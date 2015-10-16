@@ -8,6 +8,9 @@ Welcome to pySecDec's documentation!
 
 Contents:
 
+.. automodule:: polynomial
+    :members:
+
 .. toctree::
    :maxdepth: 2
 
