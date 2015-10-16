@@ -10,7 +10,7 @@ class Polynomial(object):
     stored as [[2,0],[1,1]].
 
     Coefficients are stored in a separate list of strings, e.g.
-    "A*x1^2 + B*x1*x2" <-> [[2,0],[1,1]] and [A,B].
+    "A*x1^2 + B*x1*x2" <-> [[2,0],[1,1]] and ["A","B"].
 
     :param expolist:
         iterable of iterables;

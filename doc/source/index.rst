@@ -8,7 +8,10 @@ Welcome to pySecDec's documentation!
 
 Contents:
 
-.. automodule:: polynomial
+.. automodule:: pySecDec.polynomial
+    :members:
+
+.. automodule:: pySecDec.decomposition
     :members:
 
 .. toctree::
