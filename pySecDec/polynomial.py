@@ -42,3 +42,7 @@ class Polynomial(object):
                 outstr += "*x%i^%i" %(i,power)
 
         return outstr
+
+    def copy(self):
+        "Return a copy of a :class:`Polynomial`."
+        return Polynomial(self.expolist, self.coeffs)
