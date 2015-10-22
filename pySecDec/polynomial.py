@@ -36,7 +36,8 @@ class Polynomial(object):
         outstr = ''
         terms = []
         for coeff,expolist in zip(self.coeffs,self.expolist):
-            outstr += " + %s" % coeff
+            if coeff != '': outstr += " + %s" % coeff
+            else:           outstr += " + 1"
             for i,power in enumerate(expolist):
                 outstr += "*x%i^%i" %(i,power)
 
