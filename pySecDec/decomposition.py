@@ -3,6 +3,38 @@
 from .polynomial import Polynomial
 import numpy as np
 
+def primary_decomposition(polynomial):
+    r'''
+    Perform the primary decomposition as described in
+    chapter 3.2 (part I) of arXiv:0803.4177v2.
+    Return a list of :class:`.Polynomial` - the primary
+    sectors.
+    For `N` Feynman parameters, there are `N` primary
+    sectors where the `i`-th Feynman parameter is set to
+    `1` in sector `i`.
+
+    :param polynomial:
+        :class:`.Polynomial`;
+        The polynomial to eliminate the Dirac delta from.
+
+    '''
+    primary_sectors = []
+
+    # get number of Feynman parameters
+    N = polynomial.expolist.shape[1]
+
+    coeffs = polynomial.coeffs
+    expolist = polynomial.expolist
+
+    for i in range(N):
+        # "pinch" (delete) Feynman parameter `i`
+        #   => this is equivalent to setting the exponent to zero
+        #     => that is however equivalent to setting the parameter ot one
+        expolist_i = np.delete(expolist,i,axis=1)
+        primary_sectors.append(Polynomial(expolist_i, coeffs))
+
+    return primary_sectors
+
 def decompose_step(singular_parameters, Jacobian, *polynomials):
     r'''
     Remap the Feynman parameters according to eq. (16) of
