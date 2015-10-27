@@ -14,6 +14,9 @@ class TestPolynomial(unittest.TestCase):
         # Length mismatch between coeffs and expolist
         self.assertRaisesRegexp(AssertionError, "same length", Polynomial, [(0,1),(1,0),(2,1)], ['A','B','C','D'])
 
+        # entries of expolist have variable length
+        self.assertRaisesRegexp(AssertionError, "expolist.*same length", Polynomial, [(0,1,2),(1,0),(2,1)], ['A','B','C'])
+
 
     def test_string_form(self):
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])

@@ -23,6 +23,7 @@ class Polynomial(object):
     '''
     def __init__(self, expolist, coeffs):
         self.expolist = np.array(expolist)
+        assert len(self.expolist.shape) == 2, 'All entries in `expolist` must have the same length'
         if not np.issubdtype(self.expolist.dtype, np.integer):
             raise TypeError('All entries in `expolist` must be integer.')
         self.coeffs = list(coeffs)
@@ -44,5 +45,5 @@ class Polynomial(object):
         return outstr
 
     def copy(self):
-        "Return a copy of a :class:`Polynomial`."
+        "Return a copy of a :class:`.Polynomial`."
         return Polynomial(self.expolist, self.coeffs)
