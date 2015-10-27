@@ -47,3 +47,32 @@ class Polynomial(object):
     def copy(self):
         "Return a copy of a :class:`.Polynomial`."
         return Polynomial(self.expolist, self.coeffs)
+
+class PolynomialProduct():
+    r'''
+    Product of polynomials.
+    Store one or polynomials :math:`p_i` to be interpreted as
+    product :math:`\prod_i p_i`.
+
+    :param factors:
+        arbitrarily many instances of :class:`.Polynomial`;
+        The factors :math:`p_i`.
+
+    :math:`p_i` can be accessed with ``self.factors[i]``.
+
+    Example:
+
+    .. code-block:: python
+
+        p = PolynomialProduct(p0, p1)
+        p0 = p.factors[0]
+        p1 = p.factors[1]
+
+
+    '''
+    def __init__(self,*factors):
+        self.factors = [factor.copy() for factor in factors]
+        assert self.factors, 'Must have at least one factor'
+        for factor in self.factors:
+            if factor.expolist.shape[1] != self.factors[0].expolist.shape[1]:
+                raise TypeError('Must have the same number of variables for all factors.')

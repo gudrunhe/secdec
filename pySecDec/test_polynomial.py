@@ -38,3 +38,24 @@ class TestPolynomial(unittest.TestCase):
         polynomial1.coeffs[0] += 'foo'
         self.assertEqual(polynomial1.coeffs[0],'Afoo')
         self.assertEqual(polynomial2.coeffs[0],'A')
+
+class TestPolynomialProduct(unittest.TestCase):
+    def test_init(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
+        p2 = Polynomial([(1,0,1),(2,1,0),(0,2,1)],['G','H','I'])
+
+        # mismatch in number of parameters
+        self.assertRaisesRegexp(TypeError, 'same number of variables.*all.*factors', PolynomialProduct,p0,p2)
+
+        self.assertRaisesRegexp(AssertionError, 'at least one factor', PolynomialProduct)
+
+        # Proper instantiation
+        prod = PolynomialProduct(p0,p1)
+
+        # made a copy?
+        self.assertEqual(prod.factors[0].expolist[0,0],0)
+        self.assertEqual(p0.expolist[0,0],0)
+        prod.factors[0].expolist[0,0] = 5
+        self.assertEqual(prod.factors[0].expolist[0,0],5)
+        self.assertEqual(p0.expolist[0,0],0)
