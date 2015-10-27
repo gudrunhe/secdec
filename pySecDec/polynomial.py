@@ -48,7 +48,19 @@ class Polynomial(object):
         "Return a copy of a :class:`.Polynomial`."
         return Polynomial(self.expolist, self.coeffs)
 
-class PolynomialProduct():
+    def has_constant_term(self):
+        '''
+        Return True if the polynomial can be written as:
+
+        .. math::
+            const + ...
+
+        Otherwise, return False.
+
+        '''
+        return (self.expolist == 0).all(axis=1).any()
+
+class PolynomialProduct(object):
     r'''
     Product of polynomials.
     Store one or polynomials :math:`p_i` to be interpreted as
