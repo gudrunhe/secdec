@@ -14,6 +14,9 @@ Contents:
 .. automodule:: pySecDec.decomposition
     :members:
 
+.. automodule:: pySecDec.misc
+    :members:
+
 .. toctree::
    :maxdepth: 2
 
