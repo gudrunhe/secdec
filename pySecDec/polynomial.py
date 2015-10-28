@@ -35,7 +35,6 @@ class Polynomial(object):
 
     def __repr__(self):
         outstr = ''
-        terms = []
         for coeff,expolist in zip(self.coeffs,self.expolist):
             if coeff != '': outstr += " + %s" % coeff
             else:           outstr += " + 1"
@@ -59,6 +58,19 @@ class Polynomial(object):
 
         '''
         return (self.expolist == 0).all(axis=1).any()
+
+    def becomes_zero_for(self, zero_params):
+        '''
+        Return True if the polynomial becomes zero if the
+        parameters passed in `zero_params` are set to zero.
+        Otherwise, return False.
+
+        :param zero_params:
+            iterable of integers;
+            The indices of the parameters to be checked.
+
+        '''
+        return (self.expolist > 0)[:,tuple(zero_params)].any(axis=1).all()
 
 class PolynomialProduct(object):
     r'''
