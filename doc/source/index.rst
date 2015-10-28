@@ -11,6 +11,9 @@ Contents:
 .. automodule:: pySecDec.polynomial
     :members:
 
+.. automodule:: pySecDec.sector
+    :members:
+
 .. automodule:: pySecDec.decomposition
     :members:
 
