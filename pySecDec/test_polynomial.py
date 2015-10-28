@@ -73,3 +73,16 @@ class TestPolynomialProduct(unittest.TestCase):
         prod.factors[0].expolist[0,0] = 5
         self.assertEqual(prod.factors[0].expolist[0,0],5)
         self.assertEqual(p0.expolist[0,0],0)
+
+    def test_copy(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
+
+        orig = PolynomialProduct(p0,p1)
+        copy = orig.copy()
+
+        self.assertEqual(orig.factors[0].expolist[0,0],0)
+        self.assertEqual(copy.factors[0].expolist[0,0],0)
+        orig.factors[0].expolist[0,0] = 5
+        self.assertEqual(orig.factors[0].expolist[0,0],5)
+        self.assertEqual(copy.factors[0].expolist[0,0],0)

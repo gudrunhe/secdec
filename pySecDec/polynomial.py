@@ -100,3 +100,7 @@ class PolynomialProduct(object):
         for factor in self.factors:
             if factor.expolist.shape[1] != self.factors[0].expolist.shape[1]:
                 raise TypeError('Must have the same number of variables for all factors.')
+
+    def copy(self):
+        "Return a copy of a :class:`.PolynomialProduct`."
+        return PolynomialProduct(*self.factors)
