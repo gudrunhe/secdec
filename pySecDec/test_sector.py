@@ -5,6 +5,10 @@ from .polynomial import Polynomial, PolynomialProduct
 import unittest
 
 class TestSector(unittest.TestCase):
+    def setUp(self):
+        self.poly = Polynomial([(0,1,2),(1,0,5),(1,2,3),(9,4,2)],['','A','C','g'])
+        self.sector = Sector([self.poly])
+
     def test_init(self):
         # Feynman parameters are the ti
         # input is part of the 1Loop box
@@ -30,3 +34,19 @@ class TestSector(unittest.TestCase):
 
         sector = Sector([F])
         self.assertEqual(str(sector.Jacobian), str(Jacobian))
+
+    def test_access(self):
+        self.assertEqual(self.sector.other,[])
+        self.assertEqual(len(self.sector.cast),1)
+        self.assertEqual(str(self.sector.cast[0].factors[1]),str(self.poly))
+
+    def test_copy(self):
+        sector = self.sector.copy()
+        self.assertEqual(sector.other,self.sector.other)
+        self.assertEqual(len(self.sector.cast),len(sector.cast))
+        self.assertEqual(str(self.sector.cast[0].factors[1]),str(sector.cast[0].factors[1]))
+        self.assertEqual(self.sector.number_of_variables,sector.number_of_variables)
+
+        # really made a copy?
+        sector.cast[0].factors[1].expolist += 1
+        self.assertNotEqual(str(self.sector.cast[0].factors[1]),sector.cast[0].factors[1])

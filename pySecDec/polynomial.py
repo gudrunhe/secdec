@@ -30,18 +30,18 @@ class Polynomial(object):
         assert len(self.expolist) == len(self.coeffs), \
             '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
 
-    def __str__(self):
-        return self.__repr__()
-
     def __repr__(self):
+        from .configure import _powsymbol
         outstr = ''
         for coeff,expolist in zip(self.coeffs,self.expolist):
             if coeff != '': outstr += " + %s" % coeff
             else:           outstr += " + 1"
             for i,power in enumerate(expolist):
-                outstr += "*x%i^%i" %(i,power)
+                outstr += "*x%i%s%i" %(i,_powsymbol,power)
 
         return outstr
+
+    __str__ = __repr__
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial`."
@@ -97,8 +97,11 @@ class PolynomialProduct(object):
     def __init__(self,*factors):
         self.factors = [factor.copy() for factor in factors]
         assert self.factors, 'Must have at least one factor'
+
+        self.number_of_variables = self.factors[0].expolist.shape[1]
+
         for factor in self.factors:
-            if factor.expolist.shape[1] != self.factors[0].expolist.shape[1]:
+            if factor.expolist.shape[1] != self.number_of_variables:
                 raise TypeError('Must have the same number of variables for all factors.')
 
     def copy(self):

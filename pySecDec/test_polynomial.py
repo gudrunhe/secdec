@@ -1,7 +1,11 @@
 """Unit tests for the Polynomial container class"""
 
 from .polynomial import *
+from . import configure
 import unittest
+
+def setUp():
+    configure.powsymbol('^')
 
 class TestPolynomial(unittest.TestCase):
     def test_init(self):
@@ -19,11 +23,16 @@ class TestPolynomial(unittest.TestCase):
 
 
     def test_string_form(self):
+        configure.powsymbol('^')
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])
         string_polynomial1 = " + A*x0^0*x1^1 + B*x0^1*x1^0 + C*x0^2*x1^1 + D*x0^0*x1^0"
         self.assertEqual(str(polynomial1), string_polynomial1)
         self.assertEqual(repr(polynomial1), string_polynomial1)
 
+        configure.powsymbol('**')
+        string_polynomial1 = string_polynomial1.replace('^','**')
+        self.assertEqual(str(polynomial1), string_polynomial1)
+        self.assertEqual(repr(polynomial1), string_polynomial1)
 
     def test_copy(self):
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])
