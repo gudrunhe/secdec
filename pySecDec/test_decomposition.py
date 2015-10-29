@@ -1,9 +1,13 @@
 """Unit tests for the Polynomial container class"""
 
 from .decomposition import *
-from .polynomial import Polynomial
+from .polynomial import Polynomial, PolynomialProduct
+from . import configure
 import numpy as np
 import unittest
+
+def setUp():
+    configure.powsymbol('^')
 
 class TestPrimaryDecomposition(unittest.TestCase):
     def setUp(self):

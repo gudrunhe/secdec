@@ -30,18 +30,18 @@ class Polynomial(object):
         assert len(self.expolist) == len(self.coeffs), \
             '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
 
-    def __str__(self):
-        return self.__repr__()
-
     def __repr__(self):
+        from .configure import _powsymbol
         outstr = ''
         for coeff,expolist in zip(self.coeffs,self.expolist):
             if coeff != '': outstr += " + %s" % coeff
             else:           outstr += " + 1"
             for i,power in enumerate(expolist):
-                outstr += "*x%i^%i" %(i,power)
+                outstr += "*x%i%s%i" %(i,_powsymbol,power)
 
         return outstr
+
+    __str__ = __repr__
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial`."
