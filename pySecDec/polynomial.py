@@ -97,8 +97,11 @@ class PolynomialProduct(object):
     def __init__(self,*factors):
         self.factors = [factor.copy() for factor in factors]
         assert self.factors, 'Must have at least one factor'
+
+        self.number_of_variables = self.factors[0].expolist.shape[1]
+
         for factor in self.factors:
-            if factor.expolist.shape[1] != self.factors[0].expolist.shape[1]:
+            if factor.expolist.shape[1] != self.number_of_variables:
                 raise TypeError('Must have the same number of variables for all factors.')
 
     def copy(self):

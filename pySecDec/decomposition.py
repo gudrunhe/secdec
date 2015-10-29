@@ -68,6 +68,38 @@ def primary_decomposition(sector):
     ]
     return primary_sectors
 
+def refactorize(polyprod, parameter=None):
+    '''
+    In a :class:`.polynomial.PolynomialProduct` of
+    the form `<monomial> * <polynomial>`, check if
+    a parameter in `<polynomial>` can be shifted to
+    the `<monomial>`.
+    If possible, modify `polyprod` accordingly.
+
+    :param polyprod:
+        :class:`.polynomial.PolynomialProduct` of the
+        form <monomial> * <polynomial>`;
+        The product to refactorize.
+
+    :param parameter:
+        integer, optional;
+        Check only the parameter with this index.
+        If not provided, all parameters are checked.
+
+    '''
+    if parameter is None:
+        for i in range(polyprod.number_of_variables):
+            refactorize(polyprod, i)
+        return
+
+    expolist_mono = polyprod.factors[0].expolist
+    expolist_poly = polyprod.factors[1].expolist
+
+    factorizable_power = expolist_poly[:,parameter].min()
+
+    expolist_mono[:,parameter] += factorizable_power
+    expolist_poly[:,parameter] -= factorizable_power
+
 def decompose_step(singular_parameters, Jacobian, *polynomials):
     r'''
     Remap the Feynman parameters according to eq. (16) of
