@@ -2,6 +2,7 @@
 
 from .polynomial import Polynomial, PolynomialProduct
 from .sector import Sector
+from.misc import powerset
 import numpy as np
 
 # ********************** primary decomposition **********************
@@ -81,7 +82,7 @@ def primary_decomposition(sector):
 class EndOfDecomposition(Exception):
     '''
     This exception is raised if the function
-    :func:`.iterative_step` is called although
+    :func:`.iteration_step` is called although
     the sector is already in standard form.
 
     '''
@@ -165,3 +166,63 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
             poly.expolist[:,singular_parameters[0]] += poly.expolist[:,param] # This modifies in place!
 
     Jacobian.expolist[:,singular_parameters[0]] += len(singular_parameters) - 1
+
+def iteration_step(sector):
+    '''
+    Run a single step of the iterative sector decomposition as described
+    in chapter 3.2 (part II) of arXiv:0803.4177v2.
+    Return a list of :class:`.Sector` - the arising subsectors.
+
+    :param sector:
+        :class:`.sector.Sector`;
+        The sector to be decomposed.
+
+    '''
+    def get_poly_to_transform(sector):
+        '''
+        Return a :class:`PolynomialProduct` in `sector.cast`
+        that is not in the desired form
+        `<monomial> * <const + ...>` yet.
+        Raise `EndOfDecomposition` if the desired form is
+        reached.
+
+        '''
+        for polyprod in sector.cast:
+            if not polyprod.factors[1].has_constant_term():
+                return polyprod
+        # Control only reaches this point if the desired form is
+        # already reached.
+        raise EndOfDecomposition()
+
+    N = sector.number_of_variables
+
+    # find a suitable transformation for a polynomial to be cast
+    singular_set_found = False
+    polyprod = get_poly_to_transform(sector)
+    mono = polyprod.factors[0]
+    poly = polyprod.factors[1]
+    for singular_set in powerset(range(N),exclude_empty=True):
+        if poly.becomes_zero_for(singular_set):
+            singular_set_found = True
+            break
+    assert singular_set_found
+
+    # We have to generate a subsector for each Feynman parameter
+    # that appears in `singular_set`.
+    # In order to comply with `remap_parameters`, we create
+    # `len(singular_set)` copies of `singular_set` such that
+    # each Feynman parameter is in the first position exactly
+    # once.
+    subsector_defining_singular_sets = [list(singular_set) for item in singular_set]
+    for i,item in enumerate(subsector_defining_singular_sets):
+        # swap the leading and the i-th item
+        item[0],item[i] = item[i],item[0]
+
+    # Call `remap_parameters` for each arising subsector.
+    subsectors = [sector.copy() for arising_subsector in subsector_defining_singular_sets]
+    for singular_set,subsector in zip(subsector_defining_singular_sets,subsectors):
+        remap_parameters(singular_set, subsector.Jacobian, *([polyprod.factors[1] for polyprod in subsector.cast] + subsector.other))
+        for polyprod in subsector.cast:
+            refactorize(polyprod,singular_set[0])
+
+    return subsectors

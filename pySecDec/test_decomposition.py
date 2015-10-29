@@ -65,6 +65,8 @@ class TestIterativeDecomposition(unittest.TestCase):
         # the constant Polynomial with unit constant
         self.Jacobian = Polynomial([(0,0,0)],[""])
 
+        self.sector = Sector([self.F,self.U])
+
     def test_refactorize(self):
         prod = PolynomialProduct(self.Jacobian, Polynomial([(1,1,0),(1,0,1)],["-s12","-s23"]))
 
@@ -94,5 +96,36 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(self.F), " + -s12*x0^0*x1^1*x2^0 + -s23*x0^1*x1^1*x2^1")
         self.assertEqual(str(self.U), " + 1*x0^0*x1^0*x2^0 + 1*x0^1*x1^0*x2^0 + 1*x0^0*x1^1*x2^0 + 1*x0^0*x1^1*x2^1")
 
-    def test_iteration(self):
-        assert False
+    def test_iteration_step(self):
+        F = PolynomialProduct(self.Jacobian, self.F)
+        U = PolynomialProduct(self.Jacobian, self.F)
+
+        subsectors = iteration_step(self.sector)
+
+        # The algorithm should choose t0,t1
+        # That generates two subsectors:
+        self.assertEqual(len(subsectors), 2)
+
+        s0 = subsectors[0]
+        s0_F = s0.cast[0]
+        s0_U = s0.cast[1]
+
+        s1 = subsectors[1]
+        s1_F = s1.cast[0]
+        s1_U = s1.cast[1]
+
+        # s0 should be the output of `remap_parameters([0,1], self.Jacobian, self.F, self.U)`
+        # collected in a `Sector`
+        self.assertEqual(str(s0.Jacobian), " + 1*x0^1*x1^0*x2^0")
+        self.assertEqual(str(s0_F.factors[0]), " + 1*x0^1*x1^0*x2^0")
+        self.assertEqual(str(s0_F.factors[1]), " + -s12*x0^0*x1^1*x2^0 + -s23*x0^0*x1^0*x2^1")
+        self.assertEqual(str(s0_U.factors[0]), " + 1*x0^0*x1^0*x2^0")
+        self.assertEqual(str(s0_U.factors[1]), " + 1*x0^0*x1^0*x2^0 + 1*x0^1*x1^0*x2^0 + 1*x0^1*x1^1*x2^0 + 1*x0^0*x1^0*x2^1")
+
+        # s1 should be the output of `remap_parameters([1,0], self.Jacobian, self.F, self.U)`
+        # collected in a `Sector`
+        self.assertEqual(str(s1.Jacobian), " + 1*x0^0*x1^1*x2^0")
+        self.assertEqual(str(s1_F.factors[0]), " + 1*x0^0*x1^1*x2^0")
+        self.assertEqual(str(s1_F.factors[1]), " + -s12*x0^0*x1^0*x2^0 + -s23*x0^1*x1^0*x2^1")
+        self.assertEqual(str(s1_U.factors[0]), " + 1*x0^0*x1^0*x2^0")
+        self.assertEqual(str(s1_U.factors[1]), " + 1*x0^0*x1^0*x2^0 + 1*x0^1*x1^1*x2^0 + 1*x0^0*x1^1*x2^0 + 1*x0^0*x1^0*x2^1")
