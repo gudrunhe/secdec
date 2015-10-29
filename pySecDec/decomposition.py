@@ -1,38 +1,71 @@
 """The sector decomposition routines"""
 
-from .polynomial import Polynomial
+from .polynomial import Polynomial, PolynomialProduct
+from .sector import Sector
 import numpy as np
 
-def primary_decomposition(polynomial):
+def primary_decomposition(sector):
     r'''
     Perform the primary decomposition as described in
     chapter 3.2 (part I) of arXiv:0803.4177v2.
-    Return a list of :class:`.Polynomial` - the primary
+    Return a list of :class:`.sector.Sector` - the primary
     sectors.
     For `N` Feynman parameters, there are `N` primary
     sectors where the `i`-th Feynman parameter is set to
     `1` in sector `i`.
 
-    :param polynomial:
-        :class:`.Polynomial`;
-        The polynomial to eliminate the Dirac delta from.
+    :param sector:
+        :class:`.sector.Sector`;
+        The container holding the polynomials (typically
+        :math:`U` and :math:`F`) to eliminate the Dirac
+        delta from.
 
     '''
-    primary_sectors = []
+    def primary_decomposition_polynomial(polynomial):
+        r'''
+        Perform the primary decomposition on a single polynomial.
+
+        :param polynomial:
+            :class:`.Polynomial`;
+            The polynomial to eliminate the Dirac delta from.
+
+        '''
+        primary_sectors = []
+
+        # get number of Feynman parameters
+        N = polynomial.expolist.shape[1]
+
+        coeffs = polynomial.coeffs
+        expolist = polynomial.expolist
+
+        for i in range(N):
+            # "pinch" (delete) Feynman parameter `i`
+            #   => this is equivalent to setting the exponent to zero
+            #     => that is however equivalent to setting the parameter to one
+            expolist_i = np.delete(expolist,i,axis=1)
+            primary_sectors.append(Polynomial(expolist_i, coeffs))
+
+        return primary_sectors
 
     # get number of Feynman parameters
-    N = polynomial.expolist.shape[1]
+    N = sector.number_of_variables
 
-    coeffs = polynomial.coeffs
-    expolist = polynomial.expolist
+    # Must perform `primary_decomposition_polynomial` for each element
+    # of `sector.other`, `[sector.Jacobian]`, and each of the two factors
+    # of `sector.cast`.
+    primary_sector_polynomials_other = [primary_decomposition_polynomial(poly) for poly in sector.other]
+    primary_sector_polynomials_Jacobian = primary_decomposition_polynomial(sector.Jacobian)
+    primary_sector_polynomials_cast_factor0 = [primary_decomposition_polynomial(polyprod.factors[0]) for polyprod in sector.cast]
+    primary_sector_polynomials_cast_factor1 = [primary_decomposition_polynomial(polyprod.factors[1]) for polyprod in sector.cast]
 
-    for i in range(N):
-        # "pinch" (delete) Feynman parameter `i`
-        #   => this is equivalent to setting the exponent to zero
-        #     => that is however equivalent to setting the parameter ot one
-        expolist_i = np.delete(expolist,i,axis=1)
-        primary_sectors.append(Polynomial(expolist_i, coeffs))
-
+    # Collect the primary decomposed polynomials back into the `Sector` container class
+    primary_sectors = [
+        Sector(
+                [PolynomialProduct(cast0[sector_index],cast1[sector_index]) for cast0,cast1 in zip(primary_sector_polynomials_cast_factor0, primary_sector_polynomials_cast_factor1)],
+                [other[sector_index] for other in primary_sector_polynomials_other],
+                primary_sector_polynomials_Jacobian[sector_index]
+        ) for sector_index in range(N)
+    ]
     return primary_sectors
 
 def decompose_step(singular_parameters, Jacobian, *polynomials):

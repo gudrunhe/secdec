@@ -2,6 +2,7 @@
 
 from .decomposition import *
 from .polynomial import Polynomial, PolynomialProduct
+from .sector import Sector
 from . import configure
 import numpy as np
 import unittest
@@ -20,10 +21,13 @@ class TestPrimaryDecomposition(unittest.TestCase):
         # U = t0 + t1 + t2 + t3
         self.U = Polynomial([(1,0,0,0),(0,1,0,0),(0,0,1,0),(0,0,0,1)],["","","",""])
 
-    def test_primary_decomposition(self):
-        F_primary = primary_decomposition(self.F)
-        U_primary = primary_decomposition(self.U)
+        self.initial_sector = Sector([self.F,self.U])
 
+    def test_primary_decomposition(self):
+        primary_sectors = primary_decomposition(self.initial_sector)
+
+        F_primary = [sector.cast[0].factors[1] for sector in primary_sectors]
+        U_primary = [sector.cast[1].factors[1] for sector in primary_sectors]
 
         # 4 variables => 4 primary sectors
         self.assertEqual(len(F_primary),4)
