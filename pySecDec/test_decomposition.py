@@ -88,9 +88,8 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(copy2.factors[0]), ' + 1*x0^0*x1^0*x2^0')
         self.assertEqual(str(copy2.factors[1]), ' + -s12*x0^1*x1^1*x2^0 + -s23*x0^1*x1^0*x2^1')
 
-
-    def test_step(self):
-        decompose_step([1,2], self.Jacobian, self.F, self.U) # modification in place
+    def test_remap_parameters(self):
+        remap_parameters([1,2], self.Jacobian, self.F, self.U) # modification in place
         self.assertEqual(str(self.Jacobian), " + 1*x0^0*x1^1*x2^0")
         self.assertEqual(str(self.F), " + -s12*x0^0*x1^1*x2^0 + -s23*x0^1*x1^1*x2^1")
         self.assertEqual(str(self.U), " + 1*x0^0*x1^0*x2^0 + 1*x0^1*x1^0*x2^0 + 1*x0^0*x1^1*x2^0 + 1*x0^0*x1^1*x2^1")

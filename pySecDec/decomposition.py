@@ -4,6 +4,36 @@ from .polynomial import Polynomial, PolynomialProduct
 from .sector import Sector
 import numpy as np
 
+# ********************** primary decomposition **********************
+
+def primary_decomposition_polynomial(polynomial):
+    r'''
+    Perform the primary decomposition on a single polynomial.
+
+    .. seealso::
+        :func:`.primary_decomposition`
+
+    :param polynomial:
+        :class:`.Polynomial`;
+        The polynomial to eliminate the Dirac delta from.
+    '''
+    primary_sectors = []
+
+    # get number of Feynman parameters
+    N = polynomial.expolist.shape[1]
+
+    coeffs = polynomial.coeffs
+    expolist = polynomial.expolist
+
+    for i in range(N):
+        # "pinch" (delete) Feynman parameter `i`
+        #   => this is equivalent to setting the exponent to zero
+        #     => that is however equivalent to setting the parameter to one
+        expolist_i = np.delete(expolist,i,axis=1)
+        primary_sectors.append(Polynomial(expolist_i, coeffs))
+
+    return primary_sectors
+
 def primary_decomposition(sector):
     r'''
     Perform the primary decomposition as described in
@@ -14,6 +44,10 @@ def primary_decomposition(sector):
     sectors where the `i`-th Feynman parameter is set to
     `1` in sector `i`.
 
+    .. seealso::
+        :func:`.primary_decomposition_polynomial`
+
+
     :param sector:
         :class:`.sector.Sector`;
         The container holding the polynomials (typically
@@ -21,32 +55,6 @@ def primary_decomposition(sector):
         delta from.
 
     '''
-    def primary_decomposition_polynomial(polynomial):
-        r'''
-        Perform the primary decomposition on a single polynomial.
-
-        :param polynomial:
-            :class:`.Polynomial`;
-            The polynomial to eliminate the Dirac delta from.
-
-        '''
-        primary_sectors = []
-
-        # get number of Feynman parameters
-        N = polynomial.expolist.shape[1]
-
-        coeffs = polynomial.coeffs
-        expolist = polynomial.expolist
-
-        for i in range(N):
-            # "pinch" (delete) Feynman parameter `i`
-            #   => this is equivalent to setting the exponent to zero
-            #     => that is however equivalent to setting the parameter to one
-            expolist_i = np.delete(expolist,i,axis=1)
-            primary_sectors.append(Polynomial(expolist_i, coeffs))
-
-        return primary_sectors
-
     # get number of Feynman parameters
     N = sector.number_of_variables
 
@@ -67,6 +75,17 @@ def primary_decomposition(sector):
         ) for sector_index in range(N)
     ]
     return primary_sectors
+
+# ********************** iterative decomposition **********************
+
+class EndOfDecomposition(Exception):
+    '''
+    This exception is raised if the function
+    :func:`.iterative_step` is called although
+    the sector is already in standard form.
+
+    '''
+    pass
 
 def refactorize(polyprod, parameter=None):
     '''
@@ -100,7 +119,7 @@ def refactorize(polyprod, parameter=None):
     expolist_mono[:,parameter] += factorizable_power
     expolist_poly[:,parameter] -= factorizable_power
 
-def decompose_step(singular_parameters, Jacobian, *polynomials):
+def remap_parameters(singular_parameters, Jacobian, *polynomials):
     r'''
     Remap the Feynman parameters according to eq. (16) of
     arXiv:0803.4177v2. The parameter whose index comes first
@@ -130,7 +149,7 @@ def decompose_step(singular_parameters, Jacobian, *polynomials):
 
     .. code-block:: python
 
-        decompose_step([1,2], Jacobian, F, U)
+        remap_parameters([1,2], Jacobian, F, U)
 
     '''
     assert Jacobian.coeffs == [""], "`Jacobian` must be a monomial without coefficient"
