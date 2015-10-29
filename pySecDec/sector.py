@@ -68,3 +68,6 @@ class Sector(object):
                 self.cast.append(item.copy())
             else: # expect type `Polynomial`
                 self.cast.append(PolynomialProduct(initial_monomial_factor, item))
+    def copy(self):
+        "Return a copy of a :class:`.Sector`."
+        return Sector(self.cast, self.other, self.Jacobian)
