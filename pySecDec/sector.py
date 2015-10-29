@@ -67,4 +67,4 @@ class Sector(object):
             if hasattr(item, 'factors'): # expect type `PolynomialProduct`
                 self.cast.append(item.copy())
             else: # expect type `Polynomial`
-                self.cast.append(PolynomialProduct(initial_monomial_factor, poly))
+                self.cast.append(PolynomialProduct(initial_monomial_factor, item))

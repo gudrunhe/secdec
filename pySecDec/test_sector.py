@@ -30,3 +30,11 @@ class TestSector(unittest.TestCase):
 
         sector = Sector([F])
         self.assertEqual(str(sector.Jacobian), str(Jacobian))
+
+    def test_access(self):
+        poly = Polynomial([(0,1,2),(1,0,5),(1,2,3),(9,4,2)],['','A','C','g'])
+        sector = Sector([poly])
+
+        self.assertEqual(sector.other,[])
+        self.assertEqual(len(sector.cast),1)
+        self.assertEqual(str(sector.cast[0].factors[1]),str(poly))
