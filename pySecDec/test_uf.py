@@ -10,8 +10,10 @@ class TestUF(unittest.TestCase):
         box_1l = uf2(['k1'],['k1**2','(k1-p1)**2'])
         zerou = sp.sympify("""x0 + x1""") - box_1l[0]
         zerof = sp.sympify("""-p1**2*x0*x1""") - box_1l[1]
-        zerou.simplify()
-        zerof.simplify()
+
+        zerou = zerou.simplify()
+        zerof = zerof.simplify()
+
         self.assertEqual(zerou,0)
         self.assertEqual(zerof,0)
 
@@ -52,8 +54,8 @@ class TestUF(unittest.TestCase):
                               p3**2*x0*x5*x6 - p3**2*x1*x3*x6 - p3**2*x1*x4*x6 -
                               p3**2*x1*x5*x6 - p3**2*x2*x3*x6 - p3**2*x2*x4*x6 -
                               p3**2*x2*x5*x6 - p3**2*x3*x4*x6 - p3**2*x3*x5*x6""") - box_2l[1]
-        zerou.simplify()
-        zerof.simplify()
+        zerou = zerou.simplify()
+        zerof = zerof.simplify()
         self.assertEqual(zerou,0)
         self.assertEqual(zerof,0)
 
@@ -213,7 +215,7 @@ class TestUF(unittest.TestCase):
                               p2**2*x3*x4*x9*x10*x11 - p2**2*x0*x5*x9*x10*x11 - p2**2*x1*x5*x9*x10*x11 - p2**2*x2*x5*x9*x10*x11 - p2**2*x3*x5*x9*x10*x11 - p2**2*x2*x7*x9*x10*x11 -
                               p2**2*x3*x7*x9*x10*x11 - p2**2*x4*x7*x9*x10*x11 - p2**2*x5*x7*x9*x10*x11 - p2**2*x0*x8*x9*x10*x11 - p2**2*x1*x8*x9*x10*x11 - p2**2*x4*x8*x9*x10*x11 -
                               p2**2*x5*x8*x9*x10*x11 - p2**2*x7*x8*x9*x10*x11""") - formfactor_4l[1]
-        zerou.simplify()
-        zerof.simplify()
+        zerou = zerou.simplify()
+        zerof = zerof.simplify()
         self.assertEqual(zerou,0)
         self.assertEqual(zerof,0)
