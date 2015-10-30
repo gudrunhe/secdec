@@ -1,30 +1,32 @@
 """The U, F routines"""
 
 import sympy as sp
-    
+
 def uf(str_ls,str_props):
     r'''
-    Construct the 1st (U) and 2nd (F) Symanzik Polynomials from a list of loop momenta and propagators.
+    Construct the 1st (U) and 2nd (F) Symanzik Polynomials
+    from a list of loop momenta and propagators.
     Outputs a tuple containing (U,F).
-    
+
     :param str_ls:
        list of strings;
        The loop momenta
-       
+
     :param str_props:
        list of strings:
        The propagators
-    
-    Adapted from A.V. Smirnov's Mathematica UF routine: http://science.sander.su/Tools-UF.htm
-    But with conventions of Eq(8) arXiv:0803.4177
+
+    Adapted from A.V. Smirnov's Mathematica UF routine:
+    http://science.sander.su/Tools-UF.htm but with
+    conventions of Eq(8) arXiv:0803.4177
+
     '''
     ls = sp.sympify(str_ls)
     props = sp.sympify(str_props)
 
     # Feynman parameters
-    #x = sp.symbols('x')
     x = [sp.symbols('x%i' % i) for i,_ in enumerate(props)]
-    
+
     u = 1
     f = sum(prop*x[i] for i,prop in enumerate(props))
 
@@ -32,27 +34,29 @@ def uf(str_ls,str_props):
         t0, t1, t2 = reversed(sp.Poly(f,l).all_coeffs())
         u *= t2
         f = sp.together((t0*t2-t1**2/4)/t2)
-    
-    f = sp.ratsimp(-u*f) # todo: need minus sign?
+
+    f = sp.ratsimp(-u*f)
     u = sp.ratsimp(u)
 
     return (u,f)
 
-
 def uf2(str_ls,str_props):
     r'''
-    Alternative method for construct the 1st (U) and 2nd (F) Symanzik Polynomials from a list of loop momenta and propagators.
+    Alternative method for construct the 1st (U) and 2nd (F)
+    Symanzik Polynomials from a list of loop momenta and
+    propagators.
     Outputs a tuple containing (U,F).
-        
-        :param str_ls:
+
+    :param str_ls:
         list of strings;
         The loop momenta
-        
-        :param str_props:
-        list of strings:
+
+    :param str_props:
+        list of strings;
         The propagators
-    
-    Adapted from Eq(8) arXiv:0803.4177
+
+    Adapted from Eq(8) arXiv:0803.4177.
+
     '''
     ls = sp.sympify(str_ls)
     props = sp.sympify(str_props)
@@ -69,6 +73,6 @@ def uf2(str_ls,str_props):
     j = propsum.subs([(l,0) for l in ls])
     am = m.adjugate()
     u = m.det()
-    f = ((q.transpose()*am*q)[0,0]-u*j).expand().together()
+    f = ((q.transpose()*am*q)[0,0]-u*j).expand().together() # TODO: is this the slow line?
 
     return (u,f)

@@ -23,6 +23,9 @@ Contents:
 .. automodule:: pySecDec.misc
     :members:
 
+.. automodule:: pySecDec.uf
+    :members:
+
 .. toctree::
    :maxdepth: 2
 

@@ -55,7 +55,7 @@ class TestUF(unittest.TestCase):
         zerof.simplify()
         self.assertEqual(zerou,0)
         self.assertEqual(zerof,0)
-    
+
     def test_formfactor_4l(self):
         formfactor_4l = uf2(['k1','k2','k3','k4'],
                            ['k1**2','k2**2','k3**2','(k3-p1)**2','(k2-k3)**2','(k2-k3-k4)**2',
