@@ -3,6 +3,7 @@
 from .uf import *
 import sympy as sp
 import unittest
+from nose.plugins.attrib import attr
 
 class TestUF(unittest.TestCase):
     def test_box_1l(self):
@@ -56,6 +57,7 @@ class TestUF(unittest.TestCase):
         self.assertEqual(zerou,0)
         self.assertEqual(zerof,0)
 
+    @attr('slow')
     def test_formfactor_4l(self):
         formfactor_4l = uf2(['k1','k2','k3','k4'],
                            ['k1**2','k2**2','k3**2','(k3-p1)**2','(k2-k3)**2','(k2-k3-k4)**2',
