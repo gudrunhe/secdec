@@ -29,6 +29,7 @@ class Polynomial(object):
         self.coeffs = list(coeffs)
         assert len(self.expolist) == len(self.coeffs), \
             '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
+        self.number_of_variables = self.expolist.shape[1]
 
     def __repr__(self):
         from .configure import _powsymbol
@@ -71,6 +72,94 @@ class Polynomial(object):
 
         '''
         return (self.expolist > 0)[:,tuple(zero_params)].any(axis=1).all()
+
+class NCPolynomial(Polynomial):
+    '''
+    Like :class:`.Polynomial`, but with numerical coefficients
+    (`coeffs`). The coefficients are stored in a numpy array.
+
+    :param expolist:
+        iterable of iterables;
+        The variable's powers for each term.
+
+    :param coeffs:
+        1d array-like, e.g. [0,1,2];
+        The numerical coefficients of the polynomial.
+
+    '''
+    def __init__(self, expolist, coeffs):
+        Polynomial.__init__(self, expolist, coeffs)
+        self.coeffs = np.array(coeffs)
+        assert np.issubdtype(self.coeffs.dtype, np.number), 'Coefficients (`coeffs`) must be numerical'
+        assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
+
+    def __add__(self, other):
+        'addition operator'
+        return self._sub_or_add(other, False)
+
+    def __sub__(self, other):
+        'subtraction operator'
+        return self._sub_or_add(other, True)
+
+    def _sub_or_add(self, other, sub):
+        '''
+        Function that implements addition and subtraction.
+        The coefficients of `other` are negated if `sub`
+        is `True`.
+
+        '''
+        if  type(other) is not NCPolynomial:
+            return NotImplemented
+
+        assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both polynomials in +'
+
+        number_of_sum_terms = len(self.coeffs) + len(other.coeffs)
+        sum_expolist = np.vstack([self.expolist, other.expolist])
+        sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
+
+        result = NCPolynomial(sum_expolist, sum_coeffs)
+        result.combine()
+        return result
+
+    def __mul__(self, other):
+        'multiplication operator'
+        if  type(other) is not NCPolynomial:
+            return NotImplemented
+
+        assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both factors in *'
+
+        number_of_product_terms = len(self.coeffs) * len(other.coeffs)
+        product_expolist = np.vstack([other.expolist + term for term in self.expolist])
+        product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
+
+        result = NCPolynomial(product_expolist, product_coeffs)
+        result.combine()
+        return result
+
+    def __neg__(self):
+        'arithmetic negation "-self"'
+        return NCPolynomial(self.expolist, [-coeff for coeff in self.coeffs])
+
+    def combine(self):
+        '''
+        Combine terms that have the same exponents of
+        the variables.
+
+        '''
+        for i in range(len(self.coeffs)):
+            # do not have to consider terms with zero coefficient
+            if self.coeffs[i] == 0: continue
+            # search `self.expolist` for the same term
+            same_exponents = np.where( (self.expolist[i+1:] == self.expolist[i]).all(axis=1) )
+            # add all these coefficients together
+            self.coeffs[i] += np.sum(self.coeffs[i+1:][same_exponents])
+            # mark other terms for removal by setting coefficients to zero
+            self.coeffs[i+1:][same_exponents] = 0
+
+        # remove terms with zero coefficient
+        zero_coeffs = np.where(self.coeffs == 0)
+        self.coeffs = np.delete(self.coeffs, zero_coeffs)
+        self.expolist = np.delete(self.expolist, zero_coeffs ,axis=0)
 
 class PolynomialProduct(object):
     r'''
