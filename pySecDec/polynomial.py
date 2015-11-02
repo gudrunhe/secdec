@@ -32,10 +32,14 @@ class Polynomial(object):
         self.number_of_variables = self.expolist.shape[1]
 
     def __repr__(self):
-        from .configure import _powsymbol
+        from .configure import _powsymbol, _coeffs_in_parentheses
         outstr = ''
         for coeff,expolist in zip(self.coeffs,self.expolist):
-            if coeff != '': outstr += " + %s" % coeff
+            if coeff != '':
+                if _coeffs_in_parentheses:
+                    outstr += (" + (%s)" % coeff).replace('**',_powsymbol)
+                else:
+                    outstr += (" + %s" % coeff).replace('**',_powsymbol)
             else:           outstr += " + 1"
             for i,power in enumerate(expolist):
                 outstr += "*x%i%s%i" %(i,_powsymbol,power)

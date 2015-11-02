@@ -6,6 +6,7 @@ import unittest
 
 def setUp():
     configure.powsymbol('^')
+    configure.coeffs_in_parentheses(False)
 
 class TestPolynomial(unittest.TestCase):
     def test_init(self):
@@ -33,6 +34,8 @@ class TestPolynomial(unittest.TestCase):
         string_polynomial1 = string_polynomial1.replace('^','**')
         self.assertEqual(str(polynomial1), string_polynomial1)
         self.assertEqual(repr(polynomial1), string_polynomial1)
+
+        configure.powsymbol('^')
 
     def test_copy(self):
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])

@@ -9,6 +9,7 @@ import unittest
 
 def setUp():
     configure.powsymbol('^')
+    configure.coeffs_in_parentheses(False)
 
 class TestPrimaryDecomposition(unittest.TestCase):
     def setUp(self):
