@@ -77,8 +77,9 @@ class Polynomial(object):
         '''
         return (self.expolist > 0)[:,tuple(zero_params)].any(axis=1).all()
 
-class NCPolynomial(Polynomial):
+class SNCPolynomial(Polynomial):
     '''
+    "Symbolic or Numerical Coefficiented Polynomial"
     Like :class:`.Polynomial`, but with numerical coefficients
     (`coeffs`). The coefficients are stored in a numpy array.
 
@@ -87,14 +88,15 @@ class NCPolynomial(Polynomial):
         The variable's powers for each term.
 
     :param coeffs:
-        1d array-like, e.g. [0,1,2];
-        The numerical coefficients of the polynomial.
+        1d array-like with numerical or sympy-symbolic
+        (see http://www.sympy.org/) content, e.g. [x,1,2]
+        where x is a sympy symbol;
+        The coefficients of the polynomial.
 
     '''
     def __init__(self, expolist, coeffs):
         Polynomial.__init__(self, expolist, coeffs)
         self.coeffs = np.array(coeffs)
-        assert np.issubdtype(self.coeffs.dtype, np.number), 'Coefficients (`coeffs`) must be numerical'
         assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
 
     def __add__(self, other):
@@ -112,37 +114,35 @@ class NCPolynomial(Polynomial):
         is `True`.
 
         '''
-        if  type(other) is not NCPolynomial:
+        if  type(other) is not SNCPolynomial:
             return NotImplemented
 
         assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both polynomials in +'
 
-        number_of_sum_terms = len(self.coeffs) + len(other.coeffs)
         sum_expolist = np.vstack([self.expolist, other.expolist])
         sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
 
-        result = NCPolynomial(sum_expolist, sum_coeffs)
+        result = SNCPolynomial(sum_expolist, sum_coeffs)
         result.combine()
         return result
 
     def __mul__(self, other):
         'multiplication operator'
-        if  type(other) is not NCPolynomial:
+        if  type(other) is not SNCPolynomial:
             return NotImplemented
 
         assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both factors in *'
 
-        number_of_product_terms = len(self.coeffs) * len(other.coeffs)
         product_expolist = np.vstack([other.expolist + term for term in self.expolist])
         product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
 
-        result = NCPolynomial(product_expolist, product_coeffs)
+        result = SNCPolynomial(product_expolist, product_coeffs)
         result.combine()
         return result
 
     def __neg__(self):
         'arithmetic negation "-self"'
-        return NCPolynomial(self.expolist, [-coeff for coeff in self.coeffs])
+        return SNCPolynomial(self.expolist, [-coeff for coeff in self.coeffs])
 
     def combine(self):
         '''

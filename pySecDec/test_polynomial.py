@@ -22,7 +22,6 @@ class TestPolynomial(unittest.TestCase):
         # entries of expolist have variable length
         self.assertRaisesRegexp(AssertionError, "expolist.*same length", Polynomial, [(0,1,2),(1,0),(2,1)], ['A','B','C'])
 
-
     def test_string_form(self):
         configure.powsymbol('^')
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])
@@ -65,25 +64,24 @@ class TestPolynomial(unittest.TestCase):
         self.assertFalse(Polynomial([(0,1),(1,0),(2,1),(4,0)],['A','B','C','D']).becomes_zero_for([1]))
         self.assertFalse(Polynomial([(0,1,0,1),(2,1,0,5),(0,0,3,5)],['A','B','C']).becomes_zero_for([1,0]))
 
-class TestNCPolynomial(unittest.TestCase):
+class TestSNCPolynomial(unittest.TestCase):
     def setUp(self):
-        self.p0 = NCPolynomial([(0,1),(1,0),(1,1)],[1,1,3])
-        self.p1 = NCPolynomial([(1,1),(1,1),(2,1)],[1,1,2])
-        self.p2 = NCPolynomial([(0,0),(1,0),(1,1)],[5,6,7])
+        self.p0 = SNCPolynomial([(0,1),(1,0),(1,1)],[1,1,3])
+        self.p1 = SNCPolynomial([(1,1),(1,1),(2,1)],[1,1,2])
+        self.p2 = SNCPolynomial([(0,0),(1,0),(1,1)],[5,6,7])
 
     def test_init(self):
-        self.assertRaisesRegexp(AssertionError, ".*coeffs.*must.*numerical", NCPolynomial, [(1,2),(1,0),(2,1)], ['A','B','C'])
-        self.assertRaisesRegexp(AssertionError, "coeffs.*one.dimensional", NCPolynomial, [(0,3),(1,2)],[[1,4],[2,3]])
-        NCPolynomial([(1,2),(1,0),(2,1)], [1,2,3])
+        self.assertRaisesRegexp(AssertionError, "coeffs.*one.dimensional", SNCPolynomial, [(0,3),(1,2)],[[1,4],[2,3]])
+        SNCPolynomial([(1,2),(1,0),(2,1)], [1,2,3])
 
     def test_combine(self):
-        polynomial = NCPolynomial([[1,2],[1,2],[2,2]  ,  [2,1],[2,1],[3,1]  ,  [2,2],[2,2],[3,2]], [1,1,2  ,  1,1,2  ,  3,3,6])
+        polynomial = SNCPolynomial([[1,2],[1,2],[2,2]  ,  [2,1],[2,1],[3,1]  ,  [2,2],[2,2],[3,2]], [1,1,2  ,  1,1,2  ,  3,3,6])
         polynomial.combine()
         self.assertEqual(str(polynomial), " + 2*x0^1*x1^2 + 8*x0^2*x1^2 + 2*x0^2*x1^1 + 2*x0^3*x1^1 + 6*x0^3*x1^2")
 
     def test_mul(self):
-        self.assertRaisesRegexp(TypeError, "unsupported operand type\(s\) for \*: \'NCPolynomial\' and \'Polynomial\'", lambda: self.p0 * Polynomial([(0,0)],['']))
-        self.assertRaisesRegexp(AssertionError, "Number of varibales must be equal for both factors in \*", lambda: self.p0 * NCPolynomial([(0,0,3)],[4]))
+        self.assertRaisesRegexp(TypeError, "unsupported operand type\(s\) for \*: \'SNCPolynomial\' and \'Polynomial\'", lambda: self.p0 * Polynomial([(0,0)],['']))
+        self.assertRaisesRegexp(AssertionError, "Number of varibales must be equal for both factors in \*", lambda: self.p0 * SNCPolynomial([(0,0,3)],[4]))
 
         prod = self.p0 * self.p1
 
@@ -101,8 +99,8 @@ class TestNCPolynomial(unittest.TestCase):
         np.testing.assert_array_equal(prod.coeffs, [2,  8  ,  2,  2  ,      6])
 
     def test_add(self):
-        self.assertRaisesRegexp(TypeError, "unsupported operand type\(s\) for \+: \'NCPolynomial\' and \'Polynomial\'", lambda: self.p0 + Polynomial([(0,0)],['']))
-        self.assertRaisesRegexp(AssertionError, "Number of varibales must be equal for both polynomials in \+", lambda: self.p0 + NCPolynomial([(0,0,3)],[4]))
+        self.assertRaisesRegexp(TypeError, "unsupported operand type\(s\) for \+: \'SNCPolynomial\' and \'Polynomial\'", lambda: self.p0 + Polynomial([(0,0)],['']))
+        self.assertRaisesRegexp(AssertionError, "Number of varibales must be equal for both polynomials in \+", lambda: self.p0 + SNCPolynomial([(0,0,3)],[4]))
 
         polysum = self.p0 + self.p2
         self.assertEqual(str(polysum), " + 1*x0^0*x1^1 + 7*x0^1*x1^0 + 10*x0^1*x1^1 + 5*x0^0*x1^0")
@@ -116,6 +114,21 @@ class TestNCPolynomial(unittest.TestCase):
         polysum = self.p0 + self.p2
         polysum -= self.p2
         self.assertEqual(str(polysum),str(self.p0))
+
+    def test_sympy_binding(self):
+        from sympy import symbols
+        a,b = symbols('a b')
+
+        p = SNCPolynomial([(1,0),(0,1)],[a,b])
+        p_squared = p * p
+        self.assertEqual(str(p), ' + a*x0^1*x1^0 + b*x0^0*x1^1')
+        self.assertEqual(str(p_squared), ' + a^2*x0^2*x1^0 + 2*a*b*x0^1*x1^1 + b^2*x0^0*x1^2')
+
+        configure.coeffs_in_parentheses(True)
+        p_sum = p_squared + SNCPolynomial([(1,1),(0,1)],[a,b])
+        self.assertEqual(str(p_sum), ' + (a^2)*x0^2*x1^0 + (2*a*b + a)*x0^1*x1^1 + (b^2)*x0^0*x1^2 + (b)*x0^0*x1^1')
+
+        configure.coeffs_in_parentheses(False)
 
 class TestPolynomialProduct(unittest.TestCase):
     def test_init(self):
