@@ -8,8 +8,12 @@ import numpy as np
 import unittest
 
 def setUp():
+    configure.reset()
     configure.powsymbol('^')
     configure.coeffs_in_parentheses(False)
+
+def tearDown():
+    configure.reset()
 
 class TestPrimaryDecomposition(unittest.TestCase):
     def setUp(self):

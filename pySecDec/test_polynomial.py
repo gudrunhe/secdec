@@ -5,8 +5,12 @@ from . import configure
 import unittest
 
 def setUp():
+    configure.reset()
     configure.powsymbol('^')
     configure.coeffs_in_parentheses(False)
+
+def tearDown():
+    configure.reset()
 
 class TestPolynomial(unittest.TestCase):
     def test_init(self):
@@ -34,7 +38,12 @@ class TestPolynomial(unittest.TestCase):
         self.assertEqual(str(polynomial1), string_polynomial1)
         self.assertEqual(repr(polynomial1), string_polynomial1)
 
-        configure.powsymbol('^')
+        configure.polysymbol('z')
+        string_polynomial1 = string_polynomial1.replace('x','z')
+        self.assertEqual(str(polynomial1), string_polynomial1)
+        self.assertEqual(repr(polynomial1), string_polynomial1)
+
+        setUp() # reset configuration
 
     def test_copy(self):
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])
