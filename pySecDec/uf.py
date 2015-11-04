@@ -1,78 +1,112 @@
 """The U, F routines"""
 
+from .polynomial import SNCPolynomial
 import sympy as sp
+import numpy as np
 
-def uf(str_ls,str_props):
+def uf(loop_momenta,propagators):
     r'''
     Construct the 1st (U) and 2nd (F) Symanzik Polynomials
     from a list of loop momenta and propagators.
-    Outputs a tuple containing (U,F).
+    Return a tuple containing (U,F) as
+    :class:`pySecDec.polynomial.Polynomial`.
 
-    :param str_ls:
-       list of strings;
-       The loop momenta
+    :param loop_momenta:
+       iterable of strings or sympy expression;
+       The loop momenta, e.g. ['k1','k2'].
 
-    :param str_props:
-       list of strings:
-       The propagators
-
-    Adapted from A.V. Smirnov's Mathematica UF routine:
-    http://science.sander.su/Tools-UF.htm but with
-    conventions of Eq(8) arXiv:0803.4177
-
-    '''
-    ls = sp.sympify(str_ls)
-    props = sp.sympify(str_props)
-
-    # Feynman parameters
-    x = [sp.symbols('x%i' % i) for i,_ in enumerate(props)]
-
-    u = 1
-    f = sum(prop*x[i] for i,prop in enumerate(props))
-
-    for l in ls:
-        t0, t1, t2 = reversed(sp.Poly(f,l).all_coeffs())
-        u *= t2
-        f = sp.together((t0*t2-t1**2/4)/t2)
-
-    f = sp.ratsimp(-u*f)
-    u = sp.ratsimp(u)
-
-    return (u,f)
-
-def uf2(str_ls,str_props):
-    r'''
-    Alternative method for construct the 1st (U) and 2nd (F)
-    Symanzik Polynomials from a list of loop momenta and
-    propagators.
-    Outputs a tuple containing (U,F).
-
-    :param str_ls:
-        list of strings;
-        The loop momenta
-
-    :param str_props:
-        list of strings;
-        The propagators
+    :param propagators:
+       iterable of strings or sympy expressions;
+       The propagators, e.g. ['k1**2', '(k1-k2)**2 - m**2'].
 
     Adapted from Eq(8) arXiv:0803.4177.
 
+    .. warning::
+        Do **NOT** name any of your variables "Feynman0",
+        "Feynman1", ... - these variables are internally
+        reserved for the Feynman parameters.
+
     '''
-    ls = sp.sympify(str_ls)
-    props = sp.sympify(str_props)
+    def sympyPoly2SNCPolynomial(sympy_expr, integer_coeffs=False):
+        '''
+        Convert a sympy polynomial-like expression in the
+        Feynman parameters to :class:`.SNCPolynomial`.
 
-    # Feynman parameters
-    x = [sp.symbols('x%i' % i) for i,_ in enumerate(props)]
+        '''
+        sympy_poly = sp.poly(sympy_expr, Feynman_parameters)
+        expolist = sympy_poly.monoms()
+        coeffs = sympy_poly.coeffs()
+        if integer_coeffs:
+            for coeff in coeffs:
+                assert coeff.is_Integer
+            coeffs = [int(coeff) for coeff in coeffs]
+        return SNCPolynomial(expolist, coeffs)
 
-    propsum = sum(prop*x[i] for i,prop in enumerate(props)).expand()
-    m = sp.Matrix( len(ls), len(ls),
-                  lambda i,j: propsum.coeff(ls[i]*ls[j]) if i==j
-                  else propsum.coeff(ls[i]*ls[j])/sp.sympify(2) )
-    q = sp.Matrix( len(ls), 1,
-                  lambda i,j: (propsum.coeff(ls[i])/sp.sympify(-2)).subs([(l,0) for l in ls]))
-    j = propsum.subs([(l,0) for l in ls])
-    am = m.adjugate()
-    u = m.det()
-    f = ((q.transpose()*am*q)[0,0]-u*j).expand().together() # TODO: is this the slow line?
+    # convert input to sympy expressions
+    loop_momenta = [sp.sympify(loop_momentum) for loop_momentum in loop_momenta]
+    propagators = [sp.sympify(propagator) for propagator in propagators]
 
-    return (u,f)
+    L = len(loop_momenta)
+    P = len(propagators)
+
+    # define Feynman parameters
+    Feynman_parameters = [sp.symbols('Feynman%i' % i) for i in range(P)]
+
+    # Calculate the square bracket in equation (5) of arXiv:0803.4177v2.
+    propsum = sum(prop*FP for prop,FP in zip(propagators,Feynman_parameters)).expand()
+
+
+    # construct matrix M
+    M = np.empty((L,L), dtype=object)
+    for i in range(L):
+        for j in range(i,L):
+            current_term = propsum.coeff(loop_momenta[i]*loop_momenta[j])
+            if i != j:
+                current_term /= 2
+            # M is symmetric
+            M[j,i] = M[i,j] = sympyPoly2SNCPolynomial(current_term, integer_coeffs=True)
+
+    # construct vector Q
+    Q = np.empty(L, dtype=object)
+    for i in range(L):
+        current_term = propsum.coeff(loop_momenta[i]).subs([(l,0) for l in loop_momenta])/(-2)
+        Q[i] = sympyPoly2SNCPolynomial(current_term)
+
+    # construct J
+    sympy_J = propsum.subs([(l,0) for l in loop_momenta])
+    J = sympyPoly2SNCPolynomial(sympy_J)
+
+
+    # need det(M) and the adjugate det(M)*inverse(M)
+    #   --> Use sympy to calculate the determinant and adjugate of a generic LxL Matrix, e.g.
+    #       [[M_0_0__, M_0_1__]
+    #        [M_1_0__, M_1_1__]]
+    generic_m = sp.Matrix([["M_%i_%i__" %(i,j) for j in range(L)] for i in range(L)])
+    generic_adjugate = generic_m.adjugate().expand()
+    generic_det = generic_m.det(method='berkowitz').expand()
+
+    # convert sympy output to python executable code; i.e. M_i_j__ --> M[i,j]
+    generic_adjugate = [[str(generic_adjugate[i,j]).replace('M_','M[').replace('__',']').replace('_',',') for j in range(L)] for i in range(L)]
+    generic_det = str(generic_det).replace('M_','M[').replace('__',']').replace('_',',')
+
+
+    # equation (8) of arXiv:0803.4177: U = det(M)
+    U = eval(generic_det)
+
+    # generate adjugate aM of M
+    aM = np.empty((L,L), dtype=object)
+    if L > 1:
+        for i in range(L):
+            for j in range(L):
+                aM[i,j] = eval(generic_adjugate[i][j])
+    else:
+        assert generic_adjugate == [['1']]
+        aM[0,0] = SNCPolynomial([[0] * P], [1])
+
+    # equation (8) of arXiv:0803.4177: F = det(M)*(Q.transpose*inverse(M)*Q-J) = (Q.transpose*adjugate(M)*Q-U*J)
+    F = - U * J
+    for i in range(L):
+        for j in range(L):
+            F += Q[i]*aM[i,j]*Q[j]
+
+    return (U,F)
