@@ -104,9 +104,10 @@ def uf(loop_momenta,propagators):
         aM[0,0] = SNCPolynomial([[0] * P], [1])
 
     # equation (8) of arXiv:0803.4177: F = det(M)*(Q.transpose*inverse(M)*Q-J) = (Q.transpose*adjugate(M)*Q-U*J)
-    F = - U * J
+    F = SNCPolynomial([[0]*P], [0])
     for i in range(L):
         for j in range(L):
             F += Q[i]*aM[i,j]*Q[j]
+    F -= U * J
 
     return (U,F)
