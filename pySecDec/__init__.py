@@ -1,3 +1,1 @@
-from . import polynomial
-from . import decomposition
-from . import misc
+from . import polynomial, decomposition, misc, uf
