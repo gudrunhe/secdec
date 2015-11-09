@@ -139,6 +139,15 @@ class TestSNCPolynomial(unittest.TestCase):
 
         configure.coeffs_in_parentheses(False)
 
+    def test_empty_expolist(self):
+        polynomial = SNCPolynomial([(0,1),(1,0),(2,1),(0,0)],[0,0,0,0])
+        polynomial.combine()
+        self.assertGreater(len(polynomial.expolist), 0)
+        self.assertGreater(len(polynomial.coeffs), 0)
+
+        np.testing.assert_array_equal(polynomial.expolist, [[0,0]])
+        np.testing.assert_array_equal(polynomial.coeffs, [0])
+
 class TestPolynomialProduct(unittest.TestCase):
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])

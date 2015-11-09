@@ -165,6 +165,11 @@ class SNCPolynomial(Polynomial):
         self.coeffs = np.delete(self.coeffs, zero_coeffs)
         self.expolist = np.delete(self.expolist, zero_coeffs ,axis=0)
 
+        # need to have at least one term
+        if len(self.coeffs) == 0:
+            self.coeffs = np.array([0])
+            self.expolist = np.array([[0]*self.number_of_variables])
+
 class PolynomialProduct(object):
     r'''
     Product of polynomials.
