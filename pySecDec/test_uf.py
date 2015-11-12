@@ -58,7 +58,7 @@ class TestUF(unittest.TestCase):
                           p3**2*x2*x3*x6 - p3**2*x2*x4*x6 - p3**2*x2*x5*x6 - p3**2*x3*x4*x6 -
                           p3**2*x3*x5*x6""")
 
-    def test_box_1l(self):
+    def test_bubble_1l(self):
         uf_generic_check(self,
             loop_momenta = ['k1'],
             propagators = ['k1**2','(k1-p1)**2'],
