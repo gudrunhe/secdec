@@ -1,16 +1,7 @@
 """Unit tests for the Polynomial container class"""
 
 from .polynomial import *
-from . import configure
 import unittest
-
-def setUp():
-    configure.reset()
-    configure.powsymbol('^')
-    configure.coeffs_in_parentheses(False)
-
-def tearDown():
-    configure.reset()
 
 class TestPolynomial(unittest.TestCase):
     def test_init(self):
@@ -27,23 +18,20 @@ class TestPolynomial(unittest.TestCase):
         self.assertRaisesRegexp(AssertionError, "expolist.*same length", Polynomial, [(0,1,2),(1,0),(2,1)], ['A','B','C'])
 
     def test_string_form(self):
-        configure.powsymbol('^')
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])
-        string_polynomial1 = " + A*x0^0*x1^1 + B*x0^1*x1^0 + C*x0^2*x1^1 + D*x0^0*x1^0"
+        string_polynomial1 = " + (A)*x1 + (B)*x0 + (C)*x0**2*x1 + (D)"
         self.assertEqual(str(polynomial1), string_polynomial1)
         self.assertEqual(repr(polynomial1), string_polynomial1)
 
-        configure.powsymbol('**')
-        string_polynomial1 = string_polynomial1.replace('^','**')
-        self.assertEqual(str(polynomial1), string_polynomial1)
-        self.assertEqual(repr(polynomial1), string_polynomial1)
+        polynomial2 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'], polysymbols='z')
+        string_polynomial2 = string_polynomial1.replace('x','z')
+        self.assertEqual(str(polynomial2), string_polynomial2)
+        self.assertEqual(repr(polynomial2), string_polynomial2)
 
-        configure.polysymbol('z')
-        string_polynomial1 = string_polynomial1.replace('x','z')
-        self.assertEqual(str(polynomial1), string_polynomial1)
-        self.assertEqual(repr(polynomial1), string_polynomial1)
-
-        setUp() # reset configuration
+        polynomial3 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'], polysymbols=['x','y'])
+        string_polynomial3 = string_polynomial1.replace('x0','x').replace('x1','y')
+        self.assertEqual(str(polynomial3), string_polynomial3)
+        self.assertEqual(repr(polynomial3), string_polynomial3)
 
     def test_copy(self):
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])
@@ -86,7 +74,7 @@ class TestSNCPolynomial(unittest.TestCase):
     def test_combine(self):
         polynomial = SNCPolynomial([[1,2],[1,2],[2,2]  ,  [2,1],[2,1],[3,1]  ,  [2,2],[2,2],[3,2]], [1,1,2  ,  1,1,2  ,  3,3,6])
         polynomial.combine()
-        self.assertEqual(str(polynomial), " + 2*x0^1*x1^2 + 8*x0^2*x1^2 + 2*x0^2*x1^1 + 2*x0^3*x1^1 + 6*x0^3*x1^2")
+        self.assertEqual(str(polynomial), " + (2)*x0*x1**2 + (8)*x0**2*x1**2 + (2)*x0**2*x1 + (2)*x0**3*x1 + (6)*x0**3*x1**2")
 
     def test_mul(self):
         self.assertRaisesRegexp(TypeError, "unsupported operand type\(s\) for \*: \'SNCPolynomial\' and \'Polynomial\'", lambda: self.p0 * Polynomial([(0,0)],['']))
@@ -112,7 +100,7 @@ class TestSNCPolynomial(unittest.TestCase):
         self.assertRaisesRegexp(AssertionError, "Number of varibales must be equal for both polynomials in \+", lambda: self.p0 + SNCPolynomial([(0,0,3)],[4]))
 
         polysum = self.p0 + self.p2
-        self.assertEqual(str(polysum), " + 1*x0^0*x1^1 + 7*x0^1*x1^0 + 10*x0^1*x1^1 + 5*x0^0*x1^0")
+        self.assertEqual(str(polysum), " + (1)*x1 + (7)*x0 + (10)*x0*x1 + (5)")
 
     def test_negation(self):
         neg_p2 = - self.p2
@@ -130,14 +118,11 @@ class TestSNCPolynomial(unittest.TestCase):
 
         p = SNCPolynomial([(1,0),(0,1)],[a,b])
         p_squared = p * p
-        self.assertEqual(str(p), ' + a*x0^1*x1^0 + b*x0^0*x1^1')
-        self.assertEqual(str(p_squared), ' + a^2*x0^2*x1^0 + 2*a*b*x0^1*x1^1 + b^2*x0^0*x1^2')
+        self.assertEqual(str(p), ' + (a)*x0 + (b)*x1')
+        self.assertEqual(str(p_squared), ' + (a**2)*x0**2 + (2*a*b)*x0*x1 + (b**2)*x1**2')
 
-        configure.coeffs_in_parentheses(True)
         p_sum = p_squared + SNCPolynomial([(1,1),(0,1)],[a,b])
-        self.assertEqual(str(p_sum), ' + (a^2)*x0^2*x1^0 + (2*a*b + a)*x0^1*x1^1 + (b^2)*x0^0*x1^2 + (b)*x0^0*x1^1')
-
-        configure.coeffs_in_parentheses(False)
+        self.assertEqual(str(p_sum), ' + (a**2)*x0**2 + (2*a*b + a)*x0*x1 + (b**2)*x1**2 + (b)*x1')
 
     def test_empty_expolist(self):
         polynomial = SNCPolynomial([(0,1),(1,0),(2,1),(0,0)],[0,0,0,0])

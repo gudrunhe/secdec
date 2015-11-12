@@ -6,22 +6,32 @@ class Polynomial(object):
     '''
     Container class for polynomials.
     Store a polynomial as list of lists counting the powers of
-    the variables. For example the monomial "x1^2 + x1*x2" is
+    the variables. For example the monomial "x1**2 + x1*x2" is
     stored as [[2,0],[1,1]].
 
     Coefficients are stored in a separate list of strings, e.g.
-    "A*x1^2 + B*x1*x2" <-> [[2,0],[1,1]] and ["A","B"].
+    "A*x0**2 + B*x0*x1" <-> [[2,0],[1,1]] and ["A","B"].
 
     :param expolist:
         iterable of iterables;
         The variable's powers for each term.
 
     :param coeffs:
-        iterable of strings;
-        The symbolic coefficients of the polynomial.
+        iterable;
+        The coefficients of the polynomial.
+
+    :param polysymbols:
+        iterable or string, optional;
+        The symbols to be used for the polynomial variables
+        when converted to string. If a string is passed, the
+        variables will be consecutively numbered.
+
+        For example: expolist=[[2,0],[1,1]] coeffs=["A","B"]
+         * polysymbols='x' (default) <-> "A*x0**2 + B*x0*x1"
+         * polysymbols=['x','y']     <-> "A*x**2 + B*x*y"
 
     '''
-    def __init__(self, expolist, coeffs):
+    def __init__(self, expolist, coeffs, polysymbols='x'):
         self.expolist = np.array(expolist)
         assert len(self.expolist.shape) == 2, 'All entries in `expolist` must have the same length'
         if not np.issubdtype(self.expolist.dtype, np.integer):
@@ -30,26 +40,30 @@ class Polynomial(object):
         assert len(self.expolist) == len(self.coeffs), \
             '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
         self.number_of_variables = self.expolist.shape[1]
+        if isinstance(polysymbols, str):
+            self.polysymbols=[polysymbols + str(i) for i in range(self.number_of_variables)]
+        else:
+            self.polysymbols=list(polysymbols)
 
     def __repr__(self):
-        from .configure import _powsymbol, _polysymbol, _coeffs_in_parentheses
         outstr = ''
         for coeff,expolist in zip(self.coeffs,self.expolist):
             if coeff != '':
-                if _coeffs_in_parentheses:
-                    outstr += (" + (%s)" % coeff).replace('**',_powsymbol)
+                outstr += (" + (%s)" % coeff)
+            else:           outstr += " + (1)"
+            for i,(power,symbol) in enumerate(zip(expolist,self.polysymbols)):
+                if power == 0:
+                    continue
+                elif power == 1:
+                    outstr += "*%s" % symbol
                 else:
-                    outstr += (" + %s" % coeff).replace('**',_powsymbol)
-            else:           outstr += " + 1"
-            for i,power in enumerate(expolist):
-                outstr += "*%s%i%s%i" %(_polysymbol,i,_powsymbol,power)
-
+                    outstr += "*%s**%i" %(symbol,power)
         return outstr
 
     __str__ = __repr__
 
     def copy(self):
-        "Return a copy of a :class:`.Polynomial`."
+        "Return a copy of a :class:`.Polynomial` or a subclass."
         return type(self)(self.expolist, self.coeffs)
 
     def has_constant_term(self):

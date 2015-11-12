@@ -8,9 +8,6 @@ Welcome to pySecDec's documentation!
 
 Contents:
 
-.. automodule:: pySecDec.configure
-    :members:
-
 .. automodule:: pySecDec.polynomial
     :members:
 

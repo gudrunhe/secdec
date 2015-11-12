@@ -3,17 +3,8 @@
 from .decomposition import *
 from .polynomial import Polynomial, PolynomialProduct
 from .sector import Sector
-from . import configure
 import numpy as np
 import unittest
-
-def setUp():
-    configure.reset()
-    configure.powsymbol('^')
-    configure.coeffs_in_parentheses(False)
-
-def tearDown():
-    configure.reset()
 
 class TestPrimaryDecomposition(unittest.TestCase):
     def setUp(self):
@@ -44,10 +35,10 @@ class TestPrimaryDecomposition(unittest.TestCase):
         np.testing.assert_array_equal(F_primary[2].expolist, np.array([(0,1,1),(1,0,0)]))
         np.testing.assert_array_equal(F_primary[3].expolist, np.array([(0,1,0),(1,0,1)]))
 
-        self.assertEqual(str(F_primary[0]), " + -s12*x0^1*x1^0*x2^1 + -s23*x0^0*x1^1*x2^0")
-        self.assertEqual(str(F_primary[1]), " + -s12*x0^0*x1^0*x2^1 + -s23*x0^1*x1^1*x2^0")
-        self.assertEqual(str(F_primary[2]), " + -s12*x0^0*x1^1*x2^1 + -s23*x0^1*x1^0*x2^0")
-        self.assertEqual(str(F_primary[3]), " + -s12*x0^0*x1^1*x2^0 + -s23*x0^1*x1^0*x2^1")
+        self.assertEqual(str(F_primary[0]), " + (-s12)*x0*x2 + (-s23)*x1")
+        self.assertEqual(str(F_primary[1]), " + (-s12)*x2 + (-s23)*x0*x1")
+        self.assertEqual(str(F_primary[2]), " + (-s12)*x1*x2 + (-s23)*x0")
+        self.assertEqual(str(F_primary[3]), " + (-s12)*x1 + (-s23)*x0*x2")
 
 
         np.testing.assert_array_equal(U_primary[0].expolist, np.array([(0,0,0),(1,0,0),(0,1,0),(0,0,1)]))
@@ -75,8 +66,8 @@ class TestIterativeDecomposition(unittest.TestCase):
     def test_refactorize(self):
         prod = PolynomialProduct(self.Jacobian, Polynomial([(1,1,0),(1,0,1)],["-s12","-s23"]))
 
-        self.assertEqual(str(prod.factors[0]), ' + 1*x0^0*x1^0*x2^0')
-        self.assertEqual(str(prod.factors[1]), ' + -s12*x0^1*x1^1*x2^0 + -s23*x0^1*x1^0*x2^1')
+        self.assertEqual(str(prod.factors[0]), ' + (1)')
+        self.assertEqual(str(prod.factors[1]), ' + (-s12)*x0*x1 + (-s23)*x0*x2')
 
         copy0 = prod.copy()
         copy1 = prod.copy()
@@ -89,17 +80,17 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(copy0.factors[0]), str(copy1.factors[0]))
         self.assertEqual(str(copy0.factors[1]), str(copy1.factors[1]))
 
-        self.assertEqual(str(copy1.factors[0]), ' + 1*x0^1*x1^0*x2^0')
-        self.assertEqual(str(copy1.factors[1]), ' + -s12*x0^0*x1^1*x2^0 + -s23*x0^0*x1^0*x2^1')
+        self.assertEqual(str(copy1.factors[0]), ' + (1)*x0')
+        self.assertEqual(str(copy1.factors[1]), ' + (-s12)*x1 + (-s23)*x2')
 
-        self.assertEqual(str(copy2.factors[0]), ' + 1*x0^0*x1^0*x2^0')
-        self.assertEqual(str(copy2.factors[1]), ' + -s12*x0^1*x1^1*x2^0 + -s23*x0^1*x1^0*x2^1')
+        self.assertEqual(str(copy2.factors[0]), ' + (1)')
+        self.assertEqual(str(copy2.factors[1]), ' + (-s12)*x0*x1 + (-s23)*x0*x2')
 
     def test_remap_parameters(self):
         remap_parameters([1,2], self.Jacobian, self.F, self.U) # modification in place
-        self.assertEqual(str(self.Jacobian), " + 1*x0^0*x1^1*x2^0")
-        self.assertEqual(str(self.F), " + -s12*x0^0*x1^1*x2^0 + -s23*x0^1*x1^1*x2^1")
-        self.assertEqual(str(self.U), " + 1*x0^0*x1^0*x2^0 + 1*x0^1*x1^0*x2^0 + 1*x0^0*x1^1*x2^0 + 1*x0^0*x1^1*x2^1")
+        self.assertEqual(str(self.Jacobian), " + (1)*x1")
+        self.assertEqual(str(self.F), " + (-s12)*x1 + (-s23)*x0*x1*x2")
+        self.assertEqual(str(self.U), " + (1) + (1)*x0 + (1)*x1 + (1)*x1*x2")
 
     def test_iteration_step(self):
         F = PolynomialProduct(self.Jacobian, self.F)
@@ -121,16 +112,16 @@ class TestIterativeDecomposition(unittest.TestCase):
 
         # s0 should be the output of `remap_parameters([0,1], self.Jacobian, self.F, self.U)`
         # collected in a `Sector`
-        self.assertEqual(str(s0.Jacobian), " + 1*x0^1*x1^0*x2^0")
-        self.assertEqual(str(s0_F.factors[0]), " + 1*x0^1*x1^0*x2^0")
-        self.assertEqual(str(s0_F.factors[1]), " + -s12*x0^0*x1^1*x2^0 + -s23*x0^0*x1^0*x2^1")
-        self.assertEqual(str(s0_U.factors[0]), " + 1*x0^0*x1^0*x2^0")
-        self.assertEqual(str(s0_U.factors[1]), " + 1*x0^0*x1^0*x2^0 + 1*x0^1*x1^0*x2^0 + 1*x0^1*x1^1*x2^0 + 1*x0^0*x1^0*x2^1")
+        self.assertEqual(str(s0.Jacobian), " + (1)*x0")
+        self.assertEqual(str(s0_F.factors[0]), " + (1)*x0")
+        self.assertEqual(str(s0_F.factors[1]), " + (-s12)*x1 + (-s23)*x2")
+        self.assertEqual(str(s0_U.factors[0]), " + (1)")
+        self.assertEqual(str(s0_U.factors[1]), " + (1) + (1)*x0 + (1)*x0*x1 + (1)*x2")
 
         # s1 should be the output of `remap_parameters([1,0], self.Jacobian, self.F, self.U)`
         # collected in a `Sector`
-        self.assertEqual(str(s1.Jacobian), " + 1*x0^0*x1^1*x2^0")
-        self.assertEqual(str(s1_F.factors[0]), " + 1*x0^0*x1^1*x2^0")
-        self.assertEqual(str(s1_F.factors[1]), " + -s12*x0^0*x1^0*x2^0 + -s23*x0^1*x1^0*x2^1")
-        self.assertEqual(str(s1_U.factors[0]), " + 1*x0^0*x1^0*x2^0")
-        self.assertEqual(str(s1_U.factors[1]), " + 1*x0^0*x1^0*x2^0 + 1*x0^1*x1^1*x2^0 + 1*x0^0*x1^1*x2^0 + 1*x0^0*x1^0*x2^1")
+        self.assertEqual(str(s1.Jacobian), " + (1)*x1")
+        self.assertEqual(str(s1_F.factors[0]), " + (1)*x1")
+        self.assertEqual(str(s1_F.factors[1]), " + (-s12) + (-s23)*x0*x2")
+        self.assertEqual(str(s1_U.factors[0]), " + (1)")
+        self.assertEqual(str(s1_U.factors[1]), " + (1) + (1)*x0*x1 + (1)*x1 + (1)*x2")
