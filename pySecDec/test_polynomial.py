@@ -133,6 +133,23 @@ class TestSNCPolynomial(unittest.TestCase):
         np.testing.assert_array_equal(polynomial.expolist, [[0,0]])
         np.testing.assert_array_equal(polynomial.coeffs, [0])
 
+class TestExponentiatedPolynomial(unittest.TestCase):
+    def test_init(self):
+        ExponentiatedPolynomial([(1,2),(1,0),(2,1)], ['x',2,3])
+        ExponentiatedPolynomial([(1,2),(1,0),(2,1)], ['x',2,3], exponent='A + eps')
+
+    def test_string_form(self):
+        polynomial1 = ExponentiatedPolynomial([(1,2),(1,0),(2,1)], ['x',2,3], polysymbols='y')
+        string_polynomial1 = ' + (x)*y0*y1**2 + (2)*y0 + (3)*y0**2*y1'
+        # if exponent is one, do not show it
+        self.assertEqual(str(polynomial1), string_polynomial1)
+        self.assertEqual(repr(polynomial1), string_polynomial1)
+
+        polynomial2 = ExponentiatedPolynomial([(1,2),(1,0),(2,1)], ['x',2,3], polysymbols='y', exponent='A + eps')
+        string_polynomial2 = '( + (x)*y0*y1**2 + (2)*y0 + (3)*y0**2*y1)**(A + eps)'
+        self.assertEqual(str(polynomial2), string_polynomial2)
+        self.assertEqual(repr(polynomial2), string_polynomial2)
+
 class TestPolynomialProduct(unittest.TestCase):
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])

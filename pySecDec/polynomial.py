@@ -1,6 +1,7 @@
 """This file defines the Polynomial class"""
 
 import numpy as np
+import sympy as sp
 
 class Polynomial(object):
     '''
@@ -194,6 +195,50 @@ class SNCPolynomial(Polynomial):
         if len(self.coeffs) == 0:
             self.coeffs = np.array([0])
             self.expolist = np.array([[0]*self.number_of_variables])
+
+class ExponentiatedPolynomial(Polynomial):
+    '''
+    Like :class:`.Polynomial`, but with a global exponent.
+    :math:`polynomial^{exponent}`
+
+    :param expolist:
+        iterable of iterables;
+        The variable's powers for each term.
+
+    :param coeffs:
+        1d array-like with numerical or sympy-symbolic
+        (see http://www.sympy.org/) content, e.g. [x,1,2]
+        where x is a sympy symbol;
+        The coefficients of the polynomial.
+
+    :param exponent:
+        number, string, or sympy expression, optional;
+        The global exponent. Whatever is passed will
+        be converted to a sympy expression using
+        :func:`sympy.sympify`.
+
+    :param polysymbols:
+        iterable or string, optional;
+        The symbols to be used for the polynomial variables
+        when converted to string. If a string is passed, the
+        variables will be consecutively numbered.
+
+        For example: expolist=[[2,0],[1,1]] coeffs=["A","B"]
+         * polysymbols='x' (default) <-> "A*x0**2 + B*x0*x1"
+         * polysymbols=['x','y']     <-> "A*x**2 + B*x*y"
+
+    '''
+    def __init__(self, expolist, coeffs, exponent=1, polysymbols='x'):
+        Polynomial.__init__(self, expolist, coeffs, polysymbols)
+        self.exponent = sp.sympify(exponent)
+
+    def __repr__(self):
+        if (self.exponent - 1) == 0:
+            return super(ExponentiatedPolynomial, self).__repr__()
+        else:
+            return '(' + super(ExponentiatedPolynomial, self).__repr__() \
+                       + ')**(%s)' % self.exponent
+    __str__ = __repr__
 
 class PolynomialProduct(object):
     r'''
