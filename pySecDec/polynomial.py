@@ -94,8 +94,9 @@ class Polynomial(object):
 class SNCPolynomial(Polynomial):
     '''
     "Symbolic or Numerical Coefficiented Polynomial"
-    Like :class:`.Polynomial`, but with numerical coefficients
-    (`coeffs`). The coefficients are stored in a numpy array.
+    Like :class:`.Polynomial`, but with numerical or symbolic
+    coefficients (`coeffs`). The coefficients are stored
+    in a numpy array.
 
     :param expolist:
         iterable of iterables;
@@ -107,9 +108,19 @@ class SNCPolynomial(Polynomial):
         where x is a sympy symbol;
         The coefficients of the polynomial.
 
+    :param polysymbols:
+        iterable or string, optional;
+        The symbols to be used for the polynomial variables
+        when converted to string. If a string is passed, the
+        variables will be consecutively numbered.
+
+        For example: expolist=[[2,0],[1,1]] coeffs=["A","B"]
+         * polysymbols='x' (default) <-> "A*x0**2 + B*x0*x1"
+         * polysymbols=['x','y']     <-> "A*x**2 + B*x*y"
+
     '''
-    def __init__(self, expolist, coeffs):
-        Polynomial.__init__(self, expolist, coeffs)
+    def __init__(self, expolist, coeffs, polysymbols='x'):
+        Polynomial.__init__(self, expolist, coeffs, polysymbols)
         self.coeffs = np.array(coeffs)
         assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
 
