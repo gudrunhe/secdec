@@ -50,7 +50,7 @@ class Polynomial(object):
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial`."
-        return Polynomial(self.expolist, self.coeffs)
+        return type(self)(self.expolist, self.coeffs)
 
     def has_constant_term(self):
         '''
