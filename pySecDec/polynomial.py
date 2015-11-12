@@ -206,9 +206,7 @@ class ExponentiatedPolynomial(Polynomial):
         The variable's powers for each term.
 
     :param coeffs:
-        1d array-like with numerical or sympy-symbolic
-        (see http://www.sympy.org/) content, e.g. [x,1,2]
-        where x is a sympy symbol;
+        iterable;
         The coefficients of the polynomial.
 
     :param exponent:
