@@ -11,8 +11,8 @@ def uf_generic_check(test_case, loop_momenta, propagators, result_u, result_f):
     sympy_u = sp.sympify(str(u))
     sympy_f = sp.sympify(str(f))
 
-    result_u = sp.sympify(str(result_u))
-    result_f = sp.sympify(str(result_f))
+    result_u = sp.sympify(str(result_u).replace('x','Feynman'))
+    result_f = sp.sympify(str(result_f).replace('x','Feynman'))
 
     zerou = (sympy_u - result_u).expand()
     zerof = (sympy_f - result_f).expand()

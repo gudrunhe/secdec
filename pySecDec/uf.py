@@ -27,21 +27,6 @@ def uf(loop_momenta,propagators):
         reserved for the Feynman parameters.
 
     '''
-    def sympyPoly2SNCPolynomial(sympy_expr, integer_coeffs=False):
-        '''
-        Convert a sympy polynomial-like expression in the
-        Feynman parameters to :class:`.SNCPolynomial`.
-
-        '''
-        sympy_poly = sp.poly(sympy_expr, Feynman_parameters)
-        expolist = sympy_poly.monoms()
-        coeffs = sympy_poly.coeffs()
-        if integer_coeffs:
-            for coeff in coeffs:
-                assert coeff.is_Integer
-            coeffs = [int(coeff) for coeff in coeffs]
-        return SNCPolynomial(expolist, coeffs)
-
     # convert input to sympy expressions
     loop_momenta = [sp.sympify(loop_momentum) for loop_momentum in loop_momenta]
     propagators = [sp.sympify(propagator) for propagator in propagators]
@@ -63,18 +48,22 @@ def uf(loop_momenta,propagators):
             current_term = propsum.coeff(loop_momenta[i]*loop_momenta[j])
             if i != j:
                 current_term /= 2
+            tmp = SNCPolynomial.from_expression(current_term, Feynman_parameters)
+            # all coeffs of the polynomials in M must be integer
+            # convert to `int` since it is faster than calculating with sympy expressions
+            tmp.coeffs = tmp.coeffs.astype(int)
             # M is symmetric
-            M[j,i] = M[i,j] = sympyPoly2SNCPolynomial(current_term, integer_coeffs=True)
+            M[j,i] = M[i,j] = tmp
 
     # construct vector Q
     Q = np.empty(L, dtype=object)
     for i in range(L):
         current_term = propsum.coeff(loop_momenta[i]).subs([(l,0) for l in loop_momenta])/(-2)
-        Q[i] = sympyPoly2SNCPolynomial(current_term)
+        Q[i] = SNCPolynomial.from_expression(current_term, Feynman_parameters)
 
     # construct J
     sympy_J = propsum.subs([(l,0) for l in loop_momenta])
-    J = sympyPoly2SNCPolynomial(sympy_J)
+    J = SNCPolynomial.from_expression(sympy_J, Feynman_parameters)
 
 
     # need det(M) and the adjugate det(M)*inverse(M)
@@ -109,5 +98,7 @@ def uf(loop_momenta,propagators):
         for j in range(L):
             F += Q[i]*aM[i,j]*Q[j]
     F -= U * J
+
+    F.polysymbols = U.polysymbols = Feynman_parameters
 
     return (U,F)
