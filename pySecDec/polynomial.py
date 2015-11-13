@@ -271,6 +271,10 @@ class ExponentiatedPolynomial(Polynomial):
                        + ')**(%s)' % self.exponent
     __str__ = __repr__
 
+    def copy(self):
+        "Return a copy of a :class:`.Polynomial` or a subclass."
+        return type(self)(self.expolist, self.coeffs, self.exponent, self.polysymbols)
+
 class PolynomialProduct(object):
     r'''
     Product of polynomials.

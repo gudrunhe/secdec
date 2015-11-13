@@ -164,6 +164,13 @@ class TestExponentiatedPolynomial(unittest.TestCase):
         self.assertEqual(str(polynomial2), string_polynomial2)
         self.assertEqual(repr(polynomial2), string_polynomial2)
 
+    def test_copy(self):
+        polynomial1 = ExponentiatedPolynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'],exponent='eps')
+        polynomial2 = polynomial1.copy()
+
+        self.assertEqual(str(polynomial1), str(polynomial2))
+        self.assertEqual(polynomial1.exponent, polynomial2.exponent)
+
 class TestPolynomialProduct(unittest.TestCase):
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
