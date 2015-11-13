@@ -133,6 +133,20 @@ class TestSNCPolynomial(unittest.TestCase):
         np.testing.assert_array_equal(polynomial.expolist, [[0,0]])
         np.testing.assert_array_equal(polynomial.coeffs, [0])
 
+    def test_creation_from_expression(self):
+        from sympy import symbols, sympify
+        x,y, a,b,c = symbols('x y a b c')
+        polynomial_expression = a*x + b*y + c*x**2*y
+
+        poly1 = SNCPolynomial.from_expression(polynomial_expression, [x,y])
+        poly2 = SNCPolynomial.from_expression('a*x + b*y + c*x**2*y', ['x','y'])
+
+        self.assertEqual((sympify(str(poly1)) - polynomial_expression).simplify(), 0)
+        self.assertEqual((sympify(str(poly2)) - polynomial_expression).simplify(), 0)
+
+        self.assertRaisesRegexp(TypeError, "\'x\*y\' is not.*symbol", SNCPolynomial.from_expression, 'a*x + b*y + c*x**2*y', [x,x*y])
+        self.assertRaisesRegexp(TypeError, "polysymbols.*at least one.*symbol", SNCPolynomial.from_expression, 'a*x + b*y + c*x**2*y', [])
+
 class TestExponentiatedPolynomial(unittest.TestCase):
     def test_init(self):
         ExponentiatedPolynomial([(1,2),(1,0),(2,1)], ['x',2,3])

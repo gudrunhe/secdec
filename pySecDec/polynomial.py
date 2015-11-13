@@ -7,7 +7,7 @@ class Polynomial(object):
     '''
     Container class for polynomials.
     Store a polynomial as list of lists counting the powers of
-    the variables. For example the monomial "x1**2 + x1*x2" is
+    the variables. For example the polynomial "x1**2 + x1*x2" is
     stored as [[2,0],[1,1]].
 
     Coefficients are stored in a separate list of strings, e.g.
@@ -124,6 +124,39 @@ class SNCPolynomial(Polynomial):
         Polynomial.__init__(self, expolist, coeffs, polysymbols)
         self.coeffs = np.array(coeffs)
         assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
+
+    @staticmethod
+    def from_expression(expression, polysymbols):
+        '''
+        Alternative constructor.
+        Construct the polynomial from an algebraic expression.
+
+        :param expression:
+            string or sympy expression;
+            The algebraic representation of the polynomial, e.g.
+            "5*x1**2 + x1*x2"
+
+        :param polysymbols:
+            iterable of strings or sympy symbols;
+            The symbols to be interpreted as the polynomial variables,
+            e.g. "['x1','x2']".
+
+        '''
+        polysymbols = list(polysymbols)
+
+        if not polysymbols:
+            raise TypeError("`polysymbols` must contain at least one symbol")
+
+        expression, polysymbols = sp.sympify((expression, polysymbols))
+
+        for symbol in polysymbols:
+            if not symbol.is_Symbol:
+                raise TypeError("'%s' is not a symbol" % symbol)
+
+        sympy_poly = sp.poly(expression, polysymbols)
+        expolist = sympy_poly.monoms()
+        coeffs = sympy_poly.coeffs()
+        return SNCPolynomial(expolist, coeffs, polysymbols)
 
     def __add__(self, other):
         'addition operator'
