@@ -65,7 +65,7 @@ class Polynomial(object):
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
-        return type(self)(self.expolist, self.coeffs)
+        return type(self)(self.expolist, self.coeffs, self.polysymbols)
 
     def has_constant_term(self):
         '''
@@ -181,7 +181,7 @@ class SNCPolynomial(Polynomial):
         sum_expolist = np.vstack([self.expolist, other.expolist])
         sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
 
-        result = SNCPolynomial(sum_expolist, sum_coeffs)
+        result = SNCPolynomial(sum_expolist, sum_coeffs, self.polysymbols)
         result.combine()
         return result
 
@@ -195,13 +195,13 @@ class SNCPolynomial(Polynomial):
         product_expolist = np.vstack([other.expolist + term for term in self.expolist])
         product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
 
-        result = SNCPolynomial(product_expolist, product_coeffs)
+        result = SNCPolynomial(product_expolist, product_coeffs, self.polysymbols)
         result.combine()
         return result
 
     def __neg__(self):
         'arithmetic negation "-self"'
-        return SNCPolynomial(self.expolist, [-coeff for coeff in self.coeffs])
+        return SNCPolynomial(self.expolist, [-coeff for coeff in self.coeffs], self.polysymbols)
 
     def combine(self):
         '''
