@@ -400,3 +400,22 @@ class PolynomialProduct(object):
     def copy(self):
         "Return a copy of a :class:`.PolynomialProduct`."
         return PolynomialProduct(*self.factors)
+
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+        Return a :class:`.PolynomialSum`.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        # product rule: derivative(p1 * p2 * ...) = derivative(p1) * p2 * ... + p1 * derivative(p2) * ...
+        summands = []
+        factors = list(self.factors) # copy
+        for i,factor in enumerate(self.factors):
+            factors[i] = factor.derive(index)
+            summands.append(PolynomialProduct(*factors))
+            factors[i] = factor
+        return PolynomialSum(*summands)

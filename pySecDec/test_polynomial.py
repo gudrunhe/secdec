@@ -218,6 +218,16 @@ class TestPolynomialProduct(unittest.TestCase):
         self.assertEqual(orig.factors[0].expolist[0,0],5)
         self.assertEqual(copy.factors[0].expolist[0,0],0)
 
+    def test_derive(self):
+        from sympy import sympify, symbols
+        A, B = symbols('A B')
+        polynomial = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sympify('a + b*eps'))
+
+        derivative_0 = polynomial.derive(0)
+        derivative_0_1 = sympify( str(derivative_0.derive(1)) )
+        target_derivative_0_1 = sympify('(a + b*eps)*(a + b*eps - 1)*(A*x0**2*x1 + B)**(a + b*eps - 2) * (A*x0**2) * (2*A*x0*x1) + (a + b*eps)*(A*x0**2*x1 + B)**(a + b*eps - 1) * (2*A*x0)')
+        self.assertEqual( (derivative_0_1 - target_derivative_0_1).simplify() , 0 )
+
     def test_string_form(self):
         p0 = ExponentiatedPolynomial([(0,1)],['A'],exponent='exponent')
         p1 = Polynomial([(8,1),(1,5),(2,1)],['B','C','D'])
