@@ -131,6 +131,25 @@ class Polynomial(object):
         '''
         return (self.expolist > 0)[:,tuple(zero_params)].any(axis=1).all()
 
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        # derivative(... * x**k) = ... * k * x**(k-1) = ... * <additional_coeff_factor> * x**(k-1)
+        additional_coeff_factors = self.expolist[:,index]
+        new_coeffs = [old_coeff*new_factor for old_coeff,new_factor in zip(self.coeffs,additional_coeff_factors)]
+        new_expolist = self.expolist.copy()
+        new_expolist[:,index] -= 1
+
+        outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols)
+        outpoly.combine() # simplify
+        return outpoly
+
     def __add__(self, other):
         'addition operator'
         return self._sub_or_add(other, False)

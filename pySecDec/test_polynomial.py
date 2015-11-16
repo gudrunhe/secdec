@@ -64,6 +64,18 @@ class TestPolynomial(unittest.TestCase):
         self.assertFalse(Polynomial([(0,1),(1,0),(2,1),(4,0)],['A','B','C','D']).becomes_zero_for([1]))
         self.assertFalse(Polynomial([(0,1,0,1),(2,1,0,5),(0,0,3,5)],['A','B','C']).becomes_zero_for([1,0]))
 
+    def test_derive(self):
+        from sympy import sympify
+        polynomial = Polynomial([(2,1),(0,1)],['A', 'B'])
+
+        derivative_0 = sympify( str(polynomial.derive(0)) )
+        target_derivative_0 = sympify('2*A*x0*x1')
+        self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
+
+        derivative_1 = sympify( str(polynomial.derive(1)) )
+        target_derivative_1 = sympify('A*x0**2 + B')
+        self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
+
 class TestFormerSNCPolynomial(unittest.TestCase):
     def setUp(self):
         self.p0 = Polynomial([(0,1),(1,0),(1,1)],[1,1,3])
