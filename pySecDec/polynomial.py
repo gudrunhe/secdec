@@ -243,10 +243,8 @@ class ExponentiatedPolynomial(Polynomial):
         The coefficients of the polynomial.
 
     :param exponent:
-        number, string, or sympy expression, optional;
-        The global exponent. Whatever is passed will
-        be converted to a sympy expression using
-        :func:`sympy.sympify`.
+        object, optional;
+        The global exponent.
 
     :param polysymbols:
         iterable or string, optional;
@@ -261,10 +259,10 @@ class ExponentiatedPolynomial(Polynomial):
     '''
     def __init__(self, expolist, coeffs, exponent=1, polysymbols='x'):
         Polynomial.__init__(self, expolist, coeffs, polysymbols)
-        self.exponent = sp.sympify(exponent)
+        self.exponent = exponent
 
     def __repr__(self):
-        if (self.exponent - 1) == 0:
+        if self.exponent == 1:
             return super(ExponentiatedPolynomial, self).__repr__()
         else:
             return '(' + super(ExponentiatedPolynomial, self).__repr__() \
