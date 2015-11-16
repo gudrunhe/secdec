@@ -245,8 +245,6 @@ class ExponentiatedPolynomial(Polynomial):
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
-        Return a :class:`.PolynomialProduct` of two
-        :class:`ExponentiatedPolynomial`.
 
         :param index:
             integer;
@@ -256,13 +254,19 @@ class ExponentiatedPolynomial(Polynomial):
         # derive an expression of the form "poly**exponent"
         # chain rule:
         #   --> factor0 = "poly**(exponent-1)"
-        #   --> factor1 = "derivative(poly) * exponent"
-        factor0 = ExponentiatedPolynomial(self.expolist,
-                                          self.coeffs,
-                                          self.exponent-1,
-                                          self.polysymbols)
 
-        # "derivative(poly) * exponent"
+        # simplification: (...)**0 = 1
+        # do not need factor 0 in that case
+        new_exponent = self.exponent - 1
+        if new_exponent == 0:
+            factor0 = None
+        else:
+            factor0 = ExponentiatedPolynomial(self.expolist,
+                                              self.coeffs,
+                                              new_exponent,
+                                              self.polysymbols)
+
+        #   --> factor1 = "derivative(poly) * exponent"
         #   --> derivative(... * x**k) = ... * k * x**(k-1) = ... * <additional_coeff_factor> * x**(k-1)
         additional_coeff_factors = self.expolist[:,index] * self.exponent
         new_coeffs = [old_coeff*new_factor for old_coeff,new_factor in zip(self.coeffs,additional_coeff_factors)]
@@ -271,8 +275,13 @@ class ExponentiatedPolynomial(Polynomial):
         factor1 = ExponentiatedPolynomial(new_expolist,
                                           new_coeffs,
                                           polysymbols=self.polysymbols)
+        # simplify
+        factor1.combine()
 
-        return PolynomialProduct(factor0, factor1)
+        if factor0 is None:
+            return factor1
+        else:
+            return PolynomialProduct(factor0, factor1)
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
@@ -321,6 +330,30 @@ class PolynomialSum(object):
 
     __str__ = __repr__
 
+    def _flatten(self):
+        '''
+        If one or more of ``self.summands`` is a
+        :class:`PolynomialSum`, replace it by its factors.
+        If only one summand is present, return that summand.
+
+        '''
+        changed = True
+        while changed:
+            changed = False
+            old_summands = self.summands
+            self.summands = []
+            for summand in old_summands:
+                if isinstance(summand, PolynomialSum):
+                    changed = True
+                    self.summands.extend(summand.summands)
+                else:
+                    self.summands.append(summand)
+        if len(self.summands) == 1:
+            return self.summands[0]
+        else:
+            return self
+
+
     def copy(self):
         "Return a copy of a :class:`.PolynomialSum`."
         return PolynomialSum(*self.summands)
@@ -328,7 +361,6 @@ class PolynomialSum(object):
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
-        Return a :class:`.PolynomialSum`.
 
         :param index:
             integer;
@@ -336,7 +368,7 @@ class PolynomialSum(object):
 
         '''
         # derivative(p1 + p2 + ...) = derivative(p1) + derivative(p2) + ...
-        return PolynomialSum(*(summand.derive(index) for summand in self.summands))
+        return PolynomialSum(*(summand.derive(index) for summand in self.summands))._flatten()
 
 class PolynomialProduct(object):
     r'''
@@ -386,21 +418,28 @@ class PolynomialProduct(object):
         '''
         If one or more of ``self.factors`` is a
         :class:`PolynomialProduct`, replace it by its factors.
+        If only one factor is present, return that factor.
 
         '''
-        old_factors = self.factors
-        self.factors = []
-        for factor in old_factors:
-            if isinstance(factor, PolynomialProduct):
-                self.factors.extend(factor.factors)
-            else:
-                self.factors.append(factor)
-        return self
+        changed = True
+        while changed:
+            changed = False
+            old_factors = self.factors
+            self.factors = []
+            for factor in old_factors:
+                if isinstance(factor, PolynomialProduct):
+                    changed = True
+                    self.factors.extend(factor.factors)
+                else:
+                    self.factors.append(factor)
+        if len(self.factors) == 1:
+            return self.factors[0]
+        else:
+            return self
 
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
-        Return a :class:`.PolynomialSum`.
 
         :param index:
             integer;
@@ -414,4 +453,4 @@ class PolynomialProduct(object):
             factors[i] = factor.derive(index)
             summands.append(PolynomialProduct(*factors)._flatten())
             factors[i] = factor
-        return PolynomialSum(*summands)
+        return PolynomialSum(*summands)._flatten()
