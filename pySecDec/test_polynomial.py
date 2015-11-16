@@ -279,3 +279,15 @@ class TestPolynomialSum(unittest.TestCase):
 
         self.assertEqual(str(sum), string_sum)
         self.assertEqual(repr(sum), string_sum)
+
+    def test_derive(self):
+        from sympy import symbols, sympify
+        A, B = symbols('A B')
+
+        p0 = ExponentiatedPolynomial([(0,1)],[A])
+        p1 = ExponentiatedPolynomial([(2,1)],[B])
+        psum = PolynomialSum(p0,p1)
+
+        derivative_0 = sympify( psum.derive(0) )
+        target_derivative_0 = sympify( '2*B*x0*x1' )
+        self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )

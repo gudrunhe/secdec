@@ -357,6 +357,19 @@ class PolynomialSum(object):
         "Return a copy of a :class:`.PolynomialSum`."
         return PolynomialSum(*self.summands)
 
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+        Return a :class:`.PolynomialSum`.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        # derivative(p1 + p2 + ...) = derivative(p1) + derivative(p2) + ...
+        return PolynomialSum(*(summand.derive(index) for summand in self.summands))
+
 class PolynomialProduct(object):
     r'''
     Product of polynomials.
