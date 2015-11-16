@@ -248,11 +248,6 @@ class ExponentiatedPolynomial(Polynomial):
         Return a :class:`.PolynomialProduct` of two
         :class:`ExponentiatedPolynomial`.
 
-        .. warning::
-            If ``self.exponent`` or any of ``self.coeffs`` is of
-            type `string`, this function produces wrong results!
-            They should be numbers, a sympy expressions.
-
         :param index:
             integer;
             The index of the paramater to derive by.
