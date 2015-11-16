@@ -213,3 +213,46 @@ class TestPolynomialProduct(unittest.TestCase):
 
         self.assertEqual(str(prod), string_prod)
         self.assertEqual(repr(prod), string_prod)
+
+class TestPolynomialSum(unittest.TestCase):
+    def test_init(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
+        p2 = Polynomial([(1,0,1),(2,1,0),(0,2,1)],['G','H','I'])
+
+        # mismatch in number of parameters
+        self.assertRaisesRegexp(TypeError, 'same number of variables.*all.*summands', PolynomialSum,p0,p2)
+
+        self.assertRaisesRegexp(AssertionError, 'at least one summand', PolynomialSum)
+
+        # Proper instantiation
+        psum = PolynomialSum(p0,p1)
+
+        # made a copy?
+        self.assertEqual(psum.summands[0].expolist[0,0],0)
+        self.assertEqual(p0.expolist[0,0],0)
+        psum.summands[0].expolist[0,0] = 5
+        self.assertEqual(psum.summands[0].expolist[0,0],5)
+        self.assertEqual(p0.expolist[0,0],0)
+
+    def test_copy(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
+
+        orig = PolynomialSum(p0,p1)
+        copy = orig.copy()
+
+        self.assertEqual(orig.summands[0].expolist[0,0],0)
+        self.assertEqual(copy.summands[0].expolist[0,0],0)
+        orig.summands[0].expolist[0,0] = 5
+        self.assertEqual(orig.summands[0].expolist[0,0],5)
+        self.assertEqual(copy.summands[0].expolist[0,0],0)
+
+    def test_string_form(self):
+        p0 = ExponentiatedPolynomial([(0,1)],['A'],exponent='exponent')
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['B','C','D'])
+        sum = PolynomialSum(p0,p1)
+        string_sum = '(( + (A)*x1)**(exponent)) + ( + (B)*x0**8*x1 + (C)*x0*x1**5 + (D)*x0**2*x1)'
+
+        self.assertEqual(str(sum), string_sum)
+        self.assertEqual(repr(sum), string_sum)

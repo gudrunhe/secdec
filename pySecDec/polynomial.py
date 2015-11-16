@@ -273,6 +273,53 @@ class ExponentiatedPolynomial(Polynomial):
         "Return a copy of a :class:`.Polynomial` or a subclass."
         return type(self)(self.expolist, self.coeffs, self.exponent, self.polysymbols)
 
+class PolynomialSum(object):
+    r'''
+    Sum of polynomials.
+    Store one or polynomials :math:`p_i` to be interpreted as
+    product :math:`\sum_i p_i`.
+
+    .. hint::
+        This class is particularly useful when used with instances
+        of :class:`ExponentiatedPolynomial`.
+
+    :param summands:
+        arbitrarily many instances of :class:`.Polynomial`;
+        The summands :math:`p_i`.
+
+    :math:`p_i` can be accessed with ``self.summands[i]``.
+
+    Example:
+
+    .. code-block:: python
+
+        p = PolynomialSum(p0, p1)
+        p0 = p.summands[0]
+        p1 = p.summands[1]
+
+    '''
+    def __init__(self,*summands):
+        self.summands = [summand.copy() for summand in summands]
+        assert self.summands, 'Must have at least one summand'
+
+        self.number_of_variables = self.summands[0].number_of_variables
+
+        for summand in self.summands:
+            if summand.number_of_variables != self.number_of_variables:
+                raise TypeError('Must have the same number of variables for all summands.')
+
+    def __repr__(self):
+        stringified_summands = []
+        for summand in self.summands:
+            stringified_summands.append( '(' + str(summand) + ')' )
+        return ' + '.join(stringified_summands)
+
+    __str__ = __repr__
+
+    def copy(self):
+        "Return a copy of a :class:`.PolynomialSum`."
+        return PolynomialSum(*self.summands)
+
 class PolynomialProduct(object):
     r'''
     Product of polynomials.
