@@ -1,6 +1,6 @@
 """The U, F routines"""
 
-from .polynomial import SNCPolynomial
+from .polynomial import Polynomial
 import sympy as sp
 import numpy as np
 
@@ -48,7 +48,7 @@ def uf(loop_momenta,propagators):
             current_term = propsum.coeff(loop_momenta[i]*loop_momenta[j])
             if i != j:
                 current_term /= 2
-            tmp = SNCPolynomial.from_expression(current_term, Feynman_parameters)
+            tmp = Polynomial.from_expression(current_term, Feynman_parameters)
             # all coeffs of the polynomials in M must be integer
             # convert to `int` since it is faster than calculating with sympy expressions
             tmp.coeffs = tmp.coeffs.astype(int)
@@ -59,11 +59,11 @@ def uf(loop_momenta,propagators):
     Q = np.empty(L, dtype=object)
     for i in range(L):
         current_term = propsum.coeff(loop_momenta[i]).subs([(l,0) for l in loop_momenta])/(-2)
-        Q[i] = SNCPolynomial.from_expression(current_term, Feynman_parameters)
+        Q[i] = Polynomial.from_expression(current_term, Feynman_parameters)
 
     # construct J
     sympy_J = propsum.subs([(l,0) for l in loop_momenta])
-    J = SNCPolynomial.from_expression(sympy_J, Feynman_parameters)
+    J = Polynomial.from_expression(sympy_J, Feynman_parameters)
 
 
     # need det(M) and the adjugate det(M)*inverse(M)
@@ -90,10 +90,10 @@ def uf(loop_momenta,propagators):
                 aM[i,j] = eval(generic_adjugate[i][j])
     else:
         assert generic_adjugate == [['1']]
-        aM[0,0] = SNCPolynomial([[0] * P], [1])
+        aM[0,0] = Polynomial([[0] * P], [1])
 
     # equation (8) of arXiv:0803.4177: F = det(M)*(Q.transpose*inverse(M)*Q-J) = (Q.transpose*adjugate(M)*Q-U*J)
-    F = SNCPolynomial([[0]*P], [0])
+    F = Polynomial([[0]*P], [0])
     for i in range(L):
         for j in range(L):
             F += Q[i]*aM[i,j]*Q[j]

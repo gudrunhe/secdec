@@ -18,7 +18,9 @@ class Polynomial(object):
         The variable's powers for each term.
 
     :param coeffs:
-        iterable;
+        1d array-like with numerical or sympy-symbolic
+        (see http://www.sympy.org/) content, e.g. [x,1,2]
+        where x is a sympy symbol;
         The coefficients of the polynomial.
 
     :param polysymbols:
@@ -37,14 +39,51 @@ class Polynomial(object):
         assert len(self.expolist.shape) == 2, 'All entries in `expolist` must have the same length'
         if not np.issubdtype(self.expolist.dtype, np.integer):
             raise TypeError('All entries in `expolist` must be integer.')
-        self.coeffs = list(coeffs)
+        self.coeffs = np.array(coeffs)
         assert len(self.expolist) == len(self.coeffs), \
             '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
+        assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
+        if not np.issubdtype(self.coeffs.dtype, np.number):
+            self.coeffs = np.array([sp.sympify(coeff) for coeff in self.coeffs])
         self.number_of_variables = self.expolist.shape[1]
         if isinstance(polysymbols, str):
             self.polysymbols=[polysymbols + str(i) for i in range(self.number_of_variables)]
         else:
             self.polysymbols=list(polysymbols)
+
+    @staticmethod
+    def from_expression(expression, polysymbols):
+        '''
+        Alternative constructor.
+        Construct the polynomial from an algebraic expression.
+
+        :param expression:
+            string or sympy expression;
+            The algebraic representation of the polynomial, e.g.
+            "5*x1**2 + x1*x2"
+
+        :param polysymbols:
+            iterable of strings or sympy symbols;
+            The symbols to be interpreted as the polynomial variables,
+            e.g. "['x1','x2']".
+
+        '''
+        polysymbols = list(polysymbols)
+
+        if not polysymbols:
+            raise TypeError("`polysymbols` must contain at least one symbol")
+
+        expression, polysymbols = sp.sympify((expression, polysymbols))
+
+        for symbol in polysymbols:
+            if not symbol.is_Symbol:
+                raise TypeError("'%s' is not a symbol" % symbol)
+
+        sympy_poly = sp.poly(expression, polysymbols)
+        expolist = sympy_poly.monoms()
+        coeffs = sympy_poly.coeffs()
+        return Polynomial(expolist, coeffs, polysymbols)
+
 
     def __repr__(self):
         outstr = ''
@@ -92,72 +131,6 @@ class Polynomial(object):
         '''
         return (self.expolist > 0)[:,tuple(zero_params)].any(axis=1).all()
 
-class SNCPolynomial(Polynomial):
-    '''
-    "Symbolic or Numerical Coefficiented Polynomial"
-    Like :class:`.Polynomial`, but with numerical or symbolic
-    coefficients (`coeffs`). The coefficients are stored
-    in a numpy array.
-
-    :param expolist:
-        iterable of iterables;
-        The variable's powers for each term.
-
-    :param coeffs:
-        1d array-like with numerical or sympy-symbolic
-        (see http://www.sympy.org/) content, e.g. [x,1,2]
-        where x is a sympy symbol;
-        The coefficients of the polynomial.
-
-    :param polysymbols:
-        iterable or string, optional;
-        The symbols to be used for the polynomial variables
-        when converted to string. If a string is passed, the
-        variables will be consecutively numbered.
-
-        For example: expolist=[[2,0],[1,1]] coeffs=["A","B"]
-         * polysymbols='x' (default) <-> "A*x0**2 + B*x0*x1"
-         * polysymbols=['x','y']     <-> "A*x**2 + B*x*y"
-
-    '''
-    def __init__(self, expolist, coeffs, polysymbols='x'):
-        Polynomial.__init__(self, expolist, coeffs, polysymbols)
-        self.coeffs = np.array(coeffs)
-        assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
-
-    @staticmethod
-    def from_expression(expression, polysymbols):
-        '''
-        Alternative constructor.
-        Construct the polynomial from an algebraic expression.
-
-        :param expression:
-            string or sympy expression;
-            The algebraic representation of the polynomial, e.g.
-            "5*x1**2 + x1*x2"
-
-        :param polysymbols:
-            iterable of strings or sympy symbols;
-            The symbols to be interpreted as the polynomial variables,
-            e.g. "['x1','x2']".
-
-        '''
-        polysymbols = list(polysymbols)
-
-        if not polysymbols:
-            raise TypeError("`polysymbols` must contain at least one symbol")
-
-        expression, polysymbols = sp.sympify((expression, polysymbols))
-
-        for symbol in polysymbols:
-            if not symbol.is_Symbol:
-                raise TypeError("'%s' is not a symbol" % symbol)
-
-        sympy_poly = sp.poly(expression, polysymbols)
-        expolist = sympy_poly.monoms()
-        coeffs = sympy_poly.coeffs()
-        return SNCPolynomial(expolist, coeffs, polysymbols)
-
     def __add__(self, other):
         'addition operator'
         return self._sub_or_add(other, False)
@@ -173,7 +146,7 @@ class SNCPolynomial(Polynomial):
         is `True`.
 
         '''
-        if  type(other) is not SNCPolynomial:
+        if  type(other) is not Polynomial:
             return NotImplemented
 
         assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both polynomials in +'
@@ -181,13 +154,13 @@ class SNCPolynomial(Polynomial):
         sum_expolist = np.vstack([self.expolist, other.expolist])
         sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
 
-        result = SNCPolynomial(sum_expolist, sum_coeffs, self.polysymbols)
+        result = Polynomial(sum_expolist, sum_coeffs, self.polysymbols)
         result.combine()
         return result
 
     def __mul__(self, other):
         'multiplication operator'
-        if  type(other) is not SNCPolynomial:
+        if  type(other) is not Polynomial:
             return NotImplemented
 
         assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both factors in *'
@@ -195,13 +168,13 @@ class SNCPolynomial(Polynomial):
         product_expolist = np.vstack([other.expolist + term for term in self.expolist])
         product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
 
-        result = SNCPolynomial(product_expolist, product_coeffs, self.polysymbols)
+        result = Polynomial(product_expolist, product_coeffs, self.polysymbols)
         result.combine()
         return result
 
     def __neg__(self):
         'arithmetic negation "-self"'
-        return SNCPolynomial(self.expolist, [-coeff for coeff in self.coeffs], self.polysymbols)
+        return Polynomial(self.expolist, [-coeff for coeff in self.coeffs], self.polysymbols)
 
     def combine(self):
         '''
@@ -414,6 +387,21 @@ class PolynomialProduct(object):
         "Return a copy of a :class:`.PolynomialProduct`."
         return PolynomialProduct(*self.factors)
 
+    def _flatten(self):
+        '''
+        If one or more of ``self.factors`` is a
+        :class:`PolynomialProduct`, replace it by its factors.
+
+        '''
+        old_factors = self.factors
+        self.factors = []
+        for factor in old_factors:
+            if isinstance(factor, PolynomialProduct):
+                self.factors.extend(factor.factors)
+            else:
+                self.factors.append(factor)
+        return self
+
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
@@ -429,6 +417,6 @@ class PolynomialProduct(object):
         factors = list(self.factors) # copy
         for i,factor in enumerate(self.factors):
             factors[i] = factor.derive(index)
-            summands.append(PolynomialProduct(*factors))
+            summands.append(PolynomialProduct(*factors)._flatten())
             factors[i] = factor
         return PolynomialSum(*summands)

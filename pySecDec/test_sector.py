@@ -6,7 +6,7 @@ import unittest
 
 class TestSector(unittest.TestCase):
     def setUp(self):
-        self.poly = Polynomial([(0,1,2),(1,0,5),(1,2,3),(9,4,2)],['','A','C','g'])
+        self.poly = Polynomial([(0,1,2),(1,0,5),(1,2,3),(9,4,2)],[1,'A','C','g'])
         self.sector = Sector([self.poly])
 
     def test_init(self):
@@ -17,13 +17,13 @@ class TestSector(unittest.TestCase):
         F = Polynomial([(0,1,0),(1,0,1)],["-s12","-s23"])
 
         # U = 1 + t0 + t1 + t2
-        U = Polynomial([(0,0,0),(1,0,0),(0,1,0),(0,0,1)],["","","",""])
+        U = Polynomial([(0,0,0),(1,0,0),(0,1,0),(0,0,1)],[1,1,1,1])
 
         # "empty" Jacobian in the sense that it is
         # the constant Polynomial with unit constant
-        Jacobian = Polynomial([(0,0,0)],[""])
+        Jacobian = Polynomial([(0,0,0)],[1])
 
-        other_polynomial = Polynomial([(1,0,0,5),(0,1,0,2),(0,0,1,1)],["","",""])
+        other_polynomial = Polynomial([(1,0,0,5),(0,1,0,2),(0,0,1,1)],[1,1,1])
 
         self.assertRaisesRegexp(AssertionError, 'Jacobian.*monomial', Sector, [F], Jacobian=U)
         self.assertRaisesRegexp(AssertionError, 'number of variables.*equal', Sector, [F], [other_polynomial])

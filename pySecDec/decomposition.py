@@ -153,7 +153,7 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
         remap_parameters([1,2], Jacobian, F, U)
 
     '''
-    assert Jacobian.coeffs == [""], "`Jacobian` must be a monomial without coefficient"
+    assert len(Jacobian.coeffs) == 1, "`Jacobian` must be a monomial."
     assert polynomials, "No polynomial for modification passed"
 
     num_parameters = polynomials[0].expolist.shape[1]

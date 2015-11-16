@@ -15,7 +15,7 @@ class TestPrimaryDecomposition(unittest.TestCase):
         self.F = Polynomial([(0,1,0,1),(1,0,1,0)],["-s12","-s23"])
 
         # U = t0 + t1 + t2 + t3
-        self.U = Polynomial([(1,0,0,0),(0,1,0,0),(0,0,1,0),(0,0,0,1)],["","","",""])
+        self.U = Polynomial([(1,0,0,0),(0,1,0,0),(0,0,1,0),(0,0,0,1)],[1,1,1,1])
 
         self.initial_sector = Sector([self.F,self.U])
 
@@ -55,11 +55,11 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.F = Polynomial([(0,1,0),(1,0,1)],["-s12","-s23"])
 
         # U = 1 + t0 + t1 + t2
-        self.U = Polynomial([(0,0,0),(1,0,0),(0,1,0),(0,0,1)],["","","",""])
+        self.U = Polynomial([(0,0,0),(1,0,0),(0,1,0),(0,0,1)],[1,1,1,1])
 
         # initialize an "empty" Jacobian in the sense that it is
         # the constant Polynomial with unit constant
-        self.Jacobian = Polynomial([(0,0,0)],[""])
+        self.Jacobian = Polynomial([(0,0,0)],[1])
 
         self.sector = Sector([self.F,self.U])
 
