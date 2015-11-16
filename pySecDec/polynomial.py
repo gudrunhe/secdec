@@ -305,6 +305,14 @@ class PolynomialProduct(object):
             if factor.expolist.shape[1] != self.number_of_variables:
                 raise TypeError('Must have the same number of variables for all factors.')
 
+    def __repr__(self):
+        stringified_factors = []
+        for factor in self.factors:
+            stringified_factors.append( '(' + str(factor) + ')' )
+        return ' * '.join(stringified_factors)
+
+    __str__ = __repr__
+
     def copy(self):
         "Return a copy of a :class:`.PolynomialProduct`."
         return PolynomialProduct(*self.factors)

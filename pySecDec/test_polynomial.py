@@ -204,3 +204,12 @@ class TestPolynomialProduct(unittest.TestCase):
         orig.factors[0].expolist[0,0] = 5
         self.assertEqual(orig.factors[0].expolist[0,0],5)
         self.assertEqual(copy.factors[0].expolist[0,0],0)
+
+    def test_string_form(self):
+        p0 = ExponentiatedPolynomial([(0,1)],['A'],exponent='exponent')
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['B','C','D'])
+        prod = PolynomialProduct(p0,p1)
+        string_prod = '(( + (A)*x1)**(exponent)) * ( + (B)*x0**8*x1 + (C)*x0*x1**5 + (D)*x0**2*x1)'
+
+        self.assertEqual(str(prod), string_prod)
+        self.assertEqual(repr(prod), string_prod)
