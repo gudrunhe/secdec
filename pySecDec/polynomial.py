@@ -269,6 +269,43 @@ class ExponentiatedPolynomial(Polynomial):
                        + ')**(%s)' % self.exponent
     __str__ = __repr__
 
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+        Return a :class:`.PolynomialProduct` of two
+        :class:`ExponentiatedPolynomial`.
+
+        .. warning::
+            If ``self.exponent`` or any of ``self.coeffs`` is of
+            type `string`, this function produces wrong results!
+            They should be numbers, a sympy expressions.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        # derive an expression of the form "poly**exponent"
+        # chain rule:
+        #   --> factor0 = "poly**(exponent-1)"
+        #   --> factor1 = "derivative(poly) * exponent"
+        factor0 = ExponentiatedPolynomial(self.expolist,
+                                          self.coeffs,
+                                          self.exponent-1,
+                                          self.polysymbols)
+
+        # "derivative(poly) * exponent"
+        #   --> derivative(... * x**k) = ... * k * x**(k-1) = ... * <additional_coeff_factor> * x**(k-1)
+        additional_coeff_factors = self.expolist[:,index] * self.exponent
+        new_coeffs = [old_coeff*new_factor for old_coeff,new_factor in zip(self.coeffs,additional_coeff_factors)]
+        new_expolist = self.expolist.copy()
+        new_expolist[:,index] -= 1
+        factor1 = ExponentiatedPolynomial(new_expolist,
+                                          new_coeffs,
+                                          polysymbols=self.polysymbols)
+
+        return PolynomialProduct(factor0, factor1)
+
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
         return type(self)(self.expolist, self.coeffs, self.exponent, self.polysymbols)

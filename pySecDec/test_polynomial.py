@@ -171,6 +171,19 @@ class TestExponentiatedPolynomial(unittest.TestCase):
         self.assertEqual(str(polynomial1), str(polynomial2))
         self.assertEqual(polynomial1.exponent, polynomial2.exponent)
 
+    def test_derive(self):
+        from sympy import sympify, symbols
+        A, B = symbols('A B')
+        polynomial = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sympify('a + b*eps'))
+
+        derivative_0 = sympify( str(polynomial.derive(0)) )
+        target_derivative_0 = sympify('(a + b*eps)*(A*x0**2*x1 + B)**(a + b*eps - 1) * (2*A*x0*x1)')
+        self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
+
+        derivative_1 = sympify( str(polynomial.derive(1)) )
+        target_derivative_1 = sympify('(a + b*eps)*(A*x0**2*x1 + B)**(a + b*eps - 1) * (A*x0**2)')
+        self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
+
 class TestPolynomialProduct(unittest.TestCase):
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
