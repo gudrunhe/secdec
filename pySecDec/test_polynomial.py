@@ -1,6 +1,7 @@
 """Unit tests for the Polynomial container class"""
 
 from .polynomial import *
+import sympy as sp
 import unittest
 
 class TestPolynomial(unittest.TestCase):
@@ -306,3 +307,26 @@ class TestPolynomialSum(unittest.TestCase):
         derivative_0 = sympify( psum.derive(0) )
         target_derivative_0 = sympify( '2*B*x0*x1' )
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
+
+class TestInsertion(unittest.TestCase):
+    def test_insert_value_polynomial(self):
+        poly = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
+        replaced_poly = replace(poly,index=1,value=sp.sympify('1/2'))
+        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/2 + D/4') , 0 )
+
+    def test_insert_value_polynomial_product(self):
+        poly0 = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
+        poly1 = Polynomial([(0,0),(5,0)],['E',1])
+        prod = PolynomialProduct(poly0,poly1)
+        replaced_prod = replace(prod,index=1,value=0)
+        self.assertEqual( (sp.sympify(str(replaced_prod)) - sp.sympify('(A + B*x0) * (E + x0**5)')).simplify() , 0 )
+
+    def test_insert_value_polynomial_sum(self):
+        poly0 = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
+        poly1 = Polynomial([(0,0),(5,0)],['E',1])
+        prod = PolynomialSum(poly0,poly1)
+        replaced_prod = replace(prod,index=1,value=0)
+        self.assertEqual( (sp.sympify(str(replaced_prod)) - sp.sympify('A + B*x0 + E + x0**5')).simplify() , 0 )
+
+    def test_error(self):
+        self.assertRaisesRegexp(NotImplementedError, 'Can.*only.*Polynomial.*not.*int', replace, 3, 2, 1)

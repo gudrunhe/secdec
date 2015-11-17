@@ -375,7 +375,6 @@ class PolynomialSum(object):
         else:
             return self
 
-
     def copy(self):
         "Return a copy of a :class:`.PolynomialSum`."
         return PolynomialSum(*self.summands)
@@ -476,3 +475,45 @@ class PolynomialProduct(object):
             summands.append(PolynomialProduct(*factors)._flatten())
             factors[i] = factor
         return PolynomialSum(*summands)._flatten()
+
+def replace(expression, index, value):
+    '''
+    Replace a polynomial variable by a number or
+    a symbol.
+    The entries in all ``expolist`` of the underlying
+    :class:`.Polynomial` are set to zero. The coefficients
+    are modified according to `value` and the powers
+    indicated in the ``expolist``.
+
+    :param expression:
+        PolynomialProduct, PolynomialSum, or Polynomial;
+        The expression to replace the variable.
+
+    :param index:
+        integer;
+        The index of the variable to be replaced.
+
+    :param value:
+        number of sympy expression;
+        The value to insert for the chosen variable.
+
+    '''
+    if isinstance(expression,Polynomial):
+        outpoly = expression.copy()
+        powers = expression.expolist[:,index]
+        outpoly.coeffs *= value**powers
+        outpoly.expolist[:,index] = 0
+        outpoly.combine()
+        return outpoly
+    elif isinstance(expression, PolynomialProduct):
+        outfactors = []
+        for factor in expression.factors:
+            outfactors.append(replace(factor,index,value))
+        return PolynomialProduct(*outfactors)
+    elif isinstance(expression, PolynomialSum):
+        outsummands = []
+        for summand in expression.summands:
+            outsummands.append(replace(summand,index,value))
+        return PolynomialSum(*outsummands)
+    else:
+        raise NotImplementedError('Can only operate on `Polynomial`, `PolynomialProduct`, and `PolynomialSum`, not `%s`' % type(expression))
