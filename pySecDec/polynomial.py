@@ -251,7 +251,10 @@ class ExponentiatedPolynomial(Polynomial):
     '''
     def __init__(self, expolist, coeffs, exponent=1, polysymbols='x'):
         Polynomial.__init__(self, expolist, coeffs, polysymbols)
-        self.exponent = exponent
+        if np.issubdtype(type(exponent), np.number) or isinstance(exponent,Polynomial):
+            self.exponent = exponent
+        else:
+            self.exponent = sp.sympify(exponent)
 
     def __repr__(self):
         if self.exponent == 1:
