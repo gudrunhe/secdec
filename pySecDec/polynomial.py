@@ -88,9 +88,7 @@ class Polynomial(object):
     def __repr__(self):
         outstr = ''
         for coeff,expolist in zip(self.coeffs,self.expolist):
-            if coeff != '':
-                outstr += (" + (%s)" % coeff)
-            else:           outstr += " + (1)"
+            outstr += (" + (%s)" % coeff)
             for i,(power,symbol) in enumerate(zip(expolist,self.polysymbols)):
                 if power == 0:
                     continue
@@ -352,11 +350,12 @@ class PolynomialSum(object):
 
     __str__ = __repr__
 
-    def _flatten(self):
+    def simplify(self):
         '''
         If one or more of ``self.summands`` is a
-        :class:`PolynomialSum`, replace it by its factors.
+        :class:`PolynomialSum`, replace it by its summands.
         If only one summand is present, return that summand.
+        Remove zero from sums.
 
         '''
         changed = True
@@ -365,13 +364,23 @@ class PolynomialSum(object):
             old_summands = self.summands
             self.summands = []
             for summand in old_summands:
+                if isinstance(summand, PolynomialProduct):
+                    summand = summand.simplify()
                 if isinstance(summand, PolynomialSum):
                     changed = True
                     self.summands.extend(summand.summands)
+                elif isinstance(summand, Polynomial):
+                    if (summand.coeffs == 0).all():
+                        changed = True
+                        zero = summand
+                    else:
+                        self.summands.append(summand)
                 else:
                     self.summands.append(summand)
         if len(self.summands) == 1:
             return self.summands[0]
+        elif len(self.summands) == 0:
+            return zero
         else:
             return self
 
@@ -389,7 +398,7 @@ class PolynomialSum(object):
 
         '''
         # derivative(p1 + p2 + ...) = derivative(p1) + derivative(p2) + ...
-        return PolynomialSum(*(summand.derive(index) for summand in self.summands))._flatten()
+        return PolynomialSum(*(summand.derive(index) for summand in self.summands)).simplify()
 
 class PolynomialProduct(object):
     r'''
@@ -435,11 +444,12 @@ class PolynomialProduct(object):
         "Return a copy of a :class:`.PolynomialProduct`."
         return PolynomialProduct(*self.factors)
 
-    def _flatten(self):
+    def simplify(self):
         '''
         If one or more of ``self.factors`` is a
         :class:`PolynomialProduct`, replace it by its factors.
         If only one factor is present, return that factor.
+        Remove factors of one and zero.
 
         '''
         changed = True
@@ -448,9 +458,24 @@ class PolynomialProduct(object):
             old_factors = self.factors
             self.factors = []
             for factor in old_factors:
+                if isinstance(factor, PolynomialSum):
+                    factor = factor.simplify()
                 if isinstance(factor, PolynomialProduct):
                     changed = True
                     self.factors.extend(factor.factors)
+                elif isinstance(factor, Polynomial):
+                    if (factor.expolist == 0).all() and (factor.coeffs == 1).all():
+                        # do not need to append unity except there is no other factor
+                        if self.factors:
+                            changed = True
+                        else:
+                            self.factors.append(factor)
+                    elif (factor.coeffs == 0).all():
+                        factor.combine()
+                        self.factors = [factor]
+                        break
+                    else:
+                        self.factors.append(factor)
                 else:
                     self.factors.append(factor)
         if len(self.factors) == 1:
@@ -472,9 +497,9 @@ class PolynomialProduct(object):
         factors = list(self.factors) # copy
         for i,factor in enumerate(self.factors):
             factors[i] = factor.derive(index)
-            summands.append(PolynomialProduct(*factors)._flatten())
+            summands.append(PolynomialProduct(*factors).simplify())
             factors[i] = factor
-        return PolynomialSum(*summands)._flatten()
+        return PolynomialSum(*summands).simplify()
 
 def replace(expression, index, value):
     '''
