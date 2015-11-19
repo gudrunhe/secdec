@@ -222,7 +222,7 @@ class Polynomial(object):
             # search `self.expolist` for the same term
             same_exponents = np.where( (self.expolist[i+1:] == self.expolist[i]).all(axis=1) )
             # add all these coefficients together
-            self.coeffs[i] += np.sum(self.coeffs[i+1:][same_exponents])
+            self.coeffs[i] += sum(self.coeffs[i+1:][same_exponents])
             # mark other terms for removal by setting coefficients to zero
             self.coeffs[i+1:][same_exponents] = 0
 
