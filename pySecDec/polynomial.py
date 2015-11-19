@@ -44,7 +44,7 @@ class Polynomial(object):
             '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
         assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
         if not np.issubdtype(self.coeffs.dtype, np.number):
-            self.coeffs = np.array([sp.sympify(coeff) for coeff in self.coeffs])
+            self.coeffs = np.array([coeff.copy() if isinstance(coeff,Polynomial) else sp.sympify(coeff) for coeff in self.coeffs])
         self.number_of_variables = self.expolist.shape[1]
         if isinstance(polysymbols, str):
             self.polysymbols=[polysymbols + str(i) for i in range(self.number_of_variables)]
