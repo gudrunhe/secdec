@@ -163,31 +163,48 @@ class Polynomial(object):
         is `True`.
 
         '''
-        if  type(other) is not Polynomial:
+        if  type(other) is Polynomial:
+            assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both polynomials in +'
+
+            sum_expolist = np.vstack([self.expolist, other.expolist])
+            sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
+
+            result = Polynomial(sum_expolist, sum_coeffs, self.polysymbols)
+            result.combine()
+            return result
+
+        elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
+            new_expolist = np.vstack([[0]*self.number_of_variables, self.expolist])
+            new_coeffs = np.append(other, self.coeffs)
+            outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols)
+            outpoly.combine()
+            return outpoly
+
+        else:
             return NotImplemented
-
-        assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both polynomials in +'
-
-        sum_expolist = np.vstack([self.expolist, other.expolist])
-        sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
-
-        result = Polynomial(sum_expolist, sum_coeffs, self.polysymbols)
-        result.combine()
-        return result
 
     def __mul__(self, other):
         'multiplication operator'
-        if  type(other) is not Polynomial:
+        if  type(other) is Polynomial:
+            assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both factors in *'
+
+            product_expolist = np.vstack([other.expolist + term for term in self.expolist])
+            product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
+
+            result = Polynomial(product_expolist, product_coeffs, self.polysymbols)
+            result.combine()
+            return result
+
+        elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
+            new_coeffs = self.coeffs * other
+            return Polynomial(self.expolist, new_coeffs, self.polysymbols)
+
+        else:
             return NotImplemented
 
-        assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both factors in *'
-
-        product_expolist = np.vstack([other.expolist + term for term in self.expolist])
-        product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
-
-        result = Polynomial(product_expolist, product_coeffs, self.polysymbols)
-        result.combine()
-        return result
+    __rmul__ = __mul__
+    __radd__ = __add__
+    __rsub__ = __sub__
 
     def __neg__(self):
         'arithmetic negation "-self"'

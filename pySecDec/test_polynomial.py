@@ -93,8 +93,9 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         self.assertEqual(str(polynomial), " + (2)*x0*x1**2 + (8)*x0**2*x1**2 + (2)*x0**2*x1 + (2)*x0**3*x1 + (6)*x0**3*x1**2")
 
     def test_mul(self):
-        self.assertRaisesRegexp(TypeError, "unsupported operand type\(s\) for \*: \'int\' and \'Polynomial\'", lambda: 5 * Polynomial([(0,0)],[1]))
         self.assertRaisesRegexp(AssertionError, "Number of varibales must be equal for both factors in \*", lambda: self.p0 * Polynomial([(0,0,3)],[4]))
+
+        self.assertEqual( str(5 * Polynomial([(0,2),(1,0)],[1,'C'])) , ' + (5)*x1**2 + (5*C)*x0')
 
         prod = self.p0 * self.p1
 
@@ -112,8 +113,10 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         np.testing.assert_array_equal(prod.coeffs, [2,  8  ,  2,  2  ,      6])
 
     def test_add(self):
-        self.assertRaisesRegexp(TypeError, "unsupported operand type\(s\) for \+: \'int\' and \'Polynomial\'", lambda: 10 + Polynomial([(0,0)],[1]))
         self.assertRaisesRegexp(AssertionError, "Number of varibales must be equal for both polynomials in \+", lambda: self.p0 + Polynomial([(0,0,3)],[4]))
+
+        self.assertEqual( str(10 + Polynomial([(1,0)],[1])) , ' + (10) + (1)*x0' )
+        self.assertEqual( str(10 + Polynomial([(0,0),(1,0)],[2,1])) , ' + (12) + (1)*x0' )
 
         polysum = self.p0 + self.p2
         self.assertEqual(str(polysum), " + (1)*x1 + (7)*x0 + (10)*x0*x1 + (5)")
