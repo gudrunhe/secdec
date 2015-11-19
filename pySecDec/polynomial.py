@@ -254,6 +254,11 @@ class ExponentiatedPolynomial(Polynomial):
         else:
             self.exponent = sp.sympify(exponent)
 
+    def _NotImplemented(self,*args,**kwargs):
+        return NotImplemented
+
+    __mul__ = __rmul__ = __add__ = __radd__ = __sub__ = __rsub__ = __neg__ = _NotImplemented
+
     def __repr__(self):
         if self.exponent == 1:
             return super(ExponentiatedPolynomial, self).__repr__()
