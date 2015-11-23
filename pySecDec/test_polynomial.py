@@ -368,5 +368,11 @@ class TestInsertion(unittest.TestCase):
         replaced_prod = replace(prod,index=1,value=0)
         self.assertEqual( (sp.sympify(str(replaced_prod)) - sp.sympify('A + B*x0 + E + x0**5')).simplify() , 0 )
 
+    def test_insert_in_exponent(self):
+        exponent = Polynomial([(0,0),(5,0)],['E',1])
+        poly1 = ExponentiatedPolynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'],exponent)
+        replaced = replace(poly1,index=0,value=0)
+        self.assertEqual( (sp.sympify(str(replaced)) - sp.sympify('(A + C*x1 + D*x1**2)**(E)')).simplify() , 0 )
+
     def test_error(self):
-        self.assertRaisesRegexp(NotImplementedError, 'Can.*only.*Polynomial.*not.*int', replace, 3, 2, 1)
+        self.assertRaisesRegexp(TypeError, 'Can.*only.*Polynomial.*not.*int', replace, 3, 2, 1)

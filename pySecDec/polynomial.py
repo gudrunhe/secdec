@@ -641,6 +641,12 @@ def replace(expression, index, value):
     '''
     if isinstance(expression,Polynomial):
         outpoly = expression.copy()
+        if isinstance(expression,ExponentiatedPolynomial):
+            # replace in exponent if it has a type `replace` can handle
+            try:
+                outpoly.exponent = replace(outpoly.exponent, index, value)
+            except TypeError:
+                pass
         powers = expression.expolist[:,index]
         outpoly.coeffs *= value**powers
         outpoly.expolist[:,index] = 0
@@ -657,4 +663,4 @@ def replace(expression, index, value):
             outsummands.append(replace(summand,index,value))
         return PolynomialSum(*outsummands)
     else:
-        raise NotImplementedError('Can only operate on `Polynomial`, `PolynomialProduct`, and `PolynomialSum`, not `%s`' % type(expression))
+        raise TypeError('Can only operate on `Polynomial`, `PolynomialProduct`, and `PolynomialSum`, not `%s`' % type(expression))
