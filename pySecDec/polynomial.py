@@ -271,6 +271,10 @@ class ExponentiatedPolynomial(Polynomial):
         else:
             self.exponent = sp.sympify(exponent)
 
+    @staticmethod
+    def from_expression(*args,**kwargs):
+        raise NotImplementedError('Cannot create `ExponentiatedPolynomial` from expression.')
+
     def _NotImplemented(self,*args,**kwargs):
         return NotImplemented
 
@@ -328,6 +332,81 @@ class ExponentiatedPolynomial(Polynomial):
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
         return type(self)(self.expolist, self.coeffs, self.exponent, self.polysymbols)
+
+class LogOfPolynomial(Polynomial):
+    '''
+    The natural logarithm of a :class:`.Polynomial`.
+
+    :param expolist:
+        iterable of iterables;
+        The variable's powers for each term.
+
+    :param coeffs:
+        iterable;
+        The coefficients of the polynomial.
+
+    :param exponent:
+        object, optional;
+        The global exponent.
+
+    :param polysymbols:
+        iterable or string, optional;
+        The symbols to be used for the polynomial variables
+        when converted to string. If a string is passed, the
+        variables will be consecutively numbered.
+
+        For example: expolist=[[2,0],[1,1]] coeffs=["A","B"]
+         * polysymbols='x' (default) <-> "A*x0**2 + B*x0*x1"
+         * polysymbols=['x','y']     <-> "A*x**2 + B*x*y"
+
+    '''
+    @staticmethod
+    def from_expression(expression, polysymbols):
+        '''
+        Alternative constructor.
+        Construct the :class:`LogOfPolynomial` from an algebraic
+        expression.
+
+        :param expression:
+            string or sympy expression;
+            The algebraic representation of the polynomial, e.g.
+            "5*x1**2 + x1*x2"
+
+        :param polysymbols:
+            iterable of strings or sympy symbols;
+            The symbols to be interpreted as the polynomial variables,
+            e.g. "['x1','x2']".
+
+        '''
+        poly = Polynomial.from_expression(expression,polysymbols)
+        return LogOfPolynomial(poly.expolist, poly.coeffs, poly.polysymbols)
+
+    def __repr__(self):
+        return 'log(%s)' % Polynomial.__repr__(self)
+
+    __str__ = __repr__
+
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        # derive an expression of the form "log(poly)"
+        # chain rule: poly**(-1) * derivative(poly)
+        #   --> factor0 = "poly**(-1)"
+        factor0 = ExponentiatedPolynomial(self.expolist,
+                                          self.coeffs,
+                                          -1,
+                                          self.polysymbols)
+
+        #   --> factor1 = "derivative(poly)"
+        factor1 = Polynomial.derive(self, index)
+
+        return PolynomialProduct(factor0, factor1)
 
 class PolynomialSum(object):
     r'''
@@ -533,7 +612,8 @@ def replace(expression, index, value):
     indicated in the ``expolist``.
 
     :param expression:
-        PolynomialProduct, PolynomialSum, or Polynomial;
+        :class:`PolynomialProduct`, :class:`PolynomialSum`,
+        or :class:`Polynomial`;
         The expression to replace the variable.
 
     :param index:

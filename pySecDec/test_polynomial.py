@@ -311,6 +311,37 @@ class TestPolynomialSum(unittest.TestCase):
         target_derivative_0 = sympify( '2*B*x0*x1' )
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
 
+class TestLogOfPolynomial(unittest.TestCase):
+    def test_string_form(self):
+        p0 = LogOfPolynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+        str_p0 = 'log( + (A)*x1 + (B)*x0 + (C)*x0**2*x1)'
+
+        self.assertEqual(str(p0),str_p0)
+        self.assertEqual(repr(p0),str_p0)
+
+    def test_construct_from_expression(self):
+        p1 = LogOfPolynomial.from_expression('D*x0**8*x1 + E*x0*x1**5 + F*x0*x0*x1',['x0','x1'])
+        str_p1 = 'log( + (D)*x0**8*x1 + (E)*x0*x1**5 + (F)*x0**2*x1)'
+        sympy_p1 = sp.sympify(str_p1)
+
+        self.assertEqual(str(p1),repr(p1))
+        self.assertEqual( sp.sympify(repr(p1)) - sympy_p1 , 0 )
+
+    def test_derive(self):
+        expr = LogOfPolynomial([(2,1),(0,1)],['A', 'B'])
+
+        derivative_0 = expr.derive(0)
+        sympified_derivative_0 = sp.sympify( str(derivative_0) )
+        target_derivative_0 = sp.sympify('1/(A*x0**2*x1 + B*x1) * 2*A*x0*x1')
+        self.assertEqual( (sympified_derivative_0 - target_derivative_0).simplify() , 0 )
+        self.assertEqual(type(derivative_0), PolynomialProduct)
+        self.assertEqual(len(derivative_0.factors), 2)
+        self.assertEqual(type(derivative_0.factors[0]), ExponentiatedPolynomial)
+
+        derivative_1 = sp.sympify( str(expr.derive(1)) )
+        target_derivative_1 = sp.sympify('1/(A*x0**2*x1 + B*x1) * (A*x0**2 + B)')
+        self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
+
 class TestInsertion(unittest.TestCase):
     def test_insert_value_polynomial(self):
         poly = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
