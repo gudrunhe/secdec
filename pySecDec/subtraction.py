@@ -84,6 +84,7 @@ def integrate_pole_part(polyprod, index):
         exponent_constant_term = 0
     assert type(monomial.exponent) is Polynomial , 'unexpected input'
 
+    # TODO: finite variance of Monte Carlo integral estimator only if exponent_constant_term >-0.5   -->   should we change this to >-0.5 or even >=0?
     if exponent_constant_term > -1:
         # no subtraction needed, the input `polyprod` is numerically integrable
         return [polyprod]
