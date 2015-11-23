@@ -57,6 +57,28 @@ class TestIntegratePolePart(unittest.TestCase):
             self.assertEqual(type(I_j_numerically_integrable_part.factors[0]), ExponentiatedPolynomial)
             self.assertEqual( (sp.sympify(str(I_j_numerically_integrable_part)) - expected_numerical_integrand).simplify() , 0)
 
+    def test_integrate_multiple_pole_parts(self):
+        I_j_before = PolynomialProduct(self.exponentiated_monomial,self.regulator_poles,self.cal_I)
+        I_j_after = PolynomialSum(*integrate_pole_part(I_j_before,0,1))
+        # expected_after_0 = sp.sympify('''
+        #                                    1/(-2 + 0 + 1 - eps0 - 3*eps1) * (A + D*x1) * (x1)**(-4 - 2*eps0 - 6*eps1) +
+        #                                    1/(-2 + 1 + 1 - eps0 - 3*eps1) * (B) * (x1)**(-4 - 2*eps0 - 6*eps1) +
+        #                                    C*x0**2*x0**(-eps0 - 3*eps1 - 2) * (x1)**(-2*eps0 - 6*eps1 - 3)
+        #                               ''')
+        expected_after_0_1 = sp.sympify('''
+                                             1/(-2 + 0 + 1 - eps0 - 3*eps1) / (-4+1-2*eps0-6*eps1) * (A) +
+                                             1/(-2 + 0 + 1 - eps0 - 3*eps1) / (-4+2-2*eps0-6*eps1)* (D) +
+                                             (  1/(-2 + 0 + 1 - eps0 - 3*eps1) * (A + D*x1)
+                                                - 1/(-2 + 0 + 1 - eps0 - 3*eps1) * (A)
+                                                - 1/(-2 + 0 + 1 - eps0 - 3*eps1) * (D) * x1
+                                             ) * (x1)**(-4 - 2*eps0 - 6*eps1) +
+
+                                             1/(-2 + 1 + 1 - eps0 - 3*eps1) / (-4+1-2*eps0-6*eps1) * (B) +
+
+                                             C*x0**2*x0**(-eps0 - 3*eps1 - 2) / (-2*eps0 - 6*eps1 - 3+1)
+                                        ''')
+        self.assertEqual( (sp.sympify(str(I_j_after)) - expected_after_0_1).simplify() , 0)
+
     def test_subsequent_call(self):
         # should be able to walk through all variables
         I = PolynomialProduct(self.exponentiated_monomial,self.regulator_poles,self.cal_I)

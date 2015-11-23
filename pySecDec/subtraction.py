@@ -8,69 +8,7 @@ from .polynomial import Polynomial, ExponentiatedPolynomial, PolynomialSum, Poly
 import numpy as np
 import sympy as sp
 
-def integrate_pole_part(polyprod, index):
-    r'''
-    Transform an integral of the form
-
-    .. math::
-        \int_0^1
-        {
-            dt_j t_j^{(a - b \epsilon_1 - c \epsilon_2 + ...)}
-            \cal{I} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
-        }
-
-    into the form
-
-    .. math::
-        \sum_{p=0}^{|a|-1}
-        {
-            \frac{1}{a + p + 1 - b \epsilon_1 - c \epsilon_2 - ...}
-            \frac{\cal{I}^{(p)} (0,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)}{p!} +
-            \int_0^1
-            {
-                dt_j t_j^{(a - b \epsilon_1 - c \epsilon_2 + ...)}
-                R(t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
-            }
-        }
-
-    , where :math:`\cal{I}^{(p)}` is denotes the p-th derivative
-    of :math:`\cal{I}` with respect to :math:`t_j`. The equations
-    above are to be understood schematically.
-
-    .. seealso::
-        This function implements the transformation from
-        equation (19) to (21) as described in arXiv:0803.4177v2.
-
-
-    :param polyprod:
-        :class:`.polynomial.PolynomialProduct` of the
-        form ``<monomial>**(a_j + ...) * <regulator poles of cal_I>
-        * <cal_I>``;
-        The input product as decribed above.
-        The monomial should be an
-        :class:`pySecDec.polynomial.ExponentiatedPolynomial`
-        with ``exponent`` being a :class:`Polynomial` of the
-        regulators :math:`\epsilon_1, \epsilon_2, ...`. Although
-        no dependence on the Feynman parameters is expected
-        in the ``exponent``, the polynomial variables should
-        be the Feynman parameters and the regulators.
-        The constant term of the exponent should be numerical.
-        The polynomial variables of ``monomial`` and the other
-        factors (interpreted as :math:`\cal{I}`) are interpreted
-        as the Feynman parameters and the epsilon regulators.
-
-    :param index:
-        integer;
-        The index of the parameter to partially integrate.
-        :math:`j` in the formulae above.
-
-    Return the pole part and the numerically integrable remainder
-    as a list. That is the sum and the integrand of equation (21)
-    in arXiv:0803.4177v2.
-    Each returned list element has the same structure as the input
-    `polyprod`.
-
-    '''
+def _integrate_pole_part_single_index(polyprod, index):
     monomial = polyprod.factors[0]
     monomial_FeynmanJ_set_to_one = replace(monomial,index,1)
     regulator_poles = polyprod.factors[1]
@@ -142,3 +80,75 @@ def integrate_pole_part(polyprod, index):
     output_summands.append(integrable_part)
 
     return output_summands
+
+
+def integrate_pole_part(polyprod, *indices):
+    r'''
+    Transform an integral of the form
+
+    .. math::
+        \int_0^1
+        {
+            dt_j t_j^{(a - b \epsilon_1 - c \epsilon_2 + ...)}
+            \cal{I} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
+        }
+
+    into the form
+
+    .. math::
+        \sum_{p=0}^{|a|-1}
+        {
+            \frac{1}{a + p + 1 - b \epsilon_1 - c \epsilon_2 - ...}
+            \frac{\cal{I}^{(p)} (0,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)}{p!} +
+            \int_0^1
+            {
+                dt_j t_j^{(a - b \epsilon_1 - c \epsilon_2 + ...)}
+                R(t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
+            }
+        }
+
+    , where :math:`\cal{I}^{(p)}` is denotes the p-th derivative
+    of :math:`\cal{I}` with respect to :math:`t_j`. The equations
+    above are to be understood schematically.
+
+    .. seealso::
+        This function implements the transformation from
+        equation (19) to (21) as described in arXiv:0803.4177v2.
+
+
+    :param polyprod:
+        :class:`.polynomial.PolynomialProduct` of the
+        form ``<monomial>**(a_j + ...) * <regulator poles of cal_I>
+        * <cal_I>``;
+        The input product as decribed above.
+        The monomial should be an
+        :class:`pySecDec.polynomial.ExponentiatedPolynomial`
+        with ``exponent`` being a :class:`Polynomial` of the
+        regulators :math:`\epsilon_1, \epsilon_2, ...`. Although
+        no dependence on the Feynman parameters is expected
+        in the ``exponent``, the polynomial variables should
+        be the Feynman parameters and the regulators.
+        The constant term of the exponent should be numerical.
+        The polynomial variables of ``monomial`` and the other
+        factors (interpreted as :math:`\cal{I}`) are interpreted
+        as the Feynman parameters and the epsilon regulators.
+
+    :param indices:
+        integer or iterable of integers;
+        The index/indices of the parameter to partially integrate.
+        :math:`j` in the formulae above.
+
+    Return the pole part and the numerically integrable remainder
+    as a list. That is the sum and the integrand of equation (21)
+    in arXiv:0803.4177v2.
+    Each returned list element has the same structure as the input
+    `polyprod`.
+
+    '''
+    new_products = [polyprod]
+    for index in indices:
+        old_products = new_products
+        new_products = []
+        for polyprod in old_products:
+            new_products.extend( _integrate_pole_part_single_index(polyprod, index) )
+    return new_products
