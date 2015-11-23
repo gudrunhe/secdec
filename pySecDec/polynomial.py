@@ -331,15 +331,12 @@ class ExponentiatedPolynomial(Polynomial):
                                               new_exponent,
                                               self.polysymbols)
         # factor1 = "exponent*derivative(poly)"
-        additional_coeff_factors = self.expolist[:,index] * self.exponent
-        new_coeffs = [old_coeff*new_factor for old_coeff,new_factor in zip(self.coeffs,additional_coeff_factors)]
-        new_expolist = self.expolist.copy()
-        new_expolist[:,index] -= 1
-        factor1 = ExponentiatedPolynomial(new_expolist,
-                                          new_coeffs,
-                                          polysymbols=self.polysymbols)
-        # simplify
-        factor1.combine()
+        derivative_poly = Polynomial(self.expolist, self.coeffs, self.polysymbols).derive(index)
+        try:
+            factor1 = self.exponent * derivative_poly
+        except TypeError:
+            factor1 = PolynomialProduct(self.exponent, derivative_poly)
+
         if factor0 is None:
             summand1 = factor1
         else:
