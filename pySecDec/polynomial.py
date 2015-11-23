@@ -156,6 +156,10 @@ class Polynomial(object):
         'subtraction operator'
         return self._sub_or_add(other, True)
 
+    def __rsub__(self,other):
+        'other - self'
+        return (-self) + other
+
     def _sub_or_add(self, other, sub):
         '''
         Function that implements addition and subtraction.
@@ -175,7 +179,7 @@ class Polynomial(object):
 
         elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
             new_expolist = np.vstack([[0]*self.number_of_variables, self.expolist])
-            new_coeffs = np.append(other, self.coeffs)
+            new_coeffs = np.append(-other if sub else other, self.coeffs)
             outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols)
             outpoly.combine()
             return outpoly
@@ -204,7 +208,6 @@ class Polynomial(object):
 
     __rmul__ = __mul__
     __radd__ = __add__
-    __rsub__ = __sub__
 
     def __neg__(self):
         'arithmetic negation "-self"'
