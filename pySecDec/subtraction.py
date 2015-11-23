@@ -50,7 +50,10 @@ def integrate_pole_part(polyprod, index):
         The monomial should be an
         :class:`pySecDec.polynomial.ExponentiatedPolynomial`
         with ``exponent`` being a :class:`Polynomial` of the
-        regulators :math:`\epsilon_1, \epsilon_2, ...`.
+        regulators :math:`\epsilon_1, \epsilon_2, ...`. Although
+        no dependence on the Feynman parameters is expected
+        in the ``exponent``, the polynomial variables should
+        be the Feynman parameters and the regulators.
         The constant term of the exponent should be numerical.
         The polynomial variables of ``monomial`` and the other
         factors (interpreted as :math:`\cal{I}`) are interpreted
@@ -79,15 +82,11 @@ def integrate_pole_part(polyprod, index):
         exponent_constant_term *= monomial.expolist[0,index]
     else:
         exponent_constant_term = 0
-    number_of_regulators = monomial.exponent.number_of_variables
-    number_of_Feynman_parameters = monomial.number_of_variables - number_of_regulators
-    assert number_of_Feynman_parameters > 0, 'unexpected input'
     assert type(monomial.exponent) is Polynomial , 'unexpected input'
 
-    # convert the exponent to a polynomial that also has slots for the Feynman parameters
-    monomial_exponent_expolist_with_Feynman_parameters = \
-    np.hstack([ np.zeros([len(monomial.exponent.expolist),number_of_Feynman_parameters], dtype=int) , monomial.exponent.expolist ])
-    monomial_exponent_with_Feynman_parameters = Polynomial(monomial_exponent_expolist_with_Feynman_parameters, monomial.exponent.coeffs, polysymbols=polysymbols)
+    if exponent_constant_term > -1:
+        # no subtraction needed, the input `polyprod` is numerically integrable
+        return [polyprod]
 
     def make_FeynmanIndex_to_power(power):
         '''
@@ -98,12 +97,6 @@ def integrate_pole_part(polyprod, index):
         expolist = [0]*monomial.number_of_variables
         expolist[index] = power
         return Polynomial([expolist], ['1/%s!'%power])
-
-
-    if exponent_constant_term > -1:
-        # no subtraction needed, the input `polyprod` is numerically integrable
-        return [polyprod]
-
 
     output_summands = []
     minus_cal_I_expansion_summands = []
@@ -124,7 +117,7 @@ def integrate_pole_part(polyprod, index):
         derivative_cal_I_Feynmanj_set_to_zero = replace(derivative_cal_I, index, 0)
 
         # arXiv0803.4177v2: 1/( (a_j + p + 1 - b_j * eps) * factorial(p) )
-        new_potential_pole_denominator = (monomial.expolist[0,index] * monomial_exponent_with_Feynman_parameters + p + 1) * (p_factorial)
+        new_potential_pole_denominator = (monomial.expolist[0,index] * monomial.exponent + p + 1) * (p_factorial)
         new_potential_pole = ExponentiatedPolynomial(new_potential_pole_denominator.expolist, new_potential_pole_denominator.coeffs, exponent=-1, polysymbols=monomial.polysymbols)
         # put this factor into the pole part only if a_j + p is zero
         if exponent_constant_term + p + 1 == 0:
