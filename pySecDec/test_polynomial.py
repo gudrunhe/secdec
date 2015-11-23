@@ -203,6 +203,12 @@ class TestExponentiatedPolynomial(unittest.TestCase):
         target_derivative_1 = sympify('(a + b*eps)*(A*x0**2*x1 + B)**(a + b*eps - 1) * (A*x0**2)')
         self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
 
+
+        polynomial = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=Polynomial.from_expression('a + b*x0',['x0','x1']))
+        derivative_0 = sympify( str(polynomial.derive(0)) )
+        target_derivative_0 = sympify('(a + b*x0)*(A*x0**2*x1 + B)**(a + b*x0 - 1) * (2*A*x0*x1)   +   (A*x0**2*x1 + B)**(a + b*x0)*b*log(A*x0**2*x1 + B)')
+        self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
+
 class TestPolynomialProduct(unittest.TestCase):
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])

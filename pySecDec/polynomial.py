@@ -292,16 +292,32 @@ class ExponentiatedPolynomial(Polynomial):
         '''
         Generate the derivative by the parameter indexed `index`.
 
+        .. note::
+            The exponent is assumed to **NOT** depend on the
+            polynomial variables if it is not of type
+            :class:`PolynomialProduct`, :class:`PolynomialSum`,
+            or :class:`Polynomial`.
+
         :param index:
             integer;
             The index of the paramater to derive by.
 
         '''
         # derive an expression of the form "poly**exponent"
-        # chain rule:
-        #   --> factor0 = "poly**(exponent-1)"
+        # derivative(poly**exponent) = poly**exponent*derivative(exponent)*log(poly) + poly**(exponent-1)*exponent*derivative(poly)
 
-        # simplification: (...)**0 = 1
+
+        if isinstance(self.exponent, (Polynomial, PolynomialSum, PolynomialProduct)):
+            # summand0: poly**exponent*derivative(exponent)*log(poly)
+            summand0_factors = [self.copy()]
+            summand0_factors.append(self.exponent.derive(index))
+            summand0_factors.append(LogOfPolynomial(self.expolist, self.coeffs, self.polysymbols))
+            summand0 = PolynomialProduct(*summand0_factors).simplify()
+        else:
+            summand0 = None
+
+        # summand1: poly**(exponent-1)*derivative(poly)
+        # factor0 = poly**(exponent-1)   -->   simplification: (...)**0 = 1
         # do not need factor 0 in that case
         new_exponent = self.exponent - 1
         if new_exponent == 0:
@@ -311,9 +327,7 @@ class ExponentiatedPolynomial(Polynomial):
                                               self.coeffs,
                                               new_exponent,
                                               self.polysymbols)
-
-        #   --> factor1 = "derivative(poly) * exponent"
-        #   --> derivative(... * x**k) = ... * k * x**(k-1) = ... * <additional_coeff_factor> * x**(k-1)
+        # factor1 = "exponent*derivative(poly)"
         additional_coeff_factors = self.expolist[:,index] * self.exponent
         new_coeffs = [old_coeff*new_factor for old_coeff,new_factor in zip(self.coeffs,additional_coeff_factors)]
         new_expolist = self.expolist.copy()
@@ -323,11 +337,15 @@ class ExponentiatedPolynomial(Polynomial):
                                           polysymbols=self.polysymbols)
         # simplify
         factor1.combine()
-
         if factor0 is None:
-            return factor1
+            summand1 = factor1
         else:
-            return PolynomialProduct(factor0, factor1)
+            summand1 = PolynomialProduct(factor0, factor1)
+
+        if summand0 is None:
+            return summand1
+        else:
+            return PolynomialSum(summand0,summand1).simplify()
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
