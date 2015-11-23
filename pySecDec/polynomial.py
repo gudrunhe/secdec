@@ -332,11 +332,7 @@ class ExponentiatedPolynomial(Polynomial):
                                               self.polysymbols)
         # factor1 = "exponent*derivative(poly)"
         derivative_poly = Polynomial(self.expolist, self.coeffs, self.polysymbols).derive(index)
-        try:
-            factor1 = self.exponent * derivative_poly
-        except TypeError:
-            factor1 = PolynomialProduct(self.exponent, derivative_poly)
-
+        factor1 = self.exponent * derivative_poly
         if factor0 is None:
             summand1 = factor1
         else:
