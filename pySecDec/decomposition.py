@@ -226,3 +226,25 @@ def iteration_step(sector):
             refactorize(polyprod,singular_set[0])
 
     return subsectors
+
+def iterative_decomposition(*sectors):
+    '''
+    Run the iterative sector decomposition as described
+    in chapter 3.2 (part II) of arXiv:0803.4177v2.
+    Return a list of :class:`.Sector` - the arising subsectors.
+
+    :param sectors:
+        :class:`.sector.Sector`;
+        The sectors to be decomposed.
+
+    '''
+    further_decomposable_sectors = list(sectors)
+    fully_decomposed_sectors = []
+    while further_decomposable_sectors:
+        sector_to_decompose = further_decomposable_sectors.pop()
+        try:
+            current_subsectors = iteration_step(sector_to_decompose)
+            further_decomposable_sectors.extend(current_subsectors)
+        except EndOfDecomposition:
+            fully_decomposed_sectors.append(sector_to_decompose)
+    return fully_decomposed_sectors
