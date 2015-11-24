@@ -171,7 +171,7 @@ def iteration_step(sector):
     '''
     Run a single step of the iterative sector decomposition as described
     in chapter 3.2 (part II) of arXiv:0803.4177v2.
-    Return a list of :class:`.Sector` - the arising subsectors.
+    Return an iterator of :class:`.Sector` - the arising subsectors.
 
     :param sector:
         :class:`.sector.Sector`;
@@ -219,32 +219,28 @@ def iteration_step(sector):
         item[0],item[i] = item[i],item[0]
 
     # Call `remap_parameters` for each arising subsector.
-    subsectors = [sector.copy() for arising_subsector in subsector_defining_singular_sets]
-    for singular_set,subsector in zip(subsector_defining_singular_sets,subsectors):
+    for singular_set in subsector_defining_singular_sets:
+        subsector = sector.copy()
         remap_parameters(singular_set, subsector.Jacobian, *([polyprod.factors[1] for polyprod in subsector.cast] + subsector.other))
         for polyprod in subsector.cast:
             refactorize(polyprod,singular_set[0])
+        yield subsector
 
-    return subsectors
-
-def iterative_decomposition(*sectors):
+def iterative_decomposition(sector):
     '''
     Run the iterative sector decomposition as described
     in chapter 3.2 (part II) of arXiv:0803.4177v2.
-    Return a list of :class:`.Sector` - the arising subsectors.
+    Return an iterator of :class:`.Sector` - the arising subsectors.
 
-    :param sectors:
+    :param sector:
         :class:`.sector.Sector`;
-        The sectors to be decomposed.
+        The sector to be decomposed.
 
     '''
-    further_decomposable_sectors = list(sectors)
-    fully_decomposed_sectors = []
-    while further_decomposable_sectors:
-        sector_to_decompose = further_decomposable_sectors.pop()
-        try:
-            current_subsectors = iteration_step(sector_to_decompose)
-            further_decomposable_sectors.extend(current_subsectors)
-        except EndOfDecomposition:
-            fully_decomposed_sectors.append(sector_to_decompose)
-    return fully_decomposed_sectors
+    try:
+        new_subsectors = iteration_step(sector)
+        for subsector in new_subsectors:
+            for deeper_subsector in iterative_decomposition(subsector):
+                yield deeper_subsector
+    except EndOfDecomposition:
+        yield sector

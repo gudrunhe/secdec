@@ -93,7 +93,7 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(self.U), " + (1) + (1)*x0 + (1)*x1 + (1)*x1*x2")
 
     def test_iteration_step(self):
-        subsectors = iteration_step(self.sector)
+        subsectors = list( iteration_step(self.sector) )
 
         # The algorithm should choose t0,t1
         # That generates two subsectors:
@@ -123,8 +123,8 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(s1_U.factors[0]), " + (1)")
         self.assertEqual(str(s1_U.factors[1]), " + (1) + (1)*x0*x1 + (1)*x1 + (1)*x2")
 
-    def test_iteratiop(self):
-        subsectors = iterative_decomposition(self.sector)
+    def test_iteration(self):
+        subsectors = list( iterative_decomposition(self.sector) )
 
         # The algorithm should first choose t0,t1
         # That generates two subsectors; see test case above.
@@ -133,7 +133,7 @@ class TestIterativeDecomposition(unittest.TestCase):
         # Sector 1 is already in standard form, it should not be further decomposed.
         self.assertEqual(len(subsectors), 3)
 
-        s0_0 = subsectors[2]
+        s0_0 = subsectors[0]
         s0_0_F = s0_0.cast[0]
         s0_0_U = s0_0.cast[1]
 
@@ -141,7 +141,7 @@ class TestIterativeDecomposition(unittest.TestCase):
         s0_1_F = s0_1.cast[0]
         s0_1_U = s0_1.cast[1]
 
-        s1 = subsectors[0]
+        s1 = subsectors[2]
         s1_F = s1.cast[0]
         s1_U = s1.cast[1]
 
