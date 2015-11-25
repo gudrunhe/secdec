@@ -1,6 +1,8 @@
 """miscellaneous routines"""
 
 from itertools import chain,combinations
+import sympy as sp
+import numpy as np
 
 def powerset(iterable,exclude_empty=False):
     """
@@ -24,3 +26,62 @@ def powerset(iterable,exclude_empty=False):
         # The first element of the iterator is the empty set -> discard
         next(powerset_iterator)
     return powerset_iterator
+
+def det(M):
+    '''
+    Calculate the determinant of a matrix.
+
+    :param M:
+        a square-matrix-like array;
+
+    '''
+    M = np.asarray(M)
+    assert len(M.shape) == 2, "`M` must be two dimensional"
+    assert M.shape[0] == M.shape[1], "`M` must be a square matrix"
+    D = M.shape[0]
+
+    # Use sympy to calculate the determinant of a generic DxD Matrix, e.g.
+    # [[M_0_0__, M_0_1__]
+    #  [M_1_0__, M_1_1__]]
+    generic_m = sp.Matrix([["M_%i_%i__" % (i,j) for j in range(D)] for i in range(D)])
+    generic_det = generic_m.det(method='berkowitz').expand()
+
+    # convert sympy output to python executable code; i.e. M_i_j__ --> M[i,j]
+    algebraic_det = str(generic_det).replace('M_','M[').replace('__',']').replace('_',',')
+
+    # execute the expression and return the result
+    return eval(algebraic_det)
+
+def adjugate(M):
+    '''
+    Calculate the adjugate of a matrix.
+
+    :param M:
+         a square-matrix-like array;
+
+    '''
+    M = np.asarray(M)
+    assert len(M.shape) == 2, "`M` must be two dimensional"
+    assert M.shape[0] == M.shape[1], "`M` must be a square matrix"
+    D = M.shape[0]
+
+    if D == 1:
+        # whatever the entry of a 1x1 matrix is, its adjugate is [[1]]
+        return np.array([[1]], dtype=M.dtype)
+
+    # Use sympy to calculate the adjugate of a generic DxD Matrix, e.g.
+    # [[M_0_0__, M_0_1__]
+    #  [M_1_0__, M_1_1__]]
+    generic_m = sp.Matrix([["M_%i_%i__" %(i,j) for j in range(D)] for i in range(D)])
+    generic_adjugate = generic_m.adjugate().expand()
+
+    # convert sympy output to python executable code; i.e. M_i_j__ --> M[i,j]
+    algebraic_adjugate = [[str(generic_adjugate[i,j]).replace('M_','M[').replace('__',']').replace('_',',') for j in range(D)] for i in range(D)]
+
+    # generate adjugate of M
+    adjugate_M = np.empty((D,D), dtype=M.dtype)
+    for i in range(D):
+        for j in range(D):
+            adjugate_M[i,j] = eval(algebraic_adjugate[i][j])
+
+    return adjugate_M

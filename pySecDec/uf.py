@@ -1,6 +1,7 @@
 """The U, F routines"""
 
 from .polynomial import Polynomial
+from .misc import det, adjugate
 import sympy as sp
 import numpy as np
 
@@ -66,34 +67,14 @@ def uf(loop_momenta,propagators):
     J = Polynomial.from_expression(sympy_J, Feynman_parameters)
 
 
-    # need det(M) and the adjugate det(M)*inverse(M)
-    #   --> Use sympy to calculate the determinant and adjugate of a generic LxL Matrix, e.g.
-    #       [[M_0_0__, M_0_1__]
-    #        [M_1_0__, M_1_1__]]
-    generic_m = sp.Matrix([["M_%i_%i__" %(i,j) for j in range(L)] for i in range(L)])
-    generic_adjugate = generic_m.adjugate().expand()
-    generic_det = generic_m.det(method='berkowitz').expand()
-
-    # convert sympy output to python executable code; i.e. M_i_j__ --> M[i,j]
-    generic_adjugate = [[str(generic_adjugate[i,j]).replace('M_','M[').replace('__',']').replace('_',',') for j in range(L)] for i in range(L)]
-    generic_det = str(generic_det).replace('M_','M[').replace('__',']').replace('_',',')
-
-
-    # equation (8) of arXiv:0803.4177: U = det(M)
-    U = eval(generic_det)
+    # equation (8) of arXiv:0803.4177
+    U = det(M)
 
     # generate adjugate aM of M
-    aM = np.empty((L,L), dtype=object)
-    if L > 1:
-        for i in range(L):
-            for j in range(L):
-                aM[i,j] = eval(generic_adjugate[i][j])
-    else:
-        assert generic_adjugate == [['1']]
-        aM[0,0] = Polynomial([[0] * P], [1])
+    aM = adjugate(M)
 
     # equation (8) of arXiv:0803.4177: F = det(M)*(Q.transpose*inverse(M)*Q-J) = (Q.transpose*adjugate(M)*Q-U*J)
-    F = Polynomial([[0]*P], [0])
+    F = 0
     for i in range(L):
         for j in range(L):
             F += Q[i]*aM[i,j]*Q[j]
