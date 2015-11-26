@@ -165,3 +165,19 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(s1_F.factors[1]), " + (-s12) + (-s23)*x0*x2")
         self.assertEqual(str(s1_U.factors[0]), " + (1)")
         self.assertEqual(str(s1_U.factors[1]), " + (1) + (1)*x0*x1 + (1)*x1 + (1)*x2")
+
+class TestGeomethod(unittest.TestCase):
+    def test_convex_hull(self):
+        p0 = Polynomial.from_expression('x0+x1+x0*x1', ['x0','x1'])
+        p1 = Polynomial.from_expression('1+x0+x1', ['x0','x1'])
+
+        # TODO use function `sort_2D_array`
+        hull = convex_hull(p0,p1)
+        target_hull = [[2,1],
+                       [1,2],
+                       [2,0],
+                       [1,0],
+                       [0,2],
+                       [0,1]]
+
+        np.testing.assert_array_equal(hull, target_hull)

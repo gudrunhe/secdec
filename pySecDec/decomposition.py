@@ -244,3 +244,30 @@ def iterative_decomposition(sector):
                 yield deeper_subsector
     except EndOfDecomposition:
         yield sector
+
+# ********************** geometric decomposition **********************
+
+def convex_hull(*polynomials):
+    '''
+    Calculate the convex hull of the Minkowski
+    sum of all polynomials in the input.
+    The algorithm sets all coefficients to one first
+    and then only keeps terms of the polynomial product
+    that have coefficient 1.
+    Return the list of these entries in the expolist
+    of the product of all input polynomials.
+
+    :param polynomials:
+        abritrarily many instances of :class:`.Polynomial` where
+        all of these have an equal number of variables;
+        The polynomials to calculate the convex hull for.
+
+    '''
+    product = 1
+
+    for poly in polynomials:
+        poly = poly.copy()
+        poly.coeffs = np.ones_like(poly.coeffs, dtype=int) # set coeffs to one
+        product *= poly
+
+    return product.expolist[np.where( product.coeffs == 1 )]
