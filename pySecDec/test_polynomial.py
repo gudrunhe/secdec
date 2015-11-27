@@ -90,27 +90,49 @@ class TestFormerSNCPolynomial(unittest.TestCase):
     def test_combine(self):
         polynomial = Polynomial([[1,2],[1,2],[2,2]  ,  [2,1],[2,1],[3,1]  ,  [2,2],[2,2],[3,2]], [1,1,2  ,  1,1,2  ,  3,3,6])
         polynomial.combine()
-        self.assertEqual(str(polynomial), " + (2)*x0*x1**2 + (8)*x0**2*x1**2 + (2)*x0**2*x1 + (2)*x0**3*x1 + (6)*x0**3*x1**2")
+        self.assertEqual( (sp.sympify(str(polynomial)) - sp.sympify(" + (2)*x0*x1**2 + (8)*x0**2*x1**2 + (2)*x0**2*x1 + (2)*x0**3*x1 + (6)*x0**3*x1**2")).simplify() , 0)
+
+        # should have minimal number of terms
+        self.assertEqual(len(polynomial.coeffs), 5)
+        self.assertEqual(polynomial.expolist.shape, (5,2))
 
     def test_mul(self):
         self.assertRaisesRegexp(AssertionError, "Number of varibales must be equal for both factors in \*", lambda: self.p0 * Polynomial([(0,0,3)],[4]))
 
-        self.assertEqual( str(5 * Polynomial([(0,2),(1,0)],[1,'C'])) , ' + (5)*x1**2 + (5*C)*x0')
+        poly = Polynomial([(0,2),(1,0)],[1,'C'])
+        intprod = 5 * poly
+        self.assertEqual( (sp.sympify(str(intprod)) - sp.sympify(' + (5)*x1**2 + (5*C)*x0')).simplify() , 0)
+        # should have minimal number of terms
+        self.assertEqual(len(intprod.coeffs), 2)
+        self.assertEqual(intprod.expolist.shape, (2,2))
 
         prod = self.p0 * self.p1
 
-        #                                                    expolist    coefficient
-        np.testing.assert_array_equal(prod.expolist, np.array([[1,2],   #     1
-        #                                                      [1,2],   #     1
-                                                               [2,2],   #     2
-                                                               [2,1],   #     1
-        #                                                      [2,1],   #     1
-                                                               [3,1],   #     2
-        #                                                      [2,2],   #     3
-        #                                                      [2,2],   #     3
-                                                               [3,2]])) #     6
+        #                              expolist    coefficient
+        target_prod_expolist = np.array([[1,2],   #     1
+        #                                [1,2],   #     1
+                                         [2,2],   #     2
+                                         [2,1],   #     1
+        #                                [2,1],   #     1
+                                         [3,1],   #     2
+        #                                [2,2],   #     3
+        #                                [2,2],   #     3
+                                         [3,2]])  #     6
 
-        np.testing.assert_array_equal(prod.coeffs, [2,  8  ,  2,  2  ,      6])
+        target_prod_coeffs = np.array([2,  8  ,  2,  2  ,      6])
+
+
+        # the order of the terms does not matter but for array comparison, it must be fixed
+        sortkey_target = argsort_2D_array(target_prod_expolist)
+        sorted_target_prod_expolist = target_prod_expolist[sortkey_target]
+        sorted_target_prod_coeffs = target_prod_coeffs[sortkey_target]
+
+        sortkey_prod = argsort_2D_array(prod.expolist)
+        sorted_prod_expolist = prod.expolist[sortkey_prod]
+        sorted_prod_coeffs = prod.coeffs[sortkey_prod]
+
+        np.testing.assert_array_equal(sorted_prod_expolist, sorted_target_prod_expolist)
+        np.testing.assert_array_equal(sorted_prod_coeffs, sorted_target_prod_coeffs)
 
     def test_add(self):
         self.assertRaisesRegexp(AssertionError, "Number of varibales must be equal for both polynomials in \+", lambda: self.p0 + Polynomial([(0,0,3)],[4]))
@@ -119,7 +141,12 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         self.assertEqual( str(10 + Polynomial([(0,0),(1,0)],[2,1])) , ' + (12) + (1)*x0' )
 
         polysum = self.p0 + self.p2
-        self.assertEqual(str(polysum), " + (1)*x1 + (7)*x0 + (10)*x0*x1 + (5)")
+        self.assertEqual( (sp.sympify(str(polysum)) - sp.sympify(" + (1)*x1 + (7)*x0 + (10)*x0*x1 + (5)")).simplify() , 0)
+
+        # should have minimal number of terms
+        self.assertEqual(len(polysum.coeffs), 4)
+        self.assertEqual(polysum.expolist.shape, (4,2))
+
 
     def test_negation(self):
         neg_p2 = - self.p2
@@ -138,10 +165,19 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         p = Polynomial([(1,0),(0,1)],[a,b])
         p_squared = p * p
         self.assertEqual(str(p), ' + (a)*x0 + (b)*x1')
-        self.assertEqual(str(p_squared), ' + (a**2)*x0**2 + (2*a*b)*x0*x1 + (b**2)*x1**2')
+        self.assertEqual( (sp.sympify(str(p_squared)) - sp.sympify(' + (a**2)*x0**2 + (2*a*b)*x0*x1 + (b**2)*x1**2')).simplify() , 0)
+
+        # should have minimal number of terms
+        self.assertEqual(len(p_squared.coeffs), 3)
+        self.assertEqual(p_squared.expolist.shape, (3,2))
 
         p_sum = p_squared + Polynomial([(1,1),(0,1)],[a,b])
-        self.assertEqual(str(p_sum), ' + (a**2)*x0**2 + (2*a*b + a)*x0*x1 + (b**2)*x1**2 + (b)*x1')
+        self.assertEqual( (sp.sympify(str(p_sum)) - sp.sympify(' + (a**2)*x0**2 + (2*a*b + a)*x0*x1 + (b**2)*x1**2 + (b)*x1')).simplify() , 0)
+
+        # should have minimal number of terms
+        self.assertEqual(len(p_sum.coeffs), 4)
+        self.assertEqual(p_sum.expolist.shape, (4,2))
+
 
     def test_empty_expolist(self):
         polynomial = Polynomial([(0,1),(1,0),(2,1),(0,0)],[0,0,0,0])

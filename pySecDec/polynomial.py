@@ -1,5 +1,6 @@
 """This file defines the Polynomial class"""
 
+from .misc import argsort_2D_array
 import numpy as np
 import sympy as sp
 
@@ -219,15 +220,24 @@ class Polynomial(object):
         the variables.
 
         '''
-        for i in range(len(self.coeffs)):
+        # Sort the expolist first, such that identical entries are
+        # grouped together
+        sort_key = argsort_2D_array(self.expolist)
+        self.expolist = self.expolist[sort_key]
+        self.coeffs = self.coeffs[sort_key]
+
+        for i in range(1,len(self.coeffs)):
             # do not have to consider terms with zero coefficient
             if self.coeffs[i] == 0: continue
+
+            previous_exponents = self.expolist[i-1]
             # search `self.expolist` for the same term
-            same_exponents = np.where( (self.expolist[i+1:] == self.expolist[i]).all(axis=1) )
-            # add all these coefficients together
-            self.coeffs[i] += sum(self.coeffs[i+1:][same_exponents])
-            # mark other terms for removal by setting coefficients to zero
-            self.coeffs[i+1:][same_exponents] = 0
+            # since `self.expolist` is sorted, must only compare with the previous term
+            if (previous_exponents == self.expolist[i]).all():
+                # add coefficients
+                self.coeffs[i] += self.coeffs[i-1]
+                # mark previous term for removal by setting coefficient to zero
+                self.coeffs[i-1] = 0
 
         # remove terms with zero coefficient
         zero_coeffs = np.where(self.coeffs == 0)
