@@ -85,3 +85,35 @@ def adjugate(M):
             adjugate_M[i,j] = eval(algebraic_adjugate[i][j])
 
     return adjugate_M
+
+def argsort_2D_array(array):
+    '''
+    Sort a 2D array according to its row entries.
+    The idea is to bring identical rows together.
+
+    Example:
+        [[1,2,3],         [[1,2,3],
+         [2,3,4],  --->    [1,2,3],
+         [1,2,3]]          [2,3,4]]
+
+    Return the indices like numpy's :func:`argsort`
+    would.
+
+    :param array:
+        2D array;
+        The array to be argsorted.
+
+    '''
+    # create a new view
+    # the "[:]" is essential; if it was missing, we could overwrite the input
+    array = np.asarray(array)[:]
+
+    assert len(array.shape) == 2, "`array` must be two dimensional"
+
+    # reinterpret each column as a single data type (C struct)
+    # see also `record arrays` in the numpy documentation
+    array.dtype = [('column' + str(i), array.dtype) for i in range(array.shape[1])]
+
+    array = array.flatten()
+
+    return np.argsort(array, kind='mergesort')

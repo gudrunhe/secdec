@@ -1,7 +1,24 @@
 """Unit tests for the miscellaneous routines"""
 
 from .misc import *
+import numpy as np
 import unittest
+
+class TestSort(unittest.TestCase):
+    def test_sort_2D_array(self):
+        in_array = [[1,2,3],
+                    [2,3,4],
+                    [1,2,3]]
+        target_sorted_array = [[1,2,3],
+                               [1,2,3],
+                               [2,3,4]]
+        calculated_sort_indices = argsort_2D_array(in_array)
+
+        in_array = np.asarray(in_array)
+        np.testing.assert_array_equal(in_array[calculated_sort_indices], target_sorted_array)
+
+    def test_error_message(self):
+        self.assertRaisesRegexp(AssertionError, 'array.*two dimensional', argsort_2D_array, [1,2,3,4])
 
 class TestPowerset(unittest.TestCase):
     def test_powerset_range(self):
