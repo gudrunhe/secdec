@@ -1,6 +1,6 @@
 """The Sector class"""
 
-from .polynomial import Polynomial, PolynomialProduct
+from ..polynomial import Polynomial, PolynomialProduct
 
 class Sector(object):
     '''

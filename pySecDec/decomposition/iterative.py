@@ -1,7 +1,7 @@
 """The iterative sector decomposition routines"""
 
+from .sector import Sector
 from ..polynomial import Polynomial, PolynomialProduct
-from ..sector import Sector
 from ..misc import powerset
 import numpy as np
 

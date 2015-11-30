@@ -11,8 +11,7 @@ Contents:
 .. automodule:: pySecDec.polynomial
     :members:
 
-.. automodule:: pySecDec.sector
-    :members:
+.. autoclass:: pySecDec.decomposition.Sector
 
 .. automodule:: pySecDec.decomposition.iterative
     :members:

@@ -1,8 +1,8 @@
 """Unit tests for the Polynomial container class"""
 
 from .iterative import *
+from .sector import Sector
 from ..polynomial import Polynomial, PolynomialProduct
-from ..sector import Sector
 import numpy as np
 import unittest
 
