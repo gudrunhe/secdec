@@ -14,7 +14,10 @@ Contents:
 .. automodule:: pySecDec.sector
     :members:
 
-.. automodule:: pySecDec.decomposition
+.. automodule:: pySecDec.decomposition.iterative
+    :members:
+
+.. automodule:: pySecDec.decomposition.geometric
     :members:
 
 .. automodule:: pySecDec.misc
