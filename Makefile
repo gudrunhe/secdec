@@ -14,7 +14,9 @@ help :
 	echo "    check        use nosetests to test with python 2.7 and 3"
 	echo "    checkX       use nosetests to test with python 2.7 or 3,"
 	echo "                 where X is one of {2,3}"
-	echo "    check-fast   use nosetests to run only quick tests"
+	echo "    active_check use nosetests to run only tests marked as"
+	echo "                 \"active\" using nosetests-2.7 and nosetests3"
+	echo "    fast_check   use nosetests to run only quick tests"
 	echo "                 using nosetests-2.7 and nosetests3"
 	echo "    clean        delete compiled and temporary files"
 	echo "    coverage     produce and show a code coverage report"
@@ -58,8 +60,13 @@ check3 :
 	@ # run tests
 	nosetests3 --processes=-1 --process-timeout=$(TIMEOUT)
 
-.PHONY : check-fast
-check-fast :
+.PHONY : active_check
+active_check :
+	nosetests-2.7 -a 'active' --processes=-1 --process-timeout=$(TIMEOUT)
+	nosetests3    -a 'active' --processes=-1 --process-timeout=$(TIMEOUT)
+
+.PHONY : fast_check
+fast_check :
 	nosetests-2.7 -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
 	nosetests3    -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
 
