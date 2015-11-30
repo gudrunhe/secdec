@@ -313,7 +313,7 @@ class Polytope(object):
         else:
             self.facets = np.array(facets)
 
-    def complete_representation(self, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False, verbose=False):
+    def complete_representation(self, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False):
         '''
         Transform the vertex representation of a polytope
         to the facet representation or the other way round.
@@ -323,7 +323,8 @@ class Polytope(object):
         .. note::
             This function calls the command line executable of
             `normaliz <http://www.home.uni-osnabrueck.de/wbruns/
-            normaliz/>`_..
+            normaliz/>`_.
+            It is designed for `normaliz` version 3.0.0
 
         :param normaliz:
             string or None;
@@ -348,11 +349,6 @@ class Polytope(object):
             bool;
             Whether or not to delete the `workdir` after execution.
 
-        :param verbose:
-            bool;
-            Whether or not to print the command line messages
-            of `normaliz`.
-
         '''
         os.mkdir(workdir)
         try:
@@ -366,26 +362,29 @@ class Polytope(object):
             run_card_file_prefix = 'normaliz'
             run_card_file_suffix = '.in'
             run_card_filename = run_card_file_prefix + run_card_file_suffix
-            normaliz_args = ['--ext', '--cst'] # create the files 'normaliz.ext' (vertices) and 'normaliz.cst' (facets)
+            normaliz_args = ['--ext', '--cst', '--verbose'] # create the files 'normaliz.ext' (vertices) and 'normaliz.cst' (facets)
             command_line_command = [normaliz] + normaliz_args + [run_card_filename]
 
             # dump run card to file
             with open(os.path.join(workdir, run_card_filename),'w') as f:
                 f.write(run_card_as_str)
 
-            if verbose:
-                print('Normaliz run card (file "%s"):\n' % run_card_filename)
-                print('-----------------------------------')
-                print(run_card_as_str)
-                print('-----------------------------------')
-                print()
-                print('running "%s" ...\n' % ' '.join(command_line_command))
+            # write additional information
+            with open(os.path.join(workdir, 'run_info'),'w') as infofile:
+                infofile.write('Normaliz run card (file "%s"):\n' % run_card_filename)
+                infofile.write('-----------------------------------\n')
+                infofile.write(run_card_as_str)
+                infofile.write('\n-----------------------------------\n')
+                infofile.write('\n')
+                infofile.write('running "%s" ...\n' % ' '.join(command_line_command))
 
-            # run normaliz
-            #    stdout=None and stderr=None --> print all normaliz output to the screen
-            #    stdout=subprocess.PIPE and stderr=subprocess.PIPE --> redirect and discard output
-            #    subprocess.check_call --> run normaliz, block until it finishes and raise error on nonzero exit status
-            subprocess.check_call(command_line_command, stdout=None if verbose else subprocess.PIPE, stderr=None if verbose else subprocess.PIPE, cwd=workdir)
+            # redirect normaliz stdout
+            with open(os.path.join(workdir, 'stdout'),'w') as stdout:
+                # redirect normaliz stderr
+                with open(os.path.join(workdir, 'stderr'),'w') as stderr:
+                    # run normaliz
+                    #    subprocess.check_call --> run normaliz, block until it finishes and raise error on nonzero exit status
+                    subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir)
 
             # read file output from normaliz
             if self.facets is None: # reduced vertices are in cst file
