@@ -2,7 +2,7 @@
 
 import subprocess, shutil, os, re, numpy as np
 
-# ********************** geometric decomposition **********************
+# *********************** primary decomposition ***********************
 
 def Cheng_Wu(sector, index=-1):
     '''
@@ -24,6 +24,8 @@ def Cheng_Wu(sector, index=-1):
     '''
     raise NotImplementedError()
     # TODO implement and test
+
+# ********************** geometric decomposition **********************
 
 def convex_hull(*polynomials):
     '''
@@ -179,6 +181,20 @@ class Polytope(object):
         finally:
             if not keep_workdir:
                 shutil.rmtree(workdir)
+
+    def vertex_incidence_list(self):
+        '''
+        Return for each vertex the list of facets it
+        lies in (as dictonary).
+
+        '''
+        assert self.vertices is not None and self.facets is not None, 'Run `complete_representation` first'
+        # insert vertices in \bigcap_F \left( {\langle n_F, v \rangle} + a_F \right) \ge 0
+        incidence_array = np.einsum('ij,kj', self.vertices, self.facets[:,:-1]) + self.facets[:,-1] == 0
+        outdict = {}
+        for i, vertex in enumerate(self.vertices):
+            outdict[tuple(vertex)] = self.facets[np.where(incidence_array[i])]
+        return outdict
 
     def _make_run_card_vertices2facets(self):
         run_card_as_str  = str(self.vertices.shape[0]) + ' ' + str(self.vertices.shape[1]) + '\n\n'
