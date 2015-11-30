@@ -32,6 +32,48 @@ class TestGeomethod(unittest.TestCase):
         sorted_target_hull = sort_2D_array(target_hull)
         np.testing.assert_array_equal(sorted_hull, sorted_target_hull)
 
+    #@attr('active')
+    def test_triangulate(self):
+        # basic consistency checks working?
+        simplicial_cone = [[ 1,  0,  0], [ 0,  1,  0], [ 0, -1, -1]]
+        self.assertRaisesRegexp(ValueError, 'simplicial.*already', triangulate, simplicial_cone)
+        wrong_dimensionality = [ 1,  0,  0]
+        self.assertRaisesRegexp(AssertionError, '(M|m)ust.*two.*dim', triangulate, wrong_dimensionality)
+        two_rays = [[ 1,  0,  0], [ 0,  1,  0]]
+        self.assertRaisesRegexp(AssertionError, '(M|m)ust.*at least.*dim', triangulate, two_rays)
+
+
+        cone = [[ 1,  0,  0], [ 0,  1,  0], [ 0, -1, -1], [-1,  0, -1]]
+
+        triangulated_cone = triangulate(cone, workdir='tmpdir_test_triangulate_python' + python_major_version)
+
+        # there are two possibilities for the triangualtion
+        target_triangulate_cone1 = np.array([
+                                                [[ 1,  0,  0], [ 0,  1,  0], [-1,  0, -1]],
+                                                [[ 1,  0,  0], [ 0, -1, -1], [-1,  0, -1]]
+                                            ])
+        target_triangulate_cone2 = np.array([
+                                                [[ 0, -1, -1], [ 0,  1,  0], [ 1,  0,  0]],
+                                                [[ 0, -1, -1], [ 0,  1,  0], [-1,  0, -1]]
+                                            ])
+
+        # should get one of these triangulations
+        # The ordering is not important but must be fixed to compare the arrays
+        try:
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cone[0]), sort_2D_array(target_triangulate_cone1[0]))
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cone[1]), sort_2D_array(target_triangulate_cone1[1]))
+        except AssertionError:
+            try:
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cone[0]), sort_2D_array(target_triangulate_cone1[1]))
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cone[1]), sort_2D_array(target_triangulate_cone1[0]))
+            except AssertionError:
+                try:
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cone[0]), sort_2D_array(target_triangulate_cone2[0]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cone[1]), sort_2D_array(target_triangulate_cone2[1]))
+                except:
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cone[0]), sort_2D_array(target_triangulate_cone2[1]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cone[1]), sort_2D_array(target_triangulate_cone2[0]))
+
 class TestPolytope(unittest.TestCase):
     def setUp(self):
         self.vertices = [[2,1],

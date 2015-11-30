@@ -227,3 +227,113 @@ class Polytope(object):
             # the first two lines contain the array dimensions
             shape = int(f.readline()), int(f.readline())
             return np.fromfile(f, sep=' ', dtype=int).reshape(shape)
+
+def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False):
+    '''
+    Split a cone into simplicial cones; i.e.
+    cones defined by exactly :math:`D` rays
+    where :math:`D` is the dimensionality.
+
+    .. note::
+        This function calls the command line executable of
+        `normaliz <http://www.home.uni-osnabrueck.de/wbruns/
+        normaliz/>`_.
+        It is designed for `normaliz` version 3.0.0
+
+    :param cone:
+        two dimensional array;
+        The defining rays of the cone.
+
+    :param normaliz:
+        string or None;
+        If this is None, return the `normaliz` run card
+        as string.
+        Otherwise, this specifies the shell command to
+        run `normaliz`.
+
+    :param workdir:
+        string;
+        The directory for the communication with `normaliz`.
+        A directory with the specified name will be created
+        in the current working directory. If the specified
+        directory name already exists, an :class:`OSError`
+        is raised.
+
+        .. note::
+            The communication with `normaliz` is done via
+            files.
+
+    :param keep_workdir:
+        bool;
+        Whether or not to delete the `workdir` after execution.
+
+    '''
+    cone = np.asarray(cone)
+    # basic consistency checks
+    assert len(cone.shape) == 2, '`cone` must be two dimensional'
+    assert cone.shape[0] >= cone.shape[1], 'Must at least have as many rays as the dimensionality'
+    if cone.shape[0] == cone.shape[1]:
+        raise ValueError("`cone` is simplicial already")
+
+    os.mkdir(workdir)
+    try:
+        # generate the normaliz run card
+        run_card_as_str  = str(cone.shape[0]) + ' ' + str(cone.shape[1]) + '\n'
+        run_card_as_str += str(cone).replace('[','').replace(']','').replace('\n ','\n')
+        run_card_as_str += '\nintegral_closure\n'
+
+        run_card_file_prefix = 'normaliz'
+        run_card_file_suffix = '.in'
+        run_card_filename = run_card_file_prefix + run_card_file_suffix
+        normaliz_args = ['-T', '--verbose'] # create the triangulation
+        command_line_command = [normaliz] + normaliz_args + [run_card_filename]
+
+        # dump run card to file
+        with open(os.path.join(workdir, run_card_filename),'w') as f:
+            f.write(run_card_as_str)
+
+        # write additional information
+        with open(os.path.join(workdir, 'run_info'),'w') as infofile:
+            infofile.write('Normaliz run card (file "%s"):\n' % run_card_filename)
+            infofile.write('-----------------------------------\n')
+            infofile.write(run_card_as_str)
+            infofile.write('\n-----------------------------------\n')
+            infofile.write('\n')
+            infofile.write('running "%s" ...\n' % ' '.join(command_line_command))
+
+        # redirect normaliz stdout
+        with open(os.path.join(workdir, 'stdout'),'w') as stdout:
+            # redirect normaliz stderr
+            with open(os.path.join(workdir, 'stderr'),'w') as stderr:
+                # run normaliz
+                #    subprocess.check_call --> run normaliz, block until it finishes and raise error on nonzero exit status
+                subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir)
+
+        # read normaliz output
+        # normaliz reorders the rays and defines its ordering in "normaliz.tgn"
+        with open(os.path.join(workdir, 'normaliz.tgn'),'r') as f:
+            # the first two lines contain the array dimensions
+            shape = int(f.readline()), int(f.readline())
+            original_cone = np.fromfile(f, sep=' ', dtype=int).reshape(shape)
+
+        # the triangulation is given as indices of `original_cone`
+        with open(os.path.join(workdir, 'normaliz.tri'),'r') as f:
+            # the first two lines contain the array dimensions
+            shape = int(f.readline()), int(f.readline())
+
+            # it is terminated by a line containing letters
+            array_as_str = ''
+            current_str = f.readline()
+            while re.match(r'^[\-0-9 ]+$', current_str) is not None:
+                array_as_str += current_str
+                current_str = f.readline()
+
+        # `[:,:-1]` to delete the last column of ones
+        # `-1` normaliz starts counting at `1` while python starts at `0`
+        simplicial_cones_indices = np.fromstring(array_as_str, sep=' ', dtype=int).reshape(shape)[:,:-1] - 1
+
+        return original_cone[simplicial_cones_indices]
+
+    finally:
+        if not keep_workdir:
+            shutil.rmtree(workdir)
