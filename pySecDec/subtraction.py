@@ -134,7 +134,7 @@ def integrate_pole_part(polyprod, *indices):
         as the Feynman parameters and the epsilon regulators.
 
     :param indices:
-        integer or iterable of integers;
+        arbitrarily many integers;
         The index/indices of the parameter to partially integrate.
         :math:`j` in the formulae above.
 
