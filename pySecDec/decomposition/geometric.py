@@ -182,10 +182,12 @@ class Polytope(object):
             if not keep_workdir:
                 shutil.rmtree(workdir)
 
-    def vertex_incidence_list(self):
+    def vertex_incidence_lists(self):
         '''
         Return for each vertex the list of facets it
-        lies in (as dictonary).
+        lies in (as dictonary). The keys of the output
+        dictonary are the vertices while the values
+        are the indices of the facets in ``self.facets``.
 
         '''
         assert self.vertices is not None and self.facets is not None, 'Run `complete_representation` first'
@@ -193,7 +195,7 @@ class Polytope(object):
         incidence_array = np.einsum('ij,kj', self.vertices, self.facets[:,:-1]) + self.facets[:,-1] == 0
         outdict = {}
         for i, vertex in enumerate(self.vertices):
-            outdict[tuple(vertex)] = self.facets[np.where(incidence_array[i])]
+            outdict[tuple(vertex)] = np.where(incidence_array[i])[0]
         return outdict
 
     def _make_run_card_vertices2facets(self):

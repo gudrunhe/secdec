@@ -150,7 +150,7 @@ class TestPolytope(unittest.TestCase):
         self.assertEqual(polytope2.vertices[0,0], 1)
 
     #@attr('active')
-    def test_vertex_incidence_list(self):
+    def test_vertex_incidence_lists(self):
         polytopes = [
                         Polytope(vertices=self.vertices_with_inside),
                         Polytope(facets=self.facets_with_outside),
@@ -161,10 +161,10 @@ class TestPolytope(unittest.TestCase):
         incidences = []
         for polytope in polytopes:
             # sensible error message if `complete_representaion` not run before?
-            self.assertRaisesRegexp(AssertionError, 'complete_representation.*first', polytope.vertex_incidence_list)
+            self.assertRaisesRegexp(AssertionError, 'complete_representation.*first', polytope.vertex_incidence_lists)
 
-            polytope.complete_representation(workdir='tmpdir_test_vertex_incidence_list_python' + python_major_version)
-            incidences.append(polytope.vertex_incidence_list())
+            polytope.complete_representation(workdir='tmpdir_test_vertex_incidence_lists_python' + python_major_version)
+            incidences.append(polytope.vertex_incidence_lists())
 
         target_incidence_lists = {
                                      (1,0): np.array([[ 0, 1, 0], [ 1, 1,-1]]),
@@ -174,13 +174,13 @@ class TestPolytope(unittest.TestCase):
                                      (2,1): np.array([[-1, 0, 2], [-1,-1, 3]]),
                                      (1,2): np.array([[ 0,-1, 2], [-1,-1, 3]])
                                  }
-        for incidence in incidences:
+        for polytope, incidence in zip(polytopes,incidences):
             self.assertEqual(len(incidence.keys()), 6)
             for key, value in incidence.items():
                 self.assertTrue(key in target_incidence_lists.keys())
 
                 # The ordering is not important but must be fixed to compare the arrays
-                np.testing.assert_array_equal(sort_2D_array(value), sort_2D_array(target_incidence_lists[key]))
+                np.testing.assert_array_equal(sort_2D_array(polytope.facets[value]), sort_2D_array(target_incidence_lists[key]))
 
     def test_vertex2facet(self):
         polytope1 = Polytope(vertices=self.vertices)
