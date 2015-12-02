@@ -171,7 +171,7 @@ def iteration_step(sector):
     '''
     Run a single step of the iterative sector decomposition as described
     in chapter 3.2 (part II) of arXiv:0803.4177v2.
-    Return an iterator of :class:`.Sector` - the arising subsectors.
+    Return an iterator of :class:`.sector.Sector` - the arising subsectors.
 
     :param sector:
         :class:`.sector.Sector`;
@@ -230,7 +230,8 @@ def iterative_decomposition(sector):
     '''
     Run the iterative sector decomposition as described
     in chapter 3.2 (part II) of arXiv:0803.4177v2.
-    Return an iterator of :class:`.Sector` - the arising subsectors.
+    Return an iterator of :class:`.sector.Sector` - the
+    arising subsectors.
 
     :param sector:
         :class:`.sector.Sector`;
@@ -238,8 +239,8 @@ def iterative_decomposition(sector):
 
     '''
     try:
-        new_subsectors = iteration_step(sector)
-        for subsector in new_subsectors:
+        subsectors = iteration_step(sector) # only this line can raise `EndOfDecomposition`
+        for subsector in subsectors:
             for deeper_subsector in iterative_decomposition(subsector):
                 yield deeper_subsector
     except EndOfDecomposition:
