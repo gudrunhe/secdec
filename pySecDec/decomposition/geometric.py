@@ -337,3 +337,43 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
     finally:
         if not keep_workdir:
             shutil.rmtree(workdir)
+
+def transform_variables(polynomial, transformation, polysymbols='y'):
+    r'''
+    Transform the parameters :math:`x_i` of a
+    :class:`pySecDec.polynomial.Polynomial`,
+
+    .. math::
+        x_i \rightarrow \prod_j x_j^{T_{ij}}
+
+    , where :math:`T_{ij}` is the transformation matrix.
+
+    :param polynomial:
+        :class:`pySecDec.polynomial.Polynomial`;
+        The polynomial to transform the variables in.
+
+    :param transformation:
+        two dimensional array;
+        The transformation matrix :math:`T_{ij}`.
+
+    :param polysymbols:
+        string or iterable of strings;
+        The symbols for the new variables. This argument
+        is passed to the default constructor of
+        :class:`pySecDec.polynomial.Polynomial`.
+        Refer to the documentation of
+        :class:`pySecDec.polynomial.Polynomial`
+        for further details.
+
+    '''
+    new_expolist = polynomial.expolist.dot(transformation)
+    number_of_new_variables = transformation.shape[-1]
+    if isinstance(polysymbols, str):
+        new_polysymbols=[polysymbols + str(i) for i in range(number_of_new_variables)]
+
+    # keep the type (`polynomial` can have a subtype of `Polynomial`)
+    outpoly = polynomial.copy()
+    outpoly.expolist = new_expolist
+    outpoly.polysymbols = new_polysymbols
+    outpoly.number_of_variables = number_of_new_variables
+    return outpoly

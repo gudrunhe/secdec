@@ -1,10 +1,12 @@
 """Unit tests for the Polynomial container class"""
 
 from .geometric import *
-from ..polynomial import Polynomial
+from .sector import Sector
+from ..polynomial import Polynomial, ExponentiatedPolynomial, LogOfPolynomial
 from ..misc import argsort_2D_array
 from nose.plugins.attrib import attr
 import numpy as np
+import sympy as sp
 import sys
 import unittest
 
@@ -73,6 +75,43 @@ class TestGeomethod(unittest.TestCase):
                 except:
                     np.testing.assert_array_equal(sort_2D_array(triangulated_cone[0]), sort_2D_array(target_triangulate_cone2[1]))
                     np.testing.assert_array_equal(sort_2D_array(triangulated_cone[1]), sort_2D_array(target_triangulate_cone2[0]))
+
+    #@attr('active')
+    def test_transform_variables(self):
+        x0 = Polynomial.from_expression('x0',['x0','x1','x2'])
+        x1 = Polynomial.from_expression('x1',['x0','x1','x2'])
+        x2 = Polynomial.from_expression('x2',['x0','x1','x2'])
+
+        y0 = Polynomial.from_expression('y0',['y0','y1','y2','y3'])
+        y1 = Polynomial.from_expression('y1',['y0','y1','y2','y3'])
+        y2 = Polynomial.from_expression('y2',['y0','y1','y2','y3'])
+        y3 = Polynomial.from_expression('y3',['y0','y1','y2','y3'])
+
+        composite_polynomial = x0 * x0 * x1
+        exponentiated_polynomial = ExponentiatedPolynomial([[2,1,0],[0,0,0]], [1,2], polysymbols='x', exponent='exponent')
+        log_of_polynomial = LogOfPolynomial([[2,1,0],[0,1,1]], [1,2], polysymbols='x')
+
+        transformation = np.array([[ 0, 0, 0, 1],   # x0 -> y3
+                                   [ 1, 1, 0, 0],   # x1 -> y0*y1
+                                   [ 1, 1, 1,-2]])  # x2 -> y0*y1*y2*y3**-2
+
+        transformed_x0 = y3
+        transformed_x1 = y0 * y1
+        transformed_x2 = Polynomial(expolist=[[1, 1, 1,-2]], coeffs=[1], polysymbols='y')
+        transformed_composite_polynomial = transformed_x0 * transformed_x0 * transformed_x1
+        transformed_exponentiated_polynomial = ExponentiatedPolynomial([[1,1,0,2],[0,0,0,0]], [1,2], polysymbols='y', exponent='exponent')
+        transformed_log_of_polynomial = LogOfPolynomial([[1,1,0,2],[2,2,1,-2]], [1,2], polysymbols='y')
+
+        self.assertEqual( ( sp.sympify(transformed_x0) - sp.sympify(transform_variables(x0, transformation)) ).simplify() , 0)
+        self.assertEqual( (sp.sympify(transformed_x1) - sp.sympify(transform_variables(x1, transformation))).simplify() , 0)
+        self.assertEqual( (sp.sympify(transformed_x2) - sp.sympify(transform_variables(x2, transformation))).simplify() , 0)
+        self.assertEqual( (sp.sympify(transformed_composite_polynomial) - sp.sympify(transform_variables(composite_polynomial, transformation))).simplify() , 0)
+
+        self.assertTrue(type(transform_variables(exponentiated_polynomial, transformation)) is ExponentiatedPolynomial)
+        self.assertEqual( (sp.sympify(transformed_exponentiated_polynomial) - sp.sympify(transform_variables(exponentiated_polynomial, transformation))).simplify() , 0)
+
+        self.assertTrue(type(transform_variables(log_of_polynomial, transformation)) is LogOfPolynomial)
+        self.assertEqual( (sp.sympify(transformed_log_of_polynomial) - sp.sympify(transform_variables(log_of_polynomial, transformation))).simplify() , 0)
 
 class TestPolytope(unittest.TestCase):
     def setUp(self):
