@@ -28,6 +28,9 @@ Contents:
 .. automodule:: pySecDec.subtraction
     :members:
 
+.. automodule:: pySecDec.expansion
+    :members:
+
 .. toctree::
    :maxdepth: 2
 
