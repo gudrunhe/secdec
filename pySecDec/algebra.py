@@ -27,6 +27,10 @@ class Polynomial(_Expression):
         iterable of iterables;
         The variable's powers for each term.
 
+        .. hint::
+
+            Negative powers are allowed.
+
     :param coeffs:
         1d array-like with numerical or sympy-symbolic
         (see http://www.sympy.org/) content, e.g. [x,1,2]
