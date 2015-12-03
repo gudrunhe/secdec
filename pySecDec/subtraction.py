@@ -4,7 +4,7 @@ expansion
 
 """
 
-from .algebra import Polynomial, ExponentiatedPolynomial, PolynomialSum, PolynomialProduct, replace
+from .algebra import Polynomial, ExponentiatedPolynomial, PolynomialSum, Product, replace
 import numpy as np
 import sympy as sp
 
@@ -12,7 +12,7 @@ def _integrate_pole_part_single_index(polyprod, index):
     monomial = polyprod.factors[0]
     monomial_FeynmanJ_set_to_one = replace(monomial,index,1)
     regulator_poles = polyprod.factors[1]
-    cal_I = PolynomialProduct(*polyprod.factors[2:])
+    cal_I = Product(*polyprod.factors[2:])
     polysymbols = monomial.polysymbols
     # arXiv:0803.4177v2: exponent_constant_term = a_j
     if monomial.exponent.has_constant_term():
@@ -60,7 +60,7 @@ def _integrate_pole_part_single_index(polyprod, index):
         new_potential_pole = ExponentiatedPolynomial(new_potential_pole_denominator.expolist, new_potential_pole_denominator.coeffs, exponent=-1, polysymbols=monomial.polysymbols)
         # put this factor into the pole part only if a_j + p is zero
         if exponent_constant_term + p + 1 == 0:
-            current_regulator_poles = PolynomialProduct(new_potential_pole, regulator_poles).simplify()
+            current_regulator_poles = Product(new_potential_pole, regulator_poles).simplify()
             current_factors.append(current_regulator_poles)
             current_factors.append(derivative_cal_I_Feynmanj_set_to_zero)
         # otherwise it does not lead to additional regulator poles and can become part of <derivative_cal_I>
@@ -69,13 +69,13 @@ def _integrate_pole_part_single_index(polyprod, index):
             current_factors.append(regulator_poles)
 
             # put `new_potential_pole` (which is not a pole in this case) in the last factor
-            last_factor = PolynomialProduct(derivative_cal_I_Feynmanj_set_to_zero, new_potential_pole)
+            last_factor = Product(derivative_cal_I_Feynmanj_set_to_zero, new_potential_pole)
             current_factors.append(last_factor.simplify())
 
-        output_summands.append(PolynomialProduct(*current_factors))
-        minus_cal_I_expansion_summands.append(PolynomialProduct(-make_FeynmanIndex_to_power(p), derivative_cal_I_Feynmanj_set_to_zero ))
+        output_summands.append(Product(*current_factors))
+        minus_cal_I_expansion_summands.append(Product(-make_FeynmanIndex_to_power(p), derivative_cal_I_Feynmanj_set_to_zero ))
 
-    integrable_part = PolynomialProduct(   monomial, regulator_poles, PolynomialSum(cal_I, *minus_cal_I_expansion_summands).simplify()   )
+    integrable_part = Product(   monomial, regulator_poles, PolynomialSum(cal_I, *minus_cal_I_expansion_summands).simplify()   )
 
     output_summands.append(integrable_part)
 
@@ -117,7 +117,7 @@ def integrate_pole_part(polyprod, *indices):
 
 
     :param polyprod:
-        :class:`.algebra.PolynomialProduct` of the
+        :class:`.algebra.Product` of the
         form ``<monomial>**(a_j + ...) * <regulator poles of cal_I>
         * <cal_I>``;
         The input product as decribed above.

@@ -1,6 +1,6 @@
 "Routines to series expand singular and nonsingular expressions"
 
-from .algebra import PolynomialProduct, PolynomialSum, Polynomial, ExponentiatedPolynomial, replace
+from .algebra import Product, PolynomialSum, Polynomial, ExponentiatedPolynomial, replace
 from numpy import iterable
 import numpy as np
 import sympy as sp
@@ -16,11 +16,11 @@ def _expand_singular_step(product, index, order):
         }
 
     Return a :class:`.algebra.Polynomial` with coefficients
-    of :class:`.algebra.PolynomialProduct` of the same form
+    of :class:`.algebra.Product` of the same form
     as above - the series expansion.
 
     :param product:
-        :class:`.algebra.PolynomialProduct` of the form
+        :class:`.algebra.Product` of the form
         ``<numerator polynomial> * <denominator polynomial> ** -1``;
         The expression to be series expanded.
 
@@ -34,8 +34,8 @@ def _expand_singular_step(product, index, order):
 
     '''
     # must have a rational polynomial (polynomial product of the form p * p**-1) in the first arg
-    if type(product) is not PolynomialProduct:
-        raise TypeError('`product` must be a `PolynomialProduct`')
+    if type(product) is not Product:
+        raise TypeError('`product` must be a `Product`')
     if len(product.factors) != 2:
         raise TypeError('`product` must consist of exactly two factors')
     if type(product.factors[0]) is not Polynomial:
@@ -80,7 +80,7 @@ def _expand_singular_step(product, index, order):
     # convert denominator to ``<polynomial>**-1``
     this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols)
 
-    nonsingular_series_coeffs = [PolynomialProduct(this_order_numerator, this_order_denominator)]
+    nonsingular_series_coeffs = [Product(this_order_numerator, this_order_denominator)]
     nonsingular_series_expolist = np.zeros((1 + order + highest_pole, N), dtype=int)
     nonsingular_series_expolist[:,index] = np.arange(1 + order + highest_pole) - highest_pole
 
@@ -99,7 +99,7 @@ def _expand_singular_step(product, index, order):
         # convert denominator to ``<polynomial>**-1``
         this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols)
 
-        nonsingular_series_coeffs.append(PolynomialProduct(this_order_numerator, this_order_denominator))
+        nonsingular_series_coeffs.append(Product(this_order_numerator, this_order_denominator))
 
     return Polynomial(nonsingular_series_expolist, nonsingular_series_coeffs, numerator.polysymbols)
 
@@ -117,7 +117,7 @@ def _flatten(polynomial):
     def recursively_sympify_products(expr):
         assert isinstance(expr, Polynomial)
         for i,coeff in enumerate(expr.coeffs):
-            if isinstance(expr.coeffs[i], PolynomialProduct):
+            if isinstance(expr.coeffs[i], Product):
                 expr.coeffs[i] = sp.sympify(coeff)
             else:
                 recursively_sympify_products(coeff)
@@ -153,7 +153,7 @@ def expand_singular(product, indices, orders):
     Return a :class:`.algebra.Polynomial` - the series expansion.
 
     :param product:
-        :class:`.algebra.PolynomialProduct` of the form
+        :class:`.algebra.Product` of the form
         ``<numerator polynomial> * <denominator polynomial> ** -1``;
         The expression to be series expanded.
 

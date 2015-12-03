@@ -1,7 +1,7 @@
 """The iterative sector decomposition routines"""
 
 from .sector import Sector
-from ..algebra import Polynomial, PolynomialProduct
+from ..algebra import Polynomial, Product
 from ..misc import powerset
 import numpy as np
 
@@ -70,7 +70,7 @@ def primary_decomposition(sector):
     # Collect the primary decomposed polynomials back into the `Sector` container class
     primary_sectors = [
         Sector(
-                [PolynomialProduct(cast0[sector_index],cast1[sector_index]) for cast0,cast1 in zip(primary_sector_polynomials_cast_factor0, primary_sector_polynomials_cast_factor1)],
+                [Product(cast0[sector_index],cast1[sector_index]) for cast0,cast1 in zip(primary_sector_polynomials_cast_factor0, primary_sector_polynomials_cast_factor1)],
                 [other[sector_index] for other in primary_sector_polynomials_other],
                 primary_sector_polynomials_Jacobian[sector_index]
         ) for sector_index in range(N)
@@ -90,14 +90,14 @@ class EndOfDecomposition(Exception):
 
 def refactorize(polyprod, parameter=None):
     '''
-    In a :class:`.algebra.PolynomialProduct` of
+    In a :class:`.algebra.Product` of
     the form `<monomial> * <polynomial>`, check if
     a parameter in `<polynomial>` can be shifted to
     the `<monomial>`.
     If possible, modify `polyprod` accordingly.
 
     :param polyprod:
-        :class:`.algebra.PolynomialProduct` of the
+        :class:`.algebra.Product` of the
         form <monomial> * <polynomial>`;
         The product to refactorize.
 
@@ -180,7 +180,7 @@ def iteration_step(sector):
     '''
     def get_poly_to_transform(sector):
         '''
-        Return a :class:`.algebra.PolynomialProduct` in
+        Return a :class:`.algebra.Product` in
         `sector.cast` that is not in the desired form
         `<monomial> * <const + ...>` yet.
         Raise `EndOfDecomposition` if the desired form is

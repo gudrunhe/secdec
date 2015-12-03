@@ -1,7 +1,7 @@
 """Unit tests for the Sector container class"""
 
 from .sector import *
-from ..algebra import Polynomial, PolynomialProduct
+from ..algebra import Polynomial, Product
 import unittest
 
 class TestSector(unittest.TestCase):
@@ -27,10 +27,10 @@ class TestSector(unittest.TestCase):
 
         self.assertRaisesRegexp(AssertionError, 'Jacobian.*monomial', Sector, [F], Jacobian=U)
         self.assertRaisesRegexp(AssertionError, 'number of variables.*equal', Sector, [F], [other_polynomial])
-        self.assertRaisesRegexp(AssertionError, '(f|F)irst factor.*monomial', Sector, [PolynomialProduct(F,U)])
-        self.assertRaisesRegexp(AssertionError, 'two factors', Sector, [PolynomialProduct(F,U,Jacobian)])
+        self.assertRaisesRegexp(AssertionError, '(f|F)irst factor.*monomial', Sector, [Product(F,U)])
+        self.assertRaisesRegexp(AssertionError, 'two factors', Sector, [Product(F,U,Jacobian)])
         self.assertRaisesRegexp(AssertionError, 'at least one', Sector, [])
-        Sector([PolynomialProduct(Jacobian,F)])
+        Sector([Product(Jacobian,F)])
 
         sector = Sector([F])
         self.assertEqual(str(sector.Jacobian), str(Jacobian))

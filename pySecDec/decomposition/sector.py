@@ -1,6 +1,6 @@
 """The Sector class"""
 
-from ..algebra import Polynomial, PolynomialProduct
+from ..algebra import Polynomial, Product
 
 class Sector(object):
     '''
@@ -8,7 +8,7 @@ class Sector(object):
     sector decomposition.
 
     :param cast:
-        iterable of :class:`.algebra.PolynomialProduct` or
+        iterable of :class:`.algebra.Product` or
         of :class:`.algebra.Polynomial`;
         The polynomials to be cast to the form
         `<monomial> * (const + ...)`
@@ -31,9 +31,9 @@ class Sector(object):
 
         assert cast, "Must have at least one input polynomial"
 
-        # The elements of `cast` may be of type `Polynomial` or `PolynomialProduct`
+        # The elements of `cast` may be of type `Polynomial` or `Product`
         try:
-            assert len(cast[0].factors) == 2, "Every `PolynomialProduct` must have exactly two factors" # raises AttributeError if type is `Polynomial`
+            assert len(cast[0].factors) == 2, "Every `Product` must have exactly two factors" # raises AttributeError if type is `Polynomial`
             poly = cast[0].factors[1]
         except AttributeError:
             poly = cast[0]
@@ -50,10 +50,10 @@ class Sector(object):
         for item in cast + other + [Jacobian]:
             # explanation see above
             try:
-                assert len(item.factors) == 2, "Every `PolynomialProduct` must have exactly two factors" # raises AttributeError if type is `Polynomial`
-                # if control reaches this point, assume that `item` has type `PolynomialProduct`
+                assert len(item.factors) == 2, "Every `Product` must have exactly two factors" # raises AttributeError if type is `Polynomial`
+                # if control reaches this point, assume that `item` has type `Product`
                 poly = item.factors[1]
-                assert len(item.factors[0].coeffs) == 1, 'The first factor of every `PolynomialProduct` must be a monomial'
+                assert len(item.factors[0].coeffs) == 1, 'The first factor of every `Product` must be a monomial'
             except AttributeError:
                 poly = item
             # number of variables must match for all input polynomials
@@ -64,10 +64,10 @@ class Sector(object):
 
         self.cast = []
         for item in cast:
-            if hasattr(item, 'factors'): # expect type `PolynomialProduct`
+            if hasattr(item, 'factors'): # expect type `Product`
                 self.cast.append(item.copy())
             else: # expect type `Polynomial`
-                self.cast.append(PolynomialProduct(initial_monomial_factor, item))
+                self.cast.append(Product(initial_monomial_factor, item))
 
     def __repr__(self):
         return 'Sector(Jacobian=%s, cast=%s, other=%s)' % (self.Jacobian, self.cast, self.other)

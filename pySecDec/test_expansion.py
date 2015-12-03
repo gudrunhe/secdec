@@ -2,7 +2,7 @@
 
 from .expansion import *
 from .expansion import _expand_singular_step, _flatten
-from .algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial, PolynomialProduct
+from .algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial, Product
 from nose.plugins.attrib import attr
 import sympy as sp
 import unittest
@@ -20,19 +20,19 @@ class TestSingularExpansion(unittest.TestCase):
         self.numerator = self.unit_polynomial
         self.denominator = self.p0 * self.p1 * self.p2
         self.denominator = ExponentiatedPolynomial(self.denominator.expolist, self.denominator.coeffs, polysymbols=self.denominator.polysymbols, exponent=-1)
-        self.rational_polynomial = PolynomialProduct(self.numerator, self.denominator)
+        self.rational_polynomial = Product(self.numerator, self.denominator)
 
     #@attr('active')
     def test_basic_checks(self):
-        correct_input = PolynomialProduct(self.p0, self.p3)
-        three_factors = PolynomialProduct(self.p0, self.p3, self.p0)
-        first_factor_wrong_type = PolynomialProduct(self.p4, self.p3)
-        second_factor_wrong_type = PolynomialProduct(self.p0, self.p4)
-        second_factor_wrong_exponent = PolynomialProduct(self.p0, self.p5)
+        correct_input = Product(self.p0, self.p3)
+        three_factors = Product(self.p0, self.p3, self.p0)
+        first_factor_wrong_type = Product(self.p4, self.p3)
+        second_factor_wrong_type = Product(self.p0, self.p4)
+        second_factor_wrong_exponent = Product(self.p0, self.p5)
 
         for expansion_function in (_expand_singular_step, expand_singular):
             # must have a rational polynomial (polynomial product of the form p * p**-1) in the first arg
-            self.assertRaisesRegexp(TypeError, 'product.*must.*PolynomialProduct', expansion_function, self.p0, 0, 0)
+            self.assertRaisesRegexp(TypeError, 'product.*must.*Product', expansion_function, self.p0, 0, 0)
             self.assertRaisesRegexp(TypeError, 'product.*must.*two factors', expansion_function, three_factors, 0, 0)
             self.assertRaisesRegexp(TypeError, 'first factor.*Polynomial.*not.*subtype', expansion_function, first_factor_wrong_type, 0, 0)
             self.assertRaisesRegexp(TypeError, 'second factor.*ExponentiatedPolynomial', expansion_function, second_factor_wrong_type, 0, 0)
@@ -49,7 +49,7 @@ class TestSingularExpansion(unittest.TestCase):
         self.assertTrue(type(expansion) is Polynomial)
         self.assertEqual(expansion.number_of_variables, 2)
         for coeff in expansion.coeffs:
-            self.assertTrue(type(coeff) is PolynomialProduct)
+            self.assertTrue(type(coeff) is Product)
 
         # expansion in eps1 yields a simple pole --> expansion to order epsilon has three terms
         self.assertEqual(len(expansion.coeffs), 3)
@@ -82,7 +82,7 @@ class TestSingularExpansion(unittest.TestCase):
         self.assertTrue(type(flattened_expansion_1_0) is Polynomial)
         for coeff in flattened_expansion_1_0.coeffs:
             self.assertFalse(isinstance(coeff, Polynomial))
-            self.assertFalse(isinstance(coeff, PolynomialProduct))
+            self.assertFalse(isinstance(coeff, Product))
             self.assertFalse(isinstance(coeff, PolynomialSum))
 
         self.assertEqual( (sp.sympify(expansion_1_0) - sp.sympify(flattened_expansion_1_0)).simplify() , 0)
@@ -96,7 +96,7 @@ class TestSingularExpansion(unittest.TestCase):
         self.assertEqual(expansion.number_of_variables, 2)
         for coeff in expansion.coeffs:
             self.assertFalse(isinstance(coeff, Polynomial))
-            self.assertFalse(isinstance(coeff, PolynomialProduct))
+            self.assertFalse(isinstance(coeff, Product))
             self.assertFalse(isinstance(coeff, PolynomialSum))
 
         # expansion in eps1 yields a simple pole --> expansion to order epsilon has three terms
@@ -124,7 +124,7 @@ class TestSingularExpansion(unittest.TestCase):
         self.assertTrue(type(high_level_output) is Polynomial)
         for coeff in high_level_output.coeffs:
             self.assertFalse(isinstance(coeff, Polynomial))
-            self.assertFalse(isinstance(coeff, PolynomialProduct))
+            self.assertFalse(isinstance(coeff, Product))
             self.assertFalse(isinstance(coeff, PolynomialSum))
 
         self.assertEqual( (sp.sympify(high_level_output) - sp.sympify(flattened_expansion_1_0)).simplify() , 0)

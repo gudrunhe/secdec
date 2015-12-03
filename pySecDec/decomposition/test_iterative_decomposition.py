@@ -2,7 +2,7 @@
 
 from .iterative import *
 from .sector import Sector
-from ..algebra import Polynomial, PolynomialProduct
+from ..algebra import Polynomial, Product
 import numpy as np
 import unittest
 
@@ -64,7 +64,7 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.sector = Sector([self.F,self.U])
 
     def test_refactorize(self):
-        prod = PolynomialProduct(self.Jacobian, Polynomial([(1,1,0),(1,0,1)],["-s12","-s23"]))
+        prod = Product(self.Jacobian, Polynomial([(1,1,0),(1,0,1)],["-s12","-s23"]))
 
         self.assertEqual(str(prod.factors[0]), ' + (1)')
         self.assertEqual(str(prod.factors[1]), ' + (-s12)*x0*x1 + (-s23)*x0*x2')

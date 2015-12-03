@@ -54,7 +54,7 @@ class Polynomial(_Expression):
             '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
         assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
         if not np.issubdtype(self.coeffs.dtype, np.number):
-            self.coeffs = np.array([coeff.copy() if isinstance(coeff,(Polynomial,PolynomialProduct,PolynomialSum)) else sp.sympify(coeff) for coeff in self.coeffs])
+            self.coeffs = np.array([coeff.copy() if isinstance(coeff,(Polynomial,Product,PolynomialSum)) else sp.sympify(coeff) for coeff in self.coeffs])
         self.number_of_variables = self.expolist.shape[1]
         if isinstance(polysymbols, str):
             self.polysymbols=[polysymbols + str(i) for i in range(self.number_of_variables)]
@@ -317,7 +317,7 @@ class ExponentiatedPolynomial(Polynomial):
         .. note::
             The exponent is assumed to **NOT** depend on the
             polynomial variables if it is not of type
-            :class:`PolynomialProduct`, :class:`PolynomialSum`,
+            :class:`.Product`, :class:`PolynomialSum`,
             or :class:`Polynomial`.
 
         :param index:
@@ -329,12 +329,12 @@ class ExponentiatedPolynomial(Polynomial):
         # derivative(poly**exponent) = poly**exponent*derivative(exponent)*log(poly) + poly**(exponent-1)*exponent*derivative(poly)
 
 
-        if isinstance(self.exponent, (Polynomial, PolynomialSum, PolynomialProduct)):
+        if isinstance(self.exponent, (Polynomial, PolynomialSum, Product)):
             # summand0: poly**exponent*derivative(exponent)*log(poly)
             summand0_factors = [self.copy()]
             summand0_factors.append(self.exponent.derive(index))
             summand0_factors.append(LogOfPolynomial(self.expolist, self.coeffs, self.polysymbols))
-            summand0 = PolynomialProduct(*summand0_factors).simplify()
+            summand0 = Product(*summand0_factors).simplify()
         else:
             summand0 = None
 
@@ -355,7 +355,7 @@ class ExponentiatedPolynomial(Polynomial):
         if factor0 is None:
             summand1 = factor1
         else:
-            summand1 = PolynomialProduct(factor0, factor1)
+            summand1 = Product(factor0, factor1)
 
         if summand0 is None:
             return summand1
@@ -439,7 +439,7 @@ class LogOfPolynomial(Polynomial):
         #   --> factor1 = "derivative(poly)"
         factor1 = Polynomial.derive(self, index)
 
-        return PolynomialProduct(factor0, factor1)
+        return Product(factor0, factor1)
 
 class PolynomialSum(_Expression):
     r'''
@@ -498,7 +498,7 @@ class PolynomialSum(_Expression):
             old_summands = self.summands
             self.summands = []
             for summand in old_summands:
-                if isinstance(summand, PolynomialProduct):
+                if isinstance(summand, Product):
                     summand = summand.simplify()
                 if isinstance(summand, PolynomialSum):
                     changed = True
@@ -534,7 +534,7 @@ class PolynomialSum(_Expression):
         # derivative(p1 + p2 + ...) = derivative(p1) + derivative(p2) + ...
         return PolynomialSum(*(summand.derive(index) for summand in self.summands)).simplify()
 
-class PolynomialProduct(_Expression):
+class Product(_Expression):
     r'''
     Product of polynomials.
     Store one or polynomials :math:`p_i` to be interpreted as
@@ -550,7 +550,7 @@ class PolynomialProduct(_Expression):
 
     .. code-block:: python
 
-        p = PolynomialProduct(p0, p1)
+        p = Product(p0, p1)
         p0 = p.factors[0]
         p1 = p.factors[1]
 
@@ -575,13 +575,13 @@ class PolynomialProduct(_Expression):
     __str__ = __repr__
 
     def copy(self):
-        "Return a copy of a :class:`.PolynomialProduct`."
-        return PolynomialProduct(*self.factors)
+        "Return a copy of a :class:`.Product`."
+        return Product(*self.factors)
 
     def simplify(self):
         '''
         If one or more of ``self.factors`` is a
-        :class:`PolynomialProduct`, replace it by its factors.
+        :class:`.Product`, replace it by its factors.
         If only one factor is present, return that factor.
         Remove factors of one and zero.
 
@@ -594,7 +594,7 @@ class PolynomialProduct(_Expression):
             for factor in old_factors:
                 if isinstance(factor, PolynomialSum):
                     factor = factor.simplify()
-                if isinstance(factor, PolynomialProduct):
+                if isinstance(factor, Product):
                     changed = True
                     self.factors.extend(factor.factors)
                 elif isinstance(factor, Polynomial):
@@ -630,21 +630,21 @@ class PolynomialProduct(_Expression):
         factors = list(self.factors) # copy
         for i,factor in enumerate(self.factors):
             factors[i] = factor.derive(index)
-            summands.append(PolynomialProduct(*factors).simplify())
+            summands.append(Product(*factors).simplify())
             factors[i] = factor
         return PolynomialSum(*summands).simplify()
 
 def replace(expression, index, value):
     '''
-    Replace a polynomial variable by a number or
-    a symbol.
+    Replace a variable in an expression by a number or a
+    symbol.
     The entries in all ``expolist`` of the underlying
     :class:`.Polynomial` are set to zero. The coefficients
     are modified according to `value` and the powers
     indicated in the ``expolist``.
 
     :param expression:
-        :class:`PolynomialProduct`, :class:`PolynomialSum`,
+        :class:`.Product`, :class:`.PolynomialSum`,
         or :class:`Polynomial`;
         The expression to replace the variable.
 
@@ -670,15 +670,15 @@ def replace(expression, index, value):
         outpoly.expolist[:,index] = 0
         outpoly.combine()
         return outpoly
-    elif isinstance(expression, PolynomialProduct):
+    elif isinstance(expression, Product):
         outfactors = []
         for factor in expression.factors:
             outfactors.append(replace(factor,index,value))
-        return PolynomialProduct(*outfactors)
+        return Product(*outfactors)
     elif isinstance(expression, PolynomialSum):
         outsummands = []
         for summand in expression.summands:
             outsummands.append(replace(summand,index,value))
         return PolynomialSum(*outsummands)
-    else:
-        raise TypeError('Can only operate on `Polynomial`, `PolynomialProduct`, and `PolynomialSum`, not `%s`' % type(expression))
+    else: # TODO: implement for class `Function`
+        raise TypeError('Can only operate on `Polynomial`, `Product`, and `PolynomialSum`, not `%s`' % type(expression))

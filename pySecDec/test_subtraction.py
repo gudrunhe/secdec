@@ -18,7 +18,7 @@ class TestIntegratePolePart(unittest.TestCase):
 
     def test_integrate_pole_part(self):
         for j in (0,1):
-            I_j_before = PolynomialProduct(self.exponentiated_monomial,self.regulator_poles,self.cal_I)
+            I_j_before = Product(self.exponentiated_monomial,self.regulator_poles,self.cal_I)
             I_j_after = integrate_pole_part(I_j_before,j)
             I_j_pole_part = PolynomialSum(*I_j_after[:-1])
             I_j_numerically_integrable_part = I_j_after[-1]
@@ -50,15 +50,15 @@ class TestIntegratePolePart(unittest.TestCase):
 
             self.assertEqual( (sp.sympify(str(I_j_pole_part)) - expected_pole_part).simplify() , 0)
             for summand in I_j_pole_part.summands:
-                self.assertEqual(type(summand), PolynomialProduct)
+                self.assertEqual(type(summand), Product)
                 self.assertEqual(type(summand.factors[0]), ExponentiatedPolynomial)
 
-            self.assertEqual(type(I_j_numerically_integrable_part), PolynomialProduct)
+            self.assertEqual(type(I_j_numerically_integrable_part), Product)
             self.assertEqual(type(I_j_numerically_integrable_part.factors[0]), ExponentiatedPolynomial)
             self.assertEqual( (sp.sympify(str(I_j_numerically_integrable_part)) - expected_numerical_integrand).simplify() , 0)
 
     def test_integrate_multiple_pole_parts(self):
-        I_j_before = PolynomialProduct(self.exponentiated_monomial,self.regulator_poles,self.cal_I)
+        I_j_before = Product(self.exponentiated_monomial,self.regulator_poles,self.cal_I)
         I_j_after = PolynomialSum(*integrate_pole_part(I_j_before,0,1))
         # expected_after_0 = sp.sympify('''
         #                                    1/(-2 + 0 + 1 - eps0 - 3*eps1) * (A + D*x1) * (x1)**(-4 - 2*eps0 - 6*eps1) +
@@ -81,7 +81,7 @@ class TestIntegratePolePart(unittest.TestCase):
 
     def test_subsequent_call(self):
         # should be able to walk through all variables
-        I = PolynomialProduct(self.exponentiated_monomial,self.regulator_poles,self.cal_I)
+        I = Product(self.exponentiated_monomial,self.regulator_poles,self.cal_I)
         I_0 = integrate_pole_part(I,0)
         for i,term in enumerate(I_0):
             integrate_pole_part(term,1)

@@ -245,19 +245,19 @@ class TestExponentiatedPolynomial(unittest.TestCase):
         target_derivative_0 = sympify('(a + b*x0)*(A*x0**2*x1 + B)**(a + b*x0 - 1) * (2*A*x0*x1)   +   (A*x0**2*x1 + B)**(a + b*x0)*b*log(A*x0**2*x1 + B)')
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
 
-class TestPolynomialProduct(unittest.TestCase):
+class TestProduct(unittest.TestCase):
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
         p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
         p2 = Polynomial([(1,0,1),(2,1,0),(0,2,1)],['G','H','I'])
 
         # mismatch in number of parameters
-        self.assertRaisesRegexp(TypeError, 'same number of variables.*all.*factors', PolynomialProduct,p0,p2)
+        self.assertRaisesRegexp(TypeError, 'same number of variables.*all.*factors', Product,p0,p2)
 
-        self.assertRaisesRegexp(AssertionError, 'at least one factor', PolynomialProduct)
+        self.assertRaisesRegexp(AssertionError, 'at least one factor', Product)
 
         # Proper instantiation
-        prod = PolynomialProduct(p0,p1)
+        prod = Product(p0,p1)
 
         # made a copy?
         self.assertEqual(prod.factors[0].expolist[0,0],0)
@@ -270,7 +270,7 @@ class TestPolynomialProduct(unittest.TestCase):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
         p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
 
-        orig = PolynomialProduct(p0,p1)
+        orig = Product(p0,p1)
         copy = orig.copy()
 
         self.assertEqual(orig.factors[0].expolist[0,0],0)
@@ -292,7 +292,7 @@ class TestPolynomialProduct(unittest.TestCase):
     def test_string_form(self):
         p0 = ExponentiatedPolynomial([(0,1)],['A'],exponent='exponent')
         p1 = Polynomial([(8,1),(1,5),(2,1)],['B','C','D'])
-        prod = PolynomialProduct(p0,p1)
+        prod = Product(p0,p1)
         string_prod = '(( + (A)*x1)**(exponent)) * ( + (B)*x0**8*x1 + (C)*x0*x1**5 + (D)*x0**2*x1)'
 
         self.assertEqual(str(prod), string_prod)
@@ -376,7 +376,7 @@ class TestLogOfPolynomial(unittest.TestCase):
         sympified_derivative_0 = sp.sympify( str(derivative_0) )
         target_derivative_0 = sp.sympify('1/(A*x0**2*x1 + B*x1) * 2*A*x0*x1')
         self.assertEqual( (sympified_derivative_0 - target_derivative_0).simplify() , 0 )
-        self.assertEqual(type(derivative_0), PolynomialProduct)
+        self.assertEqual(type(derivative_0), Product)
         self.assertEqual(len(derivative_0.factors), 2)
         self.assertEqual(type(derivative_0.factors[0]), ExponentiatedPolynomial)
 
@@ -393,7 +393,7 @@ class TestInsertion(unittest.TestCase):
     def test_insert_value_polynomial_product(self):
         poly0 = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
         poly1 = Polynomial([(0,0),(5,0)],['E',1])
-        prod = PolynomialProduct(poly0,poly1)
+        prod = Product(poly0,poly1)
         replaced_prod = replace(prod,index=1,value=0)
         self.assertEqual( (sp.sympify(str(replaced_prod)) - sp.sympify('(A + B*x0) * (E + x0**5)')).simplify() , 0 )
 
