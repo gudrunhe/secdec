@@ -20,7 +20,7 @@ class TestIntegratePolePart(unittest.TestCase):
         for j in (0,1):
             I_j_before = Product(self.exponentiated_monomial,self.regulator_poles,self.cal_I)
             I_j_after = integrate_pole_part(I_j_before,j)
-            I_j_pole_part = PolynomialSum(*I_j_after[:-1])
+            I_j_pole_part = Sum(*I_j_after[:-1])
             I_j_numerically_integrable_part = I_j_after[-1]
 
             if j == 0:
@@ -59,7 +59,7 @@ class TestIntegratePolePart(unittest.TestCase):
 
     def test_integrate_multiple_pole_parts(self):
         I_j_before = Product(self.exponentiated_monomial,self.regulator_poles,self.cal_I)
-        I_j_after = PolynomialSum(*integrate_pole_part(I_j_before,0,1))
+        I_j_after = Sum(*integrate_pole_part(I_j_before,0,1))
         # expected_after_0 = sp.sympify('''
         #                                    1/(-2 + 0 + 1 - eps0 - 3*eps1) * (A + D*x1) * (x1)**(-4 - 2*eps0 - 6*eps1) +
         #                                    1/(-2 + 1 + 1 - eps0 - 3*eps1) * (B) * (x1)**(-4 - 2*eps0 - 6*eps1) +

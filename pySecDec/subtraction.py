@@ -4,7 +4,7 @@ expansion
 
 """
 
-from .algebra import Polynomial, ExponentiatedPolynomial, PolynomialSum, Product, replace
+from .algebra import Polynomial, ExponentiatedPolynomial, Sum, Product, replace
 import numpy as np
 import sympy as sp
 
@@ -75,7 +75,7 @@ def _integrate_pole_part_single_index(polyprod, index):
         output_summands.append(Product(*current_factors))
         minus_cal_I_expansion_summands.append(Product(-make_FeynmanIndex_to_power(p), derivative_cal_I_Feynmanj_set_to_zero ))
 
-    integrable_part = Product(   monomial, regulator_poles, PolynomialSum(cal_I, *minus_cal_I_expansion_summands).simplify()   )
+    integrable_part = Product(   monomial, regulator_poles, Sum(cal_I, *minus_cal_I_expansion_summands).simplify()   )
 
     output_summands.append(integrable_part)
 

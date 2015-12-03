@@ -298,19 +298,19 @@ class TestProduct(unittest.TestCase):
         self.assertEqual(str(prod), string_prod)
         self.assertEqual(repr(prod), string_prod)
 
-class TestPolynomialSum(unittest.TestCase):
+class TestSum(unittest.TestCase):
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
         p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
         p2 = Polynomial([(1,0,1),(2,1,0),(0,2,1)],['G','H','I'])
 
         # mismatch in number of parameters
-        self.assertRaisesRegexp(TypeError, 'same number of variables.*all.*summands', PolynomialSum,p0,p2)
+        self.assertRaisesRegexp(TypeError, 'same number of variables.*all.*summands', Sum,p0,p2)
 
-        self.assertRaisesRegexp(AssertionError, 'at least one summand', PolynomialSum)
+        self.assertRaisesRegexp(AssertionError, 'at least one summand', Sum)
 
         # Proper instantiation
-        psum = PolynomialSum(p0,p1)
+        psum = Sum(p0,p1)
 
         # made a copy?
         self.assertEqual(psum.summands[0].expolist[0,0],0)
@@ -323,7 +323,7 @@ class TestPolynomialSum(unittest.TestCase):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
         p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
 
-        orig = PolynomialSum(p0,p1)
+        orig = Sum(p0,p1)
         copy = orig.copy()
 
         self.assertEqual(orig.summands[0].expolist[0,0],0)
@@ -335,7 +335,7 @@ class TestPolynomialSum(unittest.TestCase):
     def test_string_form(self):
         p0 = ExponentiatedPolynomial([(0,1)],['A'],exponent='exponent')
         p1 = Polynomial([(8,1),(1,5),(2,1)],['B','C','D'])
-        sum = PolynomialSum(p0,p1)
+        sum = Sum(p0,p1)
         string_sum = '(( + (A)*x1)**(exponent)) + ( + (B)*x0**8*x1 + (C)*x0*x1**5 + (D)*x0**2*x1)'
 
         self.assertEqual(str(sum), string_sum)
@@ -347,7 +347,7 @@ class TestPolynomialSum(unittest.TestCase):
 
         p0 = ExponentiatedPolynomial([(0,1)],[A])
         p1 = ExponentiatedPolynomial([(2,1)],[B])
-        psum = PolynomialSum(p0,p1)
+        psum = Sum(p0,p1)
 
         derivative_0 = sympify( psum.derive(0) )
         target_derivative_0 = sympify( '2*B*x0*x1' )
@@ -400,7 +400,7 @@ class TestInsertion(unittest.TestCase):
     def test_insert_value_polynomial_sum(self):
         poly0 = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
         poly1 = Polynomial([(0,0),(5,0)],['E',1])
-        prod = PolynomialSum(poly0,poly1)
+        prod = Sum(poly0,poly1)
         replaced_prod = replace(prod,index=1,value=0)
         self.assertEqual( (sp.sympify(str(replaced_prod)) - sp.sympify('A + B*x0 + E + x0**5')).simplify() , 0 )
 

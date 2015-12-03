@@ -83,7 +83,7 @@ class TestSingularExpansion(unittest.TestCase):
         for coeff in flattened_expansion_1_0.coeffs:
             self.assertFalse(isinstance(coeff, Polynomial))
             self.assertFalse(isinstance(coeff, Product))
-            self.assertFalse(isinstance(coeff, PolynomialSum))
+            self.assertFalse(isinstance(coeff, Sum))
 
         self.assertEqual( (sp.sympify(expansion_1_0) - sp.sympify(flattened_expansion_1_0)).simplify() , 0)
 
@@ -97,7 +97,7 @@ class TestSingularExpansion(unittest.TestCase):
         for coeff in expansion.coeffs:
             self.assertFalse(isinstance(coeff, Polynomial))
             self.assertFalse(isinstance(coeff, Product))
-            self.assertFalse(isinstance(coeff, PolynomialSum))
+            self.assertFalse(isinstance(coeff, Sum))
 
         # expansion in eps1 yields a simple pole --> expansion to order epsilon has three terms
         self.assertEqual(len(expansion.coeffs), 3)
@@ -125,6 +125,6 @@ class TestSingularExpansion(unittest.TestCase):
         for coeff in high_level_output.coeffs:
             self.assertFalse(isinstance(coeff, Polynomial))
             self.assertFalse(isinstance(coeff, Product))
-            self.assertFalse(isinstance(coeff, PolynomialSum))
+            self.assertFalse(isinstance(coeff, Sum))
 
         self.assertEqual( (sp.sympify(high_level_output) - sp.sympify(flattened_expansion_1_0)).simplify() , 0)

@@ -1,6 +1,6 @@
 "Routines to series expand singular and nonsingular expressions"
 
-from .algebra import Product, PolynomialSum, Polynomial, ExponentiatedPolynomial, replace
+from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial, replace
 from numpy import iterable
 import numpy as np
 import sympy as sp
