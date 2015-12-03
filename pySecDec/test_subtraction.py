@@ -1,7 +1,7 @@
 """Unit tests for the subtraction routines"""
 
 from .subtraction import *
-from .polynomial import *
+from .algebra import *
 import sympy as sp
 import unittest
 

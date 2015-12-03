@@ -2,7 +2,7 @@
 
 from .geometric import *
 from .sector import Sector
-from ..polynomial import Polynomial, ExponentiatedPolynomial, LogOfPolynomial
+from ..algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial
 from ..misc import argsort_2D_array
 from nose.plugins.attrib import attr
 import numpy as np

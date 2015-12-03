@@ -1,5 +1,4 @@
-"""This file defines the Polynomial class"""
-# TODO: rename "polynomial.py" --> "algebra.py"
+"""Implementation of a simple computer algebra system"""
 # TODO: implement "Function" - a class that remembers variable transforms and derivatives and knows about the chain rule
 
 from .misc import argsort_2D_array

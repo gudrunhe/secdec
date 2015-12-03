@@ -2,7 +2,7 @@
 
 from .expansion import *
 from .expansion import _expand_singular_step, _flatten
-from .polynomial import Polynomial, ExponentiatedPolynomial, LogOfPolynomial, PolynomialProduct
+from .algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial, PolynomialProduct
 from nose.plugins.attrib import attr
 import sympy as sp
 import unittest

@@ -1,6 +1,6 @@
 """The Sector class"""
 
-from ..polynomial import Polynomial, PolynomialProduct
+from ..algebra import Polynomial, PolynomialProduct
 
 class Sector(object):
     '''
@@ -8,19 +8,19 @@ class Sector(object):
     sector decomposition.
 
     :param cast:
-        iterable of :class:`.polynomial.PolynomialProduct` or
-        of :class:`.polynomial.Polynomial`;
+        iterable of :class:`.algebra.PolynomialProduct` or
+        of :class:`.algebra.Polynomial`;
         The polynomials to be cast to the form
         `<monomial> * (const + ...)`
 
     :param other:
-        iterable of :class:`.polynomial.Polynomial`, optional;
+        iterable of :class:`.algebra.Polynomial`, optional;
         All variable transformations are applied to these
         polynomials but it is not attempted to achieve the
         form `<monomial> * (const + ...)`
 
     :param Jacobian:
-        :class:`.polynomial.Polynomial` with one term, optional;
+        :class:`.algebra.Polynomial` with one term, optional;
         The Jacobian determinant of this sector. If not provided,
         the according unit monomial (1*x0^0*x1^0...) is assumed.
 

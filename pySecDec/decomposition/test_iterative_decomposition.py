@@ -2,7 +2,7 @@
 
 from .iterative import *
 from .sector import Sector
-from ..polynomial import Polynomial, PolynomialProduct
+from ..algebra import Polynomial, PolynomialProduct
 import numpy as np
 import unittest
 

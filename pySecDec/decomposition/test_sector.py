@@ -1,7 +1,7 @@
 """Unit tests for the Sector container class"""
 
 from .sector import *
-from ..polynomial import Polynomial, PolynomialProduct
+from ..algebra import Polynomial, PolynomialProduct
 import unittest
 
 class TestSector(unittest.TestCase):

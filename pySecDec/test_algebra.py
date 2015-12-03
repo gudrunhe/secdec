@@ -1,6 +1,6 @@
-"""Unit tests for the Polynomial container class"""
+"""Unit tests for the algebra module"""
 
-from .polynomial import *
+from .algebra import *
 import sympy as sp
 import unittest
 

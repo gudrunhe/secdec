@@ -343,7 +343,7 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
 def transform_variables(polynomial, transformation, polysymbols='y'):
     r'''
     Transform the parameters :math:`x_i` of a
-    :class:`pySecDec.polynomial.Polynomial`,
+    :class:`pySecDec.algebra.Polynomial`,
 
     .. math::
         x_i \rightarrow \prod_j x_j^{T_{ij}}
@@ -351,7 +351,7 @@ def transform_variables(polynomial, transformation, polysymbols='y'):
     , where :math:`T_{ij}` is the transformation matrix.
 
     :param polynomial:
-        :class:`pySecDec.polynomial.Polynomial`;
+        :class:`pySecDec.algebra.Polynomial`;
         The polynomial to transform the variables in.
 
     :param transformation:
@@ -362,9 +362,9 @@ def transform_variables(polynomial, transformation, polysymbols='y'):
         string or iterable of strings;
         The symbols for the new variables. This argument
         is passed to the default constructor of
-        :class:`pySecDec.polynomial.Polynomial`.
+        :class:`pySecDec.algebra.Polynomial`.
         Refer to the documentation of
-        :class:`pySecDec.polynomial.Polynomial`
+        :class:`pySecDec.algebra.Polynomial`
         for further details.
 
     '''

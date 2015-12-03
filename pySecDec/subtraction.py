@@ -4,7 +4,7 @@ expansion
 
 """
 
-from .polynomial import Polynomial, ExponentiatedPolynomial, PolynomialSum, PolynomialProduct, replace
+from .algebra import Polynomial, ExponentiatedPolynomial, PolynomialSum, PolynomialProduct, replace
 import numpy as np
 import sympy as sp
 
@@ -117,12 +117,12 @@ def integrate_pole_part(polyprod, *indices):
 
 
     :param polyprod:
-        :class:`.polynomial.PolynomialProduct` of the
+        :class:`.algebra.PolynomialProduct` of the
         form ``<monomial>**(a_j + ...) * <regulator poles of cal_I>
         * <cal_I>``;
         The input product as decribed above.
         The monomial should be an
-        :class:`pySecDec.polynomial.ExponentiatedPolynomial`
+        :class:`pySecDec.algebra.ExponentiatedPolynomial`
         with ``exponent`` being a :class:`Polynomial` of the
         regulators :math:`\epsilon_1, \epsilon_2, ...`. Although
         no dependence on the Feynman parameters is expected

@@ -1,6 +1,6 @@
 "Routines to series expand singular and nonsingular expressions"
 
-from .polynomial import PolynomialProduct, PolynomialSum, Polynomial, ExponentiatedPolynomial, replace
+from .algebra import PolynomialProduct, PolynomialSum, Polynomial, ExponentiatedPolynomial, replace
 from numpy import iterable
 import numpy as np
 import sympy as sp
@@ -15,12 +15,12 @@ def _expand_singular_step(product, index, order):
                  {a_D \epsilon_0 + b_D \epsilon_1 + ...}
         }
 
-    Return a :class:`.polynomial.Polynomial` with coefficients
-    of :class:`.polynomial.PolynomialProduct` of the same form
+    Return a :class:`.algebra.Polynomial` with coefficients
+    of :class:`.algebra.PolynomialProduct` of the same form
     as above - the series expansion.
 
     :param product:
-        :class:`.polynomial.PolynomialProduct` of the form
+        :class:`.algebra.PolynomialProduct` of the form
         ``<numerator polynomial> * <denominator polynomial> ** -1``;
         The expression to be series expanded.
 
@@ -110,7 +110,7 @@ def _flatten(polynomial):
     numbers or symbols.
 
     :param polynomial:
-        :class:`pySecDec.polynomial.Polynomial`;
+        :class:`pySecDec.algebra.Polynomial`;
         The polynomial to "flatten".
 
     '''
@@ -150,10 +150,10 @@ def expand_singular(product, indices, orders):
                  {a_D \epsilon_0 + b_D \epsilon_1 + ...}
         }
 
-    Return a :class:`.polynomial.Polynomial` - the series expansion.
+    Return a :class:`.algebra.Polynomial` - the series expansion.
 
     :param product:
-        :class:`.polynomial.PolynomialProduct` of the form
+        :class:`.algebra.PolynomialProduct` of the form
         ``<numerator polynomial> * <denominator polynomial> ** -1``;
         The expression to be series expanded.
 

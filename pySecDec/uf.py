@@ -1,6 +1,6 @@
 """The U, F routines"""
 
-from .polynomial import Polynomial
+from .algebra import Polynomial
 from .misc import det, adjugate
 import sympy as sp
 import numpy as np
@@ -10,7 +10,7 @@ def uf(loop_momenta,propagators):
     Construct the 1st (U) and 2nd (F) Symanzik Polynomials
     from a list of loop momenta and propagators.
     Return a tuple containing (U,F) as
-    :class:`pySecDec.polynomial.Polynomial`.
+    :class:`pySecDec.algebra.Polynomial`.
 
     :param loop_momenta:
        iterable of strings or sympy expression;

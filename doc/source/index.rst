@@ -8,7 +8,7 @@ Welcome to pySecDec's documentation!
 
 Contents:
 
-.. automodule:: pySecDec.polynomial
+.. automodule:: pySecDec.algebra
     :members:
 
 .. autoclass:: pySecDec.decomposition.Sector

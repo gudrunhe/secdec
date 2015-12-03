@@ -1,7 +1,7 @@
 """The iterative sector decomposition routines"""
 
 from .sector import Sector
-from ..polynomial import Polynomial, PolynomialProduct
+from ..algebra import Polynomial, PolynomialProduct
 from ..misc import powerset
 import numpy as np
 
@@ -15,7 +15,7 @@ def primary_decomposition_polynomial(polynomial):
         :func:`.primary_decomposition`
 
     :param polynomial:
-        :class:`.Polynomial`;
+        :class:`.algebra.Polynomial`;
         The polynomial to eliminate the Dirac delta from.
     '''
     primary_sectors = []
@@ -90,14 +90,14 @@ class EndOfDecomposition(Exception):
 
 def refactorize(polyprod, parameter=None):
     '''
-    In a :class:`.polynomial.PolynomialProduct` of
+    In a :class:`.algebra.PolynomialProduct` of
     the form `<monomial> * <polynomial>`, check if
     a parameter in `<polynomial>` can be shifted to
     the `<monomial>`.
     If possible, modify `polyprod` accordingly.
 
     :param polyprod:
-        :class:`.polynomial.PolynomialProduct` of the
+        :class:`.algebra.PolynomialProduct` of the
         form <monomial> * <polynomial>`;
         The product to refactorize.
 
@@ -140,8 +140,8 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
         The Jacobian determinant is multiplied to this polynomial.
 
     :param polynomials:
-        abritrarily many instances of :class:`.Polynomial` where
-        all of these have an equal number of variables;
+        abritrarily many instances of :class:`.algebra.Polynomial`
+        where all of these have an equal number of variables;
         The polynomials of Feynman parameters to be remapped. These
         are typically :math:`F` and :math:`U`.
 
@@ -180,8 +180,8 @@ def iteration_step(sector):
     '''
     def get_poly_to_transform(sector):
         '''
-        Return a :class:`PolynomialProduct` in `sector.cast`
-        that is not in the desired form
+        Return a :class:`.algebra.PolynomialProduct` in
+        `sector.cast` that is not in the desired form
         `<monomial> * <const + ...>` yet.
         Raise `EndOfDecomposition` if the desired form is
         reached.

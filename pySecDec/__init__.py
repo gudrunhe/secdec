@@ -1,1 +1,1 @@
-from . import polynomial, decomposition, misc, uf, subtraction
+from . import algebra, decomposition, misc, uf, subtraction
