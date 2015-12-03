@@ -591,11 +591,8 @@ class PolynomialProduct(object):
                     self.factors.extend(factor.factors)
                 elif isinstance(factor, Polynomial):
                     if (factor.expolist == 0).all() and (factor.coeffs == 1).all():
-                        # do not need to append unity except there is no other factor
-                        if self.factors:
-                            changed = True
-                        else:
-                            self.factors.append(factor)
+                        one = factor
+                        changed = True
                     elif (factor.coeffs == 0).all():
                         factor.combine()
                         self.factors = [factor]
@@ -606,6 +603,8 @@ class PolynomialProduct(object):
                     self.factors.append(factor)
         if len(self.factors) == 1:
             return self.factors[0]
+        elif len(self.factors) == 0:
+            return one
         else:
             return self
 
