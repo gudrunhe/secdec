@@ -5,7 +5,15 @@ from .misc import argsort_2D_array
 import numpy as np
 import sympy as sp
 
-class Polynomial(object):
+class _Expression(object):
+    '''
+    Abstract base class for all expressions in this
+    computer algebra system.
+
+    '''
+    pass
+
+class Polynomial(_Expression):
     '''
     Container class for polynomials.
     Store a polynomial as list of lists counting the powers of
@@ -433,7 +441,7 @@ class LogOfPolynomial(Polynomial):
 
         return PolynomialProduct(factor0, factor1)
 
-class PolynomialSum(object):
+class PolynomialSum(_Expression):
     r'''
     Sum of polynomials.
     Store one or polynomials :math:`p_i` to be interpreted as
@@ -526,7 +534,7 @@ class PolynomialSum(object):
         # derivative(p1 + p2 + ...) = derivative(p1) + derivative(p2) + ...
         return PolynomialSum(*(summand.derive(index) for summand in self.summands)).simplify()
 
-class PolynomialProduct(object):
+class PolynomialProduct(_Expression):
     r'''
     Product of polynomials.
     Store one or polynomials :math:`p_i` to be interpreted as
