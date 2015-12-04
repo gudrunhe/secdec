@@ -3,6 +3,7 @@
 from .algebra import *
 import sympy as sp
 import unittest
+from nose.plugins.attrib import attr
 
 class TestPolynomial(unittest.TestCase):
     def test_init(self):
@@ -244,6 +245,19 @@ class TestExponentiatedPolynomial(unittest.TestCase):
         derivative_0 = sympify( str(polynomial.derive(0)) )
         target_derivative_0 = sympify('(a + b*x0)*(A*x0**2*x1 + B)**(a + b*x0 - 1) * (2*A*x0*x1)   +   (A*x0**2*x1 + B)**(a + b*x0)*b*log(A*x0**2*x1 + B)')
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
+
+    #@attr('active')
+    def test_simplify(self):
+        A, B = sp.symbols('A B')
+        # <something>**0 = 1
+        polynomial_to_power_zero_polynomial_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=Polynomial.from_expression('0',['x0','x1'])).simplify()
+        polynomial_to_power_zero_sympy_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sp.sympify('x-x')).simplify()
+        polynomial_to_power_zero_numerical_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=0).simplify()
+
+        for p in (polynomial_to_power_zero_polynomial_exponent, polynomial_to_power_zero_sympy_exponent, polynomial_to_power_zero_numerical_exponent):
+            self.assertEqual(p.exponent, 1)
+            np.testing.assert_array_equal(p.coeffs, [1])
+            np.testing.assert_array_equal(p.expolist, [[0,0]])
 
 class TestProduct(unittest.TestCase):
     def test_init(self):

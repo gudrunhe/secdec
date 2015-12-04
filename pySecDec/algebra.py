@@ -262,6 +262,8 @@ class Polynomial(_Expression):
             self.coeffs = np.array([0])
             self.expolist = np.array([[0]*self.number_of_variables])
 
+        return self
+
 class ExponentiatedPolynomial(Polynomial):
     '''
     Like :class:`.Polynomial`, but with a global exponent.
@@ -369,6 +371,21 @@ class ExponentiatedPolynomial(Polynomial):
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
         return type(self)(self.expolist, self.coeffs, self.exponent, self.polysymbols)
+
+    def simplify(self):
+        '''
+        Apply the identity <something>**0 = 1 if possible,
+        otherwise call the simplify method of the base class.
+
+        '''
+        if self.exponent == 0 or (isinstance(self.exponent, Polynomial) and (self.exponent.coeffs==0).all()):
+            self.coeffs = np.array([1])
+            self.expolist = np.array([[0]*self.number_of_variables])
+            self.exponent = 1
+        else:
+            super(ExponentiatedPolynomial, self).simplify()
+
+        return self
 
 class LogOfPolynomial(Polynomial):
     '''
