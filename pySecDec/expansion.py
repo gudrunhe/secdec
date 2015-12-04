@@ -114,13 +114,13 @@ def _flatten(polynomial):
         The polynomial to "flatten".
 
     '''
-    def recursively_sympify_products(expr):
+    def recursively_sympify(expr):
         assert isinstance(expr, Polynomial)
         for i,coeff in enumerate(expr.coeffs):
-            if isinstance(expr.coeffs[i], Product):
+            if not isinstance(expr.coeffs[i], Polynomial):
                 expr.coeffs[i] = sp.sympify(coeff)
             else:
-                recursively_sympify_products(coeff)
+                recursively_sympify(coeff)
 
     def flatten_recursively(expr):
         '''
@@ -137,7 +137,7 @@ def _flatten(polynomial):
             outpoly += monomial * coeff
         return outpoly
 
-    recursively_sympify_products(polynomial)
+    recursively_sympify(polynomial)
     return flatten_recursively(polynomial)
 
 def expand_singular(product, indices, orders):
