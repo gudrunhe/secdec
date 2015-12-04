@@ -1,6 +1,6 @@
 "Routines to series expand singular and nonsingular expressions"
 
-from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial, replace
+from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial, replace, _get_symbols
 from numpy import iterable
 import numpy as np
 import sympy as sp
@@ -196,3 +196,40 @@ def expand_singular(product, indices, orders):
 
     expansion = recursive_expansion(product, indices, orders)
     return _flatten(expansion)
+
+def expand_Taylor(expression, index, order):
+    r'''
+    Series/Taylor expand a nonsingular `expression` around
+    zero.
+
+    :param expression:
+        an expression composed of the types defined in
+        the module :mod:`.algebra`;
+        The expression to be series expanded.
+
+    :param index:
+        integer;
+        The index of the parameter to expand.
+
+    :param order:
+        nonnegative integer;
+        The order to which the expansion is to be calculated.
+
+    '''
+    int_order = int(order)
+    assert int_order == order and int_order >= 0, "`order` must be a nonnegative integer"
+    order = int_order
+    N = expression.number_of_variables
+
+    # Construct expolist of the Tatlor polynomial
+    expolist = np.zeros((1 + order, N), dtype=int)
+    expolist[:,index] = np.arange(1 + order)
+
+    # Construct coefficients of the Taylor polynomial
+    expression_variable_set_to_zero = replace(expression, index, 0).simplify()
+    coeffs = [expression_variable_set_to_zero]
+    for order_i in range(order):
+        expression = expression.derive(index)
+        coeffs.append( replace(expression, index, 0) )
+
+    return Polynomial(expolist, coeffs, _get_symbols(expression))

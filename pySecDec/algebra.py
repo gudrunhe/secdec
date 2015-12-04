@@ -682,3 +682,19 @@ def replace(expression, index, value):
         return Sum(*outsummands)
     else: # TODO: implement for class `Function`
         raise TypeError('Can only operate on `Polynomial`, `Product`, and `Sum`, not `%s`' % type(expression))
+
+def _get_symbols(expression):
+    '''
+    Find the first :class:`.Polynomial` or
+    :class:`.Function` in an `expression and
+    return the symbols of the variables.
+
+    '''
+    if isinstance(expression, Polynomial):
+        return expression.polysymbols
+    elif isinstance(expression, Sum):
+        return _get_symbols(expression.summands[0])
+    elif isinstance(expression, Product):
+        return _get_symbols(expression.factors[0])
+    else: # TODO: implement for class `Function`
+        raise TypeError('Can only operate on `Polynomial`, `Product`, and `Sum`, not `%s`' % type(expression))
