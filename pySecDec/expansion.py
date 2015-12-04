@@ -229,7 +229,7 @@ def expand_Taylor(expression, index, order):
     expression_variable_set_to_zero = replace(expression, index, 0).simplify()
     coeffs = [expression_variable_set_to_zero]
     for order_i in range(order):
-        expression = expression.derive(index)
-        coeffs.append( replace(expression, index, 0) )
+        expression = expression.derive(index).simplify()
+        coeffs.append( replace(expression, index, 0).simplify() )
 
     return Polynomial(expolist, coeffs, _get_symbols(expression))
