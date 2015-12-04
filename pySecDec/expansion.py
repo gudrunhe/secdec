@@ -5,6 +5,45 @@ from numpy import iterable
 import numpy as np
 import sympy as sp
 
+# ------------------------ private functions ------------------------
+
+def _expand_Taylor_step(expression, index, order):
+    r'''
+    Series/Taylor expand a nonsingular `expression` around
+    zero.
+
+    :param expression:
+        an expression composed of the types defined in
+        the module :mod:`.algebra`;
+        The expression to be series expanded.
+
+    :param index:
+        integer;
+        The index of the parameter to expand.
+
+    :param order:
+        nonnegative integer;
+        The order to which the expansion is to be calculated.
+
+    '''
+    int_order = int(order)
+    assert int_order == order and int_order >= 0, "`order` must be a nonnegative integer"
+    order = int_order
+    N = expression.number_of_variables
+
+    # Construct expolist of the Tatlor polynomial
+    expolist = np.zeros((1 + order, N), dtype=int)
+    expolist[:,index] = np.arange(1 + order)
+
+    # Construct coefficients of the Taylor polynomial
+    expression_variable_set_to_zero = replace(expression, index, 0).simplify()
+    coeffs = [expression_variable_set_to_zero]
+    for order_i in range(order):
+        expression = expression.derive(index).simplify()
+        coeffs.append( replace(expression, index, 0).simplify() )
+
+    return Polynomial(expolist, coeffs, _get_symbols(expression))
+
 def _expand_singular_step(product, index, order):
     r'''
     Series expand a potentially singular expression of the form
@@ -140,6 +179,46 @@ def _flatten(polynomial):
     recursively_sympify(polynomial)
     return flatten_recursively(polynomial)
 
+def _expand_and_flatten(expression, indices, orders, expansion_one_variable):
+    '''
+    Expand `expression` in each variable passed via
+    `indices` using the function `expansion_one_variable`.
+    Flatten the resulting polynomial using the function
+    :func:`_flatten`.
+
+    '''
+    # basic consistency check
+    # Note: More checks are done by `_expand_Taylor_step` or `_expand_singular_step`
+    indices = list(indices) if iterable(indices) else [indices]
+    orders = list(orders) if iterable(orders) else [orders]
+    assert len(indices) == len(orders), '`indices` and `orders` must have the same length'
+
+    # reverse lists because popping the last element of a list is cheaper (order one) than the first (order N)
+    indices.reverse()
+    orders.reverse()
+
+    def recursive_expansion(expression, indices, orders):
+        # make a copy
+        indices, orders = list(indices), list(orders)
+
+        # pop the last index and order (lists have been reversed) and expand in that parameter
+        index, order = indices.pop(), orders.pop()
+        expansion = expansion_one_variable(expression, index, order)
+
+        if indices:
+            assert orders
+            # recursively expand the other parameters in the coefficients
+            for i, coeff in enumerate(expansion.coeffs):
+                expansion.coeffs[i] = recursive_expansion(coeff, indices, orders)
+
+        return expansion
+
+
+    expansion = recursive_expansion(expression, indices, orders)
+    return _flatten(expansion)
+
+# -------------------- end of private functions --------------------
+
 def expand_singular(product, indices, orders):
     r'''
     Series expand a potentially singular expression of the form
@@ -167,69 +246,28 @@ def expand_singular(product, indices, orders):
         The order to which the expansion is to be calculated.
 
     '''
-    # basic consistency check
-    # Note: More checks are done by `_expand_singular_step`
-    indices = list(indices) if iterable(indices) else [indices]
-    orders = list(orders) if iterable(orders) else [orders]
-    assert len(indices) == len(orders), '`indices` and `orders` must have the same length'
+    return _expand_and_flatten(product, indices, orders, _expand_singular_step)
 
-    # reverse lists because popping the last element of a list is cheaper (order one) than the first (order N)
-    indices.reverse()
-    orders.reverse()
-
-    def recursive_expansion(product, indices, orders):
-        # make a copy
-        indices, orders = list(indices), list(orders)
-
-        # pop the last index and order (lists have been reversed) and expand in that parameter
-        index, order = indices.pop(), orders.pop()
-        expansion = _expand_singular_step(product, index, order)
-
-        if indices:
-            assert orders
-            # recursively expand the other parameters in the coefficients
-            for i, coeff in enumerate(expansion.coeffs):
-                expansion.coeffs[i] = recursive_expansion(coeff, indices, orders)
-
-        return expansion
-
-
-    expansion = recursive_expansion(product, indices, orders)
-    return _flatten(expansion)
-
-def _expand_Taylor_step(expression, index, order):
+def expand_Taylor(expression, indices, orders):
     r'''
     Series/Taylor expand a nonsingular `expression` around
     zero.
+
+    Return a :class:`.algebra.Polynomial` - the series expansion.
 
     :param expression:
         an expression composed of the types defined in
         the module :mod:`.algebra`;
         The expression to be series expanded.
 
-    :param index:
-        integer;
-        The index of the parameter to expand.
+    :param indices:
+        integer or iterable of integers;
+        The indices of the parameters to expand. The ordering of
+        the indices defines the ordering of the expansion.
 
     :param order:
-        nonnegative integer;
+        integer or iterable of integers;
         The order to which the expansion is to be calculated.
 
     '''
-    int_order = int(order)
-    assert int_order == order and int_order >= 0, "`order` must be a nonnegative integer"
-    order = int_order
-    N = expression.number_of_variables
-
-    # Construct expolist of the Tatlor polynomial
-    expolist = np.zeros((1 + order, N), dtype=int)
-    expolist[:,index] = np.arange(1 + order)
-
-    # Construct coefficients of the Taylor polynomial
-    expression_variable_set_to_zero = replace(expression, index, 0).simplify()
-    coeffs = [expression_variable_set_to_zero]
-    for order_i in range(order):
-        expression = expression.derive(index).simplify()
-        coeffs.append( replace(expression, index, 0).simplify() )
-
-    return Polynomial(expolist, coeffs, _get_symbols(expression))
+    return _expand_and_flatten(expression, indices, orders, _expand_Taylor_step)

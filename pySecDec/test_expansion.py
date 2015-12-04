@@ -130,24 +130,33 @@ class TestSingularExpansion(unittest.TestCase):
         self.assertEqual( (sp.sympify(high_level_output) - sp.sympify(flattened_expansion_1_0)).simplify() , 0)
 
 class TestTaylorExpansion(unittest.TestCase):
-    def test_error_messages_step(self):
-        p0 = Polynomial.from_expression('x', ['x','y'])
-        self.assertRaisesRegexp(AssertionError, "order.*nonnegative integer", _expand_Taylor_step, p0, index=0, order=-1)
-        self.assertRaisesRegexp(AssertionError, "order.*nonnegative integer", _expand_Taylor_step, p0, index=0, order=1.5)
-        self.assertRaisesRegexp(IndexError, "out of bounds", _expand_Taylor_step, p0, index=4, order=1)
+    def setUp(self):
+        p0 = Polynomial.from_expression('5 + 2*x + 4*y + y**2', ['x','y'])
+        self.p0 = ExponentiatedPolynomial(p0.expolist, p0.coeffs, polysymbols=p0.polysymbols, exponent=Polynomial.from_expression('2*x', ['x','y']))
+        self.p1 = Polynomial.from_expression('3*x + y', ['x','y'])
+        self.expression = Sum(self.p0, Product(self.p0, self.p1)) # (3*x + y)*(2*x + y**2 + 4*y)**(2*x) + (2*x + y**2 + 4*y)**(2*x)
+        self.expected_expansion_in_x = sp.sympify('''
+                                                         + x**0  *  (y + 1)
+                                                         + x**1  *  (2*y*log(5 + y**2 + 4*y) + 2*log(5 + y**2 + 4*y) + 3) +
+                                                         + x**2  *  (y*(4*log(5 + y**2 + 4*y)**2 + 8/(5 + y**2 + 4*y)) + 4*log(5 + y**2 + 4*y)**2 + 12*log(5 + y**2 + 4*y) + 8/(5 + y**2 + 4*y))
+                                                  ''')
+
+    def test_error_messages(self):
+        expression = Polynomial.from_expression('x', ['x','y'])
+        self.assertRaisesRegexp(AssertionError, "order.*nonnegative integer", expand_Taylor, expression, indices=0, orders=-1)
+        self.assertRaisesRegexp(AssertionError, "order.*nonnegative integer", expand_Taylor, expression, indices=0, orders=1.5)
+        self.assertRaisesRegexp(IndexError, "out of bounds", expand_Taylor, expression, indices=4, orders=1)
+        self.assertRaisesRegexp(AssertionError, 'indices.*orders.*same length', expand_Taylor, expression, indices=1, orders=[1,2])
 
     def test_expand_Taylor_step(self):
-        p0 = Polynomial.from_expression('2*x + 4*y + y**2', ['x','y'])
-        p0 = ExponentiatedPolynomial(p0.expolist, p0.coeffs, polysymbols=p0.polysymbols, exponent=Polynomial.from_expression('2*x', ['x','y']))
-        p1 = Polynomial.from_expression('3*x + y', ['x','y'])
-        expression = Sum(p0, Product(p0, p1))
-        # expression is "(3*x + y)*(2*x + y**2 + 4*y)**(2*x) + (2*x + y**2 + 4*y)**(2*x)"
+        expansion_in_x = _expand_Taylor_step(self.expression, 0, 2)
+        self.assertEqual( (sp.sympify(expansion_in_x) - self.expected_expansion_in_x).simplify() , 0)
 
-        expansion_in_x = _expand_Taylor_step(expression, 0, 2)
-        expected_expansion_in_x = sp.sympify('''
-                                                    + x**0  *  (y + 1)
-                                                    + x**1  *  (2*y*log(y**2 + 4*y) + 2*log(y**2 + 4*y) + 3) +
-                                                    + x**2  *  (y*(4*log(y**2 + 4*y)**2 + 8/(y**2 + 4*y)) + 4*log(y**2 + 4*y)**2 + 12*log(y**2 + 4*y) + 8/(y**2 + 4*y))
-                                             ''')
+    def test_expand_Taylor(self):
+        # the order of the expansion should not matter
+        expansion_in_x_and_y = expand_Taylor(self.expression, [0,1], [2,0])
+        expansion_in_y_and_x = expand_Taylor(self.expression, [1,0], [0,2])
+        expected_expansion = self.expected_expansion_in_x.subs('y',0) # zeroth order in y
 
-        self.assertEqual( (sp.sympify(expansion_in_x) - expected_expansion_in_x).simplify() , 0)
+        self.assertEqual( (sp.sympify(expansion_in_x_and_y) - expected_expansion).simplify() , 0)
+        self.assertEqual( (sp.sympify(expansion_in_y_and_x) - expected_expansion).simplify() , 0)
