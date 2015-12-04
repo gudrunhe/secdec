@@ -197,7 +197,7 @@ def expand_singular(product, indices, orders):
     expansion = recursive_expansion(product, indices, orders)
     return _flatten(expansion)
 
-def expand_Taylor(expression, index, order):
+def _expand_Taylor_step(expression, index, order):
     r'''
     Series/Taylor expand a nonsingular `expression` around
     zero.

@@ -1,7 +1,7 @@
 """Unit tests for the expansion routines"""
 
 from .expansion import *
-from .expansion import _expand_singular_step, _flatten
+from .expansion import _expand_singular_step, _expand_Taylor_step, _flatten
 from .algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial, Product, Sum
 from nose.plugins.attrib import attr
 import sympy as sp
@@ -130,20 +130,20 @@ class TestSingularExpansion(unittest.TestCase):
         self.assertEqual( (sp.sympify(high_level_output) - sp.sympify(flattened_expansion_1_0)).simplify() , 0)
 
 class TestTaylorExpansion(unittest.TestCase):
-    def test_error_msg(self):
+    def test_error_messages_step(self):
         p0 = Polynomial.from_expression('x', ['x','y'])
-        self.assertRaisesRegexp(AssertionError, "order.*nonnegative integer", expand_Taylor, p0, index=0, order=-1)
-        self.assertRaisesRegexp(AssertionError, "order.*nonnegative integer", expand_Taylor, p0, index=0, order=1.5)
-        self.assertRaisesRegexp(IndexError, "out of bounds", expand_Taylor, p0, index=4, order=1)
+        self.assertRaisesRegexp(AssertionError, "order.*nonnegative integer", _expand_Taylor_step, p0, index=0, order=-1)
+        self.assertRaisesRegexp(AssertionError, "order.*nonnegative integer", _expand_Taylor_step, p0, index=0, order=1.5)
+        self.assertRaisesRegexp(IndexError, "out of bounds", _expand_Taylor_step, p0, index=4, order=1)
 
-    def test_expansion(self):
+    def test_expand_Taylor_step(self):
         p0 = Polynomial.from_expression('2*x + 4*y + y**2', ['x','y'])
         p0 = ExponentiatedPolynomial(p0.expolist, p0.coeffs, polysymbols=p0.polysymbols, exponent=Polynomial.from_expression('2*x', ['x','y']))
         p1 = Polynomial.from_expression('3*x + y', ['x','y'])
         expression = Sum(p0, Product(p0, p1))
         # expression is "(3*x + y)*(2*x + y**2 + 4*y)**(2*x) + (2*x + y**2 + 4*y)**(2*x)"
 
-        expansion_in_x = expand_Taylor(expression, 0, 2)
+        expansion_in_x = _expand_Taylor_step(expression, 0, 2)
         expected_expansion_in_x = sp.sympify('''
                                                     + x**0  *  (y + 1)
                                                     + x**1  *  (2*y*log(y**2 + 4*y) + 2*log(y**2 + 4*y) + 3) +
