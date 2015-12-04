@@ -159,7 +159,7 @@ class Polynomial(_Expression):
         new_expolist[:,index] -= 1
 
         outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols)
-        outpoly.combine() # simplify
+        outpoly.simplify()
         return outpoly
 
     def __add__(self, other):
@@ -188,14 +188,14 @@ class Polynomial(_Expression):
             sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
 
             result = Polynomial(sum_expolist, sum_coeffs, self.polysymbols)
-            result.combine()
+            result.simplify()
             return result
 
         elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
             new_expolist = np.vstack([[0]*self.number_of_variables, self.expolist])
             new_coeffs = np.append(-other if sub else other, self.coeffs)
             outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols)
-            outpoly.combine()
+            outpoly.simplify()
             return outpoly
 
         else:
@@ -210,7 +210,7 @@ class Polynomial(_Expression):
             product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
 
             result = Polynomial(product_expolist, product_coeffs, self.polysymbols)
-            result.combine()
+            result.simplify()
             return result
 
         elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
@@ -227,7 +227,7 @@ class Polynomial(_Expression):
         'arithmetic negation "-self"'
         return Polynomial(self.expolist, [-coeff for coeff in self.coeffs], self.polysymbols)
 
-    def combine(self):
+    def simplify(self):
         '''
         Combine terms that have the same exponents of
         the variables.
@@ -602,7 +602,7 @@ class Product(_Expression):
                         one = factor
                         changed = True
                     elif (factor.coeffs == 0).all():
-                        factor.combine()
+                        factor.simplify()
                         self.factors = [factor]
                         break
                     else:
@@ -668,7 +668,7 @@ def replace(expression, index, value):
         powers = expression.expolist[:,index]
         outpoly.coeffs *= value**powers
         outpoly.expolist[:,index] = 0
-        outpoly.combine()
+        outpoly.simplify()
         return outpoly
     elif isinstance(expression, Product):
         outfactors = []

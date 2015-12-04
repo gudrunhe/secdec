@@ -87,9 +87,9 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         self.assertRaisesRegexp(AssertionError, "coeffs.*one.dimensional", Polynomial, [(0,3),(1,2)],[[1,4],[2,3]])
         Polynomial([(1,2),(1,0),(2,1)], [1,2,3])
 
-    def test_combine(self):
+    def test_simplify(self):
         polynomial = Polynomial([[1,2],[1,2],[2,2]  ,  [2,1],[2,1],[3,1]  ,  [2,2],[2,2],[3,2]], [1,1,2  ,  1,1,2  ,  3,3,6])
-        polynomial.combine()
+        polynomial.simplify()
         self.assertEqual( (sp.sympify(str(polynomial)) - sp.sympify(" + (2)*x0*x1**2 + (8)*x0**2*x1**2 + (2)*x0**2*x1 + (2)*x0**3*x1 + (6)*x0**3*x1**2")).simplify() , 0)
 
         # should have minimal number of terms
@@ -181,7 +181,7 @@ class TestFormerSNCPolynomial(unittest.TestCase):
 
     def test_empty_expolist(self):
         polynomial = Polynomial([(0,1),(1,0),(2,1),(0,0)],[0,0,0,0])
-        polynomial.combine()
+        polynomial.simplify()
         self.assertGreater(len(polynomial.expolist), 0)
         self.assertGreater(len(polynomial.coeffs), 0)
 
