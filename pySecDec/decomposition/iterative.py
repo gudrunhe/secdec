@@ -88,6 +88,7 @@ class EndOfDecomposition(Exception):
     '''
     pass
 
+# TODO: move to more general module since it is also used in the geomethod
 def refactorize(polyprod, parameter=None):
     '''
     In a :class:`.algebra.Product` of
