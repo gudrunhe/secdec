@@ -39,7 +39,7 @@ class Sector(object):
             poly = cast[0]
         self.number_of_variables = poly.expolist.shape[1]
 
-        initial_monomial_factor = Polynomial([ [0]*self.number_of_variables ], [1])
+        initial_monomial_factor = Polynomial([ [0]*self.number_of_variables ], [1], poly.polysymbols)
 
         if Jacobian is not None:
             assert len(Jacobian.coeffs) == 1, "`Jacobian` must be a monomial"
