@@ -47,14 +47,14 @@ class TestGeomethod(unittest.TestCase):
 
         cone = [[ 1,  0,  0], [ 0,  1,  0], [ 0, -1, -1], [-1,  0, -1]]
 
-        triangulated_cone = triangulate(cone, workdir='tmpdir_test_triangulate_python' + python_major_version)
+        triangulated_cones = triangulate(cone, workdir='tmpdir_test_triangulate_python' + python_major_version)
 
         # there are two possibilities for the triangualtion
-        target_triangulate_cone1 = np.array([
+        target_triangulated_cones1 = np.array([
                                                 [[ 1,  0,  0], [ 0,  1,  0], [-1,  0, -1]],
                                                 [[ 1,  0,  0], [ 0, -1, -1], [-1,  0, -1]]
                                             ])
-        target_triangulate_cone2 = np.array([
+        target_triangulated_cones2 = np.array([
                                                 [[ 0, -1, -1], [ 0,  1,  0], [ 1,  0,  0]],
                                                 [[ 0, -1, -1], [ 0,  1,  0], [-1,  0, -1]]
                                             ])
@@ -62,19 +62,19 @@ class TestGeomethod(unittest.TestCase):
         # should get one of these triangulations
         # The ordering is not important but must be fixed to compare the arrays
         try:
-            np.testing.assert_array_equal(sort_2D_array(triangulated_cone[0]), sort_2D_array(target_triangulate_cone1[0]))
-            np.testing.assert_array_equal(sort_2D_array(triangulated_cone[1]), sort_2D_array(target_triangulate_cone1[1]))
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cones[0]), sort_2D_array(target_triangulated_cones1[0]))
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cones[1]), sort_2D_array(target_triangulated_cones1[1]))
         except AssertionError:
             try:
-                np.testing.assert_array_equal(sort_2D_array(triangulated_cone[0]), sort_2D_array(target_triangulate_cone1[1]))
-                np.testing.assert_array_equal(sort_2D_array(triangulated_cone[1]), sort_2D_array(target_triangulate_cone1[0]))
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cones[0]), sort_2D_array(target_triangulated_cones1[1]))
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cones[1]), sort_2D_array(target_triangulated_cones1[0]))
             except AssertionError:
                 try:
-                    np.testing.assert_array_equal(sort_2D_array(triangulated_cone[0]), sort_2D_array(target_triangulate_cone2[0]))
-                    np.testing.assert_array_equal(sort_2D_array(triangulated_cone[1]), sort_2D_array(target_triangulate_cone2[1]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones[0]), sort_2D_array(target_triangulated_cones2[0]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones[1]), sort_2D_array(target_triangulated_cones2[1]))
                 except:
-                    np.testing.assert_array_equal(sort_2D_array(triangulated_cone[0]), sort_2D_array(target_triangulate_cone2[1]))
-                    np.testing.assert_array_equal(sort_2D_array(triangulated_cone[1]), sort_2D_array(target_triangulate_cone2[0]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones[0]), sort_2D_array(target_triangulated_cones2[1]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones[1]), sort_2D_array(target_triangulated_cones2[0]))
 
     #@attr('active')
     def test_transform_variables(self):
@@ -112,6 +112,37 @@ class TestGeomethod(unittest.TestCase):
 
         self.assertTrue(type(transform_variables(log_of_polynomial, transformation)) is LogOfPolynomial)
         self.assertEqual( (sp.sympify(transformed_log_of_polynomial) - sp.sympify(transform_variables(log_of_polynomial, transformation))).simplify() , 0)
+
+    #@attr('active')
+    def test_2D_geometric_decomposition(self):
+        poly = Polynomial.from_expression('x1 + x2 + x1*x2', ['x1','x2'])
+        sector = Sector([poly])
+        subsectors = list( geometric_decomposition(sector, workdir='tmpdir_test_2D_geometric_decomposition_python' + python_major_version) )
+
+        target_general_Jacobian = sp.sympify('x1**-2 * x2**-2 * x3')
+        target_general_poly = sp.sympify('x1**-1 * x2**-1 * x3 * (x1 + x2 + x3)')
+
+        self.assertEqual(len(subsectors), 3)
+
+        for i,subsector in enumerate(subsectors):
+            Jacobian = sp.sympify(subsector.Jacobian)
+            poly = sp.sympify(subsector.cast[0])
+
+            target_Jacobian = target_general_Jacobian.subs('x%i'%(i+1), 1)
+            target_poly = target_general_poly.subs('x%i'%(i+1), 1)
+            for j in range(i+1,3+1):
+                target_Jacobian = target_Jacobian.subs('x%i'%j, 'x%i'%(j-1))
+                target_poly = target_poly.subs('x%i'%j, 'x%i'%(j-1))
+
+            self.assertEqual( (poly-target_poly).simplify() , 0)
+            self.assertEqual( (Jacobian-target_Jacobian).simplify() , 0)
+
+    #@attr('active')
+    def test_3D_geometric_decomposition(self):
+        # 3D test case where triangulation is needed
+        poly = Polynomial.from_expression('A*1 + B*x1 + C*x2 + D*x3 + E*x1*x2', ['x1','x2','x3']) # pyramid
+        sector = Sector([poly])
+        subsectors = list( geometric_decomposition(sector, workdir='tmpdir_test_3D_geometric_decomposition_python' + python_major_version) )
 
 class TestPolytope(unittest.TestCase):
     def setUp(self):

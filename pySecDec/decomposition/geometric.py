@@ -1,6 +1,7 @@
 """The geometric sector decomposition routines"""
 
-from .common import Sector
+from .common import Sector, refactorize
+from ..algebra import Polynomial, Product
 import subprocess, shutil, os, re, numpy as np
 
 # *********************** primary decomposition ***********************
@@ -331,7 +332,7 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
                 array_as_str += current_str
                 current_str = f.readline()
 
-        # `[:,:-1]` to delete the last column of ones
+        # `[:,:-1]` to delete the last column (last column are the determiants)
         # `-1` normaliz starts counting at `1` while python starts at `0`
         simplicial_cones_indices = np.fromstring(array_as_str, sep=' ', dtype=int).reshape(shape)[:,:-1] - 1
 
@@ -372,11 +373,103 @@ def transform_variables(polynomial, transformation, polysymbols='y'):
     new_expolist = polynomial.expolist.dot(transformation)
     number_of_new_variables = transformation.shape[-1]
     if isinstance(polysymbols, str):
-        new_polysymbols=[polysymbols + str(i) for i in range(number_of_new_variables)]
+        polysymbols = [polysymbols + str(i) for i in range(number_of_new_variables)]
 
     # keep the type (`polynomial` can have a subtype of `Polynomial`)
     outpoly = polynomial.copy()
     outpoly.expolist = new_expolist
-    outpoly.polysymbols = new_polysymbols
+    outpoly.polysymbols = polysymbols
     outpoly.number_of_variables = number_of_new_variables
     return outpoly
+
+def geometric_decomposition(sector, normaliz='normaliz', workdir='normaliz_tmp'):
+    '''
+    Run the sector decomposition using the geomethod
+    as described in arXiv:1502.06595.
+
+    :param sector:
+        :class:`.Sector`;
+        The sector to be decomposed.
+
+    :param normaliz:
+        string;
+        The shell command to run `normaliz`.
+
+    :param workdir:
+        string;
+        The directory for the communication with `normaliz`.
+        A directory with the specified name will be created
+        in the current working directory. If the specified
+        directory name already exists, an :class:`OSError`
+        is raised.
+
+        .. note::
+            The communication with `normaliz` is done via
+            files.
+
+    '''
+    sector = sector.copy()
+    dim = sector.number_of_variables
+
+    polytope_vertices = convex_hull( *(product.factors[1] for product in sector.cast) )
+    polytope = Polytope(vertices=polytope_vertices)
+    polytope.complete_representation(normaliz, workdir)
+
+    transformation = polytope.facets.T[:-1] # do not need offset term "a_F"
+    incidence_lists = polytope.vertex_incidence_lists()
+
+    # transform the variables for every polynomial of the sector
+    sector.Jacobian = transform_variables(sector.Jacobian, transformation, sector.Jacobian.polysymbols)
+    for i,product in enumerate(sector.cast):
+        transformed_monomial = transform_variables(product.factors[0], transformation, product.factors[0].polysymbols)
+        transformed_polynomial = transform_variables(product.factors[1], transformation, product.factors[1].polysymbols)
+        sector.cast[i] = Product(transformed_monomial, transformed_polynomial)
+    for i,polynomial in enumerate(sector.other):
+        sector.other[i] = transform_variables(polynomial, transformation, polynomial.polysymbols)
+    # this transformation produces an extra Jacobian factor
+    # can multiply part encoded in the `expolist` here but the coefficient is specific for each subsector
+    sector.Jacobian *= Polynomial([transformation.sum(axis=0) - 1], [1])
+
+    def make_sector(cone_indices, cone):
+        subsector = sector.copy()
+        Jacobian_coeff = abs(np.linalg.det(cone))
+        Jacobian_coeff_as_int = int(Jacobian_coeff + 0.5) # `Jacobian_coeff` is integral but numpy calculates it as float
+        assert Jacobian_coeff_as_int == Jacobian_coeff
+        subsector.Jacobian *= Jacobian_coeff_as_int
+
+        # set variables to one that are not in `cone_indices`
+        number_of_variables = len(cone_indices)
+        subsector.number_of_variables = number_of_variables
+        subsector.Jacobian.number_of_variables = number_of_variables
+        subsector.Jacobian.expolist = sector.Jacobian.expolist[:,cone_indices]
+        for product in subsector.cast:
+            for j in range(2):
+                product.factors[j].number_of_variables = number_of_variables
+                product.factors[j].expolist = product.factors[j].expolist[:,cone_indices]
+            product.number_of_variables = number_of_variables
+            refactorize(product)
+        for polynomial in subsector.other:
+            polynomial.number_of_variables = number_of_variables
+            polynomial.expolist = polynomial.expolist[:,cone_indices]
+
+        return subsector
+
+
+    for cone_indices in incidence_lists.values():
+        cone = transformation[:,cone_indices].T
+
+        # triangluate where neccessary
+        if len(cone_indices) != dim:
+            # assert len(cone) > dim # --> this check is done by `triangulate`
+            triangular_cones = triangulate(cone, normaliz, workdir)
+
+            assert len(triangular_cones.shape) == 3
+            for i, triangular_cone in enumerate(triangular_cones):
+                triangular_cone_indices = []
+                for vector in triangular_cone:
+                    # find the indices of the vectors defining the triangular cone
+                    triangular_cone_indices.append(int(  np.where( (vector == transformation.T).all(axis=1) )[0]  ))
+                yield make_sector(triangular_cone_indices, triangular_cone)
+
+        else:
+            yield make_sector(cone_indices, cone)
