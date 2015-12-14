@@ -108,11 +108,8 @@ class Polytope(object):
             It is designed for `normaliz` version 3.0.0
 
         :param normaliz:
-            string or None;
-            If this is None, return the `normaliz` run card
-            as string.
-            Otherwise, this specifies the shell command to
-            run `normaliz`.
+            string;
+            The shell command to run `normaliz`.
 
         :param workdir:
             string;
@@ -249,11 +246,8 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
         The defining rays of the cone.
 
     :param normaliz:
-        string or None;
-        If this is None, return the `normaliz` run card
-        as string.
-        Otherwise, this specifies the shell command to
-        run `normaliz`.
+        string;
+        The shell command to run `normaliz`.
 
     :param workdir:
         string;
