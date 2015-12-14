@@ -1,6 +1,6 @@
 """The iterative sector decomposition routines"""
 
-from .common import Sector
+from .common import Sector, refactorize
 from ..algebra import Polynomial, Product
 from ..misc import powerset
 import numpy as np
@@ -87,39 +87,6 @@ class EndOfDecomposition(Exception):
 
     '''
     pass
-
-# TODO: move to more general module since it is also used in the geomethod
-def refactorize(polyprod, parameter=None):
-    '''
-    In a :class:`.algebra.Product` of
-    the form `<monomial> * <polynomial>`, check if
-    a parameter in `<polynomial>` can be shifted to
-    the `<monomial>`.
-    If possible, modify `polyprod` accordingly.
-
-    :param polyprod:
-        :class:`.algebra.Product` of the
-        form <monomial> * <polynomial>`;
-        The product to refactorize.
-
-    :param parameter:
-        integer, optional;
-        Check only the parameter with this index.
-        If not provided, all parameters are checked.
-
-    '''
-    if parameter is None:
-        for i in range(polyprod.number_of_variables):
-            refactorize(polyprod, i)
-        return
-
-    expolist_mono = polyprod.factors[0].expolist
-    expolist_poly = polyprod.factors[1].expolist
-
-    factorizable_power = expolist_poly[:,parameter].min()
-
-    expolist_mono[:,parameter] += factorizable_power
-    expolist_poly[:,parameter] -= factorizable_power
 
 def remap_parameters(singular_parameters, Jacobian, *polynomials):
     r'''

@@ -78,3 +78,35 @@ class Sector(object):
     def copy(self):
         "Return a copy of a :class:`.Sector`."
         return Sector(self.cast, self.other, self.Jacobian)
+
+def refactorize(polyprod, parameter=None):
+    '''
+    In a :class:`.algebra.Product` of
+    the form `<monomial> * <polynomial>`, check if
+    a parameter in `<polynomial>` can be shifted to
+    the `<monomial>`.
+    If possible, modify `polyprod` accordingly.
+
+    :param polyprod:
+        :class:`.algebra.Product` of the
+        form <monomial> * <polynomial>`;
+        The product to refactorize.
+
+    :param parameter:
+        integer, optional;
+        Check only the parameter with this index.
+        If not provided, all parameters are checked.
+
+    '''
+    if parameter is None:
+        for i in range(polyprod.number_of_variables):
+            refactorize(polyprod, i)
+        return
+
+    expolist_mono = polyprod.factors[0].expolist
+    expolist_poly = polyprod.factors[1].expolist
+
+    factorizable_power = expolist_poly[:,parameter].min()
+
+    expolist_mono[:,parameter] += factorizable_power
+    expolist_poly[:,parameter] -= factorizable_power

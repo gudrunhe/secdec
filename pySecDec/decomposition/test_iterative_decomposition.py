@@ -63,29 +63,6 @@ class TestIterativeDecomposition(unittest.TestCase):
 
         self.sector = Sector([self.F,self.U])
 
-    def test_refactorize(self):
-        prod = Product(self.Jacobian, Polynomial([(1,1,0),(1,0,1)],["-s12","-s23"]))
-
-        self.assertEqual(str(prod.factors[0]), ' + (1)')
-        self.assertEqual(str(prod.factors[1]), ' + (-s12)*x0*x1 + (-s23)*x0*x2')
-
-        copy0 = prod.copy()
-        copy1 = prod.copy()
-        copy2 = prod.copy()
-
-        refactorize(copy0) # refactorize all parameters -> should find the factorization of parameter 0
-        refactorize(copy1,0) # refactorize parameter 0 -> should find a factorization
-        refactorize(copy2,1) # refactorize parameter 1 -> should NOT find the factorization of parameter 0
-
-        self.assertEqual(str(copy0.factors[0]), str(copy1.factors[0]))
-        self.assertEqual(str(copy0.factors[1]), str(copy1.factors[1]))
-
-        self.assertEqual(str(copy1.factors[0]), ' + (1)*x0')
-        self.assertEqual(str(copy1.factors[1]), ' + (-s12)*x1 + (-s23)*x2')
-
-        self.assertEqual(str(copy2.factors[0]), ' + (1)')
-        self.assertEqual(str(copy2.factors[1]), ' + (-s12)*x0*x1 + (-s23)*x0*x2')
-
     def test_remap_parameters(self):
         remap_parameters([1,2], self.Jacobian, self.F, self.U) # modification in place
         self.assertEqual(str(self.Jacobian), " + (1)*x1")
