@@ -159,6 +159,24 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         polysum -= self.p2
         self.assertEqual(str(polysum),str(self.p0))
 
+    #@attr('active')
+    def test_pow(self):
+        self.assertRaisesRegexp(TypeError, "unsupported", lambda: self.p0 ** 'a')
+        self.assertRaisesRegexp(TypeError, "unsupported", lambda: self.p0 ** sp.sympify('a'))
+        self.assertRaisesRegexp(ValueError, "must.*nonnegative", lambda: self.p0 ** -1)
+
+        target_p0_zeroth_power = 0 * self.p0 + 1
+        p0_zeroth_power = self.p0 ** 0
+        self.assertEqual(sp.sympify(target_p0_zeroth_power - p0_zeroth_power), 0)
+
+        target_p0_third_power = self.p0 * self.p0 * self.p0
+        p0_third_power = self.p0 ** 3
+        self.assertEqual(sp.sympify(target_p0_third_power - p0_third_power), 0)
+
+        target_p1_sixth_power = self.p1 * self.p1 * self.p1 * self.p1 * self.p1 * self.p1
+        p1_sixth_power = self.p1 ** 6
+        self.assertEqual(sp.sympify(target_p1_sixth_power - p1_sixth_power), 0)
+
     def test_sympy_binding(self):
         from sympy import symbols
         a,b = symbols('a b')

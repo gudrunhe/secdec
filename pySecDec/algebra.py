@@ -227,6 +227,28 @@ class Polynomial(_Expression):
         'arithmetic negation "-self"'
         return Polynomial(self.expolist, [-coeff for coeff in self.coeffs], self.polysymbols)
 
+    def __pow__(self, exponent):
+        if not isinstance(exponent, int):
+            return NotImplemented
+        if exponent < 0:
+            raise ValueError("The exponent must be nonnegative")
+        if exponent == 0:
+            return Polynomial([[0]*self.number_of_variables], [1], self.polysymbols)
+
+        def iterative_pow(polynomial, exponent):
+            if exponent == 1:
+                return polynomial
+            half_exponent = exponent // 2
+            outpoly = iterative_pow(polynomial, half_exponent)
+            outpoly *= outpoly
+            if 2 * half_exponent == exponent: # `exponent` is even
+                return outpoly
+            # else:
+            assert 2 * half_exponent == exponent - 1 # `exponent` is odd
+            return outpoly * self
+
+        return iterative_pow(self, exponent)
+
     def simplify(self):
         '''
         Combine terms that have the same exponents of
