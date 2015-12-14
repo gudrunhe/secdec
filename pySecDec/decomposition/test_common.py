@@ -1,6 +1,6 @@
 """Unit tests for the Sector container class"""
 
-from .sector import *
+from .common import *
 from ..algebra import Polynomial, Product
 import unittest
 

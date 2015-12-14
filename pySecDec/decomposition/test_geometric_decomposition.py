@@ -1,7 +1,7 @@
 """Unit tests for the Polynomial container class"""
 
 from .geometric import *
-from .sector import Sector
+from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial
 from ..misc import argsort_2D_array
 from nose.plugins.attrib import attr

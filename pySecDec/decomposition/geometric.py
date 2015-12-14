@@ -1,5 +1,6 @@
 """The geometric sector decomposition routines"""
 
+from .common import Sector
 import subprocess, shutil, os, re, numpy as np
 
 # *********************** primary decomposition ***********************
@@ -11,7 +12,7 @@ def Cheng_Wu(sector, index=-1):
     delta according to the Cheng-Wu theorem.
 
     :param sector:
-        :class:`.sector.Sector`;
+        :class:`.Sector`;
         The container holding the polynomials (typically
         :math:`U` and :math:`F`) to eliminate the Dirac
         delta from.

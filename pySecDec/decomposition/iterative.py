@@ -1,6 +1,6 @@
 """The iterative sector decomposition routines"""
 
-from .sector import Sector
+from .common import Sector
 from ..algebra import Polynomial, Product
 from ..misc import powerset
 import numpy as np
@@ -39,7 +39,7 @@ def primary_decomposition(sector):
     r'''
     Perform the primary decomposition as described in
     chapter 3.2 (part I) of arXiv:0803.4177v2.
-    Return a list of :class:`.sector.Sector` - the primary
+    Return a list of :class:`.Sector` - the primary
     sectors.
     For `N` Feynman parameters, there are `N` primary
     sectors where the `i`-th Feynman parameter is set to
@@ -50,7 +50,7 @@ def primary_decomposition(sector):
 
 
     :param sector:
-        :class:`.sector.Sector`;
+        :class:`.Sector`;
         The container holding the polynomials (typically
         :math:`U` and :math:`F`) to eliminate the Dirac
         delta from.
@@ -172,10 +172,10 @@ def iteration_step(sector):
     '''
     Run a single step of the iterative sector decomposition as described
     in chapter 3.2 (part II) of arXiv:0803.4177v2.
-    Return an iterator of :class:`.sector.Sector` - the arising subsectors.
+    Return an iterator of :class:`.Sector` - the arising subsectors.
 
     :param sector:
-        :class:`.sector.Sector`;
+        :class:`.Sector`;
         The sector to be decomposed.
 
     '''
@@ -231,11 +231,11 @@ def iterative_decomposition(sector):
     '''
     Run the iterative sector decomposition as described
     in chapter 3.2 (part II) of arXiv:0803.4177v2.
-    Return an iterator of :class:`.sector.Sector` - the
+    Return an iterator of :class:`.Sector` - the
     arising subsectors.
 
     :param sector:
-        :class:`.sector.Sector`;
+        :class:`.Sector`;
         The sector to be decomposed.
 
     '''

@@ -1,7 +1,7 @@
 """Unit tests for the Polynomial container class"""
 
 from .iterative import *
-from .sector import Sector
+from .common import Sector
 from ..algebra import Polynomial, Product
 import numpy as np
 import unittest
