@@ -306,7 +306,7 @@ class ExponentiatedPolynomial(Polynomial):
     def _NotImplemented(self,*args,**kwargs):
         return NotImplemented
 
-    __mul__ = __rmul__ = __add__ = __radd__ = __sub__ = __rsub__ = __neg__ = _NotImplemented
+    __mul__ = __rmul__ = __add__ = __radd__ = __sub__ = __rsub__ = __neg__ = __pow__ = _NotImplemented
 
     def __repr__(self):
         if self.exponent == 1:
@@ -439,6 +439,11 @@ class LogOfPolynomial(Polynomial):
         return 'log(%s)' % Polynomial.__repr__(self)
 
     __str__ = __repr__
+
+    def _NotImplemented(self,*args,**kwargs):
+        return NotImplemented
+
+    __mul__ = __rmul__ = __add__ = __radd__ = __sub__ = __rsub__ = __neg__ = __pow__ = _NotImplemented
 
     def derive(self, index):
         '''
