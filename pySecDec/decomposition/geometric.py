@@ -1,7 +1,7 @@
 """The geometric sector decomposition routines"""
 
 from .common import Sector, refactorize
-from ..algebra import Polynomial, Product
+from ..algebra import Polynomial, Product, replace
 import subprocess, shutil, os, re, numpy as np
 
 # *********************** primary decomposition ***********************
@@ -24,8 +24,10 @@ def Cheng_Wu(sector, index=-1):
         Default: -1 (the last Feynman parameter)
 
     '''
-    raise NotImplementedError()
-    # TODO implement and test
+    Jacobian = replace(sector.Jacobian, index, value=1, remove=True)
+    other = [replace(poly, index, value=1, remove=True) for poly in sector.other]
+    cast = [Product( *(replace(product.factors[i], index, value=1, remove=True) for i in (0,1)) ) for product in sector.cast]
+    return Sector(cast, other, Jacobian)
 
 # ********************** geometric decomposition **********************
 

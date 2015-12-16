@@ -17,6 +17,23 @@ def sort_2D_array(array):
     return array[argsort_2D_array(array)]
 
 class TestGeomethod(unittest.TestCase):
+    #@attr('active')
+    def test_Cheng_Wu(self):
+        Feynman_parameters = ['x1', 'x2', 'x3']
+        poly_sympy = sp.sympify('x1*x2 + 5*x2*x3')
+        other_sympy = sp.sympify('a + x3*6')
+        poly = Polynomial.from_expression(poly_sympy, Feynman_parameters)
+        other = Polynomial.from_expression(other_sympy, Feynman_parameters)
+        sector = Sector([poly], [other])
+
+        primary_x3 = Cheng_Wu(sector)
+        self.assertEqual( (sp.sympify(primary_x3.cast[0].factors[1]) - poly_sympy.subs('x3',1)).simplify() , 0 )
+        self.assertEqual( (sp.sympify(primary_x3.other[0]) - other_sympy.subs('x3',1)).simplify() , 0 )
+
+        primary_x1 = Cheng_Wu(sector,0)
+        self.assertEqual( (sp.sympify(primary_x1.cast[0].factors[1]) - poly_sympy.subs('x1',1)).simplify() , 0 )
+        self.assertEqual( (sp.sympify(primary_x1.other[0]) - other_sympy.subs('x1',1)).simplify() , 0 )
+
     def test_convex_hull(self):
         p0 = Polynomial.from_expression('x0+x1+x0*x1', ['x0','x1'])
         p1 = Polynomial.from_expression('1+x0+x1', ['x0','x1'])
