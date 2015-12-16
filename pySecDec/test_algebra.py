@@ -5,6 +5,67 @@ import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
 
+class TestFunction(unittest.TestCase):
+    def setUp(self):
+        self.polysymbols = ['x0', 'x1', 'x2', 'x3']
+        self.arg0 = Polynomial.from_expression('x0', self.polysymbols)
+        self.arg1 = Polynomial.from_expression('x1', self.polysymbols)
+        self.simplifyable_arg = Polynomial([[0,0,1,1],[0,0,1,1],[1,0,0,0]], [1,1,1], self.polysymbols)
+        self.f = Function('f', self.arg0, self.arg1)
+        self.g = Function('g', self.arg0, self.arg1, self.simplifyable_arg)
+
+    #@attr('active')
+    def test_init(self):
+        # do not use variables defined in `setUp` here because of the last test in this function
+        polysymbols = ['x0', 'x1', 'x2', 'x3']
+        arg0 = Polynomial.from_expression('x0', polysymbols)
+        arg1 = Polynomial.from_expression('x1', polysymbols)
+        wrong_arg = Polynomial.from_expression('x4', polysymbols + ['x4'])
+        self.assertRaisesRegexp(AssertionError, 'same.*number of variables.*all arguments', Function, 'f', arg0, arg1, wrong_arg)
+        f = Function('f', arg0, arg1)
+
+        self.assertEqual(f.number_of_variables, len(polysymbols))
+        self.assertEqual( str(f) , 'f( + (1)*x0, + (1)*x1)' )
+
+        # made a copy?
+        arg0.expolist += 1
+        self.assertEqual( str(f) , 'f( + (1)*x0, + (1)*x1)' )
+
+    #@attr('active')
+    def test_copy(self):
+        f = self.f.copy()
+        f.arguments[0].expolist[:,0] = 0
+        f.arguments[0].expolist[:,1] = 1
+        self.assertNotEqual( str(self.f) , str(f) )
+        self.assertEqual( str(f) , 'f( + (1)*x1, + (1)*x1)' )
+
+    #@attr('active')
+    def test_simplify(self):
+        unsimplified_g = self.g.copy()
+        str_unsimplified_g = str(unsimplified_g)
+
+        simplified_g = unsimplified_g.simplify()
+        str_simplified_g = str(simplified_g)
+
+        self.assertNotEqual(str_simplified_g, str_unsimplified_g)
+        self.assertEqual( (sp.sympify(str_simplified_g) - sp.sympify(str_unsimplified_g)).simplify() , 0 )
+        self.assertEqual( str(self.simplifyable_arg.simplify()) , str(simplified_g.arguments[-1]) )
+
+    #@attr('active')
+    def test_derive(self):
+        # simple derivative
+        df_d0 = self.f.derive(0)
+        self.assertEqual( (sp.sympify(df_d0) - sp.sympify('df_d0(x0,x1)')).simplify() , 0 )
+
+        # g( + (1)*x0, + (1)*x1, + (1)*x2*x3 + (1)*x2*x3 + (1)*x0)
+
+        # derivatives with chain rule
+        dg_d2 = self.g.derive(2)
+        self.assertEqual( (sp.sympify(dg_d2) - sp.sympify('dg_d2(x0,x1,2*x2*x3+x0)*2*x3')).simplify() , 0 )
+
+        dg_d0 = self.g.derive(0)
+        self.assertEqual( (sp.sympify(dg_d0) - sp.sympify('dg_d0(x0,x1,2*x2*x3+x0) + dg_d2(x0,x1,2*x2*x3+x0)')).simplify() , 0 )
+
 class TestPolynomial(unittest.TestCase):
     def test_init(self):
         # Proper instantiation

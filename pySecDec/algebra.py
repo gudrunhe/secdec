@@ -1,5 +1,4 @@
 """Implementation of a simple computer algebra system"""
-# TODO: implement "Function" - a class that remembers variable transforms and derivatives and knows about the chain rule
 
 from .misc import argsort_2D_array
 import numpy as np
@@ -12,6 +11,67 @@ class _Expression(object):
 
     '''
     pass
+
+class Function(_Expression):
+    '''
+    Symbolic function that can take care of
+    parameter transformations.
+
+    :param symbol:
+        string;
+        The symbol to be used to represent
+        the `Function`.
+
+    :param arguments:
+        arbitrarily many :class:`._Expression`;
+        The arguments of the `Function`.
+
+    '''
+    def __init__(self, symbol, *arguments):
+        self.symbol = symbol
+        self.number_of_arguments = len(arguments)
+        self.number_of_variables = arguments[0].number_of_variables
+        self.arguments = []
+        for arg in arguments:
+            assert arg.number_of_variables == self.number_of_variables, 'Must have the same number of variables in all arguments.'
+            self.arguments.append(arg.copy())
+
+    def __repr__(self):
+        outstr_template = self.symbol + '(%s)'
+        str_args = ','.join(str(arg) for arg in self.arguments)
+        return outstr_template % str_args
+
+    __str__ = __repr__
+
+    def copy(self):
+        "Return a copy of a :class:`.Function`."
+        return Function(self.symbol, *self.arguments)
+
+    def simplify(self):
+        'Simplify the arguments.'
+        self.arguments = [arg.simplify() for arg in self.arguments]
+        return self
+
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+        The derivative of a function with `symbol` ``f`` by
+        some `index` is denoted as ``df_d<index>``.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        summands = []
+        for argindex, arg in enumerate(self.arguments):
+            summands.append(
+                                Product(    # chain rule
+                                            arg.derive(index),
+                                            Function('d%s_d%i'%(self.symbol,argindex), *self.arguments)
+                                       )
+                           )
+        return Sum(*summands).simplify()
 
 class Polynomial(_Expression):
     '''
@@ -341,12 +401,6 @@ class ExponentiatedPolynomial(Polynomial):
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
-
-        .. note::
-            The exponent is assumed to **NOT** depend on the
-            polynomial variables if it is not of type
-            :class:`.Product`, :class:`Sum`,
-            or :class:`Polynomial`.
 
         :param index:
             integer;
