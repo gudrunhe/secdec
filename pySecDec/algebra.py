@@ -789,8 +789,14 @@ def replace(expression, index, value, remove=False):
         for summand in expression.summands:
             outsummands.append(replace(summand,index,value,remove))
         return Sum(*outsummands)
-    else: # TODO: implement for class `Function`
-        raise TypeError('Can only operate on `Polynomial`, `Product`, and `Sum`, not `%s`' % type(expression))
+    elif isinstance(expression, Function):
+        outfunction = expression.copy()
+        outfunction.arguments = [replace(arg, index, value, remove) for arg in expression.arguments]
+        if remove:
+            outfunction.number_of_variables -= 1
+        return outfunction
+    else:
+        raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, and `Function`, not `%s`' % type(expression))
 
 def _get_symbols(expression):
     '''
@@ -805,5 +811,7 @@ def _get_symbols(expression):
         return _get_symbols(expression.summands[0])
     elif isinstance(expression, Product):
         return _get_symbols(expression.factors[0])
-    else: # TODO: implement for class `Function`
-        raise TypeError('Can only operate on `Polynomial`, `Product`, and `Sum`, not `%s`' % type(expression))
+    elif isinstance(expression, Function):
+        return _get_symbols(expression.arguments[0])
+    else:
+        raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, and `Function`, not `%s`' % type(expression))

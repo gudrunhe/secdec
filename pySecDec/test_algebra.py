@@ -535,5 +535,30 @@ class TestInsertion(unittest.TestCase):
         self.assertEqual(removed.expolist.shape[1], 1)
         self.assertEqual(removed.exponent.expolist.shape[1], 1)
 
+    #@attr('active')
+    def test_insert_in_Function(self):
+        exponent = Polynomial([(0,0),(5,0)],['E',1])
+        poly1 = ExponentiatedPolynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'],exponent)
+        poly2 = Polynomial([(1,0),(0,1)],[1,1])
+        f = Function('f', poly1, poly2)
+
+        replaced = replace(f,index=0,value=0)
+        self.assertEqual( (sp.sympify(str(replaced)) - sp.sympify('f( (A + C*x1 + D*x1**2)**(E), x1)')).simplify() , 0 )
+        self.assertEqual(replaced.number_of_variables, 2)
+        self.assertEqual(replaced.arguments[0].expolist.shape[1], 2)
+        self.assertEqual(replaced.arguments[1].expolist.shape[1], 2)
+        self.assertEqual(replaced.arguments[1].number_of_variables, 2)
+        self.assertEqual(replaced.arguments[0].exponent.number_of_variables, 2)
+        self.assertEqual(replaced.arguments[0].exponent.expolist.shape[1], 2)
+
+        removed = replace(f, index=0, value=2, remove=True)
+        self.assertEqual( (sp.sympify(str(removed)) - sp.sympify('f( (A + 2*B + C*x1 + D*x1**2)**(E + 2**5), 2 + x1)')).simplify() , 0 )
+        self.assertEqual(removed.number_of_variables, 1)
+        self.assertEqual(removed.arguments[0].expolist.shape[1], 1)
+        self.assertEqual(removed.arguments[1].expolist.shape[1], 1)
+        self.assertEqual(removed.arguments[1].number_of_variables, 1)
+        self.assertEqual(removed.arguments[0].exponent.number_of_variables, 1)
+        self.assertEqual(removed.arguments[0].exponent.expolist.shape[1], 1)
+
     def test_error(self):
         self.assertRaisesRegexp(TypeError, 'Can.*only.*Polynomial.*not.*int', replace, 3, 2, 1)
