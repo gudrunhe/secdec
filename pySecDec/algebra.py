@@ -678,7 +678,7 @@ class Product(_Expression):
             factors[i] = factor
         return Sum(*summands).simplify()
 
-def replace(expression, index, value):
+def replace(expression, index, value, remove=False):
     '''
     Replace a variable in an expression by a number or a
     symbol.
@@ -700,29 +700,40 @@ def replace(expression, index, value):
         number of sympy expression;
         The value to insert for the chosen variable.
 
+    :param remove:
+        bool;
+        Whether or not to remove the replaced
+        parameter from the ``parameters`` in the
+        `expression`.
+
     '''
     if isinstance(expression,Polynomial):
         outpoly = expression.copy()
         if isinstance(expression,ExponentiatedPolynomial):
             # replace in exponent if it has a type `replace` can handle
             try:
-                outpoly.exponent = replace(outpoly.exponent, index, value)
+                outpoly.exponent = replace(outpoly.exponent, index, value, remove)
             except TypeError:
                 pass
         powers = expression.expolist[:,index]
         outpoly.coeffs *= value**powers
-        outpoly.expolist[:,index] = 0
+        if remove:
+            outpoly.number_of_variables -= 1
+            outpoly.expolist = np.delete(outpoly.expolist, index, axis=1)
+            outpoly.polysymbols = np.delete(outpoly.polysymbols, index)
+        else:
+            outpoly.expolist[:,index] = 0
         outpoly.simplify()
         return outpoly
     elif isinstance(expression, Product):
         outfactors = []
         for factor in expression.factors:
-            outfactors.append(replace(factor,index,value))
+            outfactors.append(replace(factor,index,value,remove))
         return Product(*outfactors)
     elif isinstance(expression, Sum):
         outsummands = []
         for summand in expression.summands:
-            outsummands.append(replace(summand,index,value))
+            outsummands.append(replace(summand,index,value,remove))
         return Sum(*outsummands)
     else: # TODO: implement for class `Function`
         raise TypeError('Can only operate on `Polynomial`, `Product`, and `Sum`, not `%s`' % type(expression))

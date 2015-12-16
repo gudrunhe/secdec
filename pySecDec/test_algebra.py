@@ -416,11 +416,18 @@ class TestLogOfPolynomial(unittest.TestCase):
         target_derivative_1 = sp.sympify('1/(A*x0**2*x1 + B*x1) * (A*x0**2 + B)')
         self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
 
+#@attr('active')
 class TestInsertion(unittest.TestCase):
     def test_insert_value_polynomial(self):
         poly = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
         replaced_poly = replace(poly,index=1,value=sp.sympify('1/2'))
         self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/2 + D/4') , 0 )
+        self.assertEqual(replaced_poly.number_of_variables, 2)
+
+        removed_poly = replace(poly,index=1,value=sp.sympify('1/2'), remove=True)
+        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/2 + D/4') , 0 )
+        self.assertEqual(removed_poly.number_of_variables, 1)
+        self.assertEqual(removed_poly.expolist.shape[1], 1)
 
     def test_insert_value_polynomial_product(self):
         poly0 = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
@@ -428,19 +435,44 @@ class TestInsertion(unittest.TestCase):
         prod = Product(poly0,poly1)
         replaced_prod = replace(prod,index=1,value=0)
         self.assertEqual( (sp.sympify(str(replaced_prod)) - sp.sympify('(A + B*x0) * (E + x0**5)')).simplify() , 0 )
+        self.assertEqual(replaced_prod.number_of_variables, 2)
+
+        removed_prod = replace(prod, index=1, value=0, remove=True)
+        self.assertEqual( (sp.sympify(str(removed_prod)) - sp.sympify('(A + B*x0) * (E + x0**5)')).simplify() , 0 )
+        self.assertEqual(removed_prod.number_of_variables, 1)
+        self.assertEqual(removed_prod.factors[0].expolist.shape[1], 1)
+        self.assertEqual(removed_prod.factors[1].expolist.shape[1], 1)
 
     def test_insert_value_polynomial_sum(self):
         poly0 = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
         poly1 = Polynomial([(0,0),(5,0)],['E',1])
-        prod = Sum(poly0,poly1)
-        replaced_prod = replace(prod,index=1,value=0)
-        self.assertEqual( (sp.sympify(str(replaced_prod)) - sp.sympify('A + B*x0 + E + x0**5')).simplify() , 0 )
+        polysum = Sum(poly0,poly1)
+        replaced_sum = replace(polysum,index=1,value=0)
+        self.assertEqual( (sp.sympify(str(replaced_sum)) - sp.sympify('A + B*x0 + E + x0**5')).simplify() , 0 )
+        self.assertEqual(replaced_sum.number_of_variables, 2)
+
+        removed_sum = replace(polysum,index=1,value=0, remove=True)
+        self.assertEqual( (sp.sympify(str(removed_sum)) - sp.sympify('(A + B*x0) + (E + x0**5)')).simplify() , 0 )
+        self.assertEqual(removed_sum.number_of_variables, 1)
+        self.assertEqual(removed_sum.summands[0].expolist.shape[1], 1)
+        self.assertEqual(removed_sum.summands[1].expolist.shape[1], 1)
 
     def test_insert_in_exponent(self):
         exponent = Polynomial([(0,0),(5,0)],['E',1])
         poly1 = ExponentiatedPolynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'],exponent)
         replaced = replace(poly1,index=0,value=0)
         self.assertEqual( (sp.sympify(str(replaced)) - sp.sympify('(A + C*x1 + D*x1**2)**(E)')).simplify() , 0 )
+        self.assertEqual(replaced.number_of_variables, 2)
+        self.assertEqual(replaced.expolist.shape[1], 2)
+        self.assertEqual(replaced.exponent.number_of_variables, 2)
+        self.assertEqual(replaced.exponent.expolist.shape[1], 2)
+
+        removed = replace(poly1, index=0, value=2, remove=True)
+        self.assertEqual( (sp.sympify(str(removed)) - sp.sympify('(A + 2*B + C*x1 + D*x1**2)**(E + 2**5)')).simplify() , 0 )
+        self.assertEqual(removed.number_of_variables, 1)
+        self.assertEqual(removed.exponent.number_of_variables, 1)
+        self.assertEqual(removed.expolist.shape[1], 1)
+        self.assertEqual(removed.exponent.expolist.shape[1], 1)
 
     def test_error(self):
         self.assertRaisesRegexp(TypeError, 'Can.*only.*Polynomial.*not.*int', replace, 3, 2, 1)
