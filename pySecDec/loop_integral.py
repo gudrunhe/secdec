@@ -1,4 +1,4 @@
-"""The U, F routines"""
+"""Routines to Feynman parametrize a loop integral"""
 
 from .algebra import Polynomial
 from .misc import det, adjugate

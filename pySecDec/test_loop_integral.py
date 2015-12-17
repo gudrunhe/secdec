@@ -1,6 +1,6 @@
 """Unit tests for the U, F routines"""
 
-from .uf import *
+from .loop_integral import *
 import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
