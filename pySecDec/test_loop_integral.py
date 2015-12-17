@@ -5,8 +5,10 @@ import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
 
-def uf_generic_check(test_case, loop_momenta, propagators, result_u, result_f):
-    u,f = uf(loop_momenta,propagators)
+def uf_from_propagators_generic(test_case, loop_momenta, propagators, result_u, result_f):
+    loop_integral = LoopIntegral.from_propagators(propagators, loop_momenta, Feynman_parameters='Feynman')
+
+    u,f = loop_integral.U, loop_integral.F
 
     sympy_u = sp.sympify(str(u))
     sympy_f = sp.sympify(str(f))
@@ -20,10 +22,11 @@ def uf_generic_check(test_case, loop_momenta, propagators, result_u, result_f):
     test_case.assertEqual(zerou,0)
     test_case.assertEqual(zerof,0)
 
-class TestUF(unittest.TestCase):
+#@attr('active')
+class TestUF_FromPropagators(unittest.TestCase):
     def test_massive(self):
         # from SecDec: loop -> demos -> 6_geomethod_2L
-        uf_generic_check(self,
+        uf_from_propagators_generic(self,
             loop_momenta = ['k','l'],
             propagators = ['k**2','(k-p1)**2-m**2','(k+p2)**2-m**2','(k-l)**2',
                            '(l-p1)**2-m**2','(l+p2)**2-m**2','(l+p2+p3)**2'],
@@ -59,14 +62,14 @@ class TestUF(unittest.TestCase):
                           p3**2*x3*x5*x6""")
 
     def test_bubble_1l(self):
-        uf_generic_check(self,
+        uf_from_propagators_generic(self,
             loop_momenta = ['k1'],
             propagators = ['k1**2','(k1-p1)**2'],
             result_u = "x0 + x1",
             result_f = "-p1**2*x0*x1")
 
     def test_box_2l(self):
-        uf_generic_check(self,
+        uf_from_propagators_generic(self,
             loop_momenta = ['k1','k2'],
             propagators = ['k1**2','(k1+p2)**2','(k1-p1)**2','(k1-k2)**2',
                            '(k2+p2)**2','(k2-p1)**2','(k2+p2+p3)**2'],
@@ -106,7 +109,7 @@ class TestUF(unittest.TestCase):
 
     @attr('slow')
     def test_formfactor_4l(self):
-        uf_generic_check(self,
+        uf_from_propagators_generic(self,
             loop_momenta = ['k1','k2','k3','k4'],
             propagators = ['k1**2','k2**2','k3**2','(k3-p1)**2','(k2-k3)**2','(k2-k3-k4)**2',
                            '(k1-k2)**2','(k1-p1-p2)**2','(k1-k2+k3+k4-p1-p2)**2',
