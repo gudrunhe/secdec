@@ -264,3 +264,55 @@ class TestUF_FromPropagators(unittest.TestCase):
                               p2**2*x3*x4*x9*x10*x11 - p2**2*x0*x5*x9*x10*x11 - p2**2*x1*x5*x9*x10*x11 - p2**2*x2*x5*x9*x10*x11 - p2**2*x3*x5*x9*x10*x11 - p2**2*x2*x7*x9*x10*x11 -
                               p2**2*x3*x7*x9*x10*x11 - p2**2*x4*x7*x9*x10*x11 - p2**2*x5*x7*x9*x10*x11 - p2**2*x0*x8*x9*x10*x11 - p2**2*x1*x8*x9*x10*x11 - p2**2*x4*x8*x9*x10*x11 -
                               p2**2*x5*x8*x9*x10*x11 - p2**2*x7*x8*x9*x10*x11""")
+
+    #@attr('active')
+    def test_error_messages(self):
+        self.assertRaisesRegexp(AssertionError, '(M|m)ismatch.*propagators.*Feynman_parameters', \
+                                LoopIntegral.from_propagators, ['k1**2'], ['k1'], Feynman_parameters=['z0','z1'])
+
+    #@attr('active')
+    def test_replacement_rules_box_2L(self):
+        k1, k2, p1, p2, p3, p4, s, t = sp.symbols('k1 k2 p1 p2 p3 p4 s t')
+
+        loop_momenta = [k1, k2]
+        propagators = [k1**2,(k1+p2)**2,(k1-p1)**2,(k1-k2)**2,(k2+p2)**2,(k2-p1)**2,(k2+p2+p3)**2]
+        replacement_rules = [(p1*p1, 0),
+                             (p2*p2, 0),
+                             (p3*p3, 0),
+                             (p4*p4, 0),
+                             (p1*p2, s/2),
+                             (p2*p3, t/2),
+                             (p1*p3, -s/2-t/2)]
+        loop_integral = LoopIntegral.from_propagators(propagators, loop_momenta, replacement_rules=replacement_rules, Feynman_parameters='z')
+        U = sp.sympify(loop_integral.U)
+        F = sp.sympify(loop_integral.F)
+
+        target_U = sp.sympify('z3*(z4 + z5 + z6) + z0*(z3 + z4 + z5 + z6) + z1*(z3 + z4 + z5 + z6) + z2*(z3 + z4 + z5 + z6)')
+        target_F = sp.sympify('-(s*z3*z4*z5) + s*z2*(-(z3*z4) - z4*z5) - z0*(s*z4*z5 + t*z3*z6) - s*z1*((z3 + z4)*z5 + z2*(z3 + z4 + z5 + z6))')
+
+        self.assertEqual( (target_U - U).simplify() , 0)
+        self.assertEqual( (target_F - F).simplify() , 0)
+
+    #@attr('active')
+    def test_replacement_rules_box_1L(self):
+        loop_momenta = ['k1']
+        props = ['(k1+p1)**2 - m**2', '(k1+p1+p2)**2', '(k1+p1+p2+p3)**2', '(k1+p1+p2+p3+p4)**2']
+        replacement_rules = [('p1*p1',      's1'     ),
+                             ('p2*p2',       0       ),
+                             ('p3*p3',       0       ),
+                             ('p3*p2',     't/2'     ),
+                             ('p1*p3',   '-t/2-s/2'  ),
+                             ('p1*p2',   's/2-s1/2'  ),
+                             ('p4*p4',       0       ),
+                             ('p1*p4',   't/2-s1/2'  ),
+                             ('p2*p4', 's1/2-t/2-s/2'),
+                             ('p3*p4',     's/2'     )]
+        loop_integral = LoopIntegral.from_propagators(props, loop_momenta, replacement_rules=replacement_rules, Feynman_parameters=['z1','z2','z3','z4'])
+        U = sp.sympify(loop_integral.U)
+        F = sp.sympify(loop_integral.F)
+
+        target_U = sp.sympify('z1 + z2 + z3 + z4')
+        target_F = sp.sympify('-(t*z1*z3) - (s1*z1 + s*z2)*z4 + m**2*z1*(z1 + z2 + z3 + z4)')
+
+        self.assertEqual( (target_U - U).simplify() , 0)
+        self.assertEqual( (target_F - F).simplify() , 0)
