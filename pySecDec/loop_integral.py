@@ -206,3 +206,4 @@ class LoopIntegral(object):
                 self._F = F - self.U * self.J
                 for i,coeff in enumerate(self._F.coeffs):
                     self._F.coeffs[i] = coeff.expand().subs(self.replacement_rules)
+                self._F = self._F.simplify()
