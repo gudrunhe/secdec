@@ -7,7 +7,9 @@ use_setuptools()
 from setuptools import setup, find_packages
 
 # get the version number and author list from package
-from pySecDec import __version__, __authors__
+import sys
+sys.path.insert(0, 'pySecDec')
+from metadata import __version__, __authors__
 
 setup(
     name='pySecDec',
