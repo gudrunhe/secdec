@@ -26,7 +26,9 @@ class LoopIntegral(object):
             raise AttributeError('Use one of the named constructors.')
 
     @staticmethod
-    def from_propagators(propagators, loop_momenta, numerator=None, replacement_rules=None, Feynman_parameters='x', regulator='eps'):
+    def from_propagators(propagators, loop_momenta, external_momenta=None, symbols=None, \
+                         numerator=None, replacement_rules=None, Feynman_parameters='x', \
+                         regulator='eps'):
         r'''
         Construct the loop integral from a list of the
         loop momenta and a list of the propagators.
@@ -39,22 +41,38 @@ class LoopIntegral(object):
             iterable of strings or sympy expressions;
             The loop momenta, e.g. ['k1','k2'].
 
-        :param kinematic_invariants:
-            iterable of strings or sympy expressions;
-            The kinematic invariants of the problem;
-            i.e. the Mandelstam variables. All scalar
-            products of external momenta must be expressed
-            in terms of these invariants in the
-            `replacement_rules`.
-
-        :param masses:
+        :param external_momenta:
             iterable of strings or sympy expressions,
             optional;
-            The masses appearing in the loop integral,
-            e.g. ['m1','m2'].
+            The external momenta, e.g. ['p1','p2'].
+            Specifying the `external_momenta` is only
+            required when a `numerator` is to be
+            constructed.
+
+        :param symbols:
+            iterable of strings or sympy expressions,
+            optional;
+            Any scalar symbol that appears in the `numerator`
+            must be specified here, in particular all the
+            Mandelstam variables and masses. If a `numerator`
+            shall be constructed, all scalar products of
+            external momenta that appear in the `numerator`
+            must be expressed in terms scalars (the Mandelstam
+            variables) in the `replacement_rules`.
+            Specifying the `kinematic_invariants` is only
+            required when a `numerator` is to be constructed.
 
         :param numerator:
-            not implemented yet, optional;
+            string or sympy expression, optional;
+            The numerator of the loop integral.
+            The numerator should be a scalar; i.e. all momenta
+            should be contracted in scalar products denoted as
+            e.g. "SP(k1,k2)". The numerator should be a sum of
+            products of exclusively:
+            * numbers
+            * scalar products (e.g. "SP(p1,k1)*SP(p1,k2)")
+            * `symbols` (e.g. "m")
+            Example: 'SP(p1,k1)*SP(p1,k2) + 4*s*eps*SP(k1,k1)'
 
         :param replacement_rules:
             iterable of iterables with two strings or sympy
@@ -63,6 +81,8 @@ class LoopIntegral(object):
             momenta, e.g. definition of Mandelstam variables.
             Example: [('p1*p2', 's'), ('p1**2', 0)] where
             ``p1`` and ``p2`` are external momenta.
+            It is also possible to specify vector replacements,
+            for example [('p4', '-(p1+p2+p3)')].
 
         :param Feynman_parameters:
             iterable or string, optional;
@@ -78,8 +98,8 @@ class LoopIntegral(object):
 
         '''
         # TODO: implement numerator
-        # TODO: implement replacement rules in cut construct and in construction from propagators
-        # TODO: test case and proper implementation
+        # TODO: check that the propagators are at most quadratic in the loop momenta
+        # TODO: remove all sympy symbols from the final output U, F, and N
 
         self = LoopIntegral('using a named constructor')
 
@@ -103,7 +123,7 @@ class LoopIntegral(object):
             self.Feynman_parameters = sp.sympify(list(Feynman_parameters))
             assert len(self.Feynman_parameters) == len(self.propagators), \
                 'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
-                ( len(self.propagators) , len(self.Feynman_parameters) ) #TODO: test error message
+                ( len(self.propagators) , len(self.Feynman_parameters) )
 
         if replacement_rules is None:
             self.replacement_rules = []
@@ -112,11 +132,11 @@ class LoopIntegral(object):
             assert len(self.replacement_rules.shape) == 2, "Wrong format for `replacement_rules`" #TODO: test error message
             assert self.replacement_rules.shape[1] == 2 , "Wrong format for `replacement_rules`" #TODO: test error message
 
-
         return self
 
     @staticmethod
     def from_graph(): #TODO: What input is required for the cut construct?
+        # TODO: implement replacement rules in cut construct
         raise NotImplementedError()
         self = LoopIntegral()
         # TODO: implement cut construction
