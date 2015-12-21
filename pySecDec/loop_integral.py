@@ -28,7 +28,7 @@ class LoopIntegral(object):
     @staticmethod
     def from_propagators(propagators, loop_momenta, external_momenta=None, symbols=None, \
                          numerator=None, replacement_rules=None, Feynman_parameters='x', \
-                         regulator='eps'):
+                         regulator='eps', dimensionality='4 - 2*eps', metric='g'):
         r'''
         Construct the loop integral from a list of the
         loop momenta and a list of the propagators.
@@ -66,13 +66,25 @@ class LoopIntegral(object):
             string or sympy expression, optional;
             The numerator of the loop integral.
             The numerator should be a scalar; i.e. all momenta
-            should be contracted in scalar products denoted as
-            e.g. "SP(k1,k2)". The numerator should be a sum of
+            should be contracted in scalar products. The scalar
+            products should be in index notation e.g.
+            "k1(mu)*k2(mu)". The numerator should be a sum of
             products of exclusively:
             * numbers
-            * scalar products (e.g. "SP(p1,k1)*SP(p1,k2)")
+            * scalar products (e.g. "p1(mu)*k1(mu)*p1(nu)*k2(nu)")
             * `symbols` (e.g. "m")
-            Example: 'SP(p1,k1)*SP(p1,k2) + 4*s*eps*SP(k1,k1)'
+            Examples:
+                * 'p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)'
+                * 'p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)'
+
+            .. hint::
+                It is possible to use numbers as indices, for example
+                'p1(mu)*p2(mu)*k1(nu)*k2(nu) = p1(1)*p2(1)*k1(2)*k2(2)'.
+
+            .. warning::
+                Do **NOT** use the symbol "ScalarProduct".
+                "ScalarProduct" is internally used to group the scalar
+                products in index notation.
 
         :param replacement_rules:
             iterable of iterables with two strings or sympy
@@ -96,7 +108,20 @@ class LoopIntegral(object):
             The symbol to be used for the dimensional regulator
             (typically :math:`\epsilon` or :math:`\epsilon_D`)
 
+        :param dimensionality:
+            string or sympy symbol, optional;
+            The dimensionality; this also defines the symbol
+            to be used for the dimensional regulator (typically
+            :math:`\epsilon` or :math:`\epsilon_D`)
+
+        :param metric:
+            string or sympy symbol, optional;
+            The symbol to be used for the (Minkowski) metric
+            tensor :math:`g^{\mu\nu}`.
+
         '''
+        # TODO: explain the main member properties (U, F, numerator)
+        # TODO: carefully reread and check this documentation
         # TODO: implement numerator
         # TODO: check that the propagators are at most quadratic in the loop momenta
         # TODO: remove all sympy symbols from the final output U, F, and N
@@ -119,7 +144,7 @@ class LoopIntegral(object):
         # There should be one Feynman parameter for each propagator.
         if isinstance(Feynman_parameters, str):
             self.Feynman_parameters = [sp.sympify(Feynman_parameters + str(i)) for i in range(self.P)]
-        else: # TODO: test case for this
+        else:
             self.Feynman_parameters = sp.sympify(list(Feynman_parameters))
             assert len(self.Feynman_parameters) == len(self.propagators), \
                 'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
@@ -127,7 +152,7 @@ class LoopIntegral(object):
 
         if replacement_rules is None:
             self.replacement_rules = []
-        else: # TODO: test case if replacement rules are provided
+        else:
             self.replacement_rules = np.array(replacement_rules)
             assert len(self.replacement_rules.shape) == 2, "Wrong format for `replacement_rules`" #TODO: test error message
             assert self.replacement_rules.shape[1] == 2 , "Wrong format for `replacement_rules`" #TODO: test error message
@@ -207,10 +232,8 @@ class LoopIntegral(object):
                 sympy_J = self.propagator_sum.subs([(l,0) for l in self.loop_momenta])
                 self._J = Polynomial.from_expression(sympy_J.expand().subs(self.replacement_rules), self.Feynman_parameters)
 
-    @property
-    def U(self):
-        # equation (8) of arXiv:0803.4177: U = det(M)
-        return self.detM
+    # equation (8) of arXiv:0803.4177: U = det(M)
+    U = detM
 
     @property
     def F(self):
