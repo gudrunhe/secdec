@@ -316,3 +316,54 @@ class TestUF_FromPropagators(unittest.TestCase):
 
         self.assertEqual( (target_U - U).simplify() , 0)
         self.assertEqual( (target_F - F).simplify() , 0)
+
+class TestNumerator(unittest.TestCase):
+    #@attr('active')
+    def test_double_index_notation(self):
+        mu, nu = sp.symbols('mu nu')
+        numerator = 'k1(mu)*(k2(mu) + p1(mu)) + k2(mu)*k2(nu)*p1(mu)*p2(nu)'
+        loop_momenta = ['k1', 'k2']
+        external_momenta = ['p1', 'p2']
+        propagators = [] # dummy, do not need to specify propagators for the double index notation
+
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
+        tensors = li.numerator_tensors
+        # Note: `sympy` may reorder the terms
+        target_tensors = [
+                            [(0,mu),(1,mu)], # (loop_momenta[0], index), (loop_momenta[1], index)
+                            [(0,mu)],        # (loop_momenta[0], index)
+                            [(1,mu),(1,nu)], # (loop_momenta[0], index), (loop_momenta[1], index)
+                         ]
+
+        self.assertEqual(len(tensors), 3)
+        for i in range(3):
+            print(i)
+            self.assertEqual(tensors[i], target_tensors[i])
+
+    def test_double_index_notation_2(self):
+        mu, nu = sp.symbols('mu nu')
+        numerator = 'k1(mu)*k2(mu)*k2(1)*k2(2)*p1(1)*p2(2)'
+        loop_momenta = ['k1', 'k2']
+        external_momenta = ['p1', 'p2']
+        propagators = [] # dummy, do not need to specify propagators for the double index notation
+
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
+        tensors = li.numerator_tensors
+        # Note: `sympy` may reorder the terms
+        target_tensors = [[(0,mu),(1,1),(1,2),(1,mu)]]
+
+        self.assertEqual(len(tensors), 1)
+        for i in range(1):
+            print(i)
+            self.assertEqual(tensors[i], target_tensors[i])
+
+# TODO: uncomment when implemented
+#    def test_error_if_index_too_often(self):
+#        mu, nu = sp.symbols('mu nu')
+#        numerator = 'k1(mu)*k2(mu)*k2(1)*k2(2)*p1(1)*p2(2)*p1(mu)'
+#        loop_momenta = ['k1', 'k2']
+#        external_momenta = ['p1', 'p2']
+#        propagators = [] # dummy, do not need to specify propagators for the double index notation
+#
+#        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
+#        self.assertRaisesRegexp(AssertionError, '(E|e)ach.*index.*(exactly|at most).*(twice|two times)', lambda: li.numerator)

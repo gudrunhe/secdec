@@ -157,6 +157,15 @@ class LoopIntegral(object):
             assert len(self.replacement_rules.shape) == 2, "Wrong format for `replacement_rules`" #TODO: test error message
             assert self.replacement_rules.shape[1] == 2 , "Wrong format for `replacement_rules`" #TODO: test error message
 
+        if numerator is None: # TODO: test case for all this
+            self.numerator = None
+        else:
+            self.numerator_input = sp.sympify(numerator).expand()
+            if self.numerator_input.is_Add:
+                self.numerator_input_terms = list(self.numerator_input.args)
+            else:
+                self.numerator_input_terms = [self.numerator_input]
+
         return self
 
     @staticmethod
@@ -250,3 +259,31 @@ class LoopIntegral(object):
                 for i,coeff in enumerate(self._F.coeffs):
                     self._F.coeffs[i] = coeff.expand().subs(self.replacement_rules)
                 self._F = self._F.simplify()
+
+    @property
+    def numerator_tensors(self):
+        '''
+        Return the tensor structure of the numerator
+        encoded in double indices. The first index
+        of each pair is the position of the loop
+        momentum in ``self.loop_momenta``, the second
+        index is the contraction index.
+
+        '''
+        while True:
+            try:
+                return self._numerator_tensors
+            except AttributeError:
+                wildcard_index = sp.Wild('wildcard_index')
+                self._numerator_tensors = []
+                for term in self.numerator_input_terms:
+                    current_tensor = []
+                    for arg in term.args:
+                        # search for ``loop_momentum(index)``
+                        if not arg.is_Function:
+                            continue
+                        for i,loop_momentum in enumerate(self.loop_momenta):
+                            indexdict = arg.match(loop_momentum(wildcard_index))
+                            if indexdict is not None: # expression matches
+                                current_tensor.append((i,indexdict[wildcard_index]))
+                    self._numerator_tensors.append(current_tensor)
