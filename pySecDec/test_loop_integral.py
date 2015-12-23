@@ -357,6 +357,38 @@ class TestNumerator(unittest.TestCase):
             print(i)
             self.assertEqual(tensors[i], target_tensors[i])
 
+    #@attr('active')
+    def test_tensor_numerator_bubble_1L(self): #TODO: test case for contracted loop momenta
+        numerator = 'k(1)*k(2)*k(3)*k(4)'
+        loop_momenta = ['k']
+        external_momenta = ['p']
+        propagators = ['k**2', '(k - p)**2']
+
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'])
+        tensors = li.numerator_loop_tensors
+        # Note: `sympy` may reorder the terms
+        target_tensors = [[(0,1),(0,2),(0,3),(0,4)]]
+
+        self.assertEqual(len(tensors), 1)
+        for i in range(1):
+            print(i)
+            self.assertEqual(tensors[i], target_tensors[i])
+
+        numerator = li.numerator
+        target_numerator = sp.sympify('''
+                                             scalar_factor(0)*p(1)*x2*p(2)*x2*p(3)*x2*p(4)*x2 +
+                                             g(1,2) * scalar_factor(2)*p(3)*x2*p(4)*x2 +
+                                             g(1,3) * scalar_factor(2)*p(2)*x2*p(4)*x2 +
+                                             g(1,4) * scalar_factor(2)*p(2)*x2*p(3)*x2 +
+                                             g(2,3) * scalar_factor(2)*p(1)*x2*p(4)*x2 +
+                                             g(2,4) * scalar_factor(2)*p(1)*x2*p(3)*x2 +
+                                             g(3,4) * scalar_factor(2)*p(1)*x2*p(2)*x2 +
+                                             g(1,2) * g(3,4) * scalar_factor(4) +
+                                             g(1,3) * g(2,4) * scalar_factor(4) +
+                                             g(1,4) * g(2,3) * scalar_factor(4)
+                                      ''')
+        self.assertEqual( (numerator - target_numerator).simplify() , 0 )
+
 # TODO: uncomment when implemented
 #    def test_error_if_index_too_often(self):
 #        mu, nu = sp.symbols('mu nu')

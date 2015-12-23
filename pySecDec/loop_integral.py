@@ -1,7 +1,7 @@
 """Routines to Feynman parametrize a loop integral"""
 
 from .algebra import Polynomial
-from .misc import det, adjugate
+from .misc import det, adjugate, powerset, missing, all_pairs
 import sympy as sp
 import numpy as np
 
@@ -28,7 +28,7 @@ class LoopIntegral(object):
     @staticmethod
     def from_propagators(propagators, loop_momenta, external_momenta=None, symbols=None, \
                          numerator=None, replacement_rules=None, Feynman_parameters='x', \
-                         regulator='eps', dimensionality='4 - 2*eps', metric='g'):
+                         regulator='eps', dimensionality='4 - 2*eps', metric_tensor='g'):
         r'''
         Construct the loop integral from a list of the
         loop momenta and a list of the propagators.
@@ -114,7 +114,7 @@ class LoopIntegral(object):
             to be used for the dimensional regulator (typically
             :math:`\epsilon` or :math:`\epsilon_D`)
 
-        :param metric:
+        :param metric_tensor:
             string or sympy symbol, optional;
             The symbol to be used for the (Minkowski) metric
             tensor :math:`g^{\mu\nu}`.
@@ -167,6 +167,10 @@ class LoopIntegral(object):
                 self.numerator_input_terms = list(self.numerator_input.args)
             else:
                 self.numerator_input_terms = [self.numerator_input]
+
+        self.metric_tensor = sp.sympify(metric_tensor) # TODO: assert this is a symbol
+
+        self.external_momenta = sp.sympify(external_momenta) # TODO: assert all these are symbols
 
         return self
 
@@ -263,7 +267,7 @@ class LoopIntegral(object):
                 self._F = self._F.simplify()
 
     @property
-    def numerator_loop_tensors(self):
+    def numerator_loop_tensors(self): # TODO: implement a similar property for external momenta
         '''
         Return the tensor structure of the numerator
         encoded in double indices. The first index
@@ -289,3 +293,63 @@ class LoopIntegral(object):
                             if indexdict is not None: # expression matches
                                 current_tensor.append((i,indexdict[wildcard_index]))
                     self._numerator_loop_tensors.append(current_tensor)
+
+    @property
+    def numerator(self):
+        while True:
+            try:
+                return self._numerator
+            except AttributeError:
+                # TODO: clean this mess up
+
+                # implementation according to section 2 in arXiv:1010.1667
+                scalar_factor, F, A, P = sp.symbols('scalar_factor F A P') # TODO: which of these symbols are really needed?
+                proj = sp.symbols('proj') # TODO: remove
+
+                numerator = 0
+
+                aM = self.aM
+                Q = self.Q
+                g = self.metric_tensor
+
+                # `scalar_factor` is the `r` dependent factor in the sum of equation (2.5) in arXiv:1010.1667v1
+                # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
+
+                for term in self.numerator_loop_tensors:
+                # TODO: replace by ``for loop_term, external_term in zip(self.numerator_loop_tensors, self.numerator_external_tensors)``
+                    # `this_tensor_terms` corresponds to the tensor part of the sum in equation (2.5) of arXiv:1010.1667v1
+                    this_tensor_terms = []
+                    for A_indices in powerset(term, stride=2):
+                        r = len(A_indices)
+                        P_indices = missing(term, A_indices)
+                        # print 'A_indices', A_indices
+                        # symmetrization of calA
+                        for metric_tensor_indices in all_pairs(A_indices):
+                            metric_tensor_part = 1
+                            # print 'metric_tensor_indices', metric_tensor_indices
+                            for metric_index_pair in metric_tensor_indices:
+                                # print 'metric_index_pair', metric_index_pair
+                                metric_tensor_part *= aM[metric_index_pair[0][0],metric_index_pair[1][0]]*g(metric_index_pair[0][1], metric_index_pair[1][1])
+
+                            external_momenta_part = 1
+                            for i in range(len(P_indices)):
+                                external_momenta_part *= sp.sympify(aM[P_indices[i][0]].dot(Q)).subs([(p, p(P_indices[i][1])) for p in self.external_momenta])
+                                # print 'external_momenta_part', external_momenta_part
+
+                            this_tensor_terms.append([scalar_factor(r), metric_tensor_part, external_momenta_part])
+
+                    numerator += sum(t[0]*t[1]*t[2] for t in this_tensor_terms)
+
+                    # print '\nfinal numerator:'
+                    # print numerator
+
+                    return numerator
+
+                        #                            r , <indices on the metric tensors> , <indices on calP>                         symmetrization of calA
+                        #this_tensor_terms.extend([[ r ,          metric_indices         ,     P_indices     ] for metric_indices in  all_pairs(A_indices)  ])
+
+                    # print 'this_tensor_terms', this_tensor_terms
+
+                    # TODO: Insert the tensor expressions that carry the indices stored in `this_tensor_terms`.
+                    # TODO: Multiply by the corresponding term in `self.numerator_external_tensors`
+                    # TODO: Contract indices if possible using the `self.replacement_rules`
