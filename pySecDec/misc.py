@@ -59,6 +59,32 @@ def missing(full, part):
             missing.append(item)
     return missing
 
+def all_pairs(iterable):
+    '''
+    Return all possible pairs of a given set.
+    all_pairs([1,2,3,4]) --> [(1,2),(3,4)] [(1,3),(2,4)] [(1,4),(2,3)]
+
+    :param iterable:
+        iterable;
+        The set to be split into all possible pairs.
+
+    '''
+    # the following iterative routine is taken from
+    # http://stackoverflow.com/questions/5360220/how-to-split-a-list-into-pairs-in-all-possible-ways
+    def all_pairs_recursion(lst):
+        if len(lst) < 2:
+            yield lst
+            return
+        a = lst[0]
+        for i in range(1,len(lst)):
+            pair = (a,lst[i])
+            for rest in all_pairs_recursion(lst[1:i]+lst[i+1:]):
+                yield [pair] + rest
+
+    lst = iterable if isinstance(iterable, list) else list(iterable)
+    assert len(lst) % 2 == 0, '`iterable` must have even length'
+    return all_pairs_recursion(lst)
+
 def det(M):
     '''
     Calculate the determinant of a matrix.

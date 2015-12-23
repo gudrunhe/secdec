@@ -62,6 +62,21 @@ class TestMissing(unittest.TestCase):
             self.assertEqual(powerset_item, target_powerset_4[i])
             self.assertEqual(missing(full_set, powerset_item), list(target_missing_in_powerset_4[i]))
 
+class TestAllPairs(unittest.TestCase):
+    #@attr('active')
+    def test_error_input_not_even(self):
+        self.assertRaisesRegexp(AssertionError, 'even', all_pairs, [1,2,3])
+
+    #@attr('active')
+    def test_partitioning(self):
+        # list input
+        lst = [1,2,3,4]
+        self.assertEqual(list(all_pairs(lst)), [[(1,2),(3,4)], [(1,3),(2,4)], [(1,4),(2,3)]])
+
+        # iterator input
+        generator = (i for i in lst)
+        self.assertEqual(list(all_pairs(generator)), [[(1,2),(3,4)], [(1,3),(2,4)], [(1,4),(2,3)]])
+
 class TestDet(unittest.TestCase):
     def test_calculation(self):
         M1 = [[1,1],
