@@ -73,6 +73,7 @@ class LoopIntegral(object):
             * numbers
             * scalar products (e.g. "p1(mu)*k1(mu)*p1(nu)*k2(nu)")
             * `symbols` (e.g. "m")
+
             Examples:
                 * 'p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)'
                 * 'p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)'

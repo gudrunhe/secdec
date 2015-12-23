@@ -7,7 +7,8 @@ import numpy as np
 def powerset(iterable, exclude_empty=False, stride=1):
     """
     Return an iterator over the powerset of a given set.
-    powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
+    ``powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3)
+    (2,3) (1,2,3)``
 
     :param iterable:
         iterable;
@@ -22,7 +23,8 @@ def powerset(iterable, exclude_empty=False, stride=1):
         integer;
         Only generate sets that have a multiple of
         `stride` elements.
-        powerset([1,2,3], stride=2) --> () (1,2) (1,3) (2,3)
+        ``powerset([1,2,3], stride=2) --> () (1,2) (1,3)
+        (2,3)``
 
     """
     # taken from python's own documentation
@@ -38,8 +40,8 @@ def missing(full, part):
     Return the elements of `full` that have to
     be appended to `part` such that `full` is
     a subset of `part`.
-    missing([1,2,3], [1]) --> [2,3]
-    missing([1,2,3], [1,'a']) --> [2,3]
+    ``missing([1,2,3], [1]) --> [2,3]``
+    ``missing([1,2,3], [1,'a']) --> [2,3]``
 
     :param full:
         iterable;
@@ -62,7 +64,8 @@ def missing(full, part):
 def all_pairs(iterable):
     '''
     Return all possible pairs of a given set.
-    all_pairs([1,2,3,4]) --> [(1,2),(3,4)] [(1,3),(2,4)] [(1,4),(2,3)]
+    ``all_pairs([1,2,3,4]) --> [(1,2),(3,4)]
+    [(1,3),(2,4)] [(1,4),(2,3)]``
 
     :param iterable:
         iterable;
@@ -145,14 +148,20 @@ def adjugate(M):
     return adjugate_M
 
 def argsort_2D_array(array):
-    '''
+    r'''
     Sort a 2D array according to its row entries.
     The idea is to bring identical rows together.
 
     Example:
-        [[1,2,3],         [[1,2,3],
-         [2,3,4],  --->    [1,2,3],
-         [1,2,3]]          [2,3,4]]
+        +-------+--------+-------+
+        | input |        |sorted |
+        +=======+========+=======+
+        | 1 2 3 |        | 1 2 3 |
+        +-------+--------+-------+
+        | 2 3 4 |        | 1 2 3 |
+        +-------+--------+-------+
+        | 1 2 3 |        | 2 3 4 |
+        +-------+--------+-------+
 
     Return the indices like numpy's :func:`argsort`
     would.
