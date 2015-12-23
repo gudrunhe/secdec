@@ -4,7 +4,7 @@ from itertools import chain,combinations
 import sympy as sp
 import numpy as np
 
-def powerset(iterable,exclude_empty=False):
+def powerset(iterable, exclude_empty=False, stride=1):
     """
     Return an iterator over the powerset of a given set.
     powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
@@ -18,10 +18,16 @@ def powerset(iterable,exclude_empty=False):
         If True, skip the empty set in the powerset.
         Default is False.
 
+    :param stride:
+        integer;
+        Only generate sets that have a multiple of
+        `stride` elements.
+        powerset([1,2,3], stride=2) --> () (1,2) (1,3) (2,3)
+
     """
     # taken from python's own documentation
     s = list(iterable)
-    powerset_iterator = iter(chain.from_iterable(combinations(s, r) for r in range(len(s)+1)))
+    powerset_iterator = iter(chain.from_iterable(combinations(s, r) for r in range(0,len(s)+1,stride)))
     if exclude_empty:
         # The first element of the iterator is the empty set -> discard
         next(powerset_iterator)
