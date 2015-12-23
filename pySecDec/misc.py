@@ -33,6 +33,32 @@ def powerset(iterable, exclude_empty=False, stride=1):
         next(powerset_iterator)
     return powerset_iterator
 
+def missing(full, part):
+    '''
+    Return the elements of `full` that have to
+    be appended to `part` such that `full` is
+    a subset of `part`.
+    missing([1,2,3], [1]) --> [2,3]
+    missing([1,2,3], [1,'a']) --> [2,3]
+
+    :param full:
+        iterable;
+        The set of elements to complete `part`
+        with.
+
+    :param part:
+        iterable;
+        The set to be completed to a superset
+        of `full`.
+
+    '''
+    part = list(part)
+    missing = []
+    for item in full:
+        if item not in part:
+            missing.append(item)
+    return missing
+
 def det(M):
     '''
     Calculate the determinant of a matrix.

@@ -42,6 +42,26 @@ class TestPowerset(unittest.TestCase):
         self.assertEqual(list(powerset(range(4),stride=3)), [(),(0,1,2),(0,1,3),(0,2,3),(1,2,3)])
         self.assertEqual(list(powerset(range(4),stride=2,exclude_empty=True)), [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)])
 
+class TestMissing(unittest.TestCase):
+    #@attr('active')
+    def test_missing(self):
+        self.assertEqual(missing([1,2,3], [1,2]), [3])
+        self.assertEqual(missing(['a','b','c','d','e','f'], ['a','e','d']), ['b','c','f'])
+
+    #@attr('active')
+    def test_in_combination_with_powerset(self):
+        full_set = list(range(4))
+        powerset_4_generator = powerset(full_set)
+        target_powerset_4 = [(),(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)]
+
+        target_missing_in_powerset_4 = list(target_powerset_4)
+        target_missing_in_powerset_4.reverse()
+
+        for i, powerset_item in enumerate(powerset_4_generator):
+            print(i)
+            self.assertEqual(powerset_item, target_powerset_4[i])
+            self.assertEqual(missing(full_set, powerset_item), list(target_missing_in_powerset_4[i]))
+
 class TestDet(unittest.TestCase):
     def test_calculation(self):
         M1 = [[1,1],
