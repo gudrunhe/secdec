@@ -120,6 +120,8 @@ class LoopIntegral(object):
             tensor :math:`g^{\mu\nu}`.
 
         '''
+        # TODO: numerator implementation according to arXiv:1010.1667
+        # TODO: allow tensor numerators --> correct documentation
         # TODO: explain the main member properties (U, F, numerator)
         # TODO: carefully reread and check this documentation
         # TODO: implement numerator
@@ -158,7 +160,7 @@ class LoopIntegral(object):
             assert self.replacement_rules.shape[1] == 2 , "Wrong format for `replacement_rules`" #TODO: test error message
 
         if numerator is None: # TODO: test case for all this
-            self.numerator = None
+            self._numerator = None
         else:
             self.numerator_input = sp.sympify(numerator).expand()
             if self.numerator_input.is_Add:
@@ -261,7 +263,7 @@ class LoopIntegral(object):
                 self._F = self._F.simplify()
 
     @property
-    def numerator_tensors(self):
+    def numerator_loop_tensors(self):
         '''
         Return the tensor structure of the numerator
         encoded in double indices. The first index
@@ -272,10 +274,10 @@ class LoopIntegral(object):
         '''
         while True:
             try:
-                return self._numerator_tensors
+                return self._numerator_loop_tensors
             except AttributeError:
                 wildcard_index = sp.Wild('wildcard_index')
-                self._numerator_tensors = []
+                self._numerator_loop_tensors = []
                 for term in self.numerator_input_terms:
                     current_tensor = []
                     for arg in term.args:
@@ -286,4 +288,4 @@ class LoopIntegral(object):
                             indexdict = arg.match(loop_momentum(wildcard_index))
                             if indexdict is not None: # expression matches
                                 current_tensor.append((i,indexdict[wildcard_index]))
-                    self._numerator_tensors.append(current_tensor)
+                    self._numerator_loop_tensors.append(current_tensor)

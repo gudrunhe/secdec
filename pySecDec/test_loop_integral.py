@@ -327,7 +327,7 @@ class TestNumerator(unittest.TestCase):
         propagators = [] # dummy, do not need to specify propagators for the double index notation
 
         li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
-        tensors = li.numerator_tensors
+        tensors = li.numerator_loop_tensors
         # Note: `sympy` may reorder the terms
         target_tensors = [
                             [(0,mu),(1,mu)], # (loop_momenta[0], index), (loop_momenta[1], index)
@@ -348,7 +348,7 @@ class TestNumerator(unittest.TestCase):
         propagators = [] # dummy, do not need to specify propagators for the double index notation
 
         li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
-        tensors = li.numerator_tensors
+        tensors = li.numerator_loop_tensors
         # Note: `sympy` may reorder the terms
         target_tensors = [[(0,mu),(1,1),(1,2),(1,mu)]]
 
