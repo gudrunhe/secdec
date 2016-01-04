@@ -250,17 +250,28 @@ class LoopIntegral(object):
 
         '''
         wildcard_index = sp.Wild('wildcard_index')
+        def append_double_index(expr, lst):
+            '''
+            Append the double index of an expression of the form
+            ``<loop_momentum>(<index>)`` to `lst`.
+
+            '''
+            for i,loop_momentum in enumerate(self.loop_momenta):
+                indexdict = expr.match(loop_momentum(wildcard_index))
+                if indexdict is not None: # expression matches
+                    lst.append((i,indexdict[wildcard_index]))
+
         numerator_loop_tensors = []
         for term in self.numerator_input_terms:
             current_tensor = []
-            for arg in term.args:
-                # search for ``loop_momentum(index)``
-                if not arg.is_Function:
-                    continue
-                for i,loop_momentum in enumerate(self.loop_momenta):
-                    indexdict = arg.match(loop_momentum(wildcard_index))
-                    if indexdict is not None: # expression matches
-                        current_tensor.append((i,indexdict[wildcard_index]))
+            if term.is_Function: # catch special case ``term = <loop momentum>(<index>)``
+                append_double_index(term, current_tensor)
+            else:
+                for arg in term.args:
+                    # search for ``loop_momentum(index)``
+                    if not arg.is_Function:
+                        continue
+                    append_double_index(arg, current_tensor)
             numerator_loop_tensors.append(current_tensor)
         return numerator_loop_tensors
 

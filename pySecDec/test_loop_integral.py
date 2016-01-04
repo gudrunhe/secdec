@@ -340,6 +340,20 @@ class TestNumerator(unittest.TestCase):
             print(i)
             self.assertEqual(tensors[i], target_tensors[i])
 
+    #@attr('active')
+    def test_double_index_notation_special_case(self):
+        mu = sp.symbols('mu')
+        numerator = 'k1(mu)'
+        loop_momenta = ['k1', 'k2']
+        external_momenta = ['p1', 'p2']
+        propagators = [] # dummy, do not need to specify propagators for the double index notation
+
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
+        tensors = li.numerator_loop_tensors
+
+        target_tensors = [  [(0,mu)]  ]
+        self.assertEqual(tensors, target_tensors)
+
     def test_double_index_notation_2(self):
         mu, nu = sp.symbols('mu nu')
         numerator = 'k1(mu)*k2(mu)*k2(1)*k2(2)*p1(1)*p2(2)'
