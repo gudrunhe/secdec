@@ -36,7 +36,7 @@ clean:
 	rm -f ./*.pyc
 	find -P . -name '*.pyc' -delete
 
-	#remove .pyc files crated by python 3
+	#remove .pyc files created by python 3
 	rm -rf ./__pycache__
 	find -P . -name __pycache__ -delete
 
