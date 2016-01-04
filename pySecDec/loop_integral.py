@@ -307,8 +307,7 @@ class LoopIntegral(object):
         # TODO: clean this mess up
 
         # implementation according to section 2 in arXiv:1010.1667
-        scalar_factor, F, A, P = sp.symbols('scalar_factor F A P') # TODO: which of these symbols are really needed?
-        proj = sp.symbols('proj') # TODO: remove
+        scalar_factor = sp.symbols('scalar_factor') # TODO: let the user define this symbol
 
         numerator = 0
 
@@ -319,13 +318,12 @@ class LoopIntegral(object):
         # `scalar_factor` is the `r` dependent factor in the sum of equation (2.5) in arXiv:1010.1667v1
         # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
 
-        for term in self.numerator_loop_tensors:
-        # TODO: replace by ``for loop_term, external_term in zip(self.numerator_loop_tensors, self.numerator_external_tensors)``
+        for loop_tensor, external_tensor in zip(self.numerator_loop_tensors, self.numerator_external_tensors):
             # `this_tensor_terms` corresponds to the tensor part of the sum in equation (2.5) of arXiv:1010.1667v1
             this_tensor_terms = []
-            for A_indices in powerset(term, stride=2):
+            for A_indices in powerset(loop_tensor, stride=2):
                 r = len(A_indices)
-                P_indices = missing(term, A_indices)
+                P_indices = missing(loop_tensor, A_indices)
                 # print 'A_indices', A_indices
                 # symmetrization of calA
                 for metric_tensor_indices in all_pairs(A_indices):
@@ -338,6 +336,9 @@ class LoopIntegral(object):
                     external_momenta_part = 1
                     for i in range(len(P_indices)):
                         external_momenta_part *= sp.sympify(aM[P_indices[i][0]].dot(Q)).subs([(p, p(P_indices[i][1])) for p in self.external_momenta])
+                    # multiply the `external_tensor`
+                    for i in range(len(external_tensor)):
+                        external_momenta_part *= self.external_momenta[external_tensor[i][0]](external_tensor[i][1])
                         # print 'external_momenta_part', external_momenta_part
 
                     this_tensor_terms.append([scalar_factor(r), metric_tensor_part, external_momenta_part])
@@ -349,5 +350,4 @@ class LoopIntegral(object):
 
             return numerator
 
-            # TODO: Multiply by the corresponding term in `self.numerator_external_tensors`
             # TODO: Contract indices if possible using the `self.replacement_rules`

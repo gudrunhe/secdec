@@ -384,23 +384,23 @@ class TestNumerator(unittest.TestCase):
             self.assertEqual(tensors[i], target_tensors[i])
 
     #@attr('active')
-    def test_tensor_numerator_bubble_1L(self): #TODO: test case for contracted loop momenta
-        numerator = 'k(1)*k(2)*k(3)*k(4)'
+    def test_tensor_numerator_bubble_1L(self):
+        numerator = sp.sympify('k(1)*k(2)*k(3)*k(4)')
+        contracted_numerator = numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)')
         loop_momenta = ['k']
         external_momenta = ['p']
         propagators = ['k**2', '(k - p)**2']
 
         li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'])
+        li_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=contracted_numerator, Feynman_parameters=['x1','x2'])
         tensors = li.numerator_loop_tensors
         # Note: `sympy` may reorder the terms
         target_tensors = [[(0,1),(0,2),(0,3),(0,4)]]
 
-        self.assertEqual(len(tensors), 1)
-        for i in range(1):
-            print(i)
-            self.assertEqual(tensors[i], target_tensors[i])
+        self.assertEqual(tensors, target_tensors)
 
         numerator = li.numerator
+        contracted_numerator = li_contracted.numerator
         target_numerator = sp.sympify('''
                                              scalar_factor(0)*p(1)*x2*p(2)*x2*p(3)*x2*p(4)*x2 +
                                              g(1,2) * scalar_factor(2)*p(3)*x2*p(4)*x2 +
@@ -413,7 +413,10 @@ class TestNumerator(unittest.TestCase):
                                              g(1,3) * g(2,4) * scalar_factor(4) +
                                              g(1,4) * g(2,3) * scalar_factor(4)
                                       ''')
+        target_contracted_numerator = target_numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)')
+
         self.assertEqual( (numerator - target_numerator).simplify() , 0 )
+        self.assertEqual( (contracted_numerator - target_contracted_numerator).simplify() , 0 )
 
 # TODO: uncomment when implemented
 #    def test_error_if_index_too_often(self):
