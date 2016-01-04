@@ -142,3 +142,36 @@ class TestAdjugate(unittest.TestCase):
         self.assertTrue(np.issubdtype(adjugate(M1).dtype, np.int))
         self.assertTrue(np.issubdtype(adjugate(M2).dtype, np.int))
         self.assertTrue(np.issubdtype(adjugate(M3).dtype, np.float))
+
+class TestCachedProperty(unittest.TestCase):
+    #@attr('active')
+    def test_usability(self):
+        class C(object):
+            'Sum up the numbers from one to `N`.'
+            def __init__(self, N):
+                self.N = N
+            @cached_property
+            def sum(self):
+                result = 0
+                for i in range(1, self.N + 1):
+                    result += i
+                return result
+        to_ten = C(10)
+        self.assertEqual(to_ten.sum, 1+2+3+4+5+6+7+8+9+10)
+
+    #@attr('active')
+    def test_called_only_once(self):
+        class C(object):
+            def __init__(self):
+                self.counter = 0
+            @cached_property
+            def prop(self):
+                self.counter += 1
+                return 5 + 5
+        instance = C()
+
+        self.assertEqual(instance.counter, 0)
+        for i in range(10):
+            # the method should be called only once
+            self.assertEqual(instance.prop, 10)
+            self.assertEqual(instance.counter, 1)

@@ -184,3 +184,36 @@ def argsort_2D_array(array):
     array = array.flatten()
 
     return np.argsort(array, kind='mergesort')
+
+def cached_property(method):
+    '''
+    Like the builtin `property` to be used as decorator
+    but the method is only called once per instance.
+
+    Example:
+
+    .. code-block:: python
+
+        class C(object):
+            'Sum up the numbers from one to `N`.'
+            def __init__(self, N):
+                self.N = N
+            @cached_property
+            def sum(self):
+                result = 0
+                for i in range(1, self.N + 1):
+                    result += i
+                return result
+
+    '''
+    def wrapped_method(obj):
+        try:
+            # try to return the result from cache
+            return obj.__dict__[method.__name__]
+        except KeyError:
+            # call the function once and for all
+            result = method(obj)
+            obj.__dict__[method.__name__] = result
+            return result
+    # make the method a property
+    return property(wrapped_method)
