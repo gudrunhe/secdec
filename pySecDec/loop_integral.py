@@ -27,8 +27,8 @@ class LoopIntegral(object):
 
     @staticmethod
     def from_propagators(propagators, loop_momenta, external_momenta=None, symbols=None, \
-                         numerator=None, replacement_rules=None, Feynman_parameters='x', \
-                         regulator='eps', dimensionality='4 - 2*eps', metric_tensor='g'):
+                         numerator=1, replacement_rules=None, Feynman_parameters='x', \
+                         regulator='eps', dimensionality='4-2*eps', metric_tensor='g'):
         r'''
         Construct the loop integral from a list of the
         loop momenta and a list of the propagators.
@@ -160,14 +160,11 @@ class LoopIntegral(object):
             assert len(self.replacement_rules.shape) == 2, "Wrong format for `replacement_rules`" #TODO: test error message
             assert self.replacement_rules.shape[1] == 2 , "Wrong format for `replacement_rules`" #TODO: test error message
 
-        if numerator is None: # TODO: test case for all this
-            self._numerator = None
+        self.numerator_input = sp.sympify(numerator).expand()
+        if self.numerator_input.is_Add:
+            self.numerator_input_terms = list(self.numerator_input.args)
         else:
-            self.numerator_input = sp.sympify(numerator).expand()
-            if self.numerator_input.is_Add:
-                self.numerator_input_terms = list(self.numerator_input.args)
-            else:
-                self.numerator_input_terms = [self.numerator_input]
+            self.numerator_input_terms = [self.numerator_input]
 
         self.metric_tensor = sp.sympify(metric_tensor) # TODO: assert this is a symbol
 
@@ -240,40 +237,70 @@ class LoopIntegral(object):
         return F.simplify()
 
     @cached_property
-    def numerator_loop_tensors(self): # TODO: implement a similar property for external momenta
+    def _numerator_tensors(self):
         '''
         Return the tensor structure of the numerator
-        encoded in double indices. The first index
+        encoded in double indices. The return value is
+        a tuple of two lists. In each list, the first index
         of each pair is the position of the loop
-        momentum in ``self.loop_momenta``, the second
+        momentum in ``self.loop_momenta`` or
+        ``self.external_momenta``, respectively. The second
         index is the contraction index.
+
+        Example:
+            input:
+                loop_momenta = ['k1', 'k2']
+                external_momenta = ['p1', 'p2']
+                numerator = 'k1(mu)*k2(mu) + k2(1)*k2(2)*p1(1)*p2(2)'
+
+            output:
+                numerator_loop_tensors = [[(0,mu),(1,mu)],[(1,1),(1,2)]]
+                numerator_external_tensors = [[],[(0,1),(1,2)]]
+                _numerator_tensors = (numerator_loop_tensors,
+                                      numerator_external_tensors)
 
         '''
         wildcard_index = sp.Wild('wildcard_index')
-        def append_double_index(expr, lst):
+        def append_double_index(expr, lst, momenta):
             '''
             Append the double index of an expression of the form
-            ``<loop_momentum>(<index>)`` to `lst`.
+            ``<momentum>(<index>)`` to `lst`.
+            Return ``True`` if the ``<momentum>`` matches one of
+            the `momenta`, otherwise return ``False``.
 
             '''
-            for i,loop_momentum in enumerate(self.loop_momenta):
+            for i,loop_momentum in enumerate(momenta):
                 indexdict = expr.match(loop_momentum(wildcard_index))
                 if indexdict is not None: # expression matches
                     lst.append((i,indexdict[wildcard_index]))
+                    return True
+            return False
 
         numerator_loop_tensors = []
+        numerator_external_tensors = []
         for term in self.numerator_input_terms:
-            current_tensor = []
+            current_loop_tensor = []
+            current_external_tensor = []
             if term.is_Function: # catch special case ``term = <loop momentum>(<index>)``
-                append_double_index(term, current_tensor)
+                append_double_index(term, current_loop_tensor, self.loop_momenta)
             else:
                 for arg in term.args:
-                    # search for ``loop_momentum(index)``
-                    if not arg.is_Function:
-                        continue
-                    append_double_index(arg, current_tensor)
-            numerator_loop_tensors.append(current_tensor)
-        return numerator_loop_tensors
+                    # search for ``momentum(index)``
+                    if arg.is_Function:
+                        if not append_double_index(arg, current_loop_tensor, self.loop_momenta):
+                            # continue lookup only if nothing found so far
+                            append_double_index(arg, current_external_tensor, self.external_momenta)
+            numerator_loop_tensors.append(current_loop_tensor)
+            numerator_external_tensors.append(current_external_tensor)
+        return numerator_loop_tensors, numerator_external_tensors
+
+    @cached_property
+    def numerator_loop_tensors(self):
+        return self._numerator_tensors[0]
+
+    @cached_property
+    def numerator_external_tensors(self):
+        return self._numerator_tensors[1]
 
     @cached_property
     def numerator(self):
