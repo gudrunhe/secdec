@@ -1,7 +1,7 @@
 """Routines to Feynman parametrize a loop integral"""
 
 from .algebra import Polynomial
-from .misc import det, adjugate, powerset, missing, all_pairs
+from .misc import det, adjugate, powerset, missing, all_pairs, cached_property
 import sympy as sp
 import numpy as np
 
@@ -183,91 +183,63 @@ class LoopIntegral(object):
         # TODO: implement cut construction
         return self
 
-    @property
+    @cached_property
     def propagator_sum(self):
-        while True:
-            try:
-                return self._propagator_sum
-            except AttributeError:
-                self._propagator_sum = sum(prop*FP for prop,FP in zip(self.propagators,self.Feynman_parameters)).expand()
+        return sum(prop*FP for prop,FP in zip(self.propagators,self.Feynman_parameters)).expand()
 
-    @property
+    @cached_property
     def M(self):
-        while True:
-            try:
-                return self._M
-            except AttributeError:
-                M = np.empty((self.L,self.L), dtype=object)
-                for i in range(self.L):
-                    for j in range(i,self.L):
-                        current_term = self.propagator_sum.coeff(self.loop_momenta[i]*self.loop_momenta[j])
-                        if i != j:
-                            current_term /= 2
-                        tmp = Polynomial.from_expression(current_term, self.Feynman_parameters)
-                        # all coeffs of the polynomials in M must be integer
-                        # convert to `int` since it is faster than calculating with sympy expressions
-                        tmp.coeffs = tmp.coeffs.astype(int)
-                        # M is symmetric
-                        M[j,i] = M[i,j] = tmp
-                self._M = M
+        M = np.empty((self.L,self.L), dtype=object)
+        for i in range(self.L):
+            for j in range(i,self.L):
+                current_term = self.propagator_sum.coeff(self.loop_momenta[i]*self.loop_momenta[j])
+                if i != j:
+                    current_term /= 2
+                tmp = Polynomial.from_expression(current_term, self.Feynman_parameters)
+                # all coeffs of the polynomials in M must be integer
+                # convert to `int` since it is faster than calculating with sympy expressions
+                tmp.coeffs = tmp.coeffs.astype(int)
+                # M is symmetric
+                M[j,i] = M[i,j] = tmp
+        return M
 
-    @property
+    @cached_property
     def detM(self):
-        while True:
-            try:
-                return self._detM
-            except AttributeError:
-                self._detM = det(self.M)
+        return det(self.M)
 
-    @property
+    @cached_property
     def aM(self):
-        while True:
-            try:
-                return self._aM
-            except AttributeError:
-                self._aM = adjugate(self.M)
+        return adjugate(self.M)
 
-    @property
+    @cached_property
     def Q(self):
-        while True:
-            try:
-                return self._Q
-            except AttributeError:
-                Q = np.empty(self.L, dtype=object)
-                for i in range(self.L):
-                    current_term = self.propagator_sum.coeff(self.loop_momenta[i]).subs([(l,0) for l in self.loop_momenta])/(-2)
-                    Q[i] = Polynomial.from_expression(current_term.expand().subs(self.replacement_rules), self.Feynman_parameters)
-                self._Q = Q
+        Q = np.empty(self.L, dtype=object)
+        for i in range(self.L):
+            current_term = self.propagator_sum.coeff(self.loop_momenta[i]).subs([(l,0) for l in self.loop_momenta])/(-2)
+            Q[i] = Polynomial.from_expression(current_term.expand().subs(self.replacement_rules), self.Feynman_parameters)
+        return Q
 
-    @property
+    @cached_property
     def J(self):
-        while True:
-            try:
-                return self._J
-            except AttributeError:
-                sympy_J = self.propagator_sum.subs([(l,0) for l in self.loop_momenta])
-                self._J = Polynomial.from_expression(sympy_J.expand().subs(self.replacement_rules), self.Feynman_parameters)
+        sympy_J = self.propagator_sum.subs([(l,0) for l in self.loop_momenta])
+        return Polynomial.from_expression(sympy_J.expand().subs(self.replacement_rules), self.Feynman_parameters)
 
     # equation (8) of arXiv:0803.4177: U = det(M)
     U = detM
 
-    @property
+    @cached_property
     def F(self):
-        while True:
-            try:
-                return self._F
-            except AttributeError:
-                # equation (8) of arXiv:0803.4177: F = det(M)*(Q.transpose*inverse(M)*Q-J) = (Q.transpose*adjugate(M)*Q-U*J)
-                F = 0
-                for i in range(self.L):
-                    for j in range(self.L):
-                        F += self.Q[i]*self.aM[i,j]*self.Q[j]
-                self._F = F - self.U * self.J
-                for i,coeff in enumerate(self._F.coeffs):
-                    self._F.coeffs[i] = coeff.expand().subs(self.replacement_rules)
-                self._F = self._F.simplify()
+        # equation (8) of arXiv:0803.4177: F = det(M)*(Q.transpose*inverse(M)*Q-J) = (Q.transpose*adjugate(M)*Q-U*J)
+        F = 0
+        for i in range(self.L):
+            for j in range(self.L):
+                F += self.Q[i]*self.aM[i,j]*self.Q[j]
+        F -= self.U * self.J
+        for i,coeff in enumerate(F.coeffs):
+            F.coeffs[i] = coeff.expand().subs(self.replacement_rules)
+        return F.simplify()
 
-    @property
+    @cached_property
     def numerator_loop_tensors(self): # TODO: implement a similar property for external momenta
         '''
         Return the tensor structure of the numerator
@@ -277,23 +249,20 @@ class LoopIntegral(object):
         index is the contraction index.
 
         '''
-        while True:
-            try:
-                return self._numerator_loop_tensors
-            except AttributeError:
-                wildcard_index = sp.Wild('wildcard_index')
-                self._numerator_loop_tensors = []
-                for term in self.numerator_input_terms:
-                    current_tensor = []
-                    for arg in term.args:
-                        # search for ``loop_momentum(index)``
-                        if not arg.is_Function:
-                            continue
-                        for i,loop_momentum in enumerate(self.loop_momenta):
-                            indexdict = arg.match(loop_momentum(wildcard_index))
-                            if indexdict is not None: # expression matches
-                                current_tensor.append((i,indexdict[wildcard_index]))
-                    self._numerator_loop_tensors.append(current_tensor)
+        wildcard_index = sp.Wild('wildcard_index')
+        numerator_loop_tensors = []
+        for term in self.numerator_input_terms:
+            current_tensor = []
+            for arg in term.args:
+                # search for ``loop_momentum(index)``
+                if not arg.is_Function:
+                    continue
+                for i,loop_momentum in enumerate(self.loop_momenta):
+                    indexdict = arg.match(loop_momentum(wildcard_index))
+                    if indexdict is not None: # expression matches
+                        current_tensor.append((i,indexdict[wildcard_index]))
+            numerator_loop_tensors.append(current_tensor)
+        return numerator_loop_tensors
 
     @property
     def numerator(self):
