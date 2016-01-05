@@ -399,8 +399,8 @@ class TestNumerator(unittest.TestCase):
 
         self.assertEqual(tensors, target_tensors)
 
-        numerator = li.numerator_index_notation
-        contracted_numerator = li_contracted.numerator_index_notation
+        numerator = li.numerator
+        contracted_numerator = li_contracted.numerator
         target_numerator = sp.sympify('''
                                              scalar_factor(0)*p(1)*x2*p(2)*x2*p(3)*x2*p(4)*x2 +
                                              g(1,2) * scalar_factor(2)*p(3)*x2*p(4)*x2 +
@@ -413,10 +413,46 @@ class TestNumerator(unittest.TestCase):
                                              g(1,3) * g(2,4) * scalar_factor(4) +
                                              g(1,4) * g(2,3) * scalar_factor(4)
                                       ''')
-        target_contracted_numerator = target_numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)*const')
+        target_contracted_numerator = sp.sympify('''
+                                                        scalar_factor(0)*p(1)**2*x2*p(2)**2*x2*p(3)**2*x2*p(4)**2*x2 +
+                                                        p(2)*p(2) * scalar_factor(2)*p(3)*p(3)*x2*p(4)*p(4)*x2 +
+                                                        p(3)*p(3) * scalar_factor(2)*p(2)*p(2)*x2*p(4)*p(4)*x2 +
+                                                        p(4)*p(4) * scalar_factor(2)*p(2)*p(2)*x2*p(3)*p(3)*x2 +
+                                                        p(3)*p(3) * scalar_factor(2)*p(1)*p(1)*x2*p(4)*p(4)*x2 +
+                                                        p(4)*p(4) * scalar_factor(2)*p(1)*p(1)*x2*p(3)*p(3)*x2 +
+                                                        p(4)*p(4) * scalar_factor(2)*p(1)*p(1)*x2*p(2)*p(2)*x2 +
+                                                        p(2)*p(2) * p(4)*p(4) * scalar_factor(4) +
+                                                        p(3)*p(3) * p(4)*p(4) * scalar_factor(4) +
+                                                        p(4)*p(4) * p(3)*p(3) * scalar_factor(4)
+                                                 ''') * sp.sympify('const')
 
         self.assertEqual( (numerator - target_numerator).simplify() , 0 )
         self.assertEqual( (contracted_numerator - target_contracted_numerator).simplify() , 0 )
+
+    #@attr('active')
+    def test_replacement_rules_in_numerator_bubble_1L(self):
+        numerator = sp.sympify('k(1)*k(2)*k(3)*k(4)*p(1)*p(2)*p(3)*p(4)')
+        loop_momenta = ['k']
+        external_momenta = ['p']
+        propagators = ['k**2', '(k - p)**2']
+        replacement_rules = [('p**2', 'm**2')]
+
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'], replacement_rules=replacement_rules)
+
+        target_numerator = sp.sympify('''
+                                             scalar_factor(0)*m**2*x2*m**2*x2*m**2*x2*m**2*x2 +
+                                             m**2 * scalar_factor(2)*m**2*x2*m**2*x2 +
+                                             m**2 * scalar_factor(2)*m**2*x2*m**2*x2 +
+                                             m**2 * scalar_factor(2)*m**2*x2*m**2*x2 +
+                                             m**2 * scalar_factor(2)*m**2*x2*m**2*x2 +
+                                             m**2 * scalar_factor(2)*m**2*x2*m**2*x2 +
+                                             m**2 * scalar_factor(2)*m**2*x2*m**2*x2 +
+                                             m**2 * m**2 * scalar_factor(4) +
+                                             m**2 * m**2 * scalar_factor(4) +
+                                             m**2 * m**2 * scalar_factor(4)
+                                      ''')
+
+        self.assertEqual( (li.numerator - target_numerator).simplify() , 0 )
 
 # TODO: uncomment when implemented
 #    def test_error_if_index_too_often(self):

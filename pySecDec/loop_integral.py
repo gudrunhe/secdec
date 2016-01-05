@@ -82,11 +82,6 @@ class LoopIntegral(object):
                 It is possible to use numbers as indices, for example
                 'p1(mu)*p2(mu)*k1(nu)*k2(nu) = p1(1)*p2(1)*k1(2)*k2(2)'.
 
-            .. warning::
-                Do **NOT** use the symbol "ScalarProduct".
-                "ScalarProduct" is internally used to group the scalar
-                products in index notation.
-
         :param replacement_rules:
             iterable of iterables with two strings or sympy
             expressions, optional;
@@ -317,7 +312,7 @@ class LoopIntegral(object):
         return self._numerator_tensors[2]
 
     @cached_property
-    def numerator_index_notation(self):
+    def numerator(self):
         '''
         Generate the numerator in index notation according to
         section 2 in arXiv:1010.1667.
@@ -336,6 +331,7 @@ class LoopIntegral(object):
         aM = self.aM
         Q = self.Q
         g = self.metric_tensor
+        replacement_rules = self.replacement_rules_with_dummy_indices
 
         # `self.numerator_loop_tensors`: List of double indices for the loop momenta for each term.
         # `self.numerator_external_tensors`: List of double indices for the external momenta for each term.
@@ -367,13 +363,6 @@ class LoopIntegral(object):
 
                     this_numerator_summand = scalar_factor(r) * remainder
 
-                    # ---- multiply the caligraphic "A" in equation (2.5) of arXiv:1010.1667v1. ----
-                    # `tensors_A2_indices` is a list of pairs of double indices describing one of the factors of equation (2.15) in arXiv:1010.1667v1.
-                    # The following loop inserts the definition (2.18, arXiv:1010.1667v1) for all of these pairs.
-                    for tensor_A2_indices in tensors_A2_indices:
-                        this_numerator_summand *= aM[tensor_A2_indices[0][0],tensor_A2_indices[1][0]]*g(tensor_A2_indices[0][1], tensor_A2_indices[1][1])
-                    # ------------------------------------------------------------------------------
-
                     # --------------------------- multiply the tensor "P" --------------------------
                     for external_momentum_index, Lorentz_index in P_indices:
                         this_tensor_P_factor = sp.sympify(aM[external_momentum_index].dot(Q))
@@ -382,13 +371,69 @@ class LoopIntegral(object):
                         this_numerator_summand *= this_tensor_P_factor
                     # ------------------------------------------------------------------------------
 
-                    # ----------------------- multiply the `external_tensor` -----------------------
-                    for external_momentum_index, Lorentz_index in external_tensor:
-                        this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index)
+                    # ---- multiply the caligraphic "A" in equation (2.5) of arXiv:1010.1667v1. ----
+                    # `tensors_A2_indices` is a list of pairs of double indices describing one of the factors of equation (2.15) in arXiv:1010.1667v1.
+                    # The following loop inserts the definition (2.18, arXiv:1010.1667v1) for all of these pairs.
+                    # The metric tensors in "A" can contract momenta of the `external_tensor` --> generate a list of
+                    # contractions and multiply only the uncontracted metric tensors
+                    contractions_left = []
+                    contractions_right = []
+                    contractions_unmatched = []
+                    for tensor_A2_indices in tensors_A2_indices:
+                        this_numerator_summand *= aM[tensor_A2_indices[0][0],tensor_A2_indices[1][0]] # * g(tensor_A2_indices[0][1], tensor_A2_indices[1][1])
+                        contractions_left.append(tensor_A2_indices[0][1])
+                        contractions_right.append(tensor_A2_indices[1][1])
+                        contractions_unmatched.append(True)
                     # ------------------------------------------------------------------------------
+
+                    # ----------------------- multiply the `external_tensor` -----------------------
+                    for external_momentum_index, Lorentz_index_external in external_tensor:
+                        # replace metric tensors where possible
+                        external_momentum_unmatched = True
+                        for i, (Lorentz_index_1, Lorentz_index_2, metric_unmatched) in enumerate(zip(contractions_left, contractions_right, contractions_unmatched)):
+                            if metric_unmatched:
+                                if Lorentz_index_1 == Lorentz_index_external:
+                                    contractions_unmatched[i] = external_momentum_unmatched = False
+                                    this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_2)
+                                    break
+                                if Lorentz_index_2 == Lorentz_index_external:
+                                    contractions_unmatched[i] = external_momentum_unmatched = False
+                                    this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_1)
+                                    break
+                        if external_momentum_unmatched:
+                            this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_external)
+                    # ------------------------------------------------------------------------------
+
+                    # -------------------------- multiply "A" (continued) --------------------------
+                    # multiply all unmatched metric tensors
+                    for Lorentz_index_1, Lorentz_index_2, is_unmatched in zip(contractions_left, contractions_right, contractions_unmatched):
+                        if is_unmatched:
+                            this_numerator_summand *= g(Lorentz_index_1, Lorentz_index_2)
+                    # ------------------------------------------------------------------------------
+
+                    # apply the replacement rules
+                    for rule in replacement_rules:
+                        this_numerator_summand = this_numerator_summand.replace(*rule)
 
                     numerator += this_numerator_summand
 
             return numerator
 
-            # TODO: Contract indices if possible using the `self.replacement_rules`
+    @cached_property
+    def replacement_rules_with_dummy_indices(self):
+        # dummy indices --> wildcards
+        mu = sp.Wild('wildcard_index_1')
+        nu = sp.Wild('wildcard_index_2')
+
+        all_momenta = self.loop_momenta + self.external_momenta
+
+        replacement_rules = []
+        for rule in self.replacement_rules:
+            pattern = sp.sympify(rule[0])
+            replacement = sp.sympify(rule[1])
+            for p in all_momenta:
+                pattern = pattern.replace(p, p(mu))
+                replacement = replacement.replace(p, p(mu))
+            replacement_rules.append( (pattern, replacement) )
+
+        return replacement_rules
