@@ -386,7 +386,7 @@ class TestNumerator(unittest.TestCase):
     #@attr('active')
     def test_tensor_numerator_bubble_1L(self):
         numerator = sp.sympify('k(1)*k(2)*k(3)*k(4)')
-        contracted_numerator = numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)')
+        contracted_numerator = numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)*const')
         loop_momenta = ['k']
         external_momenta = ['p']
         propagators = ['k**2', '(k - p)**2']
@@ -413,7 +413,7 @@ class TestNumerator(unittest.TestCase):
                                              g(1,3) * g(2,4) * scalar_factor(4) +
                                              g(1,4) * g(2,3) * scalar_factor(4)
                                       ''')
-        target_contracted_numerator = target_numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)')
+        target_contracted_numerator = target_numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)*const')
 
         self.assertEqual( (numerator - target_numerator).simplify() , 0 )
         self.assertEqual( (contracted_numerator - target_contracted_numerator).simplify() , 0 )

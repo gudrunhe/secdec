@@ -241,23 +241,27 @@ class LoopIntegral(object):
         '''
         Return the tensor structure of the numerator
         encoded in double indices. The return value is
-        a tuple of two lists. In each list, the first index
-        of each pair is the position of the loop
-        momentum in ``self.loop_momenta`` or
+        a triple of lists. In the first two lists, the
+        first index of each pair is the position of the
+        loop momentum in ``self.loop_momenta`` or
         ``self.external_momenta``, respectively. The second
         index is the contraction index.
+        The last list contains the remaining factors of
+        the corresponding term.
 
         Example:
             input:
                 loop_momenta = ['k1', 'k2']
                 external_momenta = ['p1', 'p2']
-                numerator = 'k1(mu)*k2(mu) + k2(1)*k2(2)*p1(1)*p2(2)'
+                numerator = 'k1(mu)*k2(mu) + A*k2(1)*k2(2)*p1(1)*p2(2)'
 
             output:
                 numerator_loop_tensors = [[(0,mu),(1,mu)],[(1,1),(1,2)]]
                 numerator_external_tensors = [[],[(0,1),(1,2)]]
+                numerator_symbols = [1, A]
                 _numerator_tensors = (numerator_loop_tensors,
-                                      numerator_external_tensors)
+                                      numerator_external_tensors,
+                                      numerator_symbols)
 
         '''
         wildcard_index = sp.Wild('wildcard_index')
@@ -278,9 +282,11 @@ class LoopIntegral(object):
 
         numerator_loop_tensors = []
         numerator_external_tensors = []
+        numerator_symbols = []
         for term in self.numerator_input_terms:
             current_loop_tensor = []
             current_external_tensor = []
+            current_remaining_factor = 1
             if term.is_Function: # catch special case ``term = <loop momentum>(<index>)``
                 append_double_index(term, current_loop_tensor, self.loop_momenta)
             else:
@@ -289,10 +295,14 @@ class LoopIntegral(object):
                     if arg.is_Function:
                         if not append_double_index(arg, current_loop_tensor, self.loop_momenta):
                             # continue lookup only if nothing found so far
-                            append_double_index(arg, current_external_tensor, self.external_momenta)
+                            if not append_double_index(arg, current_external_tensor, self.external_momenta):
+                                current_remaining_factor *= arg
+                    else:
+                        current_remaining_factor *= arg
             numerator_loop_tensors.append(current_loop_tensor)
             numerator_external_tensors.append(current_external_tensor)
-        return numerator_loop_tensors, numerator_external_tensors
+            numerator_symbols.append(current_remaining_factor)
+        return numerator_loop_tensors, numerator_external_tensors, numerator_symbols
 
     @cached_property
     def numerator_loop_tensors(self):
@@ -301,6 +311,10 @@ class LoopIntegral(object):
     @cached_property
     def numerator_external_tensors(self):
         return self._numerator_tensors[1]
+
+    @cached_property
+    def numerator_symbols(self):
+        return self._numerator_tensors[2]
 
     @cached_property
     def numerator(self):
@@ -318,7 +332,7 @@ class LoopIntegral(object):
         # `scalar_factor` is the `r` dependent factor in the sum of equation (2.5) in arXiv:1010.1667v1
         # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
 
-        for loop_tensor, external_tensor in zip(self.numerator_loop_tensors, self.numerator_external_tensors):
+        for loop_tensor, external_tensor, remainder in zip(self.numerator_loop_tensors, self.numerator_external_tensors, self.numerator_symbols):
             # `this_tensor_terms` corresponds to the tensor part of the sum in equation (2.5) of arXiv:1010.1667v1
             this_tensor_terms = []
             for A_indices in powerset(loop_tensor, stride=2):
@@ -333,7 +347,7 @@ class LoopIntegral(object):
                         # print 'metric_index_pair', metric_index_pair
                         metric_tensor_part *= aM[metric_index_pair[0][0],metric_index_pair[1][0]]*g(metric_index_pair[0][1], metric_index_pair[1][1])
 
-                    external_momenta_part = 1
+                    external_momenta_part = remainder
                     for i in range(len(P_indices)):
                         external_momenta_part *= sp.sympify(aM[P_indices[i][0]].dot(Q)).subs([(p, p(P_indices[i][1])) for p in self.external_momenta])
                     # multiply the `external_tensor`
