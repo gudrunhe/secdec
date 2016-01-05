@@ -194,7 +194,7 @@ class LoopIntegral(object):
                     current_term /= 2
                 tmp = Polynomial.from_expression(current_term, self.Feynman_parameters)
                 # all coeffs of the polynomials in M must be integer
-                # convert to `int` since it is faster than calculating with sympy expressions
+                # convert to `int` since it is faster than calculating with sympy expressions # TODO: not always possible --> try conversion but do not force it
                 tmp.coeffs = tmp.coeffs.astype(int)
                 # M is symmetric
                 M[j,i] = M[i,j] = tmp
@@ -317,11 +317,19 @@ class LoopIntegral(object):
         return self._numerator_tensors[2]
 
     @cached_property
-    def numerator(self):
-        # TODO: clean this mess up
+    def numerator_index_notation(self):
+        '''
+        Generate the numerator in index notation according to
+        section 2 in arXiv:1010.1667.
 
-        # implementation according to section 2 in arXiv:1010.1667
-        scalar_factor = sp.symbols('scalar_factor') # TODO: let the user define this symbol
+        '''
+        # The implementation below conceptually follows section 2 of arXiv:1010.1667.
+
+        # `scalar_factor` is the `r` dependent factor in the sum of equation (2.5) in arXiv:1010.1667v1
+        # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
+        scalar_factor = sp.symbols('scalar_factor')
+        # TODO: let the user define this symbol
+        # TODO: maybe use `pySecDec.algebra.Function`
 
         numerator = 0
 
@@ -329,38 +337,57 @@ class LoopIntegral(object):
         Q = self.Q
         g = self.metric_tensor
 
-        # `scalar_factor` is the `r` dependent factor in the sum of equation (2.5) in arXiv:1010.1667v1
-        # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
-
+        # `self.numerator_loop_tensors`: List of double indices for the loop momenta for each term.
+        # `self.numerator_external_tensors`: List of double indices for the external momenta for each term.
+        # `self.numerator_symbols`: List of other symbols for each term.
+        # see also: Docstring of `self._numerator_tensors` above.
+        # Loop over the terms (summands) of the numerator.
+        # Each summand is expected to be a product.
         for loop_tensor, external_tensor, remainder in zip(self.numerator_loop_tensors, self.numerator_external_tensors, self.numerator_symbols):
-            # `this_tensor_terms` corresponds to the tensor part of the sum in equation (2.5) of arXiv:1010.1667v1
-            this_tensor_terms = []
+
+            # Calculate the terms of the sum in equation (2.5) of arXiv:1010.1667v1:
+            #  * The `scalar_factor` as explained above
+            #  * The tensor "A"
+            #  * The tensor "P"
+            #  * The tensor of external momenta from the input (`external_tensor`)
+            #  * Remaining scalar factors from the input (`remainder`)
+
+            # Distribute the indices of the loop momenta over "A" (and "P") in all possible ways --> powerset
+            # Note that "A" must carry an even number of indices --> stride=2
             for A_indices in powerset(loop_tensor, stride=2):
                 r = len(A_indices)
+
+                # "P" carries the indices "A" doesn't.
                 P_indices = missing(loop_tensor, A_indices)
-                # print 'A_indices', A_indices
-                # symmetrization of calA
-                for metric_tensor_indices in all_pairs(A_indices):
-                    metric_tensor_part = 1
-                    # print 'metric_tensor_indices', metric_tensor_indices
-                    for metric_index_pair in metric_tensor_indices:
-                        # print 'metric_index_pair', metric_index_pair
-                        metric_tensor_part *= aM[metric_index_pair[0][0],metric_index_pair[1][0]]*g(metric_index_pair[0][1], metric_index_pair[1][1])
 
-                    external_momenta_part = remainder
-                    for i in range(len(P_indices)):
-                        external_momenta_part *= sp.sympify(aM[P_indices[i][0]].dot(Q)).subs([(p, p(P_indices[i][1])) for p in self.external_momenta])
-                    # multiply the `external_tensor`
-                    for i in range(len(external_tensor)):
-                        external_momenta_part *= self.external_momenta[external_tensor[i][0]](external_tensor[i][1])
-                        # print 'external_momenta_part', external_momenta_part
+                # Distribute the indices of "A" over metric tensors in a completely symmetric way.
+                # Note that "P" is already completely symmetric by definition.
+                for tensors_A2_indices in all_pairs(A_indices):
+                    # `tensors_A2_indices` corresponds to the indices in equation (2.15) in arXiv:1010.1667v1.
 
-                    this_tensor_terms.append([scalar_factor(r), metric_tensor_part, external_momenta_part])
+                    this_numerator_summand = scalar_factor(r) * remainder
 
-            numerator += sum(t[0]*t[1]*t[2] for t in this_tensor_terms)
+                    # ---- multiply the caligraphic "A" in equation (2.5) of arXiv:1010.1667v1. ----
+                    # `tensors_A2_indices` is a list of pairs of double indices describing one of the factors of equation (2.15) in arXiv:1010.1667v1.
+                    # The following loop inserts the definition (2.18, arXiv:1010.1667v1) for all of these pairs.
+                    for tensor_A2_indices in tensors_A2_indices:
+                        this_numerator_summand *= aM[tensor_A2_indices[0][0],tensor_A2_indices[1][0]]*g(tensor_A2_indices[0][1], tensor_A2_indices[1][1])
+                    # ------------------------------------------------------------------------------
 
-            # print '\nfinal numerator:'
-            # print numerator
+                    # --------------------------- multiply the tensor "P" --------------------------
+                    for external_momentum_index, Lorentz_index in P_indices:
+                        this_tensor_P_factor = sp.sympify(aM[external_momentum_index].dot(Q))
+                        # There should be eactly one external momentum in each term (summand) of `this_tensor_P_factor` --> attach the `Lorentz_index` to it
+                        this_tensor_P_factor = this_tensor_P_factor.subs((p, p(Lorentz_index)) for p in self.external_momenta)
+                        this_numerator_summand *= this_tensor_P_factor
+                    # ------------------------------------------------------------------------------
+
+                    # ----------------------- multiply the `external_tensor` -----------------------
+                    for external_momentum_index, Lorentz_index in external_tensor:
+                        this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index)
+                    # ------------------------------------------------------------------------------
+
+                    numerator += this_numerator_summand
 
             return numerator
 

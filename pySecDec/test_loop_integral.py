@@ -399,8 +399,8 @@ class TestNumerator(unittest.TestCase):
 
         self.assertEqual(tensors, target_tensors)
 
-        numerator = li.numerator
-        contracted_numerator = li_contracted.numerator
+        numerator = li.numerator_index_notation
+        contracted_numerator = li_contracted.numerator_index_notation
         target_numerator = sp.sympify('''
                                              scalar_factor(0)*p(1)*x2*p(2)*x2*p(3)*x2*p(4)*x2 +
                                              g(1,2) * scalar_factor(2)*p(3)*x2*p(4)*x2 +
