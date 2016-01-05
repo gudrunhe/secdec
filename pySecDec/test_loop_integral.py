@@ -454,6 +454,77 @@ class TestNumerator(unittest.TestCase):
 
         self.assertEqual( (li.numerator - target_numerator).simplify() , 0 )
 
+    #@attr('active')
+    def test_2L_box_with_numerator(self):
+        propagators = ['k1**2','(k1+p2)**2','(k1-p1)**2','(k1-k2)**2','(k2+p2)**2','(k2-p1)**2','(k2+p2+p3)**2']
+        numerator = '2*k1(mu)*p3(mu)'
+        loop_momenta = ['k1','k2']
+        external_momenta = ['p1','p2','p3','p4']
+        # TODO: extend this test to check replacement rules
+
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)])
+
+        # comparison with Mathematica implementation of SecDec
+        target_U = sp.sympify('''
+                                   z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) +
+                                   z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7)
+                              ''')
+        target_F = sp.sympify('''
+                                    z4*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 +
+                                    2*p2*p3 + p3*p3)*z6*z7) -
+                                    z5*(p1*p1*z6 + 2*p1*p2*z6 + p2*p2*z6 +
+                                    p3*p3*z7)) +
+                                    z2*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 +
+                                    2*p2*p3 + p3*p3)*z6*z7) -
+                                    (p1*p1 + 2*p1*p2 + p2*p2)*z3*(z4 + z5 + z6 +
+                                    z7) - z4*(p1*p1*z6 + 2*p1*p2*z6 + p2*p2*z6 +
+                                    p3*p3*z7) - z5*(p1*p1*z6 + 2*p1*p2*z6 +
+                                    p2*p2*z6 + p3*p3*z7)) +
+                                    z3*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 +
+                                    2*p2*p3 + p3*p3)*z6*z7) -
+                                    z5*(p1*p1*z6 + 2*p1*p2*z6 + p2*p2*z6 +
+                                    p3*p3*z7) - z4*(p2*p2*z5 + 2*p1*p3*z7 +
+                                    p2*p2*z7 + 2*p2*p3*z7 + p3*p3*z7 +
+                                    p1*p1*(z5 + z7) + 2*p1*p2*(z5 + z7))) +
+                                    z1*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 +
+                                    2*p2*p3 + p3*p3)*z6*z7) -
+                                    p2*p2*z2*(z4 + z5 + z6 + z7) -
+                                    p1*p1*z3*(z4 + z5 + z6 + z7) -
+                                    z5*(p1*p1*z6 + 2*p1*p2*z6 + p2*p2*z6 +
+                                    p3*p3*z7) - z4*(p1*p1*z6 + (2*p2*p3 + p3*p3)*
+                                    z7 + p2*p2*(z5 + z7)))
+                              ''')
+        target_numerator = sp.sympify('''
+                                               2*(-(p3(mu)* p3(mu)*z4*z7)
+                                             - p2(mu)* p3(mu)*(z4*(z5 + z7)
+                                             + z2*(z4 + z5 + z6 + z7))
+                                             + p1(mu)* p3(mu)*(z4*z6 + z3*(z4 + z5 + z6 + z7)))
+                                      ''') * sp.sympify('scalar_factor(0)')
+
+        self.assertEqual( (sp.sympify(li.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li.F) - target_F  ).simplify() , 0 )
+        self.assertEqual( (li.numerator - target_numerator).simplify() , 0 )
+
+        replacement_rules = [('p1**2', 0),
+                             ('p2**2', 0),
+                             ('p3**2', 0),
+                             ('p4**2', 0),
+                             ('p1*p2', 's/2'),
+                             ('p2*p3', 't/2'),
+                             ('p1*p3', '-s/2 - t/2')]
+
+        li_with_replacement_rules = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+                                                                  numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)],
+                                                                  replacement_rules=replacement_rules)
+
+        target_numerator_with_replacements = sp.sympify('''
+                                                               2*(
+                                                             - (t/2)*(z4*(z5 + z7)
+                                                             + z2*(z4 + z5 + z6 + z7))
+                                                             + (-s/2-t/2)*(z4*z6 + z3*(z4 + z5 + z6 + z7)))
+                                                        ''') * sp.sympify('scalar_factor(0)')
+        self.assertEqual( (li_with_replacement_rules.numerator - target_numerator_with_replacements).simplify() , 0 )
+
 # TODO: uncomment when implemented
 #    def test_error_if_index_too_often(self):
 #        mu, nu = sp.symbols('mu nu')
