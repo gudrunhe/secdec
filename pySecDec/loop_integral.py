@@ -312,6 +312,15 @@ class LoopIntegral(object):
         return self._numerator_tensors[2]
 
     @cached_property
+    def Lorentz_indices(self):
+        'Return a set of all appearing Lorentz indices'
+        Lorentz_indices = set()
+        for term in self.numerator_loop_tensors + self.numerator_external_tensors:
+            for momentum_index, Lorentz_index in term:
+                Lorentz_indices.add(Lorentz_index)
+        return Lorentz_indices
+
+    @cached_property
     def numerator(self):
         '''
         Generate the numerator in index notation according to
@@ -331,7 +340,7 @@ class LoopIntegral(object):
         aM = self.aM
         Q = self.Q
         g = self.metric_tensor
-        replacement_rules = self.replacement_rules_with_dummy_indices
+        replacement_rules = self.replacement_rules_with_Lorentz_indices
 
         # `self.numerator_loop_tensors`: List of double indices for the loop momenta for each term.
         # `self.numerator_external_tensors`: List of double indices for the external momenta for each term.
@@ -412,28 +421,26 @@ class LoopIntegral(object):
                     # ------------------------------------------------------------------------------
 
                     # apply the replacement rules
+                    this_numerator_summand = this_numerator_summand.expand()
                     for rule in replacement_rules:
-                        this_numerator_summand = this_numerator_summand.replace(*rule)
+                        this_numerator_summand = this_numerator_summand.subs(*rule)
 
                     numerator += this_numerator_summand
 
             return numerator
 
     @cached_property
-    def replacement_rules_with_dummy_indices(self):
-        # dummy indices --> wildcards
-        mu = sp.Wild('wildcard_index_1')
-        nu = sp.Wild('wildcard_index_2')
-
-        all_momenta = self.loop_momenta + self.external_momenta
-
+    def replacement_rules_with_Lorentz_indices(self):
         replacement_rules = []
         for rule in self.replacement_rules:
             pattern = sp.sympify(rule[0])
             replacement = sp.sympify(rule[1])
-            for p in all_momenta:
-                pattern = pattern.replace(p, p(mu))
-                replacement = replacement.replace(p, p(mu))
-            replacement_rules.append( (pattern, replacement) )
+            for mu in self.Lorentz_indices:
+                pattern_with_index = pattern
+                replacement_with_index = replacement
+                for p in self.external_momenta:
+                    pattern_with_index = pattern_with_index.subs(p, p(mu))
+                    replacement_with_index = replacement_with_index.subs(p, p(mu))
+                replacement_rules.append( (pattern_with_index, replacement_with_index) )
 
         return replacement_rules
