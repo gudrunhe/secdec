@@ -322,11 +322,12 @@ class TestNumerator(unittest.TestCase):
     def test_double_index_notation(self):
         mu, nu = sp.symbols('mu nu')
         numerator = 'k1(mu)*(k2(mu) + p1(mu)) + k2(mu)*k2(nu)*p1(mu)*p2(nu)'
+        indices = ['mu', 'nu']
         loop_momenta = ['k1', 'k2']
         external_momenta = ['p1', 'p2']
         propagators = [] # dummy, do not need to specify propagators for the double index notation
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Lorentz_indices=indices)
         loop_tensors = li.numerator_loop_tensors
         external_tensors = li.numerator_external_tensors
 
@@ -360,7 +361,7 @@ class TestNumerator(unittest.TestCase):
         external_momenta = ['p1', 'p2']
         propagators = [] # dummy, do not need to specify propagators for the double index notation
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Lorentz_indices=[mu])
         tensors = li.numerator_loop_tensors
 
         target_tensors = [  [(0,mu)]  ]
@@ -369,14 +370,15 @@ class TestNumerator(unittest.TestCase):
     def test_double_index_notation_2(self):
         mu, nu = sp.symbols('mu nu')
         numerator = 'k1(mu)*k2(mu)*k2(1)*k2(2)*p1(1)*p2(2)'
+        indices = [mu, nu, 1, 2]
         loop_momenta = ['k1', 'k2']
         external_momenta = ['p1', 'p2']
         propagators = [] # dummy, do not need to specify propagators for the double index notation
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Lorentz_indices=indices)
         tensors = li.numerator_loop_tensors
         # Note: `sympy` may reorder the terms
-        target_tensors = [[(0,mu),(1,1),(1,2),(1,mu)]]
+        target_tensors = [[(0,mu),(1,mu),(1,1),(1,2)]]
 
         self.assertEqual(len(tensors), 1)
         for i in range(1):
@@ -387,12 +389,13 @@ class TestNumerator(unittest.TestCase):
     def test_tensor_numerator_bubble_1L(self):
         numerator = sp.sympify('k(1)*k(2)*k(3)*k(4)')
         contracted_numerator = numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)*const')
+        indices = [1, 2, 3, 4]
         loop_momenta = ['k']
         external_momenta = ['p']
         propagators = ['k**2', '(k - p)**2']
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'])
-        li_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=contracted_numerator, Feynman_parameters=['x1','x2'])
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'], Lorentz_indices=indices)
+        li_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=contracted_numerator, Feynman_parameters=['x1','x2'], Lorentz_indices=indices)
         tensors = li.numerator_loop_tensors
         # Note: `sympy` may reorder the terms
         target_tensors = [[(0,1),(0,2),(0,3),(0,4)]]
@@ -432,12 +435,13 @@ class TestNumerator(unittest.TestCase):
     #@attr('active')
     def test_replacement_rules_in_numerator_bubble_1L(self):
         numerator = sp.sympify('k(1)*k(2)*k(3)*k(4)*p(1)*p(2)*p(3)*p(4)')
+        indices = [1, 2, 3, 4]
         loop_momenta = ['k']
         external_momenta = ['p']
         propagators = ['k**2', '(k - p)**2']
         replacement_rules = [('p**2', 'm**2')]
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'], replacement_rules=replacement_rules)
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'], replacement_rules=replacement_rules, Lorentz_indices=indices)
 
         target_numerator = sp.sympify('''
                                              scalar_factor(0)*m**2*x2*m**2*x2*m**2*x2*m**2*x2 +
@@ -457,12 +461,11 @@ class TestNumerator(unittest.TestCase):
     #@attr('active')
     def test_2L_box_with_numerator(self):
         propagators = ['k1**2','(k1+p2)**2','(k1-p1)**2','(k1-k2)**2','(k2+p2)**2','(k2-p1)**2','(k2+p2+p3)**2']
-        numerator = '2*k1(mu)*p3(mu)'
+        numerator = '2*k1(mu)*p3(mu) + eps'
         loop_momenta = ['k1','k2']
         external_momenta = ['p1','p2','p3','p4']
-        # TODO: extend this test to check replacement rules
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)])
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)], Lorentz_indices = ['mu'])
 
         # comparison with Mathematica implementation of SecDec
         target_U = sp.sympify('''
@@ -499,6 +502,7 @@ class TestNumerator(unittest.TestCase):
                                              - p2(mu)* p3(mu)*(z4*(z5 + z7)
                                              + z2*(z4 + z5 + z6 + z7))
                                              + p1(mu)* p3(mu)*(z4*z6 + z3*(z4 + z5 + z6 + z7)))
+                                             + eps
                                       ''') * sp.sympify('scalar_factor(0)')
 
         self.assertEqual( (sp.sympify(li.U) - target_U).simplify() , 0 )
@@ -515,13 +519,14 @@ class TestNumerator(unittest.TestCase):
 
         li_with_replacement_rules = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
                                                                   numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)],
-                                                                  replacement_rules=replacement_rules)
+                                                                  replacement_rules=replacement_rules, Lorentz_indices = ['mu'])
 
         target_numerator_with_replacements = sp.sympify('''
-                                                               2*(
-                                                             - (t/2)*(z4*(z5 + z7)
-                                                             + z2*(z4 + z5 + z6 + z7))
-                                                             + (-s/2-t/2)*(z4*z6 + z3*(z4 + z5 + z6 + z7)))
+                                                             2*(
+                                                                    - (t/2)*(z4*(z5 + z7)
+                                                                    + z2*(z4 + z5 + z6 + z7))
+                                                                    + (-s/2-t/2)*(z4*z6 + z3*(z4 + z5 + z6 + z7))
+                                                               ) + eps
                                                         ''') * sp.sympify('scalar_factor(0)')
         self.assertEqual( (li_with_replacement_rules.numerator - target_numerator_with_replacements).simplify() , 0 )
 

@@ -26,8 +26,8 @@ class LoopIntegral(object):
             raise AttributeError('Use one of the named constructors.')
 
     @staticmethod
-    def from_propagators(propagators, loop_momenta, external_momenta=None, symbols=None, \
-                         numerator=1, replacement_rules=None, Feynman_parameters='x', \
+    def from_propagators(propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
+                         symbols=[], numerator=1, replacement_rules=[], Feynman_parameters='x', \
                          regulator='eps', dimensionality='4-2*eps', metric_tensor='g'):
         r'''
         Construct the loop integral from a list of the
@@ -49,6 +49,15 @@ class LoopIntegral(object):
             required when a `numerator` is to be
             constructed.
 
+        :param Lorentz_indices:
+            iterable of strings or sympy expressions,
+            optional;
+            Symbols to be used as Lorentz indices in the
+            numerator.
+
+            .. seealso::
+                parameter `numerator`
+
         :param symbols:
             iterable of strings or sympy expressions,
             optional;
@@ -65,9 +74,7 @@ class LoopIntegral(object):
         :param numerator:
             string or sympy expression, optional;
             The numerator of the loop integral.
-            The numerator should be a scalar; i.e. all momenta
-            should be contracted in scalar products. The scalar
-            products should be in index notation e.g.
+            Scalar products must be passed in index notation e.g.
             "k1(mu)*k2(mu)". The numerator should be a sum of
             products of exclusively:
             * numbers
@@ -81,6 +88,23 @@ class LoopIntegral(object):
             .. hint::
                 It is possible to use numbers as indices, for example
                 'p1(mu)*p2(mu)*k1(nu)*k2(nu) = p1(1)*p2(1)*k1(2)*k2(2)'.
+
+            .. hint::
+                The numerator may have uncontracted indices, e.g.
+                'k1(mu)*k2(nu)'
+
+            .. warning::
+                **All** Lorentz indices (including the contracted ones)
+                must be explicitly defined using the parameter
+                `Lorentz_indices`.
+
+            .. warning::
+                The `numerator` is very flexible in its input. However,
+                that flexibility comes for the price of less error
+                safety. We have no way of checking for all possible
+                mistakes in the input. If your numerator is more
+                advanced than in the examples above, you should proceed
+                with great caution.
 
         :param replacement_rules:
             iterable of iterables with two strings or sympy
@@ -121,21 +145,52 @@ class LoopIntegral(object):
         # TODO: explain the main member properties (U, F, numerator)
         # TODO: carefully reread and check this documentation
         # TODO: implement numerator
-        # TODO: check that the propagators are at most quadratic in the loop momenta
         # TODO: remove all sympy symbols from the final output U, F, and N
+        # TODO: check that no symbol is used twice (e.g. assert len(all_symbols) == len(set(all_symbols))
 
         self = LoopIntegral('using a named constructor')
 
+        def sympify_symbols(iterable, error_message, allow_number=False):
+            '''
+            `sympify` each item in `iterable` and assert
+            that it is a `symbol`.
+
+            '''
+            symbols = []
+            for expression in iterable:
+                expression = sp.sympify(expression)
+                assert expression.is_Symbol or expression.is_Number if allow_number else expression.is_Symbol, error_message
+                symbols.append(expression)
+            return symbols
+
+        def assert_at_most_quadractic(expression, variables, error_message):
+            '''
+            Assert that `expression` is a polynomial of
+            degree less or equal 2 in the `variables`.
+
+            '''
+            poly = Polynomial.from_expression(expression, variables)
+            assert (poly.expolist.sum(axis=1) <= 2).all(), error_message
+
         # sympify and store `loop_momenta`
-        self.loop_momenta = []
-        for expression in loop_momenta:
-            expression = sp.sympify(expression)
-            assert expression.is_Symbol, 'Each of the `loop_momenta` must be a `sympy symbol`.' #TODO: test error message
-            self.loop_momenta.append(expression)
+        self.loop_momenta = sympify_symbols(loop_momenta, 'Each of the `loop_momenta` must be a symbol.') #TODO: test error message
         self.L = len(self.loop_momenta)
+
+        # sympify and store `external_momenta`
+        self.external_momenta = sympify_symbols(external_momenta, 'Each of the `external_momenta` must be a symbol.') #TODO: test error message
+
+        all_momenta = self.external_momenta + self.loop_momenta
+
+        # sympify and store `Lorentz_indices`
+        self.Lorentz_indices = sympify_symbols(Lorentz_indices, 'Each of the `Lorentz_indices` must be a symbol or a number.', allow_number=True) # TODO: test error message
+
+        # sympify and store `metric_tensor`
+        self.metric_tensor = sympify_symbols([metric_tensor], '`metric_tensor` must be a symbol.')[0] # TODO: test error message
 
         # sympify and store `propagators`
         self.propagators = sp.sympify(list(propagators))
+        for propagator in self.propagators:
+            assert_at_most_quadractic(propagator, all_momenta, 'Each of the `propagators` must be polynomial and at most quadratic in the momenta.') # TODO: check that this issues an error if more than quadractic powers
         self.P = len(self.propagators)
 
         # sympify and store `Feynman_parameters`
@@ -148,22 +203,21 @@ class LoopIntegral(object):
                 'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
                 ( len(self.propagators) , len(self.Feynman_parameters) )
 
-        if replacement_rules is None:
-            self.replacement_rules = []
-        else:
+        if replacement_rules:
             self.replacement_rules = np.array(replacement_rules)
             assert len(self.replacement_rules.shape) == 2, "Wrong format for `replacement_rules`" #TODO: test error message
             assert self.replacement_rules.shape[1] == 2 , "Wrong format for `replacement_rules`" #TODO: test error message
+            for rule in self.replacement_rules:
+                for expression in rule:
+                    assert_at_most_quadractic(expression, all_momenta, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.') # TODO: test error message
+        else:
+            self.replacement_rules = []
 
         self.numerator_input = sp.sympify(numerator).expand()
         if self.numerator_input.is_Add:
             self.numerator_input_terms = list(self.numerator_input.args)
         else:
             self.numerator_input_terms = [self.numerator_input]
-
-        self.metric_tensor = sp.sympify(metric_tensor) # TODO: assert this is a symbol
-
-        self.external_momenta = sp.sympify(external_momenta) # TODO: assert all these are symbols
 
         return self
 
@@ -259,21 +313,27 @@ class LoopIntegral(object):
                                       numerator_symbols)
 
         '''
-        wildcard_index = sp.Wild('wildcard_index')
-        def append_double_index(expr, lst, momenta):
+        def append_double_indices(expr, lst, momenta, indices):
             '''
-            Append the double index of an expression of the form
+            Append the double indices of an expression of the form
             ``<momentum>(<index>)`` to `lst`.
-            Return ``True`` if the ``<momentum>`` matches one of
-            the `momenta`, otherwise return ``False``.
+            Return the remaining factors.
 
             '''
-            for i,loop_momentum in enumerate(momenta):
-                indexdict = expr.match(loop_momentum(wildcard_index))
-                if indexdict is not None: # expression matches
-                    lst.append((i,indexdict[wildcard_index]))
-                    return True
-            return False
+            for index in indices:
+                index_count = 0
+                for i,momentum in enumerate(momenta):
+                    for j in range(2): # should have the same index at most twice
+                        if expr.subs(momentum(index), 0) == 0: # expression has a factor `momentum(index)`
+                            expr /= momentum(index)
+                            lst.append((i,index))
+                            index_count += 1
+                        else:
+                            break
+                    # should not have factors of `momentum(index)` left after the loop above
+                    assert str(momentum(index)) not in str(expr), 'Could not parse `numerator`'
+                assert index_count <= 2, 'Could not parse `numerator`'
+            return expr
 
         numerator_loop_tensors = []
         numerator_external_tensors = []
@@ -281,22 +341,13 @@ class LoopIntegral(object):
         for term in self.numerator_input_terms:
             current_loop_tensor = []
             current_external_tensor = []
-            current_remaining_factor = 1
-            if term.is_Function: # catch special case ``term = <loop momentum>(<index>)``
-                append_double_index(term, current_loop_tensor, self.loop_momenta)
-            else:
-                for arg in term.args:
-                    # search for ``momentum(index)``
-                    if arg.is_Function:
-                        if not append_double_index(arg, current_loop_tensor, self.loop_momenta):
-                            # continue lookup only if nothing found so far
-                            if not append_double_index(arg, current_external_tensor, self.external_momenta):
-                                current_remaining_factor *= arg
-                    else:
-                        current_remaining_factor *= arg
+
+            # search for ``momentum(index)``
+            term = append_double_indices(term, current_loop_tensor, self.loop_momenta, self.Lorentz_indices)
+            term = append_double_indices(term, current_external_tensor, self.external_momenta, self.Lorentz_indices)
             numerator_loop_tensors.append(current_loop_tensor)
             numerator_external_tensors.append(current_external_tensor)
-            numerator_symbols.append(current_remaining_factor)
+            numerator_symbols.append(term)
         return numerator_loop_tensors, numerator_external_tensors, numerator_symbols
 
     @cached_property
@@ -310,15 +361,6 @@ class LoopIntegral(object):
     @cached_property
     def numerator_symbols(self):
         return self._numerator_tensors[2]
-
-    @cached_property
-    def Lorentz_indices(self):
-        'Return a set of all appearing Lorentz indices'
-        Lorentz_indices = set()
-        for term in self.numerator_loop_tensors + self.numerator_external_tensors:
-            for momentum_index, Lorentz_index in term:
-                Lorentz_indices.add(Lorentz_index)
-        return Lorentz_indices
 
     @cached_property
     def numerator(self):
@@ -427,7 +469,7 @@ class LoopIntegral(object):
 
                     numerator += this_numerator_summand
 
-            return numerator
+        return numerator
 
     @cached_property
     def replacement_rules_with_Lorentz_indices(self):
