@@ -389,13 +389,22 @@ class TestNumerator(unittest.TestCase):
     def test_tensor_numerator_bubble_1L(self):
         numerator = sp.sympify('k(1)*k(2)*k(3)*k(4)')
         contracted_numerator = numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)*const')
+        partially_contracted_numerator = numerator * sp.sympify('p(3)*p(4)')
         indices = [1, 2, 3, 4]
         loop_momenta = ['k']
         external_momenta = ['p']
         propagators = ['k**2', '(k - p)**2']
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'], Lorentz_indices=indices)
-        li_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=contracted_numerator, Feynman_parameters=['x1','x2'], Lorentz_indices=indices)
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+                                           numerator=numerator, Feynman_parameters=['x1','x2'],
+                                           Lorentz_indices=indices)
+        li_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+                                                      numerator=contracted_numerator,
+                                                      Feynman_parameters=['x1','x2'], Lorentz_indices=indices)
+        li_partially_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+                                                                numerator=partially_contracted_numerator,
+                                                                Feynman_parameters=['x1','x2'], Lorentz_indices=indices,
+                                                                replacement_rules=[('p*p', 'm**2')])
         tensors = li.numerator_loop_tensors
         # Note: `sympy` may reorder the terms
         target_tensors = [[(0,1),(0,2),(0,3),(0,4)]]
@@ -404,6 +413,7 @@ class TestNumerator(unittest.TestCase):
 
         numerator = li.numerator
         contracted_numerator = li_contracted.numerator
+        partially_contracted_numerator = li_partially_contracted.numerator
         target_numerator = sp.sympify('''
                                              scalar_factor(0)*p(1)*x2*p(2)*x2*p(3)*x2*p(4)*x2 +
                                              g(1,2) * scalar_factor(2)*p(3)*x2*p(4)*x2 +
@@ -428,9 +438,21 @@ class TestNumerator(unittest.TestCase):
                                                         p(3)*p(3) * p(4)*p(4) * scalar_factor(4) +
                                                         p(4)*p(4) * p(3)*p(3) * scalar_factor(4)
                                                  ''') * sp.sympify('const')
-
+        target_partially_contracted_numerator = sp.sympify('''
+                                                                  scalar_factor(0)*m**2*x2*m**2*x2*p(1)*x2*p(2)*x2 +
+                                                                  m**2 * scalar_factor(2)*p(1)*x2*p(2)*x2 +
+                                                                  p(1) * scalar_factor(2)*m**2*x2*p(2)*x2 +
+                                                                  p(2) * scalar_factor(2)*m**2*x2*p(1)*x2 +
+                                                                  p(1) * scalar_factor(2)*m**2*x2*p(2)*x2 +
+                                                                  p(2) * scalar_factor(2)*m**2*x2*p(1)*x2 +
+                                                                  g(1,2) * scalar_factor(2)*m**2*x2*m**2*x2 +
+                                                                  m**2 * g(1,2) * scalar_factor(4) +
+                                                                  p(1) * p(2) * scalar_factor(4) +
+                                                                  p(2) * p(1) * scalar_factor(4)
+                                                           ''')
         self.assertEqual( (numerator - target_numerator).simplify() , 0 )
         self.assertEqual( (contracted_numerator - target_contracted_numerator).simplify() , 0 )
+        self.assertEqual( (partially_contracted_numerator - target_partially_contracted_numerator).simplify() , 0 )
 
     #@attr('active')
     def test_replacement_rules_in_numerator_bubble_1L(self):
