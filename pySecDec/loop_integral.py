@@ -187,6 +187,9 @@ class LoopIntegral(object):
         # sympify and store `metric_tensor`
         self.metric_tensor = sympify_symbols([metric_tensor], '`metric_tensor` must be a symbol.')[0] # TODO: test error message
 
+        # sympify and store `dimensionality`
+        self.dimensionality = sp.sympify(dimensionality)
+
         # sympify and store `propagators`
         self.propagators = sp.sympify(list(propagators))
         for propagator in self.propagators:
@@ -382,6 +385,7 @@ class LoopIntegral(object):
         aM = self.aM
         Q = self.Q
         g = self.metric_tensor
+        D = self.dimensionality
         replacement_rules = self.replacement_rules_with_Lorentz_indices
 
         # `self.numerator_loop_tensors`: List of double indices for the loop momenta for each term.
@@ -431,7 +435,7 @@ class LoopIntegral(object):
                     contractions_right = []
                     contractions_unmatched = []
                     for tensor_A2_indices in tensors_A2_indices:
-                        this_numerator_summand *= aM[tensor_A2_indices[0][0],tensor_A2_indices[1][0]] # * g(tensor_A2_indices[0][1], tensor_A2_indices[1][1])
+                        this_numerator_summand *= sp.sympify(aM[tensor_A2_indices[0][0],tensor_A2_indices[1][0]]) # * g(tensor_A2_indices[0][1], tensor_A2_indices[1][1])
                         contractions_left.append(tensor_A2_indices[0][1])
                         contractions_right.append(tensor_A2_indices[1][1])
                         contractions_unmatched.append(True)
@@ -459,7 +463,11 @@ class LoopIntegral(object):
                     # multiply all unmatched metric tensors
                     for Lorentz_index_1, Lorentz_index_2, is_unmatched in zip(contractions_left, contractions_right, contractions_unmatched):
                         if is_unmatched:
-                            this_numerator_summand *= g(Lorentz_index_1, Lorentz_index_2)
+                            if Lorentz_index_1 == Lorentz_index_2:
+                                # g(mu, mu) = dimensionality
+                                this_numerator_summand *= D
+                            else:
+                                this_numerator_summand *= g(Lorentz_index_1, Lorentz_index_2)
                     # ------------------------------------------------------------------------------
 
                     # apply the replacement rules

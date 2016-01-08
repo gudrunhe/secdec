@@ -465,7 +465,7 @@ class TestNumerator(unittest.TestCase):
         loop_momenta = ['k1','k2']
         external_momenta = ['p1','p2','p3','p4']
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)], Lorentz_indices = ['mu'])
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)], Lorentz_indices=['mu'])
 
         # comparison with Mathematica implementation of SecDec
         target_U = sp.sympify('''
@@ -519,7 +519,7 @@ class TestNumerator(unittest.TestCase):
 
         li_with_replacement_rules = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
                                                                   numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)],
-                                                                  replacement_rules=replacement_rules, Lorentz_indices = ['mu'])
+                                                                  replacement_rules=replacement_rules, Lorentz_indices=['mu'])
 
         target_numerator_with_replacements = sp.sympify('''
                                                              2*(
@@ -529,6 +529,173 @@ class TestNumerator(unittest.TestCase):
                                                                ) + eps
                                                         ''') * sp.sympify('scalar_factor(0)')
         self.assertEqual( (li_with_replacement_rules.numerator - target_numerator_with_replacements).simplify() , 0 )
+
+    #@attr('active')
+    @attr('slow')
+    def test_rank2_numerator_2L_box(self):
+        k1, k2, p1, p2, p3, p4, s, t, mu, scalar_factor, D, eps = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu scalar_factor D eps')
+
+        z = sp.sympify(['z%i'%i for i in range(7+1)]) # Feynman parameters (only use z[1], z[2], ..., z[7] but not z[0])
+        loop_momenta = [k1, k2]
+        external_momenta = [p1, p2, p3, p4]
+        indices = [mu]
+
+        propagators = [k1**2,(k1+p2)**2,(k1-p1)**2,(k1-k2)**2,(k2+p2)**2,(k2-p1)**2,(k2+p2+p3)**2]
+        numerator1 = 2*k1(mu)*k2(mu)
+        numerator2 = 2*k1(mu)*k1(mu)
+        replacement_rules = [(p1**2, 0),
+                             (p2**2, 0),
+                             (p3**2, 0),
+                             (p4**2, 0),
+                             (p1*p2, s/2),
+                             (p2*p3, t/2),
+                             (p1*p3, -s/2 - t/2)]
+
+        li1 = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+                                            numerator=numerator1, Feynman_parameters=z[1:],
+                                            Lorentz_indices=indices, dimensionality=D,
+                                            replacement_rules=replacement_rules)
+        li2 = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+                                            numerator=numerator2, Feynman_parameters=z[1:],
+                                            Lorentz_indices=indices)
+        Feynman_parametrized_numerator1 = li1.numerator
+        Feynman_parametrized_numerator2 = li2.numerator
+
+        # comparison with Mathematica implementation of SecDec
+        target_U = z[4]*(z[5] + z[6] + z[7]) + z[1]*(z[4] + z[5] + z[6] + z[7]) + \
+                   z[2]*(z[4] + z[5] + z[6] + z[7]) + z[3]*(z[4] + z[5] + z[6] + z[7])
+        target_F1 = -(t*z[1]*z[4]*z[7]) - \
+                    s*(z[5]*((z[1] + z[4])*z[6] + z[3]*(z[4] + z[6])) + \
+                    z[2]*((z[4] + z[5])*z[6] + z[3]*(z[4] + z[5] + z[6] + z[7])))
+        target_F2 = z[4]*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 + \
+                    2*p2*p3 + p3*p3)*z[6]*z[7]) - \
+                    z[5]*(p1*p1*z[6] + 2*p1*p2*z[6] + p2*p2*z[6] + \
+                    p3*p3*z[7])) + \
+                    z[2]*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 + \
+                    2*p2*p3 + p3*p3)*z[6]*z[7]) - \
+                    (p1*p1 + 2*p1*p2 + p2*p2)*z[3]*(z[4] + z[5] + z[6] + \
+                    z[7]) - z[4]*(p1*p1*z[6] + 2*p1*p2*z[6] + p2*p2*z[6] + \
+                    p3*p3*z[7]) - z[5]*(p1*p1*z[6] + 2*p1*p2*z[6] + \
+                    p2*p2*z[6] + p3*p3*z[7])) + \
+                    z[3]*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 + \
+                    2*p2*p3 + p3*p3)*z[6]*z[7]) - \
+                    z[5]*(p1*p1*z[6] + 2*p1*p2*z[6] + p2*p2*z[6] + \
+                    p3*p3*z[7]) - z[4]*(p2*p2*z[5] + 2*p1*p3*z[7] + \
+                    p2*p2*z[7] + 2*p2*p3*z[7] + p3*p3*z[7] + \
+                    p1*p1*(z[5] + z[7]) + 2*p1*p2*(z[5] + z[7]))) + \
+                    z[1]*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 + \
+                    2*p2*p3 + p3*p3)*z[6]*z[7]) - \
+                    p2*p2*z[2]*(z[4] + z[5] + z[6] + z[7]) - \
+                    p1*p1*z[3]*(z[4] + z[5] + z[6] + z[7]) - \
+                    z[5]*(p1*p1*z[6] + 2*p1*p2*z[6] + p2*p2*z[6] + \
+                    p3*p3*z[7]) - z[4]*(p1*p1*z[6] + (2*p2*p3 + p3*p3)* \
+                    z[7] + p2*p2*(z[5] + z[7])))
+        target_Fs = [target_F1, target_F2]
+        target_numerator1 = (-(s*((-6 + D)*z[2]**2*z[6]*(z[4] + z[5] + z[6] + z[7]) + \
+                            z[5]*(3*(-4 + D)*z[4]**2*z[6] + (-6 + D)*z[3]**2* \
+                            (z[4] + z[5] + z[6] + z[7]) + z[3]*z[4]* \
+                            (3*(-4 + D)*z[4] + (-6 + D)*z[5] - \
+                            18*z[6] + 4*D*z[6] - 6*z[7] + D*z[7]) + \
+                            z[1]*(3*(-4 + D)*z[4]*z[6] + (-6 + D)*z[3]* \
+                            (z[4] + z[5] + z[6] + z[7]))) + \
+                            z[2]*(z[3]*(3*(-4 + D)*z[4] + (-6 + D)* \
+                            (z[5] + z[6]))*(z[4] + z[5] + z[6] + z[7]) + \
+                            z[6]*((-6 + D)*z[1]*(z[4] + z[5] + z[6] + z[7]) + \
+                            z[4]*(3*(-4 + D)*z[4] + 2*(-9 + 2*D)* \
+                            z[5] + (-6 + D)*(z[6] + z[7])))))) + \
+                            t*z[7]*((-6 + D)*(z[2] + z[3] + 2*z[4])* \
+                            (z[4]*(z[5] + z[6] + z[7]) + z[2]*(z[4] + z[5] + z[6] + z[7]) + \
+                            z[3]*(z[4] + z[5] + z[6] + z[7])) + \
+                            z[1]*((-6 + D)*z[2]*(z[4] + z[5] + z[6] + z[7]) + \
+                            (-6 + D)*z[3]*(z[4] + z[5] + z[6] + z[7]) - \
+                            z[4]*(12*(z[5] + z[6] + z[7]) + D* \
+                            (z[4] - 2*(z[5] + z[6] + z[7]))))))/(-6 + D)
+        target_numerator2 = (2*(p2*p2*z[2]**2*z[4]**2 - 2*p1*p2*z[2]*z[3]*z[4]**2 +
+                            p1*p1*z[3]**2*z[4]**2 + 2*p2*p2*z[2]**2*z[4]*z[5] -
+                            4*p1*p2*z[2]*z[3]*z[4]*z[5] + 2*p1*p1*z[3]**2*z[4]*z[5] +
+                            2*p2*p2*z[2]*z[4]**2*z[5] - 2*p1*p2*z[3]*z[4]**2*z[5] +
+                            p2*p2*z[2]**2*z[5]**2 - 2*p1*p2*z[2]*z[3]*z[5]**2 +
+                            p1*p1*z[3]**2*z[5]**2 + 2*p2*p2*z[2]*z[4]*z[5]**2 -
+                            2*p1*p2*z[3]*z[4]*z[5]**2 + p2*p2*z[4]**2*z[5]**2 +
+                            2*p2*p2*z[2]**2*z[4]*z[6] - 4*p1*p2*z[2]*z[3]*z[4]*z[6] +
+                            2*p1*p1*z[3]**2*z[4]*z[6] - 2*p1*p2*z[2]*z[4]**2*z[6] +
+                            2*p1*p1*z[3]*z[4]**2*z[6] + 2*p2*p2*z[2]**2*z[5]*z[6] -
+                            4*p1*p2*z[2]*z[3]*z[5]*z[6] + 2*p1*p1*z[3]**2*z[5]*z[6] -
+                            2*p1*p2*z[2]*z[4]*z[5]*z[6] + 2*p2*p2*z[2]*z[4]*z[5]*z[6] +
+                            2*p1*p1*z[3]*z[4]*z[5]*z[6] - 2*p1*p2*z[3]*z[4]*z[5]*z[6] -
+                            2*p1*p2*z[4]**2*z[5]*z[6] + p2*p2*z[2]**2*z[6]**2 -
+                            2*p1*p2*z[2]*z[3]*z[6]**2 + p1*p1*z[3]**2*z[6]**2 -
+                            2*p1*p2*z[2]*z[4]*z[6]**2 + 2*p1*p1*z[3]*z[4]*z[6]**2 +
+                            p1*p1*z[4]**2*z[6]**2 + 2*p2*p2*z[2]**2*z[4]*z[7] -
+                            4*p1*p2*z[2]*z[3]*z[4]*z[7] + 2*p1*p1*z[3]**2*z[4]*z[7] +
+                            2*p2*p2*z[2]*z[4]**2*z[7] + 2*p2*p3*z[2]*z[4]**2*z[7] -
+                            2*p1*p2*z[3]*z[4]**2*z[7] - 2*p1*p3*z[3]*z[4]**2*z[7] +
+                            2*p2*p2*z[2]**2*z[5]*z[7] - 4*p1*p2*z[2]*z[3]*z[5]*z[7] +
+                            2*p1*p1*z[3]**2*z[5]*z[7] + 4*p2*p2*z[2]*z[4]*z[5]*z[7] +
+                            2*p2*p3*z[2]*z[4]*z[5]*z[7] - 4*p1*p2*z[3]*z[4]*z[5]*z[7] -
+                            2*p1*p3*z[3]*z[4]*z[5]*z[7] + 2*p2*p2*z[4]**2*z[5]*z[7] +
+                            2*p2*p3*z[4]**2*z[5]*z[7] + 2*p2*p2*z[2]**2*z[6]*z[7] -
+                            4*p1*p2*z[2]*z[3]*z[6]*z[7] + 2*p1*p1*z[3]**2*z[6]*z[7] -
+                            2*p1*p2*z[2]*z[4]*z[6]*z[7] + 2*p2*p2*z[2]*z[4]*z[6]*z[7] +
+                            2*p2*p3*z[2]*z[4]*z[6]*z[7] + 2*p1*p1*z[3]*z[4]*z[6]*z[7] -
+                            2*p1*p2*z[3]*z[4]*z[6]*z[7] - 2*p1*p3*z[3]*z[4]*z[6]*z[7] -
+                            2*p1*p2*z[4]**2*z[6]*z[7] - 2*p1*p3*z[4]**2*z[6]*z[7] +
+                            p2*p2*z[2]**2*z[7]**2 - 2*p1*p2*z[2]*z[3]*z[7]**2 +
+                            p1*p1*z[3]**2*z[7]**2 + 2*p2*p2*z[2]*z[4]*z[7]**2 +
+                            2*p2*p3*z[2]*z[4]*z[7]**2 - 2*p1*p2*z[3]*z[4]*z[7]**2 -
+                            2*p1*p3*z[3]*z[4]*z[7]**2 + p2*p2*z[4]**2*z[7]**2 +
+                            2*p2*p3*z[4]**2*z[7]**2 + p3*p3*z[4]**2*z[7]**2 -
+                            ((4 - 2*eps)*(z[4] + z[5] + z[6] + z[7])*
+                            (z[4]*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 +
+                            2*p2*p3 + p3*p3)*z[6]*z[7]) -
+                            z[5]*(p1*p1*z[6] + 2*p1*p2*z[6] + p2*p2*z[6] +
+                            p3*p3*z[7])) +
+                            z[2]*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 +
+                            2*p2*p3 + p3*p3)*z[6]*z[7]) -
+                            (p1*p1 + 2*p1*p2 + p2*p2)*z[3]*(z[4] + z[5] + z[6] +
+                            z[7]) - z[4]*(p1*p1*z[6] + 2*p1*p2*z[6] +
+                            p2*p2*z[6] + p3*p3*z[7]) -
+                            z[5]*(p1*p1*z[6] + 2*p1*p2*z[6] + p2*p2*z[6] +
+                            p3*p3*z[7])) +
+                            z[3]*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 +
+                            2*p2*p3 + p3*p3)*z[6]*z[7]) -
+                            z[5]*(p1*p1*z[6] + 2*p1*p2*z[6] + p2*p2*z[6] +
+                            p3*p3*z[7]) - z[4]*(p2*p2*z[5] + 2*p1*p3*z[7] +
+                            p2*p2*z[7] + 2*p2*p3*z[7] + p3*p3*z[7] +
+                            p1*p1*(z[5] + z[7]) + 2*p1*p2*(z[5] + z[7]))) +
+                            z[1]*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 +
+                            2*p2*p3 + p3*p3)*z[6]*z[7]) - p2*p2*z[2]*
+                            (z[4] + z[5] + z[6] + z[7]) - p1*p1*z[3]*(z[4] + z[5] + z[6] +
+                            z[7]) - z[5]*(p1*p1*z[6] + 2*p1*p2*z[6] +
+                            p2*p2*z[6] + p3*p3*z[7]) -
+                            z[4]*(p1*p1*z[6] + (2*p2*p3 + p3*p3)*z[7] +
+                            p2*p2*(z[5] + z[7])))))/(4*(1 + eps))))
+        target_numerators = [target_numerator1, target_numerator2]
+
+        self.assertEqual( (sp.sympify(li1.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li2.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li1.F) - target_F1).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li2.F) - target_F2).simplify() , 0 )
+
+        for i, Feynman_parametrized_numerator in enumerate([Feynman_parametrized_numerator1, Feynman_parametrized_numerator2]):
+            print(i)
+
+            # need to insert the `scalar_factor` (and the `F` therein) when comparing with SecDec
+            # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
+            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(scalar_factor(0), 'Gamma(7 - D)')
+            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(scalar_factor(2), '1/(-2)*Gamma(7 - D - 1)*F').subs('F', target_Fs[i])
+
+            # SecDec divides by a factor of ``Gamma(7 - D)`` and uses ``Gamma(6 - D) = Gamma(7 - D) / (6 - D)``
+            Feynman_parametrized_numerator /= sp.sympify('Gamma(7 - D)')
+            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs('Gamma(6 - D)', 'Gamma(7 - D) / (6 - D)')
+
+            # only one scalar product per term --> can safely remove dummy index
+            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(p1(mu), p1).subs(p2(mu), p2).subs(p3(mu), p3).subs(p4(mu), p4)
+
+            if i == 1:
+                Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(D, 4-2*eps)
+
+            self.assertEqual( (sp.sympify(Feynman_parametrized_numerator) - target_numerators[i]).simplify() , 0 )
 
 # TODO: uncomment when implemented
 #    def test_error_if_index_too_often(self):
