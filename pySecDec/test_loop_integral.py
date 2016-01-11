@@ -554,6 +554,103 @@ class TestNumerator(unittest.TestCase):
 
     #@attr('active')
     @attr('slow')
+    def test_rank3_numerator_2L_double_triangle(self):
+        k1, k2, p1, p2, p3, p4, s, t, mu, nu, scalar_factor, eps, Gamma, F = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu nu scalar_factor eps Gamma F')
+        sp11, sp12, sp13, sp22, sp23, sp33 = sp.symbols('sp11 sp12 sp13 sp22 sp23 sp33')
+
+        z = sp.sympify(['z%i'%i for i in range(6+1)]) # Feynman parameters (only use z[1], z[2], ..., z[6] but not z[0])
+        loop_momenta = [k1, k2]
+        external_momenta = [p1, p2, p3, p4]
+        indices = [mu, nu]
+        replacement_rules = [('p4', '- (p1 + p2 + p3)'),
+                             ('p1*p1', 'sp11'),
+                             ('p2*p2', 'sp22'),
+                             ('p3*p3', 'sp33'),
+                             ('p1*p2', 'sp12'),
+                             ('p2*p3', 'sp23'),
+                             ('p1*p3', 'sp13')]
+
+        propagators = [k1**2,(k1+p1)**2,(k1-k2-p3-p4)**2,(k2)**2,(k2+p2)**2,(k2+p3)**2]
+        numerator = k1(mu)*k2(nu)*k1(mu)*p2(nu)*2
+
+        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+                                           numerator=numerator, Feynman_parameters=z[1:],
+                                           Lorentz_indices=indices,
+                                           replacement_rules=replacement_rules)
+
+        # need to insert the `scalar_factor` (and the `F` therein) when comparing with SecDec
+        # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
+        N_nu = sp.sympify(len(propagators))
+        dim = sp.sympify(4 - 2*eps)
+        L = sp.sympify(2)
+        numerator = li.numerator.subs(scalar_factor(0), Gamma(N_nu - dim*L/2))
+        numerator = numerator.subs(scalar_factor(2), sp.sympify('1/(-2)')*Gamma(N_nu - dim*L/2 - 1)*F).subs(F, sp.sympify(li.F))
+
+        # SecDec divides by a factor of ``Gamma(N_nu - dim*L/2)`` and uses ``Gamma(N_nu - dim*L/2 - 1) = Gamma(N_nu - dim*L/2) / (N_nu - dim*L/2 - 1)``
+        numerator /= Gamma(N_nu - dim*L/2)
+        numerator  = numerator.subs(Gamma(N_nu - dim*L/2 - 1), Gamma(N_nu - dim*L/2) / (N_nu - dim*L/2 - 1))
+
+
+        # Results of the Mathematica implementation
+        target_U = z[3]*(z[4] + z[5] + z[6]) + z[1]*(z[3] + z[4] + z[5] + z[6]) + \
+                   z[2]*(z[3] + z[4] + z[5] + z[6])
+        target_F = z[3]*(-((-2*sp23*z[5] + sp33*(z[4] + z[5]))*z[6]) - \
+                   sp22*z[5]*(z[4] + z[6])) + \
+                   z[1]*(-((sp22 - 2*sp23 + sp33)*z[5]*z[6]) - \
+                   sp11*z[2]*(z[3] + z[4] + z[5] + z[6]) - \
+                   z[4]*(sp22*z[5] + sp33*z[6]) - \
+                   z[3]*(sp22*z[4] + 4*sp22*z[5] + 2*sp13*z[6] + \
+                   sp22*z[6] + 2*sp23*z[6] + sp33*z[6] + \
+                   sp11*(z[4] + z[5] + z[6]) + 2*sp12*\
+                   (z[4] + 2*z[5] + z[6]))) + \
+                   z[2]*(-((2*sp23*(z[3] - z[5]) + sp33*(z[3] + z[4] + z[5]))*\
+                   z[6]) - sp22*(z[5]*(z[4] + z[6]) + z[3]*(z[4] + 4*z[5] + z[6])))
+        target_numerator = 2*(-((4 - 2*eps)*(z[3] + z[4] + z[5] + z[6])*(sp12*z[1]*z[3] + \
+                           sp22*(z[1]*(z[3] - z[5]) + z[2]*(z[3] - z[5]) - z[3]*z[5]) - \
+                           sp23*(z[1] + z[2] + z[3])*z[6])*\
+                           (z[3]*(-((-2*sp23*z[5] + sp33*(z[4] + z[5]))*z[6]) - \
+                           sp22*z[5]*(z[4] + z[6])) + \
+                           z[1]*(-((sp22 - 2*sp23 + sp33)*z[5]*z[6]) - \
+                           sp11*z[2]*(z[3] + z[4] + z[5] + z[6]) - \
+                           z[4]*(sp22*z[5] + sp33*z[6]) - \
+                           z[3]*(sp22*z[4] + 4*sp22*z[5] + 2*sp13*z[6] + \
+                           sp22*z[6] + 2*sp23*z[6] + sp33*z[6] + \
+                           sp11*(z[4] + z[5] + z[6]) + 2*sp12*(z[4] + 2*z[5] + \
+                           z[6]))) + z[2]*(-((2*sp23*(z[3] - z[5]) + \
+                           sp33*(z[3] + z[4] + z[5]))*z[6]) - \
+                           sp22*(z[5]*(z[4] + z[6]) + z[3]*(z[4] + 4*z[5] + z[6])))))/ \
+                           (2*(1 + 2*eps)) - \
+                           (z[3]*(-(sp12*(z[3]*(z[4] + z[5] + z[6]) + \
+                           z[2]*(z[3] + z[4] + z[5] + z[6]))) - \
+                           z[3]*(sp23*z[6] + sp22*(z[4] + 2*z[5] + z[6])))*\
+                           (z[3]*(-((-2*sp23*z[5] + sp33*(z[4] + z[5]))*z[6]) - \
+                           sp22*z[5]*(z[4] + z[6])) + \
+                           z[1]*(-((sp22 - 2*sp23 + sp33)*z[5]*z[6]) - \
+                           sp11*z[2]*(z[3] + z[4] + z[5] + z[6]) - \
+                           z[4]*(sp22*z[5] + sp33*z[6]) - \
+                           z[3]*(sp22*z[4] + 4*sp22*z[5] + 2*sp13*z[6] + \
+                           sp22*z[6] + 2*sp23*z[6] + sp33*z[6] + \
+                           sp11*(z[4] + z[5] + z[6]) + 2*sp12*(z[4] + 2*z[5] + \
+                           z[6]))) + z[2]*(-((2*sp23*(z[3] - z[5]) + \
+                           sp33*(z[3] + z[4] + z[5]))*z[6]) - \
+                           sp22*(z[5]*(z[4] + z[6]) + z[3]*(z[4] + 4*z[5] + z[6])))))/ \
+                           (1 + 2*eps) + (sp12*z[1]*z[3] + \
+                           sp22*(z[1]*(z[3] - z[5]) + z[2]*(z[3] - z[5]) - z[3]*z[5]) - \
+                           sp23*(z[1] + z[2] + z[3])*z[6])*\
+                           (sp11*(z[3]*(z[4] + z[5] + z[6]) + z[2]*(z[3] + z[4] + z[5] + z[6]))**\
+                           2 + z[3]*(sp22*z[3]*(z[4] + 2*z[5] + z[6])**2 + \
+                           2*sp12*(z[4] + 2*z[5] + z[6])*(z[3]*(z[4] + z[5] + z[6]) + \
+                           z[2]*(z[3] + z[4] + z[5] + z[6])) + \
+                           z[6]*(2*sp13*(z[3]*(z[4] + z[5] + z[6]) + \
+                           z[2]*(z[3] + z[4] + z[5] + z[6])) + \
+                           z[3]*(sp33*z[6] + 2*sp23*(z[4] + 2*z[5] + z[6]))))))
+
+        self.assertEqual( (sp.sympify(li.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li.F) - target_F).simplify() , 0 )
+        self.assertEqual( (sp.sympify(numerator) - target_numerator).simplify() , 0 )
+
+    #@attr('active')
+    @attr('slow')
     def test_rank2_numerator_2L_box(self):
         k1, k2, p1, p2, p3, p4, s, t, mu, scalar_factor, D, eps = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu scalar_factor D eps')
 

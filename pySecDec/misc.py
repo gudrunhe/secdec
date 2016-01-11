@@ -37,11 +37,12 @@ def powerset(iterable, exclude_empty=False, stride=1):
 
 def missing(full, part):
     '''
-    Return the elements of `full` that have to
-    be appended to `part` such that `full` is
-    a subset of `part`.
+    Return the elements in `full` that are
+    not contained in `part`. Raise `ValueError`
+    if an element is in `part` but not in `full`.
     ``missing([1,2,3], [1]) --> [2,3]``
-    ``missing([1,2,3], [1,'a']) --> [2,3]``
+    ``missing([1,2,3,1], [1,2]) --> [3,1]``
+    ``missing([1,2,3], [1,'a']) --> ValueError``
 
     :param full:
         iterable;
@@ -54,11 +55,9 @@ def missing(full, part):
         of `full`.
 
     '''
-    part = list(part)
-    missing = []
-    for item in full:
-        if item not in part:
-            missing.append(item)
+    missing = list(full)
+    for item in part:
+        missing.remove(item)
     return missing
 
 def all_pairs(iterable):

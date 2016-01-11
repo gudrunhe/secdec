@@ -45,8 +45,11 @@ class TestPowerset(unittest.TestCase):
 class TestMissing(unittest.TestCase):
     #@attr('active')
     def test_missing(self):
+        self.assertEqual(missing([1,2,3], [1]), [2,3])
         self.assertEqual(missing([1,2,3], [1,2]), [3])
+        self.assertEqual(missing([1,2,3,1], [1,2]), [3,1])
         self.assertEqual(missing(['a','b','c','d','e','f'], ['a','e','d']), ['b','c','f'])
+        self.assertRaises(ValueError, missing, [1,2,3], [1,'a'])
 
     #@attr('active')
     def test_in_combination_with_powerset(self):
