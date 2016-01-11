@@ -416,13 +416,14 @@ class LoopIntegral(object):
                 for tensors_A2_indices in all_pairs(A_indices):
                     # `tensors_A2_indices` corresponds to the indices in equation (2.15) in arXiv:1010.1667v1.
 
-                    this_numerator_summand = scalar_factor(r) * remainder
+                    this_numerator_summand = Polynomial.from_expression(scalar_factor(r) * remainder, self.Feynman_parameters)
 
                     # --------------------------- multiply the tensor "P" --------------------------
                     for external_momentum_index, Lorentz_index in P_indices:
-                        this_tensor_P_factor = sp.sympify(aM[external_momentum_index].dot(Q))
+                        this_tensor_P_factor = aM[external_momentum_index].dot(Q)
                         # There should be eactly one external momentum in each term (summand) of `this_tensor_P_factor` --> attach the `Lorentz_index` to it
-                        this_tensor_P_factor = this_tensor_P_factor.subs((p, p(Lorentz_index)) for p in self.external_momenta)
+                        for i, coeff in enumerate(this_tensor_P_factor.coeffs):
+                            this_tensor_P_factor.coeffs[i] = coeff.subs((p, p(Lorentz_index)) for p in self.external_momenta)
                         this_numerator_summand *= this_tensor_P_factor
                     # ------------------------------------------------------------------------------
 
@@ -435,7 +436,7 @@ class LoopIntegral(object):
                     contractions_right = []
                     contractions_unmatched = []
                     for tensor_A2_indices in tensors_A2_indices:
-                        this_numerator_summand *= sp.sympify(aM[tensor_A2_indices[0][0],tensor_A2_indices[1][0]]) # * g(tensor_A2_indices[0][1], tensor_A2_indices[1][1])
+                        this_numerator_summand *= aM[tensor_A2_indices[0][0],tensor_A2_indices[1][0]] # * g(tensor_A2_indices[0][1], tensor_A2_indices[1][1])
                         contractions_left.append(tensor_A2_indices[0][1])
                         contractions_right.append(tensor_A2_indices[1][1])
                         contractions_unmatched.append(True)
@@ -471,9 +472,8 @@ class LoopIntegral(object):
                     # ------------------------------------------------------------------------------
 
                     # apply the replacement rules
-                    this_numerator_summand = this_numerator_summand.expand()
-                    for rule in replacement_rules:
-                        this_numerator_summand = this_numerator_summand.subs(*rule)
+                    for i, coeff in enumerate(this_numerator_summand.coeffs):
+                        this_numerator_summand.coeffs[i] = coeff.expand().subs(replacement_rules)
 
                     numerator += this_numerator_summand
 

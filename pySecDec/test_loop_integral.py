@@ -411,9 +411,9 @@ class TestNumerator(unittest.TestCase):
 
         self.assertEqual(tensors, target_tensors)
 
-        numerator = li.numerator
-        contracted_numerator = li_contracted.numerator
-        partially_contracted_numerator = li_partially_contracted.numerator
+        numerator = sp.sympify(li.numerator)
+        contracted_numerator = sp.sympify(li_contracted.numerator)
+        partially_contracted_numerator = sp.sympify(li_partially_contracted.numerator)
         target_numerator = sp.sympify('''
                                              scalar_factor(0)*p(1)*x2*p(2)*x2*p(3)*x2*p(4)*x2 +
                                              g(1,2) * scalar_factor(2)*p(3)*x2*p(4)*x2 +
@@ -478,7 +478,7 @@ class TestNumerator(unittest.TestCase):
                                              m**2 * m**2 * scalar_factor(4)
                                       ''')
 
-        self.assertEqual( (li.numerator - target_numerator).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li.numerator) - target_numerator).simplify() , 0 )
 
     #@attr('active')
     def test_2L_box_with_numerator(self):
@@ -529,7 +529,7 @@ class TestNumerator(unittest.TestCase):
 
         self.assertEqual( (sp.sympify(li.U) - target_U).simplify() , 0 )
         self.assertEqual( (sp.sympify(li.F) - target_F  ).simplify() , 0 )
-        self.assertEqual( (li.numerator - target_numerator).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li.numerator) - target_numerator).simplify() , 0 )
 
         replacement_rules = [('p1**2', 0),
                              ('p2**2', 0),
@@ -550,7 +550,7 @@ class TestNumerator(unittest.TestCase):
                                                                     + (-s/2-t/2)*(z4*z6 + z3*(z4 + z5 + z6 + z7))
                                                                ) + eps
                                                         ''') * sp.sympify('scalar_factor(0)')
-        self.assertEqual( (li_with_replacement_rules.numerator - target_numerator_with_replacements).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li_with_replacement_rules.numerator) - target_numerator_with_replacements).simplify() , 0 )
 
     #@attr('active')
     @attr('slow')
@@ -583,7 +583,8 @@ class TestNumerator(unittest.TestCase):
         N_nu = sp.sympify(len(propagators))
         dim = sp.sympify(4 - 2*eps)
         L = sp.sympify(2)
-        numerator = li.numerator.subs(scalar_factor(0), Gamma(N_nu - dim*L/2))
+        numerator = sp.sympify(li.numerator)
+        numerator = numerator.subs(scalar_factor(0), Gamma(N_nu - dim*L/2))
         numerator = numerator.subs(scalar_factor(2), sp.sympify('1/(-2)')*Gamma(N_nu - dim*L/2 - 1)*F).subs(F, sp.sympify(li.F))
 
         # SecDec divides by a factor of ``Gamma(N_nu - dim*L/2)`` and uses ``Gamma(N_nu - dim*L/2 - 1) = Gamma(N_nu - dim*L/2) / (N_nu - dim*L/2 - 1)``
@@ -677,8 +678,8 @@ class TestNumerator(unittest.TestCase):
         li2 = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
                                             numerator=numerator2, Feynman_parameters=z[1:],
                                             Lorentz_indices=indices)
-        Feynman_parametrized_numerator1 = li1.numerator
-        Feynman_parametrized_numerator2 = li2.numerator
+        Feynman_parametrized_numerator1 = sp.sympify(li1.numerator)
+        Feynman_parametrized_numerator2 = sp.sympify(li2.numerator)
 
         # comparison with Mathematica implementation of SecDec
         target_U = z[4]*(z[5] + z[6] + z[7]) + z[1]*(z[4] + z[5] + z[6] + z[7]) + \
