@@ -248,9 +248,13 @@ class LoopIntegral(object):
                 if i != j:
                     current_term /= 2
                 tmp = Polynomial.from_expression(current_term, self.Feynman_parameters)
-                # all coeffs of the polynomials in M must be integer
-                # convert to `int` since it is faster than calculating with sympy expressions # TODO: not always possible --> try conversion but do not force it
-                tmp.coeffs = tmp.coeffs.astype(int)
+                # all coeffs of the polynomials in M are likely to be integer
+                #    --> try conversion to `int` since it is faster than calculating with sympy expressions
+                try:
+                    tmp.coeffs = tmp.coeffs.astype(int)
+                # ignore if not all coefficients can be converted to `int` --> keep the sympy expressions
+                except:
+                    pass
                 # M is symmetric
                 M[j,i] = M[i,j] = tmp
         return M
