@@ -128,11 +128,14 @@ class LoopIntegral(object):
             The symbol to be used for the dimensional regulator
             (typically :math:`\epsilon` or :math:`\epsilon_D`)
 
+            .. note::
+                If you change this symbol, you have to adapt
+                the `dimensionality` accordingly.
+
         :param dimensionality:
-            string or sympy symbol, optional;
-            The dimensionality; this also defines the symbol
-            to be used for the dimensional regulator (typically
-            :math:`\epsilon` or :math:`\epsilon_D`)
+            string or sympy expression, optional;
+            The dimensionality; typically :math:`4-2\epsilon`,
+            which is the default value.
 
         :param metric_tensor:
             string or sympy symbol, optional;
