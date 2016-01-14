@@ -547,13 +547,13 @@ class TestNumerator(unittest.TestCase):
         self.assertEqual( (sp.sympify(li.F) - target_F  ).simplify() , 0 )
         self.assertEqual( (sp.sympify(li.numerator) - target_numerator).simplify() , 0 )
 
-        replacement_rules = [('p1**2', 0),
-                             ('p2**2', 0),
-                             ('p3**2', 0),
-                             ('p4**2', 0),
-                             ('p1*p2', 's/2'),
-                             ('p2*p3', 't/2'),
-                             ('p1*p3', '-s/2 - t/2')]
+        replacement_rules = np.array([('p1**2', 0),
+                                      ('p2**2', 0),
+                                      ('p3**2', 0),
+                                      ('p4**2', 0),
+                                      ('p1*p2', 's/2'),
+                                      ('p2*p3', 't/2'),
+                                      ('p1*p3', '-s/2 - t/2')])
 
         li_with_replacement_rules = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
                                                                   numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)],

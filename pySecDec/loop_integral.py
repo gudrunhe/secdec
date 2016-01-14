@@ -210,6 +210,8 @@ class LoopIntegral(object):
                 'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
                 ( len(self.propagators) , len(self.Feynman_parameters) )
 
+        if not isinstance(replacement_rules, list):
+            replacement_rules = list(replacement_rules)
         if replacement_rules:
             self.replacement_rules = np.array(replacement_rules)
             assert len(self.replacement_rules.shape) == 2, "The `replacement_rules` should be a list of tuples"
