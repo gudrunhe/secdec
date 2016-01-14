@@ -269,6 +269,22 @@ class TestUF_FromPropagators(unittest.TestCase):
     def test_error_messages(self):
         self.assertRaisesRegexp(AssertionError, '(M|m)ismatch.*propagators.*Feynman_parameters', \
                                 LoopIntegral.from_propagators, ['k1**2'], ['k1'], Feynman_parameters=['z0','z1'])
+        self.assertRaisesRegexp(AssertionError, '.*loop_momenta.*symbol', \
+                                LoopIntegral.from_propagators, ['k1**2', '(k1+k2)**2'], ['k1', '2*k2'], Feynman_parameters=['z0','z1'])
+        self.assertRaisesRegexp(AssertionError, '.*external_momenta.*symbol', \
+                                LoopIntegral.from_propagators, ['k1**2'], ['k1', 'k2'], ['alpha*p1'], Feynman_parameters=['z0','z1'])
+        self.assertRaisesRegexp(AssertionError, '.*Lorentz_indices.*symbol.*number', \
+                                LoopIntegral.from_propagators, ['k1**2'], ['k1', 'k2'], Lorentz_indices=['alpha*delta'])
+        self.assertRaisesRegexp(AssertionError, '.*metric_tensor.*symbol', \
+                                LoopIntegral.from_propagators, ['k1**2'], ['k1', 'k2'], metric_tensor='4')
+        self.assertRaisesRegexp(AssertionError, '.*propagators.*at most quadratic', \
+                                LoopIntegral.from_propagators, ['k1**2', 'p1*(k1+k2)**2'], ['k1','k2'], ['p1','p2'])
+        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of tuples', \
+                                LoopIntegral.from_propagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=['z0','z1'])
+        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of tuples', \
+                                LoopIntegral.from_propagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1', 0,'z1')])
+        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*at most quadratic', \
+                                LoopIntegral.from_propagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1*k2', 0)])
 
     #@attr('active')
     def test_replacement_rules_box_2L(self):

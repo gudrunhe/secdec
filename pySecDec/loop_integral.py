@@ -150,6 +150,7 @@ class LoopIntegral(object):
         # TODO: implement numerator
         # TODO: remove all sympy symbols from the final output U, F, and N
         # TODO: check that no symbol is used twice (e.g. assert len(all_symbols) == len(set(all_symbols))
+        # TODO: test case with linear propagators
 
         self = LoopIntegral('using a named constructor')
 
@@ -176,19 +177,19 @@ class LoopIntegral(object):
             assert (poly.expolist.sum(axis=1) <= 2).all(), error_message
 
         # sympify and store `loop_momenta`
-        self.loop_momenta = sympify_symbols(loop_momenta, 'Each of the `loop_momenta` must be a symbol.') #TODO: test error message
+        self.loop_momenta = sympify_symbols(loop_momenta, 'Each of the `loop_momenta` must be a symbol.')
         self.L = len(self.loop_momenta)
 
         # sympify and store `external_momenta`
-        self.external_momenta = sympify_symbols(external_momenta, 'Each of the `external_momenta` must be a symbol.') #TODO: test error message
+        self.external_momenta = sympify_symbols(external_momenta, 'Each of the `external_momenta` must be a symbol.')
 
         all_momenta = self.external_momenta + self.loop_momenta
 
         # sympify and store `Lorentz_indices`
-        self.Lorentz_indices = sympify_symbols(Lorentz_indices, 'Each of the `Lorentz_indices` must be a symbol or a number.', allow_number=True) # TODO: test error message
+        self.Lorentz_indices = sympify_symbols(Lorentz_indices, 'Each of the `Lorentz_indices` must be a symbol or a number.', allow_number=True)
 
         # sympify and store `metric_tensor`
-        self.metric_tensor = sympify_symbols([metric_tensor], '`metric_tensor` must be a symbol.')[0] # TODO: test error message
+        self.metric_tensor = sympify_symbols([metric_tensor], '`metric_tensor` must be a symbol.')[0]
 
         # sympify and store `dimensionality`
         self.dimensionality = sp.sympify(dimensionality)
@@ -196,7 +197,7 @@ class LoopIntegral(object):
         # sympify and store `propagators`
         self.propagators = sp.sympify(list(propagators))
         for propagator in self.propagators:
-            assert_at_most_quadractic(propagator, all_momenta, 'Each of the `propagators` must be polynomial and at most quadratic in the momenta.') # TODO: check that this issues an error if more than quadractic powers
+            assert_at_most_quadractic(propagator, all_momenta, 'Each of the `propagators` must be polynomial and at most quadratic in the momenta.')
         self.P = len(self.propagators)
 
         # sympify and store `Feynman_parameters`
@@ -211,11 +212,11 @@ class LoopIntegral(object):
 
         if replacement_rules:
             self.replacement_rules = np.array(replacement_rules)
-            assert len(self.replacement_rules.shape) == 2, "Wrong format for `replacement_rules`" #TODO: test error message
-            assert self.replacement_rules.shape[1] == 2 , "Wrong format for `replacement_rules`" #TODO: test error message
+            assert len(self.replacement_rules.shape) == 2, "The `replacement_rules` should be a list of tuples"
+            assert self.replacement_rules.shape[1] == 2 , "The `replacement_rules` should be a list of tuples"
             for rule in self.replacement_rules:
                 for expression in rule:
-                    assert_at_most_quadractic(expression, all_momenta, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.') # TODO: test error message
+                    assert_at_most_quadractic(expression, all_momenta, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
         else:
             self.replacement_rules = []
 
