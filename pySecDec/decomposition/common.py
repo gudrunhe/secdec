@@ -98,15 +98,14 @@ def refactorize(polyprod, parameter=None):
         If not provided, all parameters are checked.
 
     '''
-    if parameter is None:
-        for i in range(polyprod.number_of_variables):
-            refactorize(polyprod, i)
-        return
-
     expolist_mono = polyprod.factors[0].expolist
     expolist_poly = polyprod.factors[1].expolist
 
-    factorizable_power = expolist_poly[:,parameter].min()
-
-    expolist_mono[:,parameter] += factorizable_power
-    expolist_poly[:,parameter] -= factorizable_power
+    if parameter is None:
+        factorizable_powers = expolist_poly.min(axis=0)
+        expolist_mono[:] += factorizable_powers
+        expolist_poly[:] -= factorizable_powers
+    else:
+        factorizable_power = expolist_poly[:,parameter].min()
+        expolist_mono[:,parameter] += factorizable_power
+        expolist_poly[:,parameter] -= factorizable_power
