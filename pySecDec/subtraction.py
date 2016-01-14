@@ -132,10 +132,16 @@ def integrate_pole_part(polyprod, *indices):
         The polynomial variables of ``monomial`` and the other
         factors (interpreted as :math:`\cal{I}`) are interpreted
         as the Feynman parameters and the epsilon regulators.
+        Make sure that the last factor (``<cal_I>``) is defined
+        and finite for :math:`\epsilon = 0`. All poles for
+        :math:`\epsilon \rightarrow 0` should be made explicit
+        by putting them into ``<regulator poles of cal_I>``
+        as :class:`pySecDec.algebra.ExponentiatedPolynomial`
+        with ``exponent = -1``.
 
     :param indices:
         arbitrarily many integers;
-        The index/indices of the parameter to partially integrate.
+        The index/indices of the parameter(s) to partially integrate.
         :math:`j` in the formulae above.
 
     Return the pole part and the numerically integrable remainder
