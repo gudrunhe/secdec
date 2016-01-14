@@ -35,9 +35,9 @@ class TestPrimaryDecomposition(unittest.TestCase):
         np.testing.assert_array_equal(F_primary[2].expolist, np.array([(0,1,1),(1,0,0)]))
         np.testing.assert_array_equal(F_primary[3].expolist, np.array([(0,1,0),(1,0,1)]))
 
-        self.assertEqual(str(F_primary[0]), " + (-s12)*x0*x2 + (-s23)*x1")
-        self.assertEqual(str(F_primary[1]), " + (-s12)*x2 + (-s23)*x0*x1")
-        self.assertEqual(str(F_primary[2]), " + (-s12)*x1*x2 + (-s23)*x0")
+        self.assertEqual(str(F_primary[0]), " + (-s12)*x1*x3 + (-s23)*x2")
+        self.assertEqual(str(F_primary[1]), " + (-s12)*x3 + (-s23)*x0*x2")
+        self.assertEqual(str(F_primary[2]), " + (-s12)*x1*x3 + (-s23)*x0")
         self.assertEqual(str(F_primary[3]), " + (-s12)*x1 + (-s23)*x0*x2")
 
 

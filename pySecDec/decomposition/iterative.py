@@ -31,7 +31,7 @@ def primary_decomposition_polynomial(polynomial):
         #   => this is equivalent to setting the exponent to zero
         #     => that is however equivalent to setting the parameter to one
         expolist_i = np.delete(expolist,i,axis=1)
-        primary_sectors.append(Polynomial(expolist_i, coeffs))
+        primary_sectors.append(Polynomial(expolist_i, coeffs, np.delete(polynomial.polysymbols,i)))
 
     return primary_sectors
 
