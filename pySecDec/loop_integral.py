@@ -27,7 +27,7 @@ class LoopIntegral(object):
 
     @staticmethod
     def from_propagators(propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
-                         symbols=[], numerator=1, replacement_rules=[], Feynman_parameters='x', \
+                         numerator=1, replacement_rules=[], Feynman_parameters='x', \
                          regulator='eps', dimensionality='4-2*eps', metric_tensor='g'):
         r'''
         Construct the loop integral from a list of the
@@ -57,19 +57,6 @@ class LoopIntegral(object):
 
             .. seealso::
                 parameter `numerator`
-
-        :param symbols:
-            iterable of strings or sympy expressions,
-            optional;
-            Any scalar symbol that appears in the `numerator`
-            must be specified here, in particular all the
-            Mandelstam variables and masses. If a `numerator`
-            shall be constructed, all scalar products of
-            external momenta that appear in the `numerator`
-            must be expressed in terms scalars (the Mandelstam
-            variables) in the `replacement_rules`.
-            Specifying the `kinematic_invariants` is only
-            required when a `numerator` is to be constructed.
 
         :param numerator:
             string or sympy expression, optional;
@@ -143,13 +130,8 @@ class LoopIntegral(object):
             tensor :math:`g^{\mu\nu}`.
 
         '''
-        # TODO: numerator implementation according to arXiv:1010.1667
-        # TODO: allow tensor numerators --> correct documentation
         # TODO: explain the main member properties (U, F, numerator)
         # TODO: carefully reread and check this documentation
-        # TODO: implement numerator
-        # TODO: remove all sympy symbols from the final output U, F, and N
-        # TODO: check that no symbol is used twice (e.g. assert len(all_symbols) == len(set(all_symbols))
         # TODO: test case with linear propagators
 
         self = LoopIntegral('using a named constructor')
