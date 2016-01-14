@@ -3,6 +3,7 @@
 from .misc import *
 import numpy as np
 import unittest
+from nose.plugins.attrib import attr
 
 class TestSort(unittest.TestCase):
     def test_sort_2D_array(self):
@@ -34,6 +35,50 @@ class TestPowerset(unittest.TestCase):
         self.assertEqual(list(powerset(range(2),exclude_empty=True)), [(0,),(1,),(0,1)])
         self.assertEqual(list(powerset(range(3),exclude_empty=True)), [(0,),(1,),(2,),(0,1),(0,2),(1,2),(0,1,2)])
         self.assertEqual(list(powerset(range(4),exclude_empty=True)), [(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
+
+    #@attr('active')
+    def test_strided_powerset(self):
+        self.assertEqual(list(powerset(range(4),stride=2)), [(),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)])
+        self.assertEqual(list(powerset(range(4),stride=3)), [(),(0,1,2),(0,1,3),(0,2,3),(1,2,3)])
+        self.assertEqual(list(powerset(range(4),stride=2,exclude_empty=True)), [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)])
+
+class TestMissing(unittest.TestCase):
+    #@attr('active')
+    def test_missing(self):
+        self.assertEqual(missing([1,2,3], [1]), [2,3])
+        self.assertEqual(missing([1,2,3], [1,2]), [3])
+        self.assertEqual(missing([1,2,3,1], [1,2]), [3,1])
+        self.assertEqual(missing(['a','b','c','d','e','f'], ['a','e','d']), ['b','c','f'])
+        self.assertRaises(ValueError, missing, [1,2,3], [1,'a'])
+
+    #@attr('active')
+    def test_in_combination_with_powerset(self):
+        full_set = list(range(4))
+        powerset_4_generator = powerset(full_set)
+        target_powerset_4 = [(),(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)]
+
+        target_missing_in_powerset_4 = list(target_powerset_4)
+        target_missing_in_powerset_4.reverse()
+
+        for i, powerset_item in enumerate(powerset_4_generator):
+            print(i)
+            self.assertEqual(powerset_item, target_powerset_4[i])
+            self.assertEqual(missing(full_set, powerset_item), list(target_missing_in_powerset_4[i]))
+
+class TestAllPairs(unittest.TestCase):
+    #@attr('active')
+    def test_error_input_not_even(self):
+        self.assertRaisesRegexp(AssertionError, 'even', all_pairs, [1,2,3])
+
+    #@attr('active')
+    def test_partitioning(self):
+        # list input
+        lst = [1,2,3,4]
+        self.assertEqual(list(all_pairs(lst)), [[(1,2),(3,4)], [(1,3),(2,4)], [(1,4),(2,3)]])
+
+        # iterator input
+        generator = (i for i in lst)
+        self.assertEqual(list(all_pairs(generator)), [[(1,2),(3,4)], [(1,3),(2,4)], [(1,4),(2,3)]])
 
 class TestDet(unittest.TestCase):
     def test_calculation(self):
@@ -100,3 +145,36 @@ class TestAdjugate(unittest.TestCase):
         self.assertTrue(np.issubdtype(adjugate(M1).dtype, np.int))
         self.assertTrue(np.issubdtype(adjugate(M2).dtype, np.int))
         self.assertTrue(np.issubdtype(adjugate(M3).dtype, np.float))
+
+class TestCachedProperty(unittest.TestCase):
+    #@attr('active')
+    def test_usability(self):
+        class C(object):
+            'Sum up the numbers from one to `N`.'
+            def __init__(self, N):
+                self.N = N
+            @cached_property
+            def sum(self):
+                result = 0
+                for i in range(1, self.N + 1):
+                    result += i
+                return result
+        to_ten = C(10)
+        self.assertEqual(to_ten.sum, 1+2+3+4+5+6+7+8+9+10)
+
+    #@attr('active')
+    def test_called_only_once(self):
+        class C(object):
+            def __init__(self):
+                self.counter = 0
+            @cached_property
+            def prop(self):
+                self.counter += 1
+                return 5 + 5
+        instance = C()
+
+        self.assertEqual(instance.counter, 0)
+        for i in range(10):
+            # the method should be called only once
+            self.assertEqual(instance.prop, 10)
+            self.assertEqual(instance.counter, 1)

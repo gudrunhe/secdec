@@ -4,10 +4,11 @@ from itertools import chain,combinations
 import sympy as sp
 import numpy as np
 
-def powerset(iterable,exclude_empty=False):
+def powerset(iterable, exclude_empty=False, stride=1):
     """
     Return an iterator over the powerset of a given set.
-    powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
+    ``powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3)
+    (2,3) (1,2,3)``
 
     :param iterable:
         iterable;
@@ -18,14 +19,73 @@ def powerset(iterable,exclude_empty=False):
         If True, skip the empty set in the powerset.
         Default is False.
 
+    :param stride:
+        integer;
+        Only generate sets that have a multiple of
+        `stride` elements.
+        ``powerset([1,2,3], stride=2) --> () (1,2) (1,3)
+        (2,3)``
+
     """
     # taken from python's own documentation
     s = list(iterable)
-    powerset_iterator = iter(chain.from_iterable(combinations(s, r) for r in range(len(s)+1)))
+    powerset_iterator = iter(chain.from_iterable(combinations(s, r) for r in range(0,len(s)+1,stride)))
     if exclude_empty:
         # The first element of the iterator is the empty set -> discard
         next(powerset_iterator)
     return powerset_iterator
+
+def missing(full, part):
+    '''
+    Return the elements in `full` that are
+    not contained in `part`. Raise `ValueError`
+    if an element is in `part` but not in `full`.
+    ``missing([1,2,3], [1]) --> [2,3]``
+    ``missing([1,2,3,1], [1,2]) --> [3,1]``
+    ``missing([1,2,3], [1,'a']) --> ValueError``
+
+    :param full:
+        iterable;
+        The set of elements to complete `part`
+        with.
+
+    :param part:
+        iterable;
+        The set to be completed to a superset
+        of `full`.
+
+    '''
+    missing = list(full)
+    for item in part:
+        missing.remove(item)
+    return missing
+
+def all_pairs(iterable):
+    '''
+    Return all possible pairs of a given set.
+    ``all_pairs([1,2,3,4]) --> [(1,2),(3,4)]
+    [(1,3),(2,4)] [(1,4),(2,3)]``
+
+    :param iterable:
+        iterable;
+        The set to be split into all possible pairs.
+
+    '''
+    # the following iterative routine is taken from
+    # http://stackoverflow.com/questions/5360220/how-to-split-a-list-into-pairs-in-all-possible-ways
+    def all_pairs_recursion(lst):
+        if len(lst) < 2:
+            yield lst
+            return
+        a = lst[0]
+        for i in range(1,len(lst)):
+            pair = (a,lst[i])
+            for rest in all_pairs_recursion(lst[1:i]+lst[i+1:]):
+                yield [pair] + rest
+
+    lst = iterable if isinstance(iterable, list) else list(iterable)
+    assert len(lst) % 2 == 0, '`iterable` must have even length'
+    return all_pairs_recursion(lst)
 
 def det(M):
     '''
@@ -87,14 +147,20 @@ def adjugate(M):
     return adjugate_M
 
 def argsort_2D_array(array):
-    '''
+    r'''
     Sort a 2D array according to its row entries.
     The idea is to bring identical rows together.
 
     Example:
-        [[1,2,3],         [[1,2,3],
-         [2,3,4],  --->    [1,2,3],
-         [1,2,3]]          [2,3,4]]
+        +-------+--------+-------+
+        | input |        |sorted |
+        +=======+========+=======+
+        | 1 2 3 |        | 1 2 3 |
+        +-------+--------+-------+
+        | 2 3 4 |        | 1 2 3 |
+        +-------+--------+-------+
+        | 1 2 3 |        | 2 3 4 |
+        +-------+--------+-------+
 
     Return the indices like numpy's :func:`argsort`
     would.
@@ -117,3 +183,36 @@ def argsort_2D_array(array):
     array = array.flatten()
 
     return np.argsort(array, kind='mergesort')
+
+def cached_property(method):
+    '''
+    Like the builtin `property` to be used as decorator
+    but the method is only called once per instance.
+
+    Example:
+
+    .. code-block:: python
+
+        class C(object):
+            'Sum up the numbers from one to `N`.'
+            def __init__(self, N):
+                self.N = N
+            @cached_property
+            def sum(self):
+                result = 0
+                for i in range(1, self.N + 1):
+                    result += i
+                return result
+
+    '''
+    def wrapped_method(obj):
+        try:
+            # try to return the result from cache
+            return obj.__dict__[method.__name__]
+        except KeyError:
+            # call the function once and for all
+            result = method(obj)
+            obj.__dict__[method.__name__] = result
+            return result
+    # make the method a property
+    return property(wrapped_method)

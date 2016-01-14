@@ -22,7 +22,7 @@ Contents:
 .. automodule:: pySecDec.misc
     :members:
 
-.. automodule:: pySecDec.uf
+.. automodule:: pySecDec.loop_integral
     :members:
 
 .. automodule:: pySecDec.subtraction
