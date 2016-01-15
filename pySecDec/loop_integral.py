@@ -1,6 +1,6 @@
 """Routines to Feynman parametrize a loop integral"""
 
-from .algebra import Polynomial
+from .algebra import Polynomial, ExponentiatedPolynomial
 from .misc import det, adjugate, powerset, missing, all_pairs, cached_property
 import sympy as sp
 import numpy as np
@@ -269,6 +269,22 @@ class LoopIntegral(object):
     U = detM
 
     @cached_property
+    def exponent_U(self):
+        return len(self.propagators) - self.dimensionality / 2 * (len(self.loop_momenta) + 1) - self.highest_rank
+
+    @property # not cached on purpose --> this is just making copies
+    def exponentiated_U(self):
+        return ExponentiatedPolynomial(self.U.expolist, self.U.coeffs, self.exponent_U, self.U.polysymbols)
+
+    @cached_property
+    def exponent_F(self):
+        return len(self.propagators) - self.dimensionality / 2 * len(self.loop_momenta)
+
+    @property # not cached on purpose --> this is just making copies
+    def exponentiated_F(self):
+        return ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, self.exponent_F, self.F.polysymbols)
+
+    @cached_property
     def F(self):
         # equation (8) of arXiv:0803.4177: F = det(M)*(Q.transpose*inverse(M)*Q-J) = (Q.transpose*adjugate(M)*Q-U*J)
         F = 0
@@ -358,6 +374,14 @@ class LoopIntegral(object):
         return self._numerator_tensors[2]
 
     @cached_property
+    def numerator_ranks(self):
+        return [len(indices) for indices in self.numerator_loop_tensors]
+
+    @cached_property
+    def highest_rank(self):
+        return max(self.numerator_ranks)
+
+    @cached_property
     def numerator(self):
         '''
         Generate the numerator in index notation according to
@@ -378,7 +402,9 @@ class LoopIntegral(object):
         Q = self.Q
         g = self.metric_tensor
         D = self.dimensionality
+        U = sp.symbols('U')
         replacement_rules = self.replacement_rules_with_Lorentz_indices
+        highest_rank = self.highest_rank
 
         # `self.numerator_loop_tensors`: List of double indices for the loop momenta for each term.
         # `self.numerator_external_tensors`: List of double indices for the external momenta for each term.
@@ -395,6 +421,11 @@ class LoopIntegral(object):
             #  * The tensor of external momenta from the input (`external_tensor`)
             #  * Remaining scalar factors from the input (`remainder`)
 
+            # Since we allow sums of numerators with different rank, we must multiply the correct
+            # power of U. We globally multiply by ``U**(N_nu - dim / 2 * (L + 1) - highest_rank)``
+            # Therefore we must multiply each term by ``U**(highest_rank - this_term_rank)``
+            this_U_factor = U**( highest_rank - len(loop_tensor) )
+
             # Distribute the indices of the loop momenta over "A" (and "P") in all possible ways --> powerset
             # Note that "A" must carry an even number of indices --> stride=2
             for A_indices in powerset(loop_tensor, stride=2):
@@ -408,7 +439,7 @@ class LoopIntegral(object):
                 for tensors_A2_indices in all_pairs(A_indices):
                     # `tensors_A2_indices` corresponds to the indices in equation (2.15) in arXiv:1010.1667v1.
 
-                    this_numerator_summand = Polynomial.from_expression(scalar_factor(r) * remainder, self.Feynman_parameters)
+                    this_numerator_summand = Polynomial.from_expression(scalar_factor(r) * remainder, self.Feynman_parameters) * this_U_factor
 
                     # --------------------------- multiply the tensor "P" --------------------------
                     for external_momentum_index, Lorentz_index in P_indices:
