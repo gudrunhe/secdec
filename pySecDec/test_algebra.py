@@ -619,6 +619,15 @@ class TestLogOfPolynomial(unittest.TestCase):
         target_derivative_1 = sp.sympify('1/(A*x0**2*x1 + B*x1) * (A*x0**2 + B)')
         self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
 
+    def test_simplify(self):
+        # log(1) = 0
+        expr = LogOfPolynomial([(0,0),(0,0)],[1, 0], polysymbols=['x','y'])
+        simplified_expr = expr.simplify()
+
+        self.assertTrue(type(simplified_expr) is Polynomial)
+        np.testing.assert_array_equal(simplified_expr.expolist, [[0,0]])
+        np.testing.assert_array_equal(simplified_expr.coeffs, [0])
+
 #@attr('active')
 class TestInsertion(unittest.TestCase):
     def test_insert_value_polynomial(self):

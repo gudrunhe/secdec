@@ -454,6 +454,8 @@ class ExponentiatedPolynomial(Polynomial):
         otherwise call the simplify method of the base class.
 
         '''
+        if isinstance(self.exponent, _Expression):
+            self.exponent = self.exponent.simplify()
         if self.exponent == 0 or (isinstance(self.exponent, Polynomial) and (self.exponent.coeffs==0).all()):
             self.coeffs = np.array([1])
             self.expolist = np.array([[0]*self.number_of_variables])
@@ -542,6 +544,18 @@ class LogOfPolynomial(Polynomial):
         factor1 = Polynomial.derive(self, index)
 
         return Product(factor0, factor1)
+
+    def simplify(self):
+        '''
+        Apply the identity ``log(1) = 0``, otherwise call
+        the simplify method of the base class.
+
+        '''
+        super(LogOfPolynomial, self).simplify()
+        if len(self.coeffs) == 1 and self.coeffs[0] == 1 and (self.expolist == 0).all():
+            return Polynomial([[0]*len(self.polysymbols)], [0], self.polysymbols)
+        else:
+            return self
 
 class Sum(_Expression):
     r'''
