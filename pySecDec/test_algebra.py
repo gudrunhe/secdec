@@ -1,6 +1,7 @@
 """Unit tests for the algebra module"""
 
 from .algebra import *
+from .algebra import _get_symbols
 import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
@@ -372,14 +373,19 @@ class TestProduct(unittest.TestCase):
         self.assertEqual(orig.factors[0].expolist[0,0],5)
         self.assertEqual(copy.factors[0].expolist[0,0],0)
 
+    #@attr('active')
     def test_derive(self):
         from sympy import sympify, symbols
         A, B = symbols('A B')
-        polynomial = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sympify('a + b*eps'))
+        polynomial1 = Polynomial([(2,1),(0,0)],[A, B])
+        polynomial2 = Polynomial([(0,0),(1,0)],[1, 2])
+        prod = Product(polynomial1, polynomial2)
 
-        derivative_0 = polynomial.derive(0)
+        derivative_0 = prod.derive(0)
         derivative_0_1 = sympify( str(derivative_0.derive(1)) )
-        target_derivative_0_1 = sympify('(a + b*eps)*(a + b*eps - 1)*(A*x0**2*x1 + B)**(a + b*eps - 2) * (A*x0**2) * (2*A*x0*x1) + (a + b*eps)*(A*x0**2*x1 + B)**(a + b*eps - 1) * (2*A*x0)')
+        target_derivative_0_1 = sympify('(A*x0**2*x1 + B) * (1 + 2*x0)')
+        target_derivative_0_1 = sympify('(2*A*x0*x1) * (1 + 2*x0) + 2*(A*x0**2*x1 + B)')
+        target_derivative_0_1 = sympify('(2*A*x0) * (1 + 2*x0) + 2*(A*x0**2)')
         self.assertEqual( (derivative_0_1 - target_derivative_0_1).simplify() , 0 )
 
     def test_string_form(self):
@@ -390,6 +396,142 @@ class TestProduct(unittest.TestCase):
 
         self.assertEqual(str(prod), string_prod)
         self.assertEqual(repr(prod), string_prod)
+
+#@attr('active')
+class TestPow(unittest.TestCase):
+    def test_init(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
+        p2 = Polynomial([(1,0,1),(2,1,0),(0,2,1)],['G','H','I'])
+
+        # mismatch in number of parameters
+        self.assertRaisesRegexp(TypeError, 'same number of variables.*base.*exponent', Pow,p0,p2)
+
+        # Proper instantiation
+        exp = Pow(p0,p1)
+
+        # made a copy?
+        self.assertEqual(exp.base.expolist[0,0],0)
+        self.assertEqual(p0.expolist[0,0],0)
+        exp.base.expolist[0,0] = 5
+        self.assertEqual(exp.base.expolist[0,0],5)
+        self.assertEqual(p0.expolist[0,0],0)
+
+        self.assertEqual(exp.exponent.expolist[0,0],8)
+        self.assertEqual(p1.expolist[0,0],8)
+        exp.exponent.expolist[0,0] = 5
+        self.assertEqual(exp.exponent.expolist[0,0],5)
+        self.assertEqual(p1.expolist[0,0],8)
+
+    def test_copy(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
+
+        orig = Pow(p0,p1)
+        copy = orig.copy()
+
+        self.assertEqual(orig.base.expolist[0,0],0)
+        self.assertEqual(copy.base.expolist[0,0],0)
+        orig.base.expolist[0,0] = 5
+        self.assertEqual(orig.base.expolist[0,0],5)
+        self.assertEqual(copy.base.expolist[0,0],0)
+
+        self.assertEqual(orig.exponent.expolist[0,0],8)
+        self.assertEqual(copy.exponent.expolist[0,0],8)
+        orig.exponent.expolist[0,0] = 5
+        self.assertEqual(orig.exponent.expolist[0,0],5)
+        self.assertEqual(copy.exponent.expolist[0,0],8)
+
+    def test_simplify(self):
+        zero = Polynomial.from_expression('0', ['x0','x1','x2'])
+        base = Polynomial([(0,0,1),(0,1,0),(1,0,0)], ['a','b','c'])
+
+        one = Pow(base, zero).simplify()
+
+        self.assertTrue(type(one) is Polynomial)
+        np.testing.assert_array_equal(one.coeffs, [1])
+        np.testing.assert_array_equal(one.expolist, [[0,0,0]])
+
+    def test_derive(self):
+        from sympy import sympify, symbols
+        A, B = symbols('A B')
+        polynomial1 = Polynomial.from_expression('A*x0 + B*x1', ['x0','x1'])
+        polynomial2 = Polynomial.from_expression('x1', ['x0','x1'])
+        exp = Pow(polynomial1, polynomial2)
+
+        derivative_0 = exp.derive(0)
+        target_derivative_0 = sympify('(A*x0 + B*x1) ** (x1 - 1) * A*x1')
+        self.assertEqual( (sympify(derivative_0) - target_derivative_0).simplify() , 0 )
+
+        derivative_0_1 = sympify(derivative_0.derive(1))
+        target_derivative_0_1 = sympify('A*x1 *( (A*x0 + B*x1) ** (x1 - 1) * (log(A*x0 + B*x1) + (x1 - 1)*B/(A*x0 + B*x1)) ) + (A*x0 + B*x1) ** (x1 - 1) * A')
+        self.assertEqual( (derivative_0_1 - target_derivative_0_1).simplify() , 0 )
+
+    def test_string_form(self):
+        p0 = ExponentiatedPolynomial([(0,1)],['A'],exponent='exponent')
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['B','C','D'])
+        exp = Pow(p0,p1)
+        string_pow = '(( + (A)*x1)**(exponent)) ** ( + (B)*x0**8*x1 + (C)*x0*x1**5 + (D)*x0**2*x1)'
+
+        self.assertEqual(str(exp), string_pow)
+        self.assertEqual(repr(exp), string_pow)
+
+#@attr('active')
+class TestLog(unittest.TestCase):
+    def test_init(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+
+        # Proper instantiation
+        ln = Log(p0)
+
+        # made a copy?
+        self.assertEqual(ln.arg.expolist[0,0],0)
+        self.assertEqual(p0.expolist[0,0],0)
+        ln.arg.expolist[0,0] = 5
+        self.assertEqual(ln.arg.expolist[0,0],5)
+        self.assertEqual(p0.expolist[0,0],0)
+
+    def test_copy(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+
+        orig = Log(p0)
+        copy = orig.copy()
+
+        self.assertEqual(orig.arg.expolist[0,0],0)
+        self.assertEqual(copy.arg.expolist[0,0],0)
+        orig.arg.expolist[0,0] = 5
+        self.assertEqual(orig.arg.expolist[0,0],5)
+        self.assertEqual(copy.arg.expolist[0,0],0)
+
+    def test_simplify(self):
+        one = Polynomial.from_expression(1, ['x0','x1','x2'])
+
+        zero = Log(one).simplify()
+
+        self.assertTrue(type(one) is Polynomial)
+        self.assertEqual(sp.sympify(one), 1)
+        np.testing.assert_array_equal(one.coeffs, [1])
+        np.testing.assert_array_equal(one.expolist, [[0,0,0]])
+
+    def test_derive(self):
+        polynomial = Polynomial.from_expression('A*x0 + B*x1', ['x0','x1'])
+        ln = Log(polynomial)
+
+        derivative_0 = ln.derive(0).simplify()
+        target_derivative_0 = sp.sympify('1/(A*x0 + B*x1)*A')
+        self.assertEqual( (sp.sympify(derivative_0) - target_derivative_0).simplify() , 0 )
+
+        derivative_0_1 = sp.sympify(derivative_0.derive(1))
+        target_derivative_0_1 = sp.sympify('-A * (A*x0 + B*x1)**(-2) * B')
+        self.assertEqual( (derivative_0_1 - target_derivative_0_1).simplify() , 0 )
+
+    def test_string_form(self):
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['B','C','D'])
+        ln = Log(p1)
+        string_ln = 'log( + (B)*x0**8*x1 + (C)*x0*x1**5 + (D)*x0**2*x1)'
+
+        self.assertEqual(str(ln), string_ln)
+        self.assertEqual(repr(ln), string_ln)
 
 class TestSum(unittest.TestCase):
     def test_init(self):
@@ -535,6 +677,31 @@ class TestInsertion(unittest.TestCase):
         self.assertEqual(removed.expolist.shape[1], 1)
         self.assertEqual(removed.exponent.expolist.shape[1], 1)
 
+    def test_insert_in_pow(self):
+        exponent = Polynomial([(0,0),(5,0)],['E',1])
+        base = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
+        expr = Pow(base, exponent)
+
+        replaced = replace(expr,index=0,value=0)
+        self.assertEqual( (sp.sympify(str(replaced)) - sp.sympify('(A + C*x1 + D*x1**2)**(E)')).simplify() , 0 )
+        self.assertEqual(replaced.number_of_variables, 2)
+
+        removed = replace(expr, index=0, value=2, remove=True)
+        self.assertEqual( (sp.sympify(str(removed)) - sp.sympify('(A + 2*B + C*x1 + D*x1**2)**(E + 2**5)')).simplify() , 0 )
+        self.assertEqual(removed.number_of_variables, 1)
+
+    def test_insert_in_log(self):
+        arg = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
+        expr = Log(arg)
+
+        replaced = replace(expr,index=1,value=sp.sympify('(3*k+1)'))
+        self.assertEqual( (sp.sympify(str(replaced)) - sp.sympify('log(A + B*x0 + C*(3*k+1) + D*(3*k+1)**2)')).simplify() , 0 )
+        self.assertEqual(replaced.number_of_variables, 2)
+
+        removed = replace(expr, index=1, value=sp.sympify('(3*k+1)'), remove=True)
+        self.assertEqual( (sp.sympify(str(removed)) - sp.sympify('log(A + B*x0 + C*(3*k+1) + D*(3*k+1)**2)')).simplify() , 0 )
+        self.assertEqual(removed.number_of_variables, 1)
+
     #@attr('active')
     def test_insert_in_Function(self):
         exponent = Polynomial([(0,0),(5,0)],['E',1])
@@ -562,3 +729,34 @@ class TestInsertion(unittest.TestCase):
 
     def test_error(self):
         self.assertRaisesRegexp(TypeError, 'Can.*only.*Polynomial.*not.*int', replace, 3, 2, 1)
+
+#@attr('active')
+class TestGetSymbols(unittest.TestCase):
+    def setUp(self):
+        self.polysymbols = sp.sympify(['x','y'])
+        self.p0 = Polynomial.from_expression('a*x + b*y', self.polysymbols)
+        self.p1 = Polynomial.from_expression('c*x + d*y', self.polysymbols)
+
+    def test_get_from_polynomial(self):
+        self.assertEqual(_get_symbols(self.p0), self.polysymbols)
+        self.assertEqual(_get_symbols(self.p1), self.polysymbols)
+
+    def test_get_from_sum(self):
+        expr = Sum(self.p0, self.p1)
+        self.assertEqual(_get_symbols(expr), self.polysymbols)
+
+    def test_get_from_product(self):
+        expr = Product(self.p0, self.p1)
+        self.assertEqual(_get_symbols(expr), self.polysymbols)
+
+    def test_get_from_log(self):
+        expr = Sum(Log(self.p0), Log(self.p1))
+        self.assertEqual(_get_symbols(expr), self.polysymbols)
+
+    def test_get_from_pow(self):
+        expr = Pow(Log(self.p0), Log(self.p1))
+        self.assertEqual(_get_symbols(expr), self.polysymbols)
+
+    def test_get_from_function(self):
+        expr = Function('f', self.p0, self.p1)
+        self.assertEqual(_get_symbols(expr), self.polysymbols)

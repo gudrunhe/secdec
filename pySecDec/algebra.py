@@ -411,7 +411,7 @@ class ExponentiatedPolynomial(Polynomial):
         # derivative(poly**exponent) = poly**exponent*derivative(exponent)*log(poly) + poly**(exponent-1)*exponent*derivative(poly)
 
 
-        if isinstance(self.exponent, (Polynomial, Sum, Product)):
+        if isinstance(self.exponent, _Expression):
             # summand0: poly**exponent*derivative(exponent)*log(poly)
             summand0_factors = [self.copy()]
             summand0_factors.append(self.exponent.derive(index))
@@ -732,6 +732,197 @@ class Product(_Expression):
             factors[i] = factor
         return Sum(*summands).simplify()
 
+class Pow(_Expression):
+    r'''
+    Exponential.
+    Store two expressions ``A`` and ``B`` to be interpreted
+    the exponential ``A**B``.
+
+    :param base:
+        :class:`._Expression`;
+        The base ``A`` of the exponential.
+
+    :param exponent:
+        :class:`._Expression`;
+        The exponent ``B``.
+
+    '''
+    def __init__(self, base, exponent):
+        if base.number_of_variables != exponent.number_of_variables:
+            raise TypeError('Must have the same number of variables for `base` and `exponent`.')
+
+        self.number_of_variables = exponent.number_of_variables
+        self.base = base.copy()
+        self.exponent = exponent.copy()
+
+    def __repr__(self):
+        return '(' + str(self.base) + ') ** (' + str(self.exponent) + ')'
+
+    __str__ = __repr__
+
+    def copy(self):
+        "Return a copy of a :class:`.Pow`."
+        return Pow(self.base, self.exponent)
+
+    def simplify(self):
+        'Apply the identity <something>**0 = 1 if possible.'
+        self.base = self.base.simplify()
+        self.exponent = self.exponent.simplify()
+
+        if isinstance(self.exponent, Polynomial) and (self.exponent.coeffs==0).all():
+            symbols = self.exponent.polysymbols
+            return Polynomial([[0]*len(symbols)], [1], symbols)
+        else:
+            return self
+
+        return self
+
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        # derive an expression of the form "base**exponent"
+        # derivative(base**exponent) = base**exponent*derivative(exponent)*log(base) + base**(exponent-1)*exponent*derivative(poly)
+
+        # summand0: base**exponent*derivative(exponent)*log(base)
+        summand0_factors = [self.copy()]
+        summand0_factors.append(self.exponent.derive(index))
+        summand0_factors.append(Log(self.base))
+        summand0 = Product(*summand0_factors).simplify()
+
+        # summand1: base**(exponent-1)*derivative(base)
+        # factor0 = base**(exponent-1)   -->   simplification: (...)**0 = 1
+        # do not need factor 0 in that case
+        try:
+            new_exponent = self.exponent - 1
+        except:
+            symbols = _get_symbols(self)
+            new_exponent = Sum( self.exponent.copy(), Polynomial([[0]*len(symbols)],[-1],symbols) )
+        if new_exponent == 0:
+            factor0 = None
+        else:
+            factor0 = Pow(self.base.copy(), new_exponent)
+        # factor1 = "exponent*derivative(poly)"
+        derivative_base = self.base.derive(index)
+        try:
+            factor1 = self.exponent * derivative_base
+        except:
+            factor1 = Product(self.exponent.copy(), derivative_base)
+        if factor0 is None:
+            summand1 = factor1
+        else:
+            summand1 = Product(factor0, factor1)
+
+        return Sum(summand0,summand1).simplify()
+
+class Log(_Expression):
+    r'''
+    The (natural) logarithm to base e (2.718281828459..).
+    Store the expressions ``log(arg)``.
+
+    :param arg:
+        :class:`._Expression`;
+        The argument of the logarithm.
+
+    '''
+    def __init__(self, arg):
+        self.number_of_variables = arg.number_of_variables
+        self.arg = arg.copy()
+
+    def __repr__(self):
+        return 'log(' + str(self.arg) + ')'
+
+    __str__ = __repr__
+
+    def copy(self):
+        "Return a copy of a :class:`.Log`."
+        return Log(self.arg)
+
+    def simplify(self):
+        'Apply ``log(1) = 0``.'
+        self.arg = self.arg.simplify()
+        if isinstance(self.arg, Polynomial):
+            if len(self.arg.coeffs) == 1 and self.arg.coeffs[0] == 1 and (self.arg.expolist == 0).all():
+                return Polynomial([[0]*len(self.arg.polysymbols)], [0], self.arg.polysymbols)
+        else:
+            return self
+
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        # derivative(log(arg)) = 1/arg * derivative(arg) = arg**-1 * derivative(arg)
+        symbols = _get_symbols(self.arg)
+        minus_one = Polynomial([[0]*len(symbols)], [-1], symbols)
+
+        return Product(Pow(self.arg, minus_one), self.arg.derive(index)).simplify()
+
+# TODO: extensively test this function
+def make_expr(expression, polysymbols):
+    '''
+    Convert a sympy expression to an expression
+    in terms of this module.
+
+    :param expression:
+        string or sympy expression;
+        The expression to be converted
+
+    :param polysymbols:
+        iterable of strings or sympy symbols;
+        The symbols to be stored as ``expolists``
+        (see :class:`.Polynomial`) where
+        possible.
+
+    '''
+    parsed_polysymbols = []
+    for item in polysymbols:
+        item = sp.sympify(item)
+        assert item.is_Symbol, 'All `polysymbols` must be symbols'
+        parsed_polysymbols.append(item)
+    polysymbols = parsed_polysymbols
+
+    try:
+        return Polynomial.from_expression(expression, polysymbols)
+
+    except sp.PolynomialError:
+        if expression.is_Mul:
+            return Product(*(make_expr(e, polysymbols) for e in expression.args))
+
+        if expression.is_Pow:
+            assert len(expression.args) == 2
+            exponent = make_expr(expression.args[1], polysymbols)
+            try:
+                poly = Polynomial.from_expression(expression.args[0], polysymbols)
+                return ExponentiatedPolynomial(poly.expolist, poly.coeffs, exponent=exponent, polysymbols=polysymbols)
+            except sp.PolynomialError:
+                return Pow(make_expr(expression.args[0], polysymbols), exponent)
+
+        if expression.is_Add:
+            return Sum(*(make_expr(e, polysymbols) for e in expression.args))
+
+        if isinstance(expression, sp.log):
+            # make sure to have the natural log
+            assert len(expression.args) == 1
+            try:
+                return LogOfPolynomial.from_expression(expression.args[0], polysymbols)
+            except sp.PolynomialError:
+                return Log(make_expr(expression.args[0], polysymbols))
+
+        if expression.is_Function:
+            return Function(expression.__class__.__name__, *(make_expr(e, polysymbols) for e in expression.args))
+
+    raise ValueError('Could not parse the expression')
+
 def replace(expression, index, value, remove=False):
     '''
     Replace a variable in an expression by a number or a
@@ -742,8 +933,7 @@ def replace(expression, index, value, remove=False):
     indicated in the ``expolist``.
 
     :param expression:
-        :class:`.Product`, :class:`.Sum`,
-        or :class:`Polynomial`;
+        :class:`._Expression`;
         The expression to replace the variable.
 
     :param index:
@@ -789,6 +979,12 @@ def replace(expression, index, value, remove=False):
         for summand in expression.summands:
             outsummands.append(replace(summand,index,value,remove))
         return Sum(*outsummands)
+    elif isinstance(expression, Pow):
+        new_base = replace(expression.base,index,value,remove)
+        new_exponent = replace(expression.exponent,index,value,remove)
+        return Pow(new_base, new_exponent)
+    elif isinstance(expression, Log):
+        return Log( replace(expression.arg,index,value,remove) )
     elif isinstance(expression, Function):
         outfunction = expression.copy()
         outfunction.arguments = [replace(arg, index, value, remove) for arg in expression.arguments]
@@ -796,13 +992,13 @@ def replace(expression, index, value, remove=False):
             outfunction.number_of_variables -= 1
         return outfunction
     else:
-        raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, and `Function`, not `%s`' % type(expression))
+        raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, `Pow`, `Log`, and `Function`, not `%s`' % type(expression))
 
 def _get_symbols(expression):
     '''
     Find the first :class:`.Polynomial` or
     :class:`.Function` in an `expression and
-    return the symbols of the variables.
+    return the `polysymbols`.
 
     '''
     if isinstance(expression, Polynomial):
@@ -811,7 +1007,11 @@ def _get_symbols(expression):
         return _get_symbols(expression.summands[0])
     elif isinstance(expression, Product):
         return _get_symbols(expression.factors[0])
+    elif isinstance(expression, Log):
+        return _get_symbols(expression.arg)
+    elif isinstance(expression, Pow):
+        return _get_symbols(expression.base)
     elif isinstance(expression, Function):
         return _get_symbols(expression.arguments[0])
     else:
-        raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, and `Function`, not `%s`' % type(expression))
+        raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, `Log`, `Pow`, and `Function`, not `%s`' % type(expression))
