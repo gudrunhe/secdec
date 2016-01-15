@@ -27,11 +27,15 @@ class LoopIntegral(object):
 
     @staticmethod
     def from_propagators(propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
-                         numerator=1, replacement_rules=[], Feynman_parameters='x', \
-                         regulator='eps', dimensionality='4-2*eps', metric_tensor='g'):
+                         numerator=1, replacement_rules=[], Feynman_parameters='x', regulator='eps', \
+                         regulator_power=0, dimensionality='4-2*eps', metric_tensor='g'):
         r'''
-        Construct the loop integral from a list of the
-        loop momenta and a list of the propagators.
+        Construct the Feynman parametrization of a
+        loop integral from the algebraic momentum
+        representation.
+
+        .. seealso::
+            arXiv:0803.4177, arXiv:1010.1667
 
         :param propagators:
             iterable of strings or sympy expressions;
@@ -71,6 +75,7 @@ class LoopIntegral(object):
             Examples:
                 * 'p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)'
                 * 'p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)'
+                * 'p1(mu)*k1(mu)*my_function(eps)'
 
             .. hint::
                 It is possible to use numbers as indices, for example
@@ -84,6 +89,21 @@ class LoopIntegral(object):
                 **All** Lorentz indices (including the contracted ones)
                 must be explicitly defined using the parameter
                 `Lorentz_indices`.
+
+            .. warning::
+                It is assumed that the numerator is and all its
+                derivatives by the `regulator` are finite and defined
+                if :math:`\epsilon=0` is inserted explicitly.
+                In particular, if user defined functions (like in the
+                example ``p1(mu)*k1(mu)*my_function(eps)``) appear,
+                make sure that ``my_function(0)`` is finite.
+
+            .. hint::
+                In order to mimic a singular user defined function,
+                use the parameter `regulator_power`.
+                For example, instead of ``numerator = gamma(eps)`` you
+                could enter ``numerator = eps_times_gamma(eps)`` in
+                conjunction with ``regulator_power = -1``
 
             .. warning::
                 The `numerator` is very flexible in its input. However,
@@ -118,6 +138,14 @@ class LoopIntegral(object):
             .. note::
                 If you change this symbol, you have to adapt
                 the `dimensionality` accordingly.
+
+        :param regulator_power:
+            integer;
+            The regulator to this power will be multiplied by
+            the numerator.
+
+            .. seealso::
+                parameter `numerator`
 
         :param dimensionality:
             string or sympy expression, optional;
@@ -157,6 +185,11 @@ class LoopIntegral(object):
             '''
             poly = Polynomial.from_expression(expression, variables)
             assert (poly.expolist.sum(axis=1) <= 2).all(), error_message
+
+        # check and store `regulator_power`
+        regulator_power_as_int = int(regulator_power)
+        assert regulator_power_as_int == regulator_power, '`regulator_power` must be integral.'
+        self.regulator_power = regulator_power_as_int
 
         # sympify and store `loop_momenta`
         self.loop_momenta = sympify_symbols(loop_momenta, 'Each of the `loop_momenta` must be a symbol.')
