@@ -121,9 +121,11 @@ class Polynomial(_Expression):
             self.coeffs = np.array([coeff.copy() if isinstance(coeff,(Polynomial,Product,Sum)) else sp.sympify(coeff) for coeff in self.coeffs])
         self.number_of_variables = self.expolist.shape[1]
         if isinstance(polysymbols, str):
-            self.polysymbols=[polysymbols + str(i) for i in range(self.number_of_variables)]
+            self.polysymbols = sp.sympify([polysymbols + str(i) for i in range(self.number_of_variables)])
         else:
-            self.polysymbols=list(polysymbols)
+            self.polysymbols = sp.sympify(list(polysymbols))
+        for symbol in self.polysymbols:
+            assert symbol.is_Symbol, 'All `polysymbols` must be symbols'
 
     @staticmethod
     def from_expression(expression, polysymbols):
