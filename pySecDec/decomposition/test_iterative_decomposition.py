@@ -2,9 +2,10 @@
 
 from .iterative import *
 from .common import Sector
-from ..algebra import Polynomial, Product
+from ..algebra import Polynomial, ExponentiatedPolynomial, Product
 import numpy as np
 import unittest
+from nose.plugins.attrib import attr
 
 class TestPrimaryDecomposition(unittest.TestCase):
     def setUp(self):
@@ -39,6 +40,41 @@ class TestPrimaryDecomposition(unittest.TestCase):
         self.assertEqual(str(F_primary[1]), " + (-s12)*x3 + (-s23)*x0*x2")
         self.assertEqual(str(F_primary[2]), " + (-s12)*x1*x3 + (-s23)*x0")
         self.assertEqual(str(F_primary[3]), " + (-s12)*x1 + (-s23)*x0*x2")
+
+
+        np.testing.assert_array_equal(U_primary[0].expolist, np.array([(0,0,0),(1,0,0),(0,1,0),(0,0,1)]))
+        np.testing.assert_array_equal(U_primary[1].expolist, np.array([(1,0,0),(0,0,0),(0,1,0),(0,0,1)]))
+        np.testing.assert_array_equal(U_primary[2].expolist, np.array([(1,0,0),(0,1,0),(0,0,0),(0,0,1)]))
+        np.testing.assert_array_equal(U_primary[3].expolist, np.array([(1,0,0),(0,1,0),(0,0,1),(0,0,0)]))
+
+    #@attr('active')
+    def test_keep_type(self):
+        exponentiated_U = ExponentiatedPolynomial(self.U.expolist, self.U.coeffs, 'expoF', 'z')
+        exponentiated_F = ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, 'expoF', 'z')
+        initial_sector = Sector([exponentiated_F,exponentiated_U])
+
+        primary_sectors = primary_decomposition(initial_sector)
+
+        F_primary = [sector.cast[0].factors[1] for sector in primary_sectors]
+        U_primary = [sector.cast[1].factors[1] for sector in primary_sectors]
+
+        # 4 variables => 4 primary sectors
+        self.assertEqual(len(F_primary),4)
+        self.assertEqual(len(U_primary),4)
+
+
+        for poly in F_primary + U_primary:
+            self.assertTrue(type(poly) is ExponentiatedPolynomial)
+
+        np.testing.assert_array_equal(F_primary[0].expolist, np.array([(1,0,1),(0,1,0)]))
+        np.testing.assert_array_equal(F_primary[1].expolist, np.array([(0,0,1),(1,1,0)]))
+        np.testing.assert_array_equal(F_primary[2].expolist, np.array([(0,1,1),(1,0,0)]))
+        np.testing.assert_array_equal(F_primary[3].expolist, np.array([(0,1,0),(1,0,1)]))
+
+        self.assertEqual(str(F_primary[0]), "( + (-s12)*z1*z3 + (-s23)*z2)**(expoF)")
+        self.assertEqual(str(F_primary[1]), "( + (-s12)*z3 + (-s23)*z0*z2)**(expoF)")
+        self.assertEqual(str(F_primary[2]), "( + (-s12)*z1*z3 + (-s23)*z0)**(expoF)")
+        self.assertEqual(str(F_primary[3]), "( + (-s12)*z1 + (-s23)*z0*z2)**(expoF)")
 
 
         np.testing.assert_array_equal(U_primary[0].expolist, np.array([(0,0,0),(1,0,0),(0,1,0),(0,0,1)]))
