@@ -37,6 +37,42 @@ class LoopIntegral(object):
         .. seealso::
             arXiv:0803.4177, arXiv:1010.1667
 
+        The Feynman parametrized integral is a product
+        of the following expressions member properties:
+
+        * ``self.regulator ** self.regulator_power``
+        * ``self.Gamma_factor``
+        * ``self.exponentiated_U``
+        * ``1/self.exponentiated_F``
+        * ``self.numerator``
+
+        , where ``self`` is an instance of :class:`LoopIntegral`.
+
+        Example:
+
+        >>> from pySecDec.loop_integral import *
+        >>> propagators = ['k**2', '(k - p)**2']
+        >>> loop_momenta = ['k']
+        >>> li = LoopIntegral.from_propagators(propagators, loop_momenta)
+        >>> li.exponentiated_U
+        ( + (1)*x0 + (1)*x1)**(2*eps - 2)
+        >>> li.exponentiated_F
+        ( + (-p**2)*x0*x1)**(eps)
+
+        The 1st (U) and 2nd (F) Symanzik polynomials and
+        their exponents can also be accessed
+        independently:
+
+        >>> li.U
+         + (1)*x0 + (1)*x1
+        >>> li.F
+         + (-p**2)*x0*x1
+        >>>
+        >>> li.exponent_U
+        2*eps - 2
+        >>> li.exponent_F
+        eps
+
         :param propagators:
             iterable of strings or sympy expressions;
             The propagators, e.g. ['k1**2', '(k1-k2)**2 - m1**2'].
@@ -158,9 +194,10 @@ class LoopIntegral(object):
             tensor :math:`g^{\mu\nu}`.
 
         '''
-        # TODO: explain the main member properties (U, F, numerator)
         # TODO: carefully reread and check this documentation
         # TODO: test case with linear propagators
+        # TODO: test that including all the factors described above
+        #       is the complete integrand
 
         self = LoopIntegral('using a named constructor')
 
@@ -205,6 +242,9 @@ class LoopIntegral(object):
 
         # sympify and store `metric_tensor`
         self.metric_tensor = sympify_symbols([metric_tensor], '`metric_tensor` must be a symbol.')[0]
+
+        # sympify and store `regulator`
+        self.regulator = sympify_symbols([regulator], '`regulator` must be a symbol.')[0]
 
         # sympify and store `dimensionality`
         self.dimensionality = sp.sympify(dimensionality)
@@ -415,6 +455,15 @@ class LoopIntegral(object):
         return max(self.numerator_ranks)
 
     @cached_property
+    def Gamma_factor(self):
+        # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
+        # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
+        # In order to keep the `numerator` free of poles in the regulator, we divide it
+        # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
+        # where `//` means integer division, and put it here.
+        return sp.gamma(len(self.propagators) - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
+
+    @cached_property
     def numerator(self):
         '''
         Generate the numerator in index notation according to
@@ -423,21 +472,41 @@ class LoopIntegral(object):
         '''
         # The implementation below conceptually follows section 2 of arXiv:1010.1667.
 
-        # `scalar_factor` is the `r` dependent factor in the sum of equation (2.5) in arXiv:1010.1667v1
-        # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
-        scalar_factor = sp.symbols('scalar_factor')
-        # TODO: let the user define this symbol
-        # TODO: maybe use `pySecDec.algebra.Function`
-
         numerator = 0
 
         aM = self.aM
         Q = self.Q
         g = self.metric_tensor
         D = self.dimensionality
-        U = sp.symbols('U')
+        L = self.L
+        Feynman_parameters_F_U = self.Feynman_parameters + ['F', 'U']
+        U = Polynomial.from_expression('U', Feynman_parameters_F_U)
+        F = Polynomial.from_expression('F', Feynman_parameters_F_U)
         replacement_rules = self.replacement_rules_with_Lorentz_indices
         highest_rank = self.highest_rank
+        N_nu = len(self.propagators)
+
+        # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
+        # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - D*L/2 - r/2)*F**(r/2)`.
+        # In order to keep the `numerator` free of poles in the regulator, we divide it
+        # by the Gamma function with the smallest argument `N_nu - D*L/2 - highest_rank//2`,
+        # where `//` means integer division, and use `x*Gamma(x) = Gamma(x+1)`.
+        one_over_minus_two = sp.sympify('1/(-2)')
+        def scalar_factor(r):
+            # `r` must be even
+            assert r % 2 == 0
+            factors_without_gamma = one_over_minus_two**(r//2) * F**(r//2)
+            # gamma_factor = 'Gamma(N_nu - D*L/2 - r/2)'
+            def reduce_gamma(r_over_two):
+                '''
+                   Transform Gamma(N_nu - D*L/2 - r_over_two) -->
+                   (N_nu - D*L/2 - (r_over_two+1))*(N_nu - D*L/2 - (r_over_two+2))*...*Gamma(N_nu - D*L/2 - highest_rank//2)'
+                   and divide by Gamma(N_nu - D*L/2 - highest_rank//2).
+                '''
+                if r_over_two == highest_rank//2:
+                    return 1
+                return (N_nu - D*L/2 - (r_over_two+1)) * reduce_gamma(r_over_two+1)
+            return factors_without_gamma * reduce_gamma(r//2)
 
         # `self.numerator_loop_tensors`: List of double indices for the loop momenta for each term.
         # `self.numerator_external_tensors`: List of double indices for the external momenta for each term.
@@ -472,7 +541,7 @@ class LoopIntegral(object):
                 for tensors_A2_indices in all_pairs(A_indices):
                     # `tensors_A2_indices` corresponds to the indices in equation (2.15) in arXiv:1010.1667v1.
 
-                    this_numerator_summand = Polynomial.from_expression(scalar_factor(r) * remainder, self.Feynman_parameters) * this_U_factor
+                    this_numerator_summand = scalar_factor(r) * this_U_factor * remainder
 
                     # --------------------------- multiply the tensor "P" --------------------------
                     for external_momentum_index, Lorentz_index in P_indices:
@@ -480,6 +549,11 @@ class LoopIntegral(object):
                         # There should be eactly one external momentum in each term (summand) of `this_tensor_P_factor` --> attach the `Lorentz_index` to it
                         for i, coeff in enumerate(this_tensor_P_factor.coeffs):
                             this_tensor_P_factor.coeffs[i] = coeff.subs((p, p(Lorentz_index)) for p in self.external_momenta)
+
+                        # must append ``F`` and ``U`` to the parameters of ``this_tensor_P_factor``
+                        this_tensor_P_factor.expolist = np.hstack([this_tensor_P_factor.expolist, np.zeros((len(this_tensor_P_factor.expolist), 2), dtype=int)])
+                        this_tensor_P_factor.number_of_variables += 2
+
                         this_numerator_summand *= this_tensor_P_factor
                     # ------------------------------------------------------------------------------
 
@@ -492,7 +566,15 @@ class LoopIntegral(object):
                     contractions_right = []
                     contractions_unmatched = []
                     for tensor_A2_indices in tensors_A2_indices:
-                        this_numerator_summand *= aM[tensor_A2_indices[0][0],tensor_A2_indices[1][0]] # * g(tensor_A2_indices[0][1], tensor_A2_indices[1][1])
+                        aM_factor = aM[tensor_A2_indices[0][0],tensor_A2_indices[1][0]] # * g(tensor_A2_indices[0][1], tensor_A2_indices[1][1])
+
+                        # must append the variables ``F`` and ``U`` to ``aM_factor``
+                        if isinstance(aM_factor, Polynomial):
+                            aM_factor = aM_factor.copy()
+                            aM_factor.expolist = np.hstack([aM_factor.expolist, np.zeros((len(aM_factor.expolist), 2), dtype=int)])
+                            aM_factor.number_of_variables += 2
+
+                        this_numerator_summand *= aM_factor
                         contractions_left.append(tensor_A2_indices[0][1])
                         contractions_right.append(tensor_A2_indices[1][1])
                         contractions_unmatched.append(True)
@@ -533,7 +615,10 @@ class LoopIntegral(object):
 
                     numerator += this_numerator_summand
 
-        return numerator
+        # The global factor of `(-1)**N_nu` in equation (2.15) of arXiv:1010.1667v1 must appear somewhere.
+        # The numerator seems a good choice since this has a nonsingular but nontrivial expansion in the
+        # regulator for noninteger propagator powers.
+        return numerator * ( (-1)**N_nu )
 
     @cached_property
     def replacement_rules_with_Lorentz_indices(self):

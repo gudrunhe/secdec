@@ -425,23 +425,28 @@ class TestNumerator(unittest.TestCase):
 
         li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
                                            numerator=numerator, Feynman_parameters=['x1','x2'],
-                                           Lorentz_indices=indices)
+                                           Lorentz_indices=indices, dimensionality='D')
         li_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
-                                                      numerator=contracted_numerator,
+                                                      numerator=contracted_numerator, dimensionality='D',
                                                       Feynman_parameters=['x1','x2'], Lorentz_indices=indices)
         li_partially_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
                                                                 numerator=partially_contracted_numerator,
                                                                 Feynman_parameters=['x1','x2'], Lorentz_indices=indices,
-                                                                replacement_rules=[('p*p', 'm**2')])
+                                                                replacement_rules=[('p*p', 'm**2')], dimensionality='D')
         tensors = li.numerator_loop_tensors
         # Note: `sympy` may reorder the terms
         target_tensors = [[(0,1),(0,2),(0,3),(0,4)]]
 
         self.assertEqual(tensors, target_tensors)
 
-        numerator = sp.sympify(li.numerator)
-        contracted_numerator = sp.sympify(li_contracted.numerator)
-        partially_contracted_numerator = sp.sympify(li_partially_contracted.numerator)
+        numerator = sp.sympify(li.numerator) * li.Gamma_factor
+        contracted_numerator = sp.sympify(li_contracted.numerator) * li.Gamma_factor
+        partially_contracted_numerator = sp.sympify(li_partially_contracted.numerator) * li.Gamma_factor
+        scalar_factor_insertation = { # N_nu = 2, L = 1 in this example
+                                          'scalar_factor(0)': '1/(-2)**(0/2)*(2 - D*1/2 - 2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(0/2)',
+                                          'scalar_factor(2)': '1/(-2)**(2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(2/2)',
+                                          'scalar_factor(4)': '1/(-2)**(4/2)*gamma(2 - D*1/2 - 4/2)*F**(4/2)'
+                                    }
         target_numerator = sp.sympify('''
                                              scalar_factor(0)*p(1)*x2*p(2)*x2*p(3)*x2*p(4)*x2 +
                                              g(1,2) * scalar_factor(2)*p(3)*x2*p(4)*x2 +
@@ -453,7 +458,7 @@ class TestNumerator(unittest.TestCase):
                                              g(1,2) * g(3,4) * scalar_factor(4) +
                                              g(1,3) * g(2,4) * scalar_factor(4) +
                                              g(1,4) * g(2,3) * scalar_factor(4)
-                                      ''')
+                                      ''').subs(scalar_factor_insertation)
         target_contracted_numerator = sp.sympify('''
                                                         scalar_factor(0)*p(1)**2*x2*p(2)**2*x2*p(3)**2*x2*p(4)**2*x2 +
                                                         p(2)*p(2) * scalar_factor(2)*p(3)*p(3)*x2*p(4)*p(4)*x2 +
@@ -465,7 +470,7 @@ class TestNumerator(unittest.TestCase):
                                                         p(2)*p(2) * p(4)*p(4) * scalar_factor(4) +
                                                         p(3)*p(3) * p(4)*p(4) * scalar_factor(4) +
                                                         p(4)*p(4) * p(3)*p(3) * scalar_factor(4)
-                                                 ''') * sp.sympify('const')
+                                                 ''').subs(scalar_factor_insertation) * sp.sympify('const')
         target_partially_contracted_numerator = sp.sympify('''
                                                                   scalar_factor(0)*m**2*x2*m**2*x2*p(1)*x2*p(2)*x2 +
                                                                   m**2 * scalar_factor(2)*p(1)*x2*p(2)*x2 +
@@ -477,7 +482,7 @@ class TestNumerator(unittest.TestCase):
                                                                   m**2 * g(1,2) * scalar_factor(4) +
                                                                   p(1) * p(2) * scalar_factor(4) +
                                                                   p(2) * p(1) * scalar_factor(4)
-                                                           ''')
+                                                           ''').subs(scalar_factor_insertation)
         self.assertEqual( (numerator - target_numerator).simplify() , 0 )
         self.assertEqual( (contracted_numerator - target_contracted_numerator).simplify() , 0 )
         self.assertEqual( (partially_contracted_numerator - target_partially_contracted_numerator).simplify() , 0 )
@@ -504,9 +509,13 @@ class TestNumerator(unittest.TestCase):
                                              m**2 * m**2 * scalar_factor(4) +
                                              m**2 * m**2 * scalar_factor(4) +
                                              m**2 * m**2 * scalar_factor(4)
-                                      ''')
+                                      ''').subs({ # N_nu = 2, L = 1, D=4-2*eps in this example
+                                                      'scalar_factor(0)': '1/(-2)**(0/2)*(2 - (4-2*eps)*1/2 - 2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(0/2)',
+                                                      'scalar_factor(2)': '1/(-2)**(2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(2/2)',
+                                                      'scalar_factor(4)': '1/(-2)**(4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(4/2)'
+                                                })
 
-        self.assertEqual( (sp.sympify(li.numerator) - target_numerator).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li.numerator)*li.Gamma_factor - target_numerator).simplify() , 0 )
 
     #@attr('active')
     def test_2L_box_with_numerator(self):
@@ -553,11 +562,13 @@ class TestNumerator(unittest.TestCase):
                                              + z2*(z4 + z5 + z6 + z7))
                                              + p1(mu)* p3(mu)*(z4*z6 + z3*(z4 + z5 + z6 + z7)))
                                              + eps * U
-                                      ''') * sp.sympify('scalar_factor(0)')
+                                      ''') * sp.sympify('gamma(7 - (4-2*eps)*2/2)')
+        # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the numerator.
+        target_numerator = - target_numerator
 
         self.assertEqual( (sp.sympify(li.U) - target_U).simplify() , 0 )
         self.assertEqual( (sp.sympify(li.F) - target_F  ).simplify() , 0 )
-        self.assertEqual( (sp.sympify(li.numerator) - target_numerator).simplify() , 0 )
+        self.assertEqual( (sp.sympify(li.numerator) * li.Gamma_factor - target_numerator).simplify() , 0 )
 
         replacement_rules = np.array([('p1**2', 0),
                                       ('p2**2', 0),
@@ -577,13 +588,16 @@ class TestNumerator(unittest.TestCase):
                                                                     + z2*(z4 + z5 + z6 + z7))
                                                                     + (-s/2-t/2)*(z4*z6 + z3*(z4 + z5 + z6 + z7))
                                                                ) + eps * U
-                                                        ''') * sp.sympify('scalar_factor(0)')
-        self.assertEqual( (sp.sympify(li_with_replacement_rules.numerator) - target_numerator_with_replacements).simplify() , 0 )
+                                                        ''') * sp.sympify('gamma(7 - (4-2*eps)*2/2)')
+        # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the numerator.
+        target_numerator_with_replacements = - target_numerator_with_replacements
+
+        self.assertEqual( (sp.sympify(li_with_replacement_rules.numerator) * li.Gamma_factor - target_numerator_with_replacements).simplify() , 0 )
 
     #@attr('active')
     @attr('slow')
     def test_rank3_numerator_2L_double_triangle(self):
-        k1, k2, p1, p2, p3, p4, s, t, mu, nu, scalar_factor, eps, Gamma, F = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu nu scalar_factor eps Gamma F')
+        k1, k2, p1, p2, p3, p4, s, t, mu, nu, scalar_factor, eps, F = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu nu scalar_factor eps F')
         sp11, sp12, sp13, sp22, sp23, sp33 = sp.symbols('sp11 sp12 sp13 sp22 sp23 sp33')
 
         z = sp.sympify(['z%i'%i for i in range(6+1)]) # Feynman parameters (only use z[1], z[2], ..., z[6] but not z[0])
@@ -611,13 +625,12 @@ class TestNumerator(unittest.TestCase):
         N_nu = sp.sympify(len(propagators))
         dim = sp.sympify(4 - 2*eps)
         L = sp.sympify(2)
-        numerator = sp.sympify(li.numerator)
-        numerator = numerator.subs(scalar_factor(0), Gamma(N_nu - dim*L/2))
-        numerator = numerator.subs(scalar_factor(2), sp.sympify('1/(-2)')*Gamma(N_nu - dim*L/2 - 1)*F).subs(F, sp.sympify(li.F))
+        numerator = sp.sympify(li.numerator) * li.Gamma_factor
+        numerator = numerator.subs(F, sp.sympify(li.F))
 
         # SecDec divides by a factor of ``Gamma(N_nu - dim*L/2)`` and uses ``Gamma(N_nu - dim*L/2 - 1) = Gamma(N_nu - dim*L/2) / (N_nu - dim*L/2 - 1)``
-        numerator /= Gamma(N_nu - dim*L/2)
-        numerator  = numerator.subs(Gamma(N_nu - dim*L/2 - 1), Gamma(N_nu - dim*L/2) / (N_nu - dim*L/2 - 1))
+        numerator /= sp.gamma(N_nu - dim*L/2)
+        numerator  = numerator.subs(sp.gamma(N_nu - dim*L/2 - 1), sp.gamma(N_nu - dim*L/2) / (N_nu - dim*L/2 - 1))
 
 
         # Results of the Mathematica implementation
@@ -837,14 +850,15 @@ class TestNumerator(unittest.TestCase):
         for i, Feynman_parametrized_numerator in enumerate([Feynman_parametrized_numerator1, Feynman_parametrized_numerator2]):
             print(i)
 
-            # need to insert the `scalar_factor` (and the `F` therein) when comparing with SecDec
-            # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
-            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(scalar_factor(0), 'Gamma(7 - D)')
-            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(scalar_factor(2), '1/(-2)*Gamma(7 - D - 1)*F').subs('F', target_Fs[i])
+            # need to insert the `F`s when comparing with SecDec
+            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs('F', target_Fs[i])
 
-            # SecDec divides by a factor of ``Gamma(7 - D)`` and uses ``Gamma(6 - D) = Gamma(7 - D) / (6 - D)``
-            Feynman_parametrized_numerator /= sp.sympify('Gamma(7 - D)')
-            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs('Gamma(6 - D)', 'Gamma(7 - D) / (6 - D)')
+            # SecDec divides by a factor of ``Gamma(7 - D)`` while pySecDec divides by ``Gamma(6 - D)``
+            Feynman_parametrized_numerator *= li1.Gamma_factor / sp.sympify('gamma(7 - D)')
+            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs('gamma(7 - D)', '(6 - D)*gamma(6 - D)')
+
+            # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the numerator.
+            Feynman_parametrized_numerator = - Feynman_parametrized_numerator
 
             # only one scalar product per term --> can safely remove dummy index
             Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(p1(mu), p1).subs(p2(mu), p2).subs(p3(mu), p3).subs(p4(mu), p4)
