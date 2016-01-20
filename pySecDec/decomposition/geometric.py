@@ -50,9 +50,9 @@ def convex_hull(*polynomials):
     product = 1
 
     for poly in polynomials:
-        poly = poly.copy()
-        poly.coeffs = np.ones_like(poly.coeffs, dtype=int) # set coeffs to one
-        product *= poly
+        # want to use multiplication operator --> need type `Polynomial`, not a subtype
+        # set the coefficients to one first --> terms with coefficients unequal to one are definitely not part of the convex hull
+        product *= Polynomial(poly.expolist, np.ones_like(poly.coeffs, dtype=int))
 
     return product.expolist[np.where( product.coeffs == 1 )]
 

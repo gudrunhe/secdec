@@ -17,6 +17,17 @@ def sort_2D_array(array):
     return array[argsort_2D_array(array)]
 
 class TestGeomethod(unittest.TestCase):
+    def setUp(self):
+        self.p0 = Polynomial.from_expression('x0+x1+x0*x1', ['x0','x1'])
+        self.p1 = Polynomial.from_expression('1+x0+x1', ['x0','x1'])
+        self.target_hull = np.array([[2,1],
+                                     [1,2],
+                                     [2,0],
+                                     [1,0],
+                                     [0,2],
+                                     [0,1]])
+        self.sorted_target_hull = sort_2D_array(self.target_hull)
+
     #@attr('active')
     def test_Cheng_Wu(self):
         Feynman_parameters = ['x1', 'x2', 'x3']
@@ -40,21 +51,22 @@ class TestGeomethod(unittest.TestCase):
         self.assertEqual( (sp.sympify(primary_x1.other[0]) - other_sympy.subs('x1',1)).simplify() , 0 )
 
     def test_convex_hull(self):
-        p0 = Polynomial.from_expression('x0+x1+x0*x1', ['x0','x1'])
-        p1 = Polynomial.from_expression('1+x0+x1', ['x0','x1'])
-
-        hull = convex_hull(p0,p1)
-        target_hull = np.array([[2,1],
-                                [1,2],
-                                [2,0],
-                                [1,0],
-                                [0,2],
-                                [0,1]])
+        hull = convex_hull(self.p0, self.p1)
 
         # The ordering is not important but must be fixed to compare the arrays
         sorted_hull = sort_2D_array(hull)
-        sorted_target_hull = sort_2D_array(target_hull)
-        np.testing.assert_array_equal(sorted_hull, sorted_target_hull)
+        np.testing.assert_array_equal(sorted_hull, self.sorted_target_hull)
+
+    #@attr('active')
+    def test_convex_hull_exponentiated_polynomial(self):
+        p0 = ExponentiatedPolynomial(self.p0.expolist, self.p0.coeffs, polysymbols=self.p0.polysymbols, exponent='8-3*eps')
+        p1 = ExponentiatedPolynomial(self.p1.expolist, self.p1.coeffs, polysymbols=self.p1.polysymbols, exponent='1-2*eps')
+
+        hull = convex_hull(p0, p1)
+
+        # The ordering is not important but must be fixed to compare the arrays
+        sorted_hull = sort_2D_array(hull)
+        np.testing.assert_array_equal(sorted_hull, self.sorted_target_hull)
 
     #@attr('active')
     def test_triangulate(self):
