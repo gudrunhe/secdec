@@ -76,6 +76,8 @@ class Sector(object):
                 else:
                     item = Product(initial_monomial_factor, item)
 
+                # try to factorize only if constructed from `Polynomial`
+                refactorize(item)
                 self.cast.append(item)
 
     def __repr__(self):

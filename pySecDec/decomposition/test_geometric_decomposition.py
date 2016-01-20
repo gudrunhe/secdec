@@ -20,6 +20,7 @@ class TestGeomethod(unittest.TestCase):
     #@attr('active')
     def test_Cheng_Wu(self):
         Feynman_parameters = ['x1', 'x2', 'x3']
+        x1, x2, x3 = sp.symbols(Feynman_parameters)
         poly_sympy = sp.sympify('x1*x2 + 5*x2*x3')
         other_sympy = sp.sympify('a + x3*6')
         poly = Polynomial.from_expression(poly_sympy, Feynman_parameters)
@@ -27,11 +28,15 @@ class TestGeomethod(unittest.TestCase):
         sector = Sector([poly], [other])
 
         primary_x3 = Cheng_Wu(sector)
-        self.assertEqual( (sp.sympify(primary_x3.cast[0].factors[1]) - poly_sympy.subs('x3',1)).simplify() , 0 )
+        # ``x2`` factorizes in ``poly``
+        self.assertEqual( (sp.sympify(primary_x3.cast[0].factors[0]) - x2).simplify() , 0 )
+        self.assertEqual( (sp.sympify(primary_x3.cast[0].factors[1]) - (poly_sympy/x2).subs('x3',1)).simplify() , 0 )
         self.assertEqual( (sp.sympify(primary_x3.other[0]) - other_sympy.subs('x3',1)).simplify() , 0 )
 
         primary_x1 = Cheng_Wu(sector,0)
-        self.assertEqual( (sp.sympify(primary_x1.cast[0].factors[1]) - poly_sympy.subs('x1',1)).simplify() , 0 )
+        # ``x2`` factorizes in ``poly``
+        self.assertEqual( (sp.sympify(primary_x1.cast[0].factors[0]) - x2).simplify() , 0 )
+        self.assertEqual( (sp.sympify(primary_x1.cast[0].factors[1]) - (poly_sympy/x2).subs('x1',1)).simplify() , 0 )
         self.assertEqual( (sp.sympify(primary_x1.other[0]) - other_sympy.subs('x1',1)).simplify() , 0 )
 
     def test_convex_hull(self):

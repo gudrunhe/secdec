@@ -1,15 +1,17 @@
 """Unit tests for the Sector container class"""
 
 from .common import *
-from ..algebra import Polynomial, Product
+from ..algebra import Polynomial, ExponentiatedPolynomial, Product
 import unittest
 import sympy as sp
+from nose.plugins.attrib import attr
 
 class TestSector(unittest.TestCase):
     def setUp(self):
-        self.poly = Polynomial([(0,1,2),(1,0,5),(1,2,3),(9,4,2)],[1,'A','C','g'])
+        self.poly = Polynomial([(1,0,0,4),(0,1,0,1),(0,0,1,0)],[1,1,1])
         self.sector = Sector([self.poly])
 
+    #@attr('active')
     def test_init(self):
         # Feynman parameters are the ti
         # input is part of the 1Loop box
@@ -24,10 +26,10 @@ class TestSector(unittest.TestCase):
         # the constant Polynomial with unit constant
         Jacobian = Polynomial([(0,0,0)],[1])
 
-        other_polynomial = Polynomial([(1,0,0,5),(0,1,0,2),(0,0,1,1)],[1,1,1])
+        other_polynomial = Polynomial([(0,1,2),(1,0,5),(1,2,3),(9,4,2)],[1,'A','C','g'], polysymbols=['x','y','z'])
 
         self.assertRaisesRegexp(AssertionError, 'Jacobian.*monomial', Sector, [F], Jacobian=U)
-        self.assertRaisesRegexp(AssertionError, 'number of variables.*equal', Sector, [F], [other_polynomial])
+        self.assertRaisesRegexp(AssertionError, 'number of variables.*equal', Sector, [F], [self.poly])
         self.assertRaisesRegexp(AssertionError, '(f|F)irst factor.*monomial', Sector, [Product(F,U)])
         self.assertRaisesRegexp(AssertionError, 'two factors', Sector, [Product(F,U,Jacobian)])
         self.assertRaisesRegexp(AssertionError, 'at least one', Sector, [])
@@ -35,6 +37,9 @@ class TestSector(unittest.TestCase):
 
         sector = Sector([F])
         self.assertEqual(str(sector.Jacobian), str(Jacobian))
+
+        sector = Sector([other_polynomial]) # constructor should factorize
+        self.assertEqual(str(sector.cast[0]), '( + (1)*z**2) * ( + (1)*y + (A)*x*z**3 + (C)*x*y**2*z + (g)*x**9*y**4)')
 
     def test_keep_exponent(self):
         exponentiated_poly = ExponentiatedPolynomial(self.poly.expolist, self.poly.coeffs, polysymbols=self.poly.polysymbols, exponent='4-2*eps')
