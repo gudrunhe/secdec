@@ -378,8 +378,10 @@ class ExponentiatedPolynomial(Polynomial):
     '''
     def __init__(self, expolist, coeffs, exponent=1, polysymbols='x'):
         Polynomial.__init__(self, expolist, coeffs, polysymbols)
-        if np.issubdtype(type(exponent), np.number) or isinstance(exponent,Polynomial):
+        if np.issubdtype(type(exponent), np.number):
             self.exponent = exponent
+        elif isinstance(exponent,_Expression):
+            self.exponent = exponent.copy()
         else:
             self.exponent = sp.sympify(exponent)
 
