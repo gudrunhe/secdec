@@ -3,6 +3,7 @@
 from .common import *
 from ..algebra import Polynomial, Product
 import unittest
+import sympy as sp
 
 class TestSector(unittest.TestCase):
     def setUp(self):
@@ -34,6 +35,13 @@ class TestSector(unittest.TestCase):
 
         sector = Sector([F])
         self.assertEqual(str(sector.Jacobian), str(Jacobian))
+
+    def test_keep_exponent(self):
+        exponentiated_poly = ExponentiatedPolynomial(self.poly.expolist, self.poly.coeffs, polysymbols=self.poly.polysymbols, exponent='4-2*eps')
+        sector = Sector([exponentiated_poly])
+        for i in range(2):
+            self.assertTrue(type(sector.cast[0].factors[i]) is ExponentiatedPolynomial)
+            self.assertEqual(  (sector.cast[0].factors[i].exponent - sp.sympify('4-2*eps')).simplify() , 0  )
 
     def test_access(self):
         self.assertEqual(self.sector.other,[])
