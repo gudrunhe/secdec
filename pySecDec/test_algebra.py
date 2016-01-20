@@ -1,7 +1,6 @@
 """Unit tests for the algebra module"""
 
 from .algebra import *
-from .algebra import _get_symbols
 import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
@@ -747,25 +746,25 @@ class TestGetSymbols(unittest.TestCase):
         self.p1 = Polynomial.from_expression('c*x + d*y', self.polysymbols)
 
     def test_get_from_polynomial(self):
-        self.assertEqual(_get_symbols(self.p0), self.polysymbols)
-        self.assertEqual(_get_symbols(self.p1), self.polysymbols)
+        self.assertEqual(self.p0.symbols, self.polysymbols)
+        self.assertEqual(self.p1.symbols, self.polysymbols)
 
     def test_get_from_sum(self):
         expr = Sum(self.p0, self.p1)
-        self.assertEqual(_get_symbols(expr), self.polysymbols)
+        self.assertEqual(expr.symbols, self.polysymbols)
 
     def test_get_from_product(self):
         expr = Product(self.p0, self.p1)
-        self.assertEqual(_get_symbols(expr), self.polysymbols)
+        self.assertEqual(expr.symbols, self.polysymbols)
 
     def test_get_from_log(self):
         expr = Sum(Log(self.p0), Log(self.p1))
-        self.assertEqual(_get_symbols(expr), self.polysymbols)
+        self.assertEqual(expr.symbols, self.polysymbols)
 
     def test_get_from_pow(self):
         expr = Pow(Log(self.p0), Log(self.p1))
-        self.assertEqual(_get_symbols(expr), self.polysymbols)
+        self.assertEqual(expr.symbols, self.polysymbols)
 
     def test_get_from_function(self):
         expr = Function('f', self.p0, self.p1)
-        self.assertEqual(_get_symbols(expr), self.polysymbols)
+        self.assertEqual(expr.symbols, self.polysymbols)

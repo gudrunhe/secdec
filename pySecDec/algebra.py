@@ -52,6 +52,10 @@ class Function(_Expression):
         self.arguments = [arg.simplify() for arg in self.arguments]
         return self
 
+    @property
+    def symbols(self):
+        return self.arguments[0].symbols
+
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
@@ -223,6 +227,10 @@ class Polynomial(_Expression):
         outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols)
         outpoly.simplify()
         return outpoly
+
+    @property
+    def symbols(self):
+        return self.polysymbols
 
     def __add__(self, other):
         'addition operator'
@@ -634,6 +642,10 @@ class Sum(_Expression):
         else:
             return self
 
+    @property
+    def symbols(self):
+        return self.summands[0].symbols
+
     def copy(self):
         "Return a copy of a :class:`.Sum`."
         return Sum(*self.summands)
@@ -732,6 +744,10 @@ class Product(_Expression):
         else:
             return self
 
+    @property
+    def symbols(self):
+        return self.factors[0].symbols
+
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
@@ -782,6 +798,10 @@ class Pow(_Expression):
         "Return a copy of a :class:`.Pow`."
         return Pow(self.base, self.exponent)
 
+    @property
+    def symbols(self):
+        return self.base.symbols
+
     def simplify(self):
         'Apply the identity <something>**0 = 1 if possible.'
         self.base = self.base.simplify()
@@ -819,7 +839,7 @@ class Pow(_Expression):
         try:
             new_exponent = self.exponent - 1
         except:
-            symbols = _get_symbols(self)
+            symbols = self.symbols
             new_exponent = Sum( self.exponent.copy(), Polynomial([[0]*len(symbols)],[-1],symbols) )
         if new_exponent == 0:
             factor0 = None
@@ -870,6 +890,10 @@ class Log(_Expression):
         else:
             return self
 
+    @property
+    def symbols(self):
+        return self.arg.symbols
+
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
@@ -880,7 +904,7 @@ class Log(_Expression):
 
         '''
         # derivative(log(arg)) = 1/arg * derivative(arg) = arg**-1 * derivative(arg)
-        symbols = _get_symbols(self.arg)
+        symbols = self.arg.symbols
         minus_one = Polynomial([[0]*len(symbols)], [-1], symbols)
 
         return Product(Pow(self.arg, minus_one), self.arg.derive(index)).simplify()
@@ -1011,25 +1035,3 @@ def replace(expression, index, value, remove=False):
         return outfunction
     else:
         raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, `Pow`, `Log`, and `Function`, not `%s`' % type(expression))
-
-def _get_symbols(expression):
-    '''
-    Find the first :class:`.Polynomial` or
-    :class:`.Function` in an `expression and
-    return the `polysymbols`.
-
-    '''
-    if isinstance(expression, Polynomial):
-        return expression.polysymbols
-    elif isinstance(expression, Sum):
-        return _get_symbols(expression.summands[0])
-    elif isinstance(expression, Product):
-        return _get_symbols(expression.factors[0])
-    elif isinstance(expression, Log):
-        return _get_symbols(expression.arg)
-    elif isinstance(expression, Pow):
-        return _get_symbols(expression.base)
-    elif isinstance(expression, Function):
-        return _get_symbols(expression.arguments[0])
-    else:
-        raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, `Log`, `Pow`, and `Function`, not `%s`' % type(expression))

@@ -1,6 +1,6 @@
 "Routines to series expand singular and nonsingular expressions"
 
-from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial, replace, _get_symbols
+from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial, replace
 from numpy import iterable
 import numpy as np
 import sympy as sp
@@ -42,7 +42,7 @@ def _expand_Taylor_step(expression, index, order):
         expression = expression.derive(index).simplify()
         coeffs.append( replace(expression, index, 0).simplify() )
 
-    return Polynomial(expolist, coeffs, _get_symbols(expression))
+    return Polynomial(expolist, coeffs, expression.symbols)
 
 def _expand_singular_step(product, index, order):
     r'''
