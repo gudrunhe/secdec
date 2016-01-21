@@ -720,8 +720,7 @@ class Product(_Expression):
             old_factors = self.factors
             self.factors = []
             for factor in old_factors:
-                if isinstance(factor, Sum):
-                    factor = factor.simplify()
+                factor = factor.simplify()
                 if isinstance(factor, Product):
                     changed = True
                     self.factors.extend(factor.factors)
