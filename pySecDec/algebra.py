@@ -883,8 +883,7 @@ class Log(_Expression):
     def simplify(self):
         'Apply ``log(1) = 0``.'
         self.arg = self.arg.simplify()
-        if isinstance(self.arg, Polynomial):
-            if len(self.arg.coeffs) == 1 and self.arg.coeffs[0] == 1 and (self.arg.expolist == 0).all():
+        if isinstance(self.arg, Polynomial) and len(self.arg.coeffs) == 1 and self.arg.coeffs[0] == 1 and (self.arg.expolist == 0).all():
                 return Polynomial([[0]*len(self.arg.polysymbols)], [0], self.arg.polysymbols)
         else:
             return self
