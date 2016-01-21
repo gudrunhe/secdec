@@ -12,6 +12,8 @@ Contents:
     :members:
 
 .. autoclass:: pySecDec.decomposition.Sector
+.. autofunction:: pySecDec.decomposition.hide
+.. autofunction:: pySecDec.decomposition.unhide
 
 .. automodule:: pySecDec.decomposition.iterative
     :members:

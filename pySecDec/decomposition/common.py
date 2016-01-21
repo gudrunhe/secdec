@@ -1,6 +1,7 @@
 """The Sector class"""
 
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
+import numpy as np
 
 class Sector(object):
     '''
@@ -120,3 +121,46 @@ def refactorize(polyprod, parameter=None):
         factorizable_power = expolist_poly[:,parameter].min()
         expolist_mono[:,parameter] += factorizable_power
         expolist_poly[:,parameter] -= factorizable_power
+
+# -------------------- `hide` and `unhide` --------------------
+
+def hide(polynomial, count):
+    '''
+    Hide the last `count` variables of a
+    polynomial.
+    This function is meant to be used
+    before instantiating a :class:`.Sector`.
+    It splits the ``expolist`` and the
+    ``polysymbols`` at the index ``count``.
+
+    .. seealso::
+        :func:`.unhide`
+
+    '''
+    hidden_expolist = polynomial.expolist[:, -count:]
+    hidden_symbols = polynomial.polysymbols[-count:]
+    hidden = Polynomial (hidden_expolist, polynomial.coeffs, hidden_symbols)
+
+    newpoly = polynomial.copy()
+    newpoly.number_of_variables -= count
+    newpoly.polysymbols = newpoly.polysymbols[:-count]
+    newpoly.expolist = polynomial.expolist[:, :-count]
+    return newpoly, hidden
+
+def unhide(polynomial1, polynomial2):
+    '''
+    Undo the operation :func:`.hide`; i.e.
+    ``unhide(*hide(polynomial))`` is equal
+    to ``polynomial``.
+
+    .. seealso::
+        :func:`.hide`
+
+    '''
+    newpoly = polynomial1.copy()
+    newpoly.number_of_variables += len(polynomial2.polysymbols)
+    newpoly.polysymbols += polynomial2.polysymbols
+    newpoly.expolist = np.hstack([polynomial1.expolist, polynomial2.expolist])
+    return newpoly
+
+# -------------------------------------------------------------
