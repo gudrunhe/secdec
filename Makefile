@@ -1,8 +1,8 @@
 # This Makefile implements common tasks needed by developers
 # A list of implemented rules can be obtained by the command "make help"
 
-# Set the timeout for a test case to finish here
-TIMEOUT=120
+# timeout (in seconds) for all test cases
+TIMEOUT=180
 
 
 .DEFAULT_GOAL=check
