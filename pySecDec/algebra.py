@@ -965,6 +965,7 @@ def make_expr(expression, polysymbols):
 
     raise ValueError('Could not parse the expression')
 
+# TODO: replace should be an instancemethod for each subclass of `_Expression`
 def replace(expression, index, value, remove=False):
     '''
     Replace a variable in an expression by a number or a
@@ -983,7 +984,7 @@ def replace(expression, index, value, remove=False):
         The index of the variable to be replaced.
 
     :param value:
-        number of sympy expression;
+        number or sympy expression;
         The value to insert for the chosen variable.
 
     :param remove:
