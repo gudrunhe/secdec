@@ -65,7 +65,7 @@ class TestSector(unittest.TestCase):
         sector.cast[0].factors[1].expolist += 1
         self.assertNotEqual(str(self.sector.cast[0].factors[1]),sector.cast[0].factors[1])
 
-@attr('active')
+#@attr('active')
 class TestHideUnhide(unittest.TestCase):
     def setUp(self):
         self.polysymbols = ['x0','x1','y']
