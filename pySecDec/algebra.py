@@ -126,10 +126,17 @@ class Polynomial(_Expression):
         self.number_of_variables = self.expolist.shape[1]
         if isinstance(polysymbols, str):
             self.polysymbols = sp.sympify([polysymbols + str(i) for i in range(self.number_of_variables)])
+            for symbol in self.polysymbols:
+                assert symbol.is_Symbol, 'All `polysymbols` must be symbols'
         else:
-            self.polysymbols = sp.sympify(list(polysymbols))
-        for symbol in self.polysymbols:
-            assert symbol.is_Symbol, 'All `polysymbols` must be symbols'
+            self.polysymbols = []
+            for item in polysymbols:
+                if isinstance(item, sp.Symbol):
+                    self.polysymbols.append(item)
+                else:
+                    item = sp.sympify(item)
+                    assert item.is_Symbol, 'All `polysymbols` must be symbols'
+                    self.polysymbols.append(item)
 
     @staticmethod
     def from_expression(expression, polysymbols):
@@ -345,9 +352,9 @@ class Polynomial(_Expression):
                 self.coeffs[i-1] = 0
 
         # remove terms with zero coefficient
-        zero_coeffs = np.where(self.coeffs == 0)
-        self.coeffs = np.delete(self.coeffs, zero_coeffs)
-        self.expolist = np.delete(self.expolist, zero_coeffs ,axis=0)
+        nonzero_coeffs = np.where(self.coeffs != 0)
+        self.coeffs = self.coeffs[nonzero_coeffs]
+        self.expolist = self.expolist[nonzero_coeffs]
 
         # need to have at least one term
         if len(self.coeffs) == 0:
