@@ -462,7 +462,8 @@ class ExponentiatedPolynomial(Polynomial):
 
     def simplify(self):
         '''
-        Apply the identity <something>**0 = 1 if possible,
+        Apply the identity <something>**0 = 1 or
+        <something>**1 = <somethng> if possible,
         otherwise call the simplify method of the base class.
 
         '''
@@ -472,6 +473,8 @@ class ExponentiatedPolynomial(Polynomial):
             self.coeffs = np.array([1])
             self.expolist = np.array([[0]*self.number_of_variables])
             self.exponent = 1
+        elif self.exponent == 1 or (isinstance(self.exponent, Polynomial) and len(self.exponent.coeffs)==1 and (self.exponent.coeffs==1).all() and (self.exponent.expolist==0).all()):
+            return Polynomial(self.expolist, self.coeffs, self.polysymbols)
         else:
             super(ExponentiatedPolynomial, self).simplify()
 
@@ -802,13 +805,22 @@ class Pow(_Expression):
         return self.base.symbols
 
     def simplify(self):
-        'Apply the identity <something>**0 = 1 if possible.'
+        '''
+        Apply the identity <something>**0 = 1
+        or <something>**1 = something if possible.
+
+        '''
         self.base = self.base.simplify()
         self.exponent = self.exponent.simplify()
 
-        if isinstance(self.exponent, Polynomial) and (self.exponent.coeffs==0).all():
-            symbols = self.exponent.polysymbols
-            return Polynomial([[0]*len(symbols)], [1], symbols)
+        if isinstance(self.exponent, Polynomial):
+            if (self.exponent.coeffs==0).all():
+                symbols = self.exponent.polysymbols
+                return Polynomial([[0]*len(symbols)], [1], symbols)
+            elif len(self.exponent.coeffs)==1 and (self.exponent.coeffs==1).all() and (self.exponent.expolist==0).all():
+                return self.base
+            else:
+                return self
         else:
             return self
 

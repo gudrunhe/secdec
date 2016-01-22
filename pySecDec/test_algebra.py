@@ -338,6 +338,16 @@ class TestExponentiatedPolynomial(unittest.TestCase):
             np.testing.assert_array_equal(p.coeffs, [1])
             np.testing.assert_array_equal(p.expolist, [[0,0]])
 
+        # <something>**1 = <something>
+        polynomial_to_power_one_polynomial_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=Polynomial([[0,0,0],[0,0,0]], [2, -1])).simplify()
+        polynomial_to_power_one_sympy_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sp.sympify('1/2+1/2')).simplify()
+        polynomial_to_power_one_numerical_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=1).simplify()
+
+        for p in (polynomial_to_power_one_polynomial_exponent, polynomial_to_power_one_sympy_exponent, polynomial_to_power_one_numerical_exponent):
+            self.assertTrue(type(p) is Polynomial)
+            np.testing.assert_array_equal(p.coeffs, [A,B])
+            np.testing.assert_array_equal(p.expolist, [(2,1),(0,0)])
+
 class TestProduct(unittest.TestCase):
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
@@ -441,6 +451,7 @@ class TestPow(unittest.TestCase):
         self.assertEqual(orig.exponent.expolist[0,0],5)
         self.assertEqual(copy.exponent.expolist[0,0],8)
 
+    #@attr('active')
     def test_simplify(self):
         zero = Polynomial.from_expression('0', ['x0','x1','x2'])
         base = Polynomial([(0,0,1),(0,1,0),(1,0,0)], ['a','b','c'])
@@ -450,6 +461,11 @@ class TestPow(unittest.TestCase):
         self.assertTrue(type(one) is Polynomial)
         np.testing.assert_array_equal(one.coeffs, [1])
         np.testing.assert_array_equal(one.expolist, [[0,0,0]])
+
+        poly = Pow(base, one).simplify()
+        self.assertTrue(type(poly) is Polynomial)
+        np.testing.assert_array_equal(poly.coeffs, base.coeffs)
+        np.testing.assert_array_equal(poly.expolist, base.expolist)
 
     #@attr('active')
     def test_derive(self):
