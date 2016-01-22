@@ -1017,7 +1017,10 @@ def replace(expression, index, value, remove=False):
         if remove:
             outpoly.number_of_variables -= 1
             outpoly.expolist = np.delete(outpoly.expolist, index, axis=1)
-            outpoly.polysymbols = outpoly.polysymbols[:index] + outpoly.polysymbols[index+1:]
+            if index == -1:
+                outpoly.polysymbols.pop()
+            else:
+                outpoly.polysymbols = outpoly.polysymbols[:index] + outpoly.polysymbols[index+1:]
         else:
             outpoly.expolist[:,index] = 0
         outpoly.simplify()

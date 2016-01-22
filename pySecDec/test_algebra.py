@@ -663,6 +663,20 @@ class TestInsertion(unittest.TestCase):
         self.assertEqual(removed_poly.number_of_variables, 1)
         self.assertEqual(removed_poly.expolist.shape[1], 1)
 
+    #@attr('active')
+    def test_insert_value_polynomial_negative_index(self):
+        poly = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
+        replaced_poly = replace(poly,index=-1,value=sp.sympify('1/2'))
+        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/2 + D/4') , 0 )
+        self.assertEqual(replaced_poly.number_of_variables, 2)
+        self.assertEqual(replaced_poly.polysymbols, sp.sympify(['x0','x1']))
+
+        removed_poly = replace(poly,index=-1,value=sp.sympify('1/2'), remove=True)
+        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/2 + D/4') , 0 )
+        self.assertEqual(removed_poly.number_of_variables, 1)
+        self.assertEqual(removed_poly.expolist.shape[1], 1)
+        self.assertEqual(removed_poly.polysymbols, sp.sympify(['x0']))
+
     def test_insert_value_polynomial_product(self):
         poly0 = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
         poly1 = Polynomial([(0,0),(5,0)],['E',1])
