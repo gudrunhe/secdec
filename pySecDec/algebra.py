@@ -1069,14 +1069,23 @@ def replace(expression, index, value, remove=False):
     '''
     if isinstance(expression,Polynomial):
         outpoly = expression.copy()
+        # act on coefficients first
+        # nothing todo if the coeffs are just numbers
+        if not np.issubdtype(outpoly.coeffs.dtype, np.number):
+            for i,coeff in enumerate(outpoly.coeffs):
+                try:
+                    outpoly.coeffs[i] = replace(coeff, index, value, remove)
+                except TypeError:
+                    pass
         if isinstance(expression,ExponentiatedPolynomial):
             # replace in exponent if it has a type `replace` can handle
             try:
                 outpoly.exponent = replace(outpoly.exponent, index, value, remove)
             except TypeError:
                 pass
-        powers = expression.expolist[:,index]
-        outpoly.coeffs *= value**powers
+        if value != 1: # nothing to do if ``value==1`` since <coeff> * 1**<something> = <coeff>
+            powers = expression.expolist[:,index]
+            outpoly.coeffs *= np.array([value**int(power) for power in powers])
         if remove:
             outpoly.number_of_variables -= 1
             outpoly.expolist = np.delete(outpoly.expolist, index, axis=1)

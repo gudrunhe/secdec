@@ -693,6 +693,19 @@ class TestInsertion(unittest.TestCase):
         self.assertEqual(removed_poly.expolist.shape[1], 1)
 
     #@attr('active')
+    def test_insert_polynomial_coeffs(self):
+        poly = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B',Polynomial([(0,1)], ['C']),'D'])
+
+        replaced_poly = replace(poly,index=1,value=sp.sympify('1/2'))
+        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/4 + D/4') , 0 )
+        self.assertEqual(replaced_poly.number_of_variables, 2)
+
+        removed_poly = replace(poly,index=1,value=sp.sympify('1/2'), remove=True)
+        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/4 + D/4') , 0 )
+        self.assertEqual(removed_poly.number_of_variables, 1)
+        self.assertEqual(removed_poly.expolist.shape[1], 1)
+
+    #@attr('active')
     def test_insert_value_polynomial_negative_index(self):
         poly = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
         replaced_poly = replace(poly,index=-1,value=sp.sympify('1/2'))
@@ -764,6 +777,7 @@ class TestInsertion(unittest.TestCase):
         self.assertEqual( (sp.sympify(str(removed)) - sp.sympify('(A + 2*B + C*x1 + D*x1**2)**(E + 2**5)')).simplify() , 0 )
         self.assertEqual(removed.number_of_variables, 1)
 
+    #@attr('active')
     def test_insert_in_log(self):
         arg = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
         expr = Log(arg)
