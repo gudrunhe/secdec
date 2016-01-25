@@ -80,6 +80,11 @@ class TestPolynomial(unittest.TestCase):
         # entries of expolist have variable length
         self.assertRaisesRegexp(AssertionError, "expolist.*same length", Polynomial, [(0,1,2),(1,0),(2,1)], ['A','B','C'])
 
+        # same number of variables in coeff if coeffs are `_Expression`s
+        self.assertRaisesRegexp(AssertionError, "same number of variables.*(p|P)olynomial.*coeffs", Polynomial, [(0,2),(1,0),(2,1)], [Polynomial.from_expression('1', ['z']),'B','C'])
+
+        Polynomial([(0,2),(1,0),(2,1)], [Polynomial.from_expression('1', ['x0','x1']),'B','C']) # OK
+
     def test_string_form(self):
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])
         string_polynomial1 = " + (A)*x1 + (B)*x0 + (C)*x0**2*x1 + (D)"

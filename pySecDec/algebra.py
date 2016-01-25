@@ -121,9 +121,16 @@ class Polynomial(_Expression):
         assert len(self.expolist) == len(self.coeffs), \
             '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
         assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
-        if not np.issubdtype(self.coeffs.dtype, np.number):
-            self.coeffs = np.array([coeff.copy() if isinstance(coeff,_Expression) else sp.sympify(coeff) for coeff in self.coeffs])
         self.number_of_variables = self.expolist.shape[1]
+        if not np.issubdtype(self.coeffs.dtype, np.number):
+            parsed_coeffs = []
+            for coeff in self.coeffs:
+                if isinstance(coeff,_Expression):
+                    assert coeff.number_of_variables == self.number_of_variables, 'Must have the same number of variables as the `Polynomial` for all coeffs'
+                    parsed_coeffs.append(coeff.copy())
+                else:
+                    parsed_coeffs.append(sp.sympify(coeff))
+            self.coeffs = np.array([coeff.copy() if isinstance(coeff,_Expression) else sp.sympify(coeff) for coeff in self.coeffs])
         if isinstance(polysymbols, str):
             self.polysymbols = sp.sympify([polysymbols + str(i) for i in range(self.number_of_variables)])
             for symbol in self.polysymbols:
