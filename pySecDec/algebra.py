@@ -30,6 +30,7 @@ class _Expression(object):
         if not isinstance(other, _Expression):
             other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
         return Product(self, other)
+    __rmul__ = __mul__
 
     def __pow__(self, other):
         if not isinstance(other, _Expression):
@@ -293,6 +294,7 @@ class Polynomial(_Expression):
     def __add__(self, other):
         'addition operator'
         return self._sub_or_add(other, False)
+    __radd__ = __add__
 
     def __sub__(self, other):
         'subtraction operator'
@@ -347,9 +349,7 @@ class Polynomial(_Expression):
 
         else:
             return NotImplemented
-
     __rmul__ = __mul__
-    __radd__ = __add__
 
     def __neg__(self):
         'arithmetic negation "-self"'
@@ -388,8 +388,13 @@ class Polynomial(_Expression):
         sort_key = argsort_2D_array(self.expolist)
         self.expolist = self.expolist[sort_key]
         self.coeffs = self.coeffs[sort_key]
+        if isinstance(self.coeffs[0], _Expression):
+            self.coeffs[0] = self.coeffs[0].simplify()
 
         for i in range(1,len(self.coeffs)):
+            if isinstance(self.coeffs[i], _Expression):
+                self.coeffs[i] = self.coeffs[i].simplify()
+
             # do not have to consider terms with zero coefficient
             if self.coeffs[i] == 0: continue
 
@@ -456,11 +461,11 @@ class ExponentiatedPolynomial(Polynomial):
         raise NotImplementedError('Cannot create `ExponentiatedPolynomial` from expression.')
 
     __pow__ = _Expression.__pow__
-    __radd__ = __add__ = _Expression.__add__
+    __add__ = __radd__ = _Expression.__add__
     __neg__ = _Expression.__neg__
     __sub__ = _Expression.__sub__
     __rsub__ = _Expression.__rsub__
-    __rmul__ =__mul__ = _Expression.__mul__
+    __mul__ = __rmul__ = _Expression.__mul__
 
     def __repr__(self):
         if self.exponent == 1:
@@ -594,7 +599,7 @@ class LogOfPolynomial(Polynomial):
     __str__ = __repr__
 
     __pow__ = _Expression.__pow__
-    __radd__ = __add__ = _Expression.__add__
+    __add__ = __radd__ = _Expression.__add__
     __neg__ = _Expression.__neg__
     __sub__ = _Expression.__sub__
     __rsub__ = _Expression.__rsub__
@@ -1073,19 +1078,15 @@ def replace(expression, index, value, remove=False):
         # nothing todo if the coeffs are just numbers
         if not np.issubdtype(outpoly.coeffs.dtype, np.number):
             for i,coeff in enumerate(outpoly.coeffs):
-                try:
+                if isinstance(coeff, _Expression):
                     outpoly.coeffs[i] = replace(coeff, index, value, remove)
-                except TypeError:
-                    pass
         if isinstance(expression,ExponentiatedPolynomial):
             # replace in exponent if it has a type `replace` can handle
-            try:
+            if isinstance(outpoly.exponent, _Expression):
                 outpoly.exponent = replace(outpoly.exponent, index, value, remove)
-            except TypeError:
-                pass
         if value != 1: # nothing to do if ``value==1`` since <coeff> * 1**<something> = <coeff>
             powers = expression.expolist[:,index]
-            outpoly.coeffs *= np.array([value**int(power) for power in powers])
+            outpoly.coeffs = outpoly.coeffs * np.array([value**int(power) for power in powers])
         if remove:
             outpoly.number_of_variables -= 1
             outpoly.expolist = np.delete(outpoly.expolist, index, axis=1)
@@ -1114,10 +1115,7 @@ def replace(expression, index, value, remove=False):
     elif isinstance(expression, Log):
         return Log( replace(expression.arg,index,value,remove) )
     elif isinstance(expression, Function):
-        outfunction = expression.copy()
-        outfunction.arguments = [replace(arg, index, value, remove) for arg in expression.arguments]
-        if remove:
-            outfunction.number_of_variables -= 1
-        return outfunction
+        arguments = [replace(arg, index, value, remove) for arg in expression.arguments]
+        return Function(expression.symbol, *arguments)
     else:
         raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, `Pow`, `Log`, and `Function`, not `%s`' % type(expression))
