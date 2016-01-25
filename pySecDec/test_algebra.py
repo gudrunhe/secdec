@@ -834,3 +834,135 @@ class TestGetSymbols(unittest.TestCase):
     def test_get_from_function(self):
         expr = Function('f', self.p0, self.p1)
         self.assertEqual(expr.symbols, self.polysymbols)
+
+class TestExpressionOperators(unittest.TestCase):
+    def setUp(self):
+        self.polysymbols = sp.sympify(['x','y'])
+        self.p0 = ExponentiatedPolynomial([(1,0),(0,1)], ['a','b'], 'exponent', self.polysymbols)
+        self.p1 = LogOfPolynomial([(1,0),(0,1)], ['c','d'], self.polysymbols)
+
+    #@attr('active')
+    def test_add(self):
+        sum_p0_p1 = self.p0 + self.p1
+        sympified_sum_p0_p1 = sp.sympify(sum_p0_p1)
+        target_sum_p0_p1 = sp.sympify('(a*x + b*y)**exponent + log(c*x + d*y)')
+        self.assertTrue(type(sum_p0_p1) is Sum)
+        self.assertEqual( (sympified_sum_p0_p1 - target_sum_p0_p1).simplify() , 0 )
+
+        sum_p1_p0 = self.p1 + self.p0
+        sympified_sum_p1_p0 = sp.sympify(sum_p1_p0)
+        target_sum_p1_p0 = target_sum_p0_p1
+        self.assertTrue(type(sum_p1_p0) is Sum)
+        self.assertEqual( (sympified_sum_p1_p0 - target_sum_p1_p0).simplify() , 0 )
+
+        for expr, sympified_expr in zip([self.p0, self.p1], sp.sympify(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
+            # other operand is number
+            sum_p0_one = sp.sympify(expr + 1)
+            self.assertEqual( (sympified_expr + 1 - sum_p0_one).simplify() , 0)
+
+            sum_one_p0 = sp.sympify(1 + expr)
+            self.assertEqual( (sympified_expr + 1 - sum_one_p0).simplify() , 0)
+
+            # other operand is sympy symbol
+            sum_p0_K = sp.sympify(expr + sp.sympify('K'))
+            self.assertEqual( (sympified_expr + sp.sympify('K') - sum_p0_K).simplify() , 0)
+
+            sum_K_p0 = sp.sympify(sp.sympify('K') + expr)
+            self.assertEqual( (sympified_expr + sp.sympify('K') - sum_K_p0).simplify() , 0)
+
+    #@attr('active')
+    def test_neg(self):
+        minus_p0 = sp.sympify(-self.p0)
+        target_minus_p0 = sp.sympify('-(a*x + b*y)**exponent')
+        self.assertEqual( (minus_p0 - target_minus_p0).simplify() , 0)
+
+        minus_p1 = sp.sympify(-self.p1)
+        target_minus_p1 = sp.sympify('-log(c*x + d*y)')
+        self.assertEqual( (minus_p1 - target_minus_p1).simplify() , 0)
+
+    #@attr('active')
+    def test_sub(self):
+        diff_p0_p1 = self.p0 - self.p1
+        sympified_diff_p0_p1 = sp.sympify(diff_p0_p1)
+        target_diff_p0_p1 = sp.sympify('(a*x + b*y)**exponent - log(c*x + d*y)')
+        self.assertTrue(type(diff_p0_p1) is Sum)
+        self.assertEqual( (sympified_diff_p0_p1 - target_diff_p0_p1).simplify() , 0 )
+
+        diff_p1_p0 = self.p1 - self.p0
+        sympified_diff_p1_p0 = sp.sympify(diff_p1_p0)
+        target_diff_p1_p0 = -target_diff_p0_p1
+        self.assertTrue(type(diff_p1_p0) is Sum)
+        self.assertEqual( (sympified_diff_p1_p0 - target_diff_p1_p0).simplify() , 0 )
+
+        for expr, sympified_expr in zip([self.p0, self.p1], sp.sympify(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
+            # other operand is number
+            diff_p0_one = sp.sympify(expr -1)
+            self.assertEqual( (sympified_expr - 1 - diff_p0_one).simplify() , 0)
+
+            diff_one_p0 = sp.sympify(1 - expr)
+            self.assertEqual( (1 - sympified_expr - diff_one_p0).simplify() , 0)
+
+            # other operand is sympy symbol
+            diff_p0_K = sp.sympify(expr - sp.sympify('K'))
+            self.assertEqual( (sympified_expr - sp.sympify('K') - diff_p0_K).simplify() , 0)
+
+            diff_K_p0 = sp.sympify(sp.sympify('K') - expr)
+            self.assertEqual( (sp.sympify('K') - sympified_expr - diff_K_p0).simplify() , 0)
+
+    #@attr('active')
+    def test_mul(self):
+        prod_p0_p1 = self.p0 * self.p1
+        sympified_prod_p0_p1 = sp.sympify(prod_p0_p1)
+        target_prod_p0_p1 = sp.sympify('(a*x + b*y)**exponent * log(c*x + d*y)')
+        self.assertTrue(type(prod_p0_p1) is Product)
+        self.assertEqual( (sympified_prod_p0_p1 - target_prod_p0_p1).simplify() , 0 )
+
+        prod_p1_p0 = self.p1 * self.p0
+        sympified_prod_p1_p0 = sp.sympify(prod_p1_p0)
+        target_prod_p1_p0 = target_prod_p0_p1
+        self.assertTrue(type(prod_p1_p0) is Product)
+        self.assertEqual( (sympified_prod_p1_p0 - target_prod_p1_p0).simplify() , 0 )
+
+        for expr, sympified_expr in zip([self.p0, self.p1], sp.sympify(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
+            # other operand is number
+            prod_p0_ten = sp.sympify(expr * 10)
+            self.assertEqual( (sympified_expr * 10 - prod_p0_ten).simplify() , 0)
+
+            prod_ten_p0 = sp.sympify(10 * expr)
+            self.assertEqual( (sympified_expr * 10 - prod_ten_p0).simplify() , 0)
+
+            # other operand is sympy symbol
+            prod_p0_K = sp.sympify(expr * sp.sympify('K'))
+            self.assertEqual( (sympified_expr * sp.sympify('K') - prod_p0_K).simplify() , 0)
+
+            prod_K_p0 = sp.sympify(sp.sympify('K') * expr)
+            self.assertEqual( (sympified_expr * sp.sympify('K') - prod_K_p0).simplify() , 0)
+
+    #@attr('active')
+    def test_pow(self):
+        pow_p0_p1 = self.p0 ** self.p1
+        sympified_pow_p0_p1 = sp.sympify(pow_p0_p1)
+        target_pow_p0_p1 = sp.sympify('((a*x + b*y)**exponent) ** log(c*x + d*y)')
+        self.assertTrue(type(pow_p0_p1) is Pow)
+        self.assertEqual( (sympified_pow_p0_p1 - target_pow_p0_p1).simplify() , 0 )
+
+        pow_p1_p0 = self.p1 ** self.p0
+        sympified_pow_p1_p0 = sp.sympify(pow_p1_p0)
+        target_pow_p1_p0 = sp.sympify('log(c*x + d*y) ** ((a*x + b*y)**exponent)')
+        self.assertTrue(type(pow_p1_p0) is Pow)
+        self.assertEqual( (sympified_pow_p1_p0 - target_pow_p1_p0).simplify() , 0 )
+
+        for expr, sympified_expr in zip([self.p0, self.p1], sp.sympify(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
+            # other operand is number
+            pow_p0_ten = sp.sympify(expr ** 10)
+            self.assertEqual( (sympified_expr ** 10 - pow_p0_ten).simplify() , 0)
+
+            pow_ten_p0 = sp.sympify(10 ** expr)
+            self.assertEqual( (10**sympified_expr - pow_ten_p0).simplify() , 0)
+
+            # other operand is sympy symbol
+            pow_p0_K = sp.sympify(expr ** sp.sympify('K'))
+            self.assertEqual( (sympified_expr ** sp.sympify('K') - pow_p0_K).simplify() , 0)
+
+            pow_K_p0 = sp.sympify(sp.sympify('K') ** expr)
+            self.assertEqual( (sp.sympify('K')**sympified_expr - pow_K_p0).simplify() , 0)

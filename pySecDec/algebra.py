@@ -10,7 +10,36 @@ class _Expression(object):
     computer algebra system.
 
     '''
-    pass
+    def __add__(self, other):
+        if not isinstance(other, _Expression):
+            other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
+        return Sum(self, other)
+    __radd__ = __add__
+
+    def __neg__(self):
+        minus_one = Polynomial([[0]*self.number_of_variables], [-1], self.symbols)
+        return Product(minus_one, self)
+
+    def __sub__(self, other):
+        return self + (-other)
+
+    def __rsub__(self, other):
+        return other + (-self)
+
+    def __mul__(self, other):
+        if not isinstance(other, _Expression):
+            other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
+        return Product(self, other)
+
+    def __pow__(self, other):
+        if not isinstance(other, _Expression):
+            other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
+        return Pow(self, other)
+
+    def __rpow__(self, other):
+        if not isinstance(other, _Expression):
+            other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
+        return Pow(other, self)
 
 class Function(_Expression):
     '''
@@ -426,10 +455,12 @@ class ExponentiatedPolynomial(Polynomial):
     def from_expression(*args,**kwargs):
         raise NotImplementedError('Cannot create `ExponentiatedPolynomial` from expression.')
 
-    def _NotImplemented(self,*args,**kwargs):
-        return NotImplemented
-
-    __mul__ = __rmul__ = __add__ = __radd__ = __sub__ = __rsub__ = __neg__ = __pow__ = _NotImplemented
+    __pow__ = _Expression.__pow__
+    __radd__ = __add__ = _Expression.__add__
+    __neg__ = _Expression.__neg__
+    __sub__ = _Expression.__sub__
+    __rsub__ = _Expression.__rsub__
+    __rmul__ =__mul__ = _Expression.__mul__
 
     def __repr__(self):
         if self.exponent == 1:
@@ -562,10 +593,12 @@ class LogOfPolynomial(Polynomial):
 
     __str__ = __repr__
 
-    def _NotImplemented(self,*args,**kwargs):
-        return NotImplemented
-
-    __mul__ = __rmul__ = __add__ = __radd__ = __sub__ = __rsub__ = __neg__ = __pow__ = _NotImplemented
+    __pow__ = _Expression.__pow__
+    __radd__ = __add__ = _Expression.__add__
+    __neg__ = _Expression.__neg__
+    __sub__ = _Expression.__sub__
+    __rsub__ = _Expression.__rsub__
+    __mul__ = __rmul__ = _Expression.__mul__
 
     def derive(self, index):
         '''
