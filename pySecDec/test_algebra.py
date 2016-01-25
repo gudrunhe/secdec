@@ -144,6 +144,16 @@ class TestPolynomial(unittest.TestCase):
         target_derivative_1 = sympify('A*x0**2 + B')
         self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
 
+    #@attr('active')
+    def test_derive_with_coeffs(self):
+        # A*x0 * x0**2*x1 + B * x1 = A * x0**3*x1 + B * x1
+        expr = Polynomial([(2,1),(0,1)],[Polynomial([(1,0)], ['A']), 'B'])
+
+        derivative_0 = sp.sympify(expr.derive(0))
+        target_derivative_0 = sp.sympify('3*A * x0**2*x1')
+
+        self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0)
+
 class TestFormerSNCPolynomial(unittest.TestCase):
     def setUp(self):
         self.p0 = Polynomial([(0,1),(1,0),(1,1)],[1,1,3])
@@ -328,6 +338,13 @@ class TestExponentiatedPolynomial(unittest.TestCase):
         polynomial = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=Polynomial.from_expression('a + b*x0',['x0','x1']))
         derivative_0 = sympify( str(polynomial.derive(0)) )
         target_derivative_0 = sympify('(a + b*x0)*(A*x0**2*x1 + B)**(a + b*x0 - 1) * (2*A*x0*x1)   +   (A*x0**2*x1 + B)**(a + b*x0)*b*log(A*x0**2*x1 + B)')
+        self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
+
+    #@attr('active')
+    def test_derive_with_coeffs(self):
+        expr = ExponentiatedPolynomial([(1,1),(0,0)],[Polynomial([(1,0)], ['A']), 'B'],exponent=Polynomial.from_expression('a + b*x0',['x0','x1']))
+        derivative_0 = sp.sympify(expr.derive(0))
+        target_derivative_0 = sp.sympify('(a + b*x0)*(A*x0**2*x1 + B)**(a + b*x0 - 1) * (2*A*x0*x1)   +   (A*x0**2*x1 + B)**(a + b*x0)*b*log(A*x0**2*x1 + B)')
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
 
     #@attr('active')
@@ -645,6 +662,13 @@ class TestLogOfPolynomial(unittest.TestCase):
         derivative_1 = sp.sympify( str(expr.derive(1)) )
         target_derivative_1 = sp.sympify('1/(A*x0**2*x1 + B*x1) * (A*x0**2 + B)')
         self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
+
+    #@attr('active')
+    def test_derive_with_coeffs(self):
+        expr = LogOfPolynomial([(1,1),(0,1)],[Polynomial([(1,0)], ['A']), 'B'])
+        derivative_0 = sp.sympify(expr.derive(0))
+        target_derivative_0 = sp.sympify('1/(A*x0**2*x1 + B*x1) * 2*A*x0*x1')
+        self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0)
 
     def test_simplify(self):
         # log(1) = 0

@@ -232,15 +232,30 @@ class Polynomial(_Expression):
             The index of the paramater to derive by.
 
         '''
-        # derivative(... * x**k) = ... * k * x**(k-1) = ... * <additional_coeff_factor> * x**(k-1)
-        additional_coeff_factors = self.expolist[:,index]
-        new_coeffs = [old_coeff*new_factor for old_coeff,new_factor in zip(self.coeffs,additional_coeff_factors)]
-        new_expolist = self.expolist.copy()
-        new_expolist[:,index] -= 1
+        # derivative by ``x`` --> have ``x`` coded in ``expolist`` and can have ``x`` in coeffs
+        # product rule: derivative(<coeff> * x**k) = <coeff> * k * x**(k-1) + derivative(<coeff>) * x**k
 
-        outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols)
-        outpoly.simplify()
-        return outpoly
+        # summand1 = <coeff> * k * x**(k-1)
+        summand1 = self.copy()
+        summand1.expolist[:,index] -= 1
+        summand1.coeffs *= self.expolist[:,index]
+        summand1 = summand1.simplify()
+
+        # summand2 = derivative(<coeff>) * x**k
+        summand_2_coeffs = []
+        need_summand2 = False
+        for coeff in self.coeffs:
+            if isinstance(coeff, _Expression):
+                summand_2_coeffs.append(coeff.derive(index))
+                need_summand2 = True
+            else:
+                summand_2_coeffs.append(0)
+
+        if need_summand2:
+            summand2 = Polynomial(self.expolist, summand_2_coeffs, self.polysymbols).simplify()
+            return summand1 + summand2
+        else:
+            return summand1
 
     @property
     def symbols(self):
@@ -570,7 +585,8 @@ class LogOfPolynomial(Polynomial):
                                           self.polysymbols)
 
         #   --> factor1 = "derivative(poly)"
-        factor1 = Polynomial.derive(self, index)
+        factor1 = Polynomial(self.expolist, self.coeffs, self.polysymbols)
+        factor1 = factor1.derive(index)
 
         return Product(factor0, factor1)
 
