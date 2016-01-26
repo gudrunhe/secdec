@@ -540,10 +540,8 @@ class ExponentiatedPolynomial(Polynomial):
             self.exponent = 1
         elif self.exponent == 1 or (isinstance(self.exponent, Polynomial) and len(self.exponent.coeffs)==1 and (self.exponent.coeffs==1).all() and (self.exponent.expolist==0).all()):
             return Polynomial(self.expolist, self.coeffs, self.polysymbols)
-        else:
-            super(ExponentiatedPolynomial, self).simplify()
 
-        return self
+        return super(ExponentiatedPolynomial, self).simplify()
 
 class LogOfPolynomial(Polynomial):
     '''
@@ -693,8 +691,7 @@ class Sum(_Expression):
             old_summands = self.summands
             self.summands = []
             for summand in old_summands:
-                if isinstance(summand, Product):
-                    summand = summand.simplify()
+                summand = summand.simplify()
                 if isinstance(summand, Sum):
                     changed = True
                     self.summands.extend(summand.summands)
@@ -1096,7 +1093,6 @@ def replace(expression, index, value, remove=False):
                 outpoly.polysymbols = outpoly.polysymbols[:index] + outpoly.polysymbols[index+1:]
         else:
             outpoly.expolist[:,index] = 0
-        outpoly.simplify()
         return outpoly
     elif isinstance(expression, Product):
         outfactors = []

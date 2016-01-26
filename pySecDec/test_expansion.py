@@ -152,6 +152,7 @@ class TestTaylorExpansion(unittest.TestCase):
         expansion_in_x = _expand_Taylor_step(self.expression, 0, 2)
         self.assertEqual( (sp.sympify(expansion_in_x) - self.expected_expansion_in_x).simplify() , 0)
 
+    #@attr('active')
     def test_expand_Taylor(self):
         # the order of the expansion should not matter
         expansion_in_x_and_y = expand_Taylor(self.expression, [0,1], [2,0])

@@ -31,7 +31,7 @@ def _expand_Taylor_step(expression, index, order):
     order = int_order
     N = expression.number_of_variables
 
-    # Construct expolist of the Tatlor polynomial
+    # Construct expolist of the Taylor polynomial
     expolist = np.zeros((1 + order, N), dtype=int)
     expolist[:,index] = np.arange(1 + order)
 
@@ -113,8 +113,8 @@ def _expand_singular_step(product, index, order):
 
 
     # Taylor expansion of the nonsingular rational polynomial defined by ``numerator / denominator``
-    this_order_numerator = replace(numerator, index, 0)
-    this_order_denominator = replace(denominator, index, 0)
+    this_order_numerator = replace(numerator, index, 0).simplify()
+    this_order_denominator = replace(denominator, index, 0).simplify()
 
     # convert denominator to ``<polynomial>**-1``
     this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols)
@@ -126,14 +126,14 @@ def _expand_singular_step(product, index, order):
     # nonsingular expansion order is shifted by the (potentially) singular prefactor (`highest_pole`)
     for i in range(order + highest_pole):
         numerator, denominator = derive_polyrational(numerator, denominator, index)
-        this_order_numerator = replace(numerator, index, 0)
+        this_order_numerator = replace(numerator, index, 0).simplify()
 
         # if the numerator is zero at one order, all higher orders vanish as well
         if (this_order_numerator.coeffs == 0).all():
             nonsingular_series_expolist = nonsingular_series_expolist[:i+1]
             break
 
-        this_order_denominator = replace(denominator, index, 0)
+        this_order_denominator = replace(denominator, index, 0).simplify()
 
         # convert denominator to ``<polynomial>**-1``
         this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols)
