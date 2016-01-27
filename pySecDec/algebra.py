@@ -990,7 +990,7 @@ class Log(_Expression):
         return Product(Pow(self.arg, minus_one), self.arg.derive(index)).simplify()
 
 # TODO: extensively test this function
-def make_expr(expression, polysymbols):
+def Expression(expression, polysymbols):
     '''
     Convert a sympy expression to an expression
     in terms of this module.
@@ -1018,19 +1018,19 @@ def make_expr(expression, polysymbols):
 
     except sp.PolynomialError:
         if expression.is_Mul:
-            return Product(*(make_expr(e, polysymbols) for e in expression.args))
+            return Product(*(Expression(e, polysymbols) for e in expression.args))
 
         if expression.is_Pow:
             assert len(expression.args) == 2
-            exponent = make_expr(expression.args[1], polysymbols)
+            exponent = Expression(expression.args[1], polysymbols)
             try:
                 poly = Polynomial.from_expression(expression.args[0], polysymbols)
                 return ExponentiatedPolynomial(poly.expolist, poly.coeffs, exponent=exponent, polysymbols=polysymbols)
             except sp.PolynomialError:
-                return Pow(make_expr(expression.args[0], polysymbols), exponent)
+                return Pow(Expression(expression.args[0], polysymbols), exponent)
 
         if expression.is_Add:
-            return Sum(*(make_expr(e, polysymbols) for e in expression.args))
+            return Sum(*(Expression(e, polysymbols) for e in expression.args))
 
         if isinstance(expression, sp.log):
             # make sure to have the natural log
@@ -1038,10 +1038,10 @@ def make_expr(expression, polysymbols):
             try:
                 return LogOfPolynomial.from_expression(expression.args[0], polysymbols)
             except sp.PolynomialError:
-                return Log(make_expr(expression.args[0], polysymbols))
+                return Log(Expression(expression.args[0], polysymbols))
 
         if expression.is_Function:
-            return Function(expression.__class__.__name__, *(make_expr(e, polysymbols) for e in expression.args))
+            return Function(expression.__class__.__name__, *(Expression(e, polysymbols) for e in expression.args))
 
     raise ValueError('Could not parse the expression')
 
