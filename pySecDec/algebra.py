@@ -390,13 +390,18 @@ class Polynomial(_Expression):
         self.coeffs = self.coeffs[sort_key]
         if isinstance(self.coeffs[0], _Expression):
             self.coeffs[0] = self.coeffs[0].simplify()
+            if isinstance(self.coeffs[0], Polynomial) and (self.coeffs[0].coeffs == 0).all():
+                self.coeffs[0] = 0 # must set to ``int(0)``, otherwise it will no be removed
 
         for i in range(1,len(self.coeffs)):
             if isinstance(self.coeffs[i], _Expression):
                 self.coeffs[i] = self.coeffs[i].simplify()
 
             # do not have to consider terms with zero coefficient
-            if self.coeffs[i] == 0: continue
+                if isinstance(self.coeffs[i], Polynomial) and (self.coeffs[i].coeffs == 0).all():
+                    self.coeffs[i] = 0 # must set to ``int(0)``, otherwise it will no be removed
+                    continue
+            elif self.coeffs[i] == 0: continue
 
             previous_exponents = self.expolist[i-1]
             # search `self.expolist` for the same term
@@ -1072,7 +1077,7 @@ def replace(expression, index, value, remove=False):
     if isinstance(expression,Polynomial):
         outpoly = expression.copy()
         # act on coefficients first
-        # nothing todo if the coeffs are just numbers
+        # nothing to do if the coeffs are just numbers
         if not np.issubdtype(outpoly.coeffs.dtype, np.number):
             for i,coeff in enumerate(outpoly.coeffs):
                 if isinstance(coeff, _Expression):

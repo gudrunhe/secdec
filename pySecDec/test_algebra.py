@@ -154,6 +154,17 @@ class TestPolynomial(unittest.TestCase):
 
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0)
 
+    #@attr('active')
+    def test_simplify(self):
+        expr1 = Polynomial([(2,1),(0,1)],[Polynomial([(0,0)], [0]), 'B']).simplify()
+        expr2 = Polynomial([(2,1),(0,1)],['A', Polynomial([(5,2)], [0])]).simplify()
+
+        np.testing.assert_array_equal(expr1.expolist, [[0,1]])
+        np.testing.assert_array_equal(expr1.coeffs, [sp.symbols('B')])
+
+        np.testing.assert_array_equal(expr2.expolist, [[2,1]])
+        np.testing.assert_array_equal(expr2.coeffs, [sp.symbols('A')])
+
 class TestFormerSNCPolynomial(unittest.TestCase):
     def setUp(self):
         self.p0 = Polynomial([(0,1),(1,0),(1,1)],[1,1,3])
