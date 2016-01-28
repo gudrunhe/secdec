@@ -4,7 +4,7 @@ expansion
 
 """
 
-from .algebra import Polynomial, ExponentiatedPolynomial, Sum, Product
+from .algebra import Polynomial, Sum, Product, Pow
 import numpy as np
 import sympy as sp
 
@@ -21,7 +21,6 @@ def _integrate_pole_part_single_index(polyprod, index):
     exponent_constant_term = 0
     full_exponent = 0
     for monomial_factor in monomial_product.factors:
-        assert type(monomial_factor.exponent) is Polynomial , 'unexpected input'
         if monomial_factor.exponent.has_constant_term():
             this_factor_exponent_constant_term = np.sum(monomial_factor.exponent.coeffs[np.where((monomial_factor.exponent.expolist == 0).all(axis=1))])
             exponent_constant_term += this_factor_exponent_constant_term * monomial_factor.expolist[0,index]
@@ -64,10 +63,9 @@ def _integrate_pole_part_single_index(polyprod, index):
 
         # arXiv0803.4177v2: 1/( (a_j + p + 1 - b_j * eps) * factorial(p) )
         new_potential_pole_denominator = (full_exponent + (p + 1)) * (p_factorial)
-        new_potential_pole = ExponentiatedPolynomial(new_potential_pole_denominator.expolist, new_potential_pole_denominator.coeffs, exponent=-1, polysymbols=polysymbols, copy=False)
         # put this factor into the pole part only if a_j + p + 1 is zero
         if exponent_constant_term + p + 1 == 0:
-            current_regulator_poles = Product(new_potential_pole, regulator_poles, copy=False)
+            current_regulator_poles = Pow(regulator_poles.base * new_potential_pole_denominator, regulator_poles.exponent, copy=False)
             current_factors.append(current_regulator_poles)
             current_factors.append(derivative_cal_I_Feynmanj_set_to_zero)
         # otherwise it does not lead to additional regulator poles and can become part of <derivative_cal_I>
@@ -75,8 +73,8 @@ def _integrate_pole_part_single_index(polyprod, index):
             # poles in current term: none --> poles are just the old ones
             current_factors.append(regulator_poles)
 
-            # put `new_potential_pole` (which is not a pole in this case) in the last factor
-            last_factor = Product(derivative_cal_I_Feynmanj_set_to_zero, new_potential_pole, copy=False)
+            # put `new_potential_pole_denominator**-1` (which is not a pole in this case) in the last factor
+            last_factor = Product(derivative_cal_I_Feynmanj_set_to_zero, Pow(new_potential_pole_denominator, regulator_poles.exponent.copy(), copy=False), copy=False)
             current_factors.append(last_factor.simplify())
 
         output_summands.append(Product(*current_factors, copy=False))
@@ -148,8 +146,8 @@ def integrate_pole_part(polyprod, *indices):
         and finite for :math:`\epsilon = 0`. All poles for
         :math:`\epsilon \rightarrow 0` should be made explicit
         by putting them into ``<regulator poles of cal_I>``
-        as :class:`pySecDec.algebra.ExponentiatedPolynomial`
-        with ``exponent = -1``.
+        as :class:`pySecDec.algebra.Pow` with ``exponent = -1``
+        and the ``base`` of type :class:`pySecDec.algebra.Polynomial`.
 
     :param indices:
         arbitrarily many integers;

@@ -11,9 +11,10 @@ class TestIntegratePolePart(unittest.TestCase):
     def setUp(self):
         self.Feynman_parameter_symbols = ['x0','x1']
         self.regulator_symbols = ['eps0','eps1']
+        all_symbols = self.Feynman_parameter_symbols+self.regulator_symbols
 
-        self.cal_I = Polynomial([(0,0,0,0),(1,0,0,0),(2,1,0,0),(0,1,0,0)],['A','B','C','D'], polysymbols=self.Feynman_parameter_symbols+self.regulator_symbols)
-        self.regulator_poles = Polynomial.from_expression('1', ['x0','x1','eps0','eps1']) # initializer, no poles yet
+        self.cal_I = Polynomial([(0,0,0,0),(1,0,0,0),(2,1,0,0),(0,1,0,0)],['A','B','C','D'], polysymbols=all_symbols)
+        self.regulator_poles = Pow(Polynomial.from_expression('1', all_symbols), Expression(-1, all_symbols)) # initializer, no poles yet
 
         self.monomial_exponent1 = Polynomial.from_expression('-2 - eps0 - 3*eps1',self.Feynman_parameter_symbols+self.regulator_symbols)
         self.monomial_exponent2 = Polynomial.from_expression(-2,self.Feynman_parameter_symbols+self.regulator_symbols)
