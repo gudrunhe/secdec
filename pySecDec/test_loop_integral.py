@@ -24,7 +24,7 @@ def uf_from_propagators_generic(test_case, loop_momenta, propagators, result_u, 
 
     expo_u, expo_f = loop_integral.exponent_U, loop_integral.exponent_F
     test_case.assertEqual(expo_u, len(propagators) - sp.sympify('2-eps') * (1 + len(loop_momenta)))
-    test_case.assertEqual(expo_f, len(propagators) - sp.sympify('2-eps') * len(loop_momenta))
+    test_case.assertEqual(expo_f, -(len(propagators) - sp.sympify('2-eps') * len(loop_momenta)))
 
 #@attr('active')
 class TestUF_FromPropagators(unittest.TestCase):
@@ -317,7 +317,7 @@ class TestUF_FromPropagators(unittest.TestCase):
         D = sp.sympify('4-2*eps')
         N_nu = 7
         target_exponent_U = N_nu - D/2 * (L+1)
-        target_exponent_F = N_nu - D/2 * L
+        target_exponent_F = -(N_nu - D/2 * L)
         self.assertEqual(target_exponent_U, loop_integral.exponent_U)
         self.assertEqual(target_exponent_F, loop_integral.exponent_F)
 
@@ -694,7 +694,7 @@ class TestNumerator(unittest.TestCase):
 
         rank = 3
         target_exponent_U = N_nu - dim/2 * (L+1) - rank
-        target_exponent_F = N_nu - dim/2 * L
+        target_exponent_F = -(N_nu - dim/2 * L)
         target_exponentiated_F = target_F ** target_exponent_F
         target_exponentiated_U = target_U ** target_exponent_U
         self.assertEqual( (sp.sympify(li.exponentiated_U) - target_exponentiated_U).simplify() , 0 )

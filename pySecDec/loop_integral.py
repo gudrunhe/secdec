@@ -43,7 +43,7 @@ class LoopIntegral(object):
         * ``self.regulator ** self.regulator_power``
         * ``self.Gamma_factor``
         * ``self.exponentiated_U``
-        * ``1/self.exponentiated_F``
+        * ``self.exponentiated_F``
         * ``self.numerator``
 
         , where ``self`` is an instance of :class:`LoopIntegral`.
@@ -57,7 +57,7 @@ class LoopIntegral(object):
         >>> li.exponentiated_U
         ( + (1)*x0 + (1)*x1)**(2*eps - 2)
         >>> li.exponentiated_F
-        ( + (-p**2)*x0*x1)**(eps)
+        ( + (-p**2)*x0*x1)**(-eps)
 
         The 1st (U) and 2nd (F) Symanzik polynomials and
         their exponents can also be accessed
@@ -71,7 +71,7 @@ class LoopIntegral(object):
         >>> li.exponent_U
         2*eps - 2
         >>> li.exponent_F
-        eps
+        -eps
 
         :param propagators:
             iterable of strings or sympy expressions;
@@ -351,7 +351,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_F(self):
-        return len(self.propagators) - self.dimensionality / 2 * len(self.loop_momenta)
+        return self.dimensionality / 2 * len(self.loop_momenta) - len(self.propagators)
 
     @property # not cached on purpose --> this is just making copies
     def exponentiated_F(self):
