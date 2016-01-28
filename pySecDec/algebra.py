@@ -958,21 +958,14 @@ class Pow(_Expression):
         # summand1: base**(exponent-1)*derivative(base)
         # factor0 = base**(exponent-1)   -->   simplification: (...)**0 = 1
         # do not need factor 0 in that case
-        try:
-            new_exponent = self.exponent - 1
-        except:
-            symbols = self.symbols
-            new_exponent = Sum( self.exponent.copy(), Polynomial([[0]*len(symbols)],[-1],symbols) )
+        new_exponent = self.exponent - 1
         if new_exponent == 0:
             factor0 = None
         else:
             factor0 = Pow(self.base.copy(), new_exponent)
         # factor1 = "exponent*derivative(poly)"
         derivative_base = self.base.derive(index)
-        try:
-            factor1 = self.exponent * derivative_base
-        except:
-            factor1 = Product(self.exponent.copy(), derivative_base)
+        factor1 = self.exponent * derivative_base
         if factor0 is None:
             summand1 = factor1
         else:
