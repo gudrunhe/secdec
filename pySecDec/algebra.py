@@ -56,15 +56,21 @@ class Function(_Expression):
         arbitrarily many :class:`._Expression`;
         The arguments of the `Function`.
 
+    :param copy:
+        bool;
+        Whether or not to copy the `arguments`.
+
     '''
-    def __init__(self, symbol, *arguments):
+    def __init__(self, symbol, *arguments, **kwargs):
+        copy = kwargs.get('copy', True)
+
         self.symbol = symbol
         self.number_of_arguments = len(arguments)
         self.number_of_variables = arguments[0].number_of_variables
         self.arguments = []
         for arg in arguments:
             assert arg.number_of_variables == self.number_of_variables, 'Must have the same number of variables in all arguments.'
-            self.arguments.append(arg.copy())
+            self.arguments.append(arg.copy() if copy else arg)
 
     def __repr__(self):
         outstr_template = self.symbol + '(%s)'
@@ -75,7 +81,7 @@ class Function(_Expression):
 
     def copy(self):
         "Return a copy of a :class:`.Function`."
-        return Function(self.symbol, *self.arguments)
+        return Function(self.symbol, *(arg.copy() for arg in self.arguments), copy=False)
 
     def simplify(self):
         'Simplify the arguments.'
@@ -141,26 +147,35 @@ class Polynomial(_Expression):
          * polysymbols='x' (default) <-> "A*x0**2 + B*x0*x1"
          * polysymbols=['x','y']     <-> "A*x**2 + B*x*y"
 
+    :param copy:
+        bool;
+        Whether or not to copy the `expolist` and the `coeffs`.
+
+        .. note::
+            If copy is ``True``, it is assumed that the
+            `expolist` and the `coeffs` have the correct
+            format.
+
     '''
-    def __init__(self, expolist, coeffs, polysymbols='x'):
+    def __init__(self, expolist, coeffs, polysymbols='x', copy=True):
         self.expolist = np.array(expolist)
         assert len(self.expolist.shape) == 2, 'All entries in `expolist` must have the same length'
         if not np.issubdtype(self.expolist.dtype, np.integer):
             raise TypeError('All entries in `expolist` must be integer.')
-        self.coeffs = np.array(coeffs)
+        self.coeffs = np.array(coeffs, copy=copy)
         assert len(self.expolist) == len(self.coeffs), \
             '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
         assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
         self.number_of_variables = self.expolist.shape[1]
-        if not np.issubdtype(self.coeffs.dtype, np.number):
+        if not np.issubdtype(self.coeffs.dtype, np.number) and copy:
             parsed_coeffs = []
             for coeff in self.coeffs:
                 if isinstance(coeff,_Expression):
                     assert coeff.number_of_variables == self.number_of_variables, 'Must have the same number of variables as the `Polynomial` for all coeffs'
-                    parsed_coeffs.append(coeff.copy())
+                    parsed_coeffs.append(coeff.copy() if copy else coeff)
                 else:
                     parsed_coeffs.append(sp.sympify(coeff))
-            self.coeffs = np.array([coeff.copy() if isinstance(coeff,_Expression) else sp.sympify(coeff) for coeff in self.coeffs])
+            self.coeffs = np.array(parsed_coeffs)
         if isinstance(polysymbols, str):
             self.polysymbols = sp.sympify([polysymbols + str(i) for i in range(self.number_of_variables)])
             for symbol in self.polysymbols:
@@ -226,7 +241,7 @@ class Polynomial(_Expression):
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
-        return type(self)(self.expolist, self.coeffs, self.polysymbols)
+        return type(self)(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False)
 
     def has_constant_term(self):
         '''
@@ -269,7 +284,7 @@ class Polynomial(_Expression):
         summand1 = self.copy()
         summand1.expolist[:,index] -= 1
         summand1.coeffs *= self.expolist[:,index]
-        summand1 = summand1.simplify()
+        summand1 = summand1
 
         # summand2 = derivative(<coeff>) * x**k
         summand_2_coeffs = []
@@ -282,10 +297,10 @@ class Polynomial(_Expression):
                 summand_2_coeffs.append(0)
 
         if need_summand2:
-            summand2 = Polynomial(self.expolist, summand_2_coeffs, self.polysymbols).simplify()
-            return summand1 + summand2
+            summand2 = Polynomial(self.expolist.copy(), np.array(summand_2_coeffs), self.polysymbols, copy=False)
+            return summand1 + summand2 # implicit simplify
         else:
-            return summand1
+            return summand1.simplify()
 
     @property
     def symbols(self):
@@ -317,16 +332,14 @@ class Polynomial(_Expression):
             sum_expolist = np.vstack([self.expolist, other.expolist])
             sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
 
-            result = Polynomial(sum_expolist, sum_coeffs, self.polysymbols)
-            result.simplify()
-            return result
+            result = Polynomial(sum_expolist, sum_coeffs, self.polysymbols, copy=False)
+            return result.simplify()
 
         elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
             new_expolist = np.vstack([[0]*self.number_of_variables, self.expolist])
             new_coeffs = np.append(-other if sub else other, self.coeffs)
-            outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols)
-            outpoly.simplify()
-            return outpoly
+            outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols, copy=False)
+            return outpoly.simplify()
 
         else:
             return NotImplemented
@@ -339,13 +352,12 @@ class Polynomial(_Expression):
             product_expolist = np.vstack([other.expolist + term for term in self.expolist])
             product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
 
-            result = Polynomial(product_expolist, product_coeffs, self.polysymbols)
-            result.simplify()
-            return result
+            result = Polynomial(product_expolist, product_coeffs, self.polysymbols, copy=False)
+            return result.simplify()
 
         elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
             new_coeffs = self.coeffs * other
-            return Polynomial(self.expolist, new_coeffs, self.polysymbols)
+            return Polynomial(self.expolist.copy(), new_coeffs, self.polysymbols, copy=False).simplify()
 
         else:
             return NotImplemented
@@ -353,7 +365,7 @@ class Polynomial(_Expression):
 
     def __neg__(self):
         'arithmetic negation "-self"'
-        return Polynomial(self.expolist, [-coeff for coeff in self.coeffs], self.polysymbols)
+        return Polynomial(self.expolist.copy(), -self.coeffs, self.polysymbols, copy=False)
 
     def __pow__(self, exponent):
         if not isinstance(exponent, int):
@@ -451,15 +463,25 @@ class ExponentiatedPolynomial(Polynomial):
          * polysymbols='x' (default) <-> "A*x0**2 + B*x0*x1"
          * polysymbols=['x','y']     <-> "A*x**2 + B*x*y"
 
+    :param copy:
+        bool;
+        Whether or not to copy the `expolist`, the `coeffs`,
+        and the `exponent`.
+
+        .. note::
+            If copy is ``True``, it is assumed that the
+            `expolist`, the `coeffs` and the `exponent` have
+            the correct format.
+
     '''
-    def __init__(self, expolist, coeffs, exponent=1, polysymbols='x'):
-        Polynomial.__init__(self, expolist, coeffs, polysymbols)
+    def __init__(self, expolist, coeffs, exponent=1, polysymbols='x', copy=True):
+        Polynomial.__init__(self, expolist, coeffs, polysymbols, copy)
         if np.issubdtype(type(exponent), np.number):
             self.exponent = exponent
         elif isinstance(exponent,_Expression):
-            self.exponent = exponent.copy()
+            self.exponent = exponent.copy() if copy else exponent
         else:
-            self.exponent = sp.sympify(exponent)
+            self.exponent = sp.sympify(exponent) if copy else exponent
 
     @staticmethod
     def from_expression(*args,**kwargs):
@@ -497,8 +519,8 @@ class ExponentiatedPolynomial(Polynomial):
             # summand0: poly**exponent*derivative(exponent)*log(poly)
             summand0_factors = [self.copy()]
             summand0_factors.append(self.exponent.derive(index))
-            summand0_factors.append(LogOfPolynomial(self.expolist, self.coeffs, self.polysymbols))
-            summand0 = Product(*summand0_factors).simplify()
+            summand0_factors.append(LogOfPolynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False))
+            summand0 = Product(*summand0_factors)
         else:
             summand0 = None
 
@@ -509,12 +531,13 @@ class ExponentiatedPolynomial(Polynomial):
         if new_exponent == 0:
             factor0 = None
         else:
-            factor0 = ExponentiatedPolynomial(self.expolist,
-                                              self.coeffs,
+            factor0 = ExponentiatedPolynomial(self.expolist.copy(),
+                                              self.coeffs.copy(),
                                               new_exponent,
-                                              self.polysymbols)
+                                              self.polysymbols,
+                                              copy=False)
         # factor1 = "exponent*derivative(poly)"
-        derivative_poly = Polynomial(self.expolist, self.coeffs, self.polysymbols).derive(index)
+        derivative_poly = Polynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False).derive(index)
         factor1 = self.exponent * derivative_poly
         if factor0 is None:
             summand1 = factor1
@@ -522,13 +545,14 @@ class ExponentiatedPolynomial(Polynomial):
             summand1 = Product(factor0, factor1)
 
         if summand0 is None:
-            return summand1
+            return summand1.simplify()
         else:
             return Sum(summand0,summand1).simplify()
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
-        return type(self)(self.expolist, self.coeffs, self.exponent, self.polysymbols)
+        exponent = self.exponent.copy() if isinstance(self.exponent, _Expression) else self.exponent
+        return type(self)(self.expolist.copy(), self.coeffs.copy(), exponent, self.polysymbols, copy=False)
 
     def simplify(self):
         '''
@@ -544,7 +568,7 @@ class ExponentiatedPolynomial(Polynomial):
             self.expolist = np.array([[0]*self.number_of_variables])
             self.exponent = 1
         elif self.exponent == 1 or (isinstance(self.exponent, Polynomial) and len(self.exponent.coeffs)==1 and (self.exponent.coeffs==1).all() and (self.exponent.expolist==0).all()):
-            return Polynomial(self.expolist, self.coeffs, self.polysymbols)
+            return Polynomial(self.expolist, self.coeffs, self.polysymbols, copy=False)
 
         return super(ExponentiatedPolynomial, self).simplify()
 
@@ -594,7 +618,7 @@ class LogOfPolynomial(Polynomial):
 
         '''
         poly = Polynomial.from_expression(expression,polysymbols)
-        return LogOfPolynomial(poly.expolist, poly.coeffs, poly.polysymbols)
+        return LogOfPolynomial(poly.expolist, poly.coeffs, poly.polysymbols, copy=False)
 
     def __repr__(self):
         return 'log(%s)' % Polynomial.__repr__(self)
@@ -620,13 +644,14 @@ class LogOfPolynomial(Polynomial):
         # derive an expression of the form "log(poly)"
         # chain rule: poly**(-1) * derivative(poly)
         #   --> factor0 = "poly**(-1)"
-        factor0 = ExponentiatedPolynomial(self.expolist,
-                                          self.coeffs,
+        factor0 = ExponentiatedPolynomial(self.expolist.copy(),
+                                          self.coeffs.copy(),
                                           -1,
-                                          self.polysymbols)
+                                          self.polysymbols,
+                                          copy=False)
 
         #   --> factor1 = "derivative(poly)"
-        factor1 = Polynomial(self.expolist, self.coeffs, self.polysymbols)
+        factor1 = Polynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False)
         factor1 = factor1.derive(index)
 
         return Product(factor0, factor1)
@@ -653,6 +678,10 @@ class Sum(_Expression):
         arbitrarily many instances of :class:`.Polynomial`;
         The summands :math:`p_i`.
 
+    :param copy:
+        bool;
+        Whether or not to copy the `summands`.
+
     :math:`p_i` can be accessed with ``self.summands[i]``.
 
     Example:
@@ -664,8 +693,10 @@ class Sum(_Expression):
         p1 = p.summands[1]
 
     '''
-    def __init__(self,*summands):
-        self.summands = [summand.copy() for summand in summands]
+    def __init__(self,*summands, **kwargs):
+        copy = kwargs.get('copy', True)
+
+        self.summands = [summand.copy() if copy else summand for summand in summands]
         assert self.summands, 'Must have at least one summand'
 
         self.number_of_variables = self.summands[0].number_of_variables
@@ -721,7 +752,7 @@ class Sum(_Expression):
 
     def copy(self):
         "Return a copy of a :class:`.Sum`."
-        return Sum(*self.summands)
+        return Sum(*(summand.copy() for summand in self.summands), copy=False)
 
     def derive(self, index):
         '''
@@ -745,6 +776,10 @@ class Product(_Expression):
         arbitrarily many instances of :class:`.Polynomial`;
         The factors :math:`p_i`.
 
+    :param copy:
+        bool;
+        Whether or not to copy the `factors`.
+
     :math:`p_i` can be accessed with ``self.factors[i]``.
 
     Example:
@@ -757,8 +792,10 @@ class Product(_Expression):
 
 
     '''
-    def __init__(self,*factors):
-        self.factors = [factor.copy() for factor in factors]
+    def __init__(self,*factors, **kwargs):
+        copy = kwargs.get('copy', True)
+
+        self.factors = [factor.copy() if copy else factor for factor in factors]
         assert self.factors, 'Must have at least one factor'
 
         self.number_of_variables = self.factors[0].number_of_variables
@@ -777,7 +814,7 @@ class Product(_Expression):
 
     def copy(self):
         "Return a copy of a :class:`.Product`."
-        return Product(*self.factors)
+        return Product(*(factor.copy() for factor in self.factors), copy=False)
 
     def simplify(self):
         '''
@@ -834,7 +871,7 @@ class Product(_Expression):
         factors = list(self.factors) # copy
         for i,factor in enumerate(self.factors):
             factors[i] = factor.derive(index)
-            summands.append(Product(*factors).simplify())
+            summands.append(Product(*factors))
             factors[i] = factor
         return Sum(*summands).simplify()
 
@@ -852,14 +889,18 @@ class Pow(_Expression):
         :class:`._Expression`;
         The exponent ``B``.
 
+    :param copy:
+        bool;
+        Whether or not to copy `base` and `exponent`.
+
     '''
-    def __init__(self, base, exponent):
+    def __init__(self, base, exponent, copy=True):
         if base.number_of_variables != exponent.number_of_variables:
             raise TypeError('Must have the same number of variables for `base` and `exponent`.')
 
         self.number_of_variables = exponent.number_of_variables
-        self.base = base.copy()
-        self.exponent = exponent.copy()
+        self.base = base.copy() if copy else base
+        self.exponent = exponent.copy() if copy else exponent
 
     def __repr__(self):
         return '(' + str(self.base) + ') ** (' + str(self.exponent) + ')'
@@ -868,7 +909,7 @@ class Pow(_Expression):
 
     def copy(self):
         "Return a copy of a :class:`.Pow`."
-        return Pow(self.base, self.exponent)
+        return Pow(self.base.copy(), self.exponent.copy(), copy=False)
 
     @property
     def symbols(self):
@@ -912,7 +953,7 @@ class Pow(_Expression):
         summand0_factors = [self.copy()]
         summand0_factors.append(self.exponent.derive(index))
         summand0_factors.append(Log(self.base))
-        summand0 = Product(*summand0_factors).simplify()
+        summand0 = Product(*summand0_factors)
 
         # summand1: base**(exponent-1)*derivative(base)
         # factor0 = base**(exponent-1)   -->   simplification: (...)**0 = 1
@@ -948,10 +989,14 @@ class Log(_Expression):
         :class:`._Expression`;
         The argument of the logarithm.
 
+    :param copy:
+        bool;
+        Whether or not to copy the `arg`.
+
     '''
-    def __init__(self, arg):
+    def __init__(self, arg, copy=True):
         self.number_of_variables = arg.number_of_variables
-        self.arg = arg.copy()
+        self.arg = arg.copy() if copy else arg
 
     def __repr__(self):
         return 'log(' + str(self.arg) + ')'
@@ -960,7 +1005,7 @@ class Log(_Expression):
 
     def copy(self):
         "Return a copy of a :class:`.Log`."
-        return Log(self.arg)
+        return Log(self.arg.copy(), copy=False)
 
     def simplify(self):
         'Apply ``log(1) = 0``.'
@@ -1025,7 +1070,7 @@ def Expression(expression, polysymbols):
             exponent = Expression(expression.args[1], polysymbols)
             try:
                 poly = Polynomial.from_expression(expression.args[0], polysymbols)
-                return ExponentiatedPolynomial(poly.expolist, poly.coeffs, exponent=exponent, polysymbols=polysymbols)
+                return ExponentiatedPolynomial(poly.expolist, poly.coeffs, exponent=exponent, polysymbols=polysymbols, copy=False)
             except sp.PolynomialError:
                 return Pow(Expression(expression.args[0], polysymbols), exponent)
 
@@ -1075,48 +1120,69 @@ def replace(expression, index, value, remove=False):
 
     '''
     if isinstance(expression,Polynomial):
-        outpoly = expression.copy()
-        # act on coefficients first
-        # nothing to do if the coeffs are just numbers
-        if not np.issubdtype(outpoly.coeffs.dtype, np.number):
-            for i,coeff in enumerate(outpoly.coeffs):
+        # coeffs
+        if np.issubdtype(expression.coeffs.dtype, np.number):
+            new_coeffs = expression.coeffs.copy()
+        else:
+            new_coeffs = np.empty_like(expression.coeffs)
+            for i,coeff in enumerate(expression.coeffs):
                 if isinstance(coeff, _Expression):
-                    outpoly.coeffs[i] = replace(coeff, index, value, remove)
-        if isinstance(expression,ExponentiatedPolynomial):
-            # replace in exponent if it has a type `replace` can handle
-            if isinstance(outpoly.exponent, _Expression):
-                outpoly.exponent = replace(outpoly.exponent, index, value, remove)
+                    new_coeffs[i] = replace(coeff, index, value, remove)
+                else:
+                    new_coeffs[i] = coeff
+
         if value != 1: # nothing to do if ``value==1`` since <coeff> * 1**<something> = <coeff>
             powers = expression.expolist[:,index]
-            outpoly.coeffs = outpoly.coeffs * np.array([value**int(power) for power in powers])
-        if remove:
-            outpoly.number_of_variables -= 1
-            outpoly.expolist = np.delete(outpoly.expolist, index, axis=1)
-            if index == -1:
-                outpoly.polysymbols.pop()
+            new_coeffs *= np.array([value**int(power) for power in powers])
+
+        exponent = None
+        if isinstance(expression,ExponentiatedPolynomial):
+            # replace in exponent if it has a type `replace` can handle
+            if isinstance(expression.exponent, _Expression):
+                exponent = replace(expression.exponent, index, value, remove)
             else:
-                outpoly.polysymbols = outpoly.polysymbols[:index] + outpoly.polysymbols[index+1:]
+                exponent = expression.exponent
+
+        if remove:
+            new_expolist = np.delete(expression.expolist, index, axis=1)
+            if index == -1:
+                new_polysymbols = list(expression.polysymbols)
+                new_polysymbols.pop()
+            else:
+                new_polysymbols = expression.polysymbols[:index] + expression.polysymbols[index+1:]
         else:
-            outpoly.expolist[:,index] = 0
-        return outpoly
+            new_expolist = expression.expolist.copy()
+            new_expolist[:,index] = 0
+            new_polysymbols = expression.polysymbols
+
+        if exponent is None:
+            return type(expression)(new_expolist, new_coeffs, new_polysymbols, copy=False)
+        else:
+            return ExponentiatedPolynomial(new_expolist, new_coeffs, exponent, new_polysymbols, copy=False)
+
     elif isinstance(expression, Product):
         outfactors = []
         for factor in expression.factors:
             outfactors.append(replace(factor,index,value,remove))
         return Product(*outfactors)
+
     elif isinstance(expression, Sum):
         outsummands = []
         for summand in expression.summands:
             outsummands.append(replace(summand,index,value,remove))
         return Sum(*outsummands)
+
     elif isinstance(expression, Pow):
         new_base = replace(expression.base,index,value,remove)
         new_exponent = replace(expression.exponent,index,value,remove)
         return Pow(new_base, new_exponent)
+
     elif isinstance(expression, Log):
         return Log( replace(expression.arg,index,value,remove) )
+
     elif isinstance(expression, Function):
         arguments = [replace(arg, index, value, remove) for arg in expression.arguments]
         return Function(expression.symbol, *arguments)
+
     else:
         raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, `Pow`, `Log`, and `Function`, not `%s`' % type(expression))

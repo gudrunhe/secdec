@@ -124,7 +124,7 @@ def refactorize(polyprod, parameter=None):
 
 # -------------------- `hide` and `unhide` --------------------
 
-def hide(polynomial, count):
+def hide(polynomial, count): # TODO: also hide (and unhide) inside the coeffs such that it can be used
     '''
     Hide the last `count` variables of a
     polynomial.
