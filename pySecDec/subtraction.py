@@ -8,34 +8,41 @@ from .algebra import Polynomial, ExponentiatedPolynomial, Sum, Product, replace
 import numpy as np
 import sympy as sp
 
+_sympy_one = sp.sympify(1)
+
 def _integrate_pole_part_single_index(polyprod, index):
-    monomial = polyprod.factors[0]
-    monomial_FeynmanJ_set_to_one = replace(monomial,index,1)
+    monomial_product = polyprod.factors[0] # e.g. (z1**2)**1-eps0-eps1  *  (z1*z2)**3-4*eps1
+    monomial_product_FeynmanJ_set_to_one = replace(monomial_product,index,1)
     regulator_poles = polyprod.factors[1]
-    cal_I = Product(*polyprod.factors[2:])
-    polysymbols = monomial.polysymbols
+    cal_I = Product(*polyprod.factors[2:], copy=False)
+    polysymbols = monomial_product.symbols
+
     # arXiv:0803.4177v2: exponent_constant_term = a_j
-    if monomial.exponent.has_constant_term():
-        exponent_constant_term  = np.sum(monomial.exponent.coeffs[np.where((monomial.exponent.expolist == 0).all(axis=1))])
-        exponent_constant_term *= monomial.expolist[0,index]
-    else:
-        exponent_constant_term = 0
-    assert type(monomial.exponent) is Polynomial , 'unexpected input'
+    exponent_constant_term = 0
+    full_exponent = 0
+    for monomial_factor in monomial_product.factors:
+        assert type(monomial_factor.exponent) is Polynomial , 'unexpected input'
+        if monomial_factor.exponent.has_constant_term():
+            this_factor_exponent_constant_term = np.sum(monomial_factor.exponent.coeffs[np.where((monomial_factor.exponent.expolist == 0).all(axis=1))])
+            exponent_constant_term += this_factor_exponent_constant_term * monomial_factor.expolist[0,index]
+        # else: e.g. (z1**2)**-eps0-eps1 --> no contribution to ``a_j``
+            # exponent_constant_term += 0
+        full_exponent += monomial_factor.exponent * monomial_factor.expolist[0,index]
 
     # TODO: finite variance of Monte Carlo integral estimator only if exponent_constant_term >-0.5   -->   should we change this to >-0.5 or even >=0?
     if exponent_constant_term > -1:
         # no subtraction needed, the input `polyprod` is numerically integrable
         return [polyprod]
 
-    def make_FeynmanIndex_to_power(power):
+    def make_FeynmanIndex_to_power(power, factorial_of_power):
         '''
         Return a :class:`Polynomial` representing
         "Feynman_index**power/power!"
 
         '''
-        expolist = [0]*monomial.number_of_variables
+        expolist = [0]*monomial_product.number_of_variables
         expolist[index] = power
-        return Polynomial([expolist], ['1/%s!'%power])
+        return Polynomial([expolist], [_sympy_one/factorial_of_power], copy=False)
 
     output_summands = []
     minus_cal_I_expansion_summands = []
@@ -45,8 +52,8 @@ def _integrate_pole_part_single_index(polyprod, index):
     # construction of the pole part
     for p in range(int(-exponent_constant_term)):
         # No dependency on Feynman parameter with index `index` --> has been integrated out analytically
-        #   --> Replace that Feynman parameter by `1` in the monomial factor.
-        current_factors = [monomial_FeynmanJ_set_to_one]
+        #   --> Replace that Feynman parameter by `1` in the monomial factors.
+        current_factors = [monomial_product_FeynmanJ_set_to_one]
 
         # renew `p_factorial` on the fly
         p_factorial = 1 if p == 0 else p_factorial * p
@@ -56,11 +63,11 @@ def _integrate_pole_part_single_index(polyprod, index):
         derivative_cal_I_Feynmanj_set_to_zero = replace(derivative_cal_I, index, 0)
 
         # arXiv0803.4177v2: 1/( (a_j + p + 1 - b_j * eps) * factorial(p) )
-        new_potential_pole_denominator = (monomial.expolist[0,index] * monomial.exponent + p + 1) * (p_factorial)
-        new_potential_pole = ExponentiatedPolynomial(new_potential_pole_denominator.expolist, new_potential_pole_denominator.coeffs, exponent=-1, polysymbols=monomial.polysymbols)
-        # put this factor into the pole part only if a_j + p is zero
+        new_potential_pole_denominator = (full_exponent + (p + 1)) * (p_factorial)
+        new_potential_pole = ExponentiatedPolynomial(new_potential_pole_denominator.expolist, new_potential_pole_denominator.coeffs, exponent=-1, polysymbols=polysymbols, copy=False)
+        # put this factor into the pole part only if a_j + p + 1 is zero
         if exponent_constant_term + p + 1 == 0:
-            current_regulator_poles = Product(new_potential_pole, regulator_poles).simplify()
+            current_regulator_poles = Product(new_potential_pole, regulator_poles, copy=False)
             current_factors.append(current_regulator_poles)
             current_factors.append(derivative_cal_I_Feynmanj_set_to_zero)
         # otherwise it does not lead to additional regulator poles and can become part of <derivative_cal_I>
@@ -69,19 +76,20 @@ def _integrate_pole_part_single_index(polyprod, index):
             current_factors.append(regulator_poles)
 
             # put `new_potential_pole` (which is not a pole in this case) in the last factor
-            last_factor = Product(derivative_cal_I_Feynmanj_set_to_zero, new_potential_pole)
+            last_factor = Product(derivative_cal_I_Feynmanj_set_to_zero, new_potential_pole, copy=False)
             current_factors.append(last_factor.simplify())
 
-        output_summands.append(Product(*current_factors))
-        minus_cal_I_expansion_summands.append(Product(-make_FeynmanIndex_to_power(p), derivative_cal_I_Feynmanj_set_to_zero ))
+        output_summands.append(Product(*current_factors, copy=False))
+        minus_cal_I_expansion_summands.append(Product(-make_FeynmanIndex_to_power(p, p_factorial), derivative_cal_I_Feynmanj_set_to_zero, copy=False ))
 
-    integrable_part = Product(   monomial, regulator_poles, Sum(cal_I, *minus_cal_I_expansion_summands).simplify()   )
+    integrable_part = Product(   monomial_product, regulator_poles, Sum(cal_I, *minus_cal_I_expansion_summands, copy=False).simplify() , copy=False   )
 
     output_summands.append(integrable_part)
 
     return output_summands
 
-
+# TODO: make this a private function --> should have a high-level function that takes a :class:`pySecDec.decomposition.Sector`.
+# TODO: raise an error if the exponent depends on the Feynman parameters in that high-level function
 def integrate_pole_part(polyprod, *indices):
     r'''
     Transform an integral of the form
@@ -118,10 +126,14 @@ def integrate_pole_part(polyprod, *indices):
 
     :param polyprod:
         :class:`.algebra.Product` of the
-        form ``<monomial>**(a_j + ...) * <regulator poles of cal_I>
-        * <cal_I>``;
+        form ``<product of <monomial>**(a_j + ...)> *
+        <regulator poles of cal_I> * <cal_I>``;
         The input product as decribed above.
-        The monomial should be an
+        The <product of <monomial>**(a_j + ...)> should be
+        a :class:`pySecDec.algebra.Product` of
+        <monomial>**(a_j + ...).
+        as described below.
+        The <monomial>**(a_j + ...) should be an
         :class:`pySecDec.algebra.ExponentiatedPolynomial`
         with ``exponent`` being a :class:`Polynomial` of the
         regulators :math:`\epsilon_1, \epsilon_2, ...`. Although
@@ -158,3 +170,17 @@ def integrate_pole_part(polyprod, *indices):
         for polyprod in old_products:
             new_products.extend( _integrate_pole_part_single_index(polyprod, index) )
     return new_products
+
+
+# TODO: implement something like this (including ``U`` as parameter):
+#In [37]: def sum_gen(nunu):
+#    for exponents, coeff in zip(nunu.expolist, nunu.coeffs):
+#        exponents = list(exponents) + [0,0]
+#        expr = Polynomial([exponents], [1], nunu.polysymbols + sp.sympify(['F','eps']))
+#        yield Product( expr , make_expr(coeff, nunu.polysymbols + sp.sympify(['F','eps'])) )
+#   ....:         
+#
+#In [38]: %time nun = Sum(*[item for item in sum_gen(li.numerator) ] )
+#CPU times: user 366 ms, sys: 0 ns, total: 366 ms
+#Wall time: 361 ms
+#
