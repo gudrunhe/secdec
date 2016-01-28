@@ -564,9 +564,9 @@ class TestLog(unittest.TestCase):
         zero = Log(one).simplify()
 
         self.assertTrue(type(one) is Polynomial)
-        self.assertEqual(sp.sympify(one), 1)
-        np.testing.assert_array_equal(one.coeffs, [1])
-        np.testing.assert_array_equal(one.expolist, [[0,0,0]])
+        self.assertEqual(sp.sympify(zero), 0)
+        np.testing.assert_array_equal(zero.coeffs, [0])
+        np.testing.assert_array_equal(zero.expolist, [[0,0,0]])
 
     def test_derive(self):
         polynomial = Polynomial.from_expression('A*x0 + B*x1', ['x0','x1'])

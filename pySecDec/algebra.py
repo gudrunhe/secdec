@@ -12,12 +12,12 @@ class _Expression(object):
     '''
     def __add__(self, other):
         if not isinstance(other, _Expression):
-            other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
+            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
         return Sum(self, other)
     __radd__ = __add__
 
     def __neg__(self):
-        minus_one = Polynomial([[0]*self.number_of_variables], [-1], self.symbols)
+        minus_one = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([-1]), self.symbols, copy=False)
         return Product(minus_one, self)
 
     def __sub__(self, other):
@@ -28,18 +28,18 @@ class _Expression(object):
 
     def __mul__(self, other):
         if not isinstance(other, _Expression):
-            other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
+            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
         return Product(self, other)
     __rmul__ = __mul__
 
     def __pow__(self, other):
         if not isinstance(other, _Expression):
-            other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
+            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
         return Pow(self, other)
 
     def __rpow__(self, other):
         if not isinstance(other, _Expression):
-            other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
+            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
         return Pow(other, self)
 
     docstring_of_replace = \
@@ -407,7 +407,7 @@ class Polynomial(_Expression):
         if exponent < 0:
             raise ValueError("The exponent must be nonnegative")
         if exponent == 0:
-            return Polynomial([[0]*self.number_of_variables], [1], self.polysymbols)
+            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([1]), self.polysymbols, copy=False)
 
         def iterative_pow(polynomial, exponent):
             if exponent == 1:
@@ -466,7 +466,7 @@ class Polynomial(_Expression):
         # need to have at least one term
         if len(self.coeffs) == 0:
             self.coeffs = np.array([0])
-            self.expolist = np.array([[0]*self.number_of_variables])
+            self.expolist = np.zeros([1,self.number_of_variables], dtype=int)
 
         return self
 
@@ -742,7 +742,7 @@ class LogOfPolynomial(Polynomial):
         '''
         super(LogOfPolynomial, self).simplify()
         if len(self.coeffs) == 1 and self.coeffs[0] == 1 and (self.expolist == 0).all():
-            return Polynomial([[0]*len(self.polysymbols)], [0], self.polysymbols)
+            return Polynomial(np.zeros([1,len(self.polysymbols)], dtype=int), np.array([0]), self.polysymbols, copy=False)
         else:
             return self
 
@@ -1019,7 +1019,7 @@ class Pow(_Expression):
         if isinstance(self.exponent, Polynomial):
             if (self.exponent.coeffs==0).all():
                 symbols = self.exponent.polysymbols
-                return Polynomial([[0]*len(symbols)], [1], symbols)
+                return Polynomial(np.zeros([1,len(symbols)], dtype=int), np.array([1]), symbols, copy=False)
             elif len(self.exponent.coeffs)==1 and (self.exponent.coeffs==1).all() and (self.exponent.expolist==0).all():
                 return self.base
             else:
@@ -1102,7 +1102,7 @@ class Log(_Expression):
         'Apply ``log(1) = 0``.'
         self.arg = self.arg.simplify()
         if isinstance(self.arg, Polynomial) and len(self.arg.coeffs) == 1 and self.arg.coeffs[0] == 1 and (self.arg.expolist == 0).all():
-                return Polynomial([[0]*len(self.arg.polysymbols)], [0], self.arg.polysymbols)
+            return Polynomial(np.zeros([1,len(self.arg.polysymbols)], dtype=int), np.array([0]), self.arg.polysymbols, copy=False)
         else:
             return self
 
@@ -1121,7 +1121,7 @@ class Log(_Expression):
         '''
         # derivative(log(arg)) = 1/arg * derivative(arg) = arg**-1 * derivative(arg)
         symbols = self.arg.symbols
-        minus_one = Polynomial([[0]*len(symbols)], [-1], symbols)
+        minus_one = Polynomial(np.zeros([1,len(symbols)], dtype=int), np.array([-1]), symbols, copy=False)
 
         return Product(Pow(self.arg, minus_one), self.arg.derive(index)).simplify()
 
