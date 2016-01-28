@@ -1,6 +1,6 @@
 """Implementation of a simple computer algebra system"""
 
-from .misc import argsort_2D_array
+from .misc import argsort_2D_array, doc
 import numpy as np
 import sympy as sp
 
@@ -41,6 +41,35 @@ class _Expression(object):
         if not isinstance(other, _Expression):
             other = Polynomial([[0]*self.number_of_variables], [sp.sympify(other)], self.symbols)
         return Pow(other, self)
+
+    docstring_of_replace = \
+        '''
+        Replace a variable in an expression by a number or a
+        symbol.
+        The entries in all ``expolist`` of the underlying
+        :class:`.Polynomial` are set to zero. The coefficients
+        are modified according to `value` and the powers
+        indicated in the ``expolist``.
+
+        :param expression:
+            :class:`._Expression`;
+            The expression to replace the variable.
+
+        :param index:
+            integer;
+            The index of the variable to be replaced.
+
+        :param value:
+            number or sympy expression;
+            The value to insert for the chosen variable.
+
+        :param remove:
+            bool;
+            Whether or not to remove the replaced
+            parameter from the ``parameters`` in the
+            `expression`.
+
+        '''
 
 class Function(_Expression):
     '''
@@ -112,6 +141,11 @@ class Function(_Expression):
                                        )
                            )
         return Sum(*summands).simplify()
+
+    @doc(_Expression.docstring_of_replace)
+    def replace(expression, index, value, remove=False):
+        arguments = [arg.replace(index, value, remove) for arg in expression.arguments]
+        return Function(expression.symbol, *arguments)
 
 class Polynomial(_Expression):
     '''
@@ -435,6 +469,50 @@ class Polynomial(_Expression):
             self.expolist = np.array([[0]*self.number_of_variables])
 
         return self
+
+    @doc(_Expression.docstring_of_replace)
+    def replace(expression, index, value, remove=False):
+        # coeffs
+        if np.issubdtype(expression.coeffs.dtype, np.number):
+            new_coeffs = expression.coeffs.copy()
+        else:
+            new_coeffs = np.empty_like(expression.coeffs)
+            for i,coeff in enumerate(expression.coeffs):
+                if isinstance(coeff, _Expression):
+                    new_coeffs[i] = coeff.replace(index, value, remove)
+                else:
+                    new_coeffs[i] = coeff
+        if value != 1: # nothing to do if ``value==1`` since <coeff> * 1**<something> = <coeff>
+            powers = expression.expolist[:,index]
+            new_coeffs *= np.array([value**int(power) for power in powers])
+
+        # exponent (if applicable)
+        exponent = None
+        if isinstance(expression,ExponentiatedPolynomial):
+            # replace in exponent if it has a type `replace` can handle
+            if isinstance(expression.exponent, _Expression):
+                exponent = expression.exponent.replace(index, value, remove)
+            else:
+                exponent = expression.exponent
+
+        # expolist
+        if remove:
+            new_expolist = np.delete(expression.expolist, index, axis=1)
+            if index == -1:
+                new_polysymbols = list(expression.polysymbols)
+                new_polysymbols.pop()
+            else:
+                new_polysymbols = expression.polysymbols[:index] + expression.polysymbols[index+1:]
+        else:
+            new_expolist = expression.expolist.copy()
+            new_expolist[:,index] = 0
+            new_polysymbols = expression.polysymbols
+
+        # final generation of the new polynomial
+        if exponent is None:
+            return type(expression)(new_expolist, new_coeffs, new_polysymbols, copy=False)
+        else:
+            return ExponentiatedPolynomial(new_expolist, new_coeffs, exponent, new_polysymbols, copy=False)
 
 class ExponentiatedPolynomial(Polynomial):
     '''
@@ -766,6 +844,13 @@ class Sum(_Expression):
         # derivative(p1 + p2 + ...) = derivative(p1) + derivative(p2) + ...
         return Sum(*(summand.derive(index) for summand in self.summands)).simplify()
 
+    @doc(_Expression.docstring_of_replace)
+    def replace(expression, index, value, remove=False):
+        outsummands = []
+        for summand in expression.summands:
+            outsummands.append(summand.replace(index,value,remove))
+        return Sum(*outsummands)
+
 class Product(_Expression):
     r'''
     Product of polynomials.
@@ -875,6 +960,13 @@ class Product(_Expression):
             factors[i] = factor
         return Sum(*summands).simplify()
 
+    @doc(_Expression.docstring_of_replace)
+    def replace(expression, index, value, remove=False):
+        outfactors = []
+        for factor in expression.factors:
+            outfactors.append(factor.replace(index,value,remove))
+        return Product(*outfactors)
+
 class Pow(_Expression):
     r'''
     Exponential.
@@ -973,6 +1065,12 @@ class Pow(_Expression):
 
         return Sum(summand0,summand1).simplify()
 
+    @doc(_Expression.docstring_of_replace)
+    def replace(expression, index, value, remove=False):
+        new_base = expression.base.replace(index,value,remove)
+        new_exponent = expression.exponent.replace(index,value,remove)
+        return Pow(new_base, new_exponent)
+
 class Log(_Expression):
     r'''
     The (natural) logarithm to base e (2.718281828459..).
@@ -1026,6 +1124,10 @@ class Log(_Expression):
         minus_one = Polynomial([[0]*len(symbols)], [-1], symbols)
 
         return Product(Pow(self.arg, minus_one), self.arg.derive(index)).simplify()
+
+    @doc(_Expression.docstring_of_replace)
+    def replace(expression, index, value, remove=False):
+        return Log( expression.arg.replace(index,value,remove) )
 
 # TODO: extensively test this function
 def Expression(expression, polysymbols):
@@ -1082,100 +1184,3 @@ def Expression(expression, polysymbols):
             return Function(expression.__class__.__name__, *(Expression(e, polysymbols) for e in expression.args))
 
     raise ValueError('Could not parse the expression')
-
-# TODO: replace should be an instancemethod for each subclass of `_Expression`
-def replace(expression, index, value, remove=False):
-    '''
-    Replace a variable in an expression by a number or a
-    symbol.
-    The entries in all ``expolist`` of the underlying
-    :class:`.Polynomial` are set to zero. The coefficients
-    are modified according to `value` and the powers
-    indicated in the ``expolist``.
-
-    :param expression:
-        :class:`._Expression`;
-        The expression to replace the variable.
-
-    :param index:
-        integer;
-        The index of the variable to be replaced.
-
-    :param value:
-        number or sympy expression;
-        The value to insert for the chosen variable.
-
-    :param remove:
-        bool;
-        Whether or not to remove the replaced
-        parameter from the ``parameters`` in the
-        `expression`.
-
-    '''
-    if isinstance(expression,Polynomial):
-        # coeffs
-        if np.issubdtype(expression.coeffs.dtype, np.number):
-            new_coeffs = expression.coeffs.copy()
-        else:
-            new_coeffs = np.empty_like(expression.coeffs)
-            for i,coeff in enumerate(expression.coeffs):
-                if isinstance(coeff, _Expression):
-                    new_coeffs[i] = replace(coeff, index, value, remove)
-                else:
-                    new_coeffs[i] = coeff
-
-        if value != 1: # nothing to do if ``value==1`` since <coeff> * 1**<something> = <coeff>
-            powers = expression.expolist[:,index]
-            new_coeffs *= np.array([value**int(power) for power in powers])
-
-        exponent = None
-        if isinstance(expression,ExponentiatedPolynomial):
-            # replace in exponent if it has a type `replace` can handle
-            if isinstance(expression.exponent, _Expression):
-                exponent = replace(expression.exponent, index, value, remove)
-            else:
-                exponent = expression.exponent
-
-        if remove:
-            new_expolist = np.delete(expression.expolist, index, axis=1)
-            if index == -1:
-                new_polysymbols = list(expression.polysymbols)
-                new_polysymbols.pop()
-            else:
-                new_polysymbols = expression.polysymbols[:index] + expression.polysymbols[index+1:]
-        else:
-            new_expolist = expression.expolist.copy()
-            new_expolist[:,index] = 0
-            new_polysymbols = expression.polysymbols
-
-        if exponent is None:
-            return type(expression)(new_expolist, new_coeffs, new_polysymbols, copy=False)
-        else:
-            return ExponentiatedPolynomial(new_expolist, new_coeffs, exponent, new_polysymbols, copy=False)
-
-    elif isinstance(expression, Product):
-        outfactors = []
-        for factor in expression.factors:
-            outfactors.append(replace(factor,index,value,remove))
-        return Product(*outfactors)
-
-    elif isinstance(expression, Sum):
-        outsummands = []
-        for summand in expression.summands:
-            outsummands.append(replace(summand,index,value,remove))
-        return Sum(*outsummands)
-
-    elif isinstance(expression, Pow):
-        new_base = replace(expression.base,index,value,remove)
-        new_exponent = replace(expression.exponent,index,value,remove)
-        return Pow(new_base, new_exponent)
-
-    elif isinstance(expression, Log):
-        return Log( replace(expression.arg,index,value,remove) )
-
-    elif isinstance(expression, Function):
-        arguments = [replace(arg, index, value, remove) for arg in expression.arguments]
-        return Function(expression.symbol, *arguments)
-
-    else:
-        raise TypeError('Can only operate on `Polynomial`, `Product`, `Sum`, `Pow`, `Log`, and `Function`, not `%s`' % type(expression))

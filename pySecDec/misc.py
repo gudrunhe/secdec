@@ -216,3 +216,22 @@ def cached_property(method):
             return result
     # make the method a property
     return property(wrapped_method)
+
+def doc(docstring):
+    '''
+    Decorator that replaces a function's docstring
+    with `docstring`.
+
+    Example:
+
+    .. code-block:: python
+
+        @doc('documentation of `some_funcion`')
+        def some_function(*args, **kwargs):
+            pass
+
+    '''
+    def add_doc(function):
+        function.__doc__ = docstring
+        return function
+    return add_doc

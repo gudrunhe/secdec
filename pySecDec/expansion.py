@@ -1,6 +1,6 @@
 "Routines to series expand singular and nonsingular expressions"
 
-from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial, replace
+from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial
 from numpy import iterable
 import numpy as np
 import sympy as sp
@@ -36,11 +36,11 @@ def _expand_Taylor_step(expression, index, order):
     expolist[:,index] = np.arange(1 + order)
 
     # Construct coefficients of the Taylor polynomial
-    expression_variable_set_to_zero = replace(expression, index, 0).simplify()
+    expression_variable_set_to_zero = expression.replace(index, 0).simplify()
     coeffs = [expression_variable_set_to_zero]
     for order_i in range(order):
         expression = expression.derive(index).simplify()
-        coeffs.append( replace(expression, index, 0).simplify() )
+        coeffs.append( expression.replace(index, 0).simplify() )
 
     return Polynomial(expolist, coeffs, expression.symbols)
 
@@ -113,8 +113,8 @@ def _expand_singular_step(product, index, order):
 
 
     # Taylor expansion of the nonsingular rational polynomial defined by ``numerator / denominator``
-    this_order_numerator = replace(numerator, index, 0).simplify()
-    this_order_denominator = replace(denominator, index, 0).simplify()
+    this_order_numerator = numerator.replace(index, 0).simplify()
+    this_order_denominator = denominator.replace(index, 0).simplify()
 
     # convert denominator to ``<polynomial>**-1``
     this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols)
@@ -126,14 +126,14 @@ def _expand_singular_step(product, index, order):
     # nonsingular expansion order is shifted by the (potentially) singular prefactor (`highest_pole`)
     for i in range(order + highest_pole):
         numerator, denominator = derive_polyrational(numerator, denominator, index)
-        this_order_numerator = replace(numerator, index, 0).simplify()
+        this_order_numerator = numerator.replace(index, 0).simplify()
 
         # if the numerator is zero at one order, all higher orders vanish as well
         if (this_order_numerator.coeffs == 0).all():
             nonsingular_series_expolist = nonsingular_series_expolist[:i+1]
             break
 
-        this_order_denominator = replace(denominator, index, 0).simplify()
+        this_order_denominator = denominator.replace(index, 0).simplify()
 
         # convert denominator to ``<polynomial>**-1``
         this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols)

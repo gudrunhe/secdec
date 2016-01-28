@@ -4,7 +4,7 @@ expansion
 
 """
 
-from .algebra import Polynomial, ExponentiatedPolynomial, Sum, Product, replace
+from .algebra import Polynomial, ExponentiatedPolynomial, Sum, Product
 import numpy as np
 import sympy as sp
 
@@ -12,7 +12,7 @@ _sympy_one = sp.sympify(1)
 
 def _integrate_pole_part_single_index(polyprod, index):
     monomial_product = polyprod.factors[0] # e.g. (z1**2)**1-eps0-eps1  *  (z1*z2)**3-4*eps1
-    monomial_product_FeynmanJ_set_to_one = replace(monomial_product,index,1)
+    monomial_product_FeynmanJ_set_to_one = monomial_product.replace(index,1)
     regulator_poles = polyprod.factors[1]
     cal_I = Product(*polyprod.factors[2:], copy=False)
     polysymbols = monomial_product.symbols
@@ -60,7 +60,7 @@ def _integrate_pole_part_single_index(polyprod, index):
 
         # renew derivative of cal_I on the fly
         derivative_cal_I = cal_I if p == 0 else derivative_cal_I.derive(index)
-        derivative_cal_I_Feynmanj_set_to_zero = replace(derivative_cal_I, index, 0)
+        derivative_cal_I_Feynmanj_set_to_zero = derivative_cal_I.replace(index, 0)
 
         # arXiv0803.4177v2: 1/( (a_j + p + 1 - b_j * eps) * factorial(p) )
         new_potential_pole_denominator = (full_exponent + (p + 1)) * (p_factorial)
