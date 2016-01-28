@@ -71,19 +71,20 @@ class TestHideUnhide(unittest.TestCase):
         self.polysymbols = ['x0','x1','y']
         self.p = Polynomial.from_expression('a*x0 + b*x1*y', self.polysymbols)
         self.exponentiated_p = ExponentiatedPolynomial(self.p.expolist, self.p.coeffs, 'exponent', self.polysymbols)
+        self.q = Polynomial([(0,0),(1,3)], [Polynomial([(0,1)], ['a']), 'b'])
 
     def test_unhide_is_inverse_of_hide(self):
-        for p in (self.p, self.exponentiated_p):
+        for p in (self.p, self.exponentiated_p, self.q):
             for i in range(1,3):
-                p_after = unhide(*hide(p, i))
+                p_after = unhide(*hide(p.copy(), i))
                 self.assertEqual(str(p_after), str(p))
 
     def test_hide(self):
-        for p in (self.p, self.exponentiated_p):
+        for p in (self.p, self.exponentiated_p, self.q):
             for i in range(1,3):
-                p1, p_hidden = hide(p, i)
+                p1, p_hidden = hide(p.copy(), i)
 
-                np.testing.assert_array_equal(p1.coeffs, p.coeffs)
+                np.testing.assert_array_equal(p1.coeffs, [1,1])
                 np.testing.assert_array_equal(p_hidden.coeffs, p.coeffs)
 
                 np.testing.assert_array_equal(p1.expolist, p.expolist[:,:-i])

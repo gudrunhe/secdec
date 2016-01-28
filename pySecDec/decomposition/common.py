@@ -124,7 +124,7 @@ def refactorize(polyprod, parameter=None):
 
 # -------------------- `hide` and `unhide` --------------------
 
-def hide(polynomial, count): # TODO: also hide (and unhide) inside the coeffs such that it can be used
+def hide(polynomial, count):
     '''
     Hide the last `count` variables of a
     polynomial.
@@ -136,16 +136,21 @@ def hide(polynomial, count): # TODO: also hide (and unhide) inside the coeffs su
     .. seealso::
         :func:`.unhide`
 
-    '''
-    hidden_expolist = polynomial.expolist[:, -count:]
-    hidden_symbols = polynomial.polysymbols[-count:]
-    hidden = Polynomial (hidden_expolist, polynomial.coeffs, hidden_symbols)
+    .. warning::
+        The `polynomial` is **NOT** copied.
 
-    newpoly = polynomial.copy()
-    newpoly.number_of_variables -= count
-    newpoly.polysymbols = newpoly.polysymbols[:-count]
-    newpoly.expolist = polynomial.expolist[:, :-count]
-    return newpoly, hidden
+    '''
+    class HideContainer(object): pass
+    hidden = HideContainer()
+    hidden.expolist = polynomial.expolist[:, -count:]
+    hidden.polysymbols = polynomial.polysymbols[-count:]
+    hidden.coeffs = polynomial.coeffs
+
+    polynomial.number_of_variables -= count
+    polynomial.polysymbols = polynomial.polysymbols[:-count]
+    polynomial.expolist = polynomial.expolist[:, :-count]
+    polynomial.coeffs = np.ones_like(polynomial.coeffs)
+    return polynomial, hidden
 
 def unhide(polynomial1, polynomial2):
     '''
@@ -156,11 +161,14 @@ def unhide(polynomial1, polynomial2):
     .. seealso::
         :func:`.hide`
 
+    .. warning::
+        `polynomial1` is modified in place.
+
     '''
-    newpoly = polynomial1.copy()
-    newpoly.number_of_variables += len(polynomial2.polysymbols)
-    newpoly.polysymbols += polynomial2.polysymbols
-    newpoly.expolist = np.hstack([polynomial1.expolist, polynomial2.expolist])
-    return newpoly
+    polynomial1.number_of_variables += len(polynomial2.polysymbols)
+    polynomial1.polysymbols += polynomial2.polysymbols
+    polynomial1.expolist = np.hstack([polynomial1.expolist, polynomial2.expolist])
+    polynomial1.coeffs = polynomial2.coeffs
+    return polynomial1
 
 # -------------------------------------------------------------
