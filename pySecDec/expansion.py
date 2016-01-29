@@ -59,8 +59,8 @@ def _expand_singular_step(product, index, order):
     as above - the series expansion.
 
     :param product:
-        :class:`.algebra.Product` of the form
-        ``<numerator polynomial> * <denominator polynomial> ** -1``;
+        :class:`.algebra.Product` with factors of the form
+        ``<polynomial>`` or ``<polynomial> ** -1``;
         The expression to be series expanded.
 
     :param index:
@@ -72,21 +72,26 @@ def _expand_singular_step(product, index, order):
         The order to which the expansion is to be calculated.
 
     '''
-    # must have a rational polynomial (polynomial product of the form p * p**-1) in the first arg
+    N = product.number_of_variables
+    symbols = product.symbols
+    numerator = Polynomial(np.zeros([1,N], dtype=int), np.array([1]), symbols, copy=False)
+    denominator = Polynomial(np.zeros([1,N], dtype=int), np.array([1]), symbols, copy=False)
+
+    # must have a rational polynomial (product with factors of the form <p> and <p**-1>)
     if type(product) is not Product:
         raise TypeError('`product` must be a `Product`')
-    if len(product.factors) != 2:
-        raise TypeError('`product` must consist of exactly two factors')
-    if type(product.factors[0]) is not Polynomial:
-        raise TypeError('The first factor of `product` must be a `Polynomial` (not a subtype)')
-    if not isinstance(product.factors[1], ExponentiatedPolynomial):
-        raise TypeError('The second factor of `product` must be an `ExponentiatedPolynomial` with ``exponent=-1``')
-    if product.factors[1].exponent != -1:
-        raise TypeError('The second factor of `product` must be an `ExponentiatedPolynomial` with ``exponent=-1``')
-
-    N = product.number_of_variables
-    numerator = product.factors[0].copy()
-    denominator = Polynomial(product.factors[1].expolist, product.factors[1].coeffs, product.factors[1].polysymbols) # convert to `Polynomial` (without exponent)
+    for factor in product.factors:
+        # type `Polynomial` --> numerator
+        if type(factor) is Polynomial:
+            numerator *= factor
+        # type `ExponentiatedPolynomial` with ``exponent==-1`` --> denominator
+        elif type(factor) is ExponentiatedPolynomial:
+            if factor.exponent != -1:
+                raise TypeError('All `factors` of `product` of type `ExponentiatedPolynomial` must fulfill ``(exponent==-1) is True``')
+            denominator *= Polynomial(factor.expolist, factor.coeffs, factor.polysymbols, copy=False)
+        # other type --> wtf??
+        else:
+            raise TypeError('All `factors` of `product` must be of type `Polynomial` or `ExponentiatedPolynomial`')
 
     # factorize overall epsilon from numerator and denominator such that it is nonzero for epsilon -> 0
     #    => can do ordinary Taylor expansion on the non singular factor
@@ -117,7 +122,7 @@ def _expand_singular_step(product, index, order):
     this_order_denominator = denominator.replace(index, 0).simplify()
 
     # convert denominator to ``<polynomial>**-1``
-    this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols)
+    this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols, copy=False)
 
     nonsingular_series_coeffs = [Product(this_order_numerator, this_order_denominator)]
     nonsingular_series_expolist = np.zeros((1 + order + highest_pole, N), dtype=int)
@@ -142,42 +147,34 @@ def _expand_singular_step(product, index, order):
 
     return Polynomial(nonsingular_series_expolist, nonsingular_series_coeffs, numerator.polysymbols)
 
-def _flatten(polynomial):
+def _flatten(polynomial, depth):
     '''
     Convert the output of :func:`_expand_singular_step`
-    to a polynomial whose coefficients only consist of
-    numbers or symbols.
+    to a polynomial in the exapnsion variables.
 
     :param polynomial:
         :class:`pySecDec.algebra.Polynomial`;
         The polynomial to "flatten".
 
+    :param depth:
+        integer;
+        The number of recursion steps.
+
     '''
-    def recursively_sympify(expr):
-        assert isinstance(expr, Polynomial)
-        for i,coeff in enumerate(expr.coeffs):
-            if not isinstance(expr.coeffs[i], Polynomial):
-                expr.coeffs[i] = sp.sympify(coeff)
-            else:
-                recursively_sympify(coeff)
-
-    def flatten_recursively(expr):
-        '''
-        Expand `Polynomial`s in the coefficients into
-        the top polynomial
-
-        '''
-        assert isinstance(expr, Polynomial)
-        outpoly = 0
-        for i,(exponents,coeff) in enumerate(zip(expr.expolist,expr.coeffs)):
-            if isinstance(coeff, Polynomial):
-                coeff = flatten_recursively(coeff)
-            monomial = Polynomial([exponents],[1], expr.polysymbols)
-            outpoly += monomial * coeff
+    assert isinstance(polynomial, Polynomial)
+    outpoly = 0
+    if depth == 1:
+        for i,(exponents,coeff) in enumerate(zip(polynomial.expolist,polynomial.coeffs)):
+            # no further recursion
+            monomial = Polynomial([exponents], [coeff], polynomial.polysymbols)
+            outpoly += monomial
         return outpoly
-
-    recursively_sympify(polynomial)
-    return flatten_recursively(polynomial)
+    else:
+        for i,(exponents,coeff) in enumerate(zip(polynomial.expolist,polynomial.coeffs)):
+            coeff = _flatten(coeff, depth-1)
+            monomial = Polynomial([exponents], [coeff], polynomial.polysymbols)
+            outpoly += monomial
+        return outpoly
 
 def _expand_and_flatten(expression, indices, orders, expansion_one_variable):
     '''
@@ -215,7 +212,7 @@ def _expand_and_flatten(expression, indices, orders, expansion_one_variable):
 
 
     expansion = recursive_expansion(expression, indices, orders)
-    return _flatten(expansion)
+    return _flatten(expansion, len(indices))
 
 # -------------------- end of private functions --------------------
 
@@ -232,8 +229,8 @@ def expand_singular(product, indices, orders):
     Return a :class:`.algebra.Polynomial` - the series expansion.
 
     :param product:
-        :class:`.algebra.Product` of the form
-        ``<numerator polynomial> * <denominator polynomial> ** -1``;
+        :class:`.algebra.Product` with factors of the form
+        ``<polynomial>`` and ``<polynomial> ** -1``;
         The expression to be series expanded.
 
     :param indices:
