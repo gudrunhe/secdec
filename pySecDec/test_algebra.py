@@ -1,6 +1,7 @@
 """Unit tests for the algebra module"""
 
 from .algebra import *
+from .algebra import _Expression
 import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
@@ -367,7 +368,7 @@ class TestExponentiatedPolynomial(unittest.TestCase):
         polynomial_to_power_zero_numerical_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=0).simplify()
 
         for p in (polynomial_to_power_zero_polynomial_exponent, polynomial_to_power_zero_sympy_exponent, polynomial_to_power_zero_numerical_exponent):
-            self.assertEqual(p.exponent, 1)
+            self.assertTrue(type(p) is Polynomial)
             np.testing.assert_array_equal(p.coeffs, [1])
             np.testing.assert_array_equal(p.expolist, [[0,0]])
 
@@ -499,6 +500,17 @@ class TestPow(unittest.TestCase):
         self.assertTrue(type(poly) is Polynomial)
         np.testing.assert_array_equal(poly.coeffs, base.coeffs)
         np.testing.assert_array_equal(poly.expolist, base.expolist)
+
+    #@attr('active')
+    def test_simplify_remove_expression(self):
+        constant_poly = Polynomial([[0,0,0], [0,0,0], [0,0,0]], ['a*3', 4*9, 'b'])
+        base = Polynomial([(0,0,1),(0,1,0),(1,0,0)], ['a','b','c'])
+
+        exponentiated = Pow(base, constant_poly).simplify()
+
+        self.assertTrue(type(exponentiated) is ExponentiatedPolynomial)
+        self.assertFalse( isinstance(exponentiated.exponent, _Expression) )
+        self.assertEqual( (sp.sympify(exponentiated) - sp.sympify('(a*x2 + b*x1 + c*x0)**(a*3 + 4*9 + b)')).simplify() , 0 )
 
     #@attr('active')
     def test_derive(self):

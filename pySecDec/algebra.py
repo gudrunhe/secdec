@@ -637,15 +637,18 @@ class ExponentiatedPolynomial(Polynomial):
         Apply the identity <something>**0 = 1 or
         <something>**1 = <somethng> if possible,
         otherwise call the simplify method of the base class.
+        Convert ``exponent`` to symbol if possible.
 
         '''
         if isinstance(self.exponent, _Expression):
             self.exponent = self.exponent.simplify()
-        if self.exponent == 0 or (isinstance(self.exponent, Polynomial) and (self.exponent.coeffs==0).all()):
+            if type(self.exponent) is Polynomial and (self.exponent.expolist == 0).all(): # exponent is a constant --> can take just the coefficient
+                self.exponent = self.exponent.coeffs[0]
+        if self.exponent == 0:
             self.coeffs = np.array([1])
             self.expolist = np.array([[0]*self.number_of_variables])
             self.exponent = 1
-        elif self.exponent == 1 or (isinstance(self.exponent, Polynomial) and len(self.exponent.coeffs)==1 and (self.exponent.coeffs==1).all() and (self.exponent.expolist==0).all()):
+        if self.exponent == 1:
             return Polynomial(self.expolist, self.coeffs, self.polysymbols, copy=False)
 
         return super(ExponentiatedPolynomial, self).simplify()
@@ -971,7 +974,7 @@ class Pow(_Expression):
     r'''
     Exponential.
     Store two expressions ``A`` and ``B`` to be interpreted
-    the exponential ``A**B``.
+    as the exponential ``A**B``.
 
     :param base:
         :class:`._Expression`;
@@ -1011,9 +1014,15 @@ class Pow(_Expression):
         '''
         Apply the identity <something>**0 = 1
         or <something>**1 = something if possible.
+        Convert to :class:`.ExponentiatedPolynomial`
+        if possible.
 
         '''
         self.base = self.base.simplify()
+
+        if type(self.base) is Polynomial: # need exact type `Polynomial` for this, not subtype
+            return ExponentiatedPolynomial(self.base.expolist, self.base.coeffs, self.exponent, self.base.polysymbols, copy=False).simplify()
+
         self.exponent = self.exponent.simplify()
 
         if isinstance(self.exponent, Polynomial):
@@ -1022,10 +1031,6 @@ class Pow(_Expression):
                 return Polynomial(np.zeros([1,len(symbols)], dtype=int), np.array([1]), symbols, copy=False)
             elif len(self.exponent.coeffs)==1 and (self.exponent.coeffs==1).all() and (self.exponent.expolist==0).all():
                 return self.base
-            else:
-                return self
-        else:
-            return self
 
         return self
 
