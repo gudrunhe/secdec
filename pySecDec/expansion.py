@@ -39,7 +39,7 @@ def _expand_Taylor_step(expression, index, order):
     expression_variable_set_to_zero = expression.replace(index, 0)
     coeffs = [expression_variable_set_to_zero]
     for order_i in range(order):
-        expression = expression.derive(index)
+        expression = expression.simplify().derive(index)
         coeffs.append( expression.replace(index, 0) )
 
     return Polynomial(expolist, np.array(coeffs), expression.symbols, copy=False)
