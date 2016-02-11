@@ -570,12 +570,24 @@ class TestLog(unittest.TestCase):
         self.assertEqual(orig.arg.expolist[0,0],5)
         self.assertEqual(copy.arg.expolist[0,0],0)
 
+    #@attr('active')
     def test_simplify(self):
         one = Polynomial.from_expression(1, ['x0','x1','x2'])
 
         zero = Log(one).simplify()
 
-        self.assertTrue(type(one) is Polynomial)
+        self.assertTrue(type(zero) is Polynomial)
+        self.assertEqual(sp.sympify(zero), 0)
+        np.testing.assert_array_equal(zero.coeffs, [0])
+        np.testing.assert_array_equal(zero.expolist, [[0,0,0]])
+
+    #@attr('active')
+    def test_simplify_log_of_polynomial_one(self):
+        one = Polynomial([[4,1,5],[0,0,0]], [0,Polynomial.from_expression(1, ['x','y','z'])], ['x','y','z'])
+
+        zero = Log(one).simplify()
+
+        self.assertTrue(type(zero) is Polynomial)
         self.assertEqual(sp.sympify(zero), 0)
         np.testing.assert_array_equal(zero.coeffs, [0])
         np.testing.assert_array_equal(zero.expolist, [[0,0,0]])
@@ -701,6 +713,17 @@ class TestLogOfPolynomial(unittest.TestCase):
         self.assertTrue(type(simplified_expr) is Polynomial)
         np.testing.assert_array_equal(simplified_expr.expolist, [[0,0]])
         np.testing.assert_array_equal(simplified_expr.coeffs, [0])
+
+    #@attr('active')
+    def test_simplify_log_of_polynomial_one(self):
+        one = Polynomial.from_expression(1, ['x','y','z'])
+
+        zero = LogOfPolynomial([[4,1,5],[0,0,0]], [0,one], ['x','y','z']).simplify()
+
+        self.assertTrue(type(zero) is Polynomial)
+        self.assertEqual(sp.sympify(zero), 0)
+        np.testing.assert_array_equal(zero.coeffs, [0])
+        np.testing.assert_array_equal(zero.expolist, [[0,0,0]])
 
 #@attr('active')
 class TestInsertion(unittest.TestCase):

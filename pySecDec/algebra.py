@@ -444,21 +444,17 @@ class Polynomial(_Expression):
         sort_key = argsort_2D_array(self.expolist)
         self.expolist = self.expolist[sort_key]
         self.coeffs = self.coeffs[sort_key]
-        if isinstance(self.coeffs[0], _Expression):
-            self.coeffs[0] = self.coeffs[0].simplify()
-            if isinstance(self.coeffs[0], Polynomial) and (self.coeffs[0].coeffs == 0).all():
-                self.coeffs[0] = 0 # must set to ``int(0)``, otherwise it will no be removed
+
+        if not np.issubdtype(self.coeffs.dtype, np.number):
+            for i in range(len(self.coeffs)):
+                if isinstance(self.coeffs[i], _Expression):
+                    self.coeffs[i] = self.coeffs[i].simplify()
+                    # do not need to keep type `_Expression` if constant
+                    if isinstance(self.coeffs[i], Polynomial) and len(self.coeffs[i].coeffs) == 1 and (self.coeffs[i].expolist == 0).all():
+                        self.coeffs[i] = self.coeffs[i].coeffs[0]
 
         for i in range(1,len(self.coeffs)):
-            if isinstance(self.coeffs[i], _Expression):
-                self.coeffs[i] = self.coeffs[i].simplify()
-
-            # do not have to consider terms with zero coefficient
-                if isinstance(self.coeffs[i], Polynomial) and (self.coeffs[i].coeffs == 0).all():
-                    self.coeffs[i] = 0 # must set to ``int(0)``, otherwise it will no be removed
-                    continue
-            elif self.coeffs[i] == 0: continue
-
+            if self.coeffs[i] == 0: continue
             previous_exponents = self.expolist[i-1]
             # search `self.expolist` for the same term
             # since `self.expolist` is sorted, must only compare with the previous term
