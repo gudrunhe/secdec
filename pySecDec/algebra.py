@@ -329,7 +329,6 @@ class Polynomial(_Expression):
         summand1 = self.copy()
         summand1.expolist[:,index] -= 1
         summand1.coeffs *= self.expolist[:,index]
-        summand1 = summand1
 
         # summand2 = derivative(<coeff>) * x**k
         summand_2_coeffs = []
