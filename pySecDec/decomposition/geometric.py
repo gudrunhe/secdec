@@ -430,7 +430,7 @@ def geometric_decomposition(sector, normaliz='normaliz', workdir='normaliz_tmp')
         subsector = sector.copy()
         Jacobian_coeff = abs(np.linalg.det(cone))
         Jacobian_coeff_as_int = int(Jacobian_coeff + 0.5) # `Jacobian_coeff` is integral but numpy calculates it as float
-        assert Jacobian_coeff_as_int == Jacobian_coeff
+        assert abs(Jacobian_coeff_as_int - Jacobian_coeff) < 1.0e-5 * abs(Jacobian_coeff)
         subsector.Jacobian *= Jacobian_coeff_as_int
 
         # set variables to one that are not in `cone_indices`
