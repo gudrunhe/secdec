@@ -36,13 +36,13 @@ def _expand_Taylor_step(expression, index, order):
     expolist[:,index] = np.arange(1 + order)
 
     # Construct coefficients of the Taylor polynomial
-    expression_variable_set_to_zero = expression.replace(index, 0).simplify()
+    expression_variable_set_to_zero = expression.replace(index, 0)
     coeffs = [expression_variable_set_to_zero]
     for order_i in range(order):
-        expression = expression.derive(index).simplify()
-        coeffs.append( expression.replace(index, 0).simplify() )
+        expression = expression.derive(index)
+        coeffs.append( expression.replace(index, 0) )
 
-    return Polynomial(expolist, coeffs, expression.symbols)
+    return Polynomial(expolist, np.array(coeffs), expression.symbols, copy=False)
 
 def _expand_singular_step(product, index, order):
     r'''
@@ -141,7 +141,7 @@ def _expand_singular_step(product, index, order):
         this_order_denominator = denominator.replace(index, 0).simplify()
 
         # convert denominator to ``<polynomial>**-1``
-        this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols)
+        this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols, copy=False)
 
         nonsingular_series_coeffs.append(Product(this_order_numerator, this_order_denominator))
 
@@ -162,19 +162,14 @@ def _flatten(polynomial, depth):
 
     '''
     assert isinstance(polynomial, Polynomial)
-    outpoly = 0
-    if depth == 1:
-        for i,(exponents,coeff) in enumerate(zip(polynomial.expolist,polynomial.coeffs)):
-            # no further recursion
-            monomial = Polynomial([exponents], [coeff], polynomial.polysymbols)
-            outpoly += monomial
-        return outpoly
-    else:
-        for i,(exponents,coeff) in enumerate(zip(polynomial.expolist,polynomial.coeffs)):
+    all_exponents = []
+    all_coeffs = []
+    for i,(exponents,coeff) in enumerate(zip(polynomial.expolist,polynomial.coeffs)):
+        if depth > 1: # stopping criterion for recursion
             coeff = _flatten(coeff, depth-1)
-            monomial = Polynomial([exponents], [coeff], polynomial.polysymbols)
-            outpoly += monomial
-        return outpoly
+        all_exponents.append(exponents)
+        all_coeffs.append(coeff)
+    return Polynomial(np.array(all_exponents), np.array(all_coeffs), polynomial.polysymbols, copy=False)
 
 def _expand_and_flatten(expression, indices, orders, expansion_one_variable):
     '''

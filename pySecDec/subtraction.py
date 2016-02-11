@@ -39,9 +39,9 @@ def _integrate_pole_part_single_index(polyprod, index):
         "Feynman_index**power/power!"
 
         '''
-        expolist = [0]*monomial_product.number_of_variables
-        expolist[index] = power
-        return Polynomial([expolist], [_sympy_one/factorial_of_power], copy=False)
+        expolist = np.zeros((1, monomial_product.number_of_variables), dtype=int)
+        expolist[:,index] = power
+        return Polynomial(expolist, np.array([_sympy_one/factorial_of_power]), copy=False)
 
     output_summands = []
     minus_cal_I_expansion_summands = []
@@ -67,14 +67,14 @@ def _integrate_pole_part_single_index(polyprod, index):
         if exponent_constant_term + p + 1 == 0:
             current_regulator_poles = Pow(regulator_poles.base * new_potential_pole_denominator, regulator_poles.exponent, copy=False)
             current_factors.append(current_regulator_poles)
-            current_factors.append(derivative_cal_I_Feynmanj_set_to_zero)
+            current_factors.append(derivative_cal_I_Feynmanj_set_to_zero.copy())
         # otherwise it does not lead to additional regulator poles and can become part of <derivative_cal_I>
         else:
             # poles in current term: none --> poles are just the old ones
             current_factors.append(regulator_poles)
 
             # put `new_potential_pole_denominator**-1` (which is not a pole in this case) in the last factor
-            last_factor = Product(derivative_cal_I_Feynmanj_set_to_zero, Pow(new_potential_pole_denominator, regulator_poles.exponent.copy(), copy=False), copy=False)
+            last_factor = Product(derivative_cal_I_Feynmanj_set_to_zero.copy(), Pow(new_potential_pole_denominator, regulator_poles.exponent.copy(), copy=False), copy=False)
             current_factors.append(last_factor.simplify())
 
         output_summands.append(Product(*current_factors, copy=False))

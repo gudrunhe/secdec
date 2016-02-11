@@ -137,15 +137,16 @@ class Function(_Expression):
             summands.append(
                                 Product(    # chain rule
                                             arg.derive(index),
-                                            Function('d%s_d%i'%(self.symbol,argindex), *self.arguments)
+                                            Function('d%s_d%i'%(self.symbol,argindex), *self.arguments),
+                                            copy=False
                                        )
                            )
-        return Sum(*summands).simplify()
+        return Sum(*summands, copy=False)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         arguments = [arg.replace(index, value, remove) for arg in expression.arguments]
-        return Function(expression.symbol, *arguments)
+        return Function(expression.symbol, *arguments, copy=False)
 
 class Polynomial(_Expression):
     '''
@@ -192,16 +193,25 @@ class Polynomial(_Expression):
 
     '''
     def __init__(self, expolist, coeffs, polysymbols='x', copy=True):
-        self.expolist = np.array(expolist)
-        assert len(self.expolist.shape) == 2, 'All entries in `expolist` must have the same length'
-        if not np.issubdtype(self.expolist.dtype, np.integer):
-            raise TypeError('All entries in `expolist` must be integer.')
-        self.coeffs = np.array(coeffs, copy=copy)
-        assert len(self.expolist) == len(self.coeffs), \
-            '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
-        assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
+        if copy:
+            self.expolist = np.array(expolist)
+            assert len(self.expolist.shape) == 2, 'All entries in `expolist` must have the same length'
+            if not np.issubdtype(self.expolist.dtype, np.integer):
+                raise TypeError('All entries in `expolist` must be integer.')
+        else:
+            self.expolist = expolist
+
+        if copy:
+            self.coeffs = np.array(coeffs)
+            assert len(self.expolist) == len(self.coeffs), \
+                '`expolist` (length %i) and `coeffs` (length %i) must have the same length.' %(len(self.expolist),len(self.coeffs))
+            assert len(self.coeffs.shape) == 1, '`coeffs` must be one-dimensional'
+        else:
+            self.coeffs = coeffs
+
         self.number_of_variables = self.expolist.shape[1]
-        if not np.issubdtype(self.coeffs.dtype, np.number) and copy:
+
+        if copy and not np.issubdtype(self.coeffs.dtype, np.number):
             parsed_coeffs = []
             for coeff in self.coeffs:
                 if isinstance(coeff,_Expression):
@@ -210,6 +220,7 @@ class Polynomial(_Expression):
                 else:
                     parsed_coeffs.append(sp.sympify(coeff))
             self.coeffs = np.array(parsed_coeffs)
+
         if isinstance(polysymbols, str):
             self.polysymbols = sp.sympify([polysymbols + str(i) for i in range(self.number_of_variables)])
             for symbol in self.polysymbols:
@@ -474,17 +485,25 @@ class Polynomial(_Expression):
     def replace(expression, index, value, remove=False):
         # coeffs
         if np.issubdtype(expression.coeffs.dtype, np.number):
-            new_coeffs = expression.coeffs.copy()
+            if value == 1: # <coeff> * 1**<something> = <coeff>
+                new_coeffs = expression.coeffs.copy()
+            else:
+                new_coeffs = np.array([value**int(power) for power in expression.expolist[:,index]])
+                new_coeffs *= expression.coeffs
         else:
             new_coeffs = np.empty_like(expression.coeffs)
-            for i,coeff in enumerate(expression.coeffs):
-                if isinstance(coeff, _Expression):
-                    new_coeffs[i] = coeff.replace(index, value, remove)
-                else:
-                    new_coeffs[i] = coeff
-        if value != 1: # nothing to do if ``value==1`` since <coeff> * 1**<something> = <coeff>
-            powers = expression.expolist[:,index]
-            new_coeffs *= np.array([value**int(power) for power in powers])
+            if value == 1: # <coeff> * 1**<something> = <coeff>
+                for i,coeff in enumerate(expression.coeffs):
+                    if isinstance(coeff, _Expression):
+                        new_coeffs[i] = coeff.replace(index, value, remove)
+                    else:
+                        new_coeffs[i] = coeff
+            else:
+                for i,(coeff,power) in enumerate(zip(expression.coeffs, expression.expolist[:,index])):
+                    if isinstance(coeff, _Expression):
+                        new_coeffs[i] = coeff.replace(index, value, remove) * value**int(power)
+                    else:
+                        new_coeffs[i] = coeff * value**int(power)
 
         # exponent (if applicable)
         exponent = None
@@ -598,7 +617,7 @@ class ExponentiatedPolynomial(Polynomial):
             summand0_factors = [self.copy()]
             summand0_factors.append(self.exponent.derive(index))
             summand0_factors.append(LogOfPolynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False))
-            summand0 = Product(*summand0_factors)
+            summand0 = Product(*summand0_factors, copy=False)
         else:
             summand0 = None
 
@@ -620,12 +639,12 @@ class ExponentiatedPolynomial(Polynomial):
         if factor0 is None:
             summand1 = factor1
         else:
-            summand1 = Product(factor0, factor1)
+            summand1 = Product(factor0, factor1, copy=False)
 
         if summand0 is None:
             return summand1.simplify()
         else:
-            return Sum(summand0,summand1).simplify()
+            return Sum(summand0, summand1, copy=False).simplify()
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
@@ -735,7 +754,7 @@ class LogOfPolynomial(Polynomial):
         factor1 = Polynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False)
         factor1 = factor1.derive(index)
 
-        return Product(factor0, factor1)
+        return Product(factor0, factor1, copy=False)
 
     def simplify(self):
         '''
@@ -845,14 +864,14 @@ class Sum(_Expression):
 
         '''
         # derivative(p1 + p2 + ...) = derivative(p1) + derivative(p2) + ...
-        return Sum(*(summand.derive(index) for summand in self.summands)).simplify()
+        return Sum(*(summand.derive(index) for summand in self.summands), copy=False)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         outsummands = []
         for summand in expression.summands:
             outsummands.append(summand.replace(index,value,remove))
-        return Sum(*outsummands)
+        return Sum(*outsummands, copy=False)
 
 class Product(_Expression):
     r'''
@@ -956,19 +975,17 @@ class Product(_Expression):
         '''
         # product rule: derivative(p1 * p2 * ...) = derivative(p1) * p2 * ... + p1 * derivative(p2) * ...
         summands = []
-        factors = list(self.factors) # copy
         for i,factor in enumerate(self.factors):
-            factors[i] = factor.derive(index)
-            summands.append(Product(*factors))
-            factors[i] = factor
-        return Sum(*summands).simplify()
+            factors = [factor.derive(index) if i==j else f.copy() for j,f in enumerate(self.factors)]
+            summands.append(Product(*factors, copy=False))
+        return Sum(*summands, copy=False)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         outfactors = []
         for factor in expression.factors:
             outfactors.append(factor.replace(index,value,remove))
-        return Product(*outfactors)
+        return Product(*outfactors, copy=False)
 
 class Pow(_Expression):
     r'''
@@ -1049,8 +1066,8 @@ class Pow(_Expression):
         # summand0: base**exponent*derivative(exponent)*log(base)
         summand0_factors = [self.copy()]
         summand0_factors.append(self.exponent.derive(index))
-        summand0_factors.append(Log(self.base))
-        summand0 = Product(*summand0_factors)
+        summand0_factors.append(Log(self.base.copy(), copy=False))
+        summand0 = Product(*summand0_factors, copy=False)
 
         # summand1: base**(exponent-1)*derivative(base)
         # factor0 = base**(exponent-1)   -->   simplification: (...)**0 = 1
@@ -1059,22 +1076,22 @@ class Pow(_Expression):
         if new_exponent == 0:
             factor0 = None
         else:
-            factor0 = Pow(self.base.copy(), new_exponent)
+            factor0 = Pow(self.base.copy(), new_exponent, copy=False)
         # factor1 = "exponent*derivative(poly)"
         derivative_base = self.base.derive(index)
         factor1 = self.exponent * derivative_base
         if factor0 is None:
             summand1 = factor1
         else:
-            summand1 = Product(factor0, factor1)
+            summand1 = Product(factor0, factor1, copy=False)
 
-        return Sum(summand0,summand1).simplify()
+        return Sum(summand0,summand1, copy=False).simplify()
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         new_base = expression.base.replace(index,value,remove)
         new_exponent = expression.exponent.replace(index,value,remove)
-        return Pow(new_base, new_exponent)
+        return Pow(new_base, new_exponent, copy=False)
 
 class Log(_Expression):
     r'''
@@ -1128,11 +1145,11 @@ class Log(_Expression):
         symbols = self.arg.symbols
         minus_one = Polynomial(np.zeros([1,len(symbols)], dtype=int), np.array([-1]), symbols, copy=False)
 
-        return Product(Pow(self.arg, minus_one), self.arg.derive(index)).simplify()
+        return Product(Pow(self.arg.copy(), minus_one, copy=False), self.arg.derive(index), copy=False)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
-        return Log( expression.arg.replace(index,value,remove) )
+        return Log( expression.arg.replace(index,value,remove) , copy=False )
 
 # TODO: extensively test this function
 def Expression(expression, polysymbols):
