@@ -326,25 +326,41 @@ class Polynomial(_Expression):
         # product rule: derivative(<coeff> * x**k) = <coeff> * k * x**(k-1) + derivative(<coeff>) * x**k
 
         # summand1 = <coeff> * k * x**(k-1)
-        summand1 = self.copy()
-        summand1.expolist[:,index] -= 1
-        summand1.coeffs *= self.expolist[:,index]
+        # remove terms that are going to be multiplied by zero
+        nonzero_coeffs = np.where(self.expolist[:,index] != 0)
+        summand1_coeffs = self.coeffs[nonzero_coeffs] * self.expolist[nonzero_coeffs][:,index]
+
+        summand1_expolist = self.expolist[nonzero_coeffs].copy()
+        summand1_expolist[:,index] -= 1
+
+        # need to have at least one term
+        if len(summand1_coeffs) == 0:
+            summand1 = None
+        else:
+            summand1 = Polynomial(summand1_expolist, summand1_coeffs, self.polysymbols, copy=False)
+
 
         # summand2 = derivative(<coeff>) * x**k
-        summand_2_coeffs = []
-        need_summand2 = False
-        for coeff in self.coeffs:
-            if isinstance(coeff, _Expression):
-                summand_2_coeffs.append(coeff.derive(index))
-                need_summand2 = True
-            else:
-                summand_2_coeffs.append(0)
+        summand2 = False
+        if not np.issubdtype(self.coeffs.dtype, np.number):
+            summand2_coeffs = np.zeros_like(self.coeffs)
+            for i, coeff in enumerate(self.coeffs):
+                if isinstance(coeff, _Expression):
+                    summand2_coeffs[i] = coeff.derive(index)
+                    summand2 = True
 
-        if need_summand2:
-            summand2 = Polynomial(self.expolist.copy(), np.array(summand_2_coeffs), self.polysymbols, copy=False)
-            return summand1 + summand2 # implicit simplify
+
+        if summand2:
+            summand2 = Polynomial(self.expolist.copy(), summand2_coeffs, self.polysymbols, copy=False)
+            if summand1 is None:
+                return summand2
+            else:
+                return summand1 + summand2 # implicit simplify
         else:
-            return summand1.simplify()
+            if summand1 is None:
+                return Polynomial(np.zeros([1,self.number_of_variables]), np.array([0]), self.polysymbols, copy=False)
+            else:
+                return summand1
 
     @property
     def symbols(self):
@@ -396,15 +412,20 @@ class Polynomial(_Expression):
             product_expolist = np.vstack([other.expolist + term for term in self.expolist])
             product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
 
-            result = Polynomial(product_expolist, product_coeffs, self.polysymbols, copy=False)
-            return result.simplify()
+            return Polynomial(product_expolist, product_coeffs, self.polysymbols, copy=False).simplify()
 
         elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
-            new_coeffs = self.coeffs * other
-            return Polynomial(self.expolist.copy(), new_coeffs, self.polysymbols, copy=False).simplify()
+            if other == 1:
+                return self.copy()
+            elif other == 0:
+                return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.polysymbols, copy=False)
+            else:
+                new_coeffs = self.coeffs * other
+                return Polynomial(self.expolist.copy(), new_coeffs, self.polysymbols, copy=False).simplify()
 
         else:
             return NotImplemented
+
     __rmul__ = __mul__
 
     def __neg__(self):
@@ -606,7 +627,6 @@ class ExponentiatedPolynomial(Polynomial):
         # derive an expression of the form "poly**exponent"
         # derivative(poly**exponent) = poly**exponent*derivative(exponent)*log(poly) + poly**(exponent-1)*exponent*derivative(poly)
 
-
         if isinstance(self.exponent, _Expression):
             # summand0: poly**exponent*derivative(exponent)*log(poly)
             summand0_factors = [self.copy()]
@@ -637,9 +657,9 @@ class ExponentiatedPolynomial(Polynomial):
             summand1 = Product(factor0, factor1, copy=False)
 
         if summand0 is None:
-            return summand1.simplify()
+            return summand1
         else:
-            return Sum(summand0, summand1, copy=False).simplify()
+            return Sum(summand0, summand1, copy=False)
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
@@ -1080,7 +1100,7 @@ class Pow(_Expression):
         else:
             summand1 = Product(factor0, factor1, copy=False)
 
-        return Sum(summand0,summand1, copy=False).simplify()
+        return Sum(summand0,summand1, copy=False)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
