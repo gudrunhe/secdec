@@ -973,7 +973,7 @@ class Product(_Expression):
                 if isinstance(factor, Product):
                     changed = True
                     self.factors.extend(factor.factors)
-                elif isinstance(factor, Polynomial):
+                elif type(factor) is Polynomial:
                     if (factor.expolist == 0).all() and (factor.coeffs == 1).all():
                         one = factor
                         changed = True
@@ -1082,7 +1082,7 @@ class Pow(_Expression):
 
         self.exponent = self.exponent.simplify()
 
-        if isinstance(self.exponent, Polynomial):
+        if type(self.exponent) is Polynomial:
             if (self.exponent.coeffs==0).all():
                 symbols = self.exponent.polysymbols
                 return Polynomial(np.zeros([1,len(symbols)], dtype=int), np.array([1]), symbols, copy=False)
@@ -1163,7 +1163,7 @@ class Log(_Expression):
     def simplify(self):
         'Apply ``log(1) = 0``.'
         self.arg = self.arg.simplify()
-        if isinstance(self.arg, Polynomial) and len(self.arg.coeffs) == 1 and self.arg.coeffs[0] == 1 and (self.arg.expolist == 0).all():
+        if type(self.arg) is Polynomial and len(self.arg.coeffs) == 1 and self.arg.coeffs[0] == 1 and (self.arg.expolist == 0).all():
             return Polynomial(np.zeros([1,len(self.arg.polysymbols)], dtype=int), np.array([0]), self.arg.polysymbols, copy=False)
         else:
             return self
