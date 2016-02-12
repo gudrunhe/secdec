@@ -134,14 +134,23 @@ class Function(_Expression):
         '''
         summands = []
         for argindex, arg in enumerate(self.arguments):
+            differentiated_arg = arg.derive(index)
+
+            # catch ``differentiated_arg == 0``
+            if type(differentiated_arg) is Polynomial and (differentiated_arg.coeffs == 0).all():
+                continue
+
             summands.append(
                                 Product(    # chain rule
-                                            arg.derive(index),
+                                            differentiated_arg,
                                             Function('d%s_d%i'%(self.symbol,argindex), *self.arguments),
                                             copy=False
                                        )
                            )
-        return Sum(*summands, copy=False)
+        if summands:
+            return Sum(*summands, copy=False)
+        else: # return zero packed into a `Polynomial`
+            return Polynomial(np.zeros([1,self.number_of_variables]), np.array([0]), self.symbols, copy=False)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
@@ -392,14 +401,12 @@ class Polynomial(_Expression):
             sum_expolist = np.vstack([self.expolist, other.expolist])
             sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
 
-            result = Polynomial(sum_expolist, sum_coeffs, self.polysymbols, copy=False)
-            return result.simplify()
+            return Polynomial(sum_expolist, sum_coeffs, self.polysymbols, copy=False).simplify()
 
         elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
             new_expolist = np.vstack([[0]*self.number_of_variables, self.expolist])
             new_coeffs = np.append(-other if sub else other, self.coeffs)
-            outpoly = Polynomial(new_expolist, new_coeffs, self.polysymbols, copy=False)
-            return outpoly.simplify()
+            return Polynomial(new_expolist, new_coeffs, self.polysymbols, copy=False).simplify()
 
         else:
             return NotImplemented
@@ -420,8 +427,7 @@ class Polynomial(_Expression):
             elif other == 0:
                 return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.polysymbols, copy=False)
             else:
-                new_coeffs = self.coeffs * other
-                return Polynomial(self.expolist.copy(), new_coeffs, self.polysymbols, copy=False).simplify()
+                return Polynomial(self.expolist.copy(), self.coeffs * other, self.polysymbols, copy=False)
 
         else:
             return NotImplemented
@@ -471,7 +477,7 @@ class Polynomial(_Expression):
                 if isinstance(self.coeffs[i], _Expression):
                     self.coeffs[i] = self.coeffs[i].simplify()
                     # do not need to keep type `_Expression` if constant
-                    if isinstance(self.coeffs[i], Polynomial) and len(self.coeffs[i].coeffs) == 1 and (self.coeffs[i].expolist == 0).all():
+                    if type(self.coeffs[i]) is Polynomial and len(self.coeffs[i].coeffs) == 1 and (self.coeffs[i].expolist == 0).all():
                         self.coeffs[i] = self.coeffs[i].coeffs[0]
 
         for i in range(1,len(self.coeffs)):
@@ -637,29 +643,37 @@ class ExponentiatedPolynomial(Polynomial):
             summand0 = None
 
         # summand1: poly**(exponent-1)*derivative(poly)
-        # factor0 = poly**(exponent-1)   -->   simplification: (...)**0 = 1
-        # do not need factor 0 in that case
-        new_exponent = self.exponent - 1
-        if new_exponent == 0:
-            factor0 = None
-        else:
-            factor0 = ExponentiatedPolynomial(self.expolist.copy(),
-                                              self.coeffs.copy(),
-                                              new_exponent,
-                                              self.polysymbols,
-                                              copy=False)
         # factor1 = "exponent*derivative(poly)"
+        # catch ``derivative(poly) = 0``
         derivative_poly = Polynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False).derive(index)
-        factor1 = self.exponent * derivative_poly
-        if factor0 is None:
-            summand1 = factor1
+        if (derivative_poly.coeffs == 0).all():
+            summand1 = None
         else:
-            summand1 = Product(factor0, factor1, copy=False)
+            factor1 = self.exponent * derivative_poly
+            # factor0 = poly**(exponent-1)   -->   simplification: (...)**0 = 1
+            # do not need factor 0 in that case
+            new_exponent = self.exponent - 1
+            if new_exponent == 0:
+                # factor0 = 1 in this case
+                summand1 = factor1
+            else:
+                factor0 = ExponentiatedPolynomial(self.expolist.copy(),
+                                                  self.coeffs.copy(),
+                                                  new_exponent,
+                                                  self.polysymbols,
+                                                  copy=False)
+                summand1 = Product(factor0, factor1, copy=False)
 
         if summand0 is None:
-            return summand1
+            if summand1 is None:
+                return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.polysymbols, copy=False)
+            else:
+                return summand1
         else:
-            return Sum(summand0, summand1, copy=False)
+            if summand1 is None:
+                return summand0
+            else:
+                return Sum(summand0, summand1, copy=False)
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
@@ -758,16 +772,19 @@ class LogOfPolynomial(Polynomial):
         '''
         # derive an expression of the form "log(poly)"
         # chain rule: poly**(-1) * derivative(poly)
+        #   --> factor1 = "derivative(poly)"
+        factor1 = Polynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False)
+        factor1 = factor1.derive(index)
+        # catch ``factor1 == 0``
+        if (factor1.coeffs == 0).all():
+            return Polynomial(np.zeros([1,len(self.polysymbols)], dtype=int), np.array([0]), self.polysymbols, copy=False)
+
         #   --> factor0 = "poly**(-1)"
         factor0 = ExponentiatedPolynomial(self.expolist.copy(),
                                           self.coeffs.copy(),
                                           -1,
                                           self.polysymbols,
                                           copy=False)
-
-        #   --> factor1 = "derivative(poly)"
-        factor1 = Polynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False)
-        factor1 = factor1.derive(index)
 
         return Product(factor0, factor1, copy=False)
 
@@ -779,7 +796,7 @@ class LogOfPolynomial(Polynomial):
         '''
         super(LogOfPolynomial, self).simplify()
         if len(self.coeffs) == 1 and self.coeffs[0] == 1 and (self.expolist == 0).all():
-            return Polynomial(np.zeros([1,len(self.polysymbols)], dtype=int), np.array([0]), self.polysymbols, copy=False)
+            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.polysymbols, copy=False)
         else:
             return self
 
@@ -990,10 +1007,18 @@ class Product(_Expression):
         '''
         # product rule: derivative(p1 * p2 * ...) = derivative(p1) * p2 * ... + p1 * derivative(p2) * ...
         summands = []
-        for i,factor in enumerate(self.factors):
-            factors = [factor.derive(index) if i==j else f.copy() for j,f in enumerate(self.factors)]
-            summands.append(Product(*factors, copy=False))
-        return Sum(*summands, copy=False)
+        for i,factor_to_diff in enumerate(self.factors):
+            differentiated_factor = factor_to_diff.derive(index)
+            # catch ``differentiated_factor == 0``
+            if type(differentiated_factor) is Polynomial and (differentiated_factor.coeffs == 0).all():
+                continue
+            else:
+                factors = [differentiated_factor if i==j else f.copy() for j,f in enumerate(self.factors)]
+                summands.append(Product(*factors, copy=False))
+        if summands:
+            return Sum(*summands, copy=False)
+        else:
+            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
