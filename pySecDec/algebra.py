@@ -1245,34 +1245,37 @@ def Expression(expression, polysymbols):
         parsed_polysymbols.append(item)
     polysymbols = parsed_polysymbols
 
-    try:
-        return Polynomial.from_expression(expression, polysymbols)
+    def recursive_call(expression): # ``polysymbols`` from nonlocal context above
+        try:
+            return Polynomial.from_expression(expression, polysymbols)
 
-    except sp.PolynomialError:
-        if expression.is_Mul:
-            return Product(*(Expression(e, polysymbols) for e in expression.args))
+        except sp.PolynomialError:
+            if expression.is_Mul:
+                return Product(*(recursive_call(e) for e in expression.args))
 
-        if expression.is_Pow:
-            assert len(expression.args) == 2
-            exponent = Expression(expression.args[1], polysymbols)
-            try:
-                poly = Polynomial.from_expression(expression.args[0], polysymbols)
-                return ExponentiatedPolynomial(poly.expolist, poly.coeffs, exponent=exponent, polysymbols=polysymbols, copy=False)
-            except sp.PolynomialError:
-                return Pow(Expression(expression.args[0], polysymbols), exponent)
+            if expression.is_Pow:
+                assert len(expression.args) == 2
+                exponent = recursive_call(expression.args[1])
+                try:
+                    poly = Polynomial.from_expression(expression.args[0], polysymbols)
+                    return ExponentiatedPolynomial(poly.expolist, poly.coeffs, exponent=exponent, polysymbols=polysymbols, copy=False)
+                except sp.PolynomialError:
+                    return Pow(recursive_call(expression.args[0]), exponent)
 
-        if expression.is_Add:
-            return Sum(*(Expression(e, polysymbols) for e in expression.args))
+            if expression.is_Add:
+                return Sum(*(recursive_call(e) for e in expression.args))
 
-        if isinstance(expression, sp.log):
-            # make sure to have the natural log
-            assert len(expression.args) == 1
-            try:
-                return LogOfPolynomial.from_expression(expression.args[0], polysymbols)
-            except sp.PolynomialError:
-                return Log(Expression(expression.args[0], polysymbols))
+            if isinstance(expression, sp.log):
+                # make sure to have the natural log
+                assert len(expression.args) == 1
+                try:
+                    return LogOfPolynomial.from_expression(expression.args[0], polysymbols)
+                except sp.PolynomialError:
+                    return Log(recursive_call(expression.args[0]))
 
-        if expression.is_Function:
-            return Function(expression.__class__.__name__, *(Expression(e, polysymbols) for e in expression.args))
+            if expression.is_Function:
+                return Function(expression.__class__.__name__, *(recursive_call(e) for e in expression.args))
 
-    raise ValueError('Could not parse the expression')
+        raise ValueError('Could not parse the expression')
+
+    return recursive_call(expression) if isinstance(expression, sp.Expr) else recursive_call( sp.sympify(expression) )
