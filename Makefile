@@ -2,7 +2,7 @@
 # A list of implemented rules can be obtained by the command "make help"
 
 # timeout (in seconds) for all test cases
-TIMEOUT=180
+TIMEOUT=600
 
 
 .DEFAULT_GOAL=check
