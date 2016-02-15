@@ -531,7 +531,12 @@ class Polynomial(_Expression):
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         # coeffs
-        if np.issubdtype(expression.coeffs.dtype, np.number):
+        if value == 0: # <coeff> * 0**<exponent> = <coeff> if <exponent>==0 else 0
+            new_coeffs = np.zeros_like(expression.coeffs)
+            nonzero_indicator = np.where(expression.expolist[:,index] == 0)
+            new_coeffs[nonzero_indicator] = expression.coeffs[nonzero_indicator]
+
+        elif np.issubdtype(expression.coeffs.dtype, np.number):
             if value == 1: # <coeff> * 1**<something> = <coeff>
                 new_coeffs = expression.coeffs.copy()
             else:
