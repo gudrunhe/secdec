@@ -1249,7 +1249,7 @@ def Expression(expression, polysymbols):
         try:
             return Polynomial.from_expression(expression, polysymbols)
 
-        except sp.PolynomialError:
+        except:
             if expression.is_Mul:
                 return Product(*(recursive_call(e) for e in expression.args))
 
@@ -1259,7 +1259,7 @@ def Expression(expression, polysymbols):
                 try:
                     poly = Polynomial.from_expression(expression.args[0], polysymbols)
                     return ExponentiatedPolynomial(poly.expolist, poly.coeffs, exponent=exponent, polysymbols=polysymbols, copy=False)
-                except sp.PolynomialError:
+                except:
                     return Pow(recursive_call(expression.args[0]), exponent)
 
             if expression.is_Add:
@@ -1270,7 +1270,7 @@ def Expression(expression, polysymbols):
                 assert len(expression.args) == 1
                 try:
                     return LogOfPolynomial.from_expression(expression.args[0], polysymbols)
-                except sp.PolynomialError:
+                except:
                     return Log(recursive_call(expression.args[0]))
 
             if expression.is_Function:
