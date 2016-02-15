@@ -90,6 +90,15 @@ class Function(_Expression):
         Whether or not to copy the `arguments`.
 
     '''
+#   hidden keyword arguments:
+#   :param differentiated_args:
+#       2D-array with shape ``(len(self.arguments), self.number_of_variables)``;
+#       This is used to cache the derivatives of the arguments.
+#
+#   :param derivatives:
+#       1D-array of length ``self.number_of_variables``;
+#       This is used to cache the derivatives.
+
     def __init__(self, symbol, *arguments, **kwargs):
         copy = kwargs.get('copy', True)
 
@@ -101,6 +110,9 @@ class Function(_Expression):
             assert arg.number_of_variables == self.number_of_variables, 'Must have the same number of variables in all arguments.'
             self.arguments.append(arg.copy() if copy else arg)
 
+        self.differentiated_args = kwargs.pop('differentiated_args', np.empty((len(self.arguments), self.number_of_variables), dtype=object))
+        self.derivatives = kwargs.pop('derivatives', np.empty(self.number_of_variables, dtype=object))
+
     def __repr__(self):
         outstr_template = self.symbol + '(%s)'
         str_args = ','.join(str(arg) for arg in self.arguments)
@@ -110,7 +122,7 @@ class Function(_Expression):
 
     def copy(self):
         "Return a copy of a :class:`.Function`."
-        return Function(self.symbol, *(arg.copy() for arg in self.arguments), copy=False)
+        return Function(self.symbol, *(arg.copy() for arg in self.arguments), copy=False, differentiated_args=self.differentiated_args, derivatives=self.derivatives)
 
     def simplify(self):
         'Simplify the arguments.'
@@ -132,9 +144,17 @@ class Function(_Expression):
             The index of the paramater to derive by.
 
         '''
+        derivative = self.derivatives[index]
+        if derivative is not None:
+            return derivative.copy()
+
         summands = []
         for argindex, arg in enumerate(self.arguments):
-            differentiated_arg = arg.derive(index)
+            if self.differentiated_args[argindex, index] is None:
+                differentiated_arg = arg.derive(index)
+                self.differentiated_args[argindex, index] = differentiated_arg
+            else:
+                differentiated_arg = self.differentiated_args[argindex, index]
 
             # catch ``differentiated_arg == 0``
             if type(differentiated_arg) is Polynomial and (differentiated_arg.coeffs == 0).all():
@@ -143,14 +163,16 @@ class Function(_Expression):
             summands.append(
                                 Product(    # chain rule
                                             differentiated_arg,
-                                            Function('d%s_d%i'%(self.symbol,argindex), *self.arguments),
+                                            Function('d%s_d%i'%(self.symbol,argindex), *(arg.copy() for arg in self.arguments), differentiated_args=self.differentiated_args, copy=False),
                                             copy=False
                                        )
                            )
         if summands:
-            return Sum(*summands, copy=False)
+            derivative = self.derivatives[index] = Sum(*summands, copy=False)
         else: # return zero packed into a `Polynomial`
-            return Polynomial(np.zeros([1,self.number_of_variables]), np.array([0]), self.symbols, copy=False)
+            derivative = self.derivatives[index] = Polynomial(np.zeros([1,self.number_of_variables]), np.array([0]), self.symbols, copy=False)
+
+        return derivative
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
