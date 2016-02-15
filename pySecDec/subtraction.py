@@ -33,7 +33,7 @@ def _integrate_pole_part_single_index(polyprod, index):
         # no subtraction needed, the input `polyprod` is numerically integrable
         return [polyprod]
 
-    def make_FeynmanIndex_to_power(power, factorial_of_power):
+    def make_FeynmanIndex_to_power(power, factorial_of_power, symbols):
         '''
         Return a :class:`Polynomial` representing
         "Feynman_index**power/power!"
@@ -41,7 +41,7 @@ def _integrate_pole_part_single_index(polyprod, index):
         '''
         expolist = np.zeros((1, monomial_product.number_of_variables), dtype=int)
         expolist[:,index] = power
-        return Polynomial(expolist, np.array([_sympy_one/factorial_of_power]), copy=False)
+        return Polynomial(expolist, np.array([_sympy_one/factorial_of_power]), symbols, copy=False)
 
     output_summands = []
     minus_cal_I_expansion_summands = []
@@ -78,7 +78,7 @@ def _integrate_pole_part_single_index(polyprod, index):
             current_factors.append(last_factor.simplify())
 
         output_summands.append(Product(*current_factors, copy=False))
-        minus_cal_I_expansion_summands.append(Product(-make_FeynmanIndex_to_power(p, p_factorial), derivative_cal_I_Feynmanj_set_to_zero, copy=False ))
+        minus_cal_I_expansion_summands.append(Product(-make_FeynmanIndex_to_power(p, p_factorial, polysymbols), derivative_cal_I_Feynmanj_set_to_zero, copy=False ))
 
     integrable_part = Product(   monomial_product, regulator_poles, Sum(cal_I, *minus_cal_I_expansion_summands, copy=False).simplify() , copy=False   )
 

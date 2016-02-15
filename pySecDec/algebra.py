@@ -252,7 +252,10 @@ class Polynomial(_Expression):
                     parsed_coeffs.append(sp.sympify(coeff))
             self.coeffs = np.array(parsed_coeffs)
 
-        if isinstance(polysymbols, str):
+        if not copy:
+            # always copy the symbols but do not check them if copy is False
+            self.polysymbols = list(polysymbols)
+        elif isinstance(polysymbols, str):
             self.polysymbols = sp.sympify([polysymbols + str(i) for i in range(self.number_of_variables)])
             for symbol in self.polysymbols:
                 assert symbol.is_Symbol, 'All `polysymbols` must be symbols'
