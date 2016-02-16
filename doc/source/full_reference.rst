@@ -4,6 +4,9 @@ Reference Guide
 .. automodule:: pySecDec.algebra
     :members:
 
+.. automodule:: pySecDec.decomposition
+    :members:
+
 .. autoclass:: pySecDec.decomposition.Sector
 .. autofunction:: pySecDec.decomposition.hide
 .. autofunction:: pySecDec.decomposition.unhide

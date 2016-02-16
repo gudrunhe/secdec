@@ -4,7 +4,7 @@ Overview
 `pySecDec` is consists of several modules that provide functions and classes for
 specific purposes. In this overview, we present only the most important aspects
 of selected modules. For detailed instruction of a specific function or class,
-please refer to the :doc:`full_reference`.
+please refer to the :doc:`reference guide <full_reference>`.
 
 
 pySecDec.algebra
@@ -79,7 +79,7 @@ The :class:`Polynomial <pySecDec.algebra.Polynomial>` class implements basic ope
 General Expressions
 ~~~~~~~~~~~~~~~~~~~
 
-In order to perform the :mod:`pySecDec.subtraction` and :pySecDec:`expansion`,
+In order to perform the :mod:`pySecDec.subtraction` and :mod:`pySecDec.expansion`,
 we have to introduce more complex algebraic constructs.
 
 General expressions can be entered in a straightforward way:
@@ -150,7 +150,7 @@ To emphasize the importance of the above statement, consider the following code:
 >>> expression2
  + (y)*x
 
-Although ``expression1``` and ``expression2`` are mathematically identical,
+Although ``expression1`` and ``expression2`` are mathematically identical,
 they are treated differently by the `algebra` module. In ``expression1``, both,
 ``x`` and ``y``, are considered as variables of the
 :class:`Polynomial <pySecDec.algebra.Polynomial>`. In contrast, ``y`` is treated
@@ -171,6 +171,8 @@ in the underlying :class:`Polynomials <pySecDec.algebra.Polynomial>`.
 Keep that in mind in order to avoid confusion.
 
 
+.. _loop_integral:
+
 Feynman Parametrization of Loop Integrals
 -----------------------------------------
 
@@ -178,14 +180,23 @@ The primary purpose of `pySecDec` is calculating loop integrals as they arise in
 order calculations in quantum field theories. In our approach, the first step is converting
 the loop integral from the momentum representation to the Feynman parameter representation.
 
-.. TODO: give some reference
+.. TODO: give a reference
 
 The module :mod:`pySecDec.loop_integral` implements exactly that conversion.
-The most basic use is to calculate the first and second Symanzik polynomials
-``U`` and ``F`` from the propagators of a loop integral. Consider for example the
-one loop bubble:
+The most basic use is to calculate the first ``U`` and the second ``F``
+Symanzik polynomial from the propagators of a loop integral.
 
 .. TODO: check spelling of "Symanzik"
+
+.. TODO: include Feynman diagrams?
+
+.. _one-loop-bubble:
+
+One Loop Bubble
+~~~~~~~~~~~~~~~
+
+To calculate ``U`` and ``F`` of the one loop bubble, type the following
+commands:
 
 >>> from pySecDec.loop_integral import LoopIntegral
 >>> propagators = ['k**2', '(k - p)**2']
@@ -196,32 +207,212 @@ one loop bubble:
 >>> one_loop_bubble.F
  + (-p**2)*x0*x1
 
+The example above among other useful features is also stated in the full documenation of
+:meth:`LoopIntegral.from_propagators() <pySecDec.loop_integral.LoopIntegral.from_propagators>`
+in the reference guide.
+
+Two Loop Planar Box with Numerator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Consider the propagators of the two loop planar box:
+
+>>> propagators = ['k1**2','(k1+p2)**2',
+...                '(k1-p1)**2','(k1-k2)**2',
+...                '(k2+p2)**2','(k2-p1)**2',
+...                '(k2+p2+p3)**2']
+>>> loop_momenta = ['k1','k2']
+
+We could now instantiate the :class:`LoopIntegral <pySecDec.loop_integral.LoopIntegral>`
+just like :ref:`before <one-loop-bubble>`. However, let us consider an additional numerator:
+
+>>> numerator = 'k1(mu)*k1(mu) + 2*k1(mu)*p3(mu) + p3(mu)*p3(mu)' # (k1 + p3) ** 2
+
+In order to unambiguously define the loop integral, we must state which
+symbols denote the ``Lorentz_indices``
+(just ``mu`` in this case here) and the ``external_momenta``:
+
+>>> external_momenta = ['p1','p2','p3','p4']
+>>> Lorentz_indices=['mu']
+
+With that, we can Feynman parametrize the two loop box with a numerator:
+
+>>> box = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+...                                     numerator=numerator, Lorentz_indices=Lorentz_indices)
+>>> box.U
+ + (1)*x3*x6 + (1)*x3*x5 + (1)*x3*x4 + (1)*x2*x6 + (1)*x2*x5 + (1)*x2*x4 + (1)*x2*x3 + (1)*x1*x6 + (1)*x1*x5 + (1)*x1*x4 + (1)*x1*x3 + (1)*x0*x6 + (1)*x0*x5 + (1)*x0*x4 + (1)*x0*x3
+>>> box.F
+ + (-p1**2 - 2*p1*p2 - 2*p1*p3 - p2**2 - 2*p2*p3 - p3**2)*x3*x5*x6 + (-p3**2)*x3*x4*x6 + (-p1**2 - 2*p1*p2 - p2**2)*x3*x4*x5 + (-p1**2 - 2*p1*p2 - 2*p1*p3 - p2**2 - 2*p2*p3 - p3**2)*x2*x5*x6 + (-p3**2)*x2*x4*x6 + (-p1**2 - 2*p1*p2 - p2**2)*x2*x4*x5 + (-p1**2 - 2*p1*p2 - 2*p1*p3 - p2**2 - 2*p2*p3 - p3**2)*x2*x3*x6 + (-p1**2 - 2*p1*p2 - p2**2)*x2*x3*x4 + (-p1**2 - 2*p1*p2 - 2*p1*p3 - p2**2 - 2*p2*p3 - p3**2)*x1*x5*x6 + (-p3**2)*x1*x4*x6 + (-p1**2 - 2*p1*p2 - p2**2)*x1*x4*x5 + (-p3**2)*x1*x3*x6 + (-p1**2 - 2*p1*p2 - p2**2)*x1*x3*x5 + (-p1**2 - 2*p1*p2 - p2**2)*x1*x2*x6 + (-p1**2 - 2*p1*p2 - p2**2)*x1*x2*x5 + (-p1**2 - 2*p1*p2 - p2**2)*x1*x2*x4 + (-p1**2 - 2*p1*p2 - p2**2)*x1*x2*x3 + (-p1**2 - 2*p1*p2 - 2*p1*p3 - p2**2 - 2*p2*p3 - p3**2)*x0*x5*x6 + (-p3**2)*x0*x4*x6 + (-p1**2 - 2*p1*p2 - p2**2)*x0*x4*x5 + (-p2**2 - 2*p2*p3 - p3**2)*x0*x3*x6 + (-p1**2)*x0*x3*x5 + (-p2**2)*x0*x3*x4 + (-p1**2)*x0*x2*x6 + (-p1**2)*x0*x2*x5 + (-p1**2)*x0*x2*x4 + (-p1**2)*x0*x2*x3 + (-p2**2)*x0*x1*x6 + (-p2**2)*x0*x1*x5 + (-p2**2)*x0*x1*x4 + (-p2**2)*x0*x1*x3
+>>> box.numerator
+ + (-2*eps*p3(mu)**2 - 2*p3(mu)**2)*U**2 + (-eps + 2)*x6*F + (-eps + 2)*x5*F + (-eps + 2)*x4*F + (-eps + 2)*x3*F + (4*eps*p2(mu)*p3(mu) + 4*eps*p3(mu)**2 + 4*p2(mu)*p3(mu) + 4*p3(mu)**2)*x3*x6*U + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x3*x5*U + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x3*x4*U + (-2*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 2*eps*p3(mu)**2 - 2*p2(mu)**2 - 4*p2(mu)*p3(mu) - 2*p3(mu)**2)*x3**2*x6**2 + (4*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) + 4*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x3**2*x5*x6 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x3**2*x5**2 + (-4*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 4*p2(mu)**2 - 4*p2(mu)*p3(mu))*x3**2*x4*x6 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x3**2*x4*x5 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x3**2*x4**2 + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x2*x6*U + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x2*x5*U + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x2*x4*U + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x2*x3*U + (4*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) + 4*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x2*x3*x6**2 + (-4*eps*p1(mu)**2 + 4*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) - 4*p1(mu)**2 + 4*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x2*x3*x5*x6 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2*x3*x5**2 + (8*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) + 8*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x2*x3*x4*x6 + (-4*eps*p1(mu)**2 + 4*eps*p1(mu)*p2(mu) - 4*p1(mu)**2 + 4*p1(mu)*p2(mu))*x2*x3*x4*x5 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x2*x3*x4**2 + (4*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) + 4*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x2*x3**2*x6 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2*x3**2*x5 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x2*x3**2*x4 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x2**2*x6**2 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x5*x6 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x2**2*x5**2 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x4*x6 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x4*x5 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x2**2*x4**2 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x3*x6 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x3*x5 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x3*x4 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x2**2*x3**2 + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x1*x6*U + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x1*x5*U + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x1*x4*U + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x1*x3*U + (-4*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 4*p2(mu)**2 - 4*p2(mu)*p3(mu))*x1*x3*x6**2 + (4*eps*p1(mu)*p2(mu) - 4*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) + 4*p1(mu)*p2(mu) - 4*p2(mu)**2 - 4*p2(mu)*p3(mu))*x1*x3*x5*x6 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x3*x5**2 + (-8*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 8*p2(mu)**2 - 4*p2(mu)*p3(mu))*x1*x3*x4*x6 + (4*eps*p1(mu)*p2(mu) - 4*eps*p2(mu)**2 + 4*p1(mu)*p2(mu) - 4*p2(mu)**2)*x1*x3*x4*x5 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1*x3*x4**2 + (-4*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 4*p2(mu)**2 - 4*p2(mu)*p3(mu))*x1*x3**2*x6 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x3**2*x5 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1*x3**2*x4 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x2*x6**2 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x5*x6 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x2*x5**2 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x4*x6 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x4*x5 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x2*x4**2 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x3*x6 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x3*x5 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x3*x4 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x2*x3**2 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x1**2*x6**2 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x5*x6 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x1**2*x5**2 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x4*x6 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x4*x5 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x1**2*x4**2 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x3*x6 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x3*x5 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x3*x4 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x1**2*x3**2
+
+We can also generate output in terms of Mandelstam invariants:
+
+>>> replacement_rules = [
+...                        ('p1*p1', 0),
+...                        ('p2*p2', 0),
+...                        ('p3*p3', 0),
+...                        ('p4*p4', 0),
+...                        ('p1*p2', 's/2'),
+...                        ('p2*p3', 't/2'),
+...                        ('p1*p3', '-s/2-t/2')
+...                     ]
+>>> box = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+...                                     numerator=numerator, Lorentz_indices=Lorentz_indices,
+...                                     replacement_rules=replacement_rules)
+>>> box.U
+ + (1)*x3*x6 + (1)*x3*x5 + (1)*x3*x4 + (1)*x2*x6 + (1)*x2*x5 + (1)*x2*x4 + (1)*x2*x3 + (1)*x1*x6 + (1)*x1*x5 + (1)*x1*x4 + (1)*x1*x3 + (1)*x0*x6 + (1)*x0*x5 + (1)*x0*x4 + (1)*x0*x3
+>>> box.F
+ + (-s)*x3*x4*x5 + (-s)*x2*x4*x5 + (-s)*x2*x3*x4 + (-s)*x1*x4*x5 + (-s)*x1*x3*x5 + (-s)*x1*x2*x6 + (-s)*x1*x2*x5 + (-s)*x1*x2*x4 + (-s)*x1*x2*x3 + (-s)*x0*x4*x5 + (-t)*x0*x3*x6
+>>> box.numerator
+ + (-eps + 2)*x6*F + (-eps + 2)*x5*F + (-eps + 2)*x4*F + (-eps + 2)*x3*F + (2*eps*t + 2*t)*x3*x6*U + (-4*eps*(-s/2 - t/2) + 2*s + 2*t)*x3*x5*U + (2*eps*t + 2*t)*x3*x4*U + (-2*eps*t - 2*t)*x3**2*x6**2 + (2*eps*s + 4*eps*(-s/2 - t/2) - 2*t)*x3**2*x5*x6 + (-2*eps*t - 2*t)*x3**2*x4*x6 + (2*eps*s + 2*s)*x3**2*x4*x5 + (-4*eps*(-s/2 - t/2) + 2*s + 2*t)*x2*x6*U + (-4*eps*(-s/2 - t/2) + 2*s + 2*t)*x2*x5*U + (-4*eps*(-s/2 - t/2) + 2*s + 2*t)*x2*x4*U + (-4*eps*(-s/2 - t/2) + 2*s + 2*t)*x2*x3*U + (2*eps*s + 4*eps*(-s/2 - t/2) - 2*t)*x2*x3*x6**2 + (2*eps*s + 4*eps*(-s/2 - t/2) - 2*t)*x2*x3*x5*x6 + (4*eps*s + 4*eps*(-s/2 - t/2) + 2*s - 2*t)*x2*x3*x4*x6 + (2*eps*s + 2*s)*x2*x3*x4*x5 + (2*eps*s + 2*s)*x2*x3*x4**2 + (2*eps*s + 4*eps*(-s/2 - t/2) - 2*t)*x2*x3**2*x6 + (2*eps*s + 2*s)*x2*x3**2*x4 + (2*eps*t + 2*t)*x1*x6*U + (2*eps*t + 2*t)*x1*x5*U + (2*eps*t + 2*t)*x1*x4*U + (2*eps*t + 2*t)*x1*x3*U + (-2*eps*t - 2*t)*x1*x3*x6**2 + (2*eps*s - 2*eps*t + 2*s - 2*t)*x1*x3*x5*x6 + (2*eps*s + 2*s)*x1*x3*x5**2 + (-2*eps*t - 2*t)*x1*x3*x4*x6 + (2*eps*s + 2*s)*x1*x3*x4*x5 + (-2*eps*t - 2*t)*x1*x3**2*x6 + (2*eps*s + 2*s)*x1*x3**2*x5 + (2*eps*s + 2*s)*x1*x2*x6**2 + (4*eps*s + 4*s)*x1*x2*x5*x6 + (2*eps*s + 2*s)*x1*x2*x5**2 + (4*eps*s + 4*s)*x1*x2*x4*x6 + (4*eps*s + 4*s)*x1*x2*x4*x5 + (2*eps*s + 2*s)*x1*x2*x4**2 + (4*eps*s + 4*s)*x1*x2*x3*x6 + (4*eps*s + 4*s)*x1*x2*x3*x5 + (4*eps*s + 4*s)*x1*x2*x3*x4 + (2*eps*s + 2*s)*x1*x2*x3**2
 
 
+Sector Decomposition
+--------------------
+
+The sector decomposition algorithm aims to factorize the polynomials :math:`P_i`
+as products of a monomial and a polynomial with nonzero constant term:
+
+.. math::
+
+    P_i( \{x_j\} ) \longmapsto \prod_j x_j^{\alpha_j} \left( const + p_i(\{ x_j \}) \right).
+
+Factorizing polynomials in that way by expoliting integral transformations
+is the first step in an algorithm for solving dimensionally
+regulated integrals of the form
+
+.. math::
+
+    \int_0^1 \prod_{i,j} P_i(\{ x_j \})^{\beta_i} ~ dx_j.
+
+The iterative sector decomposition splits the integral and remaps the integration domain
+until all polynomials :math:`P_i` in all arising integrals (called `sectors`) have the
+desired form :math:`const + polynomial`.
+An introduction to the sector decomposition approach can be found in [Hei08]_.
+
+To demonstrate the :mod:`pySecDec.decomposition` module, we decompose the polynomials
+
+>>> p1 = Polynomial.from_expression('x + A*y', ['x','y','z'])
+>>> p2 = Polynomial.from_expression('x + B*y*z', ['x','y','z'])
+
+Let us first focus on the iterative decomposition of ``p1``. In the `pySecDec`
+framework, we first have to pack ``p1`` into a :class:`Sector <pySecDec.decomposition.Sector>`:
+
+>>> from pySecDec.decomposition import Sector
+>>> initial_sector = Sector([p1])
+>>> print(initial_sector)
+Sector:
+Jacobian= + (1)
+cast=[( + (1)) * ( + (1)*x + (A)*y)]
+other=[]
+
+We can now run the iterative decomposition and take a look at the decomposed
+sectors:
+
+.. code:: python
+
+    >>> from pySecDec.decomposition.iterative import iterative_decomposition
+    >>> decomposed_sectors = iterative_decomposition(initial_sector)
+    >>> for sector in decomposed_sectors:
+    ...     print(sector)
+    ...     print('\n')
+    ...
+    Sector:
+    Jacobian= + (1)*x
+    cast=[( + (1)*x) * ( + (1) + (A)*y)]
+    other=[]
 
 
+    Sector:
+    Jacobian= + (1)*y
+    cast=[( + (1)*y) * ( + (1)*x + (A))]
+    other=[]
 
 
+The decomposition of ``p2`` needs two iterations and yields three sectors:
+
+.. code:: python
+
+    >>> initial_sector = Sector([p2])
+    >>> decomposed_sectors = iterative_decomposition(initial_sector)
+    >>> for sector in decomposed_sectors:
+    ...     print(sector)
+    ...     print('\n')
+    ...
+    Sector:
+    Jacobian= + (1)*x
+    cast=[( + (1)*x) * ( + (1) + (B)*y*z)]
+    other=[]
 
 
+    Sector:
+    Jacobian= + (1)*x*y
+    cast=[( + (1)*x*y) * ( + (1) + (B)*z)]
+    other=[]
 
 
+    Sector:
+    Jacobian= + (1)*y*z
+    cast=[( + (1)*y*z) * ( + (1)*x + (B))]
+    other=[]
 
 
+Note that we declared ``z`` as variable for ``p1`` although it does not depend on it.
+However, we have to do so if we want to simultaneously decompose ``p1`` and ``p2``:
 
 
+.. code:: python
+
+    >>> initial_sector = Sector([p1, p2])
+    >>> decomposed_sectors = iterative_decomposition(initial_sector)
+    >>> for sector in decomposed_sectors:
+    ...      print(sector)
+    ...      print('\n')
+    ...
+    Sector:
+    Jacobian= + (1)*x
+    cast=[( + (1)*x) * ( + (1) + (A)*y), ( + (1)*x) * ( + (1) + (B)*y*z)]
+    other=[]
 
 
+    Sector:
+    Jacobian= + (1)*x*y
+    cast=[( + (1)*y) * ( + (1)*x + (A)), ( + (1)*x*y) * ( + (1) + (B)*z)]
+    other=[]
 
 
+    Sector:
+    Jacobian= + (1)*y*z
+    cast=[( + (1)*y) * ( + (1)*x*z + (A)), ( + (1)*y*z) * ( + (1)*x + (B))]
+    other=[]
 
 
+We just fully decomposed ``p1`` and ``p2``. In some cases, one may want to bring
+one polynomial, say ``p1``, into standard form, but not neccessarily the other.
+For that purpose, the :class:`Sector <pySecDec.decomposition.Sector>` can take
+a second argument. In the following code example, we bring ``p1`` into standard
+form, apply all transformations to ``p2`` as well, but stop before ``p2`` is fully
+decomposed:
 
 
+.. code:: python
+
+    >>> initial_sector = Sector([p1], [p2])
+    >>> decomposed_sectors = iterative_decomposition(initial_sector)
+    >>> for sector in decomposed_sectors:
+    ...      print(sector)
+    ...      print('\n')
+    ...
+    Sector:
+    Jacobian= + (1)*x
+    cast=[( + (1)*x) * ( + (1) + (A)*y)]
+    other=[ + (1)*x + (B)*x*y*z]
 
 
-
-
+    Sector:
+    Jacobian= + (1)*y
+    cast=[( + (1)*y) * ( + (1)*x + (A))]
+    other=[ + (1)*x*y + (B)*y*z]
 
 
 
