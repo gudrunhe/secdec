@@ -1,47 +1,24 @@
-.. pySecDec documentation master file, created by
-   sphinx-quickstart on Fri Oct 16 14:41:12 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+pySecDec
+========
 
-Welcome to pySecDec's documentation!
-====================================
+`pySecDec` is toolbox for the calculation of dimensionally regulated parameter integrals
+using the sector decomposition approach [Hei08]_.
 
 Contents:
 
-.. automodule:: pySecDec.algebra
-    :members:
-
-.. autoclass:: pySecDec.decomposition.Sector
-.. autofunction:: pySecDec.decomposition.hide
-.. autofunction:: pySecDec.decomposition.unhide
-
-.. automodule:: pySecDec.decomposition.iterative
-    :members:
-
-.. automodule:: pySecDec.decomposition.geometric
-    :members:
-
-.. automodule:: pySecDec.misc
-    :members:
-
-.. automodule:: pySecDec.loop_integral
-    :members:
-
-.. automodule:: pySecDec.subtraction
-    :members:
-
-.. automodule:: pySecDec.expansion
-    :members:
-
 .. toctree::
-   :maxdepth: 2
+    :numbered:
 
+    installation.rst
+    quickstart.rst
+    full_reference.rst
+    references.rst
 
 
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 
+.. * :ref:`modindex`
