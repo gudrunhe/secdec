@@ -7,6 +7,8 @@ of selected modules. For detailed instruction of a specific function or class,
 please refer to the :doc:`reference guide <full_reference>`.
 
 
+.. _algebra_intro:
+
 pySecDec.algebra
 ----------------
 
@@ -34,7 +36,7 @@ A multivariate polynomial is completely determined by its `coefficients` :math:`
 the exponents :math:`\alpha_{ij}`. The :class:`Polynomial <pySecDec.algebra.Polynomial>`
 class stores these in two arrays:
 
-.. TODO: use doctest
+.. TODO: use doctest --> using sphinx's own ``make doctest`` also runs test of all included docstrings from the source code
 
 >>> from pySecDec.algebra import Polynomial
 >>> poly = Polynomial([[1,0], [0,2]], ['A', 'B'])
@@ -42,7 +44,7 @@ class stores these in two arrays:
  + (A)*x0 + (B)*x1**2
 >>> poly.expolist
 array([[1, 0],
-       [0, 1]])
+       [0, 2]])
 >>> poly.coeffs
 array([A, B], dtype=object)
 
@@ -135,7 +137,7 @@ log( + (1)*x)
 .. important ::
     When working with this `algebra` module, it is important to understand that
     **everything** is based on the class
-    :class:`Polynomials <pySecDec.algebra.Polynomial>`.
+    :class:`Polynomial <pySecDec.algebra.Polynomial>`.
 
 To emphasize the importance of the above statement, consider the following code:
 
@@ -168,7 +170,13 @@ array([y], dtype=object)
 The second argument of the function :func:`Expression <pySecDec.algebra.Expression>`
 controls how the variables are distributed between the coefficients and the variables
 in the underlying :class:`Polynomials <pySecDec.algebra.Polynomial>`.
-Keep that in mind in order to avoid confusion.
+Keep that in mind in order to avoid confusion. One can always check which symbols are
+considered as variables by asking for the ``symbols``:
+
+>>> expression1.symbols
+[x, y]
+>>> expression2.symbols
+[x]
 
 
 .. _loop_integral:
@@ -415,4 +423,96 @@ decomposed:
     other=[ + (1)*x*y + (B)*y*z]
 
 
+Expansion
+---------
 
+The purpose of the :mod:`expansion <pySecDec.expansion>` module is,
+as the name suggests, to provide routines to perform a series expansion.
+The module basically implements two routines - the Taylor expansion
+(:func:`pySecDec.expansion.expand_Taylor`) and an expansion of polyrational
+functions supporting singularities in the expansion variable
+(:func:`pySecDec.expansion.expand_singular`).
+
+.. _Taylor_intro:
+
+:func:`pySecDec.expansion.expand_Taylor`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The function :func:`pySecDec.expansion.expand_Taylor` implements the ordinary
+Taylor expansion. It takes an algebraic expression (in the sense of the
+:ref:`algebra module <algebra_intro>`, the index of the expansion variable
+and the order to which the expression shall be expanded:
+
+>>> from pySecDec.algebra import Expression
+>>> from pySecDec.expansion import expand_Taylor
+>>> expression = Expression('x**eps', ['eps'])
+>>> expand_Taylor(expression, 0, 2).simplify()
+ + (1) + (log( + (x)))*eps + ((log( + (x))) * (log( + (x))))*eps**2
+
+It is also possible to expand an expression in multiple variables simultaneously:
+
+>>> expression = Expression('x**(eps + alpha)', ['eps', 'alpha'])
+>>> expand_Taylor(expression, [0,1], [2,0]).simplify()
+ + (1) + (log( + (x)))*eps + ((log( + (x))) * (log( + (x))))*eps**2
+
+The command above instructs :func:`pySecDec.expansion.expand_Taylor` to expand
+the ``expression`` to the second order in the variable indexed ``0`` (``eps``)
+and to the zeroth order in the variable indexed ``1`` (``alpha``).
+
+:func:`pySecDec.expansion.expand_singular`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:func:`pySecDec.expansion.expand_singular` Laurent expands polyrational functions.
+
+Its input is more restrictive than for the :ref:`Taylor expansion <Taylor_intro>`.
+It expects a :class:`Product <pySecDec.algebra.Product>` where the factors are either
+:class:`Polynomials <pySecDec.algebra.Polynomial>` or
+:class:`ExponentiatedPolynomials <pySecDec.algebra.ExponentiatedPolynomial>`
+with ``exponent = -1``:
+
+>>> from pySecDec.expansion import expand_singular
+>>> expression = Expression('1/(eps + alpha)', ['eps', 'alpha']).simplify()
+>>> expand_singular(expression, 0, 1)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/pcl340a/sjahn/Projects/pySecDec/pySecDec/expansion.py", line 241, in expand_singular
+    return _expand_and_flatten(product, indices, orders, _expand_singular_step)
+  File "/home/pcl340a/sjahn/Projects/pySecDec/pySecDec/expansion.py", line 209, in _expand_and_flatten
+    expansion = recursive_expansion(expression, indices, orders)
+  File "/home/pcl340a/sjahn/Projects/pySecDec/pySecDec/expansion.py", line 198, in recursive_expansion
+    expansion = expansion_one_variable(expression, index, order)
+  File "/home/pcl340a/sjahn/Projects/pySecDec/pySecDec/expansion.py", line 82, in _expand_singular_step
+    raise TypeError('`product` must be a `Product`')
+TypeError: `product` must be a `Product`
+>>> expression # ``expression`` is indeed a polyrational function.
+( + (1)*alpha + (1)*eps)**(-1)
+>>> type(expression) # It is just not packed in a ``Product`` as ``expand_singular`` expects.
+<class 'pySecDec.algebra.ExponentiatedPolynomial'>
+>>> from pySecDec.algebra import Product
+>>> expression = Product(expression)
+>>> expand_singular(expression, 0, 1)
+ + (( + (1)) * (( + (1)*alpha)**(-1))) + (( + (-1)) * (( + (1)*alpha**2)**(-1)))*eps
+
+Like in the :ref:`Taylor expansion <Taylor_intro>`, we can expand simultaneously in
+multiple parameters. Note, however, that the result of the Laurent expansion depends
+on the ordering of the expansion variables. The second argument of :func:`pySecDec.expansion.expand_singular`
+determines the order of the expansion:
+
+>>> expression = Expression('1/(2*eps) * 1/(eps + alpha)', ['eps', 'alpha']).simplify()
+>>> eps_first = expand_singular(expression, [0,1], [1,1])
+>>> eps_first
+ + ( + (( + (1/2)) * (( + (1))**(-1)))*alpha**-1)*eps**-1 + ( + (( + (-1/2)) * (( + (1))**(-1)))*alpha**-2) + ( + (( + (1)) * (( + (1))**(-1)))*alpha**-3)*eps
+>>> alpha_first = expand_singular(expression, [1,0], [1,1])
+>>> alpha_first
+ + ( + (( + (1/2)) * (( + (1))**(-1)))*eps**-2) + ( + (( + (-1/2)) * (( + (1))**(-1)))*eps**-3)*alpha
+
+The expression printed out by our algebra module are quite messy. In order to obtain nicer
+output, we can convert these expressions to the slower but more high level `sympy`:
+
+>>> import sympy as sp
+>>> eps_first = expand_singular(expression, [0,1], [1,1])
+>>> alpha_first = expand_singular(expression, [1,0], [1,1])
+>>> sp.sympify(eps_first)
+1/(2*alpha*eps) - 1/(2*alpha**2) + eps/alpha**3
+>>> sp.sympify(alpha_first)
+-alpha/(2*eps**3) + 1/(2*eps**2)
