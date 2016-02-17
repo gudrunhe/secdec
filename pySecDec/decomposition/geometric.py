@@ -105,8 +105,8 @@ class Polytope(object):
 
         .. note::
             This function calls the command line executable of
-            `normaliz <http://www.home.uni-osnabrueck.de/wbruns/
-            normaliz/>`_.
+            `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_
+            [BIR]_.
             It is designed for `normaliz` version 3.0.0
 
         :param normaliz:
