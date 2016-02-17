@@ -11,13 +11,15 @@ help :
 	echo
 	echo "    Implemented targets:"
 	echo
-	echo "    check        use nosetests to test with python 2.7 and 3"
+	echo "    check        use nosetests to test with python 2.7 and 3,"
+	echo "                 and run doctest using Sphinx"
 	echo "    checkX       use nosetests to test with python 2.7 or 3,"
 	echo "                 where X is one of {2,3}"
 	echo "    active_check use nosetests to run only tests marked as"
 	echo "                 \"active\" using nosetests-2.7 and nosetests3"
 	echo "    fast_check   use nosetests to run only quick tests"
 	echo "                 using nosetests-2.7 and nosetests3"
+	echo "    doctest      run doctest using Sphinx"
 	echo "    clean        delete compiled and temporary files"
 	echo "    coverage     produce and show a code coverage report"
 	echo "    doc          build the html documentation using sphinx"
@@ -48,7 +50,7 @@ clean:
 	rm -rf coverage
 
 .PHONY : check
-check : check2 check3
+check : check2 check3 doctest
 
 .PHONY : check2
 check2 :
@@ -77,6 +79,10 @@ doc :
 .PHONY : doc-pdf
 doc-pdf :
 	cd doc; make latexpdf
+
+.PHONY : doctest
+doctest :
+	$(MAKE) -C doc doctest
 
 .PHONY : run-examples
 run-examples :
