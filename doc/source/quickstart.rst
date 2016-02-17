@@ -435,8 +435,8 @@ functions supporting singularities in the expansion variable
 
 .. _Taylor_intro:
 
-:func:`pySecDec.expansion.expand_Taylor`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Taylor expansion
+~~~~~~~~~~~~~~~~
 
 The function :func:`pySecDec.expansion.expand_Taylor` implements the ordinary
 Taylor expansion. It takes an algebraic expression (in the sense of the
@@ -459,8 +459,8 @@ The command above instructs :func:`pySecDec.expansion.expand_Taylor` to expand
 the ``expression`` to the second order in the variable indexed ``0`` (``eps``)
 and to the zeroth order in the variable indexed ``1`` (``alpha``).
 
-:func:`pySecDec.expansion.expand_singular`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Laurent Expansion
+~~~~~~~~~~~~~~~~~
 
 :func:`pySecDec.expansion.expand_singular` Laurent expands polyrational functions.
 
