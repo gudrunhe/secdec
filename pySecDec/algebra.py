@@ -1221,7 +1221,6 @@ class Log(_Expression):
     def replace(expression, index, value, remove=False):
         return Log( expression.arg.replace(index,value,remove) , copy=False )
 
-# TODO: extensively test this function
 def Expression(expression, polysymbols):
     '''
     Convert a sympy expression to an expression

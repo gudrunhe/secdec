@@ -168,17 +168,3 @@ def integrate_pole_part(polyprod, *indices):
         for polyprod in old_products:
             new_products.extend( _integrate_pole_part_single_index(polyprod, index) )
     return new_products
-
-
-# TODO: implement something like this (including ``U`` as parameter):
-#In [37]: def sum_gen(nunu):
-#    for exponents, coeff in zip(nunu.expolist, nunu.coeffs):
-#        exponents = list(exponents) + [0,0]
-#        expr = Polynomial([exponents], [1], nunu.polysymbols + sp.sympify(['F','eps']))
-#        yield Product( expr , make_expr(coeff, nunu.polysymbols + sp.sympify(['F','eps'])) )
-#   ....:         
-#
-#In [38]: %time nun = Sum(*[item for item in sum_gen(li.numerator) ] )
-#CPU times: user 366 ms, sys: 0 ns, total: 366 ms
-#Wall time: 361 ms
-#

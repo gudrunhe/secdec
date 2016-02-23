@@ -36,8 +36,6 @@ A multivariate polynomial is completely determined by its `coefficients` :math:`
 the exponents :math:`\alpha_{ij}`. The :class:`Polynomial <pySecDec.algebra.Polynomial>`
 class stores these in two arrays:
 
-.. TODO: use doctest --> using sphinx's own ``make doctest`` also runs test of all included docstrings from the source code
-
 >>> from pySecDec.algebra import Polynomial
 >>> poly = Polynomial([[1,0], [0,2]], ['A', 'B'])
 >>> poly
@@ -193,8 +191,6 @@ the loop integral from the momentum representation to the Feynman parameter repr
 The module :mod:`pySecDec.loop_integral` implements exactly that conversion.
 The most basic use is to calculate the first ``U`` and the second ``F``
 Symanzik polynomial from the propagators of a loop integral.
-
-.. TODO: check spelling of "Symanzik"
 
 .. TODO: include Feynman diagrams?
 
