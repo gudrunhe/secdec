@@ -45,7 +45,7 @@ def primary_decomposition_polynomial(polynomial):
 def primary_decomposition(sector):
     r'''
     Perform the primary decomposition as described in
-    chapter 3.2 (part I) of arXiv:0803.4177v2.
+    chapter 3.2 (part I) of arXiv:0803.4177v2 [Hei08]_.
     Return a list of :class:`.Sector` - the primary
     sectors.
     For `N` Feynman parameters, there are `N` primary
@@ -98,8 +98,8 @@ class EndOfDecomposition(Exception):
 def remap_parameters(singular_parameters, Jacobian, *polynomials):
     r'''
     Remap the Feynman parameters according to eq. (16) of
-    arXiv:0803.4177v2. The parameter whose index comes first
-    in `singular_parameters` is kept fix.
+    arXiv:0803.4177v2 [Hei08]_. The parameter whose index comes
+    first in `singular_parameters` is kept fix.
 
     The remapping is done in place; i.e. the `polynomials` are
     **NOT** copied.
@@ -145,7 +145,7 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
 def iteration_step(sector):
     '''
     Run a single step of the iterative sector decomposition as described
-    in chapter 3.2 (part II) of arXiv:0803.4177v2.
+    in chapter 3.2 (part II) of arXiv:0803.4177v2 [Hei08]_.
     Return an iterator of :class:`.Sector` - the arising subsectors.
 
     :param sector:
@@ -204,7 +204,7 @@ def iteration_step(sector):
 def iterative_decomposition(sector):
     '''
     Run the iterative sector decomposition as described
-    in chapter 3.2 (part II) of arXiv:0803.4177v2.
+    in chapter 3.2 (part II) of arXiv:0803.4177v2 [Hei08]_.
     Return an iterator of :class:`.Sector` - the
     arising subsectors.
 

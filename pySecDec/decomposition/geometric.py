@@ -381,7 +381,7 @@ def transform_variables(polynomial, transformation, polysymbols='y'):
 def geometric_decomposition(sector, normaliz='normaliz', workdir='normaliz_tmp'):
     '''
     Run the sector decomposition using the geomethod
-    as described in arXiv:1502.06595.
+    as described in [BHJ+15]_.
 
     :param sector:
         :class:`.Sector`;

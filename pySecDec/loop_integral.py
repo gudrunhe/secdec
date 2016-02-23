@@ -35,7 +35,7 @@ class LoopIntegral(object):
         representation.
 
         .. seealso::
-            arXiv:0803.4177, arXiv:1010.1667
+            [Hei08]_, [GKR+11]_
 
         The Feynman parametrized integral is a product
         of the following expressions member properties:
@@ -467,7 +467,7 @@ class LoopIntegral(object):
     def numerator(self):
         '''
         Generate the numerator in index notation according to
-        section 2 in arXiv:1010.1667.
+        section 2 in [GKR+11]_.
 
         '''
         # The implementation below conceptually follows section 2 of arXiv:1010.1667.

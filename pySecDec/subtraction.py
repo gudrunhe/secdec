@@ -119,7 +119,8 @@ def integrate_pole_part(polyprod, *indices):
 
     .. seealso::
         This function implements the transformation from
-        equation (19) to (21) as described in arXiv:0803.4177v2.
+        equation (19) to (21) as described in arXiv:0803.4177v2
+        [Hei08]_.
 
 
     :param polyprod:
@@ -156,7 +157,7 @@ def integrate_pole_part(polyprod, *indices):
 
     Return the pole part and the numerically integrable remainder
     as a list. That is the sum and the integrand of equation (21)
-    in arXiv:0803.4177v2.
+    in arXiv:0803.4177v2 [Hei08]_.
     Each returned list element has the same structure as the input
     `polyprod`.
 
