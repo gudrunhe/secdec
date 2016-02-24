@@ -4,3 +4,5 @@ doc/build
 
 .coverage
 coverage
+
+pySecDec.egg-info

@@ -22,14 +22,36 @@ class LoopIntegral(object):
 
     '''
     def __init__(self, *args, **kwargs):
-        if args[0] != 'using a named constructor':
-            raise AttributeError('Use one of the named constructors.')
+        raise AttributeError('Use one of the derived classes.')
 
-    @staticmethod
-    def from_propagators(propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
-                         numerator=1, replacement_rules=[], Feynman_parameters='x', regulator='eps', \
-                         regulator_power=0, dimensionality='4-2*eps', metric_tensor='g'):
-        r'''
+    @cached_property
+    def exponent_U(self):
+        return len(self.propagators) - self.dimensionality / 2 * (len(self.loop_momenta) + 1) - self.highest_rank
+
+    @property # not cached on purpose --> this is just making copies
+    def exponentiated_U(self):
+        return ExponentiatedPolynomial(self.U.expolist, self.U.coeffs, self.exponent_U, self.U.polysymbols)
+
+    @cached_property
+    def exponent_F(self):
+        return self.dimensionality / 2 * len(self.loop_momenta) - len(self.propagators)
+
+    @property # not cached on purpose --> this is just making copies
+    def exponentiated_F(self):
+        return ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, self.exponent_F, self.F.polysymbols)
+
+    @cached_property
+    def Gamma_factor(self):
+        # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
+        # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
+        # In order to keep the `numerator` free of poles in the regulator, we divide it
+        # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
+        # where `//` means integer division, and put it here.
+        return sp.gamma(len(self.propagators) - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
+
+
+class LoopIntegral_from_propagators(LoopIntegral):
+    '''
         Construct the Feynman parametrization of a
         loop integral from the algebraic momentum
         representation.
@@ -193,13 +215,15 @@ class LoopIntegral(object):
             The symbol to be used for the (Minkowski) metric
             tensor :math:`g^{\mu\nu}`.
 
-        '''
+    '''
         # TODO: carefully reread and check this documentation
         # TODO: test case with linear propagators
         # TODO: test that including all the factors described above
         #       is the complete integrand
 
-        self = LoopIntegral('using a named constructor')
+    def __init__(self, propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
+                 numerator=1, replacement_rules=[], Feynman_parameters='x', regulator='eps', \
+                 regulator_power=0, dimensionality='4-2*eps', metric_tensor='g'):
 
         def sympify_symbols(iterable, error_message, allow_number=False):
             '''
@@ -283,15 +307,6 @@ class LoopIntegral(object):
         else:
             self.numerator_input_terms = [self.numerator_input]
 
-        return self
-
-    @staticmethod
-    def from_graph(): #TODO: What input is required for the cut construct?
-        # TODO: implement replacement rules in cut construct
-        raise NotImplementedError()
-        self = LoopIntegral()
-        # TODO: implement cut construction
-        return self
 
     @cached_property
     def propagator_sum(self):
@@ -340,22 +355,6 @@ class LoopIntegral(object):
 
     # equation (8) of arXiv:0803.4177: U = det(M)
     U = detM
-
-    @cached_property
-    def exponent_U(self):
-        return len(self.propagators) - self.dimensionality / 2 * (len(self.loop_momenta) + 1) - self.highest_rank
-
-    @property # not cached on purpose --> this is just making copies
-    def exponentiated_U(self):
-        return ExponentiatedPolynomial(self.U.expolist, self.U.coeffs, self.exponent_U, self.U.polysymbols)
-
-    @cached_property
-    def exponent_F(self):
-        return self.dimensionality / 2 * len(self.loop_momenta) - len(self.propagators)
-
-    @property # not cached on purpose --> this is just making copies
-    def exponentiated_F(self):
-        return ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, self.exponent_F, self.F.polysymbols)
 
     @cached_property
     def F(self):
@@ -453,15 +452,6 @@ class LoopIntegral(object):
     @cached_property
     def highest_rank(self):
         return max(self.numerator_ranks)
-
-    @cached_property
-    def Gamma_factor(self):
-        # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
-        # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
-        # In order to keep the `numerator` free of poles in the regulator, we divide it
-        # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
-        # where `//` means integer division, and put it here.
-        return sp.gamma(len(self.propagators) - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
 
     @cached_property
     def numerator(self):
@@ -635,3 +625,71 @@ class LoopIntegral(object):
                 replacement_rules.append( (pattern_with_index, replacement_with_index) )
 
         return replacement_rules
+
+
+class LoopIntegral_from_graph(LoopIntegral):
+    '''
+    Construct the Feynman parametrization of a
+    loop integral from the graph using the cut construction method.
+    '''
+    # TODO: implement replacement rules in cut construct
+
+    def __init__(self, loops, lines, external_momenta):
+    
+        self.L=loops
+
+        self.intlines=[]
+        for line in lines:
+            temp=[sp.sympify(line[0]),[line[1],line[2]]]
+            self.intlines.append(temp)
+
+        self.extlines=[]
+        for i in range(len(external_momenta)):
+            temp=[sp.sympify(external_momenta[i][0]),[-i-1,external_momenta[i][1]]]
+            self.extlines.append(temp)
+
+    @cached_property
+    def vertdict(self): 
+        # creates a list of internal and external vertices and indexes them
+        lines = self.intlines + self.extlines
+        vertices=set([])
+        for line in lines:
+            vertices = vertices | set(line[1])
+        vertices=list(vertices)
+        dict = {}
+        for i in range(len(vertices)):
+            dict[vertices[i]] = i
+        return dict
+        
+    @cached_property
+    def vertmatrix(self):
+        # create transition matrix representation of underlying graph
+        numvert = len(self.vertdict)
+        M = np.empty((numvert,numvert), dtype=object)
+        # each vertex is trivially connected to itself
+        for i in range(numvert):
+            for j in range(i,numvert):
+                if i == j:
+                    M[i,j]=1
+                else:
+                    M[i,j]=M[j,i]=0
+        for i in range(len(self.intlines)):
+            # get indices for start and end of each propagator
+            start = self.vertdict[self.intlines[i][1][0]]
+            end = self.vertdict[self.intlines[i][1][1]]
+            # add entry to the matrix representation
+            temp = sp.sympify('pr'+str(i))
+            M[start,end] += temp
+            M[end,start] += temp
+        return M
+        
+    @cached_property
+    def U(self):
+        raise NotImplementedError()
+        # TODO: implement cut construction
+
+    @cached_property
+    def F(self):
+        raise NotImplementedError()
+        # TODO: implement cut construction
+        
