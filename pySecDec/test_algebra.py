@@ -440,6 +440,57 @@ class TestProduct(unittest.TestCase):
         self.assertEqual(str(prod), string_prod)
         self.assertEqual(repr(prod), string_prod)
 
+class TestProductRule(unittest.TestCase):
+    def setUp(self):
+        self.poly1 = Polynomial.from_expression('x+x*y', ['x','y'])
+        self.poly2 = Polynomial.from_expression('x**2-y**2', ['x','y'])
+        self.p0 = ProductRule(self.poly1, self.poly2)
+        self.target_dp0_dx = sp.sympify('(1+y) * (x**2-y**2) + (x+x*y) * (2*x)')
+
+    #@attr('active')
+    def test_string_form_basic(self):
+        target_str_p0 = ' + (1) * ( + (1)*x + (1)*x*y) * ( + (-1)*y**2 + (1)*x**2)'
+        self.assertEqual(str(self.p0), target_str_p0)
+        self.assertEqual(repr(self.p0), target_str_p0)
+
+    #@attr('active')
+    def test_copy(self):
+        p0 = ProductRule(self.poly1, self.poly2)
+        p1 = p0.copy()
+
+        self.assertEqual(len(p0.expressions), len(p1.expressions))
+
+        for expr0, expr1 in zip(p0.expressions, p1.expressions):
+            for key in list(expr0.keys()) + list(expr1.keys()):
+                self.assertFalse(expr0[key] is expr1[key])
+
+    #@attr('active')
+    def test_derive(self):
+        dp0_dx = self.p0.derive(0)
+        self.assertEqual(  (sp.sympify(dp0_dx) - self.target_dp0_dx).simplify()  ,   0   )
+
+    #@attr('active')
+    def test_simplify(self):
+        ddp0_dx_dx = self.p0.derive(0).derive(0)
+        simplified_ddp0_dx_dx = self.p0.derive(0).derive(0).simplify()
+        target_ddp0_dx_dx = sp.sympify('(1+y) * (2*x) + 4 * x * (1+y)')
+
+        self.assertEqual(   (sp.sympify(simplified_ddp0_dx_dx) - target_ddp0_dx_dx).simplify()   ,   0   )
+        self.assertLess(len(simplified_ddp0_dx_dx.coeffs), len(ddp0_dx_dx.coeffs))
+
+    #@attr('active')
+    def test_replace(self):
+        z = sp.symbols('z')
+        dp0_dx = self.p0.derive(0)
+        replaced = dp0_dx.replace(0,z)
+        removed = dp0_dx.replace(0,z, True)
+
+        self.assertEqual(replaced.symbols, sp.symbols(['x','y']))
+        self.assertEqual(removed.symbols, sp.symbols(['y']))
+
+        for derivative in [removed, replaced]:
+            self.assertEqual(   (sp.sympify(derivative) - self.target_dp0_dx.subs('x','z')).simplify()   ,   0   )
+
 #@attr('active')
 class TestPow(unittest.TestCase):
     def test_init(self):
