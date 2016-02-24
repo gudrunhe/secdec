@@ -1029,26 +1029,14 @@ class Product(_Expression):
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
+        Return an instance of the optimized class:`.ProductRule`.
 
         :param index:
             integer;
             The index of the paramater to derive by.
 
         '''
-        # product rule: derivative(p1 * p2 * ...) = derivative(p1) * p2 * ... + p1 * derivative(p2) * ...
-        summands = []
-        for i,factor_to_diff in enumerate(self.factors):
-            differentiated_factor = factor_to_diff.derive(index)
-            # catch ``differentiated_factor == 0``
-            if type(differentiated_factor) is Polynomial and (differentiated_factor.coeffs == 0).all():
-                continue
-            else:
-                factors = [differentiated_factor if i==j else f.copy() for j,f in enumerate(self.factors)]
-                summands.append(Product(*factors, copy=False))
-        if summands:
-            return Sum(*summands, copy=False)
-        else:
-            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
+        return ProductRule(*self.factors).derive(index)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
