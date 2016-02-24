@@ -2,6 +2,7 @@
 
 from .algebra import Polynomial, ExponentiatedPolynomial
 from .misc import det, adjugate, powerset, missing, all_pairs, cached_property
+from itertools import combinations
 import sympy as sp
 import numpy as np
 
@@ -640,7 +641,7 @@ class LoopIntegral_from_graph(LoopIntegral):
 
         self.intlines=[]
         for line in lines:
-            temp=[sp.sympify(line[0]),[line[1],line[2]]]
+            temp=[sp.sympify(line[0]),[line[1][0],line[1][1]]]
             self.intlines.append(temp)
 
         self.extlines=[]
@@ -662,31 +663,63 @@ class LoopIntegral_from_graph(LoopIntegral):
         return dict
         
     @cached_property
-    def vertmatrix(self):
-        # create transition matrix representation of underlying graph
+    def vertmatrix(self):  # create transition matrix representation of underlying graph
+
+        # each vertex is trivially connected to itself, so start from unit matrix:
         numvert = len(self.vertdict)
-        M = np.empty((numvert,numvert), dtype=object)
-        # each vertex is trivially connected to itself
-        for i in range(numvert):
-            for j in range(i,numvert):
-                if i == j:
-                    M[i,j]=1
-                else:
-                    M[i,j]=M[j,i]=0
+        def delta(i,j):
+            if i==j:
+                return 1
+            else:
+                return 0
+        M = sp.Matrix(numvert,numvert,delta)
+
+        # for each propagator connecting two vertices add an entry in the matrix
         for i in range(len(self.intlines)):
-            # get indices for start and end of each propagator
             start = self.vertdict[self.intlines[i][1][0]]
             end = self.vertdict[self.intlines[i][1][1]]
-            # add entry to the matrix representation
             temp = sp.sympify('pr'+str(i))
             M[start,end] += temp
             M[end,start] += temp
+
+        # for each propagator connecting two vertices add an entry in the matrix
+        for i in range(len(self.extlines)):
+            start = self.vertdict[self.extlines[i][1][0]]
+            end = self.vertdict[self.extlines[i][1][1]]
+            M[start,end] += 1
+            M[end,start] += 1
+
         return M
         
     @cached_property
     def U(self):
-        raise NotImplementedError()
-        # TODO: implement cut construction
+
+        U = Polynomial([[0]*len(self.intlines)],[0])
+
+        # iterate over all possible L-fold cuts
+        for Lcut in combinations(range(len(self.intlines)), self.L):
+            # find uncut propagators
+            uncut = missing(range(len(self.intlines)),Lcut)
+
+            # Define transition matrix for cut graph by removing cut propagators
+            rules1 = map(lambda x: (sp.Symbol('pr'+str(x)),0), Lcut)
+            rules2 = map(lambda x: (sp.Symbol('pr'+str(x)),1), uncut)
+            newmatrix = np.matrix(self.vertmatrix.subs(rules1+rules2))
+
+            # Check if cut graph is connected
+            numvert = len(self.vertdict)
+            if(0 in newmatrix**numvert):
+                # not connected if exponentiated matrix has a zero
+                continue
+
+            # construct monomial of Feynman parameters of cut propagators and add this to U
+            expolist=[0]*len(self.intlines)
+            for i in Lcut:
+                expolist[i]=1
+            monom = Polynomial([expolist],[1])
+            U += monom
+
+        return U
 
     @cached_property
     def F(self):
