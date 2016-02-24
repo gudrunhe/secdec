@@ -151,6 +151,10 @@ def argsort_2D_array(array):
     Sort a 2D array according to its row entries.
     The idea is to bring identical rows together.
 
+    .. seealso::
+        If your array is not two dimesional
+        use :func:`.argsort_ND_array`.
+
     Example:
         +-------+--------+-------+
         | input |        |sorted |
@@ -183,6 +187,32 @@ def argsort_2D_array(array):
     array = array.flatten()
 
     return np.argsort(array, kind='mergesort')
+
+def argsort_ND_array(array):
+    '''
+    Like :func:`.argsort_2D_array`, this
+    function groups identical entries in
+    an array with any dimensionality greater
+    than (or equal to) two together.
+
+    Return the indices like numpy's :func:`argsort`
+    would.
+
+    .. seealso::
+        :func:`.argsort_2D_array`
+
+    :param array:
+        ND array, :math:`N>=2`;
+        The array to be argsorted.
+
+    '''
+    # create a new view
+    # the "[:]" is essential; if it was missing, we could overwrite the input
+    array = np.asarray(array)[:]
+    assert len(array.shape) >= 2, "`array` must be two or higher dimensional"
+    shape_2D = (array.shape[0], np.prod(array.shape[1:]))
+    array_2D = array.reshape(shape_2D)
+    return argsort_2D_array(array_2D)
 
 def cached_property(method):
     '''
