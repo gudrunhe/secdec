@@ -1036,7 +1036,7 @@ class Product(_Expression):
             The index of the paramater to derive by.
 
         '''
-        return ProductRule(*self.factors).derive(index)
+        return ProductRule(*self.factors, copy=False).derive(index)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
@@ -1210,6 +1210,13 @@ class ProductRule(_Expression):
                 # mark previous term for removal by setting coefficient to zero
                 self.coeffs[i-1] = 0
 
+            # find zeros in `self.expressions`
+            for j, derivative_multiindex in enumerate(self.factorlist[i]):
+                derivative_multiindex = tuple(derivative_multiindex)
+                expression = self.expressions[j][derivative_multiindex]
+                if type(expression) is Polynomial and (expression.coeffs == 0).all():
+                    self.coeffs[i] = 0
+
         # remove terms with zero coefficient
         nonzero_coeffs = np.where(self.coeffs != 0)
         self.coeffs = self.coeffs[nonzero_coeffs]
@@ -1219,15 +1226,13 @@ class ProductRule(_Expression):
 
     @doc(_Expression.docstring_of_replace)
     def replace(self, index, value, remove=False):
-        new_expressions = [expression.copy() for expression in self.expressions]
-        for expression in new_expressions:
-            for derivative_multiindex, derivative in expression.items():
-                expression[derivative_multiindex] = expression[derivative_multiindex].replace(index,value,remove).simplify() # automatically simplify cache
-
-        return ProductRule(internal_regenerate=True, copy=False,
-                           factorlist=self.factorlist.copy(),
-                           coeffs=self.coeffs.copy(),
-                           expressions=new_expressions)
+        summands = []
+        for term in self.factorlist:
+            factors = []
+            for j, derivative_multiindex in enumerate(term):
+                factors.append(self.expressions[j][tuple(derivative_multiindex)].replace(index, value, remove))
+            summands.append(Product(*factors, copy=False))
+        return Sum(*summands, copy=False)
 
 class Pow(_Expression):
     r'''
