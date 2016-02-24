@@ -697,12 +697,12 @@ class LoopIntegral_from_graph(LoopIntegral):
         U = Polynomial([[0]*len(self.intlines)],[0])
 
         # iterate over all possible L-fold cuts
-        for Lcut in combinations(range(len(self.intlines)), self.L):
+        for cut in combinations(range(len(self.intlines)), self.L):
             # find uncut propagators
-            uncut = missing(range(len(self.intlines)),Lcut)
+            uncut = missing(range(len(self.intlines)),cut)
 
             # Define transition matrix for cut graph by removing cut propagators
-            rules1 = map(lambda x: (sp.Symbol('pr'+str(x)),0), Lcut)
+            rules1 = map(lambda x: (sp.Symbol('pr'+str(x)),0), cut)
             rules2 = map(lambda x: (sp.Symbol('pr'+str(x)),1), uncut)
             newmatrix = np.matrix(self.vertmatrix.subs(rules1+rules2))
 
@@ -714,7 +714,7 @@ class LoopIntegral_from_graph(LoopIntegral):
 
             # construct monomial of Feynman parameters of cut propagators and add this to U
             expolist=[0]*len(self.intlines)
-            for i in Lcut:
+            for i in cut:
                 expolist[i]=1
             monom = Polynomial([expolist],[1])
             U += monom
@@ -723,6 +723,44 @@ class LoopIntegral_from_graph(LoopIntegral):
 
     @cached_property
     def F(self):
-        raise NotImplementedError()
-        # TODO: implement cut construction
-        
+
+        F = Polynomial([[0]*len(self.intlines)],[0])
+
+        # iterate over all possible (L+1)-fold cuts
+        for cut in combinations(range(len(self.intlines)), self.L+1):
+            # find uncut propagators
+            uncut = missing(range(len(self.intlines)),cut)
+
+            # Define transition matrix for cut graph by removing cut propagators
+            rules1 = map(lambda x: (sp.Symbol('pr'+str(x)),0), cut)
+            rules2 = map(lambda x: (sp.Symbol('pr'+str(x)),1), uncut)
+            newmatrix = np.matrix(self.vertmatrix.subs(rules1+rules2))
+
+            # Check if cut graph is connected
+            numvert = len(self.vertdict)
+            newmatrix = newmatrix**numvert
+            
+            # find all vertices *not* connected to vertex 0
+            notconnectedto0 = []
+            for i in range(numvert):
+                if newmatrix[0,i]==0:
+                    notconnectedto0.append(i)
+
+            # check if all vertices not connected to 0 are connected to each other
+            valid2tree = True
+            for i,j in zip(notconnectedto0,notconnectedto0):
+                if newmatrix[i,j]==0:
+                    valid2tree = False
+                    continue
+            if not valid2tree:
+                continue
+
+            # construct monomial of Feynman parameters of cut propagators and add this to F
+            expolist=[0]*len(self.intlines)
+            for i in cut:
+                expolist[i]=1
+            monom = Polynomial([expolist],[1])
+            F += monom
+
+        return F
+            
