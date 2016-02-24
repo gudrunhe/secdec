@@ -218,9 +218,9 @@ class Polynomial(_Expression):
         Whether or not to copy the `expolist` and the `coeffs`.
 
         .. note::
-            If copy is ``True``, it is assumed that the
+            If copy is ``False``, it is assumed that the
             `expolist` and the `coeffs` have the correct
-            format.
+            type.
 
     '''
     def __init__(self, expolist, coeffs, polysymbols='x', copy=True):
@@ -618,9 +618,9 @@ class ExponentiatedPolynomial(Polynomial):
         and the `exponent`.
 
         .. note::
-            If copy is ``True``, it is assumed that the
+            If copy is ``False``, it is assumed that the
             `expolist`, the `coeffs` and the `exponent` have
-            the correct format.
+            the correct type.
 
     '''
     def __init__(self, expolist, coeffs, exponent=1, polysymbols='x', copy=True):
