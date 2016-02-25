@@ -64,7 +64,6 @@ class LoopIntegral(object):
     def exponentiated_F(self):
         return ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, self.exponent_F, self.F.polysymbols)
 
-    @staticmethod
     def set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality):
         # sympify and store `regulator`
         self.regulator = sympify_symbols([regulator], '`regulator` must be a symbol.')[0]
@@ -307,7 +306,7 @@ class LoopIntegral_from_propagators(LoopIntegral):
             self.numerator_input_terms = [self.numerator_input]
 
         # store properties shared between derived classes
-        self.set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality)
+        self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality)
 
 
     @cached_property
@@ -643,7 +642,7 @@ class LoopIntegral_from_graph(LoopIntegral):
     Construct the Feynman parametrization of a
     loop integral from the graph using the cut construction method.
     '''
-    # TODO: implement replacement rules in cut construct
+    # TODO: implement momentum conservation in cut construct
 
     def __init__(self, internal_lines, external_lines, replacement_rules=[], Feynman_parameter_symbol='x', \
                  regulator='eps', regulator_power=0, dimensionality='4-2*eps'):
@@ -676,7 +675,7 @@ class LoopIntegral_from_graph(LoopIntegral):
         self.loop_momenta=[] #dummy
 
         # store properties shared between derived classes
-        self.set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality)
+        self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality)
 
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0
@@ -803,15 +802,17 @@ class LoopIntegral_from_graph(LoopIntegral):
             else:
                 cutmomenta = missing(range(len(self.intverts),numvert),extnotconnectedto0)
 
-            # sum over cut momenta
-            cutsum = sum(map(lambda i: self.extlines[i-len(self.intverts)][0], cutmomenta))
-                
-            # construct monomial of Feynman parameters of cut propagators and add this to F
-            expolist=[0]*len(self.intlines)
-            for i in cut:
-                expolist[i]=1
-            monom = Polynomial([expolist],[-cutsum**2])
-            F0 += monom
+            # construct monomial of Feynman parameters of cut propagators and add this to F, 
+            # if the momentum flow through the cuts is non-zero
+            if cutmomenta:
+                expolist=[0]*len(self.intlines)
+                for i in cut:
+                    expolist[i]=1
+                # sum the momenta flowing through the cuts, square it, and use replacement rules
+                sumsqr = sum(map(lambda i: self.extlines[i-len(self.intverts)][0], cutmomenta))**2
+                sumsqr = sumsqr.expand().subs(self.replacement_rules)
+                monom = Polynomial([expolist],[-sumsqr])
+                F0 += monom
 
         # construct terms proportial to the squared masses
         Fm = Polynomial([[0]*len(self.intlines)], [0], polysymbols=self.Feynman_parameter_symbol)
@@ -820,5 +821,5 @@ class LoopIntegral_from_graph(LoopIntegral):
             expolist[i] = 1
             Fm += Polynomial([expolist], [self.intlines[i][0]**2])
 
-        return F0 + self.U*Fm
+        return (F0 + self.U*Fm).simplify()
             
