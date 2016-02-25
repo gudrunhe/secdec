@@ -646,13 +646,14 @@ class LoopIntegral_from_graph(LoopIntegral):
 
         self.extlines=[]
         for i in range(len(external_momenta)):
-            temp=[sp.sympify(external_momenta[i][0]),[-i-1,external_momenta[i][1]]]
+            temp=[sp.sympify(external_momenta[i][0]),external_momenta[i][1]]
             self.extlines.append(temp)
 
     @cached_property
-    def vertdict(self): 
-        # creates a list of internal and external vertices and indexes them
-        lines = self.intlines + self.extlines
+    def intverts(self): 
+        # creates a list of all internal vertices and indexes them
+        # returns a dictionary that relates the name of a vertex to its index
+        lines = self.intlines
         vertices=set([])
         for line in lines:
             vertices = vertices | set(line[1])
@@ -666,26 +667,21 @@ class LoopIntegral_from_graph(LoopIntegral):
     def vertmatrix(self):  # create transition matrix representation of underlying graph
 
         # each vertex is trivially connected to itself, so start from unit matrix:
-        numvert = len(self.vertdict)
-        def delta(i,j):
-            if i==j:
-                return 1
-            else:
-                return 0
-        M = sp.Matrix(numvert,numvert,delta)
+        numvert = len(self.intverts)+len(self.extlines)
+        M = sp.Matrix(numvert, numvert, lambda i,j: 1 if i==j else 0)
 
-        # for each propagator connecting two vertices add an entry in the matrix
+        # for each internal propagator connecting two vertices add an entry in the matrix
         for i in range(len(self.intlines)):
-            start = self.vertdict[self.intlines[i][1][0]]
-            end = self.vertdict[self.intlines[i][1][1]]
+            start = self.intverts[self.intlines[i][1][0]]
+            end = self.intverts[self.intlines[i][1][1]]
             temp = sp.sympify('pr'+str(i))
             M[start,end] += temp
             M[end,start] += temp
 
-        # for each propagator connecting two vertices add an entry in the matrix
+        # for each external line add a vertex and an entry in the matrix
         for i in range(len(self.extlines)):
-            start = self.vertdict[self.extlines[i][1][0]]
-            end = self.vertdict[self.extlines[i][1][1]]
+            start = len(self.intverts) + i
+            end = self.intverts[self.extlines[i][1]]
             M[start,end] += 1
             M[end,start] += 1
 
@@ -707,7 +703,7 @@ class LoopIntegral_from_graph(LoopIntegral):
             newmatrix = np.matrix(self.vertmatrix.subs(rules1+rules2))
 
             # Check if cut graph is connected
-            numvert = len(self.vertdict)
+            numvert = len(self.intverts) + len(self.extlines)
             if(0 in newmatrix**numvert):
                 # not connected if exponentiated matrix has a zero
                 continue
@@ -724,7 +720,7 @@ class LoopIntegral_from_graph(LoopIntegral):
     @cached_property
     def F(self):
 
-        F = Polynomial([[0]*len(self.intlines)],[0])
+        F0 = Polynomial([[0]*len(self.intlines)],[0])
 
         # iterate over all possible (L+1)-fold cuts
         for cut in combinations(range(len(self.intlines)), self.L+1):
@@ -737,30 +733,56 @@ class LoopIntegral_from_graph(LoopIntegral):
             newmatrix = np.matrix(self.vertmatrix.subs(rules1+rules2))
 
             # Check if cut graph is connected
-            numvert = len(self.vertdict)
+            numvert = len(self.intverts) + len(self.extlines)
             newmatrix = newmatrix**numvert
             
-            # find all vertices *not* connected to vertex 0
-            notconnectedto0 = []
-            for i in range(numvert):
+            # find all internal vertices *not* connected to vertex 0
+            intnotconnectedto0 = []
+            for i in range(len(self.intverts)):
                 if newmatrix[0,i]==0:
-                    notconnectedto0.append(i)
+                    intnotconnectedto0.append(i)
+
+            # find all external vertices *not* connected to vertex 0
+            extnotconnectedto0 = []
+            for i in range(len(self.intverts),numvert):
+                if newmatrix[0,i]==0:
+                    extnotconnectedto0.append(i)
 
             # check if all vertices not connected to 0 are connected to each other
             valid2tree = True
+            notconnectedto0 = intnotconnectedto0 + extnotconnectedto0
             for i,j in zip(notconnectedto0,notconnectedto0):
                 if newmatrix[i,j]==0:
+                    # there are more than two disconnected components -> not a valid two-tree cut
                     valid2tree = False
                     continue
             if not valid2tree:
                 continue
 
+            # find momementa running through the two cut lines
+            # choose either all the external momenta connected to vertex 0 or the complement
+            cutmomenta = []
+            if(len(extnotconnectedto0) <= len(self.extlines)-len(extnotconnectedto0)):
+                cutmomenta = extnotconnectedto0
+            else:
+                cutmomenta = missing(range(len(self.intverts),numvert),extnotconnectedto0)
+
+            # sum over cut momenta
+            cutsum = sum(map(lambda i: self.extlines[i-len(self.intverts)][0], cutmomenta))
+                
             # construct monomial of Feynman parameters of cut propagators and add this to F
             expolist=[0]*len(self.intlines)
             for i in cut:
                 expolist[i]=1
-            monom = Polynomial([expolist],[1])
-            F += monom
+            monom = Polynomial([expolist],[-cutsum**2])
+            F0 += monom
 
-        return F
+        # construct terms proportial to the squared masses
+        Fm = Polynomial([[0]*len(self.intlines)],[0])
+        for i in range(len(self.intlines)):
+            expolist = [0]*len(self.intlines)
+            expolist[i] = 1
+            Fm += Polynomial([expolist], [self.intlines[i][0]**2])
+
+        return F0 + self.U*Fm
             
