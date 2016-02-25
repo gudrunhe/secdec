@@ -6,7 +6,7 @@ import unittest
 from nose.plugins.attrib import attr
 
 def uf_from_propagators_generic(test_case, loop_momenta, propagators, result_u, result_f):
-    loop_integral = LoopIntegral.from_propagators(propagators, loop_momenta, Feynman_parameters='Feynman')
+    loop_integral = LoopIntegral_from_propagators(propagators, loop_momenta, Feynman_parameters='Feynman')
 
     u,f = loop_integral.U, loop_integral.F
 
@@ -272,23 +272,23 @@ class TestUF_FromPropagators(unittest.TestCase):
     #@attr('active')
     def test_error_messages(self):
         self.assertRaisesRegexp(AssertionError, '(M|m)ismatch.*propagators.*Feynman_parameters', \
-                                LoopIntegral.from_propagators, ['k1**2'], ['k1'], Feynman_parameters=['z0','z1'])
+                                LoopIntegral_from_propagators, ['k1**2'], ['k1'], Feynman_parameters=['z0','z1'])
         self.assertRaisesRegexp(AssertionError, '.*loop_momenta.*symbol', \
-                                LoopIntegral.from_propagators, ['k1**2', '(k1+k2)**2'], ['k1', '2*k2'], Feynman_parameters=['z0','z1'])
+                                LoopIntegral_from_propagators, ['k1**2', '(k1+k2)**2'], ['k1', '2*k2'], Feynman_parameters=['z0','z1'])
         self.assertRaisesRegexp(AssertionError, '.*external_momenta.*symbol', \
-                                LoopIntegral.from_propagators, ['k1**2'], ['k1', 'k2'], ['alpha*p1'], Feynman_parameters=['z0','z1'])
+                                LoopIntegral_from_propagators, ['k1**2'], ['k1', 'k2'], ['alpha*p1'], Feynman_parameters=['z0','z1'])
         self.assertRaisesRegexp(AssertionError, '.*Lorentz_indices.*symbol.*number', \
-                                LoopIntegral.from_propagators, ['k1**2'], ['k1', 'k2'], Lorentz_indices=['alpha*delta'])
+                                LoopIntegral_from_propagators, ['k1**2'], ['k1', 'k2'], Lorentz_indices=['alpha*delta'])
         self.assertRaisesRegexp(AssertionError, '.*metric_tensor.*symbol', \
-                                LoopIntegral.from_propagators, ['k1**2'], ['k1', 'k2'], metric_tensor='4')
+                                LoopIntegral_from_propagators, ['k1**2'], ['k1', 'k2'], metric_tensor='4')
         self.assertRaisesRegexp(AssertionError, '.*propagators.*at most quadratic', \
-                                LoopIntegral.from_propagators, ['k1**2', 'p1*(k1+k2)**2'], ['k1','k2'], ['p1','p2'])
+                                LoopIntegral_from_propagators, ['k1**2', 'p1*(k1+k2)**2'], ['k1','k2'], ['p1','p2'])
         self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of tuples', \
-                                LoopIntegral.from_propagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=['z0','z1'])
+                                LoopIntegral_from_propagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=['z0','z1'])
         self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of tuples', \
-                                LoopIntegral.from_propagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1', 0,'z1')])
+                                LoopIntegral_from_propagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1', 0,'z1')])
         self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*at most quadratic', \
-                                LoopIntegral.from_propagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1*k2', 0)])
+                                LoopIntegral_from_propagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1*k2', 0)])
 
     #@attr('active')
     def test_replacement_rules_box_2L(self):
@@ -303,7 +303,7 @@ class TestUF_FromPropagators(unittest.TestCase):
                              (p1*p2, s/2),
                              (p2*p3, t/2),
                              (p1*p3, -s/2-t/2)]
-        loop_integral = LoopIntegral.from_propagators(propagators, loop_momenta, replacement_rules=replacement_rules, Feynman_parameters='z')
+        loop_integral = LoopIntegral_from_propagators(propagators, loop_momenta, replacement_rules=replacement_rules, Feynman_parameters='z')
         U = sp.sympify(loop_integral.U)
         F = sp.sympify(loop_integral.F)
 
@@ -335,7 +335,7 @@ class TestUF_FromPropagators(unittest.TestCase):
                              ('p1*p4',   't/2-s1/2'  ),
                              ('p2*p4', 's1/2-t/2-s/2'),
                              ('p3*p4',     's/2'     )]
-        loop_integral = LoopIntegral.from_propagators(props, loop_momenta, replacement_rules=replacement_rules, Feynman_parameters=['z1','z2','z3','z4'])
+        loop_integral = LoopIntegral_from_propagators(props, loop_momenta, replacement_rules=replacement_rules, Feynman_parameters=['z1','z2','z3','z4'])
         U = sp.sympify(loop_integral.U)
         F = sp.sympify(loop_integral.F)
 
@@ -355,7 +355,7 @@ class TestNumerator(unittest.TestCase):
         external_momenta = ['p1', 'p2']
         propagators = [] # dummy, do not need to specify propagators for the double index notation
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Lorentz_indices=indices)
+        li = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Lorentz_indices=indices)
         loop_tensors = li.numerator_loop_tensors
         external_tensors = li.numerator_external_tensors
 
@@ -389,7 +389,7 @@ class TestNumerator(unittest.TestCase):
         external_momenta = ['p1', 'p2']
         propagators = [] # dummy, do not need to specify propagators for the double index notation
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Lorentz_indices=[mu])
+        li = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Lorentz_indices=[mu])
         tensors = li.numerator_loop_tensors
 
         target_tensors = [  [(0,mu)]  ]
@@ -403,7 +403,7 @@ class TestNumerator(unittest.TestCase):
         external_momenta = ['p1', 'p2']
         propagators = [] # dummy, do not need to specify propagators for the double index notation
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Lorentz_indices=indices)
+        li = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Lorentz_indices=indices)
         tensors = li.numerator_loop_tensors
         # Note: `sympy` may reorder the terms
         target_tensors = [[(0,mu),(1,mu),(1,1),(1,2)]]
@@ -423,13 +423,13 @@ class TestNumerator(unittest.TestCase):
         external_momenta = ['p']
         propagators = ['k**2', '(k - p)**2']
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+        li = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta,
                                            numerator=numerator, Feynman_parameters=['x1','x2'],
                                            Lorentz_indices=indices, dimensionality='D')
-        li_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+        li_contracted = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta,
                                                       numerator=contracted_numerator, dimensionality='D',
                                                       Feynman_parameters=['x1','x2'], Lorentz_indices=indices)
-        li_partially_contracted = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+        li_partially_contracted = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta,
                                                                 numerator=partially_contracted_numerator,
                                                                 Feynman_parameters=['x1','x2'], Lorentz_indices=indices,
                                                                 replacement_rules=[('p*p', 'm**2')], dimensionality='D')
@@ -496,7 +496,7 @@ class TestNumerator(unittest.TestCase):
         propagators = ['k**2', '(k - p)**2']
         replacement_rules = [('p**2', 'm**2')]
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'], replacement_rules=replacement_rules, Lorentz_indices=indices)
+        li = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'], replacement_rules=replacement_rules, Lorentz_indices=indices)
 
         target_numerator = sp.sympify('''
                                              scalar_factor(0)*m**2*x2*m**2*x2*m**2*x2*m**2*x2 +
@@ -524,7 +524,7 @@ class TestNumerator(unittest.TestCase):
         loop_momenta = ['k1','k2']
         external_momenta = ['p1','p2','p3','p4']
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)], Lorentz_indices=['mu'])
+        li = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)], Lorentz_indices=['mu'])
 
         # comparison with Mathematica implementation of SecDec
         target_U = sp.sympify('''
@@ -578,7 +578,7 @@ class TestNumerator(unittest.TestCase):
                                       ('p2*p3', 't/2'),
                                       ('p1*p3', '-s/2 - t/2')])
 
-        li_with_replacement_rules = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+        li_with_replacement_rules = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta,
                                                                   numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)],
                                                                   replacement_rules=replacement_rules, Lorentz_indices=['mu'])
 
@@ -615,7 +615,7 @@ class TestNumerator(unittest.TestCase):
         propagators = [k1**2,(k1+p1)**2,(k1-k2-p3-p4)**2,(k2)**2,(k2+p2)**2,(k2+p3)**2]
         numerator = k1(mu)*k2(nu)*k1(mu)*p2(nu)*2
 
-        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+        li = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta,
                                            numerator=numerator, Feynman_parameters=z[1:],
                                            Lorentz_indices=indices,
                                            replacement_rules=replacement_rules)
@@ -721,11 +721,11 @@ class TestNumerator(unittest.TestCase):
                              (p2*p3, t/2),
                              (p1*p3, -s/2 - t/2)]
 
-        li1 = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+        li1 = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta,
                                             numerator=numerator1, Feynman_parameters=z[1:],
                                             Lorentz_indices=indices, dimensionality=D,
                                             replacement_rules=replacement_rules)
-        li2 = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta,
+        li2 = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta,
                                             numerator=numerator2, Feynman_parameters=z[1:],
                                             Lorentz_indices=indices)
         Feynman_parametrized_numerator1 = sp.sympify(li1.numerator)
@@ -876,5 +876,5 @@ class TestNumerator(unittest.TestCase):
 #        external_momenta = ['p1', 'p2']
 #        propagators = [] # dummy, do not need to specify propagators for the double index notation
 #
-#        li = LoopIntegral.from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
+#        li = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
 #        self.assertRaisesRegexp(AssertionError, '(E|e)ach.*index.*(exactly|at most).*(twice|two times)', lambda: li.numerator)

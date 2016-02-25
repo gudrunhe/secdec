@@ -6,6 +6,29 @@ from itertools import combinations
 import sympy as sp
 import numpy as np
 
+def sympify_symbols(iterable, error_message, allow_number=False):
+    '''
+    `sympify` each item in `iterable` and assert
+    that it is a `symbol`.
+
+    '''
+    symbols = []
+    for expression in iterable:
+        expression = sp.sympify(expression)
+        assert expression.is_Symbol or expression.is_Number if allow_number else expression.is_Symbol, error_message
+        symbols.append(expression)
+    return symbols
+
+def assert_at_most_quadractic(expression, variables, error_message):
+    '''
+    Assert that `expression` is a polynomial of
+    degree less or equal 2 in the `variables`.
+
+    '''
+    poly = Polynomial.from_expression(expression, variables)
+    assert (poly.expolist.sum(axis=1) <= 2).all(), error_message
+
+
 class LoopIntegral(object):
     '''
     Container class for a loop integrals.
@@ -27,7 +50,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_U(self):
-        return len(self.propagators) - self.dimensionality / 2 * (len(self.loop_momenta) + 1) - self.highest_rank
+        return self.P - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
 
     @property # not cached on purpose --> this is just making copies
     def exponentiated_U(self):
@@ -35,20 +58,39 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_F(self):
-        return self.dimensionality / 2 * len(self.loop_momenta) - len(self.propagators)
+        return self.dimensionality / 2 * self.L - self.P
 
     @property # not cached on purpose --> this is just making copies
     def exponentiated_F(self):
         return ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, self.exponent_F, self.F.polysymbols)
 
-    @cached_property
-    def Gamma_factor(self):
-        # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
-        # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
-        # In order to keep the `numerator` free of poles in the regulator, we divide it
-        # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
-        # where `//` means integer division, and put it here.
-        return sp.gamma(len(self.propagators) - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
+    @staticmethod
+    def set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality):
+        # sympify and store `regulator`
+        self.regulator = sympify_symbols([regulator], '`regulator` must be a symbol.')[0]
+
+        # check and store `regulator_power`
+        regulator_power_as_int = int(regulator_power)
+        assert regulator_power_as_int == regulator_power, '`regulator_power` must be integral.'
+        self.regulator_power = regulator_power_as_int
+
+        # sympify and store `dimensionality`
+        self.dimensionality = sp.sympify(dimensionality)
+
+        all_momenta = self.external_momenta + self.loop_momenta
+
+        # check and store replacement rules
+        if not isinstance(replacement_rules, list):
+            replacement_rules = list(replacement_rules)
+        if replacement_rules:
+            self.replacement_rules = np.array(replacement_rules)
+            assert len(self.replacement_rules.shape) == 2, "The `replacement_rules` should be a list of tuples"
+            assert self.replacement_rules.shape[1] == 2 , "The `replacement_rules` should be a list of tuples"
+            for rule in self.replacement_rules:
+                for expression in rule:
+                    assert_at_most_quadractic(expression, all_momenta, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
+        else:
+            self.replacement_rules = []
 
 
 class LoopIntegral_from_propagators(LoopIntegral):
@@ -226,33 +268,6 @@ class LoopIntegral_from_propagators(LoopIntegral):
                  numerator=1, replacement_rules=[], Feynman_parameters='x', regulator='eps', \
                  regulator_power=0, dimensionality='4-2*eps', metric_tensor='g'):
 
-        def sympify_symbols(iterable, error_message, allow_number=False):
-            '''
-            `sympify` each item in `iterable` and assert
-            that it is a `symbol`.
-
-            '''
-            symbols = []
-            for expression in iterable:
-                expression = sp.sympify(expression)
-                assert expression.is_Symbol or expression.is_Number if allow_number else expression.is_Symbol, error_message
-                symbols.append(expression)
-            return symbols
-
-        def assert_at_most_quadractic(expression, variables, error_message):
-            '''
-            Assert that `expression` is a polynomial of
-            degree less or equal 2 in the `variables`.
-
-            '''
-            poly = Polynomial.from_expression(expression, variables)
-            assert (poly.expolist.sum(axis=1) <= 2).all(), error_message
-
-        # check and store `regulator_power`
-        regulator_power_as_int = int(regulator_power)
-        assert regulator_power_as_int == regulator_power, '`regulator_power` must be integral.'
-        self.regulator_power = regulator_power_as_int
-
         # sympify and store `loop_momenta`
         self.loop_momenta = sympify_symbols(loop_momenta, 'Each of the `loop_momenta` must be a symbol.')
         self.L = len(self.loop_momenta)
@@ -267,12 +282,6 @@ class LoopIntegral_from_propagators(LoopIntegral):
 
         # sympify and store `metric_tensor`
         self.metric_tensor = sympify_symbols([metric_tensor], '`metric_tensor` must be a symbol.')[0]
-
-        # sympify and store `regulator`
-        self.regulator = sympify_symbols([regulator], '`regulator` must be a symbol.')[0]
-
-        # sympify and store `dimensionality`
-        self.dimensionality = sp.sympify(dimensionality)
 
         # sympify and store `propagators`
         self.propagators = sp.sympify(list(propagators))
@@ -290,23 +299,15 @@ class LoopIntegral_from_propagators(LoopIntegral):
                 'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
                 ( len(self.propagators) , len(self.Feynman_parameters) )
 
-        if not isinstance(replacement_rules, list):
-            replacement_rules = list(replacement_rules)
-        if replacement_rules:
-            self.replacement_rules = np.array(replacement_rules)
-            assert len(self.replacement_rules.shape) == 2, "The `replacement_rules` should be a list of tuples"
-            assert self.replacement_rules.shape[1] == 2 , "The `replacement_rules` should be a list of tuples"
-            for rule in self.replacement_rules:
-                for expression in rule:
-                    assert_at_most_quadractic(expression, all_momenta, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
-        else:
-            self.replacement_rules = []
-
+        # sympify and store `numerator`
         self.numerator_input = sp.sympify(numerator).expand()
         if self.numerator_input.is_Add:
             self.numerator_input_terms = list(self.numerator_input.args)
         else:
             self.numerator_input_terms = [self.numerator_input]
+
+        # store properties shared between derived classes
+        self.set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality)
 
 
     @cached_property
@@ -453,6 +454,15 @@ class LoopIntegral_from_propagators(LoopIntegral):
     @cached_property
     def highest_rank(self):
         return max(self.numerator_ranks)
+
+    @cached_property
+    def Gamma_factor(self):
+        # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
+        # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
+        # In order to keep the `numerator` free of poles in the regulator, we divide it
+        # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
+        # where `//` means integer division, and put it here.
+        return sp.gamma(len(self.propagators) - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
 
     @cached_property
     def numerator(self):
@@ -635,19 +645,45 @@ class LoopIntegral_from_graph(LoopIntegral):
     '''
     # TODO: implement replacement rules in cut construct
 
-    def __init__(self, loops, lines, external_momenta):
+    def __init__(self, internal_lines, external_lines, replacement_rules=[], Feynman_parameter_symbol='x', \
+                 regulator='eps', regulator_power=0, dimensionality='4-2*eps'):
     
-        self.L=loops
-
+        # sympify and store internal lines
         self.intlines=[]
-        for line in lines:
-            temp=[sp.sympify(line[0]),[line[1][0],line[1][1]]]
-            self.intlines.append(temp)
+        for line in internal_lines:
+            assert len(line)==2 and len(line[1])==2, "Internal lines must have the form [mass, [vertex, vertex]]."
+            mass = sympify_symbols([line[0]], "Names of internal masses must be symbols or numbers.", \
+                                   allow_number=True)[0]
+            vertices = sympify_symbols(line[1], "Names of vertices must be symbols or numbers.", \
+                                       allow_number=True)
+            self.intlines.append([mass,vertices])
+        self.P = len(self.intlines)
 
+        # sympify and store external lines
         self.extlines=[]
-        for i in range(len(external_momenta)):
-            temp=[sp.sympify(external_momenta[i][0]),external_momenta[i][1]]
-            self.extlines.append(temp)
+        self.external_momenta=[]
+        for line in external_lines:
+            assert len(line)==2, "External lines must have the form [momentum, vertex]."
+            extmom = sympify_symbols([line[0]], "Names of external momenta must be symbols.")[0]
+            vertex = sympify_symbols([line[1]], "Names of vertices must be symbols or numbers.", \
+                                     allow_number=True)[0]
+            self.extlines.append([extmom,vertex])
+            self.external_momenta.append(extmom)
+
+
+        # calculate number of loops from the relation  #vertices = 2*(#loops - 1) + #legs
+        self.L = (len(self.intverts) - len(self.extlines))/2 + 1
+        self.loop_momenta=[] #dummy
+
+        # store properties shared between derived classes
+        self.set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality)
+
+        # no support for tensor integrals in combination with cutconstruct for now
+        self.highest_rank = 0
+
+        # store symbol for Feynman parameters
+        assert isinstance(Feynman_parameter_symbol,str), '`Feynman_paramter_symbol` must be a string.'
+        self.Feynman_parameter_symbol = Feynman_parameter_symbol
 
     @cached_property
     def intverts(self): 
@@ -690,7 +726,7 @@ class LoopIntegral_from_graph(LoopIntegral):
     @cached_property
     def U(self):
 
-        U = Polynomial([[0]*len(self.intlines)],[0])
+        U = Polynomial([[0]*len(self.intlines)], [0], polysymbols=self.Feynman_parameter_symbol)
 
         # iterate over all possible L-fold cuts
         for cut in combinations(range(len(self.intlines)), self.L):
@@ -720,7 +756,7 @@ class LoopIntegral_from_graph(LoopIntegral):
     @cached_property
     def F(self):
 
-        F0 = Polynomial([[0]*len(self.intlines)],[0])
+        F0 = Polynomial([[0]*len(self.intlines)], [0], polysymbols=self.Feynman_parameter_symbol)
 
         # iterate over all possible (L+1)-fold cuts
         for cut in combinations(range(len(self.intlines)), self.L+1):
@@ -778,7 +814,7 @@ class LoopIntegral_from_graph(LoopIntegral):
             F0 += monom
 
         # construct terms proportial to the squared masses
-        Fm = Polynomial([[0]*len(self.intlines)],[0])
+        Fm = Polynomial([[0]*len(self.intlines)], [0], polysymbols=self.Feynman_parameter_symbol)
         for i in range(len(self.intlines)):
             expolist = [0]*len(self.intlines)
             expolist[i] = 1
