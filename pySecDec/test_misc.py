@@ -18,8 +18,45 @@ class TestSort(unittest.TestCase):
         in_array = np.asarray(in_array)
         np.testing.assert_array_equal(in_array[calculated_sort_indices], target_sorted_array)
 
+    #@attr('active')
+    def test_sort_ND(self):
+        in_array =          [[[0, 2],
+                              [1, 0]],
+
+                             [[1, 1],
+                              [0, 1]],
+
+                             [[0, 1],
+                              [1, 1]],
+
+                             [[1, 1],
+                              [0, 1]],
+
+                             [[0, 1],
+                              [1, 1]]]
+
+        target_sorted_array = np.array([[[0, 1],
+                                         [1, 1]],
+
+                                        [[0, 1],
+                                         [1, 1]],
+
+                                        [[0, 2],
+                                         [1, 0]],
+
+                                        [[1, 1],
+                                         [0, 1]],
+
+                                        [[1, 1],
+                                         [0, 1]]])
+
+        calculated_sort_indices = argsort_ND_array(in_array)
+        np.testing.assert_array_equal(np.array(in_array)[calculated_sort_indices], target_sorted_array)
+
+    #@attr('active')
     def test_error_message(self):
         self.assertRaisesRegexp(AssertionError, 'array.*two dimensional', argsort_2D_array, [1,2,3,4])
+        self.assertRaisesRegexp(AssertionError, 'array.*two or higher dimensional', argsort_ND_array, [1,2,3,4])
 
 class TestPowerset(unittest.TestCase):
     def test_powerset_range(self):

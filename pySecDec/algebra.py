@@ -1,6 +1,6 @@
 """Implementation of a simple computer algebra system"""
 
-from .misc import argsort_2D_array, doc
+from .misc import argsort_2D_array, argsort_ND_array, doc
 import numpy as np
 import sympy as sp
 
@@ -218,9 +218,9 @@ class Polynomial(_Expression):
         Whether or not to copy the `expolist` and the `coeffs`.
 
         .. note::
-            If copy is ``True``, it is assumed that the
+            If copy is ``False``, it is assumed that the
             `expolist` and the `coeffs` have the correct
-            format.
+            type.
 
     '''
     def __init__(self, expolist, coeffs, polysymbols='x', copy=True):
@@ -618,9 +618,9 @@ class ExponentiatedPolynomial(Polynomial):
         and the `exponent`.
 
         .. note::
-            If copy is ``True``, it is assumed that the
+            If copy is ``False``, it is assumed that the
             `expolist`, the `coeffs` and the `exponent` have
-            the correct format.
+            the correct type.
 
     '''
     def __init__(self, expolist, coeffs, exponent=1, polysymbols='x', copy=True):
@@ -1029,26 +1029,14 @@ class Product(_Expression):
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
+        Return an instance of the optimized class:`.ProductRule`.
 
         :param index:
             integer;
             The index of the paramater to derive by.
 
         '''
-        # product rule: derivative(p1 * p2 * ...) = derivative(p1) * p2 * ... + p1 * derivative(p2) * ...
-        summands = []
-        for i,factor_to_diff in enumerate(self.factors):
-            differentiated_factor = factor_to_diff.derive(index)
-            # catch ``differentiated_factor == 0``
-            if type(differentiated_factor) is Polynomial and (differentiated_factor.coeffs == 0).all():
-                continue
-            else:
-                factors = [differentiated_factor if i==j else f.copy() for j,f in enumerate(self.factors)]
-                summands.append(Product(*factors, copy=False))
-        if summands:
-            return Sum(*summands, copy=False)
-        else:
-            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
+        return ProductRule(*self.factors, copy=False).derive(index)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
@@ -1056,6 +1044,195 @@ class Product(_Expression):
         for factor in expression.factors:
             outfactors.append(factor.replace(index,value,remove))
         return Product(*outfactors, copy=False)
+
+class ProductRule(_Expression):
+    r'''
+    Store an expression of the form
+
+    .. math::
+        \sum_i c_i \prod_j \prod_k
+        \left( \frac{d}{dx_k} \right)^{n_{ijk}}
+        f_j \left( \lbrace x_k \rbrace \right)
+
+    The main reason for introducing this class is a speedup
+    when calculating derivatives. In particular, this class
+    implements simplifications such that the number of
+    terms grows less than exponentially (scaling of the
+    naive implementation of the product rule) with the
+    number of derivatives.
+
+    :param expressions:
+        arbitrarily many expressions;
+        The expressions :math:`f_j`.
+
+    '''
+    def __init__(self, *expressions, **kwargs):
+        # If keyword argument `internal_regenerate` is passed and True, use passed `factorlist`, `coeffs`, and `expressions` instead of regenerating
+        copy = kwargs.get('copy', True)
+
+        if kwargs.get('internal_regenerate', False):
+            self.factorlist = kwargs['factorlist'].copy() if copy else kwargs['factorlist']
+            self.coeffs = kwargs['coeffs'].copy() if copy else kwargs['coeffs']
+            if copy:
+                self.expressions = []
+                for expression_derivatives in kwargs['expressions']:
+                    this_expression = {}
+                    for k,(key,value) in enumerate(expression_derivatives.items()):
+                        this_expression[key] = value.copy()
+                    self.expressions.append(this_expression)
+
+                # ``value`` is still one of the derivatives from the for loop
+                self.symbols = list(value.symbols)
+
+            else:
+                self.expressions = kwargs['expressions']
+                for expression in self.expressions[0].values():
+                    self.symbols = list(expression.symbols)
+                    break
+
+            self.number_of_variables = len(self.symbols)
+
+        else:
+            self.number_of_variables = expressions[0].number_of_variables
+
+            # check input consistency
+            for expression in expressions:
+                if expression.number_of_variables != self.number_of_variables:
+                    raise TypeError('Must have the same number of variables for all expressions.')
+
+            # store the `expressions` and (later) its derivatives in ``self.expressions``
+            # outer list: index ``j`` of the input expressions
+            # inner dict: use ``n_k`` as keys
+            # automatically simplify the cache
+            self.expressions = [{
+                                    tuple([0]*self.number_of_variables) :
+                                    expression.copy().simplify() if copy else expression.simplify()
+                                } for expression in expressions]
+
+            # The `factorlist` is a 3 dimensional array. Its first
+            # index denotes the terms of the sum :math:`i`. The
+            # second index denotes the factor :math:`j`. The last
+            # index denotes the varible to take the derivative with
+            # respect to. The value of ``factorlist[i,j,k]`` denotes
+            # how many derivatives :math:`n_{ijk}` are to be taken.
+            # If not given, a product of the `expressions` without
+            # derivatives are assumed.
+
+            # initialize the `factorlist`:
+            #  - all `n_ijk` zeros since we do not have derivatives yet --> np.zeros
+            #  - shape ``(1,len(expressions),self.number_of_variables)`` --> one term in the sum with ``len(expressions)``
+            #                                                                factors depending on ``self.number_of_variables``
+            #                                                                variables
+            self.factorlist = np.zeros((1,len(expressions),self.number_of_variables), dtype=int)
+
+            # initialize the coeffs ``c_i`` with ones
+            self.coeffs = np.array([1])
+
+            self.symbols = list(expressions[0].symbols)
+
+    def __repr__(self):
+        outstr = ''
+        for i,(coeff,n_jk) in enumerate(zip(self.coeffs,self.factorlist)):
+            outstr += (" + (%i)" % coeff)
+            for j,n_k in enumerate(n_jk):
+                outstr += ' * (%s)' % str(self.expressions[j][tuple(n_k)])
+        return outstr
+
+    __str__ = __repr__
+
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+        Note that this class is particularly designed to hold
+        derivatives of a product.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        # product rule: derivative(<coeff> * x**k) = <coeff> * k * x**(k-1) + derivative(<coeff>) * x**k
+
+        # generate new `factorlist`
+        new_factorlist = []
+        for j in range(len(self.expressions)):
+            # from product rule: increse ``n_ijk`` for every ``i``
+            factorlist = self.factorlist.copy()
+            factorlist[:,j,index] += 1
+            new_factorlist.append(factorlist)
+        new_factorlist = np.vstack(new_factorlist)
+        new_coeffs = np.concatenate([self.coeffs]*len(self.expressions))
+
+        # generate missing derivatives
+        # do not make a copy since it does not hurt having the child point to the same ``expressions``
+        for expression in self.expressions:
+            new_entries = {}
+            for derivative_multiindex, derivative in expression.items():
+                higher_derivative_multiindex = list(derivative_multiindex)
+                higher_derivative_multiindex[index] += 1
+                higher_derivative_multiindex = tuple(higher_derivative_multiindex)
+                try:
+                    expression[higher_derivative_multiindex]
+                except KeyError: # needed higher derivative not calculated yet
+                    new_entries[higher_derivative_multiindex] = derivative.derive(index).simplify() # automatically simplify cache
+            expression.update(new_entries)
+
+        return ProductRule(internal_regenerate=True, copy=False,
+                           factorlist=new_factorlist, coeffs=new_coeffs,
+                           expressions=self.expressions)
+
+    def copy(self):
+        "Return a copy of a :class:`.ProductRule`."
+        return ProductRule(copy=True, internal_regenerate=True,
+                           factorlist=self.factorlist,
+                           coeffs=self.coeffs, expressions=self.expressions)
+
+    def simplify(self):
+        '''
+        Combine terms that have the same derivatives
+        of the `expressions`.
+
+        '''
+        # Sort the factorlist first, such that identical entries are
+        # grouped together
+        sort_key = argsort_ND_array(self.factorlist)
+        self.factorlist = self.factorlist[sort_key]
+        self.coeffs = self.coeffs[sort_key]
+
+        for i in range(1,len(self.coeffs)):
+            if self.coeffs[i] == 0: continue
+            previous_term = self.factorlist[i-1]
+            # search `self.factorlist` for the same term
+            # since `self.factorlist` is sorted, must only compare with the previous term
+            if (previous_term == self.factorlist[i]).all():
+                # add coefficients
+                self.coeffs[i] += self.coeffs[i-1]
+                # mark previous term for removal by setting coefficient to zero
+                self.coeffs[i-1] = 0
+
+            # find zeros in `self.expressions`
+            for j, derivative_multiindex in enumerate(self.factorlist[i]):
+                derivative_multiindex = tuple(derivative_multiindex)
+                expression = self.expressions[j][derivative_multiindex]
+                if type(expression) is Polynomial and (expression.coeffs == 0).all():
+                    self.coeffs[i] = 0
+
+        # remove terms with zero coefficient
+        nonzero_coeffs = np.where(self.coeffs != 0)
+        self.coeffs = self.coeffs[nonzero_coeffs]
+        self.factorlist = self.factorlist[nonzero_coeffs]
+
+        return self
+
+    @doc(_Expression.docstring_of_replace)
+    def replace(self, index, value, remove=False):
+        summands = []
+        for term in self.factorlist:
+            factors = []
+            for j, derivative_multiindex in enumerate(term):
+                factors.append(self.expressions[j][tuple(derivative_multiindex)].replace(index, value, remove))
+            summands.append(Product(*factors, copy=False))
+        return Sum(*summands, copy=False)
 
 class Pow(_Expression):
     r'''
