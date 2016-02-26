@@ -40,9 +40,20 @@ class LoopIntegral(object):
     of the loop integrals as adjacency list,
     or the propagators.
 
+    The Feynman parametrized integral is a product
+    of the following expressions member properties:
+
+    * ``self.regulator ** self.regulator_power``
+    * ``self.Gamma_factor``
+    * ``self.exponentiated_U``
+    * ``self.exponentiated_F``
+    * ``self.numerator``
+
+    , where ``self`` is an instance of :class:`LoopIntegral`.
+
     .. seealso::
-        * input as graph: :meth:`.from_graph`
-        * input as list of propagators: :meth:`from_propagators`
+        * input as graph: :class:`.LoopIntegral_from_graph`
+        * input as list of propagators: :class:`.LoopIntegral_from_propagators`
 
     '''
     def __init__(self, *args, **kwargs):
@@ -94,174 +105,164 @@ class LoopIntegral(object):
 
 class LoopIntegral_from_propagators(LoopIntegral):
     '''
-        Construct the Feynman parametrization of a
-        loop integral from the algebraic momentum
-        representation.
+    Construct the Feynman parametrization of a
+    loop integral from the algebraic momentum
+    representation.
+
+    .. seealso::
+        [Hei08]_, [GKR+11]_
+
+    Example:
+
+    >>> from pySecDec.loop_integral import *
+    >>> propagators = ['k**2', '(k - p)**2']
+    >>> loop_momenta = ['k']
+    >>> li = LoopIntegral_from_propagators(propagators, loop_momenta)
+    >>> li.exponentiated_U
+    ( + (1)*x0 + (1)*x1)**(2*eps - 2)
+    >>> li.exponentiated_F
+    ( + (-p**2)*x0*x1)**(-eps)
+
+    The 1st (U) and 2nd (F) Symanzik polynomials and
+    their exponents can also be accessed
+    independently:
+
+    >>> li.U
+    + (1)*x0 + (1)*x1
+    >>> li.F
+    + (-p**2)*x0*x1
+    >>>
+    >>> li.exponent_U
+    2*eps - 2
+    >>> li.exponent_F
+    -eps
+
+    :param propagators:
+        iterable of strings or sympy expressions;
+        The propagators, e.g. ['k1**2', '(k1-k2)**2 - m1**2'].
+
+    :param loop_momenta:
+        iterable of strings or sympy expressions;
+        The loop momenta, e.g. ['k1','k2'].
+
+    :param external_momenta:
+        iterable of strings or sympy expressions,
+        optional;
+        The external momenta, e.g. ['p1','p2'].
+        Specifying the `external_momenta` is only
+        required when a `numerator` is to be
+        constructed.
+
+    :param Lorentz_indices:
+        iterable of strings or sympy expressions,
+        optional;
+        Symbols to be used as Lorentz indices in the
+        numerator.
+
+    .. seealso::
+        parameter `numerator`
+
+    :param numerator:
+        string or sympy expression, optional;
+        The numerator of the loop integral.
+        Scalar products must be passed in index notation e.g.
+        "k1(mu)*k2(mu)". The numerator should be a sum of
+        products of exclusively:
+        * numbers
+        * scalar products (e.g. "p1(mu)*k1(mu)*p1(nu)*k2(nu)")
+        * `symbols` (e.g. "m")
+
+    Examples:
+        * 'p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)'
+        * 'p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)'
+        * 'p1(mu)*k1(mu)*my_function(eps)'
+
+    .. hint::
+        It is possible to use numbers as indices, for example
+        'p1(mu)*p2(mu)*k1(nu)*k2(nu) = p1(1)*p2(1)*k1(2)*k2(2)'.
+
+    .. hint::
+        The numerator may have uncontracted indices, e.g.
+        'k1(mu)*k2(nu)'
+
+    .. warning::
+        **All** Lorentz indices (including the contracted ones)
+        must be explicitly defined using the parameter
+        `Lorentz_indices`.
+
+    .. warning::
+        It is assumed that the numerator is and all its
+        derivatives by the `regulator` are finite and defined
+        if :math:`\epsilon=0` is inserted explicitly.
+        In particular, if user defined functions (like in the
+        example ``p1(mu)*k1(mu)*my_function(eps)``) appear,
+        make sure that ``my_function(0)`` is finite.
+
+    .. hint::
+        In order to mimic a singular user defined function,
+        use the parameter `regulator_power`.
+        For example, instead of ``numerator = gamma(eps)`` you
+        could enter ``numerator = eps_times_gamma(eps)`` in
+        conjunction with ``regulator_power = -1``
+
+    .. warning::
+        The `numerator` is very flexible in its input. However,
+        that flexibility comes for the price of less error
+        safety. We have no way of checking for all possible
+        mistakes in the input. If your numerator is more
+        advanced than in the examples above, you should proceed
+        with great caution.
+
+    :param replacement_rules:
+        iterable of iterables with two strings or sympy
+        expressions, optional;
+        Symbolic replacements to be made for the external
+        momenta, e.g. definition of Mandelstam variables.
+        Example: [('p1*p2', 's'), ('p1**2', 0)] where
+        ``p1`` and ``p2`` are external momenta.
+        It is also possible to specify vector replacements,
+        for example [('p4', '-(p1+p2+p3)')].
+
+    :param Feynman_parameters:
+        iterable or string, optional;
+        The symbols to be used for the Feynman parameters.
+        If a string is passed, the Feynman parameter
+        variables will be consecutively numbered starting
+        from zero.
+
+    :param regulator:
+        string or sympy symbol, optional;
+        The symbol to be used for the dimensional regulator
+        (typically :math:`\epsilon` or :math:`\epsilon_D`)
+
+        .. note::
+            If you change this symbol, you have to adapt
+            the `dimensionality` accordingly.
+
+    :param regulator_power:
+        integer;
+        The regulator to this power will be multiplied by
+        the numerator.
 
         .. seealso::
-            [Hei08]_, [GKR+11]_
+            parameter `numerator`
 
-        The Feynman parametrized integral is a product
-        of the following expressions member properties:
+    :param dimensionality:
+        string or sympy expression, optional;
+        The dimensionality; typically :math:`4-2\epsilon`,
+        which is the default value.
 
-        * ``self.regulator ** self.regulator_power``
-        * ``self.Gamma_factor``
-        * ``self.exponentiated_U``
-        * ``self.exponentiated_F``
-        * ``self.numerator``
-
-        , where ``self`` is an instance of :class:`LoopIntegral`.
-
-        Example:
-
-        >>> from pySecDec.loop_integral import *
-        >>> propagators = ['k**2', '(k - p)**2']
-        >>> loop_momenta = ['k']
-        >>> li = LoopIntegral.from_propagators(propagators, loop_momenta)
-        >>> li.exponentiated_U
-        ( + (1)*x0 + (1)*x1)**(2*eps - 2)
-        >>> li.exponentiated_F
-        ( + (-p**2)*x0*x1)**(-eps)
-
-        The 1st (U) and 2nd (F) Symanzik polynomials and
-        their exponents can also be accessed
-        independently:
-
-        >>> li.U
-         + (1)*x0 + (1)*x1
-        >>> li.F
-         + (-p**2)*x0*x1
-        >>>
-        >>> li.exponent_U
-        2*eps - 2
-        >>> li.exponent_F
-        -eps
-
-        :param propagators:
-            iterable of strings or sympy expressions;
-            The propagators, e.g. ['k1**2', '(k1-k2)**2 - m1**2'].
-
-        :param loop_momenta:
-            iterable of strings or sympy expressions;
-            The loop momenta, e.g. ['k1','k2'].
-
-        :param external_momenta:
-            iterable of strings or sympy expressions,
-            optional;
-            The external momenta, e.g. ['p1','p2'].
-            Specifying the `external_momenta` is only
-            required when a `numerator` is to be
-            constructed.
-
-        :param Lorentz_indices:
-            iterable of strings or sympy expressions,
-            optional;
-            Symbols to be used as Lorentz indices in the
-            numerator.
-
-            .. seealso::
-                parameter `numerator`
-
-        :param numerator:
-            string or sympy expression, optional;
-            The numerator of the loop integral.
-            Scalar products must be passed in index notation e.g.
-            "k1(mu)*k2(mu)". The numerator should be a sum of
-            products of exclusively:
-            * numbers
-            * scalar products (e.g. "p1(mu)*k1(mu)*p1(nu)*k2(nu)")
-            * `symbols` (e.g. "m")
-
-            Examples:
-                * 'p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)'
-                * 'p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)'
-                * 'p1(mu)*k1(mu)*my_function(eps)'
-
-            .. hint::
-                It is possible to use numbers as indices, for example
-                'p1(mu)*p2(mu)*k1(nu)*k2(nu) = p1(1)*p2(1)*k1(2)*k2(2)'.
-
-            .. hint::
-                The numerator may have uncontracted indices, e.g.
-                'k1(mu)*k2(nu)'
-
-            .. warning::
-                **All** Lorentz indices (including the contracted ones)
-                must be explicitly defined using the parameter
-                `Lorentz_indices`.
-
-            .. warning::
-                It is assumed that the numerator is and all its
-                derivatives by the `regulator` are finite and defined
-                if :math:`\epsilon=0` is inserted explicitly.
-                In particular, if user defined functions (like in the
-                example ``p1(mu)*k1(mu)*my_function(eps)``) appear,
-                make sure that ``my_function(0)`` is finite.
-
-            .. hint::
-                In order to mimic a singular user defined function,
-                use the parameter `regulator_power`.
-                For example, instead of ``numerator = gamma(eps)`` you
-                could enter ``numerator = eps_times_gamma(eps)`` in
-                conjunction with ``regulator_power = -1``
-
-            .. warning::
-                The `numerator` is very flexible in its input. However,
-                that flexibility comes for the price of less error
-                safety. We have no way of checking for all possible
-                mistakes in the input. If your numerator is more
-                advanced than in the examples above, you should proceed
-                with great caution.
-
-        :param replacement_rules:
-            iterable of iterables with two strings or sympy
-            expressions, optional;
-            Symbolic replacements to be made for the external
-            momenta, e.g. definition of Mandelstam variables.
-            Example: [('p1*p2', 's'), ('p1**2', 0)] where
-            ``p1`` and ``p2`` are external momenta.
-            It is also possible to specify vector replacements,
-            for example [('p4', '-(p1+p2+p3)')].
-
-        :param Feynman_parameters:
-            iterable or string, optional;
-            The symbols to be used for the Feynman parameters.
-            If a string is passed, the Feynman parameter
-            variables will be consecutively numbered starting
-            from zero.
-
-        :param regulator:
-            string or sympy symbol, optional;
-            The symbol to be used for the dimensional regulator
-            (typically :math:`\epsilon` or :math:`\epsilon_D`)
-
-            .. note::
-                If you change this symbol, you have to adapt
-                the `dimensionality` accordingly.
-
-        :param regulator_power:
-            integer;
-            The regulator to this power will be multiplied by
-            the numerator.
-
-            .. seealso::
-                parameter `numerator`
-
-        :param dimensionality:
-            string or sympy expression, optional;
-            The dimensionality; typically :math:`4-2\epsilon`,
-            which is the default value.
-
-        :param metric_tensor:
-            string or sympy symbol, optional;
-            The symbol to be used for the (Minkowski) metric
-            tensor :math:`g^{\mu\nu}`.
+    :param metric_tensor:
+        string or sympy symbol, optional;
+        The symbol to be used for the (Minkowski) metric
+        tensor :math:`g^{\mu\\nu}` .
 
     '''
-        # TODO: carefully reread and check this documentation
-        # TODO: test case with linear propagators
-        # TODO: test that including all the factors described above
-        #       is the complete integrand
+
+    # TODO: carefully reread and check this documentation
+    # TODO: test case with linear propagators
+    # TODO: test that including all the factors described above
+    #       is the complete integrand
 
     def __init__(self, propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
                  numerator=1, replacement_rules=[], Feynman_parameters='x', regulator='eps', \
@@ -641,8 +642,47 @@ class LoopIntegral_from_graph(LoopIntegral):
     '''
     Construct the Feynman parametrization of a
     loop integral from the graph using the cut construction method.
+
+    Example:
+
+    >>> from pySecDec.loop_integral import *
+    >>> internal_lines = [['0',[1,2]], ['msq',[2,3]], ['msq',[3,1]]]
+    >>> external_lines = [['p1',1],['p2',2],['p3',3]]
+    >>> li = LoopIntegral_from_graph(internal_lines, external_lines)
+    >>> li.exponentiated_U
+    ( + (1)*x2 + (1)*x1 + (1)*x0)**(2*eps - 1)
+    >>> li.exponentiated_F
+    ( + (msq)*x2**2 + (2*msq - p3**2)*x1*x2 + (msq)*x1**2 + (msq - p1**2)*x0*x2 + (msq - p2**2)*x0*x1)**(-eps - 1)
+
+    :param internal_lines:
+        iterable of internal line specification, consisting of string or sympy expression for squared mass
+        and a pair of strings or numbers for the vertices, e.g. [['msq', [1,2]], ['0', [2,1]]].
+
+    :param external_lines:
+        iterable of external line specification, consisting of string or sympy expression for external momentum
+        and a strings or number for the vertex, e.g. [['p1', 1], ['p2', 2]].
+
+    :param replacement_rules:
+       see :class:`.LoopIntegral_from_propagators`
+
+    :param Feynman_parameter_symbol:
+        string, optional;
+        Symbols to be used for the Feynman parameters,
+        variables will be consecutively numbered starting
+        from zero.
+
+    :param regulator:
+       see :class:`.LoopIntegral_from_propagators`
+
+    :param regulator_power:
+       see :class:`.LoopIntegral_from_propagators`
+
+    :param dimensionality:
+       see :class:`.LoopIntegral_from_propagators`
+
     '''
-    # TODO: implement momentum conservation in cut construct
+    # TODO: implement momentum conservation in cut construct?
+    # TODO: document optional parameters (refer to base class?)
 
     def __init__(self, internal_lines, external_lines, replacement_rules=[], Feynman_parameter_symbol='x', \
                  regulator='eps', regulator_power=0, dimensionality='4-2*eps'):
