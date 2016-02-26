@@ -650,12 +650,13 @@ class LoopIntegral_from_graph(LoopIntegral):
         # sympify and store internal lines
         self.intlines=[]
         for line in internal_lines:
-            assert len(line)==2 and len(line[1])==2, "Internal lines must have the form [mass, [vertex, vertex]]."
-            mass = sympify_symbols([line[0]], "Names of internal masses must be symbols or numbers.", \
+            assert len(line)==2 and len(line[1])==2, \
+                "Internal lines must have the form [squared mass, [vertex, vertex]]."
+            masssqr = sympify_symbols([line[0]], "Names of internal squared masses must be symbols or numbers.", \
                                    allow_number=True)[0]
             vertices = sympify_symbols(line[1], "Names of vertices must be symbols or numbers.", \
                                        allow_number=True)
-            self.intlines.append([mass,vertices])
+            self.intlines.append([masssqr,vertices])
         self.P = len(self.intlines)
 
         # sympify and store external lines
@@ -785,12 +786,16 @@ class LoopIntegral_from_graph(LoopIntegral):
 
             # check if all vertices not connected to 0 are connected to each other
             valid2tree = True
-            notconnectedto0 = intnotconnectedto0 + extnotconnectedto0
-            for i,j in zip(notconnectedto0,notconnectedto0):
-                if newmatrix[i,j]==0:
-                    # there are more than two disconnected components -> not a valid two-tree cut
-                    valid2tree = False
-                    continue
+            notconnectedto0 = intnotconnectedto0 + extnotconnectedto0            
+            for i in notconnectedto0:
+                for j in notconnectedto0:
+                    if newmatrix[i,j]==0:
+                        # there are more than two disconnected components -> not a valid two-tree cut
+                        valid2tree = False
+                        break
+                if not valid2tree:
+                    break
+            # drop current cut if it is not a valid two-tree cut
             if not valid2tree:
                 continue
 
@@ -819,7 +824,7 @@ class LoopIntegral_from_graph(LoopIntegral):
         for i in range(len(self.intlines)):
             expolist = [0]*len(self.intlines)
             expolist[i] = 1
-            Fm += Polynomial([expolist], [self.intlines[i][0]**2])
+            Fm += Polynomial([expolist], [self.intlines[i][0]])
 
         return (F0 + self.U*Fm).simplify()
             
