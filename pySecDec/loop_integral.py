@@ -128,9 +128,9 @@ class LoopIntegral_from_propagators(LoopIntegral):
     independently:
 
     >>> li.U
-    + (1)*x0 + (1)*x1
+     + (1)*x0 + (1)*x1
     >>> li.F
-    + (-p**2)*x0*x1
+     + (-p**2)*x0*x1
     >>>
     >>> li.exponent_U
     2*eps - 2
