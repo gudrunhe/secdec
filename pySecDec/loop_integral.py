@@ -6,6 +6,8 @@ from itertools import combinations
 import sympy as sp
 import numpy as np
 
+# TODO: move sympify_symbols and assert_at_most_quadractic to misc
+
 def sympify_symbols(iterable, error_message, allow_number=False):
     '''
     `sympify` each item in `iterable` and assert
@@ -87,8 +89,6 @@ class LoopIntegral(object):
         # sympify and store `dimensionality`
         self.dimensionality = sp.sympify(dimensionality)
 
-        all_momenta = self.external_momenta + self.loop_momenta
-
         # check and store replacement rules
         if not isinstance(replacement_rules, list):
             replacement_rules = list(replacement_rules)
@@ -98,7 +98,7 @@ class LoopIntegral(object):
             assert self.replacement_rules.shape[1] == 2 , "The `replacement_rules` should be a list of tuples"
             for rule in self.replacement_rules:
                 for expression in rule:
-                    assert_at_most_quadractic(expression, all_momenta, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
+                    assert_at_most_quadractic(expression, self.all_momenta, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
         else:
             self.replacement_rules = []
 
@@ -275,7 +275,7 @@ class LoopIntegral_from_propagators(LoopIntegral):
         # sympify and store `external_momenta`
         self.external_momenta = sympify_symbols(external_momenta, 'Each of the `external_momenta` must be a symbol.')
 
-        all_momenta = self.external_momenta + self.loop_momenta
+        self.all_momenta = self.external_momenta + self.loop_momenta
 
         # sympify and store `Lorentz_indices`
         self.Lorentz_indices = sympify_symbols(Lorentz_indices, 'Each of the `Lorentz_indices` must be a symbol or a number.', allow_number=True)
@@ -286,7 +286,7 @@ class LoopIntegral_from_propagators(LoopIntegral):
         # sympify and store `propagators`
         self.propagators = sp.sympify(list(propagators))
         for propagator in self.propagators:
-            assert_at_most_quadractic(propagator, all_momenta, 'Each of the `propagators` must be polynomial and at most quadratic in the momenta.')
+            assert_at_most_quadractic(propagator, self.all_momenta, 'Each of the `propagators` must be polynomial and at most quadratic in the momenta.')
         self.P = len(self.propagators)
 
         # sympify and store `Feynman_parameters`
@@ -681,8 +681,6 @@ class LoopIntegral_from_graph(LoopIntegral):
        see :class:`.LoopIntegral_from_propagators`
 
     '''
-    # TODO: implement momentum conservation in cut construct?
-    # TODO: document optional parameters (refer to base class?)
 
     def __init__(self, internal_lines, external_lines, replacement_rules=[], Feynman_parameter_symbol='x', \
                  regulator='eps', regulator_power=0, dimensionality='4-2*eps'):
@@ -713,9 +711,10 @@ class LoopIntegral_from_graph(LoopIntegral):
 
         # calculate number of loops from the relation  #vertices = 2*(#loops - 1) + #legs
         self.L = (len(self.intverts) - len(self.extlines))/2 + 1
-        self.loop_momenta=[] #dummy
+        self.V = len(self.intverts)
 
         # store properties shared between derived classes
+        self.all_momenta = self.external_momenta
         self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality)
 
         # no support for tensor integrals in combination with cutconstruct for now
@@ -730,24 +729,25 @@ class LoopIntegral_from_graph(LoopIntegral):
         # creates a list of all internal vertices and indexes them
         # returns a dictionary that relates the name of a vertex to its index
         lines = self.intlines
-        vertices=set([])
+        vertices=set()
         for line in lines:
             vertices = vertices | set(line[1])
         vertices=list(vertices)
-        dict = {}
+        vertnames = {}
+
         for i in range(len(vertices)):
-            dict[vertices[i]] = i
-        return dict
+            vertnames[vertices[i]] = i
+        return vertnames
         
     @cached_property
     def vertmatrix(self):  # create transition matrix representation of underlying graph
 
         # each vertex is trivially connected to itself, so start from unit matrix:
-        numvert = len(self.intverts)+len(self.extlines)
+        numvert = self.V+len(self.extlines)
         M = sp.Matrix(numvert, numvert, lambda i,j: 1 if i==j else 0)
 
         # for each internal propagator connecting two vertices add an entry in the matrix
-        for i in range(len(self.intlines)):
+        for i in range(self.P):
             start = self.intverts[self.intlines[i][1][0]]
             end = self.intverts[self.intlines[i][1][1]]
             temp = sp.sympify('pr'+str(i))
@@ -756,7 +756,7 @@ class LoopIntegral_from_graph(LoopIntegral):
 
         # for each external line add a vertex and an entry in the matrix
         for i in range(len(self.extlines)):
-            start = len(self.intverts) + i
+            start = self.V + i
             end = self.intverts[self.extlines[i][1]]
             M[start,end] += 1
             M[end,start] += 1
@@ -766,12 +766,12 @@ class LoopIntegral_from_graph(LoopIntegral):
     @cached_property
     def U(self):
 
-        U = Polynomial([[0]*len(self.intlines)], [0], polysymbols=self.Feynman_parameter_symbol)
+        U = Polynomial([[0]*self.P], [0], polysymbols=self.Feynman_parameter_symbol)
 
         # iterate over all possible L-fold cuts
-        for cut in combinations(range(len(self.intlines)), self.L):
+        for cut in combinations(range(self.P), self.L):
             # find uncut propagators
-            uncut = missing(range(len(self.intlines)),cut)
+            uncut = missing(range(self.P),cut)
 
             # Define transition matrix for cut graph by removing cut propagators
             rules1 = map(lambda x: (sp.Symbol('pr'+str(x)),0), cut)
@@ -779,13 +779,13 @@ class LoopIntegral_from_graph(LoopIntegral):
             newmatrix = np.matrix(self.vertmatrix.subs(rules1+rules2))
 
             # Check if cut graph is connected
-            numvert = len(self.intverts) + len(self.extlines)
-            if(0 in newmatrix**numvert):
+            numvert = self.V + len(self.extlines)
+            if(0 in newmatrix**numvert): # TODO: optimize exponential?
                 # not connected if exponentiated matrix has a zero
                 continue
 
             # construct monomial of Feynman parameters of cut propagators and add this to U
-            expolist=[0]*len(self.intlines)
+            expolist=[0]*self.P
             for i in cut:
                 expolist[i]=1
             monom = Polynomial([expolist],[1])
@@ -796,44 +796,40 @@ class LoopIntegral_from_graph(LoopIntegral):
     @cached_property
     def F(self):
 
-        F0 = Polynomial([[0]*len(self.intlines)], [0], polysymbols=self.Feynman_parameter_symbol)
+        F0 = Polynomial([[0]*self.P], [0], polysymbols=self.Feynman_parameter_symbol)
 
         # iterate over all possible (L+1)-fold cuts
-        for cut in combinations(range(len(self.intlines)), self.L+1):
+        for cut in combinations(range(self.P), self.L+1):
             # find uncut propagators
-            uncut = missing(range(len(self.intlines)),cut)
+            uncut = missing(range(self.P),cut)
 
             # Define transition matrix for cut graph by removing cut propagators
             rules1 = map(lambda x: (sp.Symbol('pr'+str(x)),0), cut)
             rules2 = map(lambda x: (sp.Symbol('pr'+str(x)),1), uncut)
             newmatrix = np.matrix(self.vertmatrix.subs(rules1+rules2))
 
-            # Check if cut graph is connected
-            numvert = len(self.intverts) + len(self.extlines)
-            newmatrix = newmatrix**numvert
+            numvert = self.V + len(self.extlines)
+            newmatrix = newmatrix**numvert # TODO: optimize exponential?
             
-            # find all internal vertices *not* connected to vertex 0
+            # find all internal vertices *not* connected to vertex 0 (arbitrary choice)
             intnotconnectedto0 = []
-            for i in range(len(self.intverts)):
+            for i in range(self.V):
                 if newmatrix[0,i]==0:
                     intnotconnectedto0.append(i)
 
             # find all external vertices *not* connected to vertex 0
             extnotconnectedto0 = []
-            for i in range(len(self.intverts),numvert):
+            for i in range(self.V,numvert):
                 if newmatrix[0,i]==0:
                     extnotconnectedto0.append(i)
 
             # check if all vertices not connected to 0 are connected to each other
             valid2tree = True
             notconnectedto0 = intnotconnectedto0 + extnotconnectedto0            
-            for i in notconnectedto0:
-                for j in notconnectedto0:
-                    if newmatrix[i,j]==0:
-                        # there are more than two disconnected components -> not a valid two-tree cut
-                        valid2tree = False
-                        break
-                if not valid2tree:
+            for i,j in combinations(notconnectedto0, 2):
+                if newmatrix[i,j]==0:
+                    # there are more than two disconnected components -> not a valid two-tree cut
+                    valid2tree = False
                     break
             # drop current cut if it is not a valid two-tree cut
             if not valid2tree:
@@ -845,26 +841,26 @@ class LoopIntegral_from_graph(LoopIntegral):
             if(len(extnotconnectedto0) <= len(self.extlines)-len(extnotconnectedto0)):
                 cutmomenta = extnotconnectedto0
             else:
-                cutmomenta = missing(range(len(self.intverts),numvert),extnotconnectedto0)
+                cutmomenta = missing(range(self.V,numvert),extnotconnectedto0)
 
             # construct monomial of Feynman parameters of cut propagators and add this to F, 
             # if the momentum flow through the cuts is non-zero
             if cutmomenta:
-                expolist=[0]*len(self.intlines)
+                expolist=[0]*self.P
                 for i in cut:
                     expolist[i]=1
                 # sum the momenta flowing through the cuts, square it, and use replacement rules
-                sumsqr = sum(map(lambda i: self.extlines[i-len(self.intverts)][0], cutmomenta))**2
+                sumsqr = sum(self.extlines[i-self.V][0] for i in cutmomenta)**2
                 sumsqr = sumsqr.expand().subs(self.replacement_rules)
                 monom = Polynomial([expolist],[-sumsqr])
                 F0 += monom
 
         # construct terms proportial to the squared masses
-        Fm = Polynomial([[0]*len(self.intlines)], [0], polysymbols=self.Feynman_parameter_symbol)
-        for i in range(len(self.intlines)):
-            expolist = [0]*len(self.intlines)
+        Fm = Polynomial([[0]*self.P], [0], polysymbols=self.Feynman_parameter_symbol)
+        for i in range(self.P):
+            expolist = [0]*self.P
             expolist[i] = 1
             Fm += Polynomial([expolist], [self.intlines[i][0]])
 
-        return (F0 + self.U*Fm).simplify()
+        return F0 + self.U*Fm
             
