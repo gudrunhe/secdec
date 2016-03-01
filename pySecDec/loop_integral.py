@@ -709,9 +709,9 @@ class LoopIntegral_from_graph(LoopIntegral):
             self.external_momenta.append(extmom)
 
 
-        # calculate number of loops from the relation  #vertices = 2*(#loops - 1) + #legs
-        self.L = (len(self.intverts) - len(self.extlines))/2 + 1
+        # calculate number of loops from the relation #loops = #internal lines - (#vertices - 1)
         self.V = len(self.intverts)
+        self.L = self.P - (self.V - 1)
 
         # store properties shared between derived classes
         self.all_momenta = self.external_momenta
