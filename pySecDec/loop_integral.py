@@ -744,15 +744,14 @@ class LoopIntegral_from_graph(LoopIntegral):
 
         # each vertex is trivially connected to itself, so start from unit matrix:
         numvert = self.V+len(self.extlines)
-        M = sp.Matrix(numvert, numvert, lambda i,j: 1 if i==j else 0)
+        M = np.identity(numvert, dtype=int)
 
         # for each internal propagator connecting two vertices add an entry in the matrix
         for i in range(self.P):
             start = self.intverts[self.intlines[i][1][0]]
             end = self.intverts[self.intlines[i][1][1]]
-            temp = sp.sympify('pr'+str(i))
-            M[start,end] += temp
-            M[end,start] += temp
+            M[start,end] += 1
+            M[end,start] += 1
 
         # for each external line add a vertex and an entry in the matrix
         for i in range(len(self.extlines)):
@@ -774,13 +773,16 @@ class LoopIntegral_from_graph(LoopIntegral):
             uncut = missing(range(self.P),cut)
 
             # Define transition matrix for cut graph by removing cut propagators
-            rules1 = map(lambda x: (sp.Symbol('pr'+str(x)),0), cut)
-            rules2 = map(lambda x: (sp.Symbol('pr'+str(x)),1), uncut)
-            newmatrix = np.matrix(self.vertmatrix.subs(rules1+rules2))
+            newmatrix = np.matrix(self.vertmatrix) # copies data by default
+            for i in cut:
+                start = self.intverts[self.intlines[i][1][0]]
+                end = self.intverts[self.intlines[i][1][1]]
+                newmatrix[start,end] -= 1
+                newmatrix[end,start] -= 1
 
             # Check if cut graph is connected
             numvert = self.V + len(self.extlines)
-            if(0 in newmatrix**numvert): # TODO: optimize exponential?
+            if(0 in newmatrix**numvert): # TODO: optimize exponential? convert to boolian matrix?
                 # not connected if exponentiated matrix has a zero
                 continue
 
@@ -804,12 +806,15 @@ class LoopIntegral_from_graph(LoopIntegral):
             uncut = missing(range(self.P),cut)
 
             # Define transition matrix for cut graph by removing cut propagators
-            rules1 = map(lambda x: (sp.Symbol('pr'+str(x)),0), cut)
-            rules2 = map(lambda x: (sp.Symbol('pr'+str(x)),1), uncut)
-            newmatrix = np.matrix(self.vertmatrix.subs(rules1+rules2))
+            newmatrix = np.matrix(self.vertmatrix) # copies data by default
+            for i in cut:
+                start = self.intverts[self.intlines[i][1][0]]
+                end = self.intverts[self.intlines[i][1][1]]
+                newmatrix[start,end] -= 1
+                newmatrix[end,start] -= 1
 
             numvert = self.V + len(self.extlines)
-            newmatrix = newmatrix**numvert # TODO: optimize exponential?
+            newmatrix = newmatrix**numvert # TODO: optimize exponential? convert to boolian matrix?
             
             # find all internal vertices *not* connected to vertex 0 (arbitrary choice)
             intnotconnectedto0 = []
