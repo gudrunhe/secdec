@@ -765,7 +765,8 @@ class LoopIntegral_from_graph(LoopIntegral):
     @cached_property
     def U(self):
 
-        U = Polynomial([[0]*self.P], [0], polysymbols=self.Feynman_parameter_symbol)
+        expolists=[]
+        coeffs=[]
 
         # iterate over all possible L-fold cuts
         for cut in combinations(range(self.P), self.L):
@@ -782,23 +783,24 @@ class LoopIntegral_from_graph(LoopIntegral):
 
             # Check if cut graph is connected
             numvert = self.V + len(self.extlines)
-            if(0 in newmatrix**numvert): # TODO: optimize exponential? convert to boolian matrix?
+            if(0 in newmatrix**numvert):
                 # not connected if exponentiated matrix has a zero
                 continue
 
-            # construct monomial of Feynman parameters of cut propagators and add this to U
+            # construct monomial of Feynman parameters of cut propagators to be added to U
             expolist=[0]*self.P
             for i in cut:
                 expolist[i]=1
-            monom = Polynomial([expolist],[1])
-            U += monom
+            expolists.append(expolist)
+            coeffs.append(1)
 
-        return U
+        return Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
 
     @cached_property
     def F(self):
 
-        F0 = Polynomial([[0]*self.P], [0], polysymbols=self.Feynman_parameter_symbol)
+        expolists=[]
+        coeffs=[]
 
         # iterate over all possible (L+1)-fold cuts
         for cut in combinations(range(self.P), self.L+1):
@@ -814,7 +816,7 @@ class LoopIntegral_from_graph(LoopIntegral):
                 newmatrix[end,start] -= 1
 
             numvert = self.V + len(self.extlines)
-            newmatrix = newmatrix**numvert # TODO: optimize exponential? convert to boolian matrix?
+            newmatrix = newmatrix**numvert
             
             # find all internal vertices *not* connected to vertex 0 (arbitrary choice)
             intnotconnectedto0 = []
@@ -848,7 +850,7 @@ class LoopIntegral_from_graph(LoopIntegral):
             else:
                 cutmomenta = missing(range(self.V,numvert),extnotconnectedto0)
 
-            # construct monomial of Feynman parameters of cut propagators and add this to F, 
+            # construct monomial of Feynman parameters of cut propagators to be added to F, 
             # if the momentum flow through the cuts is non-zero
             if cutmomenta:
                 expolist=[0]*self.P
@@ -857,15 +859,20 @@ class LoopIntegral_from_graph(LoopIntegral):
                 # sum the momenta flowing through the cuts, square it, and use replacement rules
                 sumsqr = sum(self.extlines[i-self.V][0] for i in cutmomenta)**2
                 sumsqr = sumsqr.expand().subs(self.replacement_rules)
-                monom = Polynomial([expolist],[-sumsqr])
-                F0 += monom
+                expolists.append(expolist)
+                coeffs.append(-sumsqr)
+
+        F0 = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
 
         # construct terms proportial to the squared masses
-        Fm = Polynomial([[0]*self.P], [0], polysymbols=self.Feynman_parameter_symbol)
+        expolists=[]
+        coeffs=[]
         for i in range(self.P):
             expolist = [0]*self.P
             expolist[i] = 1
-            Fm += Polynomial([expolist], [self.intlines[i][0]])
+            expolists.append(expolist)
+            coeffs.append(self.intlines[i][0])
+        Fm = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
 
         return F0 + self.U*Fm
             
