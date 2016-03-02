@@ -901,6 +901,10 @@ def uf_from_graph_generic(test_case, int_lines, ext_lines, rules, result_L, resu
     test_case.assertEqual(zerof,0)
 
 #@attr('active')
+    expo_u, expo_f = loop_integral.exponent_U, loop_integral.exponent_F
+    test_case.assertEqual(expo_u, len(int_lines) - sp.sympify('2-eps') * (1 + loop_integral.L))
+    test_case.assertEqual(expo_f, -(len(int_lines) - sp.sympify('2-eps') * loop_integral.L))
+
 class TestUF_FromGraph(unittest.TestCase):
     def test_bubble_3l(self):
         uf_from_graph_generic(self,
