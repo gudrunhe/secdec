@@ -878,3 +878,107 @@ class TestNumerator(unittest.TestCase):
 #
 #        li = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta, numerator=numerator)
 #        self.assertRaisesRegexp(AssertionError, '(E|e)ach.*index.*(exactly|at most).*(twice|two times)', lambda: li.numerator)
+
+
+def uf_from_graph_generic(test_case, int_lines, ext_lines, rules, result_L, result_u, result_f):
+    loop_integral = LoopIntegral_from_graph(int_lines, ext_lines, Feynman_parameter_symbol='Feynman',
+                                            replacement_rules=rules)
+
+    test_case.assertEqual(loop_integral.L,result_L)
+
+    u,f = loop_integral.U, loop_integral.F
+
+    sympy_u = sp.sympify(str(u))
+    sympy_f = sp.sympify(str(f))
+
+    result_u = sp.sympify(str(result_u).replace('x','Feynman'))
+    result_f = sp.sympify(str(result_f).replace('x','Feynman'))
+
+    zerou = (sympy_u - result_u).expand()
+    zerof = (sympy_f - result_f).expand()
+
+    test_case.assertEqual(zerou,0)
+    test_case.assertEqual(zerof,0)
+
+#@attr('active')
+class TestUF_FromGraph(unittest.TestCase):
+    def test_bubble_3l(self):
+        uf_from_graph_generic(self,
+                              int_lines = [[0,[1,2]], [0,[1,2]], [0,[1,2]], [0,[1,2]]],
+                              ext_lines = [['p1',1], ['p2',2]],
+                              rules = [('p2','-p1')], 
+                              result_L = 3,
+                              result_u = "x0*x1*x2 + x0*x1*x3 + x0*x2*x3 + x1*x2*x3",
+                              result_f = "-p1**2*x0*x1*x2*x3")
+
+    # from SecDec -> loop/demos/3_nonplanarbox_2L
+    def test_nonplanarbox_2l(self):
+        uf_from_graph_generic(self,
+                              int_lines=[['msq',[1,5]],['msq',[2,6]],['Msq',[1,2]],['Msq',[3,5]],['msq',[3,6]],
+                                         ['msq',[4,6]],['Msq',[4,5]]],
+                              ext_lines=[['p1',1],['p2',2],['p3',3],['p4',4]],
+                              rules=[('p1*p1','msq'),
+                                     ('p2*p2','msq'),
+                                     ('p3*p3','msq'),
+                                     ('p4*p4','msq'),
+                                     ('p3*p2','t/2-msq'),
+                                     ('p1*p3','-t/2-s/2+msq'),
+                                     ('p1*p2','s/2-msq'),
+                                     ('p1*p4','t/2-msq'),
+                                     ('p2*p4','-t/2-s/2+msq'),
+                                     ('p3*p4','s/2-msq')],
+                              result_L = 2,
+                              result_f = """msq*x0**2*x3 + 2*msq*x0*x1*x3 - s*x0*x1*x3 + msq*x1**2*x3 
+                              + Msq*x0*x2*x3 + Msq*x1*x2*x3 + Msq*x2**2*x3 + Msq*x0*x3**2 + Msq*x1*x3**2 
+                              + Msq*x2*x3**2 + msq*x0**2*x4 + 2*msq*x0*x1*x4 - s*x0*x1*x4 + msq*x1**2*x4 
+                              + Msq*x0*x2*x4 + Msq*x1*x2*x4 + Msq*x2**2*x4 + Msq*x0*x3*x4 + Msq*x1*x3*x4 
+                              + Msq*x2*x3*x4 + msq*x0*x4**2 + msq*x1*x4**2 + msq*x2*x4**2 + msq*x0**2*x5 
+                              + 2*msq*x0*x1*x5 - s*x0*x1*x5 + msq*x1**2*x5 + Msq*x0*x2*x5 + Msq*x1*x2*x5 
+                              + Msq*x2**2*x5 + msq*x0*x3*x5 + Msq*x0*x3*x5 + msq*x1*x3*x5 + Msq*x1*x3*x5 
+                              + msq*x2*x3*x5 + 2*Msq*x2*x3*x5 - t*x2*x3*x5 + Msq*x3**2*x5 + 3*msq*x0*x4*x5 
+                              - s*x0*x4*x5 + 3*msq*x1*x4*x5 + msq*x2*x4*x5 + Msq*x2*x4*x5 + Msq*x3*x4*x5 
+                              + msq*x4**2*x5 + msq*x0*x5**2 + msq*x1*x5**2 + msq*x2*x5**2 + msq*x3*x5**2 
+                              + msq*x4*x5**2 + msq*x0**2*x6 + 2*msq*x0*x1*x6 - s*x0*x1*x6 + msq*x1**2*x6 
+                              + Msq*x0*x2*x6 + Msq*x1*x2*x6 + Msq*x2**2*x6 + msq*x0*x3*x6 + 2*Msq*x0*x3*x6 
+                              + msq*x1*x3*x6 + 2*Msq*x1*x3*x6 - s*x1*x3*x6 - msq*x2*x3*x6 + 3*Msq*x2*x3*x6 
+                              + Msq*x3**2*x6 + msq*x0*x4*x6 + Msq*x0*x4*x6 + msq*x1*x4*x6 + Msq*x1*x4*x6 
+                              - 3*msq*x2*x4*x6 + 2*Msq*x2*x4*x6 + s*x2*x4*x6 + t*x2*x4*x6 + Msq*x3*x4*x6 
+                              + msq*x4**2*x6 + Msq*x0*x5*x6 + Msq*x1*x5*x6 + Msq*x2*x5*x6 + Msq*x3*x5*x6 
+                              + Msq*x4*x5*x6 + Msq*x0*x6**2 + Msq*x1*x6**2 + Msq*x2*x6**2 + Msq*x3*x6**2 
+                              + Msq*x4*x6**2""",
+                              result_u = """x0*x3 + x1*x3 + x2*x3 + x0*x4 + x1*x4 + x2*x4 + x0*x5 + x1*x5 
+                              + x2*x5 + x3*x5 + x4*x5 + x0*x6 + x1*x6 + x2*x6 + x3*x6 + x4*x6"""
+                              )
+                              
+    # from SecDec -> loop/demos/5_pentagon_2L
+    def test_pentagon_2l(self):
+        uf_from_graph_generic(self,
+                              int_lines=[[0,[1,2]],[0,[2,6]],[0,[6,3]],
+                                         [0,[3,4]],[0,[4,5]],[0,[5,7]],
+                                         [0,[7,1]],[0,[7,6]]],
+                              ext_lines = [['p1',1],['p2',2],['p3',3],['p4',4],['p5',5]],
+                              rules = [('p1*p1', '0'),
+                                       ('p2*p2', '0'),
+                                       ('p3*p3', '0'),
+                                       ('p4*p4', '0'),
+                                       ('p5*p5', '0'),
+                                       ('p1*p2', 's12/2'),
+                                       ('p1*p3', '(s45-s12-s23)/2'),
+                                       ('p1*p4', '(s23-s51-s45)/2'),
+                                       ('p1*p5', 's51/2'),
+                                       ('p2*p3', 's23/2'),
+                                       ('p2*p4', '(-s23-s34+s51)/2'),
+                                       ('p2*p5', '(s34-s12-s51)/2'),
+                                       ('p3*p4', 's34/2'),
+                                       ('p3*p5', '(s12-s34-s45)/2'),
+                                       ('p4*p5', 's45/2')],
+                              result_L = 2,
+                              result_u = """x0*x2 + x1*x2 + x0*x3 + x1*x3 + x0*x4 + x1*x4 + x0*x5 + x1*x5 
+                              + x2*x6 + x3*x6 + x4*x6 + x5*x6 + x0*x7 + x1*x7 + x2*x7 + x3*x7 + x4*x7 
+                              + x5*x7 + x6*x7""",
+                              result_f = """-s34*x0*x2*x4 - s34*x1*x2*x4 - s12*x0*x2*x5 - s12*x1*x2*x5 
+                              - s45*x0*x3*x5 - s45*x1*x3*x5 - s12*x1*x2*x6 - s12*x1*x3*x6 - s12*x1*x4*x6 
+                              - s34*x2*x4*x6 - s12*x1*x5*x6 - s12*x2*x5*x6 - s45*x3*x5*x6 - s23*x0*x3*x7 
+                              - s51*x0*x4*x7 - s34*x1*x4*x7 - s34*x2*x4*x7 - s12*x1*x5*x7 - s12*x2*x5*x7 
+                              - s45*x3*x5*x7 - s12*x1*x6*x7 - s12*x2*x6*x7 - s45*x3*x6*x7"""
+                              )
