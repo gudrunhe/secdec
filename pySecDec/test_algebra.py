@@ -248,11 +248,35 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         self.assertEqual(str(polysum),str(self.p0))
 
     #@attr('active')
-    def test_pow(self):
-        self.assertRaisesRegexp(TypeError, "unsupported", lambda: self.p0 ** 'a')
-        self.assertRaisesRegexp(TypeError, "unsupported", lambda: self.p0 ** sp.sympify('a'))
-        self.assertRaisesRegexp(ValueError, "must.*nonnegative", lambda: self.p0 ** -1)
+    def test_pow_sympy(self):
+        poly = Polynomial([[1]], [1])
+        poly_pow_poly = poly**poly
+        expected_string_form_1 = '( + (1)*x0) ** ( + (1)*x0)'
+        self.assertEqual(str(poly_pow_poly), expected_string_form_1)
 
+        poly_pow_string = poly ** 'a+5*b'
+        self.assertTrue(isinstance(poly_pow_string.exponent.coeffs[0], sp.Expr)) # ``a+5*b`` should be converted to sympy expression
+        poly_pow_sympy = poly ** sp.sympify('a+5*b')
+        expected_string_form_2 = '( + (1)*x0) ** ( + (a + 5*b))'
+        for i, poly_pow in enumerate((poly_pow_string, poly_pow_sympy)):
+            print(i)
+            self.assertEqual(str(poly_pow), expected_string_form_2)
+            self.assertTrue(type(poly_pow) is Pow)
+
+        poly_pow_negative_int = poly ** -1
+        expected_string_form_3 = '( + (1)*x0) ** ( + (-1))'
+        self.assertEqual(str(poly_pow_negative_int), expected_string_form_3)
+        self.assertTrue(isinstance(poly_pow_negative_int.exponent.coeffs[0], sp.Expr)) # ``-1`` should be converted to sympy expression
+
+        poly_pow_float = poly ** -1.5
+        # expect something like ``( + (1)*x0) ** ( + (-1.50000000000000))``
+        # the exact representation of the floating point number can be system dependent --> use a regular expression
+        expected_string_form_4 = r'^\( \+ \(1\)\*x0\) \*\* \( \+ \(\-1.5(|000000[0-9]*)\)\)$'
+        self.assertRegexpMatches(str(poly_pow_float), expected_string_form_4)
+        self.assertTrue(isinstance(poly_pow_float.exponent.coeffs[0], sp.Expr)) # ``-1`` should be converted to sympy expression
+
+    #@attr('active')
+    def test_pow_positive_integer(self):
         target_p0_zeroth_power = 0 * self.p0 + 1
         p0_zeroth_power = self.p0 ** 0
         self.assertEqual(sp.sympify(target_p0_zeroth_power - p0_zeroth_power), 0)

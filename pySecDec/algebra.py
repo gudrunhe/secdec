@@ -464,10 +464,9 @@ class Polynomial(_Expression):
         return Polynomial(self.expolist.copy(), -self.coeffs, self.polysymbols, copy=False)
 
     def __pow__(self, exponent):
-        if not isinstance(exponent, int):
-            return NotImplemented
-        if exponent < 0:
-            raise ValueError("The exponent must be nonnegative")
+        if not isinstance(exponent, int) or exponent < 0:
+            return super(Polynomial, self).__pow__(exponent)
+
         if exponent == 0:
             return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([1]), self.polysymbols, copy=False)
 
