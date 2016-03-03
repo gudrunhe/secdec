@@ -357,6 +357,7 @@ class TestExponentiatedPolynomial(unittest.TestCase):
         self.assertEqual(str(polynomial1), str(polynomial2))
         self.assertEqual(polynomial1.exponent, polynomial2.exponent)
 
+    #@attr('active')
     def test_derive(self):
         from sympy import sympify, symbols
         A, B = symbols('A B')
@@ -662,6 +663,14 @@ class TestPowDerive(unittest.TestCase):
         dd__x_pow_y__dxdy = sp.sympify(self.x_pow_y.derive(0).derive(1))
         target_dd__x_pow_y__dxdy = sp.sympify('x**y * y/x * log(x) + x**y / x')
         self.assertEqual( (dd__x_pow_y__dxdy - target_dd__x_pow_y__dxdy).simplify() , 0 )
+
+    #@attr('active')
+    def test_derivative_of_constant(self):
+        constant = PowDerive(self.y, self.y)
+        zero1 = constant.derive(0) # take derivative of ``y**y`` by ``x``
+        zero2 = constant.derive(0).simplify()
+        for i, zero in enumerate([zero1, zero2]):
+            self.assertEqual( sp.sympify(zero).simplify() , 0)
 
     #@attr('active')
     def test_replace(self):

@@ -1559,6 +1559,10 @@ class PowDerive(_Expression):
         self.coeffs = self.coeffs[nonzero_coeffs]
         self.derivatives = self.derivatives[nonzero_coeffs]
 
+        # return zero if no terms are left
+        if len(self.coeffs) == 0:
+            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
+
         return self
 
     @doc(_Expression.docstring_of_replace)
