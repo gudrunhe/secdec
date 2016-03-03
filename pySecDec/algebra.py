@@ -659,50 +659,15 @@ class ExponentiatedPolynomial(Polynomial):
             The index of the paramater to derive by.
 
         '''
-        # derive an expression of the form "poly**exponent"
-        # derivative(poly**exponent) = poly**exponent*derivative(exponent)*log(poly) + poly**(exponent-1)*exponent*derivative(poly)
+        # no need to copy since `derive` makes a copy anyway
+        base = Polynomial(self.expolist, self.coeffs, self.polysymbols, copy=False)
 
         if isinstance(self.exponent, _Expression):
-            # summand0: poly**exponent*derivative(exponent)*log(poly)
-            summand0_factors = [self.copy()]
-            summand0_factors.append(self.exponent.derive(index))
-            summand0_factors.append(LogOfPolynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False))
-            summand0 = Product(*summand0_factors, copy=False)
+            exponent = self.exponent
         else:
-            summand0 = None
+            exponent = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([self.exponent]), self.polysymbols, copy=False)
 
-        # summand1: poly**(exponent-1)*derivative(poly)
-        # factor1 = "exponent*derivative(poly)"
-        # catch ``derivative(poly) = 0``
-        derivative_poly = Polynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False).derive(index)
-        if (derivative_poly.coeffs == 0).all():
-            summand1 = None
-        else:
-            factor1 = self.exponent * derivative_poly
-            # factor0 = poly**(exponent-1)   -->   simplification: (...)**0 = 1
-            # do not need factor 0 in that case
-            new_exponent = self.exponent - 1
-            if new_exponent == 0:
-                # factor0 = 1 in this case
-                summand1 = factor1
-            else:
-                factor0 = ExponentiatedPolynomial(self.expolist.copy(),
-                                                  self.coeffs.copy(),
-                                                  new_exponent,
-                                                  self.polysymbols,
-                                                  copy=False)
-                summand1 = Product(factor0, factor1, copy=False)
-
-        if summand0 is None:
-            if summand1 is None:
-                return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.polysymbols, copy=False)
-            else:
-                return summand1
-        else:
-            if summand1 is None:
-                return summand0
-            else:
-                return Sum(summand0, summand1, copy=False)
+        return PowDerive(base, exponent, copy=False).derive(index)
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
@@ -1317,32 +1282,7 @@ class Pow(_Expression):
             The index of the paramater to derive by.
 
         '''
-        # derive an expression of the form "base**exponent"
-        # derivative(base**exponent) = base**exponent*derivative(exponent)*log(base) + base**(exponent-1)*exponent*derivative(poly)
-
-        # summand0: base**exponent*derivative(exponent)*log(base)
-        summand0_factors = [self.copy()]
-        summand0_factors.append(self.exponent.derive(index))
-        summand0_factors.append(Log(self.base.copy(), copy=False))
-        summand0 = Product(*summand0_factors, copy=False)
-
-        # summand1: base**(exponent-1)*derivative(base)
-        # factor0 = base**(exponent-1)   -->   simplification: (...)**0 = 1
-        # do not need factor 0 in that case
-        new_exponent = self.exponent - 1
-        if new_exponent == 0:
-            factor0 = None
-        else:
-            factor0 = Pow(self.base.copy(), new_exponent, copy=False)
-        # factor1 = "exponent*derivative(poly)"
-        derivative_base = self.base.derive(index)
-        factor1 = self.exponent * derivative_base
-        if factor0 is None:
-            summand1 = factor1
-        else:
-            summand1 = Product(factor0, factor1, copy=False)
-
-        return Sum(summand0,summand1, copy=False)
+        return PowDerive(self.base, self.exponent, copy=False).derive(index)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
