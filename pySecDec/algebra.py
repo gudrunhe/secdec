@@ -1199,6 +1199,13 @@ class ProductRule(_Expression):
         self.factorlist = self.factorlist[sort_key]
         self.coeffs = self.coeffs[sort_key]
 
+        # find zeros in `self.expressions`
+        for j, derivative_multiindex in enumerate(self.factorlist[0]):
+            derivative_multiindex = tuple(derivative_multiindex)
+            expression = self.expressions[j][derivative_multiindex]
+            if type(expression) is Polynomial and (expression.coeffs == 0).all():
+                self.coeffs[0] = 0
+
         for i in range(1,len(self.coeffs)):
             if self.coeffs[i] == 0: continue
             previous_term = self.factorlist[i-1]
@@ -1221,6 +1228,10 @@ class ProductRule(_Expression):
         nonzero_coeffs = np.where(self.coeffs != 0)
         self.coeffs = self.coeffs[nonzero_coeffs]
         self.factorlist = self.factorlist[nonzero_coeffs]
+
+        # return ``zero`` if no term left
+        if len(self.coeffs) == 0:
+            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
 
         return self
 
