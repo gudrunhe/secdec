@@ -664,6 +664,10 @@ class TestPowDerive(unittest.TestCase):
         target_dd__x_pow_y__dxdy = sp.sympify('x**y * y/x * log(x) + x**y / x')
         self.assertEqual( (dd__x_pow_y__dxdy - target_dd__x_pow_y__dxdy).simplify() , 0 )
 
+        ddd__x_pow_y__dxdydx = sp.sympify(self.x_pow_y.derive(0).derive(1).derive(0))
+        target_ddd__x_pow_y__dxdydx = sp.sympify('y*(y-1) * x**(y-2) * log(x) + y*x**(y-1)/x    +    (y-1)*x**(y-2)')
+        self.assertEqual( (ddd__x_pow_y__dxdydx - target_ddd__x_pow_y__dxdydx).simplify() , 0 )
+
     #@attr('active')
     def test_derivative_of_constant(self):
         constant = PowDerive(self.y, self.y)

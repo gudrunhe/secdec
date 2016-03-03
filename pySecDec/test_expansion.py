@@ -152,6 +152,7 @@ class TestTaylorExpansion(unittest.TestCase):
         self.assertRaisesRegexp(IndexError, "out of bounds", expand_Taylor, expression, indices=4, orders=1)
         self.assertRaisesRegexp(AssertionError, 'indices.*orders.*same length', expand_Taylor, expression, indices=1, orders=[1,2])
 
+    #@attr('active')
     def test_expand_Taylor_step(self):
         expansion_in_x = _expand_Taylor_step(self.expression, 0, 2)
         self.assertEqual( (sp.sympify(expansion_in_x) - self.expected_expansion_in_x).simplify() , 0)

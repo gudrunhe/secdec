@@ -1155,12 +1155,12 @@ class ProductRule(_Expression):
         # generate new `factorlist`
         new_factorlist = []
         for j in range(len(self.expressions)):
-            # from product rule: increse ``n_ijk`` for every ``i``
+            # from product rule: increase ``n_ijk`` for every ``i``
             factorlist = self.factorlist.copy()
             factorlist[:,j,index] += 1
             new_factorlist.append(factorlist)
         new_factorlist = np.vstack(new_factorlist)
-        new_coeffs = np.concatenate([self.coeffs]*len(self.expressions))
+        new_coeffs = np.hstack([self.coeffs]*len(self.expressions))
 
         # generate missing derivatives
         # do not make a copy since it does not hurt having the child point to the same ``expressions``
@@ -1237,11 +1237,11 @@ class ProductRule(_Expression):
     @doc(_Expression.docstring_of_replace)
     def replace(self, index, value, remove=False):
         summands = []
-        for term in self.factorlist:
+        for coeff, term in zip(self.coeffs, self.factorlist):
             factors = []
             for j, derivative_multiindex in enumerate(term):
                 factors.append(self.expressions[j][tuple(derivative_multiindex)].replace(index, value, remove))
-            summands.append(Product(*factors, copy=False))
+            summands.append(Product(*factors, copy=False) * coeff)
         return Sum(*summands, copy=False)
 
 class Pow(_Expression):
@@ -1468,14 +1468,17 @@ class PowDerive(_Expression):
 
         # generate the term(s) "derivative(C)" --> product rule
         second_term_derivatives = []
+        second_term_coeffs = []
         # product rule: every factor produces a new summand
         for j in range(self.derivatives.shape[1]):
-            tmp = np.zeros(new_shape, dtype=int) - 1
-            tmp[:,:-1,:] = self.derivatives
-            to_increment = tmp[:,j,index]
+            this_derivatives = np.zeros(new_shape, dtype=int) - 1
+            this_derivatives[:,:-1,:] = self.derivatives
+            to_increment = this_derivatives[:,j,index]
             to_increment[to_increment != -1] += 1
-            second_term_derivatives.append(sort_factors(tmp))
-        second_term_coeffs = [self.coeffs] * self.derivatives.shape[1]
+            this_coeffs = self.coeffs.copy()
+            this_coeffs[to_increment == -1] = 0 # exclude factors of one
+            second_term_derivatives.append(sort_factors(this_derivatives))
+            second_term_coeffs.append(this_coeffs)
 
         new_coeffs = np.hstack([first_term_coeffs] + second_term_coeffs)
         new_derivatives = np.vstack([first_term_derivatives] + second_term_derivatives)
@@ -1498,9 +1501,9 @@ class PowDerive(_Expression):
         self.exponent_log_base_derivatives.update(new_entries)
 
         return PowDerive(internal_regenerate=True, copy=False,
-                         base=self.base.copy(), exponent=self.exponent.copy(),
+                         base=self.base, exponent=self.exponent,
                          derivatives=new_derivatives, coeffs=new_coeffs,
-                         exponent_log_base_derivatives = self.exponent_log_base_derivatives)
+                         exponent_log_base_derivatives=self.exponent_log_base_derivatives)
 
     def copy(self):
         "Return a copy of a :class:`.PowDerive`."
@@ -1526,7 +1529,6 @@ class PowDerive(_Expression):
             if type(expression) is Polynomial:
                 if (expression.coeffs == 0).all():
                     self.coeffs[0] = 0
-                    continue
                 elif len(expression.coeffs) == 1 and (expression.expolist == 0).all() and (expression.coeffs == 1).all():
                     derivative_multiindex[:] = -1 # do not have to consider a factor of one
 
@@ -1550,7 +1552,6 @@ class PowDerive(_Expression):
                 if type(expression) is Polynomial:
                     if (expression.coeffs == 0).all():
                         self.coeffs[i] = 0
-                        continue
                     elif len(expression.coeffs) == 1 and (expression.expolist == 0).all() and (expression.coeffs == 1).all():
                         derivative_multiindex[:] = -1 # do not have to consider a factor of one
 
@@ -1567,17 +1568,15 @@ class PowDerive(_Expression):
 
     @doc(_Expression.docstring_of_replace)
     def replace(self, index, value, remove=False):
-        replaced_base = self.base.replace(index,value,remove)
-        replaced_exponent = self.exponent.replace(index,value,remove)
-
-        replaced_exponent_log_base_derivatives = {}
-        for multiindex, expression in self.exponent_log_base_derivatives.items():
-            replaced_exponent_log_base_derivatives[multiindex] = expression.replace(index,value,remove)
-
-        return PowDerive(internal_regenerate=True, copy=False,
-                         base=replaced_base, exponent=replaced_exponent,
-                         derivatives=self.derivatives.copy(), coeffs=self.coeffs.copy(),
-                         exponent_log_base_derivatives = replaced_exponent_log_base_derivatives)
+        A_pow_B = Pow(self.base, self.exponent, copy=False).replace(index,value,remove)
+        summands = []
+        for coeff, term in zip(self.coeffs, self.derivatives):
+            factors = []
+            for j, derivative_multiindex in enumerate(term):
+                if derivative_multiindex[0] >= 0:
+                    factors.append(self.exponent_log_base_derivatives[tuple(derivative_multiindex)].replace(index, value, remove))
+            summands.append(Product(*factors, copy=False) * coeff)
+        return Product(A_pow_B, Sum(*summands, copy=False), copy=False)
 
 class Log(_Expression):
     r'''
