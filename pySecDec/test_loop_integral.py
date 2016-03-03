@@ -904,7 +904,7 @@ def uf_from_graph_generic(test_case, int_lines, ext_lines, result_L, result_u, r
     test_case.assertEqual(expo_u, len(int_lines) - sp.sympify('2-eps') * (1 + loop_integral.L))
     test_case.assertEqual(expo_f, -(len(int_lines) - sp.sympify('2-eps') * loop_integral.L))
 
-@attr('active')
+#@attr('active')
 class TestUF_FromGraph(unittest.TestCase):
     def test_triangle_1l(self):
         uf_from_graph_generic(self,
