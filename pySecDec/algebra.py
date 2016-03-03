@@ -1386,20 +1386,20 @@ class PowDerive(_Expression):
                 current_term[:] = current_term[argsort_2D_array(current_term)]
             return array
 
-        # derivative(A**B * C) = A**B * ( C * derivative(A*log(B))  +  derivative(C) )
+        # derivative(A**B * C) = A**B * ( C * derivative(B*log(A))  +  derivative(C) )
         # where "C" denotes derivatives taken earlier
 
         # The global factor "A**B" is always implied --> nothing to do
 
         # The shape of `derivatives` changes:
-        # There is one more factor (``derivative(A*log(B))``) in every term
+        # There is one more factor (``derivative(B*log(A))``) in every term
         old_shape = self.derivatives.shape
         new_shape = old_shape[0], old_shape[1] + 1, old_shape[2]
 
-        # generate the term(s) "C * derivative(A*log(B))"
+        # generate the term(s) "C * derivative(B*log(A))"
         first_term_derivatives = np.empty(new_shape, dtype=int)
         first_term_derivatives[:,:-1,:] = self.derivatives
-        # multiply by "derivative(A*log(B))"
+        # multiply by "derivative(B*log(A))"
         derivative_AlogB = [0] * self.number_of_variables
         derivative_AlogB[index] = 1
         first_term_derivatives[:,-1] = derivative_AlogB
