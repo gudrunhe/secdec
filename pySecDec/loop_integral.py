@@ -104,7 +104,7 @@ class LoopIntegral(object):
 
 
 class LoopIntegral_from_propagators(LoopIntegral):
-    '''
+    r'''
     Construct the Feynman parametrization of a
     loop integral from the algebraic momentum
     representation.
@@ -255,7 +255,7 @@ class LoopIntegral_from_propagators(LoopIntegral):
     :param metric_tensor:
         string or sympy symbol, optional;
         The symbol to be used for the (Minkowski) metric
-        tensor :math:`g^{\mu\\nu}` .
+        tensor :math:`g^{\mu\nu}` .
 
     '''
 
