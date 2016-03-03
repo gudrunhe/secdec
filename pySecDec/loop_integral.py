@@ -646,13 +646,13 @@ class LoopIntegral_from_graph(LoopIntegral):
     Example:
 
     >>> from pySecDec.loop_integral import *
-    >>> internal_lines = [['0',[1,2]], ['msq',[2,3]], ['msq',[3,1]]]
-    >>> external_lines = [['p1',1],['p2',2],['p3',3]]
+    >>> internal_lines = [['0',[1,2]], ['m',[2,3]], ['m',[3,1]]]
+    >>> external_lines = [['p1',1],['p2',2],['-p12',3]]
     >>> li = LoopIntegral_from_graph(internal_lines, external_lines)
     >>> li.exponentiated_U
-    ( + (1)*x2 + (1)*x1 + (1)*x0)**(2*eps - 1)
+    ( + (1)*x0 + (1)*x1 + (1)*x2)**(2*eps - 1)
     >>> li.exponentiated_F
-    ( + (msq)*x2**2 + (2*msq - p3**2)*x1*x2 + (msq)*x1**2 + (msq - p1**2)*x0*x2 + (msq - p2**2)*x0*x1)**(-eps - 1)
+    ( + (m**2)*x2**2 + (2*m**2 - p12**2)*x1*x2 + (m**2)*x1**2 + (m**2 - p1**2)*x0*x2 + (m**2 - p2**2)*x0*x1)**(-eps - 1)
 
     :param internal_lines:
         iterable of internal line specification, consisting of string or sympy expression for mass
@@ -702,7 +702,7 @@ class LoopIntegral_from_graph(LoopIntegral):
         self.external_momenta=[]
         for line in external_lines:
             assert len(line)==2, "External lines must have the form [momentum, vertex]."
-            extmom = sympify_symbols([line[0]], "Names of external momenta must be symbols.")[0]
+            extmom = sp.sympify(line[0])
             vertex = sympify_symbols([line[1]], "Names of vertices must be symbols or numbers.", \
                                      allow_number=True)[0]
             self.extlines.append([extmom,vertex])

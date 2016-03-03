@@ -880,7 +880,7 @@ class TestNumerator(unittest.TestCase):
 #        self.assertRaisesRegexp(AssertionError, '(E|e)ach.*index.*(exactly|at most).*(twice|two times)', lambda: li.numerator)
 
 
-def uf_from_graph_generic(test_case, int_lines, ext_lines, rules, result_L, result_u, result_f):
+def uf_from_graph_generic(test_case, int_lines, ext_lines, result_L, result_u, result_f, rules=[]):
     loop_integral = LoopIntegral_from_graph(int_lines, ext_lines, Feynman_parameter_symbol='Feynman',
                                             replacement_rules=rules)
 
@@ -900,12 +900,21 @@ def uf_from_graph_generic(test_case, int_lines, ext_lines, rules, result_L, resu
     test_case.assertEqual(zerou,0)
     test_case.assertEqual(zerof,0)
 
-#@attr('active')
     expo_u, expo_f = loop_integral.exponent_U, loop_integral.exponent_F
     test_case.assertEqual(expo_u, len(int_lines) - sp.sympify('2-eps') * (1 + loop_integral.L))
     test_case.assertEqual(expo_f, -(len(int_lines) - sp.sympify('2-eps') * loop_integral.L))
 
+@attr('active')
 class TestUF_FromGraph(unittest.TestCase):
+    def test_triangle_1l(self):
+        uf_from_graph_generic(self,
+                              int_lines = [[0,['vertex1','vertex2']], [0,['vertex2','vertex3']],
+                                           [0,['vertex3','vertex1']]],
+                              ext_lines = [['p1','vertex1'], ['p2','vertex2'], ['-p1-p2','vertex3']],
+                              result_L = 1,
+                              result_u = "x0 + x1 + x2",
+                              result_f = "-p2**2*x0*x1 - p1**2*x0*x2 - (p1+p2)**2*x1*x2")
+
     def test_bubble_3l(self):
         uf_from_graph_generic(self,
                               int_lines = [[0,[1,2]], [0,[1,2]], [0,[1,2]], [0,[1,2]]],
@@ -988,3 +997,4 @@ class TestUF_FromGraph(unittest.TestCase):
                               - s51*x0*x4*x7 - s34*x1*x4*x7 - s34*x2*x4*x7 - s12*x1*x5*x7 - s12*x2*x5*x7 
                               - s45*x3*x5*x7 - s12*x1*x6*x7 - s12*x2*x6*x7 - s45*x3*x6*x7"""
                               )
+
