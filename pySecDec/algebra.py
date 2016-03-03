@@ -1029,7 +1029,7 @@ class Product(_Expression):
     def derive(self, index):
         '''
         Generate the derivative by the parameter indexed `index`.
-        Return an instance of the optimized class:`.ProductRule`.
+        Return an instance of the optimized :class:`.ProductRule`.
 
         :param index:
             integer;
