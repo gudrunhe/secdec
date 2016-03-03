@@ -1350,6 +1350,231 @@ class Pow(_Expression):
         new_exponent = expression.exponent.replace(index,value,remove)
         return Pow(new_base, new_exponent, copy=False)
 
+class PowDerive(_Expression):
+    r'''
+    Store an expression of the form
+
+    .. math::
+        A \left( \lbrace x_k \rbrace \right) ^
+        { B\left( \lbrace x_k \rbrace \right) }
+        \sum_i c_i \prod_j \prod_k \left(
+        \frac{d}{dx_k} \right)^{n_{ijk}} \left(
+        {B \left( \lbrace x_k \rbrace \right)
+        \cdot \log \left( A \left( \lbrace x_k
+        \rbrace \right) \right)} \right)
+
+    which arises by taking derivatives of
+    expressions of the form
+
+    .. math::
+        A \left( \lbrace x_k \rbrace \right) ^
+        { B\left( \lbrace x_k \rbrace \right) }
+
+    :param base:
+        :class:`._Expression`;
+        The base ``A`` of the exponential.
+
+    :param exponent:
+        :class:`._Expression`;
+        The exponent ``B``.
+
+    :param copy:
+        bool;
+        Whether or not to copy `base` and `exponent`.
+
+    '''
+    def __init__(self, base, exponent, copy=True, **kwargs):
+        self.symbols = list(base.symbols)
+        self.base = base.copy() if copy else base
+        self.exponent = exponent.copy() if copy else exponent
+        self.number_of_variables = base.number_of_variables
+
+        # If keyword argument `internal_regenerate` is passed and True, use passed `factorlist`, `coeffs`, and `expressions` instead of regenerating
+
+        if kwargs.get('internal_regenerate', False):
+            self.coeffs = kwargs['coeffs'].copy() if copy else kwargs['coeffs'] # c_i
+            self.derivatives = kwargs['derivatives'].copy() if copy else kwargs['derivatives'] # n_ijk
+
+            if copy:
+                self.exponent_log_base_derivatives = {}
+                for key,value in kwargs['exponent_log_base_derivatives'].items():
+                    self.exponent_log_base_derivatives[key] = value.copy()
+
+            else:
+                self.exponent_log_base_derivatives = kwargs['exponent_log_base_derivatives']
+
+        else:
+            # check input consistency
+            if base.number_of_variables != exponent.number_of_variables:
+                raise ValueError('Must have the same number of variables in `base` and `exponent`.')
+
+            self.exponent_log_base_derivatives = {
+                                                      tuple(0 for i in range(self.number_of_variables)):
+                                                      Product(self.exponent, Log(self.base, copy=False), copy=False).simplify() # automatically simplify cache
+                                                 }
+            self.coeffs = np.array([1]) # c_i
+            self.derivatives = np.empty((1,0,self.number_of_variables), dtype=int) # n_ijk
+
+    def __repr__(self):
+        A_pow_B = '(%s) ** (%s)' % (self.base, self.exponent)
+        other = ''
+        for i,(coeff,n_jk) in enumerate(zip(self.coeffs,self.derivatives)):
+            other += " + (%i)" % coeff
+            for j,n_k in enumerate(n_jk):
+                if n_k[0] >= 0: # ``n_k < 0`` indicates a factor of ``1``
+                    other += ' * (%s)' % str(self.exponent_log_base_derivatives[tuple(n_k)])
+        if other == '':
+            return A_pow_B
+        else:
+            return A_pow_B + ' * (' + other + ')'
+
+    __str__ = __repr__
+
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        def sort_factors(array):
+            'Sort the factors of a `derivatives`-like array'
+            for i in range(len(array)):
+                current_term = array[i]
+                current_term[:] = current_term[argsort_2D_array(current_term)]
+            return array
+
+        # derivative(A**B * C) = A**B * ( C * derivative(A*log(B))  +  derivative(C) )
+        # where "C" denotes derivatives taken earlier
+
+        # The global factor "A**B" is always implied --> nothing to do
+
+        # The shape of `derivatives` changes:
+        # There is one more factor (``derivative(A*log(B))``) in every term
+        old_shape = self.derivatives.shape
+        new_shape = old_shape[0], old_shape[1] + 1, old_shape[2]
+
+        # generate the term(s) "C * derivative(A*log(B))"
+        first_term_derivatives = np.empty(new_shape, dtype=int)
+        first_term_derivatives[:,:-1,:] = self.derivatives
+        # multiply by "derivative(A*log(B))"
+        derivative_AlogB = [0] * self.number_of_variables
+        derivative_AlogB[index] = 1
+        first_term_derivatives[:,-1] = derivative_AlogB
+        sort_factors(first_term_derivatives)
+        first_term_coeffs = self.coeffs
+
+        # generate the term(s) "derivative(C)" --> product rule
+        second_term_derivatives = []
+        # product rule: every factor produces a new summand
+        for j in range(self.derivatives.shape[1]):
+            tmp = np.zeros(new_shape, dtype=int) - 1
+            tmp[:,:-1,:] = self.derivatives
+            to_increment = tmp[:,j,index]
+            to_increment[to_increment != -1] += 1
+            second_term_derivatives.append(sort_factors(tmp))
+        second_term_coeffs = [self.coeffs] * self.derivatives.shape[1]
+
+        new_coeffs = np.hstack([first_term_coeffs] + second_term_coeffs)
+        new_derivatives = np.vstack([first_term_derivatives] + second_term_derivatives)
+
+        # generate missing derivatives
+        # do not make a copy since it does not hurt having the child point to the same ``exponent_log_base_derivatives``
+        new_entries = {}
+        for term in new_derivatives:
+            for derivative_multiindex in term:
+                if derivative_multiindex[0] >= 0: # ``derivative_multiindex < 0`` indicates a factor of one
+                    derivative_multiindex = tuple(derivative_multiindex)
+                    try:
+                        self.exponent_log_base_derivatives[derivative_multiindex]
+                    except KeyError: # needed higher derivative not calculated yet
+                        lower_derivative_multiindex = list(derivative_multiindex)
+                        lower_derivative_multiindex[index] -= 1
+                        lower_derivative_multiindex = tuple(lower_derivative_multiindex)
+                        derivative = self.exponent_log_base_derivatives[lower_derivative_multiindex]
+                        new_entries[derivative_multiindex] = derivative.derive(index).simplify() # automatically simplify cache
+        self.exponent_log_base_derivatives.update(new_entries)
+
+        return PowDerive(internal_regenerate=True, copy=False,
+                         base=self.base.copy(), exponent=self.exponent.copy(),
+                         derivatives=new_derivatives, coeffs=new_coeffs,
+                         exponent_log_base_derivatives = self.exponent_log_base_derivatives)
+
+    def copy(self):
+        "Return a copy of a :class:`.PowDerive`."
+        return PowDerive(internal_regenerate=True, copy=True,
+                         base=self.base, exponent=self.exponent,
+                         derivatives=self.derivatives, coeffs=self.coeffs,
+                         exponent_log_base_derivatives = self.exponent_log_base_derivatives)
+
+    def simplify(self):
+        'Combine terms with the same factors.'
+        # Sort the `derivatives` first, such that identical entries are
+        # grouped together
+        sort_key = argsort_ND_array(self.derivatives)
+        self.derivatives = self.derivatives[sort_key]
+        self.coeffs = self.coeffs[sort_key]
+
+        # find zeros and ones in `self.exponent_log_base_derivatives`
+        for j, derivative_multiindex in enumerate(self.derivatives[0]):
+            if derivative_multiindex[0] < 0: # ``derivative_multiindex < 0`` indicates a factor of one
+                continue
+            derivative_multiindex = tuple(derivative_multiindex)
+            expression = self.exponent_log_base_derivatives[derivative_multiindex]
+            if type(expression) is Polynomial:
+                if (expression.coeffs == 0).all():
+                    self.coeffs[0] = 0
+                    continue
+                elif len(expression.coeffs) == 1 and (expression.expolist == 0).all() and (expression.coeffs == 1).all():
+                    derivative_multiindex[:] = -1 # do not have to consider a factor of one
+
+        for i in range(1,len(self.coeffs)):
+            if self.coeffs[i] == 0: continue
+            previous_term = self.derivatives[i-1]
+            # search `self.derivatives` for the same term
+            # since `self.derivatives` is sorted, must only compare with the previous term
+            if (previous_term == self.derivatives[i]).all():
+                # add coefficients
+                self.coeffs[i] += self.coeffs[i-1]
+                # mark previous term for removal by setting coefficient to zero
+                self.coeffs[i-1] = 0
+
+            # find zeros and ones in `self.exponent_log_base_derivatives`
+            for j, derivative_multiindex in enumerate(self.derivatives[i]):
+                if derivative_multiindex[0] < 0: # ``derivative_multiindex < 0`` indicates a factor of one
+                    continue
+                derivative_multiindex = tuple(derivative_multiindex)
+                expression = self.exponent_log_base_derivatives[derivative_multiindex]
+                if type(expression) is Polynomial:
+                    if (expression.coeffs == 0).all():
+                        self.coeffs[i] = 0
+                        continue
+                    elif len(expression.coeffs) == 1 and (expression.expolist == 0).all() and (expression.coeffs == 1).all():
+                        derivative_multiindex[:] = -1 # do not have to consider a factor of one
+
+        # remove terms with zero coefficient
+        nonzero_coeffs = np.where(self.coeffs != 0)
+        self.coeffs = self.coeffs[nonzero_coeffs]
+        self.derivatives = self.derivatives[nonzero_coeffs]
+
+        return self
+
+    @doc(_Expression.docstring_of_replace)
+    def replace(self, index, value, remove=False):
+        replaced_base = self.base.replace(index,value,remove)
+        replaced_exponent = self.exponent.replace(index,value,remove)
+
+        replaced_exponent_log_base_derivatives = {}
+        for multiindex, expression in self.exponent_log_base_derivatives.items():
+            replaced_exponent_log_base_derivatives[multiindex] = expression.replace(index,value,remove)
+
+        return PowDerive(internal_regenerate=True, copy=False,
+                         base=replaced_base, exponent=replaced_exponent,
+                         derivatives=self.derivatives.copy(), coeffs=self.coeffs.copy(),
+                         exponent_log_base_derivatives = replaced_exponent_log_base_derivatives)
+
 class Log(_Expression):
     r'''
     The (natural) logarithm to base e (2.718281828459..).

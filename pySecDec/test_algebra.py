@@ -618,6 +618,62 @@ class TestPow(unittest.TestCase):
         self.assertEqual(str(exp), string_pow)
         self.assertEqual(repr(exp), string_pow)
 
+class TestPowDerive(unittest.TestCase):
+    def setUp(self):
+        self.x = Polynomial([[1,0]], [1], ['x','y'])
+        self.y = Polynomial([[0,1]], [1], ['x','y'])
+        self.x_pow_y = PowDerive(self.x, self.y)
+
+    #@attr('active')
+    def test_copy(self):
+        original = self.x_pow_y
+        copy = self.x_pow_y.copy()
+
+        self.assertFalse(copy is original)
+
+        attributes = ['symbols', 'base', 'exponent', 'coeffs', 'derivatives', 'exponent_log_base_derivatives']
+        for attr_name in attributes:
+            orig_attr = getattr(original, attr_name)
+            copy_attr = getattr(copy,     attr_name)
+            self.assertFalse(orig_attr is copy_attr, msg='attribute ``%s``' % attr_name)
+
+    #@attr('active')
+    def test_error_messages(self):
+        base = Polynomial([[1,0]], [1], ['x','y'])
+        exponent = Polynomial([[0,1,0]], [1], ['x','y','z'])
+        self.assertRaisesRegexp(ValueError, 'same number.*base.*exponent',  PowDerive, base, exponent)
+
+    #@attr('active')
+    def test_initial_string_form(self):
+        string_pow = '( + (1)*x) ** ( + (1)*y) * ( + (1))'
+        self.assertEqual(str(self.x_pow_y), string_pow)
+        self.assertEqual(repr(self.x_pow_y), string_pow)
+
+    #@attr('active')
+    def test_derivatives(self):
+        d__x_pow_y__dx = sp.sympify(self.x_pow_y.derive(0))
+        target_d__x_pow_y__dx = sp.sympify('x**y * y/x')
+        self.assertEqual( (d__x_pow_y__dx - target_d__x_pow_y__dx).simplify() , 0 )
+
+        d__x_pow_y__dy = sp.sympify(self.x_pow_y.derive(1))
+        target_str_d__x_pow_y__dy = sp.sympify('x**y * log(x)')
+        self.assertEqual( (d__x_pow_y__dx - target_d__x_pow_y__dx).simplify() , 0 )
+
+        dd__x_pow_y__dxdy = sp.sympify(self.x_pow_y.derive(0).derive(1))
+        target_dd__x_pow_y__dxdy = sp.sympify('x**y * y/x * log(x) + x**y / x')
+        self.assertEqual( (dd__x_pow_y__dxdy - target_dd__x_pow_y__dxdy).simplify() , 0 )
+
+    #@attr('active')
+    def test_replace(self):
+        dd__x_pow_y__dxdy = self.x_pow_y.derive(0).derive(1) # x**y * y/x * log(x) + x**y / x
+        replaced = dd__x_pow_y__dxdy.replace(0, 1) # x --> 1
+        self.assertEqual( (sp.sympify(replaced) - 1).simplify() , 0 )
+        self.assertEqual(replaced.number_of_variables, 2)
+
+        removed = dd__x_pow_y__dxdy.replace(0, 1, remove=True) # x --> 1
+        self.assertEqual( (sp.sympify(removed) - 1).simplify() , 0 )
+        self.assertEqual(removed.number_of_variables, 1)
+
 #@attr('active')
 class TestLog(unittest.TestCase):
     def test_init(self):
