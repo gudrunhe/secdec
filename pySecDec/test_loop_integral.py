@@ -918,8 +918,8 @@ class TestUF_FromGraph(unittest.TestCase):
     # from SecDec -> loop/demos/3_nonplanarbox_2L
     def test_nonplanarbox_2l(self):
         uf_from_graph_generic(self,
-                              int_lines=[['msq',[1,5]],['msq',[2,6]],['Msq',[1,2]],['Msq',[3,5]],['msq',[3,6]],
-                                         ['msq',[4,6]],['Msq',[4,5]]],
+                              int_lines=[['m',[1,5]],['m',[2,6]],['M',[1,2]],['M',[3,5]],['m',[3,6]],
+                                         ['m',[4,6]],['M',[4,5]]],
                               ext_lines=[['p1',1],['p2',2],['p3',3],['p4',4]],
                               rules=[('p1*p1','msq'),
                                      ('p2*p2','msq'),
@@ -930,7 +930,9 @@ class TestUF_FromGraph(unittest.TestCase):
                                      ('p1*p2','s/2-msq'),
                                      ('p1*p4','t/2-msq'),
                                      ('p2*p4','-t/2-s/2+msq'),
-                                     ('p3*p4','s/2-msq')],
+                                     ('p3*p4','s/2-msq'),
+                                     ('m**2','msq'),
+                                     ('M**2','Msq')],
                               result_L = 2,
                               result_f = """msq*x0**2*x3 + 2*msq*x0*x1*x3 - s*x0*x1*x3 + msq*x1**2*x3 
                               + Msq*x0*x2*x3 + Msq*x1*x2*x3 + Msq*x2**2*x3 + Msq*x0*x3**2 + Msq*x1*x3**2 

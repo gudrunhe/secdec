@@ -655,8 +655,8 @@ class LoopIntegral_from_graph(LoopIntegral):
     ( + (msq)*x2**2 + (2*msq - p3**2)*x1*x2 + (msq)*x1**2 + (msq - p1**2)*x0*x2 + (msq - p2**2)*x0*x1)**(-eps - 1)
 
     :param internal_lines:
-        iterable of internal line specification, consisting of string or sympy expression for squared mass
-        and a pair of strings or numbers for the vertices, e.g. [['msq', [1,2]], ['0', [2,1]]].
+        iterable of internal line specification, consisting of string or sympy expression for mass
+        and a pair of strings or numbers for the vertices, e.g. [['m', [1,2]], ['0', [2,1]]].
 
     :param external_lines:
         iterable of external line specification, consisting of string or sympy expression for external momentum
@@ -689,12 +689,12 @@ class LoopIntegral_from_graph(LoopIntegral):
         self.intlines=[]
         for line in internal_lines:
             assert len(line)==2 and len(line[1])==2, \
-                "Internal lines must have the form [squared mass, [vertex, vertex]]."
-            masssqr = sympify_symbols([line[0]], "Names of internal squared masses must be symbols or numbers.", \
+                "Internal lines must have the form [mass, [vertex, vertex]]."
+            mass = sympify_symbols([line[0]], "Names of internal masses must be symbols or numbers.", \
                                    allow_number=True)[0]
             vertices = sympify_symbols(line[1], "Names of vertices must be symbols or numbers.", \
                                        allow_number=True)
-            self.intlines.append([masssqr,vertices])
+            self.intlines.append([mass,vertices])
         self.P = len(self.intlines)
 
         # sympify and store external lines
@@ -868,11 +868,17 @@ class LoopIntegral_from_graph(LoopIntegral):
         expolists=[]
         coeffs=[]
         for i in range(self.P):
-            expolist = [0]*self.P
-            expolist[i] = 1
-            expolists.append(expolist)
-            coeffs.append(self.intlines[i][0])
-        Fm = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
+            coeff = self.intlines[i][0]
+            if coeff != 0:
+                coeff = (coeff**2).subs(self.replacement_rules)
+                coeffs.append(coeff)
+                expolist = [0]*self.P
+                expolist[i] = 1
+                expolists.append(expolist)
+
+        if expolists:
+            Fm = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
+        else:
+            Fm = 0
 
         return F0 + self.U*Fm
-            
