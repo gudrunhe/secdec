@@ -686,6 +686,8 @@ class LoopIntegralFromGraph(LoopIntegral):
                  regulator='eps', regulator_power=0, dimensionality='4-2*eps'):
     
         # sympify and store internal lines
+        assert len(internal_lines) > 0, \
+            "To define a loop integral please input a graph with at least one internal line."
         self.internal_lines=[]
         for line in internal_lines:
             assert len(line)==2 and len(line[1])==2, \
@@ -712,6 +714,8 @@ class LoopIntegralFromGraph(LoopIntegral):
         # calculate number of loops from the relation #loops = #internal lines - (#vertices - 1)
         self.V = len(self.intverts)
         self.L = self.P - (self.V - 1)
+        assert self.L > 0, \
+            "To define a loop integral please input a graph with at least one closed loop."
 
         # store properties shared between derived classes
         self.all_momenta = self.external_momenta
@@ -721,7 +725,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         self.highest_rank = 0
 
         # store symbol for Feynman parameters
-        assert isinstance(Feynman_parameter_symbol,str), '`Feynman_paramter_symbol` must be a string.'
+        assert isinstance(Feynman_parameter_symbol,str), '`Feynman_parameter_symbol` must be a string.'
         self.Feynman_parameter_symbol = Feynman_parameter_symbol
 
     @cached_property

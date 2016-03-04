@@ -1006,3 +1006,28 @@ class TestUF_FromGraph(unittest.TestCase):
                               - s45*x3*x5*x7 - s12*x1*x6*x7 - s12*x2*x6*x7 - s45*x3*x6*x7"""
                               )
 
+    def test_error_messages(self):
+        self.assertRaisesRegexp(AssertionError,
+                                "To define a loop integral please input a graph with at least one internal line.",
+                                LoopIntegralFromGraph, internal_lines = [], external_lines = [['p1',1]])
+        self.assertRaisesRegexp(AssertionError,
+                                "To define a loop integral please input a graph with at least one closed loop.",
+                                LoopIntegralFromGraph, internal_lines = [['m',[1,2]]],
+                                external_lines = [['p1',1],['p2',2]])
+        self.assertRaisesRegexp(AssertionError,
+                                '.*Feynman_parameter_symbol.*string', LoopIntegralFromGraph,
+                                internal_lines = [['m',[1,1]]], external_lines = [],
+                                Feynman_parameter_symbol=0)
+        self.assertRaisesRegexp(AssertionError,
+                                '.*(I|i)nternal.*lines.*form', LoopIntegralFromGraph,
+                                internal_lines = [['m',1,1]], external_lines = [])
+        self.assertRaisesRegexp(AssertionError,
+                                '.*mass.*symbol', LoopIntegralFromGraph,
+                                internal_lines = [['m1+m2',[1,1]]], external_lines = [])
+        self.assertRaisesRegexp(AssertionError,
+                                '.*vertices.*symbol', LoopIntegralFromGraph,
+                                internal_lines = [['m',['sin(x)',1]]], external_lines = [])
+        self.assertRaisesRegexp(AssertionError,
+                                '.*vertices.*symbol', LoopIntegralFromGraph,
+                                internal_lines = [['m',[1,1]]], external_lines = [['p1','cos(x)']])
+
