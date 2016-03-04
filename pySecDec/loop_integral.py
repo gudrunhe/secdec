@@ -862,7 +862,10 @@ class LoopIntegralFromGraph(LoopIntegral):
                 expolists.append(expolist)
                 coeffs.append(-sumsqr)
 
-        F0 = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
+        if expolists:
+            F0 = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
+        else:
+            F0 = 0
 
         # construct terms proportial to the squared masses
         expolists=[]

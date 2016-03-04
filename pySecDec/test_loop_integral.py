@@ -906,6 +906,14 @@ def uf_from_graph_generic(test_case, int_lines, ext_lines, result_L, result_u, r
 
 #@attr('active')
 class TestUF_FromGraph(unittest.TestCase):
+    def test_tadpole_1l(self):
+        uf_from_graph_generic(self,
+                              int_lines = [['m',[1,1]]],
+                              ext_lines = [],
+                              result_L = 1,
+                              result_u = "x0",
+                              result_f = "m**2*x0**2")
+
     def test_triangle_1l(self):
         uf_from_graph_generic(self,
                               int_lines = [[0,['vertex1','vertex2']], [0,['vertex2','vertex3']],
