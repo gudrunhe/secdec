@@ -471,6 +471,8 @@ class TestProductRule(unittest.TestCase):
         self.poly2 = Polynomial.from_expression('x**2-y**2', ['x','y'])
         self.p0 = ProductRule(self.poly1, self.poly2)
         self.target_dp0_dx = sp.sympify('(1+y) * (x**2-y**2) + (x+x*y) * (2*x)')
+        self.target_ddp0_dxdy = sp.sympify('(x**2-y**2) + (1+y) * (-2*y)   +   x * (2*x)')
+        self.target_dddp0_dxdydx = sp.sympify('2*x + 4*x')
 
     #@attr('active')
     def test_string_form_basic(self):
@@ -494,6 +496,12 @@ class TestProductRule(unittest.TestCase):
         dp0_dx = self.p0.derive(0)
         self.assertEqual(  (sp.sympify(dp0_dx) - self.target_dp0_dx).simplify()  ,   0   )
 
+        ddp0_dxdy = self.p0.derive(0).derive(1)
+        self.assertEqual(  (sp.sympify(ddp0_dxdy) - self.target_ddp0_dxdy).simplify()  ,   0   )
+
+        dddp0_dxdydx = self.p0.derive(0).derive(1).derive(0)
+        self.assertEqual(  (sp.sympify(dddp0_dxdydx) - self.target_dddp0_dxdydx).simplify()  ,   0   )
+
     #@attr('active')
     def test_simplify(self):
         ddp0_dx_dx = self.p0.derive(0).derive(0)
@@ -506,15 +514,15 @@ class TestProductRule(unittest.TestCase):
     #@attr('active')
     def test_replace(self):
         z = sp.symbols('z')
-        dp0_dx = self.p0.derive(0)
-        replaced = dp0_dx.replace(0,z)
-        removed = dp0_dx.replace(0,z, True)
+        dddp0_dxdydx = self.p0.derive(0).derive(1).derive(0).simplify()
+        replaced = dddp0_dxdydx.replace(0,z)
+        removed = dddp0_dxdydx.replace(0,z, True)
 
         self.assertEqual(replaced.symbols, sp.symbols(['x','y']))
         self.assertEqual(removed.symbols, sp.symbols(['y']))
 
         for derivative in [removed, replaced]:
-            self.assertEqual(   (sp.sympify(derivative) - self.target_dp0_dx.subs('x','z')).simplify()   ,   0   )
+            self.assertEqual(   (sp.sympify(derivative) - self.target_dddp0_dxdydx.subs('x','z')).simplify()   ,   0   )
 
 #@attr('active')
 class TestPow(unittest.TestCase):
