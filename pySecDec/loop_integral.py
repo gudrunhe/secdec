@@ -54,8 +54,8 @@ class LoopIntegral(object):
     , where ``self`` is an instance of :class:`LoopIntegral`.
 
     .. seealso::
-        * input as graph: :class:`.LoopIntegral_from_graph`
-        * input as list of propagators: :class:`.LoopIntegral_from_propagators`
+        * input as graph: :class:`.LoopIntegralFromGraph`
+        * input as list of propagators: :class:`.LoopIntegralFromPropagators`
 
     '''
     def __init__(self, *args, **kwargs):
@@ -103,7 +103,7 @@ class LoopIntegral(object):
             self.replacement_rules = []
 
 
-class LoopIntegral_from_propagators(LoopIntegral):
+class LoopIntegralFromPropagators(LoopIntegral):
     r'''
     Construct the Feynman parametrization of a
     loop integral from the algebraic momentum
@@ -117,7 +117,7 @@ class LoopIntegral_from_propagators(LoopIntegral):
     >>> from pySecDec.loop_integral import *
     >>> propagators = ['k**2', '(k - p)**2']
     >>> loop_momenta = ['k']
-    >>> li = LoopIntegral_from_propagators(propagators, loop_momenta)
+    >>> li = LoopIntegralFromPropagators(propagators, loop_momenta)
     >>> li.exponentiated_U
     ( + (1)*x0 + (1)*x1)**(2*eps - 2)
     >>> li.exponentiated_F
@@ -638,7 +638,7 @@ class LoopIntegral_from_propagators(LoopIntegral):
         return replacement_rules
 
 
-class LoopIntegral_from_graph(LoopIntegral):
+class LoopIntegralFromGraph(LoopIntegral):
     '''
     Construct the Feynman parametrization of a
     loop integral from the graph using the cut construction method.
@@ -648,7 +648,7 @@ class LoopIntegral_from_graph(LoopIntegral):
     >>> from pySecDec.loop_integral import *
     >>> internal_lines = [['0',[1,2]], ['m',[2,3]], ['m',[3,1]]]
     >>> external_lines = [['p1',1],['p2',2],['-p12',3]]
-    >>> li = LoopIntegral_from_graph(internal_lines, external_lines)
+    >>> li = LoopIntegralFromGraph(internal_lines, external_lines)
     >>> li.exponentiated_U
     ( + (1)*x0 + (1)*x1 + (1)*x2)**(2*eps - 1)
     >>> li.exponentiated_F
@@ -663,7 +663,7 @@ class LoopIntegral_from_graph(LoopIntegral):
         and a strings or number for the vertex, e.g. [['p1', 1], ['p2', 2]].
 
     :param replacement_rules:
-       see :class:`.LoopIntegral_from_propagators`
+       see :class:`.LoopIntegralFromPropagators`
 
     :param Feynman_parameter_symbol:
         string, optional;
@@ -672,13 +672,13 @@ class LoopIntegral_from_graph(LoopIntegral):
         from zero.
 
     :param regulator:
-       see :class:`.LoopIntegral_from_propagators`
+       see :class:`.LoopIntegralFromPropagators`
 
     :param regulator_power:
-       see :class:`.LoopIntegral_from_propagators`
+       see :class:`.LoopIntegralFromPropagators`
 
     :param dimensionality:
-       see :class:`.LoopIntegral_from_propagators`
+       see :class:`.LoopIntegralFromPropagators`
 
     '''
 
@@ -686,7 +686,7 @@ class LoopIntegral_from_graph(LoopIntegral):
                  regulator='eps', regulator_power=0, dimensionality='4-2*eps'):
     
         # sympify and store internal lines
-        self.intlines=[]
+        self.internal_lines=[]
         for line in internal_lines:
             assert len(line)==2 and len(line[1])==2, \
                 "Internal lines must have the form [mass, [vertex, vertex]]."
@@ -694,18 +694,18 @@ class LoopIntegral_from_graph(LoopIntegral):
                                    allow_number=True)[0]
             vertices = sympify_symbols(line[1], "Names of vertices must be symbols or numbers.", \
                                        allow_number=True)
-            self.intlines.append([mass,vertices])
-        self.P = len(self.intlines)
+            self.internal_lines.append([mass,vertices])
+        self.P = len(self.internal_lines)
 
         # sympify and store external lines
-        self.extlines=[]
+        self.external_lines=[]
         self.external_momenta=[]
         for line in external_lines:
             assert len(line)==2, "External lines must have the form [momentum, vertex]."
             extmom = sp.sympify(line[0])
             vertex = sympify_symbols([line[1]], "Names of vertices must be symbols or numbers.", \
                                      allow_number=True)[0]
-            self.extlines.append([extmom,vertex])
+            self.external_lines.append([extmom,vertex])
             self.external_momenta.append(extmom)
 
 
@@ -728,7 +728,7 @@ class LoopIntegral_from_graph(LoopIntegral):
     def intverts(self): 
         # creates a list of all internal vertices and indexes them
         # returns a dictionary that relates the name of a vertex to its index
-        lines = self.intlines
+        lines = self.internal_lines
         vertices=set()
         for line in lines:
             vertices = vertices | set(line[1])
@@ -743,20 +743,20 @@ class LoopIntegral_from_graph(LoopIntegral):
     def vertmatrix(self):  # create transition matrix representation of underlying graph
 
         # each vertex is trivially connected to itself, so start from unit matrix:
-        numvert = self.V+len(self.extlines)
+        numvert = self.V+len(self.external_lines)
         M = np.identity(numvert, dtype=int)
 
         # for each internal propagator connecting two vertices add an entry in the matrix
         for i in range(self.P):
-            start = self.intverts[self.intlines[i][1][0]]
-            end = self.intverts[self.intlines[i][1][1]]
+            start = self.intverts[self.internal_lines[i][1][0]]
+            end = self.intverts[self.internal_lines[i][1][1]]
             M[start,end] += 1
             M[end,start] += 1
 
         # for each external line add a vertex and an entry in the matrix
-        for i in range(len(self.extlines)):
+        for i in range(len(self.external_lines)):
             start = self.V + i
-            end = self.intverts[self.extlines[i][1]]
+            end = self.intverts[self.external_lines[i][1]]
             M[start,end] += 1
             M[end,start] += 1
 
@@ -776,13 +776,13 @@ class LoopIntegral_from_graph(LoopIntegral):
             # Define transition matrix for cut graph by removing cut propagators
             newmatrix = np.matrix(self.vertmatrix) # copies data by default
             for i in cut:
-                start = self.intverts[self.intlines[i][1][0]]
-                end = self.intverts[self.intlines[i][1][1]]
+                start = self.intverts[self.internal_lines[i][1][0]]
+                end = self.intverts[self.internal_lines[i][1][1]]
                 newmatrix[start,end] -= 1
                 newmatrix[end,start] -= 1
 
             # Check if cut graph is connected
-            numvert = self.V + len(self.extlines)
+            numvert = self.V + len(self.external_lines)
             if(0 in newmatrix**numvert):
                 # not connected if exponentiated matrix has a zero
                 continue
@@ -810,12 +810,12 @@ class LoopIntegral_from_graph(LoopIntegral):
             # Define transition matrix for cut graph by removing cut propagators
             newmatrix = np.matrix(self.vertmatrix) # copies data by default
             for i in cut:
-                start = self.intverts[self.intlines[i][1][0]]
-                end = self.intverts[self.intlines[i][1][1]]
+                start = self.intverts[self.internal_lines[i][1][0]]
+                end = self.intverts[self.internal_lines[i][1][1]]
                 newmatrix[start,end] -= 1
                 newmatrix[end,start] -= 1
 
-            numvert = self.V + len(self.extlines)
+            numvert = self.V + len(self.external_lines)
             newmatrix = newmatrix**numvert
             
             # find all internal vertices *not* connected to vertex 0 (arbitrary choice)
@@ -845,7 +845,7 @@ class LoopIntegral_from_graph(LoopIntegral):
             # find momementa running through the two cut lines
             # choose either all the external momenta connected to vertex 0 or the complement
             cutmomenta = []
-            if(len(extnotconnectedto0) <= len(self.extlines)-len(extnotconnectedto0)):
+            if(len(extnotconnectedto0) <= len(self.external_lines)-len(extnotconnectedto0)):
                 cutmomenta = extnotconnectedto0
             else:
                 cutmomenta = missing(range(self.V,numvert),extnotconnectedto0)
@@ -857,7 +857,7 @@ class LoopIntegral_from_graph(LoopIntegral):
                 for i in cut:
                     expolist[i]=1
                 # sum the momenta flowing through the cuts, square it, and use replacement rules
-                sumsqr = sum(self.extlines[i-self.V][0] for i in cutmomenta)**2
+                sumsqr = sum(self.external_lines[i-self.V][0] for i in cutmomenta)**2
                 sumsqr = sumsqr.expand().subs(self.replacement_rules)
                 expolists.append(expolist)
                 coeffs.append(-sumsqr)
@@ -868,7 +868,7 @@ class LoopIntegral_from_graph(LoopIntegral):
         expolists=[]
         coeffs=[]
         for i in range(self.P):
-            coeff = self.intlines[i][0]
+            coeff = self.internal_lines[i][0]
             if coeff != 0:
                 coeff = (coeff**2).subs(self.replacement_rules)
                 coeffs.append(coeff)

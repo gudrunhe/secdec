@@ -202,17 +202,17 @@ One Loop Bubble
 To calculate ``U`` and ``F`` of the one loop bubble, type the following
 commands:
 
->>> from pySecDec.loop_integral import LoopIntegral_from_propagators
+>>> from pySecDec.loop_integral import LoopIntegralFromPropagators
 >>> propagators = ['k**2', '(k - p)**2']
 >>> loop_momenta = ['k']
->>> one_loop_bubble = LoopIntegral_from_propagators(propagators, loop_momenta)
+>>> one_loop_bubble = LoopIntegralFromPropagators(propagators, loop_momenta)
 >>> one_loop_bubble.U
  + (1)*x0 + (1)*x1
 >>> one_loop_bubble.F
  + (-p**2)*x0*x1
 
 The example above among other useful features is also stated in the full documenation of
-:meth:`LoopIntegral.from_propagators() <pySecDec.loop_integral.LoopIntegral.from_propagators>`
+:class:`LoopIntegralFromPropagators() <pySecDec.loop_integral.LoopIntegralFromPropagators>`
 in the reference guide.
 
 Two Loop Planar Box with Numerator
@@ -240,7 +240,7 @@ symbols denote the ``Lorentz_indices``
 
 With that, we can Feynman parametrize the two loop box with a numerator:
 
->>> box = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta,
+>>> box = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta,
 ...                                     numerator=numerator, Lorentz_indices=Lorentz_indices)
 >>> box.U
  + (1)*x3*x6 + (1)*x3*x5 + (1)*x3*x4 + (1)*x2*x6 + (1)*x2*x5 + (1)*x2*x4 + (1)*x2*x3 + (1)*x1*x6 + (1)*x1*x5 + (1)*x1*x4 + (1)*x1*x3 + (1)*x0*x6 + (1)*x0*x5 + (1)*x0*x4 + (1)*x0*x3
@@ -260,7 +260,7 @@ We can also generate output in terms of Mandelstam invariants:
 ...                        ('p2*p3', 't/2'),
 ...                        ('p1*p3', '-s/2-t/2')
 ...                     ]
->>> box = LoopIntegral_from_propagators(propagators, loop_momenta, external_momenta,
+>>> box = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta,
 ...                                     numerator=numerator, Lorentz_indices=Lorentz_indices,
 ...                                     replacement_rules=replacement_rules)
 >>> box.U
