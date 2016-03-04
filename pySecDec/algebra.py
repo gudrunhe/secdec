@@ -659,15 +659,50 @@ class ExponentiatedPolynomial(Polynomial):
             The index of the paramater to derive by.
 
         '''
-        # no need to copy since `derive` makes a copy anyway
-        base = Polynomial(self.expolist, self.coeffs, self.polysymbols, copy=False)
+        # derive an expression of the form "poly**exponent"
+        # derivative(poly**exponent) = poly**exponent*derivative(exponent)*log(poly) + poly**(exponent-1)*exponent*derivative(poly)
 
         if isinstance(self.exponent, _Expression):
-            exponent = self.exponent
+            # summand0: poly**exponent*derivative(exponent)*log(poly)
+            summand0_factors = [self.copy()]
+            summand0_factors.append(self.exponent.derive(index))
+            summand0_factors.append(LogOfPolynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False))
+            summand0 = Product(*summand0_factors, copy=False)
         else:
-            exponent = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([self.exponent]), self.polysymbols, copy=False)
+            summand0 = None
 
-        return PowDerive(base, exponent, copy=False).derive(index)
+        # summand1: poly**(exponent-1)*derivative(poly)
+        # factor1 = "exponent*derivative(poly)"
+        # catch ``derivative(poly) = 0``
+        derivative_poly = Polynomial(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False).derive(index)
+        if (derivative_poly.coeffs == 0).all():
+            summand1 = None
+        else:
+            factor1 = self.exponent * derivative_poly
+            # factor0 = poly**(exponent-1)   -->   simplification: (...)**0 = 1
+            # do not need factor 0 in that case
+            new_exponent = self.exponent - 1
+            if new_exponent == 0:
+                # factor0 = 1 in this case
+                summand1 = factor1
+            else:
+                factor0 = ExponentiatedPolynomial(self.expolist.copy(),
+                                                  self.coeffs.copy(),
+                                                  new_exponent,
+                                                  self.polysymbols,
+                                                  copy=False)
+                summand1 = Product(factor0, factor1, copy=False)
+
+        if summand0 is None:
+            if summand1 is None:
+                return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.polysymbols, copy=False)
+            else:
+                return summand1
+        else:
+            if summand1 is None:
+                return summand0
+            else:
+                return Sum(summand0, summand1, copy=False)
 
     def copy(self):
         "Return a copy of a :class:`.Polynomial` or a subclass."
@@ -1282,241 +1317,38 @@ class Pow(_Expression):
             The index of the paramater to derive by.
 
         '''
-        return PowDerive(self.base, self.exponent, copy=False).derive(index)
+        # derive an expression of the form "base**exponent"
+        # derivative(base**exponent) = base**exponent*derivative(exponent)*log(base) + base**(exponent-1)*exponent*derivative(poly)
+
+        # summand0: base**exponent*derivative(exponent)*log(base)
+        summand0_factors = [self.copy()]
+        summand0_factors.append(self.exponent.derive(index))
+        summand0_factors.append(Log(self.base.copy(), copy=False))
+        summand0 = Product(*summand0_factors, copy=False)
+
+        # summand1: base**(exponent-1)*derivative(base)
+        # factor0 = base**(exponent-1)   -->   simplification: (...)**0 = 1
+        # do not need factor 0 in that case
+        new_exponent = self.exponent - 1
+        if new_exponent == 0:
+            factor0 = None
+        else:
+            factor0 = Pow(self.base.copy(), new_exponent, copy=False)
+        # factor1 = "exponent*derivative(poly)"
+        derivative_base = self.base.derive(index)
+        factor1 = self.exponent * derivative_base
+        if factor0 is None:
+            summand1 = factor1
+        else:
+            summand1 = Product(factor0, factor1, copy=False)
+
+        return Sum(summand0,summand1, copy=False)
 
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         new_base = expression.base.replace(index,value,remove)
         new_exponent = expression.exponent.replace(index,value,remove)
         return Pow(new_base, new_exponent, copy=False)
-
-class PowDerive(_Expression):
-    r'''
-    Store an expression of the form
-
-    .. math::
-        A \left( \lbrace x_k \rbrace \right) ^
-        { B\left( \lbrace x_k \rbrace \right) }
-        \sum_i c_i \prod_j \prod_k \left(
-        \frac{d}{dx_k} \right)^{n_{ijk}} \left(
-        {B \left( \lbrace x_k \rbrace \right)
-        \cdot \log \left( A \left( \lbrace x_k
-        \rbrace \right) \right)} \right)
-
-    which arises by taking derivatives of
-    expressions of the form
-
-    .. math::
-        A \left( \lbrace x_k \rbrace \right) ^
-        { B\left( \lbrace x_k \rbrace \right) }
-
-    :param base:
-        :class:`._Expression`;
-        The base ``A`` of the exponential.
-
-    :param exponent:
-        :class:`._Expression`;
-        The exponent ``B``.
-
-    :param copy:
-        bool;
-        Whether or not to copy `base` and `exponent`.
-
-    '''
-    def __init__(self, base, exponent, copy=True, **kwargs):
-        self.symbols = list(base.symbols)
-        self.base = base.copy() if copy else base
-        self.exponent = exponent.copy() if copy else exponent
-        self.number_of_variables = base.number_of_variables
-
-        # If keyword argument `internal_regenerate` is passed and True, use passed `factorlist`, `coeffs`, and `expressions` instead of regenerating
-
-        if kwargs.get('internal_regenerate', False):
-            self.coeffs = kwargs['coeffs'].copy() if copy else kwargs['coeffs'] # c_i
-            self.derivatives = kwargs['derivatives'].copy() if copy else kwargs['derivatives'] # n_ijk
-
-            if copy:
-                self.exponent_log_base_derivatives = {}
-                for key,value in kwargs['exponent_log_base_derivatives'].items():
-                    self.exponent_log_base_derivatives[key] = value.copy()
-
-            else:
-                self.exponent_log_base_derivatives = kwargs['exponent_log_base_derivatives']
-
-        else:
-            # check input consistency
-            if base.number_of_variables != exponent.number_of_variables:
-                raise ValueError('Must have the same number of variables in `base` and `exponent`.')
-
-            self.exponent_log_base_derivatives = {
-                                                      tuple(0 for i in range(self.number_of_variables)):
-                                                      Product(self.exponent, Log(self.base, copy=False), copy=False).simplify() # automatically simplify cache
-                                                 }
-            self.coeffs = np.array([1]) # c_i
-            self.derivatives = np.empty((1,0,self.number_of_variables), dtype=int) # n_ijk
-
-    def __repr__(self):
-        A_pow_B = '(%s) ** (%s)' % (self.base, self.exponent)
-        other = ''
-        for i,(coeff,n_jk) in enumerate(zip(self.coeffs,self.derivatives)):
-            other += " + (%i)" % coeff
-            for j,n_k in enumerate(n_jk):
-                if n_k[0] >= 0: # ``n_k < 0`` indicates a factor of ``1``
-                    other += ' * (%s)' % str(self.exponent_log_base_derivatives[tuple(n_k)])
-        if other == '':
-            return A_pow_B
-        else:
-            return A_pow_B + ' * (' + other + ')'
-
-    __str__ = __repr__
-
-    def derive(self, index):
-        '''
-        Generate the derivative by the parameter indexed `index`.
-
-        :param index:
-            integer;
-            The index of the paramater to derive by.
-
-        '''
-        def sort_factors(array):
-            'Sort the factors of a `derivatives`-like array'
-            for i in range(len(array)):
-                current_term = array[i]
-                current_term[:] = current_term[argsort_2D_array(current_term)]
-            return array
-
-        # derivative(A**B * C) = A**B * ( C * derivative(B*log(A))  +  derivative(C) )
-        # where "C" denotes derivatives taken earlier
-
-        # The global factor "A**B" is always implied --> nothing to do
-
-        # The shape of `derivatives` changes:
-        # There is one more factor (``derivative(B*log(A))``) in every term
-        old_shape = self.derivatives.shape
-        new_shape = old_shape[0], old_shape[1] + 1, old_shape[2]
-
-        # generate the term(s) "C * derivative(B*log(A))"
-        first_term_derivatives = np.empty(new_shape, dtype=int)
-        first_term_derivatives[:,:-1,:] = self.derivatives
-        # multiply by "derivative(B*log(A))"
-        derivative_AlogB = [0] * self.number_of_variables
-        derivative_AlogB[index] = 1
-        first_term_derivatives[:,-1] = derivative_AlogB
-        sort_factors(first_term_derivatives)
-        first_term_coeffs = self.coeffs
-
-        # generate the term(s) "derivative(C)" --> product rule
-        second_term_derivatives = []
-        second_term_coeffs = []
-        # product rule: every factor produces a new summand
-        for j in range(self.derivatives.shape[1]):
-            this_derivatives = np.zeros(new_shape, dtype=int) - 1
-            this_derivatives[:,:-1,:] = self.derivatives
-            to_increment = this_derivatives[:,j,index]
-            to_increment[to_increment != -1] += 1
-            this_coeffs = self.coeffs.copy()
-            this_coeffs[to_increment == -1] = 0 # exclude factors of one
-            second_term_derivatives.append(sort_factors(this_derivatives))
-            second_term_coeffs.append(this_coeffs)
-
-        new_coeffs = np.hstack([first_term_coeffs] + second_term_coeffs)
-        new_derivatives = np.vstack([first_term_derivatives] + second_term_derivatives)
-
-        # generate missing derivatives
-        # do not make a copy since it does not hurt having the child point to the same ``exponent_log_base_derivatives``
-        new_entries = {}
-        for term in new_derivatives:
-            for derivative_multiindex in term:
-                if derivative_multiindex[0] >= 0: # ``derivative_multiindex < 0`` indicates a factor of one
-                    derivative_multiindex = tuple(derivative_multiindex)
-                    try:
-                        self.exponent_log_base_derivatives[derivative_multiindex]
-                    except KeyError: # needed higher derivative not calculated yet
-                        lower_derivative_multiindex = list(derivative_multiindex)
-                        lower_derivative_multiindex[index] -= 1
-                        lower_derivative_multiindex = tuple(lower_derivative_multiindex)
-                        derivative = self.exponent_log_base_derivatives[lower_derivative_multiindex]
-                        new_entries[derivative_multiindex] = derivative.derive(index).simplify() # automatically simplify cache
-        self.exponent_log_base_derivatives.update(new_entries)
-
-        return PowDerive(internal_regenerate=True, copy=False,
-                         base=self.base, exponent=self.exponent,
-                         derivatives=new_derivatives, coeffs=new_coeffs,
-                         exponent_log_base_derivatives=self.exponent_log_base_derivatives)
-
-    def copy(self):
-        "Return a copy of a :class:`.PowDerive`."
-        return PowDerive(internal_regenerate=True, copy=True,
-                         base=self.base, exponent=self.exponent,
-                         derivatives=self.derivatives, coeffs=self.coeffs,
-                         exponent_log_base_derivatives = self.exponent_log_base_derivatives)
-
-    def simplify(self):
-        'Combine terms with the same factors.'
-        # Sort the `derivatives` first, such that identical entries are
-        # grouped together
-        sort_key = argsort_ND_array(self.derivatives)
-        self.derivatives = self.derivatives[sort_key]
-        self.coeffs = self.coeffs[sort_key]
-
-        # find zeros and ones in `self.exponent_log_base_derivatives`
-        for j, derivative_multiindex in enumerate(self.derivatives[0]):
-            if derivative_multiindex[0] < 0: # ``derivative_multiindex < 0`` indicates a factor of one
-                continue
-            derivative_multiindex = tuple(derivative_multiindex)
-            expression = self.exponent_log_base_derivatives[derivative_multiindex]
-            if type(expression) is Polynomial:
-                if (expression.coeffs == 0).all():
-                    self.coeffs[0] = 0
-                elif len(expression.coeffs) == 1 and (expression.expolist == 0).all() and (expression.coeffs == 1).all():
-                    derivative_multiindex[:] = -1 # do not have to consider a factor of one
-
-        for i in range(1,len(self.coeffs)):
-            if self.coeffs[i] == 0: continue
-            previous_term = self.derivatives[i-1]
-            # search `self.derivatives` for the same term
-            # since `self.derivatives` is sorted, must only compare with the previous term
-            if (previous_term == self.derivatives[i]).all():
-                # add coefficients
-                self.coeffs[i] += self.coeffs[i-1]
-                # mark previous term for removal by setting coefficient to zero
-                self.coeffs[i-1] = 0
-
-            # find zeros and ones in `self.exponent_log_base_derivatives`
-            for j, derivative_multiindex in enumerate(self.derivatives[i]):
-                if derivative_multiindex[0] < 0: # ``derivative_multiindex < 0`` indicates a factor of one
-                    continue
-                derivative_multiindex = tuple(derivative_multiindex)
-                expression = self.exponent_log_base_derivatives[derivative_multiindex]
-                if type(expression) is Polynomial:
-                    if (expression.coeffs == 0).all():
-                        self.coeffs[i] = 0
-                    elif len(expression.coeffs) == 1 and (expression.expolist == 0).all() and (expression.coeffs == 1).all():
-                        derivative_multiindex[:] = -1 # do not have to consider a factor of one
-
-        # remove terms with zero coefficient
-        nonzero_coeffs = np.where(self.coeffs != 0)
-        self.coeffs = self.coeffs[nonzero_coeffs]
-        self.derivatives = self.derivatives[nonzero_coeffs]
-
-        # return zero if no terms are left
-        if len(self.coeffs) == 0:
-            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
-
-        return self
-
-    @doc(_Expression.docstring_of_replace)
-    def replace(self, index, value, remove=False):
-        A_pow_B = Pow(self.base, self.exponent, copy=False).replace(index,value,remove)
-        summands = []
-        for coeff, term in zip(self.coeffs, self.derivatives):
-            factors = []
-            for j, derivative_multiindex in enumerate(term):
-                if derivative_multiindex[0] >= 0:
-                    factors.append(self.exponent_log_base_derivatives[tuple(derivative_multiindex)].replace(index, value, remove))
-            summands.append(Product(*factors, copy=False) * coeff)
-        return Product(A_pow_B, Sum(*summands, copy=False), copy=False)
 
 class Log(_Expression):
     r'''
