@@ -32,6 +32,7 @@ def assert_at_most_quadractic(expression, variables, error_message):
 
 
 class LoopIntegral(object):
+    # TODO: update doc
     '''
     Container class for a loop integrals.
     The main purpose of this class is to convert a
@@ -127,6 +128,53 @@ class LoopIntegral(object):
                     "Propagator powers smaller than 1 only supported if they are integer."
                 self.powerlist.append(power_sp)
 
+    @cached_property
+    def U_final(self):
+        # TODO: return U with all Feynman parameters of inverse propagators set to zero
+        raise NotImplementedError
+
+    @cached_property
+    def F_final(self):
+        # TODO: return F with all Feynman parameters of inverse propagators set to zero
+        raise NotImplementedError
+
+    @cached_property
+    def Nu(self):
+        # TODO: How to represent product of x_i^nu_i/Gamma(nu_i)?
+        # expolist = [power-1 for power in self.powerlist]
+        # something like: Polynomial([expolist],[1])
+
+        # make copies of U, F, and their exponents
+        n = self.exponent_U
+        m = self.exponent_F
+        U = self.U
+        F = self.F
+
+        # start with numerator=1
+        # TODO: can one start with numerator from tensor reduction here?
+        Nu = Polynomial([[0]*self.P], [1])
+
+        # keep U and F symbolic where possible
+        U_symbol = sp.Symbol('U')
+        F_symbol = sp.Symbol('F')
+            
+        for i in range(len(self.powerlist)):
+            if self.powerlist[i].subs(self.regulator,0).is_positive:
+                continue
+
+            # calculate powerlist[i]-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
+            # TODO: speed this up!
+            for _ in range(abs(self.powerlist[i])):
+                Nu = (n*F_symbol*U.derive(i) - m*F.derive(i)*U_symbol)*Nu + F_symbol*U_symbol*(Nu.derive(i))
+                n -= 1
+                m += 1
+            
+            # set x[i] to zero
+            F = F.replace(i,0)
+            U = U.replace(i,0)
+            Nu = Nu.replace(i,0)
+
+        return Nu
 
 class LoopIntegralFromPropagators(LoopIntegral):
     r'''
@@ -654,6 +702,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
 
 class LoopIntegralFromGraph(LoopIntegral):
+    # TODO: update doc
     '''
     Construct the Feynman parametrization of a
     loop integral from the graph using the cut construction method.
