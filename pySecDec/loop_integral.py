@@ -129,14 +129,22 @@ class LoopIntegral(object):
                 self.powerlist.append(power_sp)
 
     @cached_property
-    def U_final(self):
-        # TODO: return U with all Feynman parameters of inverse propagators set to zero
-        raise NotImplementedError
+    def U(self):
+        # returns U with all Feynman parameters of inverse propagators set to zero
+        U = self.preliminary_U
+        for i in range(len(self.powerlist)):
+            if self.powerlist[i]<0:
+                U = U.replace(i,0).simplify()
+        return U
 
     @cached_property
-    def F_final(self):
-        # TODO: return F with all Feynman parameters of inverse propagators set to zero
-        raise NotImplementedError
+    def F(self):
+        # returns F with all Feynman parameters of inverse propagators set to zero
+        F = self.preliminary_F
+        for i in range(len(self.powerlist)):
+            if self.powerlist[i]<0:
+                F = F.replace(i,0).simplify()
+        return F
 
     @cached_property
     def Nu(self):
@@ -147,8 +155,8 @@ class LoopIntegral(object):
         # make copies of U, F, and their exponents
         n = self.exponent_U
         m = self.exponent_F
-        U = self.U
-        F = self.F
+        U = self.preliminary_U
+        F = self.preliminary_F
 
         # start with numerator=1
         # TODO: can one start with numerator from tensor reduction here?
@@ -162,7 +170,7 @@ class LoopIntegral(object):
             if self.powerlist[i].subs(self.regulator,0).is_positive:
                 continue
 
-            # calculate powerlist[i]-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
+            # calculate abs(powerlist[i])-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
             # TODO: speed this up!
             for _ in range(abs(self.powerlist[i])):
                 Nu = (n*F_symbol*U.derive(i) - m*F.derive(i)*U_symbol)*Nu + F_symbol*U_symbol*(Nu.derive(i))
@@ -828,7 +836,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         return M
         
     @cached_property
-    def U(self):
+    def preliminary_U(self):
 
         expolists=[]
         coeffs=[]
@@ -862,7 +870,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         return Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameters)
 
     @cached_property
-    def F(self):
+    def preliminary_F(self):
 
         expolists=[]
         coeffs=[]
@@ -949,4 +957,4 @@ class LoopIntegralFromGraph(LoopIntegral):
         else:
             Fm = 0
 
-        return F0 + self.U*Fm
+        return F0 + self.preliminary_U*Fm
