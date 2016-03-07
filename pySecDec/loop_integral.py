@@ -77,7 +77,8 @@ class LoopIntegral(object):
     def exponentiated_F(self):
         return ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, self.exponent_F, self.F.polysymbols)
 
-    def set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality):
+    def set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality,
+                              Feynman_parameters):
         # sympify and store `regulator`
         self.regulator = sympify_symbols([regulator], '`regulator` must be a symbol.')[0]
 
@@ -101,6 +102,16 @@ class LoopIntegral(object):
                     assert_at_most_quadractic(expression, self.all_momenta, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
         else:
             self.replacement_rules = []
+
+        # sympify and store `Feynman_parameters`
+        # There should be one Feynman parameter for each propagator.
+        if isinstance(Feynman_parameters, str):
+            self.Feynman_parameters = [sp.sympify(Feynman_parameters + str(i)) for i in range(self.P)]
+        else:
+            self.Feynman_parameters = sp.sympify(list(Feynman_parameters))
+            assert len(self.Feynman_parameters) == len(self.propagators), \
+                'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
+                ( len(self.propagators) , len(self.Feynman_parameters) )
 
 
 class LoopIntegralFromPropagators(LoopIntegral):
@@ -289,16 +300,6 @@ class LoopIntegralFromPropagators(LoopIntegral):
             assert_at_most_quadractic(propagator, self.all_momenta, 'Each of the `propagators` must be polynomial and at most quadratic in the momenta.')
         self.P = len(self.propagators)
 
-        # sympify and store `Feynman_parameters`
-        # There should be one Feynman parameter for each propagator.
-        if isinstance(Feynman_parameters, str):
-            self.Feynman_parameters = [sp.sympify(Feynman_parameters + str(i)) for i in range(self.P)]
-        else:
-            self.Feynman_parameters = sp.sympify(list(Feynman_parameters))
-            assert len(self.Feynman_parameters) == len(self.propagators), \
-                'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
-                ( len(self.propagators) , len(self.Feynman_parameters) )
-
         # sympify and store `numerator`
         self.numerator_input = sp.sympify(numerator).expand()
         if self.numerator_input.is_Add:
@@ -307,7 +308,8 @@ class LoopIntegralFromPropagators(LoopIntegral):
             self.numerator_input_terms = [self.numerator_input]
 
         # store properties shared between derived classes
-        self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality)
+        self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality,
+                                   Feynman_parameters)
 
 
     @cached_property
@@ -682,7 +684,7 @@ class LoopIntegralFromGraph(LoopIntegral):
 
     '''
 
-    def __init__(self, internal_lines, external_lines, replacement_rules=[], Feynman_parameter_symbol='x', \
+    def __init__(self, internal_lines, external_lines, replacement_rules=[], Feynman_parameters='x', \
                  regulator='eps', regulator_power=0, dimensionality='4-2*eps'):
     
         # sympify and store internal lines
@@ -719,14 +721,11 @@ class LoopIntegralFromGraph(LoopIntegral):
 
         # store properties shared between derived classes
         self.all_momenta = self.external_momenta
-        self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality)
+        self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality,
+                                   Feynman_parameters)
 
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0
-
-        # store symbol for Feynman parameters
-        assert isinstance(Feynman_parameter_symbol,str), '`Feynman_parameter_symbol` must be a string.'
-        self.Feynman_parameter_symbol = Feynman_parameter_symbol
 
     @cached_property
     def intverts(self): 
@@ -798,7 +797,7 @@ class LoopIntegralFromGraph(LoopIntegral):
             expolists.append(expolist)
             coeffs.append(1)
 
-        return Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
+        return Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameters)
 
     @cached_property
     def F(self):
@@ -867,7 +866,7 @@ class LoopIntegralFromGraph(LoopIntegral):
                 coeffs.append(-sumsqr)
 
         if expolists:
-            F0 = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
+            F0 = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameters)
         else:
             F0 = 0
 
@@ -884,7 +883,7 @@ class LoopIntegralFromGraph(LoopIntegral):
                 expolists.append(expolist)
 
         if expolists:
-            Fm = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameter_symbol)
+            Fm = Polynomial(expolists, coeffs, polysymbols=self.Feynman_parameters)
         else:
             Fm = 0
 

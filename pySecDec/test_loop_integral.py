@@ -881,7 +881,7 @@ class TestNumerator(unittest.TestCase):
 
 
 def uf_from_graph_generic(test_case, int_lines, ext_lines, result_L, result_u, result_f, rules=[]):
-    loop_integral = LoopIntegralFromGraph(int_lines, ext_lines, Feynman_parameter_symbol='Feynman',
+    loop_integral = LoopIntegralFromGraph(int_lines, ext_lines, Feynman_parameters='Feynman',
                                             replacement_rules=rules)
 
     test_case.assertEqual(loop_integral.L,result_L)
@@ -1014,10 +1014,6 @@ class TestUF_FromGraph(unittest.TestCase):
                                 "To define a loop integral please input a graph with at least one closed loop.",
                                 LoopIntegralFromGraph, internal_lines = [['m',[1,2]]],
                                 external_lines = [['p1',1],['p2',2]])
-        self.assertRaisesRegexp(AssertionError,
-                                '.*Feynman_parameter_symbol.*string', LoopIntegralFromGraph,
-                                internal_lines = [['m',[1,1]]], external_lines = [],
-                                Feynman_parameter_symbol=0)
         self.assertRaisesRegexp(AssertionError,
                                 '.*(I|i)nternal.*lines.*form', LoopIntegralFromGraph,
                                 internal_lines = [['m',1,1]], external_lines = [])
