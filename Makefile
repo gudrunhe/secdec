@@ -15,14 +15,15 @@ help :
 	echo "                 and run doctest using Sphinx"
 	echo "    checkX       use nosetests to test with python 2.7 or 3,"
 	echo "                 where X is one of {2,3}"
-	echo "    active_check use nosetests to run only tests marked as"
+	echo "    active-check use nosetests to run only tests marked as"
 	echo "                 \"active\" using nosetests-2.7 and nosetests3"
-	echo "    fast_check   use nosetests to run only quick tests"
+	echo "    fast-check   use nosetests to run only quick tests"
 	echo "                 using nosetests-2.7 and nosetests3"
 	echo "    doctest      run doctest using Sphinx"
 	echo "    clean        delete compiled and temporary files"
 	echo "    coverage     produce and show a code coverage report"
-	echo "    doc          build the html documentation using sphinx"
+	echo "    doc          run \"doc-html\" and \"doc-pdf\""
+	echo "    doc-html     build the html documentation using sphinx"
 	echo "    doc-pdf      build the pdf documentation using sphinx"
 	echo "    help         show this message"
 	echo "    run-examples run all examples using python 2 and 3"
@@ -32,7 +33,7 @@ help :
 .PHONY : clean
 clean:
 	#remove build doc
-	make -C ./doc clean
+	$(MAKE) -C ./doc clean
 
 	#remove .pyc files created by python 2.7
 	rm -f ./*.pyc
@@ -62,23 +63,26 @@ check3 :
 	@ # run tests
 	nosetests3 --processes=-1 --process-timeout=$(TIMEOUT)
 
-.PHONY : active_check
-active_check :
+.PHONY : active-check
+active-check :
 	nosetests-2.7 -a 'active' --processes=-1 --process-timeout=$(TIMEOUT)
 	nosetests3    -a 'active' --processes=-1 --process-timeout=$(TIMEOUT)
 
-.PHONY : fast_check
-fast_check :
+.PHONY : fast-check
+fast-check :
 	nosetests-2.7 -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
 	nosetests3    -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
 
 .PHONY : doc
-doc :
-	cd doc && make html
+doc : doc-html doc-pdf
+
+.PHONY : doc-html
+doc-html :
+	$(MAKE) -C doc html
 
 .PHONY : doc-pdf
 doc-pdf :
-	cd doc; make latexpdf
+	$(MAKE) -C doc latexpdf
 
 .PHONY : doctest
 doctest :
