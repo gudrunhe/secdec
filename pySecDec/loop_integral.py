@@ -78,7 +78,7 @@ class LoopIntegral(object):
         return ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, self.exponent_F, self.F.polysymbols)
 
     def set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality,
-                              Feynman_parameters):
+                              Feynman_parameters, powerlist):
         # sympify and store `regulator`
         self.regulator = sympify_symbols([regulator], '`regulator` must be a symbol.')[0]
 
@@ -112,6 +112,20 @@ class LoopIntegral(object):
             assert len(self.Feynman_parameters) == len(self.propagators), \
                 'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
                 ( len(self.propagators) , len(self.Feynman_parameters) )
+
+        # check and store `powerlist`
+        if not powerlist:
+            self.powerlist=[1]*self.P
+        else:
+            self.powerlist=[]
+            assert len(powerlist)==self.P, "The length of the powerlist must equal the number of propagators."
+            for power in powerlist:
+                power_sp = sp.sympify(power)
+                power0 = power_sp.subs(regulator,0)
+                assert power0.is_Number, "The propagators powers must be numbers for vanishing regulator."
+                assert power0>=1 or power_sp.is_integer,\
+                    "Propagator powers smaller than 1 only supported if they are integer."
+                self.powerlist.append(power_sp)
 
 
 class LoopIntegralFromPropagators(LoopIntegral):
@@ -277,7 +291,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
     def __init__(self, propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
                  numerator=1, replacement_rules=[], Feynman_parameters='x', regulator='eps', \
-                 regulator_power=0, dimensionality='4-2*eps', metric_tensor='g'):
+                 regulator_power=0, dimensionality='4-2*eps', metric_tensor='g', powerlist=[]):
 
         # sympify and store `loop_momenta`
         self.loop_momenta = sympify_symbols(loop_momenta, 'Each of the `loop_momenta` must be a symbol.')
@@ -309,8 +323,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
         # store properties shared between derived classes
         self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality,
-                                   Feynman_parameters)
-
+                                   Feynman_parameters, powerlist)
 
     @cached_property
     def propagator_sum(self):
@@ -685,7 +698,7 @@ class LoopIntegralFromGraph(LoopIntegral):
     '''
 
     def __init__(self, internal_lines, external_lines, replacement_rules=[], Feynman_parameters='x', \
-                 regulator='eps', regulator_power=0, dimensionality='4-2*eps'):
+                 regulator='eps', regulator_power=0, dimensionality='4-2*eps', powerlist=[]):
     
         # sympify and store internal lines
         assert len(internal_lines) > 0, \
@@ -722,7 +735,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         # store properties shared between derived classes
         self.all_momenta = self.external_momenta
         self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality,
-                                   Feynman_parameters)
+                                   Feynman_parameters, powerlist)
 
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0
