@@ -95,7 +95,7 @@ exclude_patterns = []
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-#modindex_common_prefix = []
+modindex_common_prefix = ['pySecDec.']
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
@@ -204,7 +204,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'pySecDec.tex', u'pySecDec Documentation',
-   authors, 'manual'),
+   authors.replace(', ', r' \and '), 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
