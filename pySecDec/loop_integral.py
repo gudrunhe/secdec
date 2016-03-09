@@ -64,7 +64,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_U(self):
-        return self.P - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
+        return sum(self.powerlist) - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
 
     @property # not cached on purpose --> this is just making copies
     def exponentiated_U(self):
@@ -72,7 +72,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_F(self):
-        return self.dimensionality / 2 * self.L - self.P
+        return self.dimensionality / 2 * self.L - sum(self.powerlist)
 
     @property # not cached on purpose --> this is just making copies
     def exponentiated_F(self):
@@ -116,14 +116,15 @@ class LoopIntegral(object):
 
         # check and store `powerlist`
         if not powerlist:
-            self.powerlist=[1]*self.P
+            self.powerlist=[sp.sympify(1)]*self.P
         else:
-            self.powerlist=[]
             assert len(powerlist)==self.P, "The length of the powerlist must equal the number of propagators."
+            self.powerlist=[]
             for power in powerlist:
                 power_sp = sp.sympify(power)
                 power0 = power_sp.subs(regulator,0)
                 assert power0.is_Number, "The propagators powers must be numbers for vanishing regulator."
+                # TODO: allow arbitrary powers, how to treat integrable divergencies (0<power0<1)?
                 assert power0>=1 or power_sp.is_integer,\
                     "Propagator powers smaller than 1 only supported if they are integer."
                 self.powerlist.append(power_sp)
@@ -133,7 +134,7 @@ class LoopIntegral(object):
         # returns U with all Feynman parameters of inverse propagators set to zero
         U = self.preliminary_U
         for i in range(len(self.powerlist)):
-            if self.powerlist[i]<0:
+            if not self.powerlist[i].subs(self.regulator,0).is_positive:
                 U = U.replace(i,0).simplify()
         return U
 
@@ -142,7 +143,7 @@ class LoopIntegral(object):
         # returns F with all Feynman parameters of inverse propagators set to zero
         F = self.preliminary_F
         for i in range(len(self.powerlist)):
-            if self.powerlist[i]<0:
+            if not self.powerlist[i].subs(self.regulator,0).is_positive:
                 F = F.replace(i,0).simplify()
         return F
 
@@ -152,15 +153,14 @@ class LoopIntegral(object):
         # expolist = [power-1 for power in self.powerlist]
         # something like: Polynomial([expolist],[1])
 
-        # make copies of U, F, and their exponents
         n = self.exponent_U
-        m = self.exponent_F
+        m = -self.exponent_F
         U = self.preliminary_U
         F = self.preliminary_F
 
         # start with numerator=1
         # TODO: can one start with numerator from tensor reduction here?
-        Nu = Polynomial([[0]*self.P], [1])
+        Nu = Polynomial.from_expression('1', self.Feynman_parameters)
 
         # keep U and F symbolic where possible
         U_symbol = sp.Symbol('U')
@@ -171,16 +171,17 @@ class LoopIntegral(object):
                 continue
 
             # calculate abs(powerlist[i])-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
-            # TODO: speed this up!
+            # TODO: speed improvements?
             for _ in range(abs(self.powerlist[i])):
-                Nu = (n*F_symbol*U.derive(i) - m*F.derive(i)*U_symbol)*Nu + F_symbol*U_symbol*(Nu.derive(i))
+                Nu = (n*F_symbol*U.derive(i) - m*F.derive(i)*U_symbol)*Nu + F_symbol*U_symbol*Nu.derive(i)
+                Nu = Nu.simplify()
                 n -= 1
                 m += 1
             
             # set x[i] to zero
-            F = F.replace(i,0)
-            U = U.replace(i,0)
-            Nu = Nu.replace(i,0)
+            F = F.replace(i,0).simplify()
+            U = U.replace(i,0).simplify()
+            Nu = Nu.replace(i,0).simplify()
 
         return Nu
 
