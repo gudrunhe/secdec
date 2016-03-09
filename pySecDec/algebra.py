@@ -161,7 +161,7 @@ class Function(_Expression):
                 continue
 
             summands.append(
-                                Product(    # chain rule
+                            ProductRule(    # chain rule
                                             differentiated_arg,
                                             Function('d%s_d%i'%(self.symbol,argindex), *(arg.copy() for arg in self.arguments), differentiated_args=self.differentiated_args, copy=False),
                                             copy=False
