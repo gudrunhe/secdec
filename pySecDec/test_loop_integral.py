@@ -1027,7 +1027,8 @@ class TestUF_FromGraph(unittest.TestCase):
                                 '.*vertices.*symbol', LoopIntegralFromGraph,
                                 internal_lines = [['m',[1,1]]], external_lines = [['p1','cos(x)']])
 
-@attr('active')
+#@attr('active')
+@attr('slow')
 class TestPowerlist(unittest.TestCase):
     def test_negative_powers(self):
         loop_momenta = ['l']

@@ -162,10 +162,10 @@ class LoopIntegral(object):
         # TODO: can one start with numerator from tensor reduction here?
         Nu = Polynomial.from_expression('1', self.Feynman_parameters)
 
-        # keep U and F symbolic where possible
-        U_symbol = sp.Symbol('U')
-        F_symbol = sp.Symbol('F')
-            
+        # TODO: possible at all to keep U and F symbolic? how to generate higher derivatives of U and F?
+        # U_symbol = sp.Symbol('U')
+        # F_symbol = sp.Symbol('F')
+
         for i in range(len(self.powerlist)):
             if self.powerlist[i].subs(self.regulator,0).is_positive:
                 continue
@@ -173,7 +173,7 @@ class LoopIntegral(object):
             # calculate abs(powerlist[i])-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
             # TODO: speed improvements?
             for _ in range(abs(self.powerlist[i])):
-                Nu = (n*F_symbol*U.derive(i) - m*F.derive(i)*U_symbol)*Nu + F_symbol*U_symbol*Nu.derive(i)
+                Nu = (n*F*U.derive(i) - m*F.derive(i)*U)*Nu + F*U*Nu.derive(i)
                 Nu = Nu.simplify()
                 n -= 1
                 m += 1
