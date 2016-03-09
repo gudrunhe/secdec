@@ -1164,17 +1164,17 @@ class ProductRule(_Expression):
 
         # generate missing derivatives
         # do not make a copy since it does not hurt having the child point to the same ``expressions``
-        for expression in self.expressions:
-            new_entries = {}
-            for derivative_multiindex, derivative in expression.items():
-                higher_derivative_multiindex = list(derivative_multiindex)
-                higher_derivative_multiindex[index] += 1
-                higher_derivative_multiindex = tuple(higher_derivative_multiindex)
+        for term in new_factorlist:
+            for derivative_multiindex, expression in zip(term, self.expressions):
+                derivative_multiindex = tuple(derivative_multiindex)
                 try:
-                    expression[higher_derivative_multiindex]
-                except KeyError: # needed higher derivative not calculated yet
-                    new_entries[higher_derivative_multiindex] = derivative.derive(index).simplify() # automatically simplify cache
-            expression.update(new_entries)
+                    expression[derivative_multiindex]
+                except KeyError: # need a derivative that is not calculated yet
+                    lower_derivative_multiindex = list(derivative_multiindex)
+                    lower_derivative_multiindex[index] -= 1
+                    lower_derivative_multiindex = tuple(lower_derivative_multiindex)
+                    lower_derivative = expression[lower_derivative_multiindex]
+                    expression[derivative_multiindex] = lower_derivative.derive(index).simplify() # automatically simplify cache
 
         return ProductRule(internal_regenerate=True, copy=False,
                            factorlist=new_factorlist, coeffs=new_coeffs,
