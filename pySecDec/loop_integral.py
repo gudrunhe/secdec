@@ -428,16 +428,16 @@ class LoopIntegralFromPropagators(LoopIntegral):
         return Polynomial.from_expression(sympy_J.expand().subs(self.replacement_rules), self.Feynman_parameters)
 
     # equation (8) of arXiv:0803.4177: U = det(M)
-    U = detM
+    preliminary_U = detM
 
     @cached_property
-    def F(self):
+    def preliminary_F(self):
         # equation (8) of arXiv:0803.4177: F = det(M)*(Q.transpose*inverse(M)*Q-J) = (Q.transpose*adjugate(M)*Q-U*J)
         F = 0
         for i in range(self.L):
             for j in range(self.L):
                 F += self.Q[i]*self.aM[i,j]*self.Q[j]
-        F -= self.U * self.J
+        F -= self.preliminary_U * self.J
         for i,coeff in enumerate(F.coeffs):
             F.coeffs[i] = coeff.expand().subs(self.replacement_rules)
         return F.simplify()
