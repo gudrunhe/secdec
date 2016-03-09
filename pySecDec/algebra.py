@@ -71,6 +71,104 @@ class _Expression(object):
 
         '''
 
+class DerivativeTracker(_Expression):
+    r'''
+    Keep track of all derivatives taken of an
+    :class:`._Expression`.
+    When the :meth:`.derive` method is called,
+    save the multiindex of the derivative to be
+    taken.
+
+    :param expression:
+        :class:`._Expression` in the sense of
+        this module;
+        The `expression` to track the derivatives.
+
+    :param copy:
+        bool;
+        Whether or not to copy the `expression`.
+
+    The derivative multiindices are the keys in
+    the `dictionary` ``self.derivatives``. The
+    values are lists with two elements: Its first
+    element is the index to derive the derivative
+    indicated by the multiindex in the second
+    element by, in order to abtain the derivative
+    indicated by the key:
+
+    >>> from pySecDec.algebra import Polynomial, DerivativeTracker
+    >>> poly = Polynomial.from_expression('x**2*y + y**2', ['x','y'])
+    >>> tracker = DerivativeTracker(poly)
+    >>> tracker.derive(0).derive(1)
+    DerivativeTracker( + (2)*x, index = (1, 1), derivatives = {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]})
+    >>> tracker.derivatives
+    {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]}
+
+    '''
+    def __init__(self, expression, copy=False):
+        self.expression = expression.copy() if copy else expression
+        self.number_of_variables = expression.number_of_variables
+        self.derivative_multiindex = tuple(0 for i in range(self.number_of_variables))
+        self.derivatives = {}
+
+    def derive(self, index):
+        '''
+        Generate the derivative of the `expression`
+        and update ``self.derivatives``.
+
+        '''
+        # generate the desired derivative
+        derivative = self.expression.derive(index)
+
+        # generate the multiindex of the requested derivative
+        old_multiindex = self.derivative_multiindex
+        new_multiindex = list(old_multiindex)
+        new_multiindex[index] += 1
+        new_multiindex = tuple(new_multiindex)
+        self.derivatives[new_multiindex] = [index, old_multiindex]
+
+        # generate the new instance of `DerivativeTracker`
+        new_tracker = DerivativeTracker(derivative, copy=False)
+        new_tracker.derivatives = self.derivatives
+        new_tracker.derivative_multiindex = new_multiindex
+
+        return new_tracker
+
+    def __repr__(self):
+        out = 'DerivativeTracker('
+        out += repr(self.expression)
+        out += ', index = ' + repr(self.derivative_multiindex)
+        out += ', derivatives = ' + repr(self.derivatives) + ')'
+        return out
+
+    def __str__(self):
+        return str(self.expression)
+
+    def copy(self):
+        "Return a copy of a :class:`.DerivativeTracker`."
+        out = DerivativeTracker(self.expression, copy=True)
+        out.derivatives = self.derivatives
+        out.derivative_multiindex = self.derivative_multiindex
+        return out
+
+    def simplify(self):
+        'Simplify the `expression`.'
+        self.expression = self.expression.simplify()
+        return self
+
+    @property
+    def symbols(self):
+        return self.expression.symbols
+
+    @doc(_Expression.docstring_of_replace)
+    def replace(self, index, value, remove=False):
+        if remove:
+            raise ValueError('Cannot use ``replace`` with ``remove=True`` in `DerivativeTracker`')
+
+        out = self.copy()
+        out.expression = self.expression.replace(index, value, False)
+        return out
+
 class Function(_Expression):
     '''
     Symbolic function that can take care of
