@@ -1027,3 +1027,69 @@ class TestUF_FromGraph(unittest.TestCase):
                                 '.*vertices.*symbol', LoopIntegralFromGraph,
                                 internal_lines = [['m',[1,1]]], external_lines = [['p1','cos(x)']])
 
+@attr('active')
+class TestPowerlist(unittest.TestCase):
+    def test_negative_powers(self):
+        loop_momenta = ['l']
+        propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
+
+        Feynman_parameters=['z1','z2','z3']
+
+        rules = [('p1*p1','ssp1'),
+                 ('p2*p2','ssp2'),
+                 ('p1*p2','ssp3')]
+
+        target_U = '''z1 + z2'''
+
+        target_F = '''-(ssp1*z1*z2)'''
+
+        target_Nu = ['1'
+                     ,
+                     '''3*ssp1*z1*z2 - 2*eps*ssp1*z1*z2 + 
+                     (z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
+                     eps*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))'''
+                     ,
+                     '''(-2 + eps)*(-10*ssp1**2*z1**2*z2**2 + 4*eps*ssp1**2*z1**2*z2**2 - 
+                     8*ssp1*z1*z2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - 
+                     ssp2*(z1 + z2)) + 4*eps*ssp1*z1*z2*(z1 + z2)*
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
+                     (z1 + z2)**2*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 + 
+                     eps*(z1 + z2)**2*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2)'''
+                     ,
+                     '''210*ssp1**3*z1**3*z2**3 - 214*eps*ssp1**3*z1**3*z2**3 + 
+                     72*eps**2*ssp1**3*z1**3*z2**3 - 8*eps**3*ssp1**3*z1**3*z2**3 + 
+                     270*ssp1**2*z1**2*z2**2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - 
+                     ssp2*(z1 + z2)) - 288*eps*ssp1**2*z1**2*z2**2*(z1 + z2)*
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) + 
+                     102*eps**2*ssp1**2*z1**2*z2**2*(z1 + z2)*
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
+                     12*eps**3*ssp1**2*z1**2*z2**2*(z1 + z2)*
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) + 
+                     90*ssp1*z1*z2*(z1 + z2)**2*
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 - 
+                     111*eps*ssp1*z1*z2*(z1 + z2)**2*
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 + 
+                     45*eps**2*ssp1*z1*z2*(z1 + z2)**2*
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 - 
+                     6*eps**3*ssp1*z1*z2*(z1 + z2)**2*
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 + 
+                     6*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**
+                     3 - 11*eps*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - 
+                     ssp2*(z1 + z2))**3 + 6*eps**2*(z1 + z2)**3*
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**3 - 
+                     eps**3*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - 
+                     ssp2*(z1 + z2))**3'''
+                     ]
+
+        for i in range(4):
+            powerlist = [1,1,-i]
+            li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
+                                             replacement_rules=rules, Feynman_parameters=Feynman_parameters)
+            result_U = sp.sympify(li.U)
+            result_F = sp.sympify(li.F)
+            result_Nu = sp.sympify(li.Nu).subs('U',result_U).subs('F',result_F)
+
+            self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
+            self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
+            self.assertEqual( (result_Nu - sp.sympify(target_Nu[i])).simplify() , 0 )
+
