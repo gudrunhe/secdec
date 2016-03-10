@@ -32,7 +32,6 @@ def assert_at_most_quadractic(expression, variables, error_message):
 
 
 class LoopIntegral(object):
-    # TODO: update doc
     '''
     Container class for a loop integrals.
     The main purpose of this class is to convert a
@@ -338,6 +337,12 @@ class LoopIntegralFromPropagators(LoopIntegral):
         string or sympy symbol, optional;
         The symbol to be used for the (Minkowski) metric
         tensor :math:`g^{\mu\nu}` .
+
+    :param powerlist:
+        iterable, optional;
+        The powers of the propergators, possibly dependent on the `regulator`.
+        In case of negative powers, the derivative with respect to the corresponding 
+        Feynman parameter is calculated.
 
     '''
 
@@ -711,7 +716,6 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
 
 class LoopIntegralFromGraph(LoopIntegral):
-    # TODO: update doc
     '''
     Construct the Feynman parametrization of a
     loop integral from the graph using the cut construction method.
@@ -738,11 +742,8 @@ class LoopIntegralFromGraph(LoopIntegral):
     :param replacement_rules:
        see :class:`.LoopIntegralFromPropagators`
 
-    :param Feynman_parameter_symbol:
-        string, optional;
-        Symbols to be used for the Feynman parameters,
-        variables will be consecutively numbered starting
-        from zero.
+    :param Feynman_parameters:
+       see :class:`.LoopIntegralFromPropagators`
 
     :param regulator:
        see :class:`.LoopIntegralFromPropagators`
@@ -751,6 +752,9 @@ class LoopIntegralFromGraph(LoopIntegral):
        see :class:`.LoopIntegralFromPropagators`
 
     :param dimensionality:
+       see :class:`.LoopIntegralFromPropagators`
+
+    :param powerlist:
        see :class:`.LoopIntegralFromPropagators`
 
     '''
