@@ -1088,9 +1088,61 @@ class TestPowerlist(unittest.TestCase):
                                              replacement_rules=rules, Feynman_parameters=Feynman_parameters)
             result_U = sp.sympify(li.U)
             result_F = sp.sympify(li.F)
-            result_Nu = sp.sympify(li.Nu).subs('U',result_U).subs('F',result_F)
+            result_Nu = sp.sympify(li.Nu)
 
             self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
             self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
             self.assertEqual( (result_Nu - sp.sympify(target_Nu[i])).simplify() , 0 )
 
+    def test_box_withnumerator2L(self):
+        # SecDec3 -> loop/demos/4_box_withnumerator_2L
+        loop_momenta = ['k1','k2']
+        propagators = ['k1**2', '(k1+p2)**2', '(k1-p1)**2', '(k1-k2)**2', '(k2+p2)**2', '(k2-p1)**2', 
+                       '(k2+p2+p3)**2', '(k1+p3)**2']
+
+        rules = [('p1*p1','0'),
+                 ('p2*p2','0'),
+                 ('p3*p3','0'),
+                 ('p4*p4','0'),
+                 ('p1*p2','s/2'),
+                 ('p2*p3','t/2'),
+                 ('p1*p3','-s/2-t/2')]
+
+        powerlist = [1,1,1,1,1,1,1,-1]
+
+        Feynman_parameters = ['z'+str(i) for i in range(1,9)]
+
+        target_U = '''z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) + 
+        z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7)'''
+
+        target_F = '''-(s*z4*z5*z6) + s*z3*(-(z4*z5) - z5*z6) - 
+        z1*(s*z5*z6 + t*z4*z7) - 
+        s*z2*((z4 + z5)*z6 + z3*(z4 + z5 + z6 + z7))'''
+
+        target_Nu = '''-2*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) + 
+        z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7))*
+        (-(s*z5*z6) + z4*(s*z6 + t*(z5 + z6)) + 
+        t*z2*(z4 + z5 + z6 + z7) + 
+        z3*(s*(z4 + z5 + z6 + z7) + 
+        t*(z4 + z5 + z6 + z7))) - 
+        2*eps*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) + 
+        z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7))*
+        (-(s*z5*z6) + z4*(s*z6 + t*(z5 + z6)) + 
+        t*z2*(z4 + z5 + z6 + z7) + 
+        z3*(s*(z4 + z5 + z6 + z7) + 
+        t*(z4 + z5 + z6 + z7))) + 3*eps*(z4 + z5 + z6 + z7)*
+        (-(s*z4*z5*z6) + s*z3*(-(z4*z5) - z5*z6) - 
+        z1*(s*z5*z6 + t*z4*z7) - 
+        s*z2*((z4 + z5)*z6 + z3*(z4 + z5 + z6 + z7)))'''
+
+
+        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
+                                         replacement_rules=rules, Feynman_parameters=Feynman_parameters)
+
+        result_U = sp.sympify(li.U)
+        result_F = sp.sympify(li.F)
+        result_Nu = sp.sympify(li.Nu)
+
+        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
