@@ -63,6 +63,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_U(self):
+        #TODO: get exponent right for negative propagator powers
         return sum(self.powerlist) - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
 
     @property # not cached on purpose --> this is just making copies
@@ -71,6 +72,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_F(self):
+        #TODO: get exponent right for negative propagator powers
         return self.dimensionality / 2 * self.L - sum(self.powerlist)
 
     @property # not cached on purpose --> this is just making copies
@@ -154,32 +156,49 @@ class LoopIntegral(object):
 
         n = self.exponent_U
         m = -self.exponent_F
-        U = self.preliminary_U
-        F = self.preliminary_F
+
+        Feynman_parameters_F_U = self.Feynman_parameters + ['F', 'U']
+
+        extended_expolist = []
+        for exponents in self.preliminary_U.expolist:
+            extended_expolist.append(np.concatenate([exponents,[0,0]]))
+
+        U_explicit = Polynomial(expolist=extended_expolist, coeffs=self.preliminary_U.coeffs,
+                       polysymbols=Feynman_parameters_F_U)
+
+        extended_expolist = []
+        for exponents in self.preliminary_F.expolist:
+            extended_expolist.append(np.concatenate([exponents,[0,0]]))
+
+        F_explicit = Polynomial(expolist=extended_expolist, coeffs=self.preliminary_F.coeffs,
+                       polysymbols=Feynman_parameters_F_U)
 
         # start with numerator=1
         # TODO: can one start with numerator from tensor reduction here?
-        Nu = Polynomial.from_expression('1', self.Feynman_parameters)
+        Nu = Polynomial.from_expression('1', Feynman_parameters_F_U)
 
-        # TODO: possible at all to keep U and F symbolic? how to generate higher derivatives of U and F?
-        # U_symbol = sp.Symbol('U')
-        # F_symbol = sp.Symbol('F')
+        U = Polynomial.from_expression('U', Feynman_parameters_F_U)
+        F = Polynomial.from_expression('F', Feynman_parameters_F_U)
+
 
         for i in range(len(self.powerlist)):
             if self.powerlist[i].subs(self.regulator,0).is_positive:
                 continue
 
             # calculate abs(powerlist[i])-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
+            # keeping F and U symbolic but calculating their derivatives explicitly
             # TODO: speed improvements?
             for _ in range(abs(self.powerlist[i])):
-                Nu = (n*F*U.derive(i) - m*F.derive(i)*U)*Nu + F*U*Nu.derive(i)
+                dFdx = F_explicit.derive(i)
+                dUdx = U_explicit.derive(i)
+                Nu = (n*F*dUdx - m*dFdx*U)*Nu + F*U*(Nu.derive(i) + Nu.derive(-2)*dFdx + Nu.derive(-1)*dUdx)
                 Nu = Nu.simplify()
                 n -= 1
                 m += 1
             
             # set x[i] to zero
-            F = F.replace(i,0).simplify()
-            U = U.replace(i,0).simplify()
+            F_explicit = F_explicit.replace(i,0).simplify()
+            U_explicit = U_explicit.replace(i,0).simplify()
             Nu = Nu.replace(i,0).simplify()
 
         return Nu

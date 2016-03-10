@@ -1088,7 +1088,7 @@ class TestPowerlist(unittest.TestCase):
                                              replacement_rules=rules, Feynman_parameters=Feynman_parameters)
             result_U = sp.sympify(li.U)
             result_F = sp.sympify(li.F)
-            result_Nu = sp.sympify(li.Nu)
+            result_Nu = sp.sympify(li.Nu).subs('U',result_U).subs('F',result_F)
 
             self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
             self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
@@ -1141,7 +1141,7 @@ class TestPowerlist(unittest.TestCase):
 
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.Nu)
+        result_Nu = sp.sympify(li.Nu).subs('U',result_U).subs('F',result_F)
 
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
