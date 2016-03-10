@@ -71,6 +71,104 @@ class _Expression(object):
 
         '''
 
+class DerivativeTracker(_Expression):
+    r'''
+    Keep track of all derivatives taken of an
+    :class:`._Expression`.
+    When the :meth:`.derive` method is called,
+    save the multiindex of the derivative to be
+    taken.
+
+    :param expression:
+        :class:`._Expression` in the sense of
+        this module;
+        The `expression` to track the derivatives.
+
+    :param copy:
+        bool;
+        Whether or not to copy the `expression`.
+
+    The derivative multiindices are the keys in
+    the `dictionary` ``self.derivatives``. The
+    values are lists with two elements: Its first
+    element is the index to derive the derivative
+    indicated by the multiindex in the second
+    element by, in order to abtain the derivative
+    indicated by the key:
+
+    >>> from pySecDec.algebra import Polynomial, DerivativeTracker
+    >>> poly = Polynomial.from_expression('x**2*y + y**2', ['x','y'])
+    >>> tracker = DerivativeTracker(poly)
+    >>> tracker.derive(0).derive(1)
+    DerivativeTracker( + (2)*x, index = (1, 1), derivatives = {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]})
+    >>> tracker.derivatives
+    {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]}
+
+    '''
+    def __init__(self, expression, copy=False):
+        self.expression = expression.copy() if copy else expression
+        self.number_of_variables = expression.number_of_variables
+        self.derivative_multiindex = tuple(0 for i in range(self.number_of_variables))
+        self.derivatives = {}
+
+    def derive(self, index):
+        '''
+        Generate the derivative of the `expression`
+        and update ``self.derivatives``.
+
+        '''
+        # generate the desired derivative
+        derivative = self.expression.derive(index)
+
+        # generate the multiindex of the requested derivative
+        old_multiindex = self.derivative_multiindex
+        new_multiindex = list(old_multiindex)
+        new_multiindex[index] += 1
+        new_multiindex = tuple(new_multiindex)
+        self.derivatives[new_multiindex] = [index, old_multiindex]
+
+        # generate the new instance of `DerivativeTracker`
+        new_tracker = DerivativeTracker(derivative, copy=False)
+        new_tracker.derivatives = self.derivatives
+        new_tracker.derivative_multiindex = new_multiindex
+
+        return new_tracker
+
+    def __repr__(self):
+        out = 'DerivativeTracker('
+        out += repr(self.expression)
+        out += ', index = ' + repr(self.derivative_multiindex)
+        out += ', derivatives = ' + repr(self.derivatives) + ')'
+        return out
+
+    def __str__(self):
+        return str(self.expression)
+
+    def copy(self):
+        "Return a copy of a :class:`.DerivativeTracker`."
+        out = DerivativeTracker(self.expression, copy=True)
+        out.derivatives = self.derivatives
+        out.derivative_multiindex = self.derivative_multiindex
+        return out
+
+    def simplify(self):
+        'Simplify the `expression`.'
+        self.expression = self.expression.simplify()
+        return self
+
+    @property
+    def symbols(self):
+        return self.expression.symbols
+
+    @doc(_Expression.docstring_of_replace)
+    def replace(self, index, value, remove=False):
+        if remove:
+            raise ValueError('Cannot use ``replace`` with ``remove=True`` in `DerivativeTracker`')
+
+        out = self.copy()
+        out.expression = self.expression.replace(index, value, False)
+        return out
+
 class Function(_Expression):
     '''
     Symbolic function that can take care of
@@ -161,7 +259,7 @@ class Function(_Expression):
                 continue
 
             summands.append(
-                                Product(    # chain rule
+                            ProductRule(    # chain rule
                                             differentiated_arg,
                                             Function('d%s_d%i'%(self.symbol,argindex), *(arg.copy() for arg in self.arguments), differentiated_args=self.differentiated_args, copy=False),
                                             copy=False
@@ -1164,17 +1262,17 @@ class ProductRule(_Expression):
 
         # generate missing derivatives
         # do not make a copy since it does not hurt having the child point to the same ``expressions``
-        for expression in self.expressions:
-            new_entries = {}
-            for derivative_multiindex, derivative in expression.items():
-                higher_derivative_multiindex = list(derivative_multiindex)
-                higher_derivative_multiindex[index] += 1
-                higher_derivative_multiindex = tuple(higher_derivative_multiindex)
+        for term in new_factorlist:
+            for derivative_multiindex, expression in zip(term, self.expressions):
+                derivative_multiindex = tuple(derivative_multiindex)
                 try:
-                    expression[higher_derivative_multiindex]
-                except KeyError: # needed higher derivative not calculated yet
-                    new_entries[higher_derivative_multiindex] = derivative.derive(index).simplify() # automatically simplify cache
-            expression.update(new_entries)
+                    expression[derivative_multiindex]
+                except KeyError: # need a derivative that is not calculated yet
+                    lower_derivative_multiindex = list(derivative_multiindex)
+                    lower_derivative_multiindex[index] -= 1
+                    lower_derivative_multiindex = tuple(lower_derivative_multiindex)
+                    lower_derivative = expression[lower_derivative_multiindex]
+                    expression[derivative_multiindex] = lower_derivative.derive(index).simplify() # automatically simplify cache
 
         return ProductRule(internal_regenerate=True, copy=False,
                            factorlist=new_factorlist, coeffs=new_coeffs,

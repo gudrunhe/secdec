@@ -6,6 +6,30 @@ import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
 
+class TestDerivativeTracker(unittest.TestCase):
+    #@attr('active')
+    def test_derivative_tracking(self):
+        poly = Polynomial.from_expression('x**2*y + y**2', ['x','y'])
+        tracker = DerivativeTracker(poly)
+        tracker.derive(0).derive(1)
+        target_derivatives = {(1,0): [0,(0,0)], (1,1) : [1,(1,0)]}
+        self.assertEqual(tracker.derivatives, target_derivatives)
+
+    #@attr('active')
+    def test_derivative_tracking_with_replace(self):
+        poly = Polynomial.from_expression('x**2*y + y**2 + z', ['x','y','z'])
+        tracker = DerivativeTracker(poly)
+        tracker.derive(0).replace(0,0).derive(1).replace(1,0)
+        target_derivatives = {(1,0,0): [0,(0,0,0)], (1,1,0) : [1,(1,0,0)]}
+        self.assertEqual(tracker.derivatives, target_derivatives)
+
+    #@attr('active')
+    def test_str(self):
+        # Note: ``repr`` is checked by the doctests
+        poly = Polynomial.from_expression('x**2*y + y**2 + z', ['x','y','z'])
+        tracker = DerivativeTracker(poly)
+        self.assertEqual(str(tracker), str(poly))
+
 class TestFunction(unittest.TestCase):
     def setUp(self):
         self.polysymbols = ['x0', 'x1', 'x2', 'x3']
