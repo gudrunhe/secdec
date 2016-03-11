@@ -79,17 +79,17 @@ class TestFunction(unittest.TestCase):
     #@attr('active')
     def test_derive(self):
         # simple derivative
-        df_d0 = self.f.derive(0)
-        self.assertEqual( (sp.sympify(df_d0) - sp.sympify('df_d0(x0,x1)')).simplify() , 0 )
+        dfd0 = self.f.derive(0)
+        self.assertEqual( (sp.sympify(dfd0) - sp.sympify('dfd0(x0,x1)')).simplify() , 0 )
 
         # g( + (1)*x0, + (1)*x1, + (1)*x2*x3 + (1)*x2*x3 + (1)*x0)
 
         # derivatives with chain rule
-        dg_d2 = self.g.derive(2)
-        self.assertEqual( (sp.sympify(dg_d2) - sp.sympify('dg_d2(x0,x1,2*x2*x3+x0)*2*x3')).simplify() , 0 )
+        dgd2 = self.g.derive(2)
+        self.assertEqual( (sp.sympify(dgd2) - sp.sympify('dgd2(x0,x1,2*x2*x3+x0)*2*x3')).simplify() , 0 )
 
-        dg_d0 = self.g.derive(0)
-        self.assertEqual( (sp.sympify(dg_d0) - sp.sympify('dg_d0(x0,x1,2*x2*x3+x0) + dg_d2(x0,x1,2*x2*x3+x0)')).simplify() , 0 )
+        dgd0 = self.g.derive(0)
+        self.assertEqual( (sp.sympify(dgd0) - sp.sympify('dgd0(x0,x1,2*x2*x3+x0) + dgd2(x0,x1,2*x2*x3+x0)')).simplify() , 0 )
 
 class TestPolynomial(unittest.TestCase):
     def test_init(self):
