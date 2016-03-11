@@ -1095,6 +1095,7 @@ class TestPowerlist(unittest.TestCase):
         # The powers *cannot* be compared against SecDec3 because the implementation is different!
         target_exponent_U = sum(powerlist) - number_of_derivatives - (li.L + 1)*li.dimensionality/2
         target_exponent_F = - (sum(powerlist) + number_of_derivatives - li.L*li.dimensionality/2)
+        target_overall_gamma = sp.gamma((sum(powerlist) - li.L*li.dimensionality/2))
 
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
@@ -1106,6 +1107,7 @@ class TestPowerlist(unittest.TestCase):
 
         self.assertEqual( (li.exponent_U - target_exponent_U).simplify(), 0 )
         self.assertEqual( (li.exponent_F - target_exponent_F).simplify(), 0 )
+        self.assertEqual( (li.Gamma_factor - target_overall_gamma).simplify(), 0 )
 
     def test_zero_power(self):
         self.tri1L_powers(0)

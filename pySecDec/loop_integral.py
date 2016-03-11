@@ -152,6 +152,7 @@ class LoopIntegral(object):
 
     @cached_property
     def Nu(self):
+        # TODO: How to combine with numerator from tensors?
         # TODO: How to represent product of x_i^nu_i/Gamma(nu_i)?
         # expolist = [power-1 for power in self.powerlist]
         # something like: Polynomial([expolist],[1])
@@ -196,6 +197,7 @@ class LoopIntegral(object):
                 m += 1
             
             # set Feynman_parameters[i] to zero
+            # TODO: use remove=True in replace?
             F_explicit = F_explicit.replace(i,0).simplify()
             U_explicit = U_explicit.replace(i,0).simplify()
             Nu = Nu.replace(i,0).simplify()
@@ -551,13 +553,13 @@ class LoopIntegralFromPropagators(LoopIntegral):
         return max(self.numerator_ranks)
 
     @cached_property
-    def Gamma_factor(self):
+    def Gamma_factor(self): # TODO: where to put factors of (-1) ?
         # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
         # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
         # In order to keep the `numerator` free of poles in the regulator, we divide it
         # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
         # where `//` means integer division, and put it here.
-        return sp.gamma(len(self.propagators) - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
+        return sp.gamma(sum(self.powerlist) - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
 
     @cached_property
     def numerator(self):
