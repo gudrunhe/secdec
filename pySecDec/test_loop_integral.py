@@ -1028,9 +1028,8 @@ class TestUF_FromGraph(unittest.TestCase):
                                 internal_lines = [['m',[1,1]]], external_lines = [['p1','cos(x)']])
 
 #@attr('active')
-@attr('slow')
 class TestPowerlist(unittest.TestCase):
-    def test_negative_powers(self):
+    def tri1L_powers(self, power):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
 
@@ -1040,23 +1039,24 @@ class TestPowerlist(unittest.TestCase):
                  ('p2*p2','ssp2'),
                  ('p1*p2','ssp3')]
 
+        # compare against F, U, and Nu from SecDec3
         target_U = '''z1 + z2'''
 
         target_F = '''-(ssp1*z1*z2)'''
 
-        target_Nu = ['1'
-                     ,
+        target_Nu = {0: '1'
+                     , -1:
                      '''3*ssp1*z1*z2 - 2*eps*ssp1*z1*z2 + 
                      (z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
                      eps*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))'''
-                     ,
+                     , -2:
                      '''(-2 + eps)*(-10*ssp1**2*z1**2*z2**2 + 4*eps*ssp1**2*z1**2*z2**2 - 
                      8*ssp1*z1*z2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - 
                      ssp2*(z1 + z2)) + 4*eps*ssp1*z1*z2*(z1 + z2)*
                      (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
                      (z1 + z2)**2*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 + 
                      eps*(z1 + z2)**2*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2)'''
-                     ,
+                     , -3:
                      '''210*ssp1**3*z1**3*z2**3 - 214*eps*ssp1**3*z1**3*z2**3 + 
                      72*eps**2*ssp1**3*z1**3*z2**3 - 8*eps**3*ssp1**3*z1**3*z2**3 + 
                      270*ssp1**2*z1**2*z2**2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - 
@@ -1080,20 +1080,47 @@ class TestPowerlist(unittest.TestCase):
                      (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**3 - 
                      eps**3*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - 
                      ssp2*(z1 + z2))**3'''
-                     ]
+                     }
 
-        for i in range(4):
-            powerlist = [1,1,-i]
-            li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
-                                             replacement_rules=rules, Feynman_parameters=Feynman_parameters)
-            result_U = sp.sympify(li.U)
-            result_F = sp.sympify(li.F)
-            result_Nu = sp.sympify(li.Nu).subs('U',result_U).subs('F',result_F)
+        powerlist = sp.sympify([1,1,power])
 
-            self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
-            self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
-            self.assertEqual( (result_Nu - sp.sympify(target_Nu[i])).simplify() , 0 )
+        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
+                                         replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
+        if power<0:
+            number_of_derivatives = abs(power)
+        else:
+            number_of_derivatives = 0
+
+        # The powers *cannot* be compared against SecDec3 because the implementation is different!
+        target_exponent_U = sum(powerlist) - number_of_derivatives - (li.L + 1)*li.dimensionality/2
+        target_exponent_F = - (sum(powerlist) + number_of_derivatives - li.L*li.dimensionality/2)
+
+        result_U = sp.sympify(li.U)
+        result_F = sp.sympify(li.F)
+        result_Nu = sp.sympify(li.Nu).subs('U',result_U).subs('F',result_F)
+
+        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sp.sympify(target_Nu[power])).simplify() , 0 )
+
+        self.assertEqual( (li.exponent_U - target_exponent_U).simplify(), 0 )
+        self.assertEqual( (li.exponent_F - target_exponent_F).simplify(), 0 )
+
+    def test_zero_power(self):
+        self.tri1L_powers(0)
+
+    def test_negative_powers1(self):
+        self.tri1L_powers(-1)
+
+    def test_negative_powers2(self):
+        self.tri1L_powers(-2)
+
+    @attr('slow')
+    def test_negative_powers3(self):
+        self.tri1L_powers(-3)
+
+    @attr('slow')
     def test_box_withnumerator2L(self):
         # SecDec3 -> loop/demos/4_box_withnumerator_2L
         loop_momenta = ['k1','k2']

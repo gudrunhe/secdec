@@ -63,8 +63,8 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_U(self):
-        #TODO: get exponent right for negative propagator powers
-        return sum(self.powerlist) - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
+        return sum(self.powerlist) - self.number_of_derivatives - self.dimensionality / 2 * (self.L + 1)\
+            - self.highest_rank
 
     @property # not cached on purpose --> this is just making copies
     def exponentiated_U(self):
@@ -72,8 +72,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_F(self):
-        #TODO: get exponent right for negative propagator powers
-        return self.dimensionality / 2 * self.L - sum(self.powerlist)
+        return self.dimensionality / 2 * self.L - (sum(self.powerlist) + self.number_of_derivatives)
 
     @property # not cached on purpose --> this is just making copies
     def exponentiated_F(self):
@@ -116,6 +115,7 @@ class LoopIntegral(object):
                 ( len(self.propagators) , len(self.Feynman_parameters) )
 
         # check and store `powerlist`
+        self.number_of_derivatives = 0
         if not powerlist:
             self.powerlist=[sp.sympify(1)]*self.P
         else:
@@ -129,6 +129,8 @@ class LoopIntegral(object):
                 assert power0>=1 or power_sp.is_integer,\
                     "Propagator powers smaller than 1 only supported if they are integer."
                 self.powerlist.append(power_sp)
+                if power0<0:
+                    self.number_of_derivatives -= power0
 
     @cached_property
     def U(self):
@@ -154,24 +156,19 @@ class LoopIntegral(object):
         # expolist = [power-1 for power in self.powerlist]
         # something like: Polynomial([expolist],[1])
 
-        n = self.exponent_U
-        m = -self.exponent_F
-
         Feynman_parameters_F_U = self.Feynman_parameters + ['F', 'U']
 
         extended_expolist = []
         for exponents in self.preliminary_U.expolist:
             extended_expolist.append(np.concatenate([exponents,[0,0]]))
 
-        U_explicit = Polynomial(expolist=extended_expolist, coeffs=self.preliminary_U.coeffs,
-                       polysymbols=Feynman_parameters_F_U)
+        U_explicit = Polynomial(extended_expolist, self.preliminary_U.coeffs, polysymbols=Feynman_parameters_F_U)
 
         extended_expolist = []
         for exponents in self.preliminary_F.expolist:
             extended_expolist.append(np.concatenate([exponents,[0,0]]))
 
-        F_explicit = Polynomial(expolist=extended_expolist, coeffs=self.preliminary_F.coeffs,
-                       polysymbols=Feynman_parameters_F_U)
+        F_explicit = Polynomial(extended_expolist, self.preliminary_F.coeffs, polysymbols=Feynman_parameters_F_U)
 
         # start with numerator=1
         # TODO: can one start with numerator from tensor reduction here?
@@ -180,6 +177,8 @@ class LoopIntegral(object):
         U = Polynomial.from_expression('U', Feynman_parameters_F_U)
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
 
+        n = sum(self.powerlist) - self.dimensionality / 2 * (self.L + 1) # - self.highest_rank
+        m = sum(self.powerlist) - self.dimensionality / 2 * self.L
 
         for i in range(len(self.powerlist)):
             if self.powerlist[i].subs(self.regulator,0).is_positive:
@@ -196,7 +195,7 @@ class LoopIntegral(object):
                 n -= 1
                 m += 1
             
-            # set x[i] to zero
+            # set Feynman_parameters[i] to zero
             F_explicit = F_explicit.replace(i,0).simplify()
             U_explicit = U_explicit.replace(i,0).simplify()
             Nu = Nu.replace(i,0).simplify()
