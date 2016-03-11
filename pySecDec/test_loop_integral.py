@@ -1040,11 +1040,19 @@ class TestPowerlist(unittest.TestCase):
                  ('p1*p2','ssp3')]
 
         # compare against F, U, and Nu from SecDec3
-        target_U = '''z1 + z2'''
 
-        target_F = '''-(ssp1*z1*z2)'''
+        powerlist = sp.sympify([1,1,power])
 
-        target_Nu = {0: '1'
+        if powerlist[2].is_integer and powerlist[2].is_nonpositive:
+            target_U = '''z1 + z2'''
+            target_F = '''-(ssp1*z1*z2)'''
+        else:
+            target_U = '''z1 + z2 + z3'''
+            target_F = '''-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)'''
+
+        # TODO: when implemented, insert missing z3**power-1 here!
+        target_Nu = {1: '1'
+                     ,0: '1'
                      , -1:
                      '''3*ssp1*z1*z2 - 2*eps*ssp1*z1*z2 + 
                      (z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
@@ -1080,15 +1088,48 @@ class TestPowerlist(unittest.TestCase):
                      (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**3 - 
                      eps**3*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - 
                      ssp2*(z1 + z2))**3'''
+                     , '1+eps':
+                     '1'
+                     , 'eps':
+                     '1'
+                     , '-1+eps':
+                     '''((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     (z1 + z2 + z3) - 2*eps*(-(ssp2*z1) - 
+                     (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3) - 
+                     3*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3)) + 
+                     3*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3)))'''
+                     , '-2+eps':
+                     '''(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)^2*
+                     (z1 + z2 + z3)^2 - 
+                     6*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)^2*
+                     (z1 + z2 + z3)^2 + 
+                     4*eps^2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)^2*
+                     (z1 + z2 + z3)^2 - 
+                     16*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3)) + 
+                     28*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3)) - 
+                     12*eps^2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3)) + 
+                     20*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3))^2 - 
+                     27*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3))^2 + 
+                     9*eps^2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3))^2)'''
                      }
-
-        powerlist = sp.sympify([1,1,power])
 
         li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
                                          replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
-        if power<0:
-            number_of_derivatives = abs(power)
+        power0 = powerlist[2].subs(li.regulator,0)
+        if power0<0:
+            number_of_derivatives = abs(power0)
         else:
             number_of_derivatives = 0
 
@@ -1101,6 +1142,10 @@ class TestPowerlist(unittest.TestCase):
         result_F = sp.sympify(li.F)
         result_Nu = sp.sympify(li.Nu).subs('U',result_U).subs('F',result_F)
 
+        # print "number_of_derivatives: ", li.number_of_derivatives
+        # print "result_Nu = ", result_Nu
+        # print "target_Nu = ", target_Nu[power]
+
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu[power])).simplify() , 0 )
@@ -1108,6 +1153,9 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (li.exponent_U - target_exponent_U).simplify(), 0 )
         self.assertEqual( (li.exponent_F - target_exponent_F).simplify(), 0 )
         self.assertEqual( (li.Gamma_factor - target_overall_gamma).simplify(), 0 )
+
+    def test_one_power(self):
+        self.tri1L_powers(1)
 
     def test_zero_power(self):
         self.tri1L_powers(0)
@@ -1121,6 +1169,18 @@ class TestPowerlist(unittest.TestCase):
     @attr('slow')
     def test_negative_powers3(self):
         self.tri1L_powers(-3)
+
+    def test_eps_power1(self):
+        self.tri1L_powers('1+eps')
+
+    def test_eps_power2(self):
+        self.tri1L_powers('eps')
+
+    def test_eps_power3(self):
+        self.tri1L_powers('-1+eps')
+
+    def test_eps_power4(self):
+        self.tri1L_powers('-2+eps')
 
     @attr('slow')
     def test_box_withnumerator2L(self):
