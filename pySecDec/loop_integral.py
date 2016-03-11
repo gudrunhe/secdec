@@ -5,6 +5,7 @@ from .misc import det, adjugate, powerset, missing, all_pairs, cached_property
 from itertools import combinations
 import sympy as sp
 import numpy as np
+from math import floor
 
 # TODO: move sympify_symbols and assert_at_most_quadractic to misc
 
@@ -125,12 +126,10 @@ class LoopIntegral(object):
                 power_sp = sp.sympify(power)
                 power0 = power_sp.subs(regulator,0)
                 assert power0.is_Number, "The propagators powers must be numbers for vanishing regulator."
-                # TODO: allow arbitrary powers, how to treat integrable divergencies (0<power0<1)?
-                assert power0>=1 or power0.is_integer,\
-                    "Propagator powers smaller than 1 only supported if they are integer for vanishing regulator."
+                # TODO: how to treat integrable divergencies (0<power0<1)?
                 self.powerlist.append(power_sp)
                 if power0<0:
-                    self.number_of_derivatives -= power0
+                    self.number_of_derivatives += abs(floor(power0))
 
     @cached_property
     def U(self):
@@ -191,7 +190,7 @@ class LoopIntegral(object):
             # calculate k-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
             # keeping F and U symbolic but calculating their derivatives explicitly
             # TODO: speed improvements?
-            k = abs(power0)
+            k = int(abs(floor(power0)))
 
             for _ in range(k):
                 dFdx = F_explicit.derive(i)

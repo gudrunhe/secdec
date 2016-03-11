@@ -1040,6 +1040,8 @@ class TestPowerlist(unittest.TestCase):
                  ('p1*p2','ssp3')]
 
         # compare against F, U, and Nu from SecDec3
+        # For powers that are not directly supported by SecDec3, a second identical propagator was introduced
+        # and the power split up, e.g. {-1/2+eps} -> {1/2+eps, -1}
 
         powerlist = sp.sympify([1,1,power])
 
@@ -1051,20 +1053,20 @@ class TestPowerlist(unittest.TestCase):
             target_F = '''-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)'''
 
         # TODO: when implemented, insert missing z3**power-1 here!
-        target_Nu = {1: '1'
-                     ,0: '1'
-                     , -1:
+        target_Nu = {  '1': '1'
+                     , '0': '1'
+                     , '-1':
                      '''3*ssp1*z1*z2 - 2*eps*ssp1*z1*z2 + 
                      (z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
                      eps*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))'''
-                     , -2:
+                     , '-2':
                      '''(-2 + eps)*(-10*ssp1**2*z1**2*z2**2 + 4*eps*ssp1**2*z1**2*z2**2 - 
                      8*ssp1*z1*z2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - 
                      ssp2*(z1 + z2)) + 4*eps*ssp1*z1*z2*(z1 + z2)*
                      (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
                      (z1 + z2)**2*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 + 
                      eps*(z1 + z2)**2*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2)'''
-                     , -3:
+                     , '-3':
                      '''210*ssp1**3*z1**3*z2**3 - 214*eps*ssp1**3*z1**3*z2**3 + 
                      72*eps**2*ssp1**3*z1**3*z2**3 - 8*eps**3*ssp1**3*z1**3*z2**3 + 
                      270*ssp1**2*z1**2*z2**2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - 
@@ -1101,27 +1103,56 @@ class TestPowerlist(unittest.TestCase):
                      3*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
                      z1*(ssp1*z2 + ssp2*z3)))'''
                      , '-2+eps':
-                     '''(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)^2*
-                     (z1 + z2 + z3)^2 - 
-                     6*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)^2*
-                     (z1 + z2 + z3)^2 + 
-                     4*eps^2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)^2*
-                     (z1 + z2 + z3)^2 - 
+                     '''(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                     (z1 + z2 + z3)**2 - 
+                     6*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                     (z1 + z2 + z3)**2 + 
+                     4*eps**2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                     (z1 + z2 + z3)**2 - 
                      16*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
                      (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
                      z1*(ssp1*z2 + ssp2*z3)) + 
                      28*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
                      (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
                      z1*(ssp1*z2 + ssp2*z3)) - 
-                     12*eps^2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     12*eps**2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
                      (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
                      z1*(ssp1*z2 + ssp2*z3)) + 
                      20*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3))^2 - 
+                     z1*(ssp1*z2 + ssp2*z3))**2 - 
                      27*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3))^2 + 
-                     9*eps^2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3))^2)'''
+                     z1*(ssp1*z2 + ssp2*z3))**2 + 
+                     9*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3))**2)'''
+                     , '1/2+eps':
+                     '1'
+                     , '-1/2+eps':
+                     '''((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3)
+                     - 4*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3)
+                     - 5*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3))
+                     + 6*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)))/2'''
+                     ,'-3/2':
+                     '''(3*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                     (z1 + z2 + z3)**2 - 
+                     8*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                     (z1 + z2 + z3)**2 + 
+                     4*eps**2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                     (z1 + z2 + z3)**2 - 
+                     42*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3)) + 
+                     52*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3)) - 
+                     16*eps**2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3)) + 
+                     63*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3))**2 - 
+                     64*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3))**2 + 
+                     16*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     z1*(ssp1*z2 + ssp2*z3))**2)/4'''
                      }
 
         li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
@@ -1129,7 +1160,7 @@ class TestPowerlist(unittest.TestCase):
 
         power0 = powerlist[2].subs(li.regulator,0)
         if power0<0:
-            number_of_derivatives = abs(power0)
+            number_of_derivatives = abs(floor(power0))
         else:
             number_of_derivatives = 0
 
@@ -1155,20 +1186,23 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (li.Gamma_factor - target_overall_gamma).simplify(), 0 )
 
     def test_one_power(self):
-        self.tri1L_powers(1)
+        self.tri1L_powers('1')
 
     def test_zero_power(self):
-        self.tri1L_powers(0)
+        self.tri1L_powers('0')
 
     def test_negative_powers1(self):
-        self.tri1L_powers(-1)
+        self.tri1L_powers('-1')
 
     def test_negative_powers2(self):
-        self.tri1L_powers(-2)
+        self.tri1L_powers('-2')
+
+    def test_negative_powers3(self):
+        self.tri1L_powers('-3/2')
 
     @attr('slow')
-    def test_negative_powers3(self):
-        self.tri1L_powers(-3)
+    def test_negative_powers4(self):
+        self.tri1L_powers('-3')
 
     def test_eps_power1(self):
         self.tri1L_powers('1+eps')
@@ -1181,6 +1215,12 @@ class TestPowerlist(unittest.TestCase):
 
     def test_eps_power4(self):
         self.tri1L_powers('-2+eps')
+
+    def test_eps_power5(self):
+        self.tri1L_powers('1/2+eps')
+
+    def test_eps_power6(self):
+        self.tri1L_powers('-1/2+eps')
 
     @attr('slow')
     def test_box_withnumerator2L(self):
