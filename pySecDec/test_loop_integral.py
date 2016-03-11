@@ -1026,6 +1026,9 @@ class TestUF_FromGraph(unittest.TestCase):
         self.assertRaisesRegexp(AssertionError,
                                 '.*vertices.*symbol', LoopIntegralFromGraph,
                                 internal_lines = [['m',[1,1]]], external_lines = [['p1','cos(x)']])
+        self.assertRaisesRegexp(AssertionError,
+                                '.*propagator.*powers.*vanishing.*regulator', LoopIntegralFromGraph,
+                                internal_lines = [['m',[1,1]]], external_lines = [['p1',1]], powerlist=['a+eps'])
 
 #@attr('active')
 class TestPowerlist(unittest.TestCase):
