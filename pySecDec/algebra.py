@@ -524,12 +524,12 @@ class Polynomial(_Expression):
             sum_expolist = np.vstack([self.expolist, other.expolist])
             sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
 
-            return Polynomial(sum_expolist, sum_coeffs, self.polysymbols, copy=False).simplify()
+            return Polynomial(sum_expolist, sum_coeffs, self.polysymbols, copy=False).simplify(deep=False)
 
         elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
             new_expolist = np.vstack([[0]*self.number_of_variables, self.expolist])
             new_coeffs = np.append(-other if sub else other, self.coeffs)
-            return Polynomial(new_expolist, new_coeffs, self.polysymbols, copy=False).simplify()
+            return Polynomial(new_expolist, new_coeffs, self.polysymbols, copy=False).simplify(deep=False)
 
         else:
             return NotImplemented
@@ -542,7 +542,7 @@ class Polynomial(_Expression):
             product_expolist = np.vstack([other.expolist + term for term in self.expolist])
             product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
 
-            return Polynomial(product_expolist, product_coeffs, self.polysymbols, copy=False).simplify()
+            return Polynomial(product_expolist, product_coeffs, self.polysymbols, copy=False).simplify(deep=False)
 
         elif np.issubdtype(type(other), np.number) or isinstance(other, sp.Expr):
             if other == 1:
@@ -582,10 +582,16 @@ class Polynomial(_Expression):
 
         return iterative_pow(self, exponent)
 
-    def simplify(self):
+    def simplify(self, deep=True):
         '''
         Combine terms that have the same exponents of
         the variables.
+
+        :param deep:
+            bool;
+            If ``True`` (default) call the `simplify`
+            method of the coefficients if they are
+            of type :class:`._Expression`.
 
         '''
         # Sort the expolist first, such that identical entries are
@@ -594,7 +600,7 @@ class Polynomial(_Expression):
         self.expolist = self.expolist[sort_key]
         self.coeffs = self.coeffs[sort_key]
 
-        if not np.issubdtype(self.coeffs.dtype, np.number):
+        if deep and not np.issubdtype(self.coeffs.dtype, np.number):
             for i in range(len(self.coeffs)):
                 if isinstance(self.coeffs[i], _Expression):
                     self.coeffs[i] = self.coeffs[i].simplify()
