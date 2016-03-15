@@ -182,9 +182,12 @@ class LoopIntegral(object):
         n = sum(self.powerlist) - self.dimensionality / 2 * (self.L + 1) # - self.highest_rank
         m = sum(self.powerlist) - self.dimensionality / 2 * self.L
 
+        measure = 1
+        # TODO: define measure as polynomial if all powers are integer?
         for i in range(len(self.powerlist)):
             power0 = self.powerlist[i].subs(self.regulator,0)
             if power0.is_positive:
+                measure *= Nu.polysymbols[i]**(self.powerlist[i] - 1)
                 continue
 
             # calculate k-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
@@ -203,13 +206,16 @@ class LoopIntegral(object):
             # The k-fold derivative effectively increments the power of the propagator by k.
             # If the new 'effective power' is exactly zero, the corresponding parameter has to be set to zero.
             # TODO: Remember that one must multiply x_i^(power-1+k)/Gam(power-1+k) if power+k !=0.
-            if self.powerlist[i] + k == 0:
+            newpower = self.powerlist[i] + k
+            if newpower == 0:
                 # TODO: use remove=True in replace?
                 F_explicit = F_explicit.replace(i,0).simplify()
                 U_explicit = U_explicit.replace(i,0).simplify()
                 Nu = Nu.replace(i,0).simplify()
+            else:
+                measure *= Nu.polysymbols[i]**(newpower - 1)
 
-        return Nu
+        return Nu*measure
 
 class LoopIntegralFromPropagators(LoopIntegral):
     r'''

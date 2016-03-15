@@ -1094,11 +1094,11 @@ class TestPowerlist(unittest.TestCase):
                      eps**3*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - 
                      ssp2*(z1 + z2))**3'''
                      , '1+eps':
-                     '1'
+                     'z3**eps'
                      , 'eps':
-                     '1'
+                     'z3**(-1 + eps)'
                      , '-1+eps':
-                     '''((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     '''z3**(-1 + eps)*((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
                      (z1 + z2 + z3) - 2*eps*(-(ssp2*z1) - 
                      (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3) - 
                      3*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
@@ -1106,7 +1106,7 @@ class TestPowerlist(unittest.TestCase):
                      3*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
                      z1*(ssp1*z2 + ssp2*z3)))'''
                      , '-2+eps':
-                     '''(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                     '''z3**(-1 + eps)*(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
                      (z1 + z2 + z3)**2 - 
                      6*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
                      (z1 + z2 + z3)**2 + 
@@ -1128,9 +1128,9 @@ class TestPowerlist(unittest.TestCase):
                      9*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
                      z1*(ssp1*z2 + ssp2*z3))**2)'''
                      , '1/2+eps':
-                     '1'
+                     'z3**(-1/2 + eps)'
                      , '-1/2+eps':
-                     '''((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3)
+                     '''z3**(-1/2 + eps)*((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3)
                      - 4*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3)
                      - 5*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3))
                      + 6*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)))/2'''
@@ -1155,7 +1155,7 @@ class TestPowerlist(unittest.TestCase):
                      64*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
                      z1*(ssp1*z2 + ssp2*z3))**2 + 
                      16*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3))**2)/4'''
+                     z1*(ssp1*z2 + ssp2*z3))**2)/4*z3**(-1/2)'''
                      }
 
         li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
