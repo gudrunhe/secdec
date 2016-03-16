@@ -137,8 +137,7 @@ class LoopIntegral(object):
         U = self.preliminary_U
         for i in range(len(self.powerlist)):
             if self.powerlist[i].is_integer and self.powerlist[i].is_nonpositive:
-                # TODO: use remove=True in replace?
-                U = U.replace(i,0).simplify()
+                U = U.replace(i,0,remove=True).simplify()
         return U
 
     @cached_property
@@ -147,12 +146,11 @@ class LoopIntegral(object):
         F = self.preliminary_F
         for i in range(len(self.powerlist)):
             if self.powerlist[i].is_integer and self.powerlist[i].is_nonpositive:
-                # TODO: use remove=True in replace?
-                F = F.replace(i,0).simplify()
+                F = F.replace(i,0,remove=True).simplify()
         return F
 
     @cached_property
-    def Nu(self):
+    def numerator(self):
         # TODO: How to combine with numerator from tensors?
         # TODO: How to represent product of x_i^nu_i/Gamma(nu_i)?
         # expolist = [power-1 for power in self.powerlist]
@@ -174,7 +172,8 @@ class LoopIntegral(object):
 
         # start with numerator=1
         # TODO: can one start with numerator from tensor reduction here?
-        Nu = Polynomial.from_expression('1', Feynman_parameters_F_U)
+        # Nu = Polynomial.from_expression('1', Feynman_parameters_F_U)
+        Nu = self.preliminary_numerator
 
         U = Polynomial.from_expression('U', Feynman_parameters_F_U)
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
@@ -182,22 +181,25 @@ class LoopIntegral(object):
         n = sum(self.powerlist) - self.dimensionality / 2 * (self.L + 1) # - self.highest_rank
         m = sum(self.powerlist) - self.dimensionality / 2 * self.L
 
+
         measure = 1
         # TODO: define measure as polynomial if all powers are integer?
-        for i in range(len(self.powerlist)):
+
+        for i in range(len(self.powerlist)): #TODO: do this backwards
             power0 = self.powerlist[i].subs(self.regulator,0)
             if power0.is_positive:
-                measure *= Nu.polysymbols[i]**(self.powerlist[i] - 1)
+                measure *= Nu.polysymbols[i]**(self.powerlist[i] - 1) * (-1)**self.powerlist[i]
                 continue
 
             # calculate k-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
             # keeping F and U symbolic but calculating their derivatives explicitly
+            # In each step factor out U^(n-1)/F^(m+1).
             # TODO: speed improvements?
             k = int(abs(floor(power0)))
 
+            dFdx = F_explicit.derive(i)
+            dUdx = U_explicit.derive(i)
             for _ in range(k):
-                dFdx = F_explicit.derive(i)
-                dUdx = U_explicit.derive(i)
                 Nu = (n*F*dUdx - m*dFdx*U)*Nu + F*U*(Nu.derive(i) + Nu.derive(-2)*dFdx + Nu.derive(-1)*dUdx)
                 Nu = Nu.simplify()
                 n -= 1
@@ -205,17 +207,18 @@ class LoopIntegral(object):
             
             # The k-fold derivative effectively increments the power of the propagator by k.
             # If the new 'effective power' is exactly zero, the corresponding parameter has to be set to zero.
-            # TODO: Remember that one must multiply x_i^(power-1+k)/Gam(power-1+k) if power+k !=0.
             newpower = self.powerlist[i] + k
             if newpower == 0:
-                # TODO: use remove=True in replace?
-                F_explicit = F_explicit.replace(i,0).simplify()
-                U_explicit = U_explicit.replace(i,0).simplify()
-                Nu = Nu.replace(i,0).simplify()
+                F_explicit = F_explicit.replace(i,0,remove=True).simplify()
+                U_explicit = U_explicit.replace(i,0,remove=True).simplify()
+                F = F.replace(i,0,remove=True).simplify()
+                U = U.replace(i,0,remove=True).simplify()
+                Nu = Nu.replace(i,0,remove=True).simplify()
             else:
-                measure *= Nu.polysymbols[i]**(newpower - 1)
+                measure *= Nu.polysymbols[i]**(newpower - 1) * (-1)**newpower
 
-        return Nu*measure
+        return Nu * measure
+
 
 class LoopIntegralFromPropagators(LoopIntegral):
     r'''
@@ -575,7 +578,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
         return sp.gamma(sum(self.powerlist) - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
 
     @cached_property
-    def numerator(self):
+    def preliminary_numerator(self):
         '''
         Generate the numerator in index notation according to
         section 2 in [GKR+11]_.
@@ -595,7 +598,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
         replacement_rules = self.replacement_rules_with_Lorentz_indices
         highest_rank = self.highest_rank
-        N_nu = len(self.propagators)
+        N_nu = sum(self.powerlist)
 
         # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
         # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - D*L/2 - r/2)*F**(r/2)`.
@@ -722,14 +725,15 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
                     # apply the replacement rules
                     for i, coeff in enumerate(this_numerator_summand.coeffs):
-                        this_numerator_summand.coeffs[i] = coeff.expand().subs(replacement_rules)
+                        this_numerator_summand.coeffs[i] = sp.sympify(coeff).expand().subs(replacement_rules)
 
                     numerator += this_numerator_summand
 
         # The global factor of `(-1)**N_nu` in equation (2.15) of arXiv:1010.1667v1 must appear somewhere.
         # The numerator seems a good choice since this has a nonsingular but nontrivial expansion in the
         # regulator for noninteger propagator powers.
-        return numerator * ( (-1)**N_nu )
+        # TZ: moved this factor to numerator method of base class
+        return numerator
 
     @cached_property
     def replacement_rules_with_Lorentz_indices(self):
@@ -834,6 +838,7 @@ class LoopIntegralFromGraph(LoopIntegral):
 
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0
+        self.preliminary_numerator = 1
 
     @cached_property
     def intverts(self): 

@@ -1032,6 +1032,8 @@ class TestUF_FromGraph(unittest.TestCase):
 
 #@attr('active')
 class TestPowerlist(unittest.TestCase):
+    #TODO: test case with mass and power -2+eps
+    #TODO: test case with several negative powers at different positions
     def tri1L_powers(self, power):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
@@ -1055,8 +1057,8 @@ class TestPowerlist(unittest.TestCase):
             target_U = '''z1 + z2 + z3'''
             target_F = '''-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)'''
 
-        # TODO: when implemented, insert missing z3**power-1 here!
-        target_Nu = {  '1': '1'
+        # TODO: implemented (-1)^N_Nu everywhere
+        target_Nu = {  '1': '-1'
                      , '0': '1'
                      , '-1':
                      '''3*ssp1*z1*z2 - 2*eps*ssp1*z1*z2 + 
@@ -1094,11 +1096,11 @@ class TestPowerlist(unittest.TestCase):
                      eps**3*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - 
                      ssp2*(z1 + z2))**3'''
                      , '1+eps':
-                     'z3**eps'
+                     '(-1)**(3+eps)*z3**eps'
                      , 'eps':
-                     'z3**(-1 + eps)'
+                     '(-1)**(2+eps)*z3**(-1 + eps)'
                      , '-1+eps':
-                     '''z3**(-1 + eps)*((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     '''(-1)**(2+eps)*z3**(-1 + eps)*((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
                      (z1 + z2 + z3) - 2*eps*(-(ssp2*z1) - 
                      (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3) - 
                      3*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
@@ -1106,7 +1108,7 @@ class TestPowerlist(unittest.TestCase):
                      3*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
                      z1*(ssp1*z2 + ssp2*z3)))'''
                      , '-2+eps':
-                     '''z3**(-1 + eps)*(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                     '''(-1)**(2+eps)*z3**(-1 + eps)*(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
                      (z1 + z2 + z3)**2 - 
                      6*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
                      (z1 + z2 + z3)**2 + 
@@ -1128,14 +1130,14 @@ class TestPowerlist(unittest.TestCase):
                      9*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
                      z1*(ssp1*z2 + ssp2*z3))**2)'''
                      , '1/2+eps':
-                     'z3**(-1/2 + eps)'
+                     '(-1)**(2+1/2+eps)*z3**(-1/2 + eps)'
                      , '-1/2+eps':
-                     '''z3**(-1/2 + eps)*((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3)
+                     '''(-1)**(2+1/2+eps)*z3**(-1/2 + eps)*((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3)
                      - 4*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3)
                      - 5*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3))
                      + 6*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)))/2'''
                      ,'-3/2':
-                     '''(3*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                       '''(-1)**(2+1/2)*(3*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
                      (z1 + z2 + z3)**2 - 
                      8*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
                      (z1 + z2 + z3)**2 + 
@@ -1174,7 +1176,7 @@ class TestPowerlist(unittest.TestCase):
 
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.Nu).subs('U',result_U).subs('F',result_F)
+        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)
 
         # print "number_of_derivatives: ", li.number_of_derivatives
         # print "result_Nu = ", result_Nu
@@ -1251,7 +1253,7 @@ class TestPowerlist(unittest.TestCase):
         z1*(s*z5*z6 + t*z4*z7) - 
         s*z2*((z4 + z5)*z6 + z3*(z4 + z5 + z6 + z7))'''
 
-        target_Nu = '''-2*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) + 
+        target_Nu = '''(-1)**7*(-2*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) + 
         z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7))*
         (-(s*z5*z6) + z4*(s*z6 + t*(z5 + z6)) + 
         t*z2*(z4 + z5 + z6 + z7) + 
@@ -1265,7 +1267,7 @@ class TestPowerlist(unittest.TestCase):
         t*(z4 + z5 + z6 + z7))) + 3*eps*(z4 + z5 + z6 + z7)*
         (-(s*z4*z5*z6) + s*z3*(-(z4*z5) - z5*z6) - 
         z1*(s*z5*z6 + t*z4*z7) - 
-        s*z2*((z4 + z5)*z6 + z3*(z4 + z5 + z6 + z7)))'''
+        s*z2*((z4 + z5)*z6 + z3*(z4 + z5 + z6 + z7))))'''
 
 
         li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
@@ -1273,7 +1275,7 @@ class TestPowerlist(unittest.TestCase):
 
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.Nu).subs('U',result_U).subs('F',result_F)
+        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)
 
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
