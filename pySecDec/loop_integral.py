@@ -199,7 +199,10 @@ class LoopIntegral(object):
             # TODO: speed improvements?
             k = self.derivativelist[i]
 
-            if k==0: continue
+            if k==0:
+                if self.powerlist[i]==0:
+                    Nu = Nu.replace(i,0,remove=True).simplify()
+                continue
 
             dFdx = F_explicit.derive(i)
             dUdx = U_explicit.derive(i)

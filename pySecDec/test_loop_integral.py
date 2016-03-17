@@ -1053,9 +1053,11 @@ class TestPowerlist(unittest.TestCase):
         if powerlist[2].is_integer and powerlist[2].is_nonpositive:
             target_U = '''z1 + z2'''
             target_F = '''-(ssp1*z1*z2)'''
+            target_numerator_polysymbols = sp.sympify(['z1', 'z2', 'F', 'U'])
         else:
             target_U = '''z1 + z2 + z3'''
             target_F = '''-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)'''
+            target_numerator_polysymbols = sp.sympify(['z1', 'z2', 'z3', 'F', 'U'])
 
         # TODO: implemented (-1)^N_Nu everywhere
         target_Nu = {  '1': '-1'
@@ -1190,6 +1192,8 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (li.exponent_U - target_exponent_U).simplify(), 0 )
         self.assertEqual( (li.exponent_F - target_exponent_F).simplify(), 0 )
         self.assertEqual( (li.Gamma_factor - target_gamma).simplify(), 0 )
+
+        self.assertEqual( li.numerator.polysymbols, target_numerator_polysymbols)
 
     def test_one_power(self):
         self.tri1L_powers('1')
