@@ -112,7 +112,7 @@ class LoopIntegral(object):
             self.Feynman_parameters = [sp.sympify(Feynman_parameters + str(i)) for i in range(self.P)]
         else:
             self.Feynman_parameters = sp.sympify(list(Feynman_parameters))
-            assert len(self.Feynman_parameters) == len(self.propagators), \
+            assert len(self.Feynman_parameters) == self.P, \
                 'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
                 ( len(self.propagators) , len(self.Feynman_parameters) )
 
@@ -230,9 +230,25 @@ class LoopIntegral(object):
         for i in range(len(self.powerlist)):
             eff_power = self.powerlist[i] + self.derivativelist[i]
             if eff_power != 0:
-                measure *= self.preliminary_numerator.polysymbols[i]**(eff_power - 1)
+                measure *= self.preliminary_U.polysymbols[i]**(eff_power - 1)
 
         return measure
+
+    @cached_property
+    def Gamma_factor(self):
+        # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
+        # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
+        # In order to keep the `numerator` free of poles in the regulator, we divide it
+        # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
+        # where `//` means integer division, and put it here.
+        gamma_fac = sp.gamma(self.N_nu - self.dimensionality * self.L/2 - self.highest_rank//2)
+
+        # The effective power to be used in the gamma functions has to be increased by the number of derivatives.
+        for i in range(len(self.powerlist)):
+            eff_power = self.powerlist[i] + self.derivativelist[i]
+            gamma_fac *= 1/sp.gamma(eff_power)
+
+        return gamma_fac
 
 
 class LoopIntegralFromPropagators(LoopIntegral):
@@ -582,22 +598,6 @@ class LoopIntegralFromPropagators(LoopIntegral):
     @cached_property
     def highest_rank(self):
         return max(self.numerator_ranks)
-
-    @cached_property
-    def Gamma_factor(self): # TODO: where to put factors of (-1) ?
-        # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
-        # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
-        # In order to keep the `numerator` free of poles in the regulator, we divide it
-        # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
-        # where `//` means integer division, and put it here.
-        gamma_fac = sp.gamma(self.N_nu - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
-
-        # The effective power to be used in the gamma functions has to be increased by the number of derivatives.
-        for i in range(len(self.powerlist)):
-            eff_power = self.powerlist[i] + self.derivativelist[i]
-            gamma_fac *= 1/sp.gamma(eff_power)
-
-        return gamma_fac
 
     @cached_property
     def preliminary_numerator(self):

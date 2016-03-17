@@ -1348,3 +1348,43 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
 
+    def test_powerlist_cutconstruct(self):
+        internal_lines = [['m',[3,4]],['m',[4,5]],['m',[3,5]],[0,[1,2]],[0,[4,1]],[0,[2,5]]]
+        external_lines = [['p1',1], ['p2',2], ['p3',3]]
+        powerlist = [1,2,3,1,4,1]
+
+        rules = [ ('p1*p1','0'),
+                  ('p2*p2','0'),
+                  ('p3*p3','s'),
+                  ('p1*p2','s/2'),
+                  ('p2*p3','-s/2'),
+                  ('p1*p3','-s/2'),
+                  ('m**2','ms1')]
+
+        Feynman_parameters=['z' + str(i) for i in range(1,7)]
+            
+        li = LoopIntegralFromGraph(internal_lines, external_lines, powerlist=powerlist, 
+                                   replacement_rules=rules, Feynman_parameters=Feynman_parameters)
+
+        target_U = '''z1*z2 + z2*z3 + z1*z4 + z2*z4 + z3*z4 + z1*z5 + 
+        z2*z5 + z3*z5 + z1*z6 + z2*z6 + z3*z6'''
+
+        target_F = '''-(s*z1*z2*z3) - s*z1*z3*z4 - s*z1*z3*z5 - 
+        s*z2*z3*z5 - s*z1*z2*z6 - s*z1*z3*z6 - 
+        s*z1*z5*z6 - s*z2*z5*z6 - s*z3*z5*z6 + 
+        ms1*(z1 + z2 + z3)*(z3*(z4 + z5 + z6) + 
+        z1*(z2 + z4 + z5 + z6) + z2*(z3 + z4 + z5 + z6))'''
+        
+        target_Nu = '''z2*z3**2*z5**3'''
+
+        target_gamma = sp.gamma('8 + 2*eps')/12
+
+        result_U = sp.sympify(li.U)
+        result_F = sp.sympify(li.F)
+        result_Nu = sp.sympify(li.numerator)*sp.sympify(li.measure)
+        result_gamma = li.Gamma_factor
+
+        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+        self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
