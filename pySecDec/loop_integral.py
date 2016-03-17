@@ -151,7 +151,6 @@ class LoopIntegral(object):
 
     @cached_property
     def numerator(self):
-        # TODO: How to combine with numerator from tensors?
         # TODO: How to represent product of x_i^nu_i/Gamma(nu_i)?
         # expolist = [power-1 for power in self.powerlist]
         # something like: Polynomial([expolist],[1])
@@ -170,15 +169,13 @@ class LoopIntegral(object):
 
         F_explicit = Polynomial(extended_expolist, self.preliminary_F.coeffs, polysymbols=Feynman_parameters_F_U)
 
-        # start with numerator=1
-        # TODO: can one start with numerator from tensor reduction here?
-        # Nu = Polynomial.from_expression('1', Feynman_parameters_F_U)
+        # TODO: can one start with numerator from tensor reduction here? or assert highest_rank==0?
         Nu = self.preliminary_numerator
 
         U = Polynomial.from_expression('U', Feynman_parameters_F_U)
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
 
-        n = sum(self.powerlist) - self.dimensionality / 2 * (self.L + 1) # - self.highest_rank
+        n = sum(self.powerlist) - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
         m = sum(self.powerlist) - self.dimensionality / 2 * self.L
 
 
