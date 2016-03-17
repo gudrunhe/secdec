@@ -164,9 +164,6 @@ class LoopIntegral(object):
 
     @cached_property
     def numerator(self):
-        # TODO: How to represent product of x_i^nu_i/Gamma(nu_i)?
-        # expolist = [power-1 for power in self.powerlist]
-        # something like: Polynomial([expolist],[1])
 
         Feynman_parameters_F_U = self.Feynman_parameters + ['F', 'U']
 

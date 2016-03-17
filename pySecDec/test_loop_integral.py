@@ -1032,8 +1032,9 @@ class TestUF_FromGraph(unittest.TestCase):
 
 #@attr('active')
 class TestPowerlist(unittest.TestCase):
-    #TODO: test case with mass and power -2+eps
     #TODO: test case with several negative powers at different positions
+    #TODO: test case with a combination of inverse propagator and tensor integral
+    #TODO: test case with cut construct
     def tri1L_powers(self, power):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
@@ -1059,7 +1060,6 @@ class TestPowerlist(unittest.TestCase):
             target_F = '''-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)'''
             target_numerator_polysymbols = sp.sympify(['z1', 'z2', 'z3', 'F', 'U'])
 
-        # TODO: implemented (-1)^N_Nu everywhere
         target_Nu = {  '1': '-1'
                      , '0': '1'
                      , '-1':
@@ -1285,3 +1285,66 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+
+    @attr('slow')
+    def test_powerlist_with_mass(self):
+        loop_momenta = ['k']
+        propagators = ['k**2', '(k-p1)**2', '(k+p2)**2 - m**2']
+
+        powerlist = [1,1,'-2+eps']
+
+        rules = [('p1*p1','ssp1'),
+                 ('p2*p2','ssp2'),
+                 ('p1*p2','ssp3')]
+
+        Feynman_parameters=['z1','z2','z3']
+            
+        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
+                                         replacement_rules=rules, Feynman_parameters=Feynman_parameters)
+
+        target_U = '''z1 + z2 + z3'''
+
+        target_F = '''-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        m**2*(z1 + z2 + z3))'''
+
+        target_Nu = '''(-1)**eps*z3**(-1 + eps)*(2*(z1 + z2 + z3)**2*
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
+        m**2*(z1 + z2 + z3))**2 - 6*eps*(z1 + z2 + z3)**2*
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
+        m**2*(z1 + z2 + z3))**2 + 4*eps**2*(z1 + z2 + z3)**2*
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
+        m**2*(z1 + z2 + z3))**2 + 4*m**2*(z1 + z2 + z3)**2*
+        (-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 - 
+        ssp2*(z1 + z2) + m**2*(z1 + z2 + z3))) - 
+        4*eps*m**2*(z1 + z2 + z3)**2*(-(ssp1*z2*(z1 + z3)) + 
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        m**2*(z1 + z2 + z3))) - 16*(z1 + z2 + z3)*
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
+        m**2*(z1 + z2 + z3))*(-(ssp1*z2*(z1 + z3)) + 
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        m**2*(z1 + z2 + z3))) + 28*eps*(z1 + z2 + z3)*
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
+        m**2*(z1 + z2 + z3))*(-(ssp1*z2*(z1 + z3)) + 
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        m**2*(z1 + z2 + z3))) - 12*eps**2*(z1 + z2 + z3)*
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
+        m**2*(z1 + z2 + z3))*(-(ssp1*z2*(z1 + z3)) + 
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        m**2*(z1 + z2 + z3))) + 
+        20*(-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 - 
+        ssp2*(z1 + z2) + m**2*(z1 + z2 + z3)))**2 - 
+        27*eps*(-(ssp1*z2*(z1 + z3)) + 
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        m**2*(z1 + z2 + z3)))**2 + 
+        9*eps**2*(-(ssp1*z2*(z1 + z3)) + 
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        m**2*(z1 + z2 + z3)))**2)'''
+
+        result_U = sp.sympify(li.U)
+        result_F = sp.sympify(li.F)
+        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+
+        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+
