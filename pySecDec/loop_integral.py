@@ -726,6 +726,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
                     # apply the replacement rules
                     for i, coeff in enumerate(this_numerator_summand.coeffs):
                         this_numerator_summand.coeffs[i] = sp.sympify(coeff).expand().subs(replacement_rules)
+                        # TODO: sympifying the coeff here fixed case numerator=1, better fix?
 
                     numerator += this_numerator_summand
 
