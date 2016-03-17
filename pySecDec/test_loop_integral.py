@@ -1165,18 +1165,19 @@ class TestPowerlist(unittest.TestCase):
 
         power0 = powerlist[2].subs(li.regulator,0)
         if power0<0:
-            number_of_derivatives = abs(floor(power0))
+            number_of_derivatives = int(abs(floor(power0)))
         else:
             number_of_derivatives = 0
 
         # The powers *cannot* be compared against SecDec3 because the implementation is different!
         target_exponent_U = sum(powerlist) - number_of_derivatives - (li.L + 1)*li.dimensionality/2
         target_exponent_F = - (sum(powerlist) + number_of_derivatives - li.L*li.dimensionality/2)
-        target_overall_gamma = sp.gamma((sum(powerlist) - li.L*li.dimensionality/2))
+        target_gamma = sp.gamma((sum(powerlist) - li.L*li.dimensionality/2))\
+                       /sp.gamma(powerlist[2] + number_of_derivatives)
 
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)
+        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
 
         # print "number_of_derivatives: ", li.number_of_derivatives
         # print "result_Nu = ", result_Nu
@@ -1188,7 +1189,7 @@ class TestPowerlist(unittest.TestCase):
 
         self.assertEqual( (li.exponent_U - target_exponent_U).simplify(), 0 )
         self.assertEqual( (li.exponent_F - target_exponent_F).simplify(), 0 )
-        self.assertEqual( (li.Gamma_factor - target_overall_gamma).simplify(), 0 )
+        self.assertEqual( (li.Gamma_factor - target_gamma).simplify(), 0 )
 
     def test_one_power(self):
         self.tri1L_powers('1')
@@ -1275,7 +1276,7 @@ class TestPowerlist(unittest.TestCase):
 
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)
+        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
 
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )

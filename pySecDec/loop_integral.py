@@ -51,6 +51,7 @@ class LoopIntegral(object):
     * ``self.exponentiated_U``
     * ``self.exponentiated_F``
     * ``self.numerator``
+    * ``self.measure``
 
     , where ``self`` is an instance of :class:`LoopIntegral`.
 
@@ -64,7 +65,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_U(self):
-        return sum(self.powerlist) - self.number_of_derivatives - self.dimensionality / 2 * (self.L + 1)\
+        return self.N_nu - self.number_of_derivatives - self.dimensionality / 2 * (self.L + 1)\
             - self.highest_rank
 
     @property # not cached on purpose --> this is just making copies
@@ -73,7 +74,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_F(self):
-        return self.dimensionality / 2 * self.L - (sum(self.powerlist) + self.number_of_derivatives)
+        return self.dimensionality / 2 * self.L - (self.N_nu + self.number_of_derivatives)
 
     @property # not cached on purpose --> this is just making copies
     def exponentiated_F(self):
@@ -116,20 +117,32 @@ class LoopIntegral(object):
                 ( len(self.propagators) , len(self.Feynman_parameters) )
 
         # check and store `powerlist`
-        self.number_of_derivatives = 0
+        # If there are negative powers, determine the number of derivatives neseccary to make them positive
+        # and store them in derivativelist.
         if not powerlist:
-            self.powerlist=[sp.sympify(1)]*self.P
+            self.powerlist = [sp.sympify(1)] * self.P
+            self.derivativelist = [0] * self.P
+            self.number_of_derivatives = 0
         else:
             assert len(powerlist)==self.P, "The length of the powerlist must equal the number of propagators."
+
             self.powerlist=[]
+            self.derivativelist=[]
+
             for power in powerlist:
                 power_sp = sp.sympify(power)
                 power0 = power_sp.subs(regulator,0)
                 assert power0.is_Number, "The propagator powers must be numbers for vanishing regulator."
                 # TODO: how to treat integrable divergencies (0<power0<1)?
                 self.powerlist.append(power_sp)
-                if power0<0:
-                    self.number_of_derivatives += abs(floor(power0))
+                if power0.is_positive:
+                    self.derivativelist.append(0)
+                else:
+                    self.derivativelist.append(int(abs(floor(power0))))
+
+            self.number_of_derivatives = sum(self.derivativelist)
+
+        self.N_nu = sum(self.powerlist)
 
     @cached_property
     def U(self):
@@ -175,30 +188,23 @@ class LoopIntegral(object):
         U = Polynomial.from_expression('U', Feynman_parameters_F_U)
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
 
-        n = sum(self.powerlist) - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
-        m = sum(self.powerlist) - self.dimensionality / 2 * self.L
-
-
-        measure = 1
-        # TODO: define measure as polynomial if all powers are integer?
+        n = self.N_nu - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
+        m = self.N_nu - self.dimensionality / 2 * self.L
 
         for i in range(len(self.powerlist)): #TODO: do this backwards
-            power0 = self.powerlist[i].subs(self.regulator,0)
-            if power0.is_positive:
-                measure *= Nu.polysymbols[i]**(self.powerlist[i] - 1) * (-1)**self.powerlist[i]
-                continue
 
             # calculate k-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
             # keeping F and U symbolic but calculating their derivatives explicitly
             # In each step factor out U^(n-1)/F^(m+1).
             # TODO: speed improvements?
-            k = int(abs(floor(power0)))
+            k = self.derivativelist[i]
+
+            if k==0: continue
 
             dFdx = F_explicit.derive(i)
             dUdx = U_explicit.derive(i)
             for _ in range(k):
                 Nu = (n*F*dUdx - m*dFdx*U)*Nu + F*U*(Nu.derive(i) + Nu.derive(-2)*dFdx + Nu.derive(-1)*dUdx)
-                Nu = Nu.simplify()
                 n -= 1
                 m += 1
             
@@ -211,10 +217,22 @@ class LoopIntegral(object):
                 F = F.replace(i,0,remove=True).simplify()
                 U = U.replace(i,0,remove=True).simplify()
                 Nu = Nu.replace(i,0,remove=True).simplify()
-            else:
-                measure *= Nu.polysymbols[i]**(newpower - 1) * (-1)**newpower
 
-        return Nu * measure
+        return Nu * (-1)**( self.N_nu + self.number_of_derivatives )
+
+    @cached_property
+    def measure(self):
+        # The monomials x_i^(nu_i-1) multiplying the integration measure.
+        # TODO: define measure as polynomial if all powers are integer?
+        measure = 1
+
+        # The effective power to be used in the measure has to be increased by the number of derivatives.
+        for i in range(len(self.powerlist)):
+            eff_power = self.powerlist[i] + self.derivativelist[i]
+            if eff_power != 0:
+                measure *= self.preliminary_numerator.polysymbols[i]**(eff_power - 1)
+
+        return measure
 
 
 class LoopIntegralFromPropagators(LoopIntegral):
@@ -572,7 +590,14 @@ class LoopIntegralFromPropagators(LoopIntegral):
         # In order to keep the `numerator` free of poles in the regulator, we divide it
         # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
         # where `//` means integer division, and put it here.
-        return sp.gamma(sum(self.powerlist) - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
+        gamma_fac = sp.gamma(self.N_nu - self.dimensionality * len(self.loop_momenta)/2 - self.highest_rank//2)
+
+        # The effective power to be used in the gamma functions has to be increased by the number of derivatives.
+        for i in range(len(self.powerlist)):
+            eff_power = self.powerlist[i] + self.derivativelist[i]
+            gamma_fac *= 1/sp.gamma(eff_power)
+
+        return gamma_fac
 
     @cached_property
     def preliminary_numerator(self):
@@ -595,7 +620,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
         replacement_rules = self.replacement_rules_with_Lorentz_indices
         highest_rank = self.highest_rank
-        N_nu = sum(self.powerlist)
+        N_nu = self.N_nu
 
         # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
         # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - D*L/2 - r/2)*F**(r/2)`.
