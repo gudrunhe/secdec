@@ -252,9 +252,10 @@ class LoopIntegral(object):
         gamma_fac = sp.gamma(self.N_nu - self.dimensionality * self.L/2 - self.highest_rank//2)
 
         # The effective power to be used in the gamma functions has to be increased by the number of derivatives.
-        for i in range(len(self.powerlist)):
+        for i in range(self.P):
             eff_power = self.powerlist[i] + self.derivativelist[i]
-            gamma_fac *= 1/sp.gamma(eff_power)
+            if eff_power != 0 :
+                gamma_fac *= 1/sp.gamma(eff_power)
 
         return gamma_fac
 
