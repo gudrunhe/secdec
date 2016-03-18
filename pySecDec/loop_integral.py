@@ -7,7 +7,7 @@ import sympy as sp
 import numpy as np
 from math import floor
 
-# TODO: move sympify_symbols and assert_at_most_quadractic to misc
+# TODO: move sympify_symbols and assert_at_most_quadractic/linear to misc
 
 def sympify_symbols(iterable, error_message, allow_number=False):
     '''
@@ -31,6 +31,14 @@ def assert_at_most_quadractic(expression, variables, error_message):
     poly = Polynomial.from_expression(expression, variables)
     assert (poly.expolist.sum(axis=1) <= 2).all(), error_message
 
+def assert_at_most_linear(expression, variables, error_message):
+    '''
+    Assert that `expression` is a polynomial of
+    degree less or equal 1 in the `variables`.
+
+    '''
+    poly = Polynomial.from_expression(expression, variables)
+    assert (poly.expolist.sum(axis=1) <= 1).all(), error_message
 
 class LoopIntegral(object):
     '''
@@ -836,7 +844,7 @@ class LoopIntegralFromGraph(LoopIntegral):
             self.internal_lines.append([mass,vertices])
         self.P = len(self.internal_lines)
 
-        # sympify and store external lines
+        # sympify and store external lines and create list of external momenta
         self.external_lines=[]
         self.external_momenta=[]
         for line in external_lines:
@@ -845,8 +853,11 @@ class LoopIntegralFromGraph(LoopIntegral):
             vertex = sympify_symbols([line[1]], "Names of vertices must be symbols or numbers.", \
                                      allow_number=True)[0]
             self.external_lines.append([extmom,vertex])
-            self.external_momenta.append(extmom)
+            if extmom.is_Symbol:
+                self.external_momenta.append(extmom)
 
+        for line in self.external_lines:
+            assert_at_most_linear(line[0], self.external_momenta, "The first element of the external line specifications must be at most linear combinations of external momenta.")
 
         # calculate number of loops from the relation #loops = #internal lines - (#vertices - 1)
         self.V = len(self.intverts)

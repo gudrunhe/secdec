@@ -921,7 +921,11 @@ class TestUF_FromGraph(unittest.TestCase):
                               ext_lines = [['p1','vertex1'], ['p2','vertex2'], ['-p1-p2','vertex3']],
                               result_L = 1,
                               result_u = "x0 + x1 + x2",
-                              result_f = "-p2**2*x0*x1 - p1**2*x0*x2 - (p1+p2)**2*x1*x2")
+                              result_f = "-p2sqr*x0*x1 - p1sqr*x0*x2 - p12sqr*x1*x2",
+                              rules=[('p1*p1','p1sqr'),
+                                     ('p2*p2','p2sqr'),
+                                     ('p1*p2','(p12sqr - p1sqr - p2sqr)/2')]
+                              )
 
     def test_bubble_3l(self):
         uf_from_graph_generic(self,
@@ -1029,12 +1033,15 @@ class TestUF_FromGraph(unittest.TestCase):
         self.assertRaisesRegexp(AssertionError,
                                 '.*propagator.*powers.*vanishing.*regulator', LoopIntegralFromGraph,
                                 internal_lines = [['m',[1,1]]], external_lines = [['p1',1]], powerlist=['a+eps'])
+        self.assertRaisesRegexp(AssertionError,
+                                ".external.*line.*linear.*combination",
+                                LoopIntegralFromGraph, internal_lines = [['m',[1,2]], ['m',[1,2]]],
+                                external_lines = [['p1',1],['p1**2',2]])
 
-#@attr('active')
+
 class TestPowerlist(unittest.TestCase):
     #TODO: test case with several negative powers at different positions
     #TODO: test case with a combination of inverse propagator and tensor integral
-    #TODO: test case with cut construct
     def tri1L_powers(self, power):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
@@ -1349,16 +1356,14 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
 
     def test_powerlist_cutconstruct(self):
+        # like SecDec3 -> loop/demos/2_triangle_2L, but with non-trivial powerlist
         internal_lines = [['m',[3,4]],['m',[4,5]],['m',[3,5]],[0,[1,2]],[0,[4,1]],[0,[2,5]]]
-        external_lines = [['p1',1], ['p2',2], ['p3',3]]
+        external_lines = [['p1',1], ['p2',2], ['-p1-p2',3]]
         powerlist = [1,2,3,1,4,1]
 
         rules = [ ('p1*p1','0'),
                   ('p2*p2','0'),
-                  ('p3*p3','s'),
                   ('p1*p2','s/2'),
-                  ('p2*p3','-s/2'),
-                  ('p1*p3','-s/2'),
                   ('m**2','ms1')]
 
         Feynman_parameters=['z' + str(i) for i in range(1,7)]
@@ -1384,6 +1389,7 @@ class TestPowerlist(unittest.TestCase):
         result_Nu = sp.sympify(li.numerator)*sp.sympify(li.measure)
         result_gamma = li.Gamma_factor
 
+        self.assertEqual( li.external_momenta, sp.sympify(['p1','p2']) )
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
