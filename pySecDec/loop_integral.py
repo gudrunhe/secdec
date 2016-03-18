@@ -188,7 +188,10 @@ class LoopIntegral(object):
         F_explicit = Polynomial(extended_expolist, self.preliminary_F.coeffs, polysymbols=Feynman_parameters_F_U)
 
         # TODO: can one start with numerator from tensor reduction here? or assert highest_rank==0?
-        Nu = self.preliminary_numerator
+        if isinstance(self.preliminary_numerator, Polynomial):
+            Nu = self.preliminary_numerator
+        else:
+            Nu = Polynomial.from_expression(self.preliminary_numerator, Feynman_parameters_F_U)
 
         U = Polynomial.from_expression('U', Feynman_parameters_F_U)
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
