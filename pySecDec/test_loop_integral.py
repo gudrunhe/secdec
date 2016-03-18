@@ -1040,7 +1040,7 @@ class TestUF_FromGraph(unittest.TestCase):
 
 
 class TestPowerlist(unittest.TestCase):
-    #TODO: test case with a combination of inverse propagator and tensor integral
+
     def tri1L_powers(self, power):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
@@ -1355,6 +1355,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
 
+
     def test_powerlist_cutconstruct(self):
         # like SecDec3 -> loop/demos/2_triangle_2L, but with non-trivial powerlist
         internal_lines = [['m',[3,4]],['m',[4,5]],['m',[3,5]],[0,[1,2]],[0,[4,1]],[0,[2,5]]]
@@ -1395,6 +1396,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
 
+
     def test_multiple_negative_powers(self):
         internal_lines = [[0,[1,2]], [0,[2,3]], [0,[3,4]], [0,[4,1]]]
         external_lines = [['p1',1], ['p2',2], ['p3',3], ['-p1-p2-p3',4]]
@@ -1431,3 +1433,23 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
+
+
+    #TODO: if we decide to support combinations of inverse propagators and tensors, adapt this test.
+    def test_tensor_integral_with_inverse_propagator(self):
+        loop_momenta = ['l']
+        propagators = ['l', '(l-p1)**2', '(l+p2)**2', '(l+p2+p3)**2']
+
+        powerlist = [1,1,1,-1]
+        numerator = 'l(mu)*p1(mu)'
+
+        indices = ['mu']
+        external_momenta = ['p1', 'p2', 'p3']
+
+        li = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator, 
+                                         Lorentz_indices=indices, powerlist=powerlist)
+
+        def get_numerator(loop_integral):
+            return loop_integral.numerator
+
+        self.assertRaisesRegexp(AssertionError, '(T|t)ensor.*inverse.*propagator.*', get_numerator, li)
