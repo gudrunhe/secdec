@@ -1040,7 +1040,6 @@ class TestUF_FromGraph(unittest.TestCase):
 
 
 class TestPowerlist(unittest.TestCase):
-    #TODO: test case with several negative powers at different positions
     #TODO: test case with a combination of inverse propagator and tensor integral
     def tri1L_powers(self, power):
         loop_momenta = ['l']
@@ -1391,6 +1390,43 @@ class TestPowerlist(unittest.TestCase):
         result_gamma = li.Gamma_factor
 
         self.assertEqual( li.external_momenta, sp.sympify(['p1','p2']) )
+        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+        self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
+
+    def test_multiple_negative_powers(self):
+        internal_lines = [[0,[1,2]], [0,[2,3]], [0,[3,4]], [0,[4,1]]]
+        external_lines = [['p1',1], ['p2',2], ['p3',3], ['-p1-p2-p3',4]]
+        powerlist = [-1,1,-1,1]
+
+        rules = [ ('p1*p1','0'),
+                  ('p2*p2','0'),
+                  ('p3*p3','0'),
+                  ('p1*p2','s/2'),
+                  ('p2*p3','t/2'),
+                  ('p1*p3','-s/2-t/2')]
+
+        Feynman_parameters=['dummy1','z1','dummy2','z2']
+
+        li = LoopIntegralFromGraph(internal_lines, external_lines, powerlist=powerlist, 
+                                   replacement_rules=rules, Feynman_parameters=Feynman_parameters)
+
+        target_U = '''z1 + z2'''
+
+        target_F = '''-(s*z1*z2)'''
+
+        target_Nu = '''20*s**2*z1**2*z2**2 - 18*eps*s**2*z1**2*z2**2 + 
+        4*eps**2*s**2*z1**2*z2**2 + 2*s*t*z1*z2*(z1 + z2)**2 - 
+        eps*s*t*z1*z2*(z1 + z2)**2'''
+
+        target_gamma = sp.gamma('eps - 2')
+
+        result_U = sp.sympify(li.U)
+        result_F = sp.sympify(li.F)
+        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+        result_gamma = li.Gamma_factor
+
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )

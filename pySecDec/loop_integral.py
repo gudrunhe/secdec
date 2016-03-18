@@ -156,7 +156,7 @@ class LoopIntegral(object):
     def U(self):
         # returns U with all Feynman parameters of inverse propagators set to zero
         U = self.preliminary_U
-        for i in range(len(self.powerlist)):
+        for i in range(self.P-1,-1,-1):
             if self.powerlist[i].is_integer and self.powerlist[i].is_nonpositive:
                 U = U.replace(i,0,remove=True).simplify()
         return U
@@ -165,7 +165,7 @@ class LoopIntegral(object):
     def F(self):
         # returns F with all Feynman parameters of inverse propagators set to zero
         F = self.preliminary_F
-        for i in range(len(self.powerlist)):
+        for i in range(self.P-1,-1,-1):
             if self.powerlist[i].is_integer and self.powerlist[i].is_nonpositive:
                 F = F.replace(i,0,remove=True).simplify()
         return F
@@ -199,7 +199,9 @@ class LoopIntegral(object):
         n = self.N_nu - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
         m = self.N_nu - self.dimensionality / 2 * self.L
 
-        for i in range(len(self.powerlist)): #TODO: do this backwards
+        # Loop backwards over Feynman parameters so that removing one parameter does not change the indexing
+        # of the ones still to come.
+        for i in range(self.P-1,-1,-1):
 
             # calculate k-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
             # keeping F and U symbolic but calculating their derivatives explicitly
@@ -238,7 +240,7 @@ class LoopIntegral(object):
         measure = 1
 
         # The effective power to be used in the measure has to be increased by the number of derivatives.
-        for i in range(len(self.powerlist)):
+        for i in range(self.P):
             eff_power = self.powerlist[i] + self.derivativelist[i]
             if eff_power != 0:
                 measure *= self.preliminary_U.polysymbols[i]**(eff_power - 1)
