@@ -224,7 +224,7 @@ class LoopIntegral(object):
                 Nu = (n*F*dUdx - m*dFdx*U)*Nu + F*U*(Nu.derive(i) + Nu.derive(-2)*dFdx + Nu.derive(-1)*dUdx)
                 n -= 1
                 m += 1
-            
+
             # The k-fold derivative effectively increments the power of the propagator by k.
             # If the new 'effective power' is exactly zero, the corresponding parameter has to be set to zero.
             newpower = self.powerlist[i] + k
@@ -426,7 +426,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
     :param powerlist:
         iterable, optional;
         The powers of the propergators, possibly dependent on the `regulator`.
-        In case of negative powers, the derivative with respect to the corresponding 
+        In case of negative powers, the derivative with respect to the corresponding
         Feynman parameter is calculated.
 
     '''
@@ -839,7 +839,7 @@ class LoopIntegralFromGraph(LoopIntegral):
 
     def __init__(self, internal_lines, external_lines, replacement_rules=[], Feynman_parameters='x', \
                  regulator='eps', regulator_power=0, dimensionality='4-2*eps', powerlist=[]):
-    
+
         # sympify and store internal lines
         assert len(internal_lines) > 0, \
             "To define a loop integral please input a graph with at least one internal line."
@@ -885,7 +885,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         self.preliminary_numerator = 1
 
     @cached_property
-    def intverts(self): 
+    def intverts(self):
         # creates a list of all internal vertices and indexes them
         # returns a dictionary that relates the name of a vertex to its index
         lines = self.internal_lines
@@ -898,7 +898,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         for i in range(len(vertices)):
             vertnames[vertices[i]] = i
         return vertnames
-        
+
     @cached_property
     def vertmatrix(self):  # create transition matrix representation of underlying graph
 
@@ -921,7 +921,7 @@ class LoopIntegralFromGraph(LoopIntegral):
             M[end,start] += 1
 
         return M
-        
+
     @cached_property
     def preliminary_U(self):
 
@@ -977,7 +977,7 @@ class LoopIntegralFromGraph(LoopIntegral):
 
             numvert = self.V + len(self.external_lines)
             newmatrix = newmatrix**numvert
-            
+
             # find all internal vertices *not* connected to vertex 0 (arbitrary choice)
             intnotconnectedto0 = []
             for i in range(self.V):
@@ -992,7 +992,7 @@ class LoopIntegralFromGraph(LoopIntegral):
 
             # check if all vertices not connected to 0 are connected to each other
             valid2tree = True
-            notconnectedto0 = intnotconnectedto0 + extnotconnectedto0            
+            notconnectedto0 = intnotconnectedto0 + extnotconnectedto0
             for i,j in combinations(notconnectedto0, 2):
                 if newmatrix[i,j]==0:
                     # there are more than two disconnected components -> not a valid two-tree cut
@@ -1010,7 +1010,7 @@ class LoopIntegralFromGraph(LoopIntegral):
             else:
                 cutmomenta = missing(range(self.V,numvert),extnotconnectedto0)
 
-            # construct monomial of Feynman parameters of cut propagators to be added to F, 
+            # construct monomial of Feynman parameters of cut propagators to be added to F,
             # if the momentum flow through the cuts is non-zero
             if cutmomenta:
                 expolist=[0]*self.P

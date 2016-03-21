@@ -931,7 +931,7 @@ class TestUF_FromGraph(unittest.TestCase):
         uf_from_graph_generic(self,
                               int_lines = [[0,[1,2]], [0,[1,2]], [0,[1,2]], [0,[1,2]]],
                               ext_lines = [['p1',1], ['p2',2]],
-                              rules = [('p2','-p1')], 
+                              rules = [('p2','-p1')],
                               result_L = 3,
                               result_u = "x0*x1*x2 + x0*x1*x3 + x0*x2*x3 + x1*x2*x3",
                               result_f = "-p1**2*x0*x1*x2*x3")
@@ -955,28 +955,28 @@ class TestUF_FromGraph(unittest.TestCase):
                                      ('m**2','msq'),
                                      ('M**2','Msq')],
                               result_L = 2,
-                              result_f = """msq*x0**2*x3 + 2*msq*x0*x1*x3 - s*x0*x1*x3 + msq*x1**2*x3 
-                              + Msq*x0*x2*x3 + Msq*x1*x2*x3 + Msq*x2**2*x3 + Msq*x0*x3**2 + Msq*x1*x3**2 
-                              + Msq*x2*x3**2 + msq*x0**2*x4 + 2*msq*x0*x1*x4 - s*x0*x1*x4 + msq*x1**2*x4 
-                              + Msq*x0*x2*x4 + Msq*x1*x2*x4 + Msq*x2**2*x4 + Msq*x0*x3*x4 + Msq*x1*x3*x4 
-                              + Msq*x2*x3*x4 + msq*x0*x4**2 + msq*x1*x4**2 + msq*x2*x4**2 + msq*x0**2*x5 
-                              + 2*msq*x0*x1*x5 - s*x0*x1*x5 + msq*x1**2*x5 + Msq*x0*x2*x5 + Msq*x1*x2*x5 
-                              + Msq*x2**2*x5 + msq*x0*x3*x5 + Msq*x0*x3*x5 + msq*x1*x3*x5 + Msq*x1*x3*x5 
-                              + msq*x2*x3*x5 + 2*Msq*x2*x3*x5 - t*x2*x3*x5 + Msq*x3**2*x5 + 3*msq*x0*x4*x5 
-                              - s*x0*x4*x5 + 3*msq*x1*x4*x5 + msq*x2*x4*x5 + Msq*x2*x4*x5 + Msq*x3*x4*x5 
-                              + msq*x4**2*x5 + msq*x0*x5**2 + msq*x1*x5**2 + msq*x2*x5**2 + msq*x3*x5**2 
-                              + msq*x4*x5**2 + msq*x0**2*x6 + 2*msq*x0*x1*x6 - s*x0*x1*x6 + msq*x1**2*x6 
-                              + Msq*x0*x2*x6 + Msq*x1*x2*x6 + Msq*x2**2*x6 + msq*x0*x3*x6 + 2*Msq*x0*x3*x6 
-                              + msq*x1*x3*x6 + 2*Msq*x1*x3*x6 - s*x1*x3*x6 - msq*x2*x3*x6 + 3*Msq*x2*x3*x6 
-                              + Msq*x3**2*x6 + msq*x0*x4*x6 + Msq*x0*x4*x6 + msq*x1*x4*x6 + Msq*x1*x4*x6 
-                              - 3*msq*x2*x4*x6 + 2*Msq*x2*x4*x6 + s*x2*x4*x6 + t*x2*x4*x6 + Msq*x3*x4*x6 
-                              + msq*x4**2*x6 + Msq*x0*x5*x6 + Msq*x1*x5*x6 + Msq*x2*x5*x6 + Msq*x3*x5*x6 
-                              + Msq*x4*x5*x6 + Msq*x0*x6**2 + Msq*x1*x6**2 + Msq*x2*x6**2 + Msq*x3*x6**2 
+                              result_f = """msq*x0**2*x3 + 2*msq*x0*x1*x3 - s*x0*x1*x3 + msq*x1**2*x3
+                              + Msq*x0*x2*x3 + Msq*x1*x2*x3 + Msq*x2**2*x3 + Msq*x0*x3**2 + Msq*x1*x3**2
+                              + Msq*x2*x3**2 + msq*x0**2*x4 + 2*msq*x0*x1*x4 - s*x0*x1*x4 + msq*x1**2*x4
+                              + Msq*x0*x2*x4 + Msq*x1*x2*x4 + Msq*x2**2*x4 + Msq*x0*x3*x4 + Msq*x1*x3*x4
+                              + Msq*x2*x3*x4 + msq*x0*x4**2 + msq*x1*x4**2 + msq*x2*x4**2 + msq*x0**2*x5
+                              + 2*msq*x0*x1*x5 - s*x0*x1*x5 + msq*x1**2*x5 + Msq*x0*x2*x5 + Msq*x1*x2*x5
+                              + Msq*x2**2*x5 + msq*x0*x3*x5 + Msq*x0*x3*x5 + msq*x1*x3*x5 + Msq*x1*x3*x5
+                              + msq*x2*x3*x5 + 2*Msq*x2*x3*x5 - t*x2*x3*x5 + Msq*x3**2*x5 + 3*msq*x0*x4*x5
+                              - s*x0*x4*x5 + 3*msq*x1*x4*x5 + msq*x2*x4*x5 + Msq*x2*x4*x5 + Msq*x3*x4*x5
+                              + msq*x4**2*x5 + msq*x0*x5**2 + msq*x1*x5**2 + msq*x2*x5**2 + msq*x3*x5**2
+                              + msq*x4*x5**2 + msq*x0**2*x6 + 2*msq*x0*x1*x6 - s*x0*x1*x6 + msq*x1**2*x6
+                              + Msq*x0*x2*x6 + Msq*x1*x2*x6 + Msq*x2**2*x6 + msq*x0*x3*x6 + 2*Msq*x0*x3*x6
+                              + msq*x1*x3*x6 + 2*Msq*x1*x3*x6 - s*x1*x3*x6 - msq*x2*x3*x6 + 3*Msq*x2*x3*x6
+                              + Msq*x3**2*x6 + msq*x0*x4*x6 + Msq*x0*x4*x6 + msq*x1*x4*x6 + Msq*x1*x4*x6
+                              - 3*msq*x2*x4*x6 + 2*Msq*x2*x4*x6 + s*x2*x4*x6 + t*x2*x4*x6 + Msq*x3*x4*x6
+                              + msq*x4**2*x6 + Msq*x0*x5*x6 + Msq*x1*x5*x6 + Msq*x2*x5*x6 + Msq*x3*x5*x6
+                              + Msq*x4*x5*x6 + Msq*x0*x6**2 + Msq*x1*x6**2 + Msq*x2*x6**2 + Msq*x3*x6**2
                               + Msq*x4*x6**2""",
-                              result_u = """x0*x3 + x1*x3 + x2*x3 + x0*x4 + x1*x4 + x2*x4 + x0*x5 + x1*x5 
+                              result_u = """x0*x3 + x1*x3 + x2*x3 + x0*x4 + x1*x4 + x2*x4 + x0*x5 + x1*x5
                               + x2*x5 + x3*x5 + x4*x5 + x0*x6 + x1*x6 + x2*x6 + x3*x6 + x4*x6"""
                               )
-                              
+
     # from SecDec -> loop/demos/5_pentagon_2L
     def test_pentagon_2l(self):
         uf_from_graph_generic(self,
@@ -1000,13 +1000,13 @@ class TestUF_FromGraph(unittest.TestCase):
                                        ('p3*p5', '(s12-s34-s45)/2'),
                                        ('p4*p5', 's45/2')],
                               result_L = 2,
-                              result_u = """x0*x2 + x1*x2 + x0*x3 + x1*x3 + x0*x4 + x1*x4 + x0*x5 + x1*x5 
-                              + x2*x6 + x3*x6 + x4*x6 + x5*x6 + x0*x7 + x1*x7 + x2*x7 + x3*x7 + x4*x7 
+                              result_u = """x0*x2 + x1*x2 + x0*x3 + x1*x3 + x0*x4 + x1*x4 + x0*x5 + x1*x5
+                              + x2*x6 + x3*x6 + x4*x6 + x5*x6 + x0*x7 + x1*x7 + x2*x7 + x3*x7 + x4*x7
                               + x5*x7 + x6*x7""",
-                              result_f = """-s34*x0*x2*x4 - s34*x1*x2*x4 - s12*x0*x2*x5 - s12*x1*x2*x5 
-                              - s45*x0*x3*x5 - s45*x1*x3*x5 - s12*x1*x2*x6 - s12*x1*x3*x6 - s12*x1*x4*x6 
-                              - s34*x2*x4*x6 - s12*x1*x5*x6 - s12*x2*x5*x6 - s45*x3*x5*x6 - s23*x0*x3*x7 
-                              - s51*x0*x4*x7 - s34*x1*x4*x7 - s34*x2*x4*x7 - s12*x1*x5*x7 - s12*x2*x5*x7 
+                              result_f = """-s34*x0*x2*x4 - s34*x1*x2*x4 - s12*x0*x2*x5 - s12*x1*x2*x5
+                              - s45*x0*x3*x5 - s45*x1*x3*x5 - s12*x1*x2*x6 - s12*x1*x3*x6 - s12*x1*x4*x6
+                              - s34*x2*x4*x6 - s12*x1*x5*x6 - s12*x2*x5*x6 - s45*x3*x5*x6 - s23*x0*x3*x7
+                              - s51*x0*x4*x7 - s34*x1*x4*x7 - s34*x2*x4*x7 - s12*x1*x5*x7 - s12*x2*x5*x7
                               - s45*x3*x5*x7 - s12*x1*x6*x7 - s12*x2*x6*x7 - s45*x3*x6*x7"""
                               )
 
@@ -1069,39 +1069,39 @@ class TestPowerlist(unittest.TestCase):
         target_Nu = {  '1': '-1'
                      , '0': '1'
                      , '-1':
-                     '''3*ssp1*z1*z2 - 2*eps*ssp1*z1*z2 + 
-                     (z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
+                     '''3*ssp1*z1*z2 - 2*eps*ssp1*z1*z2 +
+                     (z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) -
                      eps*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))'''
                      , '-2':
-                     '''(-2 + eps)*(-10*ssp1**2*z1**2*z2**2 + 4*eps*ssp1**2*z1**2*z2**2 - 
-                     8*ssp1*z1*z2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - 
+                     '''(-2 + eps)*(-10*ssp1**2*z1**2*z2**2 + 4*eps*ssp1**2*z1**2*z2**2 -
+                     8*ssp1*z1*z2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 -
                      ssp2*(z1 + z2)) + 4*eps*ssp1*z1*z2*(z1 + z2)*
-                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
-                     (z1 + z2)**2*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 + 
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) -
+                     (z1 + z2)**2*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 +
                      eps*(z1 + z2)**2*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2)'''
                      , '-3':
-                     '''210*ssp1**3*z1**3*z2**3 - 214*eps*ssp1**3*z1**3*z2**3 + 
-                     72*eps**2*ssp1**3*z1**3*z2**3 - 8*eps**3*ssp1**3*z1**3*z2**3 + 
-                     270*ssp1**2*z1**2*z2**2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 - 
+                     '''210*ssp1**3*z1**3*z2**3 - 214*eps*ssp1**3*z1**3*z2**3 +
+                     72*eps**2*ssp1**3*z1**3*z2**3 - 8*eps**3*ssp1**3*z1**3*z2**3 +
+                     270*ssp1**2*z1**2*z2**2*(z1 + z2)*(-(ssp1*z2) - 2*ssp3*z2 -
                      ssp2*(z1 + z2)) - 288*eps*ssp1**2*z1**2*z2**2*(z1 + z2)*
-                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) + 
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) +
                      102*eps**2*ssp1**2*z1**2*z2**2*(z1 + z2)*
-                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) - 
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) -
                      12*eps**3*ssp1**2*z1**2*z2**2*(z1 + z2)*
-                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) + 
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2)) +
                      90*ssp1*z1*z2*(z1 + z2)**2*
-                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 - 
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 -
                      111*eps*ssp1*z1*z2*(z1 + z2)**2*
-                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 + 
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 +
                      45*eps**2*ssp1*z1*z2*(z1 + z2)**2*
-                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 - 
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 -
                      6*eps**3*ssp1*z1*z2*(z1 + z2)**2*
-                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 + 
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**2 +
                      6*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**
-                     3 - 11*eps*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - 
+                     3 - 11*eps*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 -
                      ssp2*(z1 + z2))**3 + 6*eps**2*(z1 + z2)**3*
-                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**3 - 
-                     eps**3*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 - 
+                     (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2))**3 -
+                     eps**3*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 -
                      ssp2*(z1 + z2))**3'''
                      , '1+eps':
                      '(-1)**(3+eps)*z3**eps'
@@ -1109,33 +1109,33 @@ class TestPowerlist(unittest.TestCase):
                      '(-1)**(2+eps)*z3**(-1 + eps)'
                      , '-1+eps':
                      '''(-1)**(2+eps)*z3**(-1 + eps)*((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
-                     (z1 + z2 + z3) - 2*eps*(-(ssp2*z1) - 
-                     (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3) - 
-                     3*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3)) + 
-                     3*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     (z1 + z2 + z3) - 2*eps*(-(ssp2*z1) -
+                     (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3) -
+                     3*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3)) +
+                     3*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
                      z1*(ssp1*z2 + ssp2*z3)))'''
                      , '-2+eps':
                      '''(-1)**(2+eps)*z3**(-1 + eps)*(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
-                     (z1 + z2 + z3)**2 - 
+                     (z1 + z2 + z3)**2 -
                      6*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
-                     (z1 + z2 + z3)**2 + 
+                     (z1 + z2 + z3)**2 +
                      4*eps**2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
-                     (z1 + z2 + z3)**2 - 
+                     (z1 + z2 + z3)**2 -
                      16*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
-                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3)) + 
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3)) +
                      28*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
-                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3)) - 
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3)) -
                      12*eps**2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
-                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3)) + 
-                     20*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3))**2 - 
-                     27*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3))**2 + 
-                     9*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3)) +
+                     20*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3))**2 -
+                     27*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3))**2 +
+                     9*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
                      z1*(ssp1*z2 + ssp2*z3))**2)'''
                      , '1/2+eps':
                      '(-1)**(2+1/2+eps)*z3**(-1/2 + eps)'
@@ -1146,29 +1146,29 @@ class TestPowerlist(unittest.TestCase):
                      + 6*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)))/2'''
                      ,'-3/2':
                        '''(-1)**(2+1/2)*(3*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
-                     (z1 + z2 + z3)**2 - 
+                     (z1 + z2 + z3)**2 -
                      8*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
-                     (z1 + z2 + z3)**2 + 
+                     (z1 + z2 + z3)**2 +
                      4*eps**2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
-                     (z1 + z2 + z3)**2 - 
+                     (z1 + z2 + z3)**2 -
                      42*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
-                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3)) + 
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3)) +
                      52*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
-                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3)) - 
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3)) -
                      16*eps**2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
-                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3)) + 
-                     63*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3))**2 - 
-                     64*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
-                     z1*(ssp1*z2 + ssp2*z3))**2 + 
-                     16*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - 
+                     (z1 + z2 + z3)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3)) +
+                     63*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3))**2 -
+                     64*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
+                     z1*(ssp1*z2 + ssp2*z3))**2 +
+                     16*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
                      z1*(ssp1*z2 + ssp2*z3))**2)/4*z3**(-1/2)'''
                      }
 
-        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
+        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist,
                                          replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
         power0 = powerlist[2].subs(li.regulator,0)
@@ -1243,7 +1243,7 @@ class TestPowerlist(unittest.TestCase):
     def test_box_withnumerator2L(self):
         # SecDec3 -> loop/demos/4_box_withnumerator_2L
         loop_momenta = ['k1','k2']
-        propagators = ['k1**2', '(k1+p2)**2', '(k1-p1)**2', '(k1-k2)**2', '(k2+p2)**2', '(k2-p1)**2', 
+        propagators = ['k1**2', '(k1+p2)**2', '(k1-p1)**2', '(k1-k2)**2', '(k2+p2)**2', '(k2-p1)**2',
                        '(k2+p2+p3)**2', '(k1+p3)**2']
 
         rules = [('p1*p1','0'),
@@ -1258,31 +1258,31 @@ class TestPowerlist(unittest.TestCase):
 
         Feynman_parameters = ['z'+str(i) for i in range(1,9)]
 
-        target_U = '''z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) + 
+        target_U = '''z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) +
         z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7)'''
 
-        target_F = '''-(s*z4*z5*z6) + s*z3*(-(z4*z5) - z5*z6) - 
-        z1*(s*z5*z6 + t*z4*z7) - 
+        target_F = '''-(s*z4*z5*z6) + s*z3*(-(z4*z5) - z5*z6) -
+        z1*(s*z5*z6 + t*z4*z7) -
         s*z2*((z4 + z5)*z6 + z3*(z4 + z5 + z6 + z7))'''
 
-        target_Nu = '''(-1)**7*(-2*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) + 
+        target_Nu = '''(-1)**7*(-2*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) +
         z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7))*
-        (-(s*z5*z6) + z4*(s*z6 + t*(z5 + z6)) + 
-        t*z2*(z4 + z5 + z6 + z7) + 
-        z3*(s*(z4 + z5 + z6 + z7) + 
-        t*(z4 + z5 + z6 + z7))) - 
-        2*eps*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) + 
+        (-(s*z5*z6) + z4*(s*z6 + t*(z5 + z6)) +
+        t*z2*(z4 + z5 + z6 + z7) +
+        z3*(s*(z4 + z5 + z6 + z7) +
+        t*(z4 + z5 + z6 + z7))) -
+        2*eps*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) +
         z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7))*
-        (-(s*z5*z6) + z4*(s*z6 + t*(z5 + z6)) + 
-        t*z2*(z4 + z5 + z6 + z7) + 
-        z3*(s*(z4 + z5 + z6 + z7) + 
+        (-(s*z5*z6) + z4*(s*z6 + t*(z5 + z6)) +
+        t*z2*(z4 + z5 + z6 + z7) +
+        z3*(s*(z4 + z5 + z6 + z7) +
         t*(z4 + z5 + z6 + z7))) + 3*eps*(z4 + z5 + z6 + z7)*
-        (-(s*z4*z5*z6) + s*z3*(-(z4*z5) - z5*z6) - 
-        z1*(s*z5*z6 + t*z4*z7) - 
+        (-(s*z4*z5*z6) + s*z3*(-(z4*z5) - z5*z6) -
+        z1*(s*z5*z6 + t*z4*z7) -
         s*z2*((z4 + z5)*z6 + z3*(z4 + z5 + z6 + z7))))'''
 
 
-        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
+        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist,
                                          replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
         result_U = sp.sympify(li.U)
@@ -1305,46 +1305,46 @@ class TestPowerlist(unittest.TestCase):
                  ('p1*p2','ssp3')]
 
         Feynman_parameters=['z1','z2','z3']
-            
-        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist, 
+
+        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist,
                                          replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
         target_U = '''z1 + z2 + z3'''
 
-        target_F = '''-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        target_F = '''-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 - ssp2*(z1 + z2) +
         m**2*(z1 + z2 + z3))'''
 
         target_Nu = '''(-1)**eps*z3**(-1 + eps)*(2*(z1 + z2 + z3)**2*
-        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 +
         m**2*(z1 + z2 + z3))**2 - 6*eps*(z1 + z2 + z3)**2*
-        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 +
         m**2*(z1 + z2 + z3))**2 + 4*eps**2*(z1 + z2 + z3)**2*
-        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 +
         m**2*(z1 + z2 + z3))**2 + 4*m**2*(z1 + z2 + z3)**2*
-        (-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 - 
-        ssp2*(z1 + z2) + m**2*(z1 + z2 + z3))) - 
-        4*eps*m**2*(z1 + z2 + z3)**2*(-(ssp1*z2*(z1 + z3)) + 
-        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        (-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 -
+        ssp2*(z1 + z2) + m**2*(z1 + z2 + z3))) -
+        4*eps*m**2*(z1 + z2 + z3)**2*(-(ssp1*z2*(z1 + z3)) +
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) +
         m**2*(z1 + z2 + z3))) - 16*(z1 + z2 + z3)*
-        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
-        m**2*(z1 + z2 + z3))*(-(ssp1*z2*(z1 + z3)) + 
-        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 +
+        m**2*(z1 + z2 + z3))*(-(ssp1*z2*(z1 + z3)) +
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) +
         m**2*(z1 + z2 + z3))) + 28*eps*(z1 + z2 + z3)*
-        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
-        m**2*(z1 + z2 + z3))*(-(ssp1*z2*(z1 + z3)) + 
-        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 +
+        m**2*(z1 + z2 + z3))*(-(ssp1*z2*(z1 + z3)) +
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) +
         m**2*(z1 + z2 + z3))) - 12*eps**2*(z1 + z2 + z3)*
-        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 + 
-        m**2*(z1 + z2 + z3))*(-(ssp1*z2*(z1 + z3)) + 
-        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
-        m**2*(z1 + z2 + z3))) + 
-        20*(-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 - 
-        ssp2*(z1 + z2) + m**2*(z1 + z2 + z3)))**2 - 
-        27*eps*(-(ssp1*z2*(z1 + z3)) + 
-        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
-        m**2*(z1 + z2 + z3)))**2 + 
-        9*eps**2*(-(ssp1*z2*(z1 + z3)) + 
-        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) + 
+        (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 +
+        m**2*(z1 + z2 + z3))*(-(ssp1*z2*(z1 + z3)) +
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) +
+        m**2*(z1 + z2 + z3))) +
+        20*(-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 -
+        ssp2*(z1 + z2) + m**2*(z1 + z2 + z3)))**2 -
+        27*eps*(-(ssp1*z2*(z1 + z3)) +
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) +
+        m**2*(z1 + z2 + z3)))**2 +
+        9*eps**2*(-(ssp1*z2*(z1 + z3)) +
+        z3*(-2*ssp3*z2 - ssp2*(z1 + z2) +
         m**2*(z1 + z2 + z3)))**2)'''
 
         result_U = sp.sympify(li.U)
@@ -1368,19 +1368,19 @@ class TestPowerlist(unittest.TestCase):
                   ('m**2','ms1')]
 
         Feynman_parameters=['z' + str(i) for i in range(1,7)]
-            
-        li = LoopIntegralFromGraph(internal_lines, external_lines, powerlist=powerlist, 
+
+        li = LoopIntegralFromGraph(internal_lines, external_lines, powerlist=powerlist,
                                    replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
-        target_U = '''z1*z2 + z2*z3 + z1*z4 + z2*z4 + z3*z4 + z1*z5 + 
+        target_U = '''z1*z2 + z2*z3 + z1*z4 + z2*z4 + z3*z4 + z1*z5 +
         z2*z5 + z3*z5 + z1*z6 + z2*z6 + z3*z6'''
 
-        target_F = '''-(s*z1*z2*z3) - s*z1*z3*z4 - s*z1*z3*z5 - 
-        s*z2*z3*z5 - s*z1*z2*z6 - s*z1*z3*z6 - 
-        s*z1*z5*z6 - s*z2*z5*z6 - s*z3*z5*z6 + 
-        ms1*(z1 + z2 + z3)*(z3*(z4 + z5 + z6) + 
+        target_F = '''-(s*z1*z2*z3) - s*z1*z3*z4 - s*z1*z3*z5 -
+        s*z2*z3*z5 - s*z1*z2*z6 - s*z1*z3*z6 -
+        s*z1*z5*z6 - s*z2*z5*z6 - s*z3*z5*z6 +
+        ms1*(z1 + z2 + z3)*(z3*(z4 + z5 + z6) +
         z1*(z2 + z4 + z5 + z6) + z2*(z3 + z4 + z5 + z6))'''
-        
+
         target_Nu = '''z2*z3**2*z5**3'''
 
         target_gamma = sp.gamma('8 + 2*eps')/12
@@ -1411,15 +1411,15 @@ class TestPowerlist(unittest.TestCase):
 
         Feynman_parameters=['dummy1','z1','dummy2','z2']
 
-        li = LoopIntegralFromGraph(internal_lines, external_lines, powerlist=powerlist, 
+        li = LoopIntegralFromGraph(internal_lines, external_lines, powerlist=powerlist,
                                    replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
         target_U = '''z1 + z2'''
 
         target_F = '''-(s*z1*z2)'''
 
-        target_Nu = '''20*s**2*z1**2*z2**2 - 18*eps*s**2*z1**2*z2**2 + 
-        4*eps**2*s**2*z1**2*z2**2 + 2*s*t*z1*z2*(z1 + z2)**2 - 
+        target_Nu = '''20*s**2*z1**2*z2**2 - 18*eps*s**2*z1**2*z2**2 +
+        4*eps**2*s**2*z1**2*z2**2 + 2*s*t*z1*z2*(z1 + z2)**2 -
         eps*s*t*z1*z2*(z1 + z2)**2'''
 
         target_gamma = sp.gamma('eps - 2')
@@ -1446,7 +1446,7 @@ class TestPowerlist(unittest.TestCase):
         indices = ['mu']
         external_momenta = ['p1', 'p2', 'p3']
 
-        li = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator, 
+        li = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator,
                                          Lorentz_indices=indices, powerlist=powerlist)
 
         def get_numerator(loop_integral):
