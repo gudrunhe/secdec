@@ -191,11 +191,7 @@ class LoopIntegral(object):
         if self.number_of_derivatives != 0:
             assert self.highest_rank == 0, "Tensor integrals cannot be combined with inverse propagators."
 
-        if isinstance(self.preliminary_numerator, Polynomial):
-            Nu = self.preliminary_numerator
-        else:
-            Nu = Polynomial.from_expression(self.preliminary_numerator, Feynman_parameters_F_U)
-
+        Nu = self.preliminary_numerator
         U = Polynomial.from_expression('U', Feynman_parameters_F_U)
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
 
@@ -633,12 +629,15 @@ class LoopIntegralFromPropagators(LoopIntegral):
         g = self.metric_tensor
         D = self.dimensionality
         L = self.L
-        Feynman_parameters_F_U = self.Feynman_parameters + ['F', 'U']
+        Feynman_parameters_F_U = self.Feynman_parameters + sp.sympify(['F', 'U'])
         U = Polynomial.from_expression('U', Feynman_parameters_F_U)
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
         replacement_rules = self.replacement_rules_with_Lorentz_indices
         highest_rank = self.highest_rank
         N_nu = self.N_nu
+
+        if self.numerator_input == 1:
+            return Polynomial(np.zeros([1,len(Feynman_parameters_F_U)], dtype=int), np.array([1]), Feynman_parameters_F_U, copy=False)
 
         # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
         # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - D*L/2 - r/2)*F**(r/2)`.
@@ -766,7 +765,6 @@ class LoopIntegralFromPropagators(LoopIntegral):
                     # apply the replacement rules
                     for i, coeff in enumerate(this_numerator_summand.coeffs):
                         this_numerator_summand.coeffs[i] = sp.sympify(coeff).expand().subs(replacement_rules)
-                        # TODO: sympifying the coeff here fixed case numerator=1, better fix?
 
                     numerator += this_numerator_summand
 
@@ -882,7 +880,9 @@ class LoopIntegralFromGraph(LoopIntegral):
 
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0
-        self.preliminary_numerator = 1
+        self.preliminary_numerator = Polynomial(np.zeros([1,len(self.Feynman_parameters)+2], dtype=int), \
+                                                np.array([1]), self.Feynman_parameters+sp.sympify(['F','U']), \
+                                                copy=False)
 
     @cached_property
     def intverts(self):
