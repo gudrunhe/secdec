@@ -236,16 +236,22 @@ class LoopIntegral(object):
     @cached_property
     def measure(self):
         # The monomials x_i^(nu_i-1) multiplying the integration measure.
-        # TODO: define measure as polynomial if all powers are integer?
+        # The factors of 1/Gamma(nu_i) are implemented in `Gamma_factor` together with the global Gamma.
+        # TODO: define measure as a single polynomial if all powers are integer?
         measure = 1
+
+        Feynman_parameters_F_U = self.Feynman_parameters + ['F', 'U']
 
         # The effective power to be used in the measure has to be increased by the number of derivatives.
         for i in range(self.P):
             eff_power = self.powerlist[i] + self.derivativelist[i]
             if eff_power != 0:
-                measure *= self.preliminary_U.polysymbols[i]**(eff_power - 1)
+                expolist = np.zeros([1,len(Feynman_parameters_F_U)], dtype=int)
+                expolist[0][i] = 1
+                measure *= ExponentiatedPolynomial(expolist, np.array([1]), exponent = (eff_power - 1),
+                                                   polysymbols = Feynman_parameters_F_U, copy=False)
 
-        return measure
+        return measure.simplify()
 
     @cached_property
     def Gamma_factor(self):
@@ -256,6 +262,7 @@ class LoopIntegral(object):
         # where `//` means integer division, and put it here.
         gamma_fac = sp.gamma(self.N_nu - self.dimensionality * self.L/2 - self.highest_rank//2)
 
+        # Multiply by the 1/Gamma(nu_i) factors belonging to the integration measure.
         # The effective power to be used in the gamma functions has to be increased by the number of derivatives.
         for i in range(self.P):
             eff_power = self.powerlist[i] + self.derivativelist[i]
