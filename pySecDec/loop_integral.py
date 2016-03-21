@@ -254,13 +254,17 @@ class LoopIntegral(object):
         return measure.simplify()
 
     @cached_property
+    def Gamma_argument(self):
+        return self.N_nu - self.dimensionality * self.L/2 - self.highest_rank//2
+
+    @cached_property
     def Gamma_factor(self):
         # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
         # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
         # In order to keep the `numerator` free of poles in the regulator, we divide it
         # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
         # where `//` means integer division, and put it here.
-        gamma_fac = sp.gamma(self.N_nu - self.dimensionality * self.L/2 - self.highest_rank//2)
+        gamma_fac = sp.gamma(self.Gamma_argument)
 
         # Multiply by the 1/Gamma(nu_i) factors belonging to the integration measure.
         # The effective power to be used in the gamma functions has to be increased by the number of derivatives.
