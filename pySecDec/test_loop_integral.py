@@ -1487,21 +1487,21 @@ class TestPowerlist(unittest.TestCase):
 
         self.assertRaisesRegexp(AssertionError, '(T|t)ensor.*inverse.*propagator.*', lambda x: x.numerator, li)
 
-
-#TODO: Can we apply more simplifications in the tensor numerator so that this test works without the `extra_rules`?
+    @attr('slow') # TODO: remove when optimized
+    #@attr('active')
     def test_compare_tensor_integral_to_inverse_propagator(self):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2', '(l+p2+p3)**2']
 
-        powerlist1 = [0,1,1,0]
-        numerator1 = 'l(mu)*l(mu)*l(nu)*l(nu)'
-        indices1 = ['mu','nu']
+        powerlist1 = [0,1,1,0]  # TODO: without the propagator to power zero this is much (factor 10) faster
+        numerator1 = 'l(mu)*l(mu) * l(nu)*l(nu) * l(rho)*l(rho)'
+        indices1 = ['mu','nu','rho']
 
-        powerlist2 = [-2,1,1,0]
+        powerlist2 = [-3,1,1,0]
         numerator2 = '1'
         indices2 = []
 
-        external_momenta = ['p1', 'p2', 'p3']
+        external_momenta = ['p1', 'p2']
 
         rules = [ ('p1*p1','0'),
                   ('p2*p2','0'),
@@ -1510,15 +1510,9 @@ class TestPowerlist(unittest.TestCase):
                   ('p2*p3','ssp2/2'),
                   ('p1*p3','-ssp1/2-ssp2/2')]
 
-        extra_rules = [('g(mu,nu)**2', '4-2*eps'),
-                       ('g(mu,nu)*p1(mu)*p1(nu)', '0'),
-                       ('g(mu,nu)*p1(mu)*p2(nu)', 'ssp1/2'),
-                       ('g(mu,nu)*p1(nu)*p2(mu)', 'ssp1/2'),
-                       ('g(mu,nu)*p2(mu)*p2(nu)', '0')]
-
         li1 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator1,
                                           Lorentz_indices=indices1, powerlist=powerlist1,
-                                          replacement_rules=rules+extra_rules)
+                                          replacement_rules=rules)
 
         li2 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator2,
                                           Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
@@ -1534,8 +1528,8 @@ class TestPowerlist(unittest.TestCase):
         result_Nu_2 = sp.sympify(li2.numerator).subs('U',result_U_2).subs('F',result_F_2)\
                       *sp.sympify(li2.measure)*sp.sympify(li2.Gamma_factor)
 
-        print("Nu_1: ", result_Nu_1)
-        print("Nu_2: ", result_Nu_2)
+        # print("Nu_1: ", result_Nu_1.simplify())
+        # print("Nu_2: ", result_Nu_2.simplify())
 
         self.assertEqual( (result_U_1  - result_U_2 ).simplify() , 0 )
         self.assertEqual( (result_F_1  - result_F_2 ).simplify() , 0 )

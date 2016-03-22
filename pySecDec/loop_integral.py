@@ -704,20 +704,6 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
                     this_numerator_summand = scalar_factor(r) * this_U_factor * remainder
 
-                    # --------------------------- multiply the tensor "P" --------------------------
-                    for external_momentum_index, Lorentz_index in P_indices:
-                        this_tensor_P_factor = aM[external_momentum_index].dot(Q)
-                        # There should be eactly one external momentum in each term (summand) of `this_tensor_P_factor` --> attach the `Lorentz_index` to it
-                        for i, coeff in enumerate(this_tensor_P_factor.coeffs):
-                            this_tensor_P_factor.coeffs[i] = coeff.subs((p, p(Lorentz_index)) for p in self.external_momenta)
-
-                        # must append ``F`` and ``U`` to the parameters of ``this_tensor_P_factor``
-                        this_tensor_P_factor.expolist = np.hstack([this_tensor_P_factor.expolist, np.zeros((len(this_tensor_P_factor.expolist), 2), dtype=int)])
-                        this_tensor_P_factor.number_of_variables += 2
-
-                        this_numerator_summand *= this_tensor_P_factor
-                    # ------------------------------------------------------------------------------
-
                     # ---- multiply the caligraphic "A" in equation (2.5) of arXiv:1010.1667v1. ----
                     # `tensors_A2_indices` is a list of pairs of double indices describing one of the factors of equation (2.15) in arXiv:1010.1667v1.
                     # The following loop inserts the definition (2.18, arXiv:1010.1667v1) for all of these pairs.
@@ -741,9 +727,44 @@ class LoopIntegralFromPropagators(LoopIntegral):
                         contractions_unmatched.append(True)
                     # ------------------------------------------------------------------------------
 
+                    # --------------------------- multiply the tensor "P" --------------------------
+
+                    # There should be eactly one external momentum in each term (summand) of `this_tensor_P_factor`
+
+                    # --> contract with metric tensors
+                    # we need a copy of the ``P_indices``
+                    contracted_P_indices = list(P_indices)
+                    for k, (external_momentum_index, Lorentz_index_P) in enumerate(P_indices):
+                        for i, (Lorentz_index_1, Lorentz_index_2, metric_unmatched) in enumerate(zip(contractions_left, contractions_right, contractions_unmatched)):
+                            if metric_unmatched:
+                                if Lorentz_index_1 == Lorentz_index_P:
+                                    contractions_unmatched[i] = False
+                                    contracted_P_indices[k] = (external_momentum_index, Lorentz_index_2)
+                                    break
+                                if Lorentz_index_2 == Lorentz_index_P:
+                                    contractions_unmatched[i] = False
+                                    contracted_P_indices[k] = (external_momentum_index, Lorentz_index_1)
+                                    break
+
+                    # --> attach the `Lorentz_index_P` to it
+                    for k, (external_momentum_index, Lorentz_index_P) in enumerate(contracted_P_indices):
+                        this_tensor_P_factor = aM[external_momentum_index].dot(Q)
+                        for j, coeff in enumerate(this_tensor_P_factor.coeffs):
+                            this_tensor_P_factor.coeffs[j] = coeff.subs((p, p(Lorentz_index_P)) for p in self.external_momenta)
+
+                        # must append ``F`` and ``U`` to the parameters of ``this_tensor_P_factor``
+                        this_tensor_P_factor.expolist = np.hstack([this_tensor_P_factor.expolist, np.zeros((len(this_tensor_P_factor.expolist), 2), dtype=int)])
+                        this_tensor_P_factor.number_of_variables += 2
+
+                        this_numerator_summand *= this_tensor_P_factor
+                    # ------------------------------------------------------------------------------
+
                     # ----------------------- multiply the `external_tensor` -----------------------
+
+                    # replace metric tensors where possible
+
+                    # match ``g(mu, nu)`` with external_momenta (e.g. ``p(mu)``)
                     for external_momentum_index, Lorentz_index_external in external_tensor:
-                        # replace metric tensors where possible
                         external_momentum_unmatched = True
                         for i, (Lorentz_index_1, Lorentz_index_2, metric_unmatched) in enumerate(zip(contractions_left, contractions_right, contractions_unmatched)):
                             if metric_unmatched:
@@ -757,6 +778,63 @@ class LoopIntegralFromPropagators(LoopIntegral):
                                     break
                         if external_momentum_unmatched:
                             this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_external)
+
+                    # match ``g(mu, nu) * g(rho, sigma)`` when two indices in different ``g``s are equal
+                    matched = True
+                    myindex = 0
+                    while matched:
+                        matched = False
+
+                        for i, (Lorentz_index_mu, Lorentz_index_nu, left_metric_unmatched) in enumerate(zip(contractions_left, contractions_right, contractions_unmatched)):
+                            if not left_metric_unmatched:
+                                continue
+
+                            for j, (Lorentz_index_rho, Lorentz_index_sigma, right_metric_unmatched) in enumerate(zip(contractions_left, contractions_right, contractions_unmatched)):
+
+                                # we must have ``i > j`` because python seems to not take e.g. ``contractions_left[j] = ...`` into account in the iterator
+                                if i <= j or not right_metric_unmatched:
+                                    continue
+
+                                # ``mu == rho`` -- > ``g(mu, nu) * g(mu, sigma) = g(nu, sigma)``
+                                if Lorentz_index_mu == Lorentz_index_rho:
+                                    # re-execute while as long as there are simplifications
+                                    matched = True
+                                    # remove ``g(mu, nu)``
+                                    contractions_unmatched[i] = False
+                                    # "Lorentz_index_rho --> Lorentz_index_nu"; i.e. replace ``g(rho, sigma) --> g(nu, sigma)``
+                                    contractions_left[j] = Lorentz_index_nu
+                                    break
+
+                                # ``mu == sigma`` --> ``g(mu, nu) * g(rho, mu) = g(rho, nu)``
+                                elif Lorentz_index_mu == Lorentz_index_sigma:
+                                    # re-execute while as long as there are simplifications
+                                    matched = True
+                                    # remove ``g(mu, nu)``
+                                    contractions_unmatched[i] = False
+                                    # "Lorentz_index_sigma --> Lorentz_index_nu"; i.e. replace ``g(rho, sigma) --> g(rho, nu)``
+                                    contractions_right[j] = Lorentz_index_nu
+                                    break
+
+                                # ``nu == rho`` --> ``g(mu, nu) * g(nu, sigma) = g(mu, sigma)``
+                                elif Lorentz_index_nu == Lorentz_index_rho:
+                                    # re-execute while as long as there are simplifications
+                                    matched = True
+                                    # remove ``g(mu, nu)``
+                                    contractions_unmatched[i] = False
+                                    # "Lorentz_index_rho --> Lorentz_index_mu"; i.e. replace ``g(rho, sigma) --> g(mu, sigma)``
+                                    contractions_left[j] = Lorentz_index_mu
+                                    break
+
+                                # ``nu == sigma`` --> ``g(mu, nu) * g(rho, nu) = g(rho, mu)``
+                                elif Lorentz_index_nu == Lorentz_index_sigma:
+                                    # re-execute while as long as there are simplifications
+                                    matched = True
+                                    # remove ``g(mu, nu)``
+                                    contractions_unmatched[i] = False
+                                    # "Lorentz_index_sigma --> Lorentz_index_mu"; i.e. replace ``g(rho, sigma) --> g(rho, mu)``
+                                    contractions_right[j] = Lorentz_index_mu
+                                    break
+
                     # ------------------------------------------------------------------------------
 
                     # -------------------------- multiply "A" (continued) --------------------------
