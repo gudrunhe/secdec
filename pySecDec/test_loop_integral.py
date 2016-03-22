@@ -1435,6 +1435,42 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
 
 
+    def test_one_zero_and_one_negative_power(self):
+        internal_lines = [[0,[1,2]], [0,[2,3]], [0,[3,4]], [0,[4,1]]]
+        external_lines = [['p1',1], ['p2',2], ['p3',3], ['-p1-p2-p3',4]]
+        powerlist = [-1,3,0,1]
+
+        rules = [ ('p1*p1','0'),
+                  ('p2*p2','0'),
+                  ('p3*p3','0'),
+                  ('p1*p2','s/2'),
+                  ('p2*p3','t/2'),
+                  ('p1*p3','-s/2-t/2')]
+
+        Feynman_parameters=['dummy1','z1','dummy2','z2']
+
+        li = LoopIntegralFromGraph(internal_lines, external_lines, powerlist=powerlist,
+                                   replacement_rules=rules, Feynman_parameters=Feynman_parameters)
+
+        target_U = '''z1 + z2'''
+
+        target_F = '''-(s*z1*z2)'''
+
+        target_Nu = '''z1**2*(s*z1*z2 - 2*eps*s*z1*z2)'''
+
+        target_gamma = sp.gamma('1 + eps')/2
+
+        result_U = sp.sympify(li.U)
+        result_F = sp.sympify(li.F)
+        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+        result_gamma = li.Gamma_factor
+
+        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+        self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
+
+
     #TODO: if we decide to support combinations of inverse propagators and tensors, adapt this test.
     def test_tensor_integral_with_inverse_propagator(self):
         loop_momenta = ['l']
@@ -1449,7 +1485,6 @@ class TestPowerlist(unittest.TestCase):
         li = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator,
                                          Lorentz_indices=indices, powerlist=powerlist)
 
-        def get_numerator(loop_integral):
-            return loop_integral.numerator
+        self.assertRaisesRegexp(AssertionError, '(T|t)ensor.*inverse.*propagator.*', lambda x: x.numerator, li)
 
-        self.assertRaisesRegexp(AssertionError, '(T|t)ensor.*inverse.*propagator.*', get_numerator, li)
+

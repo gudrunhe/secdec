@@ -209,20 +209,17 @@ class LoopIntegral(object):
             # TODO: speed improvements?
             k = self.derivativelist[i]
 
-            if k==0:
-                if self.powerlist[i]==0:
-                    Nu = Nu.replace(i,0,remove=True).simplify()
-                continue
-
-            dFdx = F_explicit.derive(i)
-            dUdx = U_explicit.derive(i)
-            for _ in range(k):
-                Nu = (n*F*dUdx - m*dFdx*U)*Nu + F*U*(Nu.derive(i) + Nu.derive(-2)*dFdx + Nu.derive(-1)*dUdx)
-                n -= 1
-                m += 1
+            if k != 0:
+                dFdx = F_explicit.derive(i)
+                dUdx = U_explicit.derive(i)
+                for _ in range(k):
+                    Nu = (n*F*dUdx - m*dFdx*U)*Nu + F*U*(Nu.derive(i) + Nu.derive(-2)*dFdx + Nu.derive(-1)*dUdx)
+                    n -= 1
+                    m += 1
 
             # The k-fold derivative effectively increments the power of the propagator by k.
             # If the new 'effective power' is exactly zero, the corresponding parameter has to be set to zero.
+            # Note that in the case where the power is zero from the start, this applies as well.
             newpower = self.powerlist[i] + k
             if newpower == 0:
                 F_explicit = F_explicit.replace(i,0,remove=True).simplify()
