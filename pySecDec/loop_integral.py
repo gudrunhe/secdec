@@ -40,6 +40,7 @@ def assert_at_most_linear(expression, variables, error_message):
     poly = Polynomial.from_expression(expression, variables)
     assert (poly.expolist.sum(axis=1) <= 1).all(), error_message
 
+# TODO: explain measure in docstring, state what is needed for full integral
 class LoopIntegral(object):
     '''
     Container class for a loop integrals.
@@ -170,6 +171,7 @@ class LoopIntegral(object):
                 F = F.replace(i,0,remove=True).simplify()
         return F
 
+#TODO: ref for inverse propagators in doc
     @cached_property
     def numerator(self):
 
@@ -206,7 +208,6 @@ class LoopIntegral(object):
             # calculate k-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
             # keeping F and U symbolic but calculating their derivatives explicitly
             # In each step factor out U^(n-1)/F^(m+1).
-            # TODO: speed improvements?
             k = self.derivativelist[i]
 
             if k != 0:
@@ -727,58 +728,6 @@ class LoopIntegralFromPropagators(LoopIntegral):
                         contractions_unmatched.append(True)
                     # ------------------------------------------------------------------------------
 
-                    # --------------------------- multiply the tensor "P" --------------------------
-
-                    # There should be eactly one external momentum in each term (summand) of `this_tensor_P_factor`
-
-                    # --> contract with metric tensors
-                    # we need a copy of the ``P_indices``
-                    contracted_P_indices = list(P_indices)
-                    for k, (external_momentum_index, Lorentz_index_P) in enumerate(P_indices):
-                        for i, (Lorentz_index_1, Lorentz_index_2, metric_unmatched) in enumerate(zip(contractions_left, contractions_right, contractions_unmatched)):
-                            if metric_unmatched:
-                                if Lorentz_index_1 == Lorentz_index_P:
-                                    contractions_unmatched[i] = False
-                                    contracted_P_indices[k] = (external_momentum_index, Lorentz_index_2)
-                                    break
-                                if Lorentz_index_2 == Lorentz_index_P:
-                                    contractions_unmatched[i] = False
-                                    contracted_P_indices[k] = (external_momentum_index, Lorentz_index_1)
-                                    break
-
-                    # --> attach the `Lorentz_index_P` to it
-                    for k, (external_momentum_index, Lorentz_index_P) in enumerate(contracted_P_indices):
-                        this_tensor_P_factor = aM[external_momentum_index].dot(Q)
-                        for j, coeff in enumerate(this_tensor_P_factor.coeffs):
-                            this_tensor_P_factor.coeffs[j] = coeff.subs((p, p(Lorentz_index_P)) for p in self.external_momenta)
-
-                        # must append ``F`` and ``U`` to the parameters of ``this_tensor_P_factor``
-                        this_tensor_P_factor.expolist = np.hstack([this_tensor_P_factor.expolist, np.zeros((len(this_tensor_P_factor.expolist), 2), dtype=int)])
-                        this_tensor_P_factor.number_of_variables += 2
-
-                        this_numerator_summand *= this_tensor_P_factor
-                    # ------------------------------------------------------------------------------
-
-                    # ----------------------- multiply the `external_tensor` -----------------------
-
-                    # replace metric tensors where possible
-
-                    # match ``g(mu, nu)`` with external_momenta (e.g. ``p(mu)``)
-                    for external_momentum_index, Lorentz_index_external in external_tensor:
-                        external_momentum_unmatched = True
-                        for i, (Lorentz_index_1, Lorentz_index_2, metric_unmatched) in enumerate(zip(contractions_left, contractions_right, contractions_unmatched)):
-                            if metric_unmatched:
-                                if Lorentz_index_1 == Lorentz_index_external:
-                                    contractions_unmatched[i] = external_momentum_unmatched = False
-                                    this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_2)
-                                    break
-                                if Lorentz_index_2 == Lorentz_index_external:
-                                    contractions_unmatched[i] = external_momentum_unmatched = False
-                                    this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_1)
-                                    break
-                        if external_momentum_unmatched:
-                            this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_external)
-
                     # match ``g(mu, nu) * g(rho, sigma)`` when two indices in different ``g``s are equal
                     matched = True
                     myindex = 0
@@ -835,6 +784,58 @@ class LoopIntegralFromPropagators(LoopIntegral):
                                     contractions_right[j] = Lorentz_index_mu
                                     break
 
+                    # --------------------------- multiply the tensor "P" --------------------------
+
+                    # There should be eactly one external momentum in each term (summand) of `this_tensor_P_factor`
+
+                    # --> contract with metric tensors
+                    # we need a copy of the ``P_indices``
+                    contracted_P_indices = list(P_indices)
+                    for k, (external_momentum_index, Lorentz_index_P) in enumerate(P_indices):
+                        for i, (Lorentz_index_1, Lorentz_index_2, metric_unmatched) in enumerate(zip(contractions_left, contractions_right, contractions_unmatched)):
+                            if metric_unmatched:
+                                if Lorentz_index_1 == Lorentz_index_P:
+                                    contractions_unmatched[i] = False
+                                    contracted_P_indices[k] = (external_momentum_index, Lorentz_index_2)
+                                    break
+                                if Lorentz_index_2 == Lorentz_index_P:
+                                    contractions_unmatched[i] = False
+                                    contracted_P_indices[k] = (external_momentum_index, Lorentz_index_1)
+                                    break
+
+                    # --> attach the `Lorentz_index_P` to it
+                    for k, (external_momentum_index, Lorentz_index_P) in enumerate(contracted_P_indices):
+                        this_tensor_P_factor = aM[external_momentum_index].dot(Q)
+                        for j, coeff in enumerate(this_tensor_P_factor.coeffs):
+                            this_tensor_P_factor.coeffs[j] = coeff.subs((p, p(Lorentz_index_P)) for p in self.external_momenta)
+
+                        # must append ``F`` and ``U`` to the parameters of ``this_tensor_P_factor``
+                        this_tensor_P_factor.expolist = np.hstack([this_tensor_P_factor.expolist, np.zeros((len(this_tensor_P_factor.expolist), 2), dtype=int)])
+                        this_tensor_P_factor.number_of_variables += 2
+
+                        this_numerator_summand *= this_tensor_P_factor
+                    # ------------------------------------------------------------------------------
+
+                    # ----------------------- multiply the `external_tensor` -----------------------
+
+                    # replace metric tensors where possible
+
+                    # match ``g(mu, nu)`` with external_momenta (e.g. ``p(mu)``)
+                    for external_momentum_index, Lorentz_index_external in external_tensor:
+                        external_momentum_unmatched = True
+                        for i, (Lorentz_index_1, Lorentz_index_2, metric_unmatched) in enumerate(zip(contractions_left, contractions_right, contractions_unmatched)):
+                            if metric_unmatched:
+                                if Lorentz_index_1 == Lorentz_index_external:
+                                    contractions_unmatched[i] = external_momentum_unmatched = False
+                                    this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_2)
+                                    break
+                                if Lorentz_index_2 == Lorentz_index_external:
+                                    contractions_unmatched[i] = external_momentum_unmatched = False
+                                    this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_1)
+                                    break
+                        if external_momentum_unmatched:
+                            this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_external)
+
                     # ------------------------------------------------------------------------------
 
                     # -------------------------- multiply "A" (continued) --------------------------
@@ -877,6 +878,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
         return replacement_rules
 
 
+#TODO: in docstring insert definition of methods rather than refering to FromPropagators
 class LoopIntegralFromGraph(LoopIntegral):
     '''
     Construct the Feynman parametrization of a

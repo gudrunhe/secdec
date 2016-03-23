@@ -1534,3 +1534,52 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_U_1  - result_U_2 ).simplify() , 0 )
         self.assertEqual( (result_F_1  - result_F_2 ).simplify() , 0 )
         self.assertEqual( (result_Nu_1 - result_Nu_2).simplify() , 0 )
+
+
+    @attr('slow')
+    #@attr('active')
+    def test_compare_tensor_integral_to_inverse_propagator2(self):
+        loop_momenta = ['l']
+        propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
+
+        powerlist1 = [0,1,1]
+        numerator1 = 'l(mu)*l(mu) * l(nu)*l(nu) * l(rho)*l(rho) * l(sigma)*l(sigma) '
+        indices1 = ['mu','nu','rho','sigma']
+
+        powerlist2 = [-4,1,1]
+        numerator2 = '1'
+        indices2 = []
+
+        external_momenta = ['p1', 'p2']
+
+        rules = [ ('p1*p1','0'),
+                  ('p2*p2','0'),
+                  ('p3*p3','0'),
+                  ('p1*p2','ssp1/2'),
+                  ('p2*p3','ssp2/2'),
+                  ('p1*p3','-ssp1/2-ssp2/2')]
+
+        li1 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator1,
+                                          Lorentz_indices=indices1, powerlist=powerlist1,
+                                          replacement_rules=rules)
+
+        li2 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator2,
+                                          Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
+
+
+        result_U_1 = sp.sympify(li1.U)
+        result_F_1 = sp.sympify(li1.F)
+        result_Nu_1 = sp.sympify(li1.numerator).subs('U',result_U_1).subs('F',result_F_1)\
+                      *sp.sympify(li1.measure)*sp.sympify(li1.Gamma_factor)
+
+        result_U_2 = sp.sympify(li2.U)
+        result_F_2 = sp.sympify(li2.F)
+        result_Nu_2 = sp.sympify(li2.numerator).subs('U',result_U_2).subs('F',result_F_2)\
+                      *sp.sympify(li2.measure)*sp.sympify(li2.Gamma_factor)
+
+        # print("Nu_1: ", result_Nu_1.simplify())
+        # print("Nu_2: ", result_Nu_2.simplify())
+
+        self.assertEqual( (result_U_1  - result_U_2 ).simplify() , 0 )
+        self.assertEqual( (result_F_1  - result_F_2 ).simplify() , 0 )
+        self.assertEqual( (result_Nu_1 - result_Nu_2).simplify() , 0 )
