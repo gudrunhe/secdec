@@ -89,8 +89,8 @@ class LoopIntegral(object):
     def exponentiated_F(self):
         return ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, self.exponent_F, self.F.polysymbols)
 
-    def set_common_properties(self, replacement_rules, regulator, regulator_power, dimensionality,
-                              Feynman_parameters, powerlist):
+    def set_common_properties(self, replacement_rules, Feynman_parameters, regulator, regulator_power,
+                              dimensionality, powerlist):
         # sympify and store `regulator`
         self.regulator = sympify_symbols([regulator], '`regulator` must be a symbol.')[0]
 
@@ -442,8 +442,8 @@ class LoopIntegralFromPropagators(LoopIntegral):
     #       is the complete integrand
 
     def __init__(self, propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
-                 numerator=1, replacement_rules=[], Feynman_parameters='x', regulator='eps', \
-                 regulator_power=0, dimensionality='4-2*eps', metric_tensor='g', powerlist=[]):
+                 numerator=1, metric_tensor='g', replacement_rules=[], Feynman_parameters='x', regulator='eps', \
+                 regulator_power=0, dimensionality='4-2*eps', powerlist=[]):
 
         # sympify and store `loop_momenta`
         self.loop_momenta = sympify_symbols(loop_momenta, 'Each of the `loop_momenta` must be a symbol.')
@@ -474,8 +474,8 @@ class LoopIntegralFromPropagators(LoopIntegral):
             self.numerator_input_terms = [self.numerator_input]
 
         # store properties shared between derived classes
-        self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality,
-                                   Feynman_parameters, powerlist)
+        self.set_common_properties(replacement_rules, Feynman_parameters, regulator, regulator_power,
+                                   dimensionality, powerlist)
 
     @cached_property
     def propagator_sum(self):
@@ -963,8 +963,8 @@ class LoopIntegralFromGraph(LoopIntegral):
 
         # store properties shared between derived classes
         self.all_momenta = self.external_momenta
-        self.set_common_properties(replacement_rules, regulator, regulator_power, dimensionality,
-                                   Feynman_parameters, powerlist)
+        self.set_common_properties(replacement_rules, Feynman_parameters, regulator, regulator_power,
+                                   dimensionality, powerlist)
 
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0
