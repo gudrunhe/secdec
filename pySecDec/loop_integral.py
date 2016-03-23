@@ -1,45 +1,12 @@
 """Routines to Feynman parametrize a loop integral"""
 
 from .algebra import Polynomial, ExponentiatedPolynomial
-from .misc import det, adjugate, powerset, missing, all_pairs, cached_property
+from .misc import det, adjugate, powerset, missing, all_pairs, cached_property,\
+     sympify_symbols, assert_degree_at_most_max_degree
 from itertools import combinations
 import sympy as sp
 import numpy as np
 from math import floor
-
-# TODO: move sympify_symbols and assert_at_most_quadractic/linear to misc
-
-def sympify_symbols(iterable, error_message, allow_number=False):
-    '''
-    `sympify` each item in `iterable` and assert
-    that it is a `symbol`.
-
-    '''
-    symbols = []
-    for expression in iterable:
-        expression = sp.sympify(expression)
-        assert expression.is_Symbol or expression.is_Number if allow_number else expression.is_Symbol, error_message
-        symbols.append(expression)
-    return symbols
-
-def assert_at_most_quadractic(expression, variables, error_message):
-    '''
-    Assert that `expression` is a polynomial of
-    degree less or equal 2 in the `variables`.
-
-    '''
-    poly = Polynomial.from_expression(expression, variables)
-    assert (poly.expolist.sum(axis=1) <= 2).all(), error_message
-
-def assert_at_most_linear(expression, variables, error_message):
-    '''
-    Assert that `expression` is a polynomial of
-    degree less or equal 1 in the `variables`.
-
-    '''
-    poly = Polynomial.from_expression(expression, variables)
-    assert (poly.expolist.sum(axis=1) <= 1).all(), error_message
-
 
 class LoopIntegral(object):
     r'''
@@ -164,7 +131,7 @@ class LoopIntegral(object):
             assert self.replacement_rules.shape[1] == 2 , "The `replacement_rules` should be a list of tuples"
             for rule in self.replacement_rules:
                 for expression in rule:
-                    assert_at_most_quadractic(expression, self.all_momenta, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
+                    assert_degree_at_most_max_degree(expression, self.all_momenta, 2, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
         else:
             self.replacement_rules = []
 
@@ -468,7 +435,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
         # sympify and store `propagators`
         self.propagators = sp.sympify(list(propagators))
         for propagator in self.propagators:
-            assert_at_most_quadractic(propagator, self.all_momenta, 'Each of the `propagators` must be polynomial and at most quadratic in the momenta.')
+            assert_degree_at_most_max_degree(propagator, self.all_momenta, 2, 'Each of the `propagators` must be polynomial and at most quadratic in the momenta.')
         self.P = len(self.propagators)
 
         # sympify and store `numerator`
@@ -939,7 +906,7 @@ class LoopIntegralFromGraph(LoopIntegral):
                 self.external_momenta.append(extmom)
 
         for line in self.external_lines:
-            assert_at_most_linear(line[0], self.external_momenta, "The first element of the external line specifications must be at most linear combinations of external momenta.")
+            assert_degree_at_most_max_degree(line[0], self.external_momenta, 1, "The first element of the external line specifications must be at most linear combinations of external momenta.")
 
         # calculate number of loops from the relation #loops = #internal lines - (#vertices - 1)
         self.V = len(self.intverts)

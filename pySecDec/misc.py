@@ -265,3 +265,26 @@ def doc(docstring):
         function.__doc__ = docstring
         return function
     return add_doc
+
+def sympify_symbols(iterable, error_message, allow_number=False):
+    '''
+    `sympify` each item in `iterable` and assert
+    that it is a `symbol`.
+
+    '''
+    symbols = []
+    for expression in iterable:
+        expression = sp.sympify(expression)
+        assert expression.is_Symbol or expression.is_Number if allow_number else expression.is_Symbol, error_message
+        symbols.append(expression)
+    return symbols
+
+def assert_degree_at_most_max_degree(expression, variables, max_degree, error_message):
+    '''
+    Assert that `expression` is a polynomial of
+    degree less or equal `max_degree` in the `variables`.
+
+    '''
+    from .algebra import Polynomial
+    poly = Polynomial.from_expression(expression, variables)
+    assert (poly.expolist.sum(axis=1) <= max_degree).all(), error_message
