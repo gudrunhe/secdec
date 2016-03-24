@@ -65,16 +65,24 @@ class LoopIntegralFromGraph(LoopIntegral):
         for line in self.external_lines:
             assert_degree_at_most_max_degree(line[0], self.external_momenta, 1, "The first element of the external line specifications must be at most linear combinations of external momenta.")
 
+        # store properties shared between derived classes
+        self.all_momenta = self.external_momenta
+        self.set_common_properties(replacement_rules, Feynman_parameters, regulator, regulator_power,
+                                   dimensionality, powerlist)
+
+        # remove `internal_lines` and `Feynman_parameters` that are set to zero by the `powerlist`
+        for i in range(self.P-1,-1,-1): # traverse backwards to stay consistent with the indexing
+            if self.powerlist[i] == 0:
+                self.P -= 1
+                self.powerlist = self.powerlist[:i] + self.powerlist[i+1:]
+                self.internal_lines = self.internal_lines[:i] + self.internal_lines[i+1:]
+                self.Feynman_parameters = self.Feynman_parameters[:i] + self.Feynman_parameters[i+1:]
+
         # calculate number of loops from the relation #loops = #internal lines - (#vertices - 1)
         self.V = len(self.intverts)
         self.L = self.P - (self.V - 1)
         assert self.L > 0, \
             "To define a loop integral please input a graph with at least one closed loop."
-
-        # store properties shared between derived classes
-        self.all_momenta = self.external_momenta
-        self.set_common_properties(replacement_rules, Feynman_parameters, regulator, regulator_power,
-                                   dimensionality, powerlist)
 
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0

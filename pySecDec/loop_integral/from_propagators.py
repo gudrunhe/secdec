@@ -163,6 +163,14 @@ class LoopIntegralFromPropagators(LoopIntegral):
         self.set_common_properties(replacement_rules, Feynman_parameters, regulator, regulator_power,
                                    dimensionality, powerlist)
 
+        # remove `propagators` and `Feynman_parameters` that are set to zero by the `powerlist`
+        for i in range(self.P-1,-1,-1): # traverse backwards to stay consistent with the indexing
+            if self.powerlist[i] == 0:
+                self.P -= 1
+                self.powerlist = self.powerlist[:i] + self.powerlist[i+1:]
+                self.propagators = self.propagators[:i] + self.propagators[i+1:]
+                self.Feynman_parameters = self.Feynman_parameters[:i] + self.Feynman_parameters[i+1:]
+
     @cached_property
     def propagator_sum(self):
         return sum(prop*FP for prop,FP in zip(self.propagators,self.Feynman_parameters)).expand()
@@ -416,7 +424,6 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
                     # match ``g(mu, nu) * g(rho, sigma)`` when two indices in different ``g``s are equal
                     matched = True
-                    myindex = 0
                     while matched:
                         matched = False
 
