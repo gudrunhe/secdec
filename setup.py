@@ -20,7 +20,7 @@ setup(
     url='secdec.hepforge.org',
     description='An implementation of "Sector Decomposition" (see arXiv:0803.4177).',
     # long_description=long_description, #TODO: write an abstract of this package
-    # license='GPLv2', # TODO: license
+    # license='my_license', # TODO: license
     install_requires=['numpy', 'sympy', 'setuptools>=3.3'],
     extras_require={'testing': ['nose']},
     classifiers=['Development Status :: 2 - Pre-Alpha',
