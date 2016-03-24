@@ -200,16 +200,26 @@ class Polytope(object):
         return outdict
 
     def _make_run_card_vertices2facets(self):
-        run_card_as_str  = str(self.vertices.shape[0]) + ' ' + str(self.vertices.shape[1]) + '\n\n'
-        run_card_as_str += str(self.vertices).replace('[',' ').replace(']',' ')
-        run_card_as_str += '\n\npolytope\n'
-        return run_card_as_str
+        old_np_printoptions = np.get_printoptions()
+        try:
+            np.set_printoptions(threshold=np.inf)
+            run_card_as_str  = str(self.vertices.shape[0]) + ' ' + str(self.vertices.shape[1]) + '\n\n'
+            run_card_as_str += str(self.vertices).replace('[',' ').replace(']',' ')
+            run_card_as_str += '\n\npolytope\n'
+            return run_card_as_str
+        finally:
+            np.set_printoptions(**old_np_printoptions)
 
     def _make_run_card_facets2vertices(self):
-        run_card_as_str  = str(self.facets.shape[0]) + ' ' + str(self.facets.shape[1]) + '\n'
-        run_card_as_str += str(self.facets).replace('[','').replace(']','').replace('\n ','\n')
-        run_card_as_str += 'integral_closure\n'
-        return run_card_as_str
+        old_np_printoptions = np.get_printoptions()
+        try:
+            np.set_printoptions(threshold=np.inf)
+            run_card_as_str  = str(self.facets.shape[0]) + ' ' + str(self.facets.shape[1]) + '\n'
+            run_card_as_str += str(self.facets).replace('[','').replace(']','').replace('\n ','\n')
+            run_card_as_str += 'integral_closure\n'
+            return run_card_as_str
+        finally:
+            np.set_printoptions(**old_np_printoptions)
 
     def _read_cst_file(self, filepath):
         with open(filepath, 'r') as f:
@@ -274,6 +284,8 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
     assert cone.shape[0] >= cone.shape[1], 'Must at least have as many rays as the dimensionality'
     if cone.shape[0] == cone.shape[1]:
         raise ValueError("`cone` is simplicial already")
+    old_np_printoptions = np.get_printoptions()
+    np.set_printoptions(threshold=np.inf)
 
     os.mkdir(workdir)
     try:
@@ -335,6 +347,7 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
         return original_cone[simplicial_cones_indices]
 
     finally:
+        np.set_printoptions(**old_np_printoptions)
         if not keep_workdir:
             shutil.rmtree(workdir)
 
