@@ -207,15 +207,15 @@ class LoopIntegral(object):
         F_explicit = Polynomial(extended_expolist, self.preliminary_F.coeffs, polysymbols=Feynman_parameters_F_U)
 
         # TODO: can one combine tensor integrals with inverse propagators? For the moment forbid this!
-        if self.number_of_derivatives != 0:
-            assert self.highest_rank == 0, "Tensor integrals cannot be combined with inverse propagators."
+        # if self.number_of_derivatives != 0:
+        #     assert self.highest_rank == 0, "Tensor integrals cannot be combined with inverse propagators."
 
         Nu = self.preliminary_numerator
         U = Polynomial.from_expression('U', Feynman_parameters_F_U)
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
 
         # TODO: here we will want to uncomment or remove the '- self.highest_rank' after solving the todo above
-        n = self.N_nu - self.dimensionality / 2 * (self.L + 1) # - self.highest_rank
+        n = self.N_nu - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
         m = self.N_nu - self.dimensionality / 2 * self.L
 
         # Loop backwards over Feynman parameters so that removing one parameter does not change the indexing
