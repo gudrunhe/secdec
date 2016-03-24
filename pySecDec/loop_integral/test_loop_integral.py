@@ -1,8 +1,10 @@
-"""Unit tests for the U, F routines"""
+"""Unit tests for the U, F, and numerator construction routines"""
 
-from .loop_integral import *
+from . import *
+import numpy as np
 import sympy as sp
 import unittest
+from math import floor
 from nose.plugins.attrib import attr
 
 def uf_from_propagators_generic(test_case, loop_momenta, propagators, result_u, result_f):
