@@ -28,6 +28,12 @@ def _integrate_pole_part_single_index(polyprod, index):
             # exponent_constant_term += 0
         full_exponent += monomial_factor.exponent * monomial_factor.expolist[0,index]
 
+    if exponent_constant_term < 0:
+        regulator_part = full_exponent - exponent_constant_term
+        # the next line conceptually implements "assert regulator_part != 0"
+        if (regulator_part.coeffs == 0).all():
+            raise ValueError('"1/0" detected.')
+
     # TODO: finite variance of Monte Carlo integral estimator only if exponent_constant_term >-0.5   -->   should we change this to >-0.5 or even >=0?
     if exponent_constant_term > -1:
         # no subtraction needed, the input `polyprod` is numerically integrable

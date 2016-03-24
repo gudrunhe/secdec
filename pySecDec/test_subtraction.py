@@ -117,3 +117,12 @@ class TestIntegratePolePart(unittest.TestCase):
         I_0 = integrate_pole_part(I,0)
         for i,term in enumerate(I_0):
             integrate_pole_part(term,1)
+
+    #@attr('active')
+    def test_catch_one_over_zero(self):
+        minus_one = Polynomial([[0]], [-1])
+        monomial = ExponentiatedPolynomial([[1]], [1], exponent=minus_one) # "x0**(-1)" without regulator --> leads to "1/0" in subtraction
+        pole_part_initializer = Pow(Polynomial([[0]],[1]), exponent=minus_one)
+        cal_I = Function('cal_I', Polynomial([[1]],[1])) # "cal_I(x0)"
+        prod = Product(Product(monomial), pole_part_initializer, cal_I)
+        self.assertRaisesRegexp(ValueError, '1/0', integrate_pole_part, prod, 0)
