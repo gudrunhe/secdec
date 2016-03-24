@@ -134,7 +134,7 @@ def integrate_pole_part(polyprod, *indices):
         as described below.
         The <monomial>**(a_j + ...) should be an
         :class:`pySecDec.algebra.ExponentiatedPolynomial`
-        with ``exponent`` being a :class:`Polynomial` of the
+        with ``exponent`` being a :class:`.Polynomial` of the
         regulators :math:`\epsilon_1, \epsilon_2, ...`. Although
         no dependence on the Feynman parameters is expected
         in the ``exponent``, the polynomial variables should
