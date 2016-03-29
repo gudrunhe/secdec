@@ -1040,6 +1040,27 @@ class TestUF_FromGraph(unittest.TestCase):
                                 LoopIntegralFromGraph, internal_lines = [['m',[1,2]], ['m',[1,2]]],
                                 external_lines = [['p1',1],['p1**2',2]])
 
+def compare_two_loop_integrals(testcase, li1, li2):
+    result_U_1 = sp.sympify(li1.U)
+    result_F_1 = sp.sympify(li1.F)
+    result_Nu_1 = sp.sympify(li1.numerator).subs('U',result_U_1).subs('F',result_F_1)\
+                      *sp.sympify(li1.measure)*sp.sympify(li1.Gamma_factor)
+    result_expoU_1 = sp.sympify(li1.exponent_U)
+    result_expoF_1 = sp.sympify(li1.exponent_F)
+
+    result_U_2 = sp.sympify(li2.U)
+    result_F_2 = sp.sympify(li2.F)
+    result_Nu_2 = sp.sympify(li2.numerator).subs('U',result_U_2).subs('F',result_F_2)\
+                  *sp.sympify(li2.measure)*sp.sympify(li2.Gamma_factor)
+    result_expoU_2 = sp.sympify(li2.exponent_U)
+    result_expoF_2 = sp.sympify(li2.exponent_F)
+
+    testcase.assertEqual( (result_U_1  - result_U_2 ).simplify() , 0 )
+    testcase.assertEqual( (result_F_1  - result_F_2 ).simplify() , 0 )
+    testcase.assertEqual( (result_Nu_1 - result_Nu_2).simplify() , 0 )
+    testcase.assertEqual( (result_expoU_1 - result_expoU_2).simplify() , 0 )
+    testcase.assertEqual( (result_expoF_1 - result_expoF_2).simplify() , 0 )
+
 
 class TestPowerlist(unittest.TestCase):
 
@@ -1519,23 +1540,7 @@ class TestPowerlist(unittest.TestCase):
         li2 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator2,
                                           Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
 
-
-        result_U_1 = sp.sympify(li1.U)
-        result_F_1 = sp.sympify(li1.F)
-        result_Nu_1 = sp.sympify(li1.numerator).subs('U',result_U_1).subs('F',result_F_1)\
-                      *sp.sympify(li1.measure)*sp.sympify(li1.Gamma_factor)
-
-        result_U_2 = sp.sympify(li2.U)
-        result_F_2 = sp.sympify(li2.F)
-        result_Nu_2 = sp.sympify(li2.numerator).subs('U',result_U_2).subs('F',result_F_2)\
-                      *sp.sympify(li2.measure)*sp.sympify(li2.Gamma_factor)
-
-        # print("Nu_1: ", result_Nu_1.simplify())
-        # print("Nu_2: ", result_Nu_2.simplify())
-
-        self.assertEqual( (result_U_1  - result_U_2 ).simplify() , 0 )
-        self.assertEqual( (result_F_1  - result_F_2 ).simplify() , 0 )
-        self.assertEqual( (result_Nu_1 - result_Nu_2).simplify() , 0 )
+        compare_two_loop_integrals(self, li1, li2)
 
 
     @attr('slow')
@@ -1568,27 +1573,13 @@ class TestPowerlist(unittest.TestCase):
         li2 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator2,
                                           Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
 
+        compare_two_loop_integrals(self, li1, li2)
 
-        result_U_1 = sp.sympify(li1.U)
-        result_F_1 = sp.sympify(li1.F)
-        result_Nu_1 = sp.sympify(li1.numerator).subs('U',result_U_1).subs('F',result_F_1)\
-                      *sp.sympify(li1.measure)*sp.sympify(li1.Gamma_factor)
-
-        result_U_2 = sp.sympify(li2.U)
-        result_F_2 = sp.sympify(li2.F)
-        result_Nu_2 = sp.sympify(li2.numerator).subs('U',result_U_2).subs('F',result_F_2)\
-                      *sp.sympify(li2.measure)*sp.sympify(li2.Gamma_factor)
-
-        # print("Nu_1: ", result_Nu_1.simplify())
-        # print("Nu_2: ", result_Nu_2.simplify())
-
-        self.assertEqual( (result_U_1  - result_U_2 ).simplify() , 0 )
-        self.assertEqual( (result_F_1  - result_F_2 ).simplify() , 0 )
-        self.assertEqual( (result_Nu_1 - result_Nu_2).simplify() , 0 )
+    #TODO: test inverse linear propagator
 
     @attr('slow')
-    @attr('active')
-    def test_combined_tensor_integral_and_inverse_propagator(self):
+    #@attr('active')
+    def test_combined_tensor_integral_and_inverse_propagator_1(self):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2', '(l+p2+p3)**2']
 
@@ -1616,20 +1607,91 @@ class TestPowerlist(unittest.TestCase):
         li2 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator2,
                                           Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
 
+        compare_two_loop_integrals(self, li1, li2)
 
-        result_U_1 = sp.sympify(li1.U)
-        result_F_1 = sp.sympify(li1.F)
-        result_Nu_1 = sp.sympify(li1.numerator).subs('U',result_U_1).subs('F',result_F_1)\
-                      *sp.sympify(li1.measure)*sp.sympify(li1.Gamma_factor)
 
-        result_U_2 = sp.sympify(li2.U)
-        result_F_2 = sp.sympify(li2.F)
-        result_Nu_2 = sp.sympify(li2.numerator).subs('U',result_U_2).subs('F',result_F_2)\
-                      *sp.sympify(li2.measure)*sp.sympify(li2.Gamma_factor)
+    #@attr('active')
+    def test_combined_tensor_integral_and_inverse_propagator_2(self):
+        loop_momenta = ['l']
+        propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
 
-        print("Nu_1: ", result_Nu_1.simplify())
-        print("Nu_2: ", result_Nu_2.simplify())
+        powerlist1 = [0,1,1]
+        numerator1 = 'l(mu)*l(mu) * l(nu)*l(nu) * l(rho)'
+        indices1 = ['mu','nu','rho']
 
-        self.assertEqual( (result_U_1  - result_U_2 ).simplify() , 0 )
-        self.assertEqual( (result_F_1  - result_F_2 ).simplify() , 0 )
-        self.assertEqual( (result_Nu_1 - result_Nu_2).simplify() , 0 )
+        powerlist2 = [-2,1,1]
+        numerator2 = 'l(rho)'
+        indices2 = ['rho']
+
+        external_momenta = ['p1', 'p2']
+
+        rules = [ ('p1*p1','0'),
+                  ('p2*p2','0'),
+                  ('p1*p2','ssp1/2')]
+
+        li1 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator1,
+                                          Lorentz_indices=indices1, powerlist=powerlist1,
+                                          replacement_rules=rules)
+
+        li2 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator2,
+                                          Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
+
+        compare_two_loop_integrals(self, li1, li2)
+
+
+    #@attr('active')
+    def test_combined_tensor_integral_and_inverse_propagator_3(self):
+        loop_momenta = ['l']
+        propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
+
+        powerlist1 = [1,'1/2+eps',1]
+        numerator1 = '(l(mu)-p1(mu))*(l(mu)-p1(mu)) * l(nu)'
+        indices1 = ['mu','nu']
+
+        powerlist2 = [1,'-1/2+eps',1]
+        numerator2 = 'l(nu)'
+        indices2 = ['nu']
+
+        external_momenta = ['p1', 'p2']
+
+        rules = [ ('p1*p1','0'),
+                  ('p2*p2','0'),
+                  ('p1*p2','ssp1/2')]
+
+        li1 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator1,
+                                          Lorentz_indices=indices1, powerlist=powerlist1,
+                                          replacement_rules=rules)
+
+        li2 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator2,
+                                          Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
+
+        compare_two_loop_integrals(self, li1, li2)
+
+
+    @attr('slow')
+    #@attr('active')
+    def test_combined_tensor_integral_and_inverse_propagator_4(self):
+        loop_momenta = ['l', 'k']
+
+        propagators1 = ['l**2', '(l+p1)**2', 'k**2', '(k-p1)**2', '(l+k)**2']
+        powerlist1 = [1,-1,1,1,1]
+        numerator1 = '(l(mu) - k(mu)) * (l(mu) - k(mu))'
+        indices1 = ['mu']
+
+        propagators2 = ['l**2', '(l+p1)**2', 'k**2', '(k-p1)**2', '(l+k)**2', '(l-k)**2']
+        powerlist2 = [1,-1,1,1,1,-1]
+        numerator2 = '1'
+        indices2 = []
+
+        external_momenta = ['p1']
+
+        rules = [ ('p1*p1','p1sqr')]
+
+        li1 = LoopIntegralFromPropagators(propagators1, loop_momenta, external_momenta, numerator=numerator1,
+                                          Lorentz_indices=indices1, powerlist=powerlist1,
+                                          replacement_rules=rules)
+
+        li2 = LoopIntegralFromPropagators(propagators2, loop_momenta, external_momenta, numerator=numerator2,
+                                          Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
+
+        compare_two_loop_integrals(self, li1, li2)
