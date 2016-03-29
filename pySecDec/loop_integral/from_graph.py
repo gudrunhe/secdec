@@ -73,10 +73,20 @@ class LoopIntegralFromGraph(LoopIntegral):
         # remove `internal_lines` and `Feynman_parameters` that are set to zero by the `powerlist`
         for i in range(self.P-1,-1,-1): # traverse backwards to stay consistent with the indexing
             if self.powerlist[i] == 0:
+                vertex1, vertex2 = self.internal_lines[i][1]
+                self.internal_lines = self.internal_lines[:i] + self.internal_lines[i+1:]
                 self.P -= 1
                 self.powerlist = self.powerlist[:i] + self.powerlist[i+1:]
-                self.internal_lines = self.internal_lines[:i] + self.internal_lines[i+1:]
                 self.Feynman_parameters = self.Feynman_parameters[:i] + self.Feynman_parameters[i+1:]
+
+                # re-connect graph after removing line -> pinch
+                for line in self.internal_lines:
+                    for j in range(2):
+                        if line[1][j] == vertex1:
+                            line[1][j] = vertex2
+                for line in self.external_lines:
+                    if line[1] == vertex1:
+                        line[1] = vertex2
 
         # calculate number of loops from the relation #loops = #internal lines - (#vertices - 1)
         self.V = len(self.intverts)

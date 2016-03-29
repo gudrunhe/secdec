@@ -1361,7 +1361,7 @@ class TestPowerlist(unittest.TestCase):
     def test_powerlist_cutconstruct(self):
         # like SecDec3 -> loop/demos/2_triangle_2L, but with non-trivial powerlist
         internal_lines = [['m',[3,4]],['m',[4,5]],['m',[3,5]],[0,[1,2]],[0,[4,1]],[0,[2,5]]]
-        external_lines = [['p1',1], ['p2',2], ['-p1-p2',3]]
+        external_lines = [['p1',1], ['p2',2], ['-p1',3], ['-p2',3]]
         powerlist = [1,2,3,1,4,1]
 
         rules = [ ('p1*p1','0'),
@@ -1436,11 +1436,11 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
 
-
+    #@attr('active')
     def test_one_zero_and_one_negative_power(self):
         internal_lines = [[0,[1,2]], [0,[2,3]], [0,[3,4]], [0,[4,1]]]
         external_lines = [['p1',1], ['p2',2], ['p3',3], ['-p1-p2-p3',4]]
-        powerlist = [-1,3,0,1] # the ``0`` opens the box --> tree graph
+        powerlist = [-1,3,0,1]
 
         rules = [ ('p1*p1','0'),
                   ('p2*p2','0'),
@@ -1451,8 +1451,26 @@ class TestPowerlist(unittest.TestCase):
 
         Feynman_parameters=['dummy1','z1','dummy2','z2']
 
-        self.assertRaisesRegexp(AssertionError, 'at least one closed loop', LoopIntegralFromGraph, internal_lines, external_lines,
-				powerlist=powerlist, replacement_rules=rules, Feynman_parameters=Feynman_parameters)
+        li = LoopIntegralFromGraph(internal_lines, external_lines, powerlist=powerlist,
+                                   replacement_rules=rules, Feynman_parameters=Feynman_parameters)
+
+        target_U = '''z1 + z2'''
+
+        target_F = '''-(s*z1*z2)'''
+
+        target_Nu = '''z1**2*(s*z1*z2 - 2*eps*s*z1*z2)'''
+
+        target_gamma = sp.gamma('1 + eps')/2
+
+        result_U = sp.sympify(li.U)
+        result_F = sp.sympify(li.F)
+        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+        result_gamma = li.Gamma_factor
+
+        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+        self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
 
 
     #TODO: if we decide to support combinations of inverse propagators and tensors, adapt this test.
