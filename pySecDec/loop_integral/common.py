@@ -104,8 +104,12 @@ class LoopIntegral(object):
         The powers of the propergators, possibly dependent on the `regulator`.
         In case of negative powers, the derivative with respect to the corresponding
         Feynman parameter is calculated as explained in Section 3.2.4 of Ref. [BHJ+15]_.
+        If negative powers are combined with a tensor numerator,
+        the derivative acts on the Feynman-parametrized tensor numerator as well,
+        which should lead to a consistent result.
 
     '''
+    #TODO: Prove last statement in description of powerlist, then replace `should lead` by `leads`
 
     def set_common_properties(self, replacement_rules, Feynman_parameters, regulator, regulator_power,
                               dimensionality, powerlist):
@@ -206,16 +210,11 @@ class LoopIntegral(object):
 
         F_explicit = Polynomial(extended_expolist, self.preliminary_F.coeffs, polysymbols=Feynman_parameters_F_U)
 
-        # TODO: can one combine tensor integrals with inverse propagators? For the moment forbid this!
-        if self.number_of_derivatives != 0:
-            assert self.highest_rank == 0, "Tensor integrals cannot be combined with inverse propagators."
-
         Nu = self.preliminary_numerator
         U = Polynomial.from_expression('U', Feynman_parameters_F_U)
         F = Polynomial.from_expression('F', Feynman_parameters_F_U)
 
-        # TODO: here we will want to uncomment or remove the '- self.highest_rank' after solving the todo above
-        n = self.N_nu - self.dimensionality / 2 * (self.L + 1) # - self.highest_rank
+        n = self.N_nu - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
         m = self.N_nu - self.dimensionality / 2 * self.L
 
         # Loop backwards over Feynman parameters so that removing one parameter does not change the indexing

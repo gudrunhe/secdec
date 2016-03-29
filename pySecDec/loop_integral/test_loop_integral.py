@@ -1494,22 +1494,6 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
 
 
-    #TODO: if we decide to support combinations of inverse propagators and tensors, adapt this test.
-    def test_tensor_integral_with_inverse_propagator(self):
-        loop_momenta = ['l']
-        propagators = ['l', '(l-p1)**2', '(l+p2)**2', '(l+p2+p3)**2']
-
-        powerlist = [1,1,1,-1]
-        numerator = 'l(mu)*p1(mu)'
-
-        indices = ['mu']
-        external_momenta = ['p1', 'p2', 'p3']
-
-        li = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator,
-                                         Lorentz_indices=indices, powerlist=powerlist)
-
-        self.assertRaisesRegexp(AssertionError, '(T|t)ensor.*inverse.*propagator.*', lambda x: x.numerator, li)
-
     @attr('slow')
     #@attr('active')
     def test_compare_tensor_integral_to_inverse_propagator(self):
