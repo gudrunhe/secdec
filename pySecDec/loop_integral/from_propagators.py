@@ -171,6 +171,16 @@ class LoopIntegralFromPropagators(LoopIntegral):
                 self.propagators = self.propagators[:i] + self.propagators[i+1:]
                 self.Feynman_parameters = self.Feynman_parameters[:i] + self.Feynman_parameters[i+1:]
 
+        # If the degree of an inverse propagator is smaller than 2,
+        # the derivative of U with respect to the corresponding Feynman parameter will vanish,
+        # which will change the exponent of U.
+        for i in range(self.P):
+            k = self.derivativelist[i]
+            if k !=0 :
+                poly = Polynomial.from_expression(self.propagators[i], self.loop_momenta)
+                if max(poly.expolist.sum(axis=1)) < 2:
+                    self.U_derivatives -= k
+
     @cached_property
     def propagator_sum(self):
         return sum(prop*FP for prop,FP in zip(self.propagators,self.Feynman_parameters)).expand()

@@ -1559,8 +1559,6 @@ class TestPowerlist(unittest.TestCase):
 
         compare_two_loop_integrals(self, li1, li2)
 
-    #TODO: test inverse linear propagator
-
     @attr('slow')
     #@attr('active')
     def test_combined_tensor_integral_and_inverse_propagator_1(self):
@@ -1664,6 +1662,34 @@ class TestPowerlist(unittest.TestCase):
 
         propagators2 = ['l**2', '(l+p1)**2', 'k**2', '(k-p1)**2', '(l+k)**2', '(l-k)**2']
         powerlist2 = [1,-1,1,1,1,-1]
+        numerator2 = '1'
+        indices2 = []
+
+        external_momenta = ['p1']
+
+        rules = [ ('p1*p1','p1sqr')]
+
+        li1 = LoopIntegralFromPropagators(propagators1, loop_momenta, external_momenta, numerator=numerator1,
+                                          Lorentz_indices=indices1, powerlist=powerlist1,
+                                          replacement_rules=rules)
+
+        li2 = LoopIntegralFromPropagators(propagators2, loop_momenta, external_momenta, numerator=numerator2,
+                                          Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
+
+        compare_two_loop_integrals(self, li1, li2)
+
+
+    #@attr('active')
+    def test_inverse_linear_propagator(self):
+        loop_momenta = ['l']
+
+        propagators1 = ['l**2', '(l+p1)**2']
+        powerlist1 = [1,1]
+        numerator1 = 'l(mu)*p1(mu) * l(nu)*p1(nu) * l(rho)*p1(rho)'
+        indices1 = ['mu', 'nu', 'rho']
+
+        propagators2 = ['l**2', '(l+p1)**2', 'l*p1']
+        powerlist2 = [1,1,-3]
         numerator2 = '1'
         indices2 = []
 

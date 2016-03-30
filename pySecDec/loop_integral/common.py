@@ -47,7 +47,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_U(self):
-        return self.N_nu - self.number_of_derivatives - self.dimensionality / 2 * (self.L + 1)\
+        return self.N_nu - self.U_derivatives - self.dimensionality / 2 * (self.L + 1)\
             - self.highest_rank
 
     @property # not cached on purpose --> this is just making copies
@@ -56,7 +56,7 @@ class LoopIntegral(object):
 
     @cached_property
     def exponent_F(self):
-        return self.dimensionality / 2 * self.L - (self.N_nu + self.number_of_derivatives)
+        return self.dimensionality / 2 * self.L - (self.N_nu + self.F_derivatives)
 
     @property # not cached on purpose --> this is just making copies
     def exponentiated_F(self):
@@ -173,6 +173,9 @@ class LoopIntegral(object):
 
             self.number_of_derivatives = sum(self.derivativelist)
 
+        self.U_derivatives = self.number_of_derivatives
+        self.F_derivatives = self.number_of_derivatives
+
         self.N_nu = sum(self.powerlist)
 
     @cached_property
@@ -223,16 +226,37 @@ class LoopIntegral(object):
 
             # calculate k-fold derivative of U^n/F^m*Nu with respect to Feynman_parameters[i]
             # keeping F and U symbolic but calculating their derivatives explicitly
-            # In each step factor out U^(n-1)/F^(m+1).
+            # In each step factor out U^(n-1)/F^(m+1) or U^n/F^(m+1).
             k = self.derivativelist[i]
 
             if k != 0:
                 dFdx = F_explicit.derive(i)
                 dUdx = U_explicit.derive(i)
                 for _ in range(k):
-                    Nu = (n*F*dUdx - m*dFdx*U)*Nu + F*U*(Nu.derive(i) + Nu.derive(-2)*dFdx + Nu.derive(-1)*dUdx)
-                    n -= 1
+                    # The derivative of U^n/F^m*Nu is given by the sum of three terms:
+                    # term1 = n * U^(n-1)/F^m * dU/dx * Nu
+                    # term2 = -m * U^n/F^(m+1) * dF/dx * Nu
+                    # term3 = U^n/F^m * ( dNu/dx + dNu/dF * dF/dx + dNu/dU * dU/dx )
+
+                    # terms with all factors of U and F stripped off:
+                    term1 = n*dUdx*Nu
+                    term2 = - m*dFdx*Nu
+                    term3 = Nu.derive(i) + Nu.derive(-2)*dFdx + Nu.derive(-1)*dUdx
+
+                    # If term1 vanishes, we can factor out U^n.
+                    if dUdx.coeffs.any() != 0:
+                        # -> term1 non-zero -> factor out U^(n-1) rather than U^n
+                        n -= 1
+                        term2 *= U
+                        term3 *= U
+
+                    # dFdx will in practice never be the zero polynomial
+                    # -> term2 always present -> factor out F^-(m+1) rather than F^-m
                     m += 1
+                    term1 *= F
+                    term3 *= F
+
+                    Nu = term1 + term2 + term3
 
             # The k-fold derivative effectively increments the power of the propagator by k.
             # If the new 'effective power' is exactly zero, the corresponding parameter has to be set to zero.
