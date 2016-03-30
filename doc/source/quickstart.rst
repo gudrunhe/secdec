@@ -443,13 +443,13 @@ and the order to which the expression shall be expanded:
 >>> from pySecDec.expansion import expand_Taylor
 >>> expression = Expression('x**eps', ['eps'])
 >>> expand_Taylor(expression, 0, 2).simplify()
- + (1) + (log( + (x)))*eps + ((log( + (x))) * (log( + (x))))*eps**2
+ + (1) + (log( + (x)))*eps + ((log( + (x))) * (log( + (x))) * ( + (1/2)))*eps**2
 
 It is also possible to expand an expression in multiple variables simultaneously:
 
 >>> expression = Expression('x**(eps + alpha)', ['eps', 'alpha'])
 >>> expand_Taylor(expression, [0,1], [2,0]).simplify()
- + (1) + (log( + (x)))*eps + ((log( + (x))) * (log( + (x))))*eps**2
+ + (1) + (log( + (x)))*eps + ((log( + (x))) * (log( + (x))) * ( + (1/2)))*eps**2
 
 The command above instructs :func:`pySecDec.expansion.expand_Taylor` to expand
 the ``expression`` to the second order in the variable indexed ``0`` (``eps``)
@@ -497,7 +497,7 @@ determines the order of the expansion:
 >>> expression = Expression('1/(2*eps) * 1/(eps + alpha)', ['eps', 'alpha']).simplify()
 >>> eps_first = expand_singular(expression, [0,1], [1,1])
 >>> eps_first
- + ( + (( + (1/2)) * (( + (1))**(-1)))*alpha**-1)*eps**-1 + ( + (( + (-1/2)) * (( + (1))**(-1)))*alpha**-2) + ( + (( + (1)) * (( + (1))**(-1)))*alpha**-3)*eps
+ + ( + (( + (1/2)) * (( + (1))**(-1)))*alpha**-1)*eps**-1 + ( + (( + (-1/2)) * (( + (1))**(-1)))*alpha**-2) + ( + (( + (1)) * (( + (2))**(-1)))*alpha**-3)*eps
 >>> alpha_first = expand_singular(expression, [1,0], [1,1])
 >>> alpha_first
  + ( + (( + (1/2)) * (( + (1))**(-1)))*eps**-2) + ( + (( + (-1/2)) * (( + (1))**(-1)))*eps**-3)*alpha
@@ -509,6 +509,6 @@ output, we can convert these expressions to the slower but more high level `symp
 >>> eps_first = expand_singular(expression, [0,1], [1,1])
 >>> alpha_first = expand_singular(expression, [1,0], [1,1])
 >>> sp.sympify(eps_first)
-1/(2*alpha*eps) - 1/(2*alpha**2) + eps/alpha**3
+1/(2*alpha*eps) - 1/(2*alpha**2) + eps/(2*alpha**3)
 >>> sp.sympify(alpha_first)
 -alpha/(2*eps**3) + 1/(2*eps**2)

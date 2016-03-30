@@ -38,9 +38,11 @@ def _expand_Taylor_step(expression, index, order):
     # Construct coefficients of the Taylor polynomial
     expression_variable_set_to_zero = expression.replace(index, 0)
     coeffs = [expression_variable_set_to_zero]
+    inverse_i_factorial = sp.sympify(1)
     for order_i in range(order):
+        inverse_i_factorial /= order_i + 1
         expression = expression.simplify().derive(index)
-        coeffs.append( expression.replace(index, 0) )
+        coeffs.append( expression.replace(index, 0) * inverse_i_factorial )
 
     return Polynomial(expolist, np.array(coeffs), expression.symbols, copy=False)
 
@@ -129,7 +131,10 @@ def _expand_singular_step(product, index, order):
     nonsingular_series_expolist[:,index] = np.arange(1 + order + highest_pole) - highest_pole
 
     # nonsingular expansion order is shifted by the (potentially) singular prefactor (`highest_pole`)
+    i_factorial = 1
     for i in range(order + highest_pole):
+        i_factorial *= i + 1
+
         numerator, denominator = derive_polyrational(numerator, denominator, index)
         this_order_numerator = numerator.replace(index, 0).simplify()
 
@@ -141,7 +146,7 @@ def _expand_singular_step(product, index, order):
         this_order_denominator = denominator.replace(index, 0).simplify()
 
         # convert denominator to ``<polynomial>**-1``
-        this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs, -1, this_order_denominator.polysymbols, copy=False)
+        this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs  * i_factorial, -1, this_order_denominator.polysymbols, copy=False)
 
         nonsingular_series_coeffs.append(Product(this_order_numerator, this_order_denominator))
 

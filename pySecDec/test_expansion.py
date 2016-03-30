@@ -12,7 +12,7 @@ class TestSingularExpansion(unittest.TestCase):
         self.unit_polynomial = Polynomial.from_expression('1', ['eps0','eps1'])
         self.p0 = Polynomial([(0,1),(1,0)], coeffs=[36, 12], polysymbols=['eps0','eps1'])
         self.p1 = Polynomial([(0,1),(1,0)], coeffs=[ 3,  1], polysymbols=['eps0','eps1'])
-        self.p2 = Polynomial([(0,1)], coeffs=[1], polysymbols=['eps0','eps1'])
+        self.p2 = Polynomial([(0,1)], coeffs=['1'], polysymbols=['eps0','eps1'])
         self.p3 = ExponentiatedPolynomial([(0,1),(1,0)], coeffs=[36, 12], polysymbols=['eps0','eps1'], exponent=-1)
         self.p4 = LogOfPolynomial([(0,1),(1,0)], coeffs=[36, 12], polysymbols=['eps0','eps1'])
         self.p5 = ExponentiatedPolynomial([(0,1),(1,0)], coeffs=[36, 12], polysymbols=['eps0','eps1'], exponent='eps0')
@@ -66,7 +66,7 @@ class TestSingularExpansion(unittest.TestCase):
 
         pole_order = sp.sympify('1/(12*eps0**2) * 1/eps1')
         constant_order = sp.sympify('-(12*3+36)*eps0/(12*12*eps0**4) * 1')
-        order_epsilon = sp.sympify('9/(2*eps0**4) * eps1')
+        order_epsilon = sp.sympify('9/(2*eps0**4) * eps1/2')
 
         target_expansion = pole_order + constant_order + order_epsilon
         self.assertEqual(target_expansion - sp.sympify(expansion), 0)
@@ -110,7 +110,7 @@ class TestSingularExpansion(unittest.TestCase):
 
         pole_order = sp.sympify('1/(12*eps0**2) * 1/eps1')
         constant_order = sp.sympify('-(12*3+36)*eps0/(12*12*eps0**4) * 1')
-        order_epsilon = sp.sympify('9/(2*eps0**4) * eps1')
+        order_epsilon = sp.sympify('9/(2*eps0**4) * eps1/2')
 
         target_expansion = pole_order + constant_order + order_epsilon
         self.assertEqual(target_expansion - sp.sympify(expansion), 0)
@@ -133,6 +133,12 @@ class TestSingularExpansion(unittest.TestCase):
 
         self.assertEqual( (sp.sympify(high_level_output) - sp.sympify(flattened_expansion_1_0)).simplify() , 0)
 
+    #@attr('active')
+    def test_high_level_function_two_regulators_higher_order(self):
+        expanded = expand_singular(self.rational_polynomial, indices=[1,0], orders=[3,2])
+        target = sp.sympify('1/(12*eps0**2*eps1) - 1/(2*eps0**3) + 9*eps1/(4*eps0**4) -  9*eps1**2/eps0**5 + 135*eps1**3/(4*eps0**6)')
+        self.assertEqual( (sp.sympify(expanded) - target).simplify() , 0)
+
 class TestTaylorExpansion(unittest.TestCase):
     def setUp(self):
         p0 = Polynomial.from_expression('5 + 2*x + 4*y + y**2', ['x','y'])
@@ -140,9 +146,9 @@ class TestTaylorExpansion(unittest.TestCase):
         self.p1 = Polynomial.from_expression('3*x + y', ['x','y'])
         self.expression = Sum(self.p0, Product(self.p0, self.p1)) # (3*x + y)*(2*x + y**2 + 4*y)**(2*x) + (2*x + y**2 + 4*y)**(2*x)
         self.expected_expansion_in_x = sp.sympify('''
-                                                         + x**0  *  (y + 1)
-                                                         + x**1  *  (2*y*log(5 + y**2 + 4*y) + 2*log(5 + y**2 + 4*y) + 3) +
-                                                         + x**2  *  (y*(4*log(5 + y**2 + 4*y)**2 + 8/(5 + y**2 + 4*y)) + 4*log(5 + y**2 + 4*y)**2 + 12*log(5 + y**2 + 4*y) + 8/(5 + y**2 + 4*y))
+                                                         + x**0 / 0!  *  (y + 1)
+                                                         + x**1 / 1!  *  (2*y*log(5 + y**2 + 4*y) + 2*log(5 + y**2 + 4*y) + 3) +
+                                                         + x**2 / 2!  *  (y*(4*log(5 + y**2 + 4*y)**2 + 8/(5 + y**2 + 4*y)) + 4*log(5 + y**2 + 4*y)**2 + 12*log(5 + y**2 + 4*y) + 8/(5 + y**2 + 4*y))
                                                   ''')
 
     def test_error_messages(self):
