@@ -125,7 +125,6 @@ class LoopIntegralFromPropagators(LoopIntegral):
     ''' + LoopIntegral.common_properties_doc
 
     # TODO: carefully reread and check this documentation
-    # TODO: test case with linear propagators
 
     def __init__(self, propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
                  numerator=1, metric_tensor='g', replacement_rules=[], Feynman_parameters='x', regulator='eps', \

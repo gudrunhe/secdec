@@ -347,6 +347,23 @@ class TestUF_FromPropagators(unittest.TestCase):
         self.assertEqual( (target_U - U).simplify() , 0)
         self.assertEqual( (target_F - F).simplify() , 0)
 
+    @attr('active')
+    def test_linear_propagator(self):
+        # SecDec3 -> loop/demos/8_linearprop_1L
+        loop_momenta = ['k']
+        props = ['k**2','(-k+p)**2','2*k*v']
+        rules = [('p*p', 'ssp1'),
+                 ('v*v', 'ssp2'),
+                 ('p*v', 0)]
+        li = LoopIntegralFromPropagators(props, loop_momenta, replacement_rules=rules, \
+                                         Feynman_parameters=['z1','z2','z3'])
+        U = sp.sympify(li.U)
+        F = sp.sympify(li.F)
+
+        target_U = sp.sympify('z1 + z2')
+        target_F = sp.sympify('-(ssp1*z1*z2) + ssp2*z3**2')
+
+
 class TestNumerator(unittest.TestCase):
     #@attr('active')
     def test_double_index_notation(self):
@@ -1705,3 +1722,50 @@ class TestPowerlist(unittest.TestCase):
                                           Lorentz_indices=indices2, powerlist=powerlist2, replacement_rules=rules)
 
         compare_two_loop_integrals(self, li1, li2)
+
+
+    #@attr('active')
+    # this integral is known analytically -> candidate to check numerical result
+    def test_Y_integral(self):
+
+        loop_momenta = ['k1', 'k2']
+        propagators = ['k1**2', 'k2**2', '(k1+k2)**2', '-b2*k2-1', '-b1*k1-1', 'b2*k1-2',
+                       '(-aij/2-1/(2*aij))*b2*(2*k2+k1)-b1*(2*k2+k1)']
+        powerlist = [1,1,1,1,1,1,-1]
+
+        rules = [('b1*b1','1'),
+                 ('b2*b2','1'),
+                 ('b1*b2','-aij/2-1/(2*aij)')]
+
+        Feynman_parameters=['z' + str(i) for i in range(1,8)]
+
+        li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist,
+                                         replacement_rules=rules, Feynman_parameters=Feynman_parameters)
+
+
+        target_U = sp.sympify('''z2*z3 + z1*(z2 + z3)''')
+
+        target_F = sp.sympify('''(4*aij*z5*(z2*z6 + z3*(z4 + z6)) +
+                    4*aij**3*z5*(z2*z6 + z3*(z4 + z6)) +
+                    2*aij**2*(z3*(2*z4**2 + 2*z5**2 + 4*z4*z6 + 2*z6**2) +
+                    2*z1*(z4**2 + 4*z2*(z4 + z5 + 2*z6) +
+                    4*z3*(z4 + z5 + 2*z6)) +
+                    z2*(2*z5**2 + 2*z6**2 + 8*z3*(z4 + z5 + 2*z6))))/(16*aij**2)''')
+
+        target_Nu = sp.sympify('''-((z2*z3 + z1*(z2 + z3))*(-2*z2*z5 + 2*z3*z5 +
+                    2*aij**2*(2*z2*z5 - 2*z3*z5) -
+                    aij**4*(2*z2*z5 - 2*z3*z5)))/(16*aij**2) -
+                    (eps*(z2*z3 + z1*(z2 + z3))*(-2*z2*z5 + 2*z3*z5 +
+                    2*aij**2*(2*z2*z5 - 2*z3*z5) -
+                    aij**4*(2*z2*z5 - 2*z3*z5)))/(8*aij**2)''')
+
+        result_U = sp.sympify(li.U)
+        result_F = sp.sympify(li.F)
+        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+
+        # The `target_Nu` produced with SecDec3 has an additional factor of U in the numerator...
+        result_Nu *= result_U
+
+        self.assertEqual( (result_U  - target_U ).simplify() , 0 )
+        self.assertEqual( (result_F  - target_F ).simplify() , 0 )
+        self.assertEqual( (result_Nu - target_Nu).simplify() , 0 )
