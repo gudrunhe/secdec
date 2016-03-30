@@ -347,7 +347,7 @@ class TestUF_FromPropagators(unittest.TestCase):
         self.assertEqual( (target_U - U).simplify() , 0)
         self.assertEqual( (target_F - F).simplify() , 0)
 
-    @attr('active')
+    #@attr('active')
     def test_linear_propagator(self):
         # SecDec3 -> loop/demos/8_linearprop_1L
         loop_momenta = ['k']
