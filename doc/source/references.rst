@@ -6,6 +6,12 @@
 References
 ==========
 
+.. [BH00] | T. Binoth and G. Heinrich
+               *An automatized algorithm to compute infrared divergent
+	       multiloop integrals*,   Nucl. Phys. B 585 (2000) 741,
+              | `doi:10.1016/S0550-3213(00)00429-6 <http://dx.doi.org/10.1016/S0550-3213(00)00429-6>`_,
+              | `arXiv:hep-ph/0004013 <http://arxiv.org/abs/hep-ph/0004013>`_
+
 .. [BHJ+15] | S. Borowka, G. Heinrich, S. P. Jones, M. Kerner, J. Schlenk, T. Zirke
               *SecDec-3.0: numerical evaluation of multi-scale integrals beyond one loop*, 2015, Comput.Phys.Comm.196
             | `doi:10.1016/j.cpc.2015.05.022 <http://dx.doi.org/10.1016/j.cpc.2015.05.022>`_,

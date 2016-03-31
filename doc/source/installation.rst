@@ -6,13 +6,47 @@ It has been tested and developed on `MacOS 10.11 (El Capitan)` and
 `openSUSE 13.2 (Harlequin)`. However, it should be platform independent
 and also work on Windows.
 
+.. _install_from_PyPI:
+
+Installation from PyPI using `pip` (coming up soon)
+----------------------------------------------------------------------
+
+Installation is easiest using `pip` (https://pypi.python.org/pypi/pip).
+`pip` automatically installs all dependencies
+along with the desired package from the Python Package Index
+(https://pypi.python.org/pypi).
+
+.. code::
+
+    $ pip install pySecDec
+
+Manual Installation
+-------------------
+
+Before you manually install `pySecDec`, make sure that you have
+recent versions of `numpy` (http://www.numpy.org/) and
+`sympy` (http://www.sympy.org) installed.
+
+To install `pySecDec`, open a shell in the top level directory (where
+``setup.py`` is located) and type::
+
+    $ python setup.py install
+
+If you have `pip`, you should type
+
+.. code::
+
+    $ pip install .
+
+instead, for the same reasons as mentioned :ref:`above <install_from_PyPI>`.
+
 The Geomethod and Normaliz
 --------------------------
 
 .. note::
     If you are not urgently interested in using the
     :mod:`geometric decomposition <pySecDec.decomposition.geometric>`, you
-    can ignore this section for the beginning. The instruction below are
+    can ignore this section for the beginning. The instructions below are
     not essential for a `pySecDec` installation. You can still install
     `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_
     **after** installing `pySecDec`. All but the
@@ -27,30 +61,8 @@ designed for `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ version ``3.0
 such that the `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ executable is found. Alternatively, you can pass the
 path to the `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ executable directly to the functions that need it.
 
-Installation from PyPI using `pip` (recommended, but not possible yet)
-----------------------------------------------------------------------
-
-Installation is easiest using `pip` (https://pypi.python.org/pypi/pip).
-`pip` automatically installs all dependencies
-along with the desired package from the Python Package Index
-(https://pypi.python.org/pypi).
-::
-
-    $ pip install pySecDec
-
-Manual Installation
--------------------
-
-Before you manually install `pySecDec`, make sure that you have
-recent versions of `numpy` (http://www.numpy.org/) and
-`sympy` (http://www.sympy.org) installed.
-
-To install `pySecDec`, open a shell in the source repository and type::
-
-    $ python setup.py install
-
 For Developers
---------------
+------------
 
 `pip` offers an "editable" installation that can be triggered by::
 

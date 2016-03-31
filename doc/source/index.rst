@@ -1,16 +1,14 @@
 pySecDec
 ========
 
-`pySecDec` is toolbox for the calculation of dimensionally regulated parameter integrals
-using the sector decomposition approach [Hei08]_.
-
-Contents:
+`pySecDec` is a toolbox for the calculation of dimensionally regulated parameter integrals
+using the sector decomposition approach [BH00]_; see also [Hei08]_, [BHJ+15]_.
 
 .. toctree::
     :numbered:
 
     installation.rst
-    quickstart.rst
+    overview.rst
     full_reference.rst
     references.rst
 
