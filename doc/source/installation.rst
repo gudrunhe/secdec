@@ -62,7 +62,7 @@ such that the `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ executable i
 path to the `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ executable directly to the functions that need it.
 
 For Developers
-------------
+--------------
 
 `pip` offers an "editable" installation that can be triggered by::
 
