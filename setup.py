@@ -21,9 +21,9 @@ setup(
     description='An implementation of "Sector Decomposition" (see arXiv:0803.4177).',
     # long_description=long_description, #TODO: write an abstract of this package
     license='GPLv3',
-    install_requires=['numpy', 'sympy', 'setuptools>=3.3'],
+    install_requires=['numpy>=1.6', 'sympy', 'setuptools>=3.3'],
     extras_require={'testing': ['nose']},
-    classifiers=['Development Status :: 2 - Pre-Alpha',
+    classifiers=['Development Status :: 3 - Alpha',
                  'Environment :: Console',
                  'Intended Audience :: Science/Research',
                  'Natural Language :: English',
