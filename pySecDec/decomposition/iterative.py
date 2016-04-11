@@ -174,7 +174,6 @@ def iteration_step(sector):
     # find a suitable transformation for a polynomial to be cast
     singular_set_found = False
     polyprod = get_poly_to_transform(sector)
-    mono = polyprod.factors[0]
     poly = polyprod.factors[1]
     for singular_set in powerset(range(N),exclude_empty=True):
         if poly.becomes_zero_for(singular_set):
@@ -196,7 +195,10 @@ def iteration_step(sector):
     # Call `remap_parameters` for each arising subsector.
     for singular_set in subsector_defining_singular_sets:
         subsector = sector.copy()
-        remap_parameters(singular_set, subsector.Jacobian, *([polyprod.factors[1] for polyprod in subsector.cast] + subsector.other))
+        polynomials_to_transform = [polyprod.factors[0] for polyprod in subsector.cast] + \
+                                   [polyprod.factors[1] for polyprod in subsector.cast] + \
+                                   subsector.other + [subsector.Jacobian]
+        remap_parameters(singular_set, subsector.Jacobian, *polynomials_to_transform)
         for polyprod in subsector.cast:
             refactorize(polyprod,singular_set[0])
         yield subsector

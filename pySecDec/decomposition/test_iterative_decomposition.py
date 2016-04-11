@@ -178,3 +178,26 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(s1_F.factors[1]), " + (-s12) + (-s23)*x0*x2")
         self.assertEqual(str(s1_U.factors[0]), " + (1)")
         self.assertEqual(str(s1_U.factors[1]), " + (1) + (1)*x0*x1 + (1)*x1 + (1)*x2")
+
+    #@attr('active')
+    def test_multiple_iterative_decomposition(self):
+        variables = ['x0', 'x1', 'x2']
+        x0, x1, x2 = [Polynomial.from_expression('x%i' % i, variables) for i in range(3)]
+        p0_mono = Polynomial.from_expression('x0*x1', variables)
+        p0_poly = Polynomial([[1,0,0],[0,1,0],[0,0,1]],[1,1,1],variables) # "x0 + x1 + x2"
+        p1 = Polynomial.from_expression('x1 + x2', variables)
+        Jacobian = Polynomial.from_expression('x0', variables) # nonempty Jacobian to check transformation there
+        initial_sector = Sector(cast=[Product(p0_mono,p0_poly)], other=[p1], Jacobian=Jacobian)
+        psd_decomposition = list( iterative_decomposition(initial_sector) )
+
+        target_decomposition = \
+            [
+                Sector(cast=[Product(p0_mono*x0**2,Polynomial([[0,0,0],[0,1,0],[0,0,1]],[1,1,1],variables))], other=[Polynomial([[1,1,0],[1,0,1]],[1,1], variables)], Jacobian=Jacobian*x0**2),
+                Sector(cast=[Product(p0_mono*x1**2,Polynomial([[1,0,0],[0,0,0],[0,0,1]],[1,1,1],variables))], other=[Polynomial([[0,1,0],[0,1,1]],[1,1], variables)], Jacobian=Jacobian*x1*x1**2),
+                Sector(cast=[Product(p0_mono*x2**3,Polynomial([[1,0,0],[0,1,0],[0,0,0]],[1,1,1],variables))], other=[Polynomial([[0,1,1],[0,0,1]],[1,1], variables)], Jacobian=Jacobian*x2*x2**2)
+            ]
+
+        self.assertEqual(len(psd_decomposition), 3)
+
+        for stringify in (str, repr):
+            self.assertEqual(stringify(psd_decomposition), stringify(target_decomposition))
