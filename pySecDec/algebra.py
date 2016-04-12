@@ -490,7 +490,7 @@ class Polynomial(_Expression):
                 return summand1 + summand2 # implicit simplify
         else:
             if summand1 is None:
-                return Polynomial(np.zeros([1,self.number_of_variables]), np.array([0]), self.polysymbols, copy=False)
+                return Polynomial(np.zeros([1,self.number_of_variables],dtype=int), np.array([0]), self.polysymbols, copy=False)
             else:
                 return summand1
 
