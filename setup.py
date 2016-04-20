@@ -27,10 +27,11 @@ setup(
                  'Environment :: Console',
                  'Intended Audience :: Science/Research',
                  'Natural Language :: English',
-                 'Operating System :: OS Independent',
+                 'Operating System :: Unix',
                  'Programming Language :: Python :: 2.7',
                  'Programming Language :: Python :: 3',
+                 'Programming Language :: C++',
                  'Topic :: Scientific/Engineering :: Physics',
                  ],
-    platforms=['any'],
+    platforms=['Unix'],
     )
