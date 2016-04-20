@@ -1352,7 +1352,7 @@ class ProductRule(_Expression):
             factors = []
             for j, derivative_multiindex in enumerate(term):
                 factors.append(self.expressions[j][tuple(derivative_multiindex)].replace(index, value, remove))
-            summands.append(Product(*factors, copy=False) * coeff)
+            summands.append(Product(*factors, copy=False) * int(coeff))
         return Sum(*summands, copy=False)
 
 class Pow(_Expression):
