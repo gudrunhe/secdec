@@ -3,7 +3,7 @@ Installation
 
 `pySecDec` should run fine with both, `python` 2.7 and `python` 3.
 It has been tested and developed on `MacOS 10.11 (El Capitan)` and
-`openSUSE 13.2 (Harlequin)`. However, it should be platform independent
+`openSUSE Tumbleweed`. However, it should be platform independent
 and also work on Windows.
 
 .. _install_from_PyPI:
