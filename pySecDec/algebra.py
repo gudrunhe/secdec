@@ -235,7 +235,7 @@ class Function(_Expression):
         '''
         Generate the derivative by the parameter indexed `index`.
         The derivative of a function with `symbol` ``f`` by
-        some `index` is denoted as ``df_d<index>``.
+        some `index` is denoted as ``dfd<index>``.
 
         :param index:
             integer;
