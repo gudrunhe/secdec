@@ -82,18 +82,18 @@ class TestSingularExpansion(unittest.TestCase):
 
     #@attr('active')
     def test_flatten(self):
-        # expand in regulator 1 first, then in regulator 0
-        expansion_1 = _expand_singular_step(self.rational_polynomial, index=1, order=0)
-        expansion_1_0 = expansion_1.copy()
-        for i, coeff in enumerate(expansion_1.coeffs):
-            expansion_1_0.coeffs[i] = _expand_singular_step(coeff, index=0, order=0)
-        flattened_expansion_1_0 = _flatten(expansion_1_0, 2)
+        p0 = Polynomial([[-1,0], [0,0]], ['A', 'B'])
+        p1 = Polynomial([[0,-2], [0,-1], [0,0]], [p0, p0, p0])
 
-        self.assertTrue(type(flattened_expansion_1_0) is Polynomial)
-        for coeff in flattened_expansion_1_0.coeffs:
-            self.assertTrue(isinstance(coeff, _Expression))
+        target_flattened_polynomial = Polynomial([[-1,-2], [0,-2],
+                                                  [-1,-1], [0,-1],
+                                                  [-1, 0], [0, 0]],
 
-        self.assertEqual( (sp.sympify(expansion_1_0) - sp.sympify(flattened_expansion_1_0)).simplify() , 0)
+                                                  ['A','B']*3)
+
+        flattened_p1 = _flatten(p1, 1)
+
+        np.testing.assert_array_equal(flattened_p1.expolist, target_flattened_polynomial.expolist)
 
     #@attr('active')
     def test_high_level_function_one_regulator(self):
@@ -122,7 +122,7 @@ class TestSingularExpansion(unittest.TestCase):
         expansion_1_0 = expansion_1.copy()
         for i, coeff in enumerate(expansion_1.coeffs):
             expansion_1_0.coeffs[i] = _expand_singular_step(coeff, index=0, order=0)
-        flattened_expansion_1_0 = _flatten(expansion_1_0, 2)
+        flattened_expansion_1_0 = _flatten(expansion_1_0, 1)
 
         # the high-level function should run exactly the commands above
         high_level_output = expand_singular(self.rational_polynomial, indices=[1,0], orders=[1,0])

@@ -172,9 +172,9 @@ def _flatten(polynomial, depth):
     for i,(exponents,coeff) in enumerate(zip(polynomial.expolist,polynomial.coeffs)):
         if depth > 1: # stopping criterion for recursion
             coeff = _flatten(coeff, depth-1)
-        all_exponents.append(exponents)
-        all_coeffs.append(coeff)
-    return Polynomial(np.array(all_exponents), np.array(all_coeffs), polynomial.polysymbols, copy=False)
+        all_coeffs.extend(coeff.coeffs)
+        all_exponents.append(exponents + coeff.expolist)
+    return Polynomial(np.vstack(all_exponents), np.array(all_coeffs), polynomial.polysymbols, copy=False)
 
 def _expand_and_flatten(expression, indices, orders, expansion_one_variable):
     '''
@@ -212,7 +212,10 @@ def _expand_and_flatten(expression, indices, orders, expansion_one_variable):
 
 
     expansion = recursive_expansion(expression, indices, orders)
-    return _flatten(expansion, len(indices))
+    if len(indices) == 1:
+        return expansion
+    else:
+        return _flatten(expansion, len(indices) - 1)
 
 # -------------------- end of private functions --------------------
 

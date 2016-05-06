@@ -497,10 +497,10 @@ determines the order of the expansion:
 >>> expression = Expression('1/(2*eps) * 1/(eps + alpha)', ['eps', 'alpha']).simplify()
 >>> eps_first = expand_singular(expression, [0,1], [1,1])
 >>> eps_first
- + ( + (( + (1/2)) * (( + (1))**(-1)))*alpha**-1)*eps**-1 + ( + (( + (-1/2)) * (( + (1))**(-1)))*alpha**-2) + ( + (( + (1)) * (( + (2))**(-1)))*alpha**-3)*eps
+ + (( + (1/2)) * (( + (1))**(-1)))*eps**-1*alpha**-1 + (( + (-1/2)) * (( + (1))**(-1)))*alpha**-2 + (( + (1)) * (( + (2))**(-1)))*eps*alpha**-3
 >>> alpha_first = expand_singular(expression, [1,0], [1,1])
 >>> alpha_first
- + ( + (( + (1/2)) * (( + (1))**(-1)))*eps**-2) + ( + (( + (-1/2)) * (( + (1))**(-1)))*eps**-3)*alpha
+ + (( + (1/2)) * (( + (1))**(-1)))*eps**-2 + (( + (-1/2)) * (( + (1))**(-1)))*eps**-3*alpha
 
 The expression printed out by our algebra module are quite messy. In order to obtain nicer
 output, we can convert these expressions to the slower but more high level `sympy`:
