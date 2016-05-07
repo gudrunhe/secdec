@@ -409,8 +409,9 @@ class TestExponentiatedPolynomial(unittest.TestCase):
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
 
     #@attr('active')
-    def test_simplify(self):
+    def test_simplify_zero_in_exponent(self):
         A, B = sp.symbols('A B')
+
         # <something>**0 = 1
         polynomial_to_power_zero_polynomial_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=Polynomial.from_expression('0',['x0','x1'])).simplify()
         polynomial_to_power_zero_sympy_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sp.sympify('x-x')).simplify()
@@ -421,6 +422,10 @@ class TestExponentiatedPolynomial(unittest.TestCase):
             np.testing.assert_array_equal(p.coeffs, [1])
             np.testing.assert_array_equal(p.expolist, [[0,0]])
 
+    #@attr('active')
+    def test_simplify_one_in_exponent(self):
+        A, B = sp.symbols('A B')
+
         # <something>**1 = <something>
         polynomial_to_power_one_polynomial_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=Polynomial([[0,0,0],[0,0,0]], [2, -1])).simplify()
         polynomial_to_power_one_sympy_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sp.sympify('1/2+1/2')).simplify()
@@ -430,6 +435,20 @@ class TestExponentiatedPolynomial(unittest.TestCase):
             self.assertTrue(type(p) is Polynomial)
             np.testing.assert_array_equal(p.coeffs, [A,B])
             np.testing.assert_array_equal(p.expolist, [(2,1),(0,0)])
+
+    #@attr('active')
+    def test_simplify_one_in_base(self):
+        A = sp.symbols('A')
+
+        # 1**<something> = 1
+        polynomial_exponent = ExponentiatedPolynomial([(0,0),(0,0)],[A, 1-A],exponent=Polynomial([[0,9,0],[1,2,3]], [2, A])).simplify()
+        sympy_exponent = ExponentiatedPolynomial([(0,0),(0,0)],[A, 1-A],exponent=sp.sympify('1/9+11/2 * eps')).simplify()
+        numerical_exponent = ExponentiatedPolynomial([(0,0),(0,0)],[A, 1-A],exponent=np.pi).simplify()
+
+        for p in (polynomial_exponent, sympy_exponent, numerical_exponent):
+            self.assertTrue(type(p) is Polynomial)
+            np.testing.assert_array_equal(p.coeffs, [1])
+            np.testing.assert_array_equal(p.expolist, [(0,0)])
 
 class TestProduct(unittest.TestCase):
     def test_init(self):
@@ -550,6 +569,11 @@ class TestProductRule(unittest.TestCase):
 
 #@attr('active')
 class TestPow(unittest.TestCase):
+    def setUp(self):
+        self.zero = Polynomial.from_expression(0, ['x0','x1','x2'])
+        self.one = Polynomial.from_expression(1, ['x0','x1','x2'])
+        self.something = Polynomial([(0,0,1),(0,1,0),(1,0,0)], ['a','b','c'])
+
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
         p1 = Polynomial([(8,1),(1,5),(2,1)],['D','E','F'])
@@ -594,20 +618,30 @@ class TestPow(unittest.TestCase):
         self.assertEqual(copy.exponent.expolist[0,0],8)
 
     #@attr('active')
-    def test_simplify(self):
-        zero = Polynomial.from_expression('0', ['x0','x1','x2'])
-        base = Polynomial([(0,0,1),(0,1,0),(1,0,0)], ['a','b','c'])
-
-        one = Pow(base, zero).simplify()
-
+    def test_simplify_zero_in_exponent(self):
+        # <something>**0 = 1
+        one = Pow(self.something, self.zero).simplify()
         self.assertTrue(type(one) is Polynomial)
-        np.testing.assert_array_equal(one.coeffs, [1])
-        np.testing.assert_array_equal(one.expolist, [[0,0,0]])
+        np.testing.assert_array_equal(one.coeffs, self.one.coeffs)
+        np.testing.assert_array_equal(one.expolist, self.one.expolist)
 
-        poly = Pow(base, one).simplify()
+    #@attr('active')
+    def test_simplify_one_in_exponent(self):
+        # <something>**1 = <something>
+        poly = Pow(self.something, self.one).simplify()
         self.assertTrue(type(poly) is Polynomial)
-        np.testing.assert_array_equal(poly.coeffs, base.coeffs)
-        np.testing.assert_array_equal(poly.expolist, base.expolist)
+        np.testing.assert_array_equal(poly.coeffs, self.something.coeffs)
+        np.testing.assert_array_equal(poly.expolist, self.something.expolist)
+
+    #@attr('active')
+    def test_simplify_one_in_base(self):
+        # 1**<something> = 1
+        complicated_one = Polynomial([[1,2,3],[1,2,3],[0,0,0],[0,0,0]], ['A','-A','B','1-B'])
+        complicated_one = Product(complicated_one, complicated_one, self.one) ** sp.symbols('exponent1')
+        one = Pow(complicated_one, self.something**sp.symbols('exponent2')).simplify()
+        self.assertTrue(type(one) is Polynomial)
+        np.testing.assert_array_equal(one.coeffs, self.one.coeffs)
+        np.testing.assert_array_equal(one.expolist, self.one.expolist)
 
     #@attr('active')
     def test_simplify_remove_expression(self):

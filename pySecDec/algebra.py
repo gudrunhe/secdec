@@ -810,9 +810,10 @@ class ExponentiatedPolynomial(Polynomial):
     def simplify(self):
         '''
         Apply the identity <something>**0 = 1 or
-        <something>**1 = <somethng> if possible,
-        otherwise call the simplify method of the base class.
-        Convert ``exponent`` to symbol if possible.
+        <something>**1 = <something> or 1**<something> = 1
+        if possible, otherwise call the simplify method of
+        the base class. Convert ``exponent`` to symbol if
+        possible.
 
         '''
         if isinstance(self.exponent, _Expression):
@@ -826,7 +827,13 @@ class ExponentiatedPolynomial(Polynomial):
         if self.exponent == 1:
             return Polynomial(self.expolist, self.coeffs, self.polysymbols, copy=False)
 
-        return super(ExponentiatedPolynomial, self).simplify()
+        super(ExponentiatedPolynomial, self).simplify()
+
+        # 1**<something> --> simplify to type `Polynomial`
+        if len(self.coeffs) == 1 and self.coeffs[0] == 1 and (self.expolist == 0).all():
+            return Polynomial(self.expolist, self.coeffs, self.polysymbols, copy=False)
+
+        return self
 
 class LogOfPolynomial(Polynomial):
     '''
@@ -1385,9 +1392,10 @@ class Pow(_Expression):
     def simplify(self):
         '''
         Apply the identity <something>**0 = 1
-        or <something>**1 = something if possible.
-        Convert to :class:`.ExponentiatedPolynomial`
-        if possible.
+        or <something>**1 = <something> or
+        1**<something> = 1 if possible. Convert
+        to :class:`.ExponentiatedPolynomial` or
+        :class:`.Polynomial` if possible.
 
         '''
         self.base = self.base.simplify()
