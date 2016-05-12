@@ -89,16 +89,30 @@ def parse_template_tree(src, dest, replacements_in_files={}, filesystem_replacem
     for dirpath, dirnames, filenames in os.walk(src):
         # create target directory
         this_source_directory = os.path.abspath(dirpath)
-        this_target_directory = os.path.abspath(os.path.join(dest, os.path.relpath(this_source_directory, src)))
+        target_relpath_without_renamings = os.path.relpath(this_source_directory, src)
 
         # rename/ignore if desired
         # do not mody top-level name
-        if this_target_directory != os.path.abspath(dest):
-            this_source_dirname = os.path.split(this_source_directory)[-1]
-            this_target_dirname = filesystem_replacements.get(this_source_dirname, this_source_dirname)
-            if this_target_dirname is None:
+        if this_source_directory != os.path.abspath(src):
+            omit_directory = False
+            target_relpath_building_blocks = []
+            remainder, last_block = os.path.split(target_relpath_without_renamings)
+            while last_block != '':
+                last_block = filesystem_replacements.get(last_block, last_block) # rename
+                if last_block is None:
+                    omit_directory = True
+                    break
+                target_relpath_building_blocks.append(last_block)
+                remainder, last_block = os.path.split(remainder)
+            if omit_directory:
                 continue
-            this_target_directory = os.path.join(os.path.split(this_target_directory)[0], this_target_dirname)
+            target_relpath_building_blocks.reverse()
+            target_relpath = os.path.join(*target_relpath_building_blocks)
+
+            this_target_directory = os.path.join(dest, target_relpath)
+
+        else:
+            this_target_directory = dest
 
         os.mkdir(this_target_directory)
 

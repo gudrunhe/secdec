@@ -56,6 +56,8 @@ class TestTemplateParsing(unittest.TestCase):
         path_to_template_file_1 = os.path.join(path_to_template_tree, 'file1')
         path_to_template_file_2 = os.path.join(path_to_template_tree, 'file2')
         path_to_template_file_3 = os.path.join(path_to_template_tree, 'file3')
+        path_to_template_file_4 = os.path.join(path_to_template_tree, 'dir1', 'file4')
+        os.mkdir(os.path.join(path_to_template_tree, 'dir1', 'subdir1'))
         with open(path_to_template_file_1, 'w') as template_file:
             template_file.write('''
             unchanged line
@@ -67,6 +69,11 @@ class TestTemplateParsing(unittest.TestCase):
             inserting integer: %(number)i
             inserting string: %(string)s''')
         with open(path_to_template_file_3, 'w') as template_file:
+            template_file.write('''
+            unchanged line
+            inserting integer: %(number)i
+            inserting string: %(string)s''')
+        with open(path_to_template_file_4, 'w') as template_file:
             template_file.write('''
             unchanged line
             inserting integer: %(number)i
@@ -84,12 +91,14 @@ class TestTemplateParsing(unittest.TestCase):
         path_to_parsed_tree = os.path.join(self.tmpdir, 'parsed_tree')
         path_to_parsed_file_1 = os.path.join(path_to_parsed_tree, 'renamed1')
         path_to_parsed_file_2 = os.path.join(path_to_parsed_tree, 'file2')
+        path_to_parsed_file_4 = os.path.join(path_to_parsed_tree, 'renamed_dir', 'file4')
         parse_template_tree(path_to_template_tree, path_to_parsed_tree, replacements_in_files, replace_filenames)
 
         # should only have the parsed files (with one renamed and without 'file3') in the destination tree
         self.assertEqual(set(os.listdir(path_to_parsed_tree)), set(['renamed1', 'file2', 'renamed_dir']))
+        self.assertEqual(set(os.listdir(os.path.join(path_to_parsed_tree, 'renamed_dir'))), set(['file4', 'subdir1']))
 
-        for path_to_parsed_file in (path_to_parsed_file_1, path_to_parsed_file_2):
+        for path_to_parsed_file in (path_to_parsed_file_1, path_to_parsed_file_2, path_to_parsed_file_4):
             print('Comparing file "' + path_to_parsed_file + '"')
 
             # read in parsed file
