@@ -126,4 +126,9 @@ def parse_template_tree(src, dest, replacements_in_files={}, filesystem_replacem
             # parse the file using `parse_template_file`
             source_file_path = os.path.join(this_source_directory, source_filename)
             target_file_path = os.path.join(this_target_directory, target_filename)
-            parse_template_file(source_file_path, target_file_path, replacements_in_files)
+
+            try:
+                parse_template_file(source_file_path, target_file_path, replacements_in_files)
+            except Exception as error:
+                error.args = tuple([arg for arg in error.args] + ['while parsing "' + source_file_path + '"'])
+                raise
