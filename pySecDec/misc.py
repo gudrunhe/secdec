@@ -288,3 +288,43 @@ def assert_degree_at_most_max_degree(expression, variables, max_degree, error_me
     from .algebra import Polynomial
     poly = Polynomial.from_expression(expression, variables)
     assert (poly.expolist.sum(axis=1) <= max_degree).all(), error_message
+
+def lowest_order(expression, variable):
+    '''
+    Find the lowest order of `expression`'s series
+    expansion in `variable`.
+
+    Example:
+
+    >>> from pySecDec.misc import lowest_order
+    >>> lowest_order('exp(eps)', 'eps')
+    0
+    >>> lowest_order('gamma(eps)', 'eps')
+    -1
+
+    :param expression:
+        string or sympy expression;
+        The expression to compute the lowest
+        expansion order of.
+
+    :param variable:
+        string or sympy expression;
+        The variable in which to expand.
+
+    '''
+    # convert to sympy if neccessary
+    variable = sympify_symbols([variable], '`variable` must be a symbol')[0]
+    if not isinstance(expression, sp.Expr):
+        expression = sp.sympify(expression)
+
+    # get the lowest term in the expansion
+    lowest_expansion_term = next( sp.series(expression, variable, n=None) )
+
+    # try conversion to sympy polynomial --> fails for pole
+    try:
+        lowest_expansion_term = sp.poly(lowest_expansion_term, variable)
+        return lowest_expansion_term.monoms()[0][0]
+    except sp.PolynomialError:
+        # pole --> convert the inverse to polynomial
+        highest_pole = sp.poly(lowest_expansion_term**-1, variable)
+        return - highest_pole.monoms()[0][0]

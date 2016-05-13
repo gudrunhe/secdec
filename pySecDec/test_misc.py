@@ -215,3 +215,42 @@ class TestCachedProperty(unittest.TestCase):
             # the method should be called only once
             self.assertEqual(instance.prop, 10)
             self.assertEqual(instance.counter, 1)
+
+class TestPrefactorExpansion(unittest.TestCase):
+    #@attr('active')
+    def test_error_message(self):
+        self.assertRaisesRegexp(AssertionError, 'variable.*symbol', lowest_order, 'a+b', 'a+b')
+
+    #@attr('active')
+    def test_lowest_order_one_variable_constant(self):
+        expression = '''
+                            -1 * 2**6 * exp(EulerGamma)**(-2*eps) / sqrt(pi) * gamma(-4*eps)
+                            / gamma(1-eps) / gamma(1/2-eps) * 4 * 2**(-1-2*eps) * 2 * 16
+                            / pi / 2 * (-1) * eps * 2**(-4*eps) * 4**(1+eps) * 64
+                     '''
+        expression_lowest_eps_order = lowest_order(expression, 'eps')
+        self.assertEqual(expression_lowest_eps_order, 0) # no pole, expasion starts at constant order
+
+    #@attr('active')
+    def test_lowest_order_one_variable_simple_pole(self):
+        expression = '''
+                            gamma(-5*eps - 2) * exp(EulerGamma * eps)
+                     '''
+        expression_lowest_eps_order = lowest_order(expression, 'eps')
+        self.assertEqual(expression_lowest_eps_order, -1) # 1/eps pole from gamma function
+
+    #@attr('active')
+    def test_lowest_order_one_variable_double_pole(self):
+        expression = '''
+                            gamma(-5*eps - 2)**2 * exp(EulerGamma * eps)
+                     '''
+        expression_lowest_eps_order = lowest_order(expression, 'eps')
+        self.assertEqual(expression_lowest_eps_order, -2) # 1/eps**2 pole from the squared gamma function
+
+    #@attr('active')
+    def test_lowest_order_one_variable_no_constant_order(self):
+        expression = '''
+                            gamma(-5*eps - 2) * exp(EulerGamma * eps) * (eps**3 + 15 * eps**2)
+                     '''
+        expression_lowest_eps_order = lowest_order(expression, 'eps')
+        self.assertEqual(expression_lowest_eps_order, +1) # starts at ``eps**1`` order
