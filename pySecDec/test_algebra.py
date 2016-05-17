@@ -30,6 +30,56 @@ class TestDerivativeTracker(unittest.TestCase):
         tracker = DerivativeTracker(poly)
         self.assertEqual(str(tracker), str(poly))
 
+    #@attr('active')
+    def test_compute_own_derivatives(self):
+        poly = Polynomial.from_expression('x**2*y + y**2', ['x','y'])
+        tracker = DerivativeTracker(poly)
+        tracker.derive(0).derive(1)
+        tracker.derive(1).derive(0).derive(0)
+
+        target_derivatives_as_strings = \
+        {
+            (0,0) : 'x**2*y + y**2',
+            (1,0) : '2*x*y',
+            (0,1) : '2*y + x**2',
+            (1,1) : '2*x',
+            (2,1) : '2'
+        }
+        target_derivatives = {key : sp.sympify(value)
+                              for key, value in target_derivatives_as_strings.items()}
+
+        recomputed_derivatives_as_expressions = tracker.compute_derivatives()
+        recomputed_derivatives = {key : sp.sympify(value)
+                                  for key, value in recomputed_derivatives_as_expressions.items()}
+
+        self.assertEqual(recomputed_derivatives, target_derivatives)
+
+    #@attr('active')
+    def test_compute_other_derivatives(self):
+        poly = Polynomial.from_expression('x**2*y + y**2', ['x','y'])
+        tracker = DerivativeTracker(poly)
+        tracker.derive(0).derive(1)
+        tracker.derive(1).derive(0).derive(0)
+
+        other_expression = Expression('x*y', ['x','y'])
+
+        target_derivatives_as_strings = \
+        {
+            (0,0) : 'x*y',
+            (1,0) : 'y',
+            (0,1) : 'x',
+            (1,1) : '1',
+            (2,1) : '0'
+        }
+        target_derivatives = {key : sp.sympify(value)
+                              for key, value in target_derivatives_as_strings.items()}
+
+        recomputed_derivatives_as_expressions = tracker.compute_derivatives(other_expression)
+        recomputed_derivatives = {key : sp.sympify(value)
+                                  for key, value in recomputed_derivatives_as_expressions.items()}
+
+        self.assertEqual(recomputed_derivatives, target_derivatives)
+
 class TestFunction(unittest.TestCase):
     def setUp(self):
         self.polysymbols = ['x0', 'x1', 'x2', 'x3']

@@ -103,6 +103,8 @@ class DerivativeTracker(_Expression):
     DerivativeTracker( + (2)*x, index = (1, 1), derivatives = {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]})
     >>> tracker.derivatives
     {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]}
+    >>> tracker.compute_derivatives()
+    {(1, 0):  + (2)*x*y, (0, 0):  + (1)*y**2 + (1)*x**2*y, (1, 1):  + (2)*x}
 
     '''
     def __init__(self, expression, copy=False):
@@ -110,6 +112,52 @@ class DerivativeTracker(_Expression):
         self.number_of_variables = expression.number_of_variables
         self.derivative_multiindex = tuple(0 for i in range(self.number_of_variables))
         self.derivatives = {}
+
+    def compute_derivatives(self, expression=None):
+        '''
+        Compute all derivatives of ``expression`` that
+        are mentioned in ``self.derivatives``.
+        The purpose of this function is to avoid
+        computing the same derivatives multiple times.
+
+        :param expression:
+            :class:`._Expression`, optional;
+            The expression to compute the derivatives of.
+            If not provided, the derivatives of
+            ``self.expression`` are computed.
+
+        '''
+        def update(repository, multiindex, recipies, expression):
+            '''
+            Recursively compute all intermediate derivatives
+            of `expression` indicated by `multiindex` using
+            `recipies` and add them to the `repository`.
+            Return the derivative indicated by `multiindex`.
+
+            '''
+            try:
+                # nothing to do if already computed
+                return repository[multiindex]
+            except KeyError: # not computed yet --> compute
+                # stopping criterion: the multiindex (0,...,0) is `expression` itself
+                if sum(multiindex) == 0:
+                    repository[multiindex] = expression
+                    return expression
+                else:
+                    # must compute the derivative from a lower derivative
+                    index, lower_multiindex = recipies[multiindex]
+                    required_derivative = update(repository, lower_multiindex, recipies, expression).simplify().derive(index)
+                    repository[multiindex] = required_derivative
+                    return required_derivative
+
+        if expression is None:
+            expression = self.expression
+
+        derivatives = {}
+        for multiindex in self.derivatives.keys():
+            update(derivatives, multiindex, self.derivatives, expression)
+
+        return derivatives
 
     def derive(self, index):
         '''
