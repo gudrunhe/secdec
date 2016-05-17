@@ -1,7 +1,7 @@
-"""Unit tests for the c++ code writer module"""
+"""Unit tests for the code writer module"""
 
 from __future__ import print_function
-from .cpp_tools import *
+from .code_writer import *
 from nose.plugins.attrib import attr
 import sys, os, shutil
 import unittest

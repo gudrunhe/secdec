@@ -32,5 +32,5 @@ Reference Guide
 .. automodule:: pySecDec.expansion
     :members:
 
-.. automodule:: pySecDec.cpp_tools
+.. automodule:: pySecDec.code_writer
     :members:
