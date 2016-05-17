@@ -1,4 +1,4 @@
-"""Routines to create a c++ library"""
+"""Functions to generate c++ sources from template files"""
 
 import os
 

@@ -34,3 +34,6 @@ Reference Guide
 
 .. automodule:: pySecDec.code_writer
     :members:
+
+.. automodule:: pySecDec.code_writer.template_parser
+    :members:

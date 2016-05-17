@@ -1,7 +1,7 @@
-"""Unit tests for the code writer module"""
+"""Unit tests for the template parser module"""
 
 from __future__ import print_function
-from .code_writer import *
+from .template_parser import *
 from nose.plugins.attrib import attr
 import sys, os, shutil
 import unittest
