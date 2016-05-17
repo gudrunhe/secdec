@@ -104,7 +104,7 @@ class DerivativeTracker(_Expression):
     >>> tracker.derivatives
     {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]}
     >>> tracker.compute_derivatives()
-    {(1, 0):  + (2)*x*y, (0, 0):  + (1)*y**2 + (1)*x**2*y, (1, 1):  + (2)*x}
+    {(1, 0):  + (2)*x*y, (1, 1):  + (2)*x}
 
     '''
     def __init__(self, expression, copy=False):
@@ -141,7 +141,6 @@ class DerivativeTracker(_Expression):
             except KeyError: # not computed yet --> compute
                 # stopping criterion: the multiindex (0,...,0) is `expression` itself
                 if sum(multiindex) == 0:
-                    repository[multiindex] = expression
                     return expression
                 else:
                     # must compute the derivative from a lower derivative

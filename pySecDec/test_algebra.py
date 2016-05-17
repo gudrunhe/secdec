@@ -39,7 +39,6 @@ class TestDerivativeTracker(unittest.TestCase):
 
         target_derivatives_as_strings = \
         {
-            (0,0) : 'x**2*y + y**2',
             (1,0) : '2*x*y',
             (0,1) : '2*y + x**2',
             (1,1) : '2*x',
@@ -65,7 +64,6 @@ class TestDerivativeTracker(unittest.TestCase):
 
         target_derivatives_as_strings = \
         {
-            (0,0) : 'x*y',
             (1,0) : 'y',
             (0,1) : 'x',
             (1,1) : '1',
