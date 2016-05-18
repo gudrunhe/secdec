@@ -24,12 +24,16 @@ class LoopIntegralFromGraph(LoopIntegral):
     ( + (m**2)*x2**2 + (2*m**2 - p12**2)*x1*x2 + (m**2)*x1**2 + (m**2 - p1**2)*x0*x2 + (m**2 - p2**2)*x0*x1)**(-eps - 1)
 
     :param internal_lines:
-        iterable of internal line specification, consisting of string or sympy expression for mass
-        and a pair of strings or numbers for the vertices, e.g. [['m', [1,2]], ['0', [2,1]]].
+        iterable of internal line specification, consisting
+        of string or sympy expression for mass and a pair
+        of strings or numbers for the vertices, e.g.
+        [['m', [1,2]], ['0', [2,1]]].
 
     :param external_lines:
-        iterable of external line specification, consisting of string or sympy expression for external momentum
-        and a strings or number for the vertex, e.g. [['p1', 1], ['p2', 2]].
+        iterable of external line specification, consisting
+        of string or sympy expression for external momentum
+        and a strings or number for the vertex, e.g.
+        [['p1', 1], ['p2', 2]].
 
     ''' + LoopIntegral.common_properties_doc
 
