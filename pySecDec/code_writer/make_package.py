@@ -16,7 +16,7 @@ import sympy as sp
 # for "def make_package(".
 
 # ----------------------------------- parse input -----------------------------------
-def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argument_being_parsed): # TODO: test all implemented cases (check with coverage)
+def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argument_being_parsed):
     '''
     Convert `polynomials` from string or sympy expression
     to :class:`_Expression` or :class:`ExponentiatedPolynomial`.
@@ -36,24 +36,21 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                                  % (expression, name_of_make_argument_being_parsed, expression.symbols, polysymbols))
         if target_type == ExponentiatedPolynomial:
             if type(expression) == ExponentiatedPolynomial:
-                try:
+                if isinstance(expression.exponent, _Expression):
                     if expression.exponent.symbols != polysymbols:
-                        raise ValueError('"%s" (in `%s`) depends on the wrong `symbols` (is: %s, should be: %s). Try passing it as string or sympy expression.' \
+                        raise ValueError('The exponent of "%s" (in `%s`) depends on the wrong `symbols` (is: %s, should be: %s). Try passing it as string or sympy expression.' \
                                          % (expression, name_of_make_argument_being_parsed, expression.symbols, polysymbols))
-                except KeyError: # exponent is not an expression
+                    if type(expression.exponent) != Polynomial:
+                        raise ValueError('The exponent of "%s" (in `%s`) should be of type `Polynomial` but is of type `%s`. Try passing it as string or sympy expression.' \
+                                          % (expression,name_of_make_argument_being_parsed,type(expression)))
+                else:
                     expression.exponent = Polynomial.from_expression(expression.exponent, polysymbols)
-                if type(expression.exponent) != Polynomial:
-                    raise ValueError('The exponent of "%s" (in `%s`) should be of type ``Polynomial`` but is of type ``%s``. Try passing it as string or sympy expression.' \
-                                      % (expression,name_of_make_argument_being_parsed,type(expression)))
             elif type(expression) == Polynomial:
-                if expression.symbols != polysymbols:
-                    raise ValueError('"%s" (in `%s`) depends on the wrong `symbols` (is: %s, should be: %s). Try passing it as string or sympy expression.' \
-                                     % (expression, name_of_make_argument_being_parsed, expression.symbols, polysymbols))
                 expression = ExponentiatedPolynomial(expression.expolist, expression.coeffs,
                                                      Polynomial.from_expression(1, polysymbols), # exponent
                                                      polysymbols, copy=False)
             else:
-                expression = sp.sympify(expression).expand()
+                expression = sp.sympify(expression)
                 if expression.is_Pow:
                     assert len(expression.args) == 2
                     expression_base = Polynomial.from_expression(expression.args[0], polysymbols)
