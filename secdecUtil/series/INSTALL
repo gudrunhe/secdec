@@ -1,0 +1,6 @@
+Issue commands:
+(autoreconf -i)
+./configure --prefix=`pwd`
+make
+(make check)
+make install
