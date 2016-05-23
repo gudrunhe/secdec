@@ -6,31 +6,30 @@
 #include <iostream> // std::ostream
 
 namespace secdecutil {
-    
+
     // Store \Sum_{i=order_min}^order_max c_i * eps^i
     template <typename T>
     class Series {
-        
+
     protected:
-        
+
         int order_min;
         int order_max;
         std::vector<T> content;
         bool truncated_above;
-        
+
         /*
          *  Helper functions
          */
-        
+
         // Checks if series has a term at order order
         bool hasTerm(int order) const
         {
             if ( (order >= order_min) && (order <= order_max) )
                 return true;
-            
+
             return false;
         }
-        
         // Performs subtraction U=true or addition U=false of two series
         // \Sum_i=a1^b1 c_i * eps^i - \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i - c'_i) * eps^i
         // or
@@ -39,12 +38,12 @@ namespace secdecutil {
         static Series sub_or_add(const Series& s1, const Series& s2)
         {
             // TODO Check expansion parameter
-            
+
             // Assume series are not truncated
             bool truncated_above = false;
             int order_min = std::min( s1.order_min, s2.order_min );
             int order_max = std::max( s1.order_max, s2.order_max );
-            
+
             // Check if new series must be truncated from above
             if ( s1.truncated_above  )
             {
@@ -52,14 +51,14 @@ namespace secdecutil {
                 if (s1.order_max < order_max)
                     order_max = s1.order_max;
             }
-            
+
             if ( s2.truncated_above )
             {
                 truncated_above = true;
                 if (s2.order_max < order_max)
                     order_max = s2.order_max;
             }
-            
+
             std::vector<T> content;
             content.reserve(order_max-order_min+1);
             if ( U ) {
@@ -95,25 +94,25 @@ namespace secdecutil {
             }
             return Series(order_min, order_max, content, truncated_above);
         }
-        
+
     public:
-        
+
         const int get_order_min() { return order_min; }
         const int get_order_max() { return order_max; }
         const bool get_truncated_above() { return truncated_above; }
-        
+
         const T& operator[](const int i) const { return content[i-order_min]; }
         T& operator[](const int i)             { return content[i-order_min]; }
         const T& at(const int i) const         { return content.at(i-order_min); }
         T& at(const int i)                     { return content.at(i-order_min); }
-    
+
         /*
          *  Comparator Operators
          */
         friend bool operator==(const Series& s1, const Series& s2)
         {
             // TODO Check expansion parameter
-            
+
             if ( s1.order_min != s2.order_min )
                 return false;
             if ( s1.order_max != s2.order_max )
@@ -124,12 +123,12 @@ namespace secdecutil {
                 return false;
             return true;
         }
-        
+
         friend bool operator!= (const Series& s1, const Series& s2)
         {
             return !( s1 == s2 );
         }
-        
+
         /*
          *  Unary Operators
          */
@@ -137,12 +136,12 @@ namespace secdecutil {
         {
             return *this * (-1);
         }
-        
+
         Series operator+() const
         {
             return *this;
         }
-        
+
         /*
          *  Compound assignment operators
          */
@@ -151,27 +150,27 @@ namespace secdecutil {
             *this = *this - s1;
             return *this;
         }
-        
+
         Series& operator+=(const Series& s1)
         {
             *this = *this + s1;
             return *this;
         }
-        
+
         Series& operator*=(const Series& s1)
         {
             *this = *this * s1;
             return *this;
         }
-        
+
         Series& operator*=(const T& val)
         {
             *this = *this * val;
             return *this;
         }
-        
+
         // TODO operator/=
-        
+
         /*
          *  Binary operators
          */
@@ -179,17 +178,17 @@ namespace secdecutil {
         {
             return sub_or_add<true>(s1,s2);
         }
-        
+
         friend Series operator+(const Series& s1, const Series& s2)
         {
             return sub_or_add<false>(s1,s2);
         };
-        
+
         // (\Sum_i=a1^b1 c_i * eps^i) * (\Sum_j=a2^b2 c'_j * eps^j)
         friend Series operator*(const Series& s1, const Series& s2)
         {
             // TODO Check expansion parameter
-            
+
             // Assume series are not truncated
             bool truncated_above = false;
             int order_min = s1.order_min + s2.order_min;
@@ -205,7 +204,7 @@ namespace secdecutil {
                 truncated_above = true;
                 order_max = std::min( order_max , s1.order_min + s2.order_max );
             }
-            
+
             // Perform multiplication
             std::vector<T> content(order_max-order_min+1,T());
             for ( int i = s1.order_min; i < s1.order_max + 1; i++ )
@@ -217,9 +216,10 @@ namespace secdecutil {
                 }
             }
             
+
             return Series(order_min, order_max, content, truncated_above);
         }
-        
+
         // d * \Sum_i=a1^b1 c_i * eps^i = \Sum_i=a1^b1 d* c_i * eps^i
         friend Series operator*( const Series& s1, const T& val)
         {
@@ -227,28 +227,28 @@ namespace secdecutil {
             content.reserve(s1.order_max-s1.order_min+1);
             for ( int i = s1.order_min; i < s1.order_max + 1; i++ )
                 content.push_back(val * s1.at(i));
-            
+
             return Series(s1.order_min, s1.order_max, content, s1.truncated_above);
         }
-        
+
         friend Series operator*( const T& val, const Series& s1)
         {
             return s1*val;
         }
-        
+
         // TODO friend operator/
-        
+
         friend std::ostream& operator<< (std::ostream& os, const Series& s1)
         {
             for ( int i = s1.order_min; i < s1.order_max + 1; i++)
                 os << " + (" << s1.at(i) << ")*ep^(" << i << ")";
-            
+
             if ( s1.truncated_above )
                 os << " + O(ep^(" << (s1.order_max+1) << "))";
-            
+
             return os;
         };
-        
+
         // Constructor
         Series(
                int order_min,
@@ -268,7 +268,7 @@ namespace secdecutil {
         Series() : order_min(0), order_max(-1), content(), truncated_above(false) {}
         
     };
-    
+
 }
 
 #endif
