@@ -193,7 +193,8 @@ namespace secdecutil {
             bool truncated_above = false;
             int order_min = s1.order_min + s2.order_min;
             int order_max = s1.order_max + s2.order_max;
-            
+            size_t current_index;
+
             if ( s1.truncated_above )
             {
                 truncated_above = true;
@@ -206,16 +207,20 @@ namespace secdecutil {
             }
 
             // Perform multiplication
-            std::vector<T> content(order_max-order_min+1,T());
+            std::vector<T> content;
+            content.reserve(order_max-order_min+1);
             for ( int i = s1.order_min; i < s1.order_max + 1; i++ )
             {
                 for ( int j = s2.order_min; j < s2.order_max + 1; j++ )
                 {
+                    current_index = i+j-order_min;
                     if ( ( (i+j) >= order_min ) && ( (i+j) <= order_max ) && s1.hasTerm(i) && s2.hasTerm(j) )
-                        content.at(i+j-order_min) += ( s1.at(i) * s2.at(j) );
+                        if ( current_index < content.size() ) // term exists
+                            content.at(current_index) += ( s1.at(i) * s2.at(j) );
+                        else // term must be created
+                            content.push_back( s1.at(i) * s2.at(j) );
                 }
             }
-            
 
             return Series(order_min, order_max, content, truncated_above);
         }
@@ -262,11 +267,7 @@ namespace secdecutil {
             if ( content.size() != (order_max-order_min+1) )
                 throw std::invalid_argument("Incorrect number of series coefficients. got: " + std::to_string(content.size()) + ", expected: " + std::to_string(order_max-order_min+1));
         }
-        
-        // Empty series
-        // Need order_max - order_min + 1 = 0
-        Series() : order_min(0), order_max(-1), content(), truncated_above(false) {}
-        
+
     };
 
 }
