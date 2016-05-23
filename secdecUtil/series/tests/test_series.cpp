@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "../src/series.hpp"
 
+#include <complex>
 #include <sstream>
 
 TEST_CASE( "Constructor exceptions for vector constructor", "[Series]" ) {
@@ -277,6 +278,15 @@ TEST_CASE( "Operator *", "[Series]" ) {
     SECTION ( "Test 5: *= " ) {
         REQUIRE( ( series_one *= series_two ) == series_one_times_series_two );
     };
+
+};
+
+TEST_CASE( "Operator * for complex", "[Series]" ) {
+
+    auto one_plus_i_times_x = secdecutil::Series<std::complex<int>>(0,1,{{1,0},{0,1}});
+    auto minus_one_minus_i_times_x = secdecutil::Series<std::complex<int>>(0,1,{{-1,0},{0,-1}});
+    auto result_operator_minus = - one_plus_i_times_x;
+    REQUIRE( result_operator_minus == minus_one_minus_i_times_x );
 
 };
 
