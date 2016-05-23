@@ -30,11 +30,12 @@ namespace secdecutil {
 
             return false;
         }
-        // Performs subtraction U=true or addition U=false of two series
+
+        // Performs subtraction (``subtract=true``) or addition (``subtract=false``) of two series
         // \Sum_i=a1^b1 c_i * eps^i - \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i - c'_i) * eps^i
         // or
         // \Sum_i=a1^b1 c_i * eps^i + \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i + c'_i) * eps^i
-        template<bool U>
+        template<bool subtract>
         static Series sub_or_add(const Series& s1, const Series& s2)
         {
             // TODO Check expansion parameter
@@ -61,7 +62,7 @@ namespace secdecutil {
 
             std::vector<T> content;
             content.reserve(order_max-order_min+1);
-            if ( U ) {
+            if ( subtract ) {
                 // Perform subtraction
                 for ( int i = order_min; i < order_max + 1; i++)
                 {
