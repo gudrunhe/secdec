@@ -1,13 +1,22 @@
 #ifndef __SecDec_include_guard_series
 #define __SecDec_include_guard_series
 
-#include <vector>
+#include <iostream>
 #include <stdexcept>
-#include <iostream> // std::ostream
+#include <string>
+#include <vector>
 
 namespace secdecutil {
 
-    // Store \Sum_{i=order_min}^order_max c_i * eps^i
+    /*!
+     * Store an expression of the form
+     * "\Sum_{i=order_min}^order_max c_i * eps^i"
+     *
+     * The Series class overlads arithmetic operators.
+     *
+     * The expansion parameter can be set by changing
+     * the public member variable ``expansion_parameter``.
+     */
     template <typename T>
     class Series {
 
@@ -98,9 +107,10 @@ namespace secdecutil {
 
     public:
 
-        const int get_order_min() { return order_min; }
-        const int get_order_max() { return order_max; }
-        const bool get_truncated_above() { return truncated_above; }
+        std::string expansion_parameter; // default value "x" set in constructor
+        const int get_order_min() const { return order_min; }
+        const int get_order_max() const { return order_max; }
+        const bool get_truncated_above() const { return truncated_above; }
 
         const T& operator[](const int i) const { return content[i-order_min]; }
         T& operator[](const int i)             { return content[i-order_min]; }
@@ -246,11 +256,32 @@ namespace secdecutil {
 
         friend std::ostream& operator<< (std::ostream& os, const Series& s1)
         {
-            for ( int i = s1.order_min; i < s1.order_max + 1; i++)
-                os << " + (" << s1.at(i) << ")*ep^(" << i << ")";
+            int i;
+
+            for ( i = s1.order_min; i < s1.order_max + 1; i++)
+            {
+                os << " + (" << s1.at(i) << ")";
+                if ( i != 0 )
+                {
+                    os << "*" << s1.expansion_parameter;
+                    if (i != 1)
+                        os << "^" << i;
+                }
+            }
 
             if ( s1.truncated_above )
-                os << " + O(ep^(" << (s1.order_max+1) << "))";
+            {
+                os << " + O(";
+                if ( i == 0 )
+                    os << "1";
+                else
+                {
+                    os << s1.expansion_parameter;
+                    if ( i != 1 )
+                        os << "^" << (i);
+                }
+                os << ")";
+            }
 
             return os;
         };
@@ -263,7 +294,8 @@ namespace secdecutil {
                bool truncated_above = true
                ) :
         order_min(order_min), order_max(order_max),
-        content(content), truncated_above(truncated_above)
+        content(content), truncated_above(truncated_above),
+        expansion_parameter("x")
         {
             if ( content.size() != (order_max-order_min+1) )
                 throw std::invalid_argument("Incorrect number of series coefficients. got: " + std::to_string(content.size()) + ", expected: " + std::to_string(order_max-order_min+1));
