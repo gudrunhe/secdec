@@ -135,6 +135,33 @@ _decomposition_strategies = dict(
                                 )
 
 
+# --------------------------------- write FORM code ---------------------------------
+def _make_FORM_Id_statement(name, args, expression):
+    r'''
+    Write the following two lines for the insert
+    procedure in FORM:
+
+    Id `name`(`args`) = `expression`;
+    .sort
+
+    `args` should be a list of sympy symbols
+    and will be formatted to FORM wildcards.
+
+    Sample output:
+    Id f(x?, y?, z?) =  + (3)*y*z + (1)*x^2;
+    .sort
+
+    '''
+    str_args = [str(arg) + '?' for arg in args]
+    str_args = ', '.join(str_args)
+    return 'Id %s(%s) = %s;\n.sort\n' % \
+    (
+        name,
+        str_args,
+        str(expression).replace('**','^')
+    )
+
+
 # ---------------------------------- main function ----------------------------------
 def make_package(target_directory, name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
