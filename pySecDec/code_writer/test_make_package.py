@@ -37,7 +37,7 @@ class TestConvertInput(TestMakePackage):
                                 polynomial_names=['U','F'],
                                 other_polynomials=['U*z1 + F'],
                                 prefactor=1,
-                                remainder_expression=['DummyFunction(z0,eps)'],
+                                remainder_expression='DummyFunction(z0,eps)',
                                 functions=['DummyFunction'],
                                 other_variables=['s','t'],
                                 form_optimization_level=2,

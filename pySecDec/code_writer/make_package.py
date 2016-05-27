@@ -5,10 +5,16 @@ This module implements the main program - the function
 """
 
 from ..misc import sympify_symbols
-from ..algebra import _Expression, Expression, Polynomial, ExponentiatedPolynomial
+from ..algebra import _Expression, Expression, Polynomial, \
+                      ExponentiatedPolynomial, Pow, Product, \
+                      DerivativeTracker, Function, Sum
 from .. import decomposition
+from ..subtraction import integrate_pole_part
+from ..expansion import expand_singular, expand_Taylor
+from ..misc import lowest_order
 import numpy as np
 import sympy as sp
+from itertools import chain
 
 # The only public object this module provides is the function `make_package`.
 # The module is organized in multiple sections dedicated to specific tasks
@@ -68,7 +74,8 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
         else:
             raise RuntimeError('`_parse_expressions` is only implemented for `target_type`s in %s, not for %s. (raised while parsing `%s`)' \
                                 % (set([_Expression, ExponentiatedPolynomial]), target_type, name_of_make_argument_being_parsed))
-    parsed.append(expression)
+        parsed.append(expression)
+    return parsed
 
 def _convert_input(target_directory, name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
@@ -94,7 +101,7 @@ def _convert_input(target_directory, name, integration_variables, regulators,
     # parse expressions
     polynomials_to_decompose = _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompose, ExponentiatedPolynomial, 'polynomials_to_decompose')
     other_polynomials = _parse_expressions(other_polynomials, symbols_other_polynomials, ExponentiatedPolynomial, 'other_polynomials')
-    remainder_expression = _parse_expressions(remainder_expression, symbols_remainder_expression, _Expression, 'remainder_expression')
+    remainder_expression = _parse_expressions([remainder_expression], symbols_remainder_expression, _Expression, 'remainder_expression')[0]
 
     # convert ``prefactor`` to sympy expression
     prefactor = sp.sympify(prefactor)
@@ -262,6 +269,10 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         If not provided, no code for contour deformation
         is created.
 
+        .. note::
+            The `contour_deformation_polynomial` must **NOT**
+            depend on the `regulators`.
+
     :param decomposition_method:
         string, optional;
         The strategy to decompose the polynomials. The
@@ -277,12 +288,12 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
     '''
     # convert input data types to the data types we need
-    target_directory, name, integration_variables, regulators,
-    requested_orders, polynomials_to_decompose, polynomial_names,
-    other_polynomials, prefactor, remainder_expression, functions,
-    other_variables, form_optimization_level, form_work_space,
-    stabilize, contour_deformation_polynomial, decomposition_method,
-    symbols_polynomials_to_decompose, symbols_other_polynomials,
+    target_directory, name, integration_variables, regulators, \
+    requested_orders, polynomials_to_decompose, polynomial_names, \
+    other_polynomials, prefactor, remainder_expression, functions, \
+    other_variables, form_optimization_level, form_work_space, \
+    stabilize, contour_deformation_polynomial, decomposition_method, \
+    symbols_polynomials_to_decompose, symbols_other_polynomials, \
     symbols_remainder_expression, all_symbols = \
     _convert_input(target_directory, name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
@@ -291,31 +302,31 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                    stabilize, contour_deformation_polynomial, decomposition_method)
 
     # get the highest poles from the ``prefactor``
-    highest_prefactor_pole_orders = np.array([psd.misc.lowest_order(prefactor, regulator) for regulator in regulators])
+    highest_prefactor_pole_orders = np.array([lowest_order(prefactor, regulator) for regulator in regulators])
 
     # compute the required expansion order accounting for the prefactor
     required_orders = requested_orders + highest_prefactor_pole_orders
 
     # get the decomposition routines
-    decomposition = _decomposition_strategies[decomposition_method]
+    strategy = _decomposition_strategies[decomposition_method]
 
     # define the `Polynomial` "x0 + x1 + x2 + ..." to keep track of the transformations
-    transformations = psd.algebra.Polynomial(np.identity(len(integration_variables), dtype=int), [1]*len(integration_variables), integration_variables)
+    transformations = Polynomial(np.identity(len(integration_variables), dtype=int), [1]*len(integration_variables), integration_variables)
 
     # hide ``regulators`` and ``polynomial_names`` from decomposition
     polynomials_to_decompose_hidden_regulators = []
     polynomials_to_decompose_hide_containers = []
     for poly in polynomials_to_decompose:
-        poly, hidden = psd.decomposition.hide(poly, len(regulators))
+        poly, hidden = decomposition.hide(poly, len(regulators))
         polynomials_to_decompose_hidden_regulators.append(poly)
         polynomials_to_decompose_hide_containers.append(hidden)
     other_polynomials_hidden_regulators_and_names = []
     other_polynomials_name_hide_containers = []
     other_polynomials_regulator_hide_containers = []
     for poly in other_polynomials:
-        poly, hidden = psd.decomposition.hide(poly, len(polynomial_names))
+        poly, hidden = decomposition.hide(poly, len(polynomial_names))
         other_polynomials_name_hide_containers.append(hidden)
-        poly, hidden = psd.decomposition.hide(poly, len(regulators))
+        poly, hidden = decomposition.hide(poly, len(regulators))
         other_polynomials_regulator_hide_containers.append(hidden)
         other_polynomials_hidden_regulators_and_names.append(poly)
 
@@ -325,14 +336,14 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     # initialize the counter
     sector_index = 0
 
-    # define the imaginary unit as used in FORM
-    imaginary_unit = sp.sympify('i_')
+    # define the imaginary unit
+    imaginary_unit = sp.sympify('I') # TODO: replace by "i_" in FORM
 
     # we must backwards traverse the `polynomial_names` --> create the reversed list once and for all
     reversed_polynomial_names = list(polynomial_names) # copy
     reversed_polynomial_names.reverse()
 
-    for primary_sector in decomposition['primary'](initial_sector):
+    for primary_sector in strategy['primary'](initial_sector):
 
         # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
         integration_variables = list(primary_sector.Jacobian.polysymbols) # make a copy
@@ -345,15 +356,16 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
         # define "elementary" `_Expression`s such as ``x = Polynomial.from_expression('x', polysymbols)`` for all x
         elementary_monomials = []
-        for i, symbol in enumerate(all_symbols):
-            expolist = np.zeros([1,len(all_symbols)], dtype=int)
+        for i, symbol in enumerate(symbols_polynomials_to_decompose):
+            expolist = np.zeros([1,len(symbols_polynomials_to_decompose)], dtype=int)
             expolist[:,i] = 1
-            elementary_monomials.append( psd.algebra.Polynomial(expolist, np.array([1]), symbols, copy=False) )
+            elementary_monomials.append( Polynomial(expolist, np.array([1]), symbols_polynomials_to_decompose, copy=False) )
 
         if contour_deformation_polynomial is not None: # TODO: further checks on `contour_deformation_polynomial`, e.g. it must not depend on the regulators
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
-            derivative_tracking_symbolic_contourdef_polynomial = psd.algebra.DerivativeTracker(symbolic_contour_deformation_polynomial)
+            symbolic_contour_deformation_polynomial = Function(str(contour_deformation_polynomial), *symbols_polynomials_to_decompose) # TODO: check that the referenced polynomial does not depend on the `regulators`
+            symbolic_contour_deformation_polynomial = DerivativeTracker(symbolic_contour_deformation_polynomial)
 
             # compute the transformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
             # ``z_k({x_k}) = x_k - i * lambda_k * (1 - x_k) * Re(dF_dx_k)``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
@@ -364,7 +376,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             transformed_integration_parameters = [
                                                      integration_variables[k] +
                                                      ( - imaginary_unit * deformation_parameters[k] * integration_variables[k] * (1 - integration_variables[k]) ) *
-                                                     derivative_tracking_symbolic_contourdef_polynomial.simplify().derive(k)
+                                                     symbolic_contour_deformation_polynomial.simplify().derive(k)
                                                      for k in range(len(integration_variables))
                                                  ]
 
@@ -377,20 +389,121 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         # we want to remove them from the symbols --> traverse backwards and pop the last of the `polysymbols`
         # redefine ``all_symbols`` (we are going to removed some)
         all_symbols = integration_variables + regulators
-        for poly_name in reversed_polynomial_names:
-            for i in range(len(primary_sector.other) - 1): # "-1" because of ``transformations``
-                primary_sector.other[i] = psd.decomposition.unhide(-1, primary_sector.other[i], other_polynomials_name_hide_containers[i])
-                primary_sector.other[i] = primary_sector.other[i].replace(-1, polynomial_names[i](*all_symbols), remove=True)
-            this_sector_remainder_expression = remainder_expression.replace(-1, polynomial_names[i](*all_symbols), remove=True)
+        this_sector_remainder_expression = remainder_expression
+        for i in range(len(primary_sector.other) - 1): # "-1" because of ``transformations``
+            decomposition.unhide(primary_sector.other[i], other_polynomials_name_hide_containers[i])
+            for poly_name in reversed_polynomial_names:
+                primary_sector.other[i] = primary_sector.other[i].replace(-1, poly_name(*all_symbols), remove=True)
+                this_sector_remainder_expression = this_sector_remainder_expression.replace(-1, poly_name(*all_symbols), remove=True)
+
+        # convert the coefficients and exponents to `_Expression`s
+        # TODO: implement this step, the polysymbols should be `all_symbols`
 
         # we later need ``1`` packed into specific types
-        polynomial_one = psd.algebra.Polynomial(np.zeros([1,len(all_symbols)], dtype=int), np.array([1]), all_symbols, copy=False)
-        pole_part_initializer = psd.algebra.Pow(polynomial_one, -polynomial_one) # this is just ``one`` packed into a suitable expression
+        polynomial_one = Polynomial(np.zeros([1,len(all_symbols)], dtype=int), np.array([1]), all_symbols, copy=False)
+        pole_part_initializer = Pow(polynomial_one, -polynomial_one) # this is just ``one`` packed into a suitable expression
 
         # TODO: exponents should not depend on the `integration_variables` --> assert in `_convert_input`
 
-        for sector in decomposition['secondary'](primary_sector):
+        for sector in strategy['secondary'](primary_sector):
             sector_index += 1
 
+            # unhide the regulator
+            #  - in the Jacobian
+            Jacobian = sector.Jacobian
+            Jacobian.number_of_variables += len(regulators)
+            Jacobian.polysymbols += regulators
+            Jacobian.expolist = np.hstack([Jacobian.expolist, np.zeros([len(Jacobian.coeffs),len(regulators)], dtype=int)])
 
-# TODO: implement actual computation and code writing
+            #  - in ``sector.cast``
+            for product,hidden_regulators in zip(sector.cast,polynomials_to_decompose_hide_containers):
+                mono, poly = product.factors
+                mono.number_of_variables += len(regulators)
+                mono.polysymbols += regulators
+                mono.expolist = np.hstack([mono.expolist, np.zeros([1,len(regulators)], dtype=int)])
+                decomposition.unhide(poly, hidden_regulators)
+
+            #  - in ``sector.other``
+            for i in range(len(sector.other) - 1): # "-1" because of ``transformations``
+                decomposition.unhide(sector.other[i], other_polynomials_regulator_hide_containers[i])
+
+            #  - in the ``transformations``
+            this_transformation = sector.other.pop() # remove transformation from ``sector.other``
+            this_transformation.number_of_variables += len(regulators)
+            this_transformation.polysymbols += regulators
+            this_transformation.expolist = np.hstack([this_transformation.expolist, np.zeros([len(this_transformation.coeffs),len(regulators)], dtype=int)])
+
+
+            # insert the monomials of the `polynomial_names` into ``sector.other`` ``<symbol> --> xi**pow_i * <symbol>``
+            # ``[:,:-len(regulators)]`` is the part of the expolist that contains only the powers of the `integration_variables` but not of the `regulators`;
+            #     i.e. it excludes the powers of the regulators from the modification
+            for poly in sector.other:
+                for name,(mono,_),hidden_name in zip(polynomial_names,sector.cast,other_polynomials_name_hide_containers):
+                    poly.expolist[:,:-len(regulators)] += np.einsum('i,k->ik', hidden_name.expolist[:,0], mono.expolist[0,:-len(regulators)])
+
+            # factorize polynomials in ``sector.other``
+            for i,to_factorize in enumerate(sector.other):
+                to_factorize = sector.other[i] = Product(polynomial_one, to_factorize)
+                decomposition.refactorize(to_factorize)
+
+            # subtraction needs type `ExponentiatedPolynomial` for all factors in its monomial part
+            Jacobian = ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
+
+            # initialize the Product to be passed to `integrate_pole_part`
+            monomial_factors = chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other))
+            monomials = Product(*monomial_factors, copy=False)
+
+            # define ``cal_I``, the part of the integrand that does not lead to poles
+            # TODO: apply ``transformations`` to ``this_sector_remainder_expression`` BEFORE taking derivatives
+            cal_I = Product(this_sector_remainder_expression, *(prod.factors[1] for prod in chain(sector.cast, sector.other)), copy=False)
+
+            # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
+            # symbolic cal_I wrapped in a `DerivativeTracker` to keep track of derivatives
+            symbolic_cal_I = DerivativeTracker(Function('calI', *elementary_monomials))
+
+            # subtract
+            subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
+            subtracted = integrate_pole_part(subtraction_initializer, *integration_variable_indices)
+
+            # intialize expansion
+            pole_parts = [s.factors[1].simplify() for s in subtracted]
+            regular_parts = [Product( *([s.factors[0]] + s.factors[2:]), copy=False ) for s in subtracted]
+            # introduce dummy functions --> faster in python
+            symbolic_regular_parts = \
+            [
+                DerivativeTracker\
+                (
+                    Function\
+                    (
+                        'regular' + str(i), *elementary_monomials
+                    )
+                )
+                for i,_ in enumerate(subtracted)
+            ]
+
+            # expand poles
+            integrand_summands = []
+            for i,(regular,singular) in enumerate(zip(symbolic_regular_parts, pole_parts)):
+                # must expand every term to the requested order plus the highest pole it multiplies
+                # We calculated the highest pole order of the prefactor (variable ``highest_prefactor_pole_orders``) above.
+                # In addition, we have to take the poles of the current term into account.
+                singular_expanded = expand_singular(Product(singular), regulator_indices, required_orders)
+
+                highest_poles_current_term = - singular_expanded.expolist[:,regulator_indices].min(axis=0)
+                expansion_orders = requested_orders + highest_prefactor_pole_orders + highest_poles_current_term
+                regular_expanded = expand_Taylor(regular, regulator_indices, expansion_orders)
+
+                if i == 0: # first iteration; ``highest_poles_current_sector`` not yet set
+                    highest_poles_current_sector = highest_poles_current_term
+                else:
+                    highest_poles_current_sector = np.maximum(highest_poles_current_sector, highest_poles_current_term)
+
+                # TODO: the following multiplication can generate terms of higher orders than requested --> discard them here or in FORM?
+                integrand_summands.append(singular_expanded * regular_expanded)
+
+            integrand = Sum(*integrand_summands, copy=False)
+
+            print integrand
+
+# TODO: compute required derivatives
+# TODO: implement code writing
