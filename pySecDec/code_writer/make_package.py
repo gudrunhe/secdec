@@ -476,7 +476,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             # subtraction needs type `ExponentiatedPolynomial` for all factors in its monomial part
             Jacobian = ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
 
-            # initialize the Product to be passed to `integrate_pole_part`
+            # initialize the product of monomials for the subtraction
             monomial_factors = chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other))
             monomials = Product(*monomial_factors, copy=False)
 
@@ -486,9 +486,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
             # symbolic cal_I wrapped in a `DerivativeTracker` to keep track of derivatives
-            symbolic_cal_I = DerivativeTracker(Function('calI', *elementary_monomials))
+            symbolic_cal_I = DerivativeTracker(Function('calI', *elementary_monomials)) # TODO: add a prefix to all internal names
 
-            # subtract
+            # initialize the Product to be passed to `integrate_pole_part` (the subtraction) and subtract
             subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
             subtracted = integrate_pole_part(subtraction_initializer, *integration_variable_indices)
 
