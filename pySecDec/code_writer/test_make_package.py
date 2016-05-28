@@ -1,7 +1,8 @@
 """Unit tests for the template parser module"""
 
 from .make_package import *
-from .make_package import _convert_input, _make_FORM_Id_statement
+from .make_package import _convert_input, _make_FORM_Id_statement, \
+                          _derivative_muliindex_to_name
 from ..algebra import Polynomial, Function
 from nose.plugins.attrib import attr
 import sys, shutil
@@ -83,7 +84,7 @@ class TestWriteFORMId(TestMakePackage):
         self.tmpdir = 'tmpdir_test_convert_input_python' + python_major_version
 
     #@attr('active')
-    def test_single_line(self):
+    def test_make_FORM_Id_statement(self):
         polysymbols = sp.symbols("x y z")
         x = Polynomial([[1,0,0]], [1], polysymbols)
         y = Polynomial([[0,1,0]], [1], polysymbols)
@@ -95,3 +96,12 @@ class TestWriteFORMId(TestMakePackage):
         target_FORM_code = 'Id f(x?, y?, z?) =  + (3)*y*z + (1)*x^2;\n.sort\n'
 
         self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
+    def test_derivative_muliindex_to_name(self):
+        basename = 'f'
+        multiindex = (1,2,1)
+
+        result = _derivative_muliindex_to_name(basename, multiindex)
+        target_result = 'ddddfd0d1d1d2'
+        self.assertEqual(result, target_result)

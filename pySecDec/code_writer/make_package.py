@@ -161,6 +161,22 @@ def _make_FORM_Id_statement(name, args, expression):
         str(expression).replace('**','^')
     )
 
+def _derivative_muliindex_to_name(basename, multiindex):
+    '''
+    Convert a derivative multiindex as returned by
+    :meth:`pySecDec.algebra.DerivativeTracker.compute_derivatives`
+    to the form ``d...d<basename>d<index>...d<index>``.
+
+    Example:
+
+    >>> _derivative_muliindex_to_name('f', (1,2,1))
+    ddddfd0d1d1d2
+
+    '''
+    prefix = 'd' * sum(multiindex)
+    suffix = ''.join(('d' + str(i)) * depth for i,depth in enumerate(multiindex))
+    return prefix + basename + suffix
+
 
 # ---------------------------------- main function ----------------------------------
 def make_package(target_directory, name, integration_variables, regulators, requested_orders,
