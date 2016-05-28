@@ -88,6 +88,8 @@ def _convert_input(target_directory, name, integration_variables, regulators,
     integration_variables = sympify_symbols(list(integration_variables), 'All `integration_variables` must be symbols.')
     regulators = sympify_symbols(list(regulators), 'All `regulators` must be symbols.')
     polynomial_names = sympify_symbols(list(polynomial_names), 'All `polynomial_names` must be symbols.')
+    if contour_deformation_polynomial is not None:
+        contour_deformation_polynomial = sympify_symbols([contour_deformation_polynomial], '`contour_deformation_polynomial` must be a symbol.')[0]
 
     # define the symbols of the different classes of `_Expression`s
     symbols_polynomials_to_decompose = integration_variables + regulators
@@ -176,6 +178,13 @@ def _derivative_muliindex_to_name(basename, multiindex):
     prefix = 'd' * sum(multiindex)
     suffix = ''.join(('d' + str(i)) * depth for i,depth in enumerate(multiindex))
     return prefix + basename + suffix
+
+# define the internal names to be used in FORM
+internal_prefix = 'SecDecInternal'
+FORM_names = dict(
+    cal_I=internal_prefix+'CalI',
+    regular=internal_prefix+'Regular'
+)
 
 
 # ---------------------------------- main function ----------------------------------
@@ -386,6 +395,15 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     reversed_polynomial_names = list(polynomial_names) # copy
     reversed_polynomial_names.reverse()
 
+    # get the index of the `contour_deformation_polynomial` in `polynomial_names`
+    if contour_deformation_polynomial is not None:
+        str_contour_deformation_polynomial = str(contour_deformation_polynomial)
+        contour_deformation_polynomial_index = 0
+        while str(polynomial_names[contour_deformation_polynomial_index]) != str_contour_deformation_polynomial:
+            contour_deformation_polynomial_index += 1
+            if len(polynomial_names) <= contour_deformation_polynomial_index:
+                raise IndexError('Could not find the `contour_deformation_polynomial` "%s" in `polynomial_names`.' % str_contour_deformation_polynomial)
+
     for primary_sector in strategy['primary'](initial_sector):
 
         # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
@@ -444,7 +462,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
         # we later need ``1`` packed into specific types
         polynomial_one = Polynomial(np.zeros([1,len(all_symbols)], dtype=int), np.array([1]), all_symbols, copy=False)
-        pole_part_initializer = Pow(polynomial_one, -polynomial_one) # this is just ``one`` packed into a suitable expression
+        pole_part_initializer = Pow(polynomial_one, -polynomial_one)
 
         # TODO: exponents should not depend on the `integration_variables` --> assert in `_convert_input`
 
@@ -502,7 +520,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
             # symbolic cal_I wrapped in a `DerivativeTracker` to keep track of derivatives
-            symbolic_cal_I = DerivativeTracker(Function('calI', *elementary_monomials)) # TODO: add a prefix to all internal names
+            symbolic_cal_I = DerivativeTracker(Function(FORM_names['cal_I'], *elementary_monomials))
 
             # initialize the Product to be passed to `integrate_pole_part` (the subtraction) and subtract
             subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
@@ -518,8 +536,8 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 (
                     Function\
                     (
-                        'regular' + str(i), *elementary_monomials
-                    )
+                        FORM_names['regular'] + str(i), *elementary_monomials
+                    ), copy=False
                 )
                 for i,_ in enumerate(subtracted)
             ]
@@ -530,7 +548,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 # must expand every term to the requested order plus the highest pole it multiplies
                 # We calculated the highest pole order of the prefactor (variable ``highest_prefactor_pole_orders``) above.
                 # In addition, we have to take the poles of the current term into account.
-                singular_expanded = expand_singular(Product(singular), regulator_indices, required_orders)
+                singular_expanded = expand_singular(Product(singular, copy=False), regulator_indices, required_orders)
 
                 highest_poles_current_term = - singular_expanded.expolist[:,regulator_indices].min(axis=0)
                 expansion_orders = requested_orders + highest_prefactor_pole_orders + highest_poles_current_term
@@ -546,7 +564,45 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             integrand = Sum(*integrand_summands, copy=False)
 
-            print integrand
+            # compute the required derivatives
+            derivatives = {}
+            def update_derivatives(basename, derivative_tracker, full_expression):
+                derivatives[basename] = full_expression # include undifferentiated expression
+                for multiindex,expression in derivative_tracker.compute_derivatives(full_expression).items():
+                    derivatives[_derivative_muliindex_to_name(basename, multiindex)] = expression
+
+            #  - for the contour deformation
+            if contour_deformation_polynomial is not None:
+                update_derivatives(
+                    contour_deformation_polynomial, # basename
+                    symbolic_contour_deformation_polynomial, # derivative tracker
+                    sector.cast[contour_deformation_polynomial_index] # full expression
+                )
+
+            #  - for the "regular parts" arising in the subtraction
+            for index, (regular_part, symbolic_regular_part) in enumerate(zip(regular_parts, symbolic_regular_parts)):
+                update_derivatives(basename=FORM_names['regular']+str(index), derivative_tracker=symbolic_regular_part, full_expression=regular_part)
+
+            #  - for the part of the integrand that does not lead to poles
+            # Must inherit derivatives from the "regular parts" because the derivative
+            # tracker does not work any more after "cal_I" is hidden in them.
+                symbolic_cal_I.derivatives.update(symbolic_regular_part.derivatives)
+            update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
+
+
+            # generate the `insert_procedure` for FORM
+            insert_procedure = ''.join(
+                _make_FORM_Id_statement(name, all_symbols, expression)
+                for name, expression in derivatives.items()
+            )
+
+            #print(insert_procedure)
+            #for i,p in enumerate(symbolic_regular_parts):
+            #    print(p.compute_derivatives(regular_parts[i]))
+            #    print()
+            #    print()
+
+            #print(integrand)
 
 # TODO: compute required derivatives
 # TODO: implement code writing
