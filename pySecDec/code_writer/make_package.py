@@ -12,9 +12,11 @@ from .. import decomposition
 from ..subtraction import integrate_pole_part
 from ..expansion import expand_singular, expand_Taylor
 from ..misc import lowest_order
+from .template_parser import parse_template_file, parse_template_tree
 import numpy as np
 import sympy as sp
 from itertools import chain
+import os
 
 # The only public object this module provides is the function `make_package`.
 # The module is organized in multiple sections dedicated to specific tasks
@@ -88,6 +90,8 @@ def _convert_input(target_directory, name, integration_variables, regulators,
     integration_variables = sympify_symbols(list(integration_variables), 'All `integration_variables` must be symbols.')
     regulators = sympify_symbols(list(regulators), 'All `regulators` must be symbols.')
     polynomial_names = sympify_symbols(list(polynomial_names), 'All `polynomial_names` must be symbols.')
+    other_variables = sympify_symbols(list(other_variables), 'All `other_variables` must be symbols.')
+    functions = sympify_symbols(list(functions), 'All `functions` must be symbols.')
     if contour_deformation_polynomial is not None:
         contour_deformation_polynomial = sympify_symbols([contour_deformation_polynomial], '`contour_deformation_polynomial` must be a symbol.')[0]
 
@@ -135,6 +139,64 @@ _decomposition_strategies = dict(
                                                                  secondary=decomposition.iterative.iterative_decomposition
                                                              )
                                 )
+
+
+# -------------------------------- template parsing ---------------------------------
+def _parse_global_templates(target_directory, name, integration_variables,
+                            regulators, polynomial_names, functions,
+                            other_variables, form_optimization_level,
+                            form_work_space, stabilize, requested_orders,
+                            contour_deformation_polynomial):
+    '''
+    Create the `target_directory` and return the two
+    optional arguments passed to :func:`parse_template_tree`.
+
+    '''
+    # TODO: check validity of symbol names and `name` in FORM and c++ (FORM: no underscores; both: no special characters, no leading numbers), and its length (due to FORM's line breaks)
+
+    # initialize template replacements
+    template_replacements = dict(
+                                     name = name,
+                                     integration_variables = _make_FORM_list(integration_variables),
+                                     regulators = _make_FORM_list(regulators),
+                                     polynomial_names = _make_FORM_list(regulators),
+                                     functions = _make_FORM_list(functions),
+                                     other_variables = _make_FORM_list(other_variables),
+                                     form_optimization_level = form_optimization_level,
+                                     form_work_space = form_work_space,
+                                     contour_deformation = int(contour_deformation_polynomial is not None),
+                                     stabilize = int(stabilize),
+                                     requested_orders = _make_FORM_list(requested_orders)
+                                )
+
+    # configure template parser
+    file_renamings = {
+                          # replace "name" by the name of the integral
+                          'name' : name,
+                          'name.hpp' : name + '.hpp',
+
+                          # the files below are specific for each sector --> do not parse globally
+                          'contour_deformation.h' : None,
+                          'sector.h' : None,
+
+                          # "integrands.hpp" can only be written after the decomposition is completed
+                          'integrands.hpp' : None
+                     }
+
+    # the files below are only relevant for contour deformation --> do not parse if deactivated
+    if contour_deformation_polynomial is not None:
+        for filename in ['write_contourdef.frm', 'optimize.hpp', 'contour_deformation.h']:
+            file_renamings[filename] = None
+
+    # get path to the directory with the template files (path relative to directory with this file: "./templates/")
+    from . import test_make_package as _unittests_for_this_module
+    template_sources = os.path.join(os.path.split(_unittests_for_this_module.__file__)[0],'templates')
+
+    # initialize the target directory with the sector independent files
+    parse_template_tree(template_sources, target_directory, template_replacements, file_renamings)
+
+    # return parser options
+    return template_sources, target_directory, template_replacements, file_renamings
 
 
 # --------------------------------- write FORM code ---------------------------------
@@ -362,6 +424,15 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                    other_polynomials, prefactor, remainder_expression, functions,
                    other_variables, form_optimization_level, form_work_space,
                    stabilize, contour_deformation_polynomial, decomposition_method)
+
+    # configure the template parser and parse global files
+    template_sources, target_directory, template_replacements, file_renamings = \
+        _parse_global_templates(
+        target_directory, name, integration_variables, regulators,
+        polynomial_names, functions, other_variables,
+        form_optimization_level, form_work_space, stabilize,
+        requested_orders, contour_deformation_polynomial
+    )
 
     # get the highest poles from the ``prefactor``
     highest_prefactor_pole_orders = np.array([lowest_order(prefactor, regulator) for regulator in regulators])
