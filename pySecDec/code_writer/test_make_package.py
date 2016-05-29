@@ -2,7 +2,7 @@
 
 from .make_package import *
 from .make_package import _convert_input, _make_FORM_Id_statement, \
-                          _derivative_muliindex_to_name
+                          _make_FORM_list, _derivative_muliindex_to_name
 from ..algebra import Polynomial, Function
 from nose.plugins.attrib import attr
 import sys, shutil
@@ -105,3 +105,10 @@ class TestWriteFORMId(TestMakePackage):
         result = _derivative_muliindex_to_name(basename, multiindex)
         target_result = 'ddddfd0d1d1d2'
         self.assertEqual(result, target_result)
+
+    #@attr('active')
+    def test_make_FORM_list(self):
+        python_list = ['a', 'b', 'c']
+        FORM_list = _make_FORM_list(python_list)
+        target_FORM_list = 'a, b, c'
+        self.assertEqual(FORM_list, target_FORM_list)

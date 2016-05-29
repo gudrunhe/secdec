@@ -138,6 +138,16 @@ _decomposition_strategies = dict(
 
 
 # --------------------------------- write FORM code ---------------------------------
+def _make_FORM_list(python_list):
+    '''
+    Convert a python list to a string to be used
+    in FORM like a list.
+
+    Example: ``['a', 'b', 'c'] --> 'a, b, c'``
+
+    '''
+    return ', '.join(str(item) for item in python_list)
+
 def _make_FORM_Id_statement(name, args, expression):
     r'''
     Write the following two lines for the insert
