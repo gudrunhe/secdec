@@ -1,7 +1,7 @@
 """Unit tests for the template parser module"""
 
 from .make_package import *
-from .make_package import _convert_input, _make_FORM_Id_statement, \
+from .make_package import _convert_input, _make_FORM_definition, \
                           _make_FORM_list, _derivative_muliindex_to_name
 from ..algebra import Polynomial, Function
 from nose.plugins.attrib import attr
@@ -79,12 +79,13 @@ class TestConvertInput(TestMakePackage):
         _convert_input(**polynomials_to_decompose_nontrivial_as_string) # should be ok
 
 # --------------------------------- write FORM code ---------------------------------
-class TestWriteFORMId(TestMakePackage):
+#@attr('active')
+class TestWriteFORMCode(TestMakePackage):
     def setUp(self):
         self.tmpdir = 'tmpdir_test_convert_input_python' + python_major_version
 
     #@attr('active')
-    def test_make_FORM_Id_statement(self):
+    def test_make_FORM_definition(self):
         polysymbols = sp.symbols("x y z")
         x = Polynomial([[1,0,0]], [1], polysymbols)
         y = Polynomial([[0,1,0]], [1], polysymbols)
@@ -92,8 +93,8 @@ class TestWriteFORMId(TestMakePackage):
         f_dummy = Function('f', x, y, z)
         f = x**2 + y*z
 
-        FORM_code = _make_FORM_Id_statement(f_dummy.symbol, f_dummy.symbols, x*x + 3*y*z)
-        target_FORM_code = 'Id f(x?, y?, z?) =  + (3)*y*z + (1)*x^2;\n.sort\n'
+        FORM_code = _make_FORM_definition(f_dummy.symbol, x*x + 3*y*z)
+        target_FORM_code = '#define f " + (3)*y*z + (1)*x^2"\n'
 
         self.assertEqual(FORM_code, target_FORM_code)
 

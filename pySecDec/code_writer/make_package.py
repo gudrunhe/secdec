@@ -210,28 +210,20 @@ def _make_FORM_list(python_list):
     '''
     return ', '.join(str(item) for item in python_list)
 
-def _make_FORM_Id_statement(name, args, expression):
+def _make_FORM_definition(name, expression):
     r'''
-    Write the following two lines for the insert
-    procedure in FORM:
+    Write the following line for the insertion
+    in FORM:
 
-    Id `name`(`args`) = `expression`;
-    .sort
-
-    `args` should be a list of sympy symbols
-    and will be formatted to FORM wildcards.
+    #define `name` "`expression`"
 
     Sample output:
-    Id f(x?, y?, z?) =  + (3)*y*z + (1)*x^2;
-    .sort
+    #define f " + (3)*y*z + (1)*x^2"
 
     '''
-    str_args = [str(arg) + '?' for arg in args]
-    str_args = ', '.join(str_args)
-    return 'Id %s(%s) = %s;\n.sort\n' % \
+    return '#define %s "%s"\n' % \
     (
         name,
-        str_args,
         str(expression).replace('**','^')
     )
 
@@ -671,13 +663,15 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
 
 
-            # generate the `insert_procedure` for FORM
-            insert_procedure = ''.join(
-                _make_FORM_Id_statement(name, all_symbols, expression)
+            # generate the function definitions the insertion in FORM
+            form_function_definitions = ''.join(
+                _make_FORM_definition(name, expression)
                 for name, expression in derivatives.items()
             )
+            form_insertions = _make_FORM_list(derivatives.keys())
 
-            #print(insert_procedure)
+            print(form_function_definitions)
+            print(form_insertions)
             #for i,p in enumerate(symbolic_regular_parts):
             #    print(p.compute_derivatives(regular_parts[i]))
             #    print()
