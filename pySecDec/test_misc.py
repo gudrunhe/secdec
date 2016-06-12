@@ -79,6 +79,32 @@ class TestPowerset(unittest.TestCase):
         self.assertEqual(list(powerset(range(4),stride=3)), [(),(0,1,2),(0,1,3),(0,2,3),(1,2,3)])
         self.assertEqual(list(powerset(range(4),stride=2,exclude_empty=True)), [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)])
 
+class TestRangecomb(unittest.TestCase):
+    #@attr('active')
+    def test_error_messages(self):
+        self.assertRaises(TypeError, rangecomb, ['a','b','c'], [1,2,3])
+        self.assertRaises(TypeError, rangecomb, [1,2,3], ['a','b','c'])
+        self.assertRaisesRegexp(AssertionError, 'low.*vector', rangecomb, [[-1,-2],[1,2]], [-1,-2])
+        self.assertRaisesRegexp(AssertionError, 'high.*vector', rangecomb, [-1,-2], [[-1,-2],[1,2]])
+        self.assertRaisesRegexp(AssertionError, 'low.*high.*length', rangecomb, [-1,-2], [0])
+
+    #@attr('active')
+    def test_3_dimensions(self):
+        low = [-2,-2, 1]
+        high = [0, 1, 2]
+
+        orders = list( rangecomb(low, high) )
+        target_orders = [(-2, -2, 1), (-2, -2, 2), (-2, -1, 1),
+                         (-2, -1, 2), (-2, 0, 1), (-2, 0, 2),
+                         (-2, 1, 1), (-2, 1, 2), (-1, -2, 1),
+                         (-1, -2, 2), (-1, -1, 1), (-1, -1, 2),
+                         (-1, 0, 1), (-1, 0, 2), (-1, 1, 1),
+                         (-1, 1, 2), (0, -2, 1), (0, -2, 2),
+                         (0, -1, 1), (0, -1, 2), (0, 0, 1),
+                         (0, 0, 2), (0, 1, 1), (0, 1, 2)]
+
+        self.assertEqual(orders, target_orders)
+
 class TestMissing(unittest.TestCase):
     #@attr('active')
     def test_missing(self):
