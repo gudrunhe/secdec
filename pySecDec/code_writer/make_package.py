@@ -227,6 +227,23 @@ def _make_FORM_definition(name, expression):
         str(expression).replace('**','^')
     )
 
+def _make_FORM_shifted_orders(positive_powers):
+    r'''
+    Write FORM code that defines the preprocessor
+    variables
+    `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''.
+
+    '''
+    codelines = []
+    orders_index = 0
+    for multiindex in positive_powers:
+        orders_index += 1
+        regulator_index = 0
+        for regulator_power in multiindex:
+            regulator_index += 1
+            codelines.append( '#define shiftedRegulator%iPowerOrder%i "%i"' % (regulator_index,orders_index,regulator_power) )
+    return '\n'.join(codelines)
+
 def _derivative_muliindex_to_name(basename, multiindex):
     '''
     Convert a derivative multiindex as returned by
