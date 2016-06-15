@@ -205,10 +205,10 @@ def _make_FORM_list(python_list):
     Convert a python list to a string to be used
     in FORM like a list.
 
-    Example: ``['a', 'b', 'c'] --> 'a, b, c'``
+    Example: ``['a', 'b', 'c'] --> 'a,b,c'``
 
     '''
-    return ', '.join(str(item) for item in python_list)
+    return ','.join(str(item) for item in python_list)
 
 def _make_FORM_definition(name, expression):
     r'''

@@ -112,7 +112,7 @@ class TestWriteFORMCode(TestMakePackage):
     def test_make_FORM_list(self):
         python_list = ['a', 'b', 'c']
         FORM_list = _make_FORM_list(python_list)
-        target_FORM_list = 'a, b, c'
+        target_FORM_list = 'a,b,c'
         self.assertEqual(FORM_list, target_FORM_list)
 
     #@attr('active')
