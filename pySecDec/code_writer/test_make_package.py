@@ -41,9 +41,11 @@ class TestConvertInput(TestMakePackage):
                                 prefactor=1,
                                 remainder_expression='DummyFunction(z0,eps)',
                                 functions=['DummyFunction'],
-                                other_variables=['s','t'],
+                                real_parameters=['s','t'],
+                                complex_parameters=[sp.sympify('msq')],
                                 form_optimization_level=2,
                                 form_work_space='500M',
+                                form_insertion_depth=0,
                                 stabilize=False,
                                 contour_deformation_polynomial=None,
                                 decomposition_method='iterative_no_primary'
@@ -78,6 +80,14 @@ class TestConvertInput(TestMakePackage):
         polynomials_to_decompose_nontrivial_as_string = correct_input.copy()
         polynomials_to_decompose_nontrivial_as_string['polynomials_to_decompose'] = ['1', '(-s -t*z0*z1*z2)**(2-4*eps+alpha)']
         _convert_input(**polynomials_to_decompose_nontrivial_as_string) # should be ok
+
+        polynomials_to_decompose_negative_insertion_depth = correct_input.copy()
+        polynomials_to_decompose_negative_insertion_depth['form_insertion_depth'] = -3
+        self.assertRaisesRegexp(AssertionError, 'form_insertion_depth.*negative', _convert_input, **polynomials_to_decompose_negative_insertion_depth)
+
+        polynomials_to_decompose_noninteger_insertion_depth = correct_input.copy()
+        polynomials_to_decompose_noninteger_insertion_depth['form_insertion_depth'] = 1.2
+        self.assertRaisesRegexp(AssertionError, 'form_insertion_depth.*integer', _convert_input, **polynomials_to_decompose_noninteger_insertion_depth)
 
 # --------------------------------- write FORM code ---------------------------------
 #@attr('active')

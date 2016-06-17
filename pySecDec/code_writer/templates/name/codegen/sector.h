@@ -14,8 +14,7 @@ Symbols `integrationVariables'
         `complexParameters'
         `regulators';
 
-* TODO: include derivatives into `functions'
-#define functions %(functions)s
+#define functions "%(functions)s"
 CFunctions `functions';
 
 *** TODO: add prefix "SecDecInternal" to all internal variables and disallow user variables with that prefix
@@ -23,11 +22,18 @@ CFunctions `functions';
 AutoDeclare CFunctions fDUMMY;
 AutoDeclare Symbols sDUMMY;
 
+* TODO: How to determine which derivatives of the user input ``functions`` are needed? How to communicate it to the user? --> quick and dirty solution for a start:
+AutoDeclare CFunctions d;
+* TODO: remove the line above
+
 * We generated logs in the subtraction and pack denominators into a function
 CFunctions log, SecDecInternalDenominator;
 
 * We rewrite function calls as symbols
-AutoDeclare Symbols SecDecInternalCall;
+AutoDeclare Symbols SecDecInternalCall, SecDecInternalDenominatorCall;
+#Do function = {`functions'}
+  AutoDeclare Symbols `function'Call;
+#EndDo
 
 * We need labels for the code optimization
 AutoDeclare Symbols SecDecInternalLabel;

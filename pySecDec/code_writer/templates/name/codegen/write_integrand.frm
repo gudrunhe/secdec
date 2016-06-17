@@ -3,20 +3,14 @@ Off statistics;
 
 * define two procedures to open and close a nested argument section
 #procedure beginArgumentDepth(depth)
-  #$depth = `depth';
-  #If `$depth' != 0
+  #Do recursiveDepth = 1, `depth'
     Argument;
-    #$nextDepth = $depth - 1;
-    #call beginArgumentDepth(`$nextDepth')
-  #EndIf
+  #EndDo
 #endProcedure
 #procedure endArgumentDepth(depth)
-  #$depth = `depth';
-  #If `$depth' != 0
+  #Do recursiveDepth = 1, `depth'
     EndArgument;
-    #$nextDepth = $depth - 1;
-    #call endArgumentDepth(`$nextDepth')
-  #EndIf
+  #EndDo
 #endProcedure
 
 #include sector`sectorID'.h
@@ -27,7 +21,7 @@ Global expansion = `integrand';
 
 * Enumerate the regulators
 #$counter = 1;
-#Do regulator = `regulators'
+#Do regulator = {`regulators'}
   #define regulator`$counter' "`regulator'"
   #$counter = $counter + 1;
 #EndDo
@@ -110,14 +104,11 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "  {"
 
 * extract the order in the regulators that we are about to process
-  Local expression = expansion[
+  #$currentOrder = 1;
   #Do regulatorIndex = 1, `numReg'
-    `regulator`regulatorIndex''^`shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''
-    #if `regulatorIndex != 1
-      *
-    #EndIf
+    #$currentOrder = $currentOrder * `regulator`regulatorIndex''^`shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex'';
   #EndDo
-  ];
+  Local expression = expansion[$currentOrder];
 
 * Explicitly insert the functions defined in python.
 * {
@@ -145,37 +136,37 @@ B `regulators';
 
 *     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
 *     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
-      beginArgumentDepth(`$depth')
+      #call beginArgumentDepth(`$depth')
         Denominators SecDecInternalDenominator;
         factarg SecDecInternalDenominator;
         chainout SecDecInternalDenominator;
         repeat Id fDUMMY?(?sDUMMY) * SecDecInternalDenominator(fDUMMY?(?sDUMMY)) = 1;
-      endArgumentDepth(`$depth')
+      #call endArgumentDepth(`$depth')
       .sort
 
 *     expand logs
-      beginArgumentDepth(`$depth')
+      #call beginArgumentDepth(`$depth')
         factarg log;
         repeat Id log(?head, sDUMMY1?, sDUMMY2?) = log(?head, sDUMMY1) + log(sDUMMY2);
         repeat Id log(sDUMMY1? ^ sDUMMY2?) = log(sDUMMY1) * sDUMMY2;
-      endArgumentDepth(`$depth')
+      #call endArgumentDepth(`$depth')
       .sort
 
 *     some simplifications
-      beginArgumentDepth(`$depth')
+      #call beginArgumentDepth(`$depth')
         Id log(1) = 0;
         repeat Id sDUMMY1? ^ sDUMMY2?neg_ = SecDecInternalDenominator(sDUMMY1) ^ (-sDUMMY2);
         repeat Id 1/sDUMMY? = SecDecInternalDenominator(sDUMMY);
         repeat Id sDUMMY? * SecDecInternalDenominator(sDUMMY?) = 1;
-      endArgumentDepth(`$depth')
+      #call endArgumentDepth(`$depth')
       .sort
 
       #Do functionForInsertion = {`functionsForInsertion'}
 
 *       set dollar variables
-        beginArgumentDepth(`$depth')
+        #call beginArgumentDepth(`$depth')
           if ( match(`functionForInsertion'(`matchArg')) ) redefine i "0";
-        endArgumentDepth(`$depth')
+        #call endArgumentDepth(`$depth')
         .sort
 
         #redefine replaceArg ""
@@ -189,7 +180,7 @@ B `regulators';
         #EndDo
 
         #redefine idArg ""
-        #Do j = 1,`NumIV'+`numReg'
+        #Do j = 1,`numIV'+`numReg'
           #If `j' != 1
             #redefine idArg "`idArg', "
           #EndIf
@@ -199,13 +190,13 @@ B `regulators';
 *       This "if" evaluates to true only if the expression above was matched.
 *       If the expression above does not match, there is nothing to do.
         #If `i' == 0
-          beginArgumentDepth(`$depth')
-            id `functionForInsertion'(`idArg') = fDUMMY(expression`functionForInsertion'*replace_(`replaceArg'));
-          endArgumentDepth(`$depth')
+          L replacement = (``functionForInsertion'')*replace_(`replaceArg');
           .sort
-          beginArgumentDepth(`$depth')
-            id fDUMMY(sDUMMY?) = sDUMMY;
-          endArgumentDepth(`$depth')
+          drop replacement;
+          #call beginArgumentDepth(`$depth')
+            id `functionForInsertion'(`idArg') = replacement;
+          #call endArgumentDepth(`$depth')
+          .sort
         #EndIf
 
       #EndDo
@@ -245,15 +236,14 @@ B `regulators';
 
 * Replace all function calls by symbols for simultaneous optimization.
 * {
-
   Local toOptimize = sDUMMYtoOptimize;
 
-* process innermost function calls first
-  #Do minusDepth = - `insertionDepth' , 0
-    #$depth = - `minusDepth';
+  #Do function = {`functions',log,SecDecInternalDenominator}
+    #$labelCounter = 0;
 
-    #Do function = {`functions',log,SecDecInternalDenominator}
-      #$largestLabel`function' = 0;
+*   process innermost function calls first
+    #Do minusDepth = - `insertionDepth' , 0
+      #$depth = - `minusDepth';
 
 *     Since we need intermediate ".sort" instructions, we cannot use the
 *     "repeat" environment.
@@ -261,34 +251,48 @@ B `regulators';
 
       #Do i = 1,1
 *       set dollar variable
-        beginArgumentDepth(`$depth')
+        #call beginArgumentDepth(`$depth')
           if ( match(`function'(?sDUMMY$args)) ) redefine i "0";
-        endArgumentDepth(`$depth')
+        #call endArgumentDepth(`$depth')
         .sort
 
 *       The following "#if" evaluates to true only if there are logs or denominators left.
         #If `i' == 0
-          #$largestLabel`function' = $largestLabel`function' + 1;
-          beginArgumentDepth(`$depth')
-            Id `function'(`$args') = `function'Call`$largestLabel`function'';
-          endArgumentDepth(`$depth')
+
+          #$labelCounter = $labelCounter + 1;
+
+          L arguments = SecDecInternalLabel`function'Call`$labelCounter'Arg * fDUMMYarguments(`$args');
+
+          #call beginArgumentDepth(`$depth')
+            Id `function'(`$args') = `function'Call`$labelCounter';
+          #call endArgumentDepth(`$depth')
+
+          repeat Id fDUMMYarguments(sDUMMY?, ?otherArgs) = SecDecInternalLabel`function'Call`$labelCounter'Arg * (sDUMMY + fDUMMYarguments(?otherArgs));
+
+*         Define `$argCounter' by loking at the term with the empty function "fDUMMYarguments"
+          Id fDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ sDUMMYexponent?$argCounter = 0;
+          .sort
+*         `$argCounter' as defined above is too big by one.
+          #$argCounter = $argCounter - 1;
+
 *         Add all arguments to top level polynomial for simultaneous optimization.
-          #$argIndex = 0;
-          #$numberOfArgs`function'Label`$largestLabel`function'' = 0;
-          #Do arg = {`$args'}
-            #$numberOfArgs`function'Label`$largestLabel`function'' = $numberOfArgs`function'Label`$largestLabel`function'' + 1;
-            Id sDUMMYtoOptimize = sDUMMYtoOptimize + label`function'Call`$largestLabel`function''Arg ^ `$numberOfArgs`function'Label`$largestLabel`function''' * $arg;
-          #EndDo
+          Id sDUMMYtoOptimize = sDUMMYtoOptimize + arguments;
+
+          #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
+
           .sort
         #EndIf
       #EndDo
     #EndDo
+
+    #redefine largestLabel`function' "`$labelCounter'"
+
   #EndDo
 
   Id sDUMMYtoOptimize = expression;
   .sort
 
-  drop expression;
+  drop expression, arguments;
   .sort
 * }
 
@@ -339,18 +343,18 @@ B `regulators';
 * Replace all function calls by symbols for simultaneous optimization.
 * {
   #Do function = {`functions',log,SecDecInternalDenominator}
-    #Do callIndex = 1, `$largestLabel`function''
+    #Do callIndex = 1, `largestLabel`function''
       B label`function'Call`callIndex'Arg;
       .sort
-      #Do argIndex = 1, `$numberOfArgs`function'Label`callIndex''
-        L arg`argIndex' = toOptimize[label`function'Call`callIndex'Arg ^ `$numberOfArgs`function'Label`callIndex'];
+      #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+        L arg`argIndex' = toOptimize[label`function'Call`callIndex'Arg ^ `numberOfArgs`function'Label`callIndex'];
       #EndDo
       .sort
       #write <sector_`sectorID'_`cppOrder'.cpp> ""
       #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t `function'Call`callIndex' ="
       #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
-      #Do argIndex = 1, `$numberOfArgs`function'Label`callIndex''
-        #If `argIndex' == `$numberOfArgs`function'Label`callIndex''
+      #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+        #If `argIndex' == `numberOfArgs`function'Label`callIndex''
           #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'
         #Else
           #write <sector_`sectorID'_`cppOrder'.cpp> "%%E," arg`argIndex'

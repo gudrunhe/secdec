@@ -4,7 +4,7 @@ This module implements the main program - the function
 
 """
 
-from ..misc import sympify_symbols
+from ..misc import sympify_symbols, rangecomb
 from ..algebra import _Expression, Expression, Polynomial, \
                       ExponentiatedPolynomial, Pow, Product, \
                       DerivativeTracker, Function, Sum
@@ -82,15 +82,17 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
 def _convert_input(target_directory, name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
-                   other_variables, form_optimization_level, form_work_space,
-                   stabilize, contour_deformation_polynomial, decomposition_method):
+                   real_parameters, complex_parameters, form_optimization_level,
+                   form_work_space, form_insertion_depth, stabilize,
+                   contour_deformation_polynomial, decomposition_method):
     'Get the data types right.'
 
     # parse symbols
     integration_variables = sympify_symbols(list(integration_variables), 'All `integration_variables` must be symbols.')
     regulators = sympify_symbols(list(regulators), 'All `regulators` must be symbols.')
     polynomial_names = sympify_symbols(list(polynomial_names), 'All `polynomial_names` must be symbols.')
-    other_variables = sympify_symbols(list(other_variables), 'All `other_variables` must be symbols.')
+    real_parameters= sympify_symbols(list(real_parameters), 'All `real_parameters` must be symbols.')
+    complex_parameters = sympify_symbols(list(complex_parameters), 'All `complex_parameters` must be symbols.')
     functions = sympify_symbols(list(functions), 'All `functions` must be symbols.')
     if contour_deformation_polynomial is not None:
         contour_deformation_polynomial = sympify_symbols([contour_deformation_polynomial], '`contour_deformation_polynomial` must be a symbol.')[0]
@@ -115,11 +117,16 @@ def _convert_input(target_directory, name, integration_variables, regulators,
     # convert ``requested_orders`` to numpy array
     requested_orders = np.array(requested_orders)
 
+    # convert ``form_insertion_depth`` to integer and check nonnegativity
+    assert form_insertion_depth == int(form_insertion_depth), '`form_insertion_depth` must be an integer.'
+    assert form_insertion_depth >= 0, '`form_insertion_depth` must not be negative.'
+
     return (target_directory, name, integration_variables, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
             other_polynomials, prefactor, remainder_expression, functions,
-            other_variables, form_optimization_level, form_work_space,
-            stabilize, contour_deformation_polynomial, decomposition_method,
+            real_parameters, complex_parameters, form_optimization_level,
+            form_work_space, form_insertion_depth, stabilize,
+            contour_deformation_polynomial, decomposition_method,
             symbols_polynomials_to_decompose, symbols_other_polynomials,
             symbols_remainder_expression, all_symbols)
 
@@ -143,10 +150,10 @@ _decomposition_strategies = dict(
 
 # -------------------------------- template parsing ---------------------------------
 def _parse_global_templates(target_directory, name, integration_variables,
-                            regulators, polynomial_names, functions,
-                            other_variables, form_optimization_level,
-                            form_work_space, stabilize, requested_orders,
-                            contour_deformation_polynomial):
+                            regulators, polynomial_names, real_parameters,
+                            complex_parameters, form_optimization_level,
+                            form_work_space, form_insertion_depth, stabilize,
+                            requested_orders, contour_deformation_polynomial):
     '''
     Create the `target_directory` and return the two
     optional arguments passed to :func:`parse_template_tree`.
@@ -157,13 +164,13 @@ def _parse_global_templates(target_directory, name, integration_variables,
     # initialize template replacements
     template_replacements = dict(
                                      name = name,
-                                     integration_variables = _make_FORM_list(integration_variables),
+                                     real_parameters = _make_FORM_list(real_parameters),
+                                     complex_parameters = _make_FORM_list(complex_parameters),
                                      regulators = _make_FORM_list(regulators),
                                      polynomial_names = _make_FORM_list(regulators),
-                                     functions = _make_FORM_list(functions),
-                                     other_variables = _make_FORM_list(other_variables),
                                      form_optimization_level = form_optimization_level,
                                      form_work_space = form_work_space,
+                                     form_insertion_depth = form_insertion_depth,
                                      contour_deformation = int(contour_deformation_polynomial is not None),
                                      stabilize = int(stabilize),
                                      requested_orders = _make_FORM_list(requested_orders)
@@ -271,9 +278,10 @@ FORM_names = dict(
 # ---------------------------------- main function ----------------------------------
 def make_package(target_directory, name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
-                 prefactor=1, remainder_expression=1, functions=[], other_variables=[],
-                 form_optimization_level=2, form_work_space='500M', stabilize=False,
-                 contour_deformation_polynomial=None, decomposition_method='iterative_no_primary'):
+                 prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
+                 complex_parameters=[], form_optimization_level=2, form_work_space='500M',
+                 form_insertion_depth=1, stabilize=False, contour_deformation_polynomial=None,
+                 decomposition_method='iterative_no_primary'):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -368,9 +376,13 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         Function symbols occuring in `remainder_expression`,
         e.g.``['f']``.
 
-    :param other_variables:
+    :param real_parameters:
         iterable of strings or sympy symbols, optional;
-        Other occuring symbols.
+        Symbols to be interpreted as real variables.
+
+    :param complex_parameters:
+        iterable of strings or sympy symbols, optional;
+        Symbols to be interpreted as complex variables.
 
     :param form_optimization_level:
         integer out of the interval [0,3], optional;
@@ -380,6 +392,11 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     :param form_work_space:
         string, optional;
         The FORM WorkSpace. Default: ``'500M'``.
+
+    :param form_insertion_depth:
+        nonnegative integer, optional;
+        How deep FORM should try resolving nested function
+        calls. Default: ``1``.
 
     :param stabilize:
         bool, optional;
@@ -424,23 +441,25 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     target_directory, name, integration_variables, regulators, \
     requested_orders, polynomials_to_decompose, polynomial_names, \
     other_polynomials, prefactor, remainder_expression, functions, \
-    other_variables, form_optimization_level, form_work_space, \
-    stabilize, contour_deformation_polynomial, decomposition_method, \
+    real_parameters, complex_parameters, form_optimization_level, \
+    form_work_space, form_insertion_depth, stabilize, \
+    contour_deformation_polynomial, decomposition_method, \
     symbols_polynomials_to_decompose, symbols_other_polynomials, \
     symbols_remainder_expression, all_symbols = \
     _convert_input(target_directory, name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
-                   other_variables, form_optimization_level, form_work_space,
-                   stabilize, contour_deformation_polynomial, decomposition_method)
+                   real_parameters, complex_parameters, form_optimization_level,
+                   form_work_space, form_insertion_depth, stabilize,
+                   contour_deformation_polynomial, decomposition_method)
 
     # configure the template parser and parse global files
     template_sources, target_directory, template_replacements, file_renamings = \
         _parse_global_templates(
         target_directory, name, integration_variables, regulators,
-        polynomial_names, functions, other_variables,
-        form_optimization_level, form_work_space, stabilize,
-        requested_orders, contour_deformation_polynomial
+        polynomial_names, real_parameters, complex_parameters,
+        form_optimization_level, form_work_space, form_insertion_depth,
+        stabilize, requested_orders, contour_deformation_polynomial
     )
 
     # get the highest poles from the ``prefactor``
@@ -654,12 +673,20 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             integrand = Sum(*integrand_summands, copy=False)
 
+            # define the CFunctions for FORM
+            # TODO: How to determine which derivatives of the user input ``functions`` are needed? How to communicate it to the user?
+            all_functions = list(functions)
+            functions_for_insertion = [FORM_names['cal_I']] + [ FORM_names['regular']+str(i) for i in range(len(regular_parts)) ]
+
             # compute the required derivatives
             derivatives = {}
             def update_derivatives(basename, derivative_tracker, full_expression):
                 derivatives[basename] = full_expression # include undifferentiated expression
+                all_functions.append(basename) # define the symbol as CFunction in FORM
                 for multiindex,expression in derivative_tracker.compute_derivatives(full_expression).items():
-                    derivatives[_derivative_muliindex_to_name(basename, multiindex)] = expression
+                    name = _derivative_muliindex_to_name(basename, multiindex)
+                    derivatives[name] = expression
+                    all_functions.append(name) # define the symbol as CFunction in FORM
 
             #  - for the contour deformation
             if contour_deformation_polynomial is not None:
@@ -680,21 +707,45 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
 
 
-            # generate the function definitions the insertion in FORM
+            # generate the function definitions for the insertion in FORM
             form_function_definitions = ''.join(
                 _make_FORM_definition(name, expression)
                 for name, expression in derivatives.items()
             )
             form_insertions = _make_FORM_list(derivatives.keys())
 
-            print(form_function_definitions)
-            print(form_insertions)
+            # generate list over all occuring orders in the regulators
+            regulator_powers = list( rangecomb(np.zeros_like(requested_orders), requested_orders+highest_poles_current_sector) )
+            number_of_orders = len(regulator_powers)
+
+            # generate the definitions of the FORM preprocessor variables "shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex'"
+            regulator_powers = _make_FORM_shifted_orders(regulator_powers)
+
+            # parse template file "sector.h"
+            template_replacements['functions'] = _make_FORM_list(all_functions)
+            template_replacements['function_definitions'] = form_function_definitions # '* dummy' # TODO: 'function_definitions' should be of the form '#define f "x^2 + 2*x^5*y"\n#define ...' --> generate from ``derivatives``
+            template_replacements['number_of_integration_variables'] = len(integration_variables)
+            template_replacements['number_of_regulators'] = len(regulators)
+            template_replacements['integration_variables'] = _make_FORM_list(integration_variables)
+            template_replacements['integrand'] = integrand
+            template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
+            template_replacements['regulator_powers'] = regulator_powers
+            template_replacements['number_of_orders'] = number_of_orders
+            template_replacements['functions_for_insertion'] = _make_FORM_list(functions_for_insertion)
+            parse_template_file(os.path.join(template_sources, 'name', 'codegen', 'sector.h'), # source
+                                os.path.join(target_directory, name, 'codegen', 'sector%i.h' % sector_index), # dest
+                                template_replacements)
+            # TODO: adapt and parse "contour_deformation.h"
+
+            # TODO: remove commented print statements below
+            #print(form_function_definitions)
+            #print(form_insertions)
             #for i,p in enumerate(symbolic_regular_parts):
             #    print(p.compute_derivatives(regular_parts[i]))
             #    print()
             #    print()
 
-            #print(integrand)
+            print(integrand)
 
 # TODO: compute required derivatives
 # TODO: implement code writing
