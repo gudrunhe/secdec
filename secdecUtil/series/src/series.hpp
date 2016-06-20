@@ -226,10 +226,12 @@ namespace secdecutil {
                 {
                     current_index = i+j-order_min;
                     if ( ( (i+j) >= order_min ) && ( (i+j) <= order_max ) && s1.hasTerm(i) && s2.hasTerm(j) )
+                    {
                         if ( current_index < content.size() ) // term exists
                             content.at(current_index) += ( s1.at(i) * s2.at(j) );
                         else // term must be created
                             content.push_back( s1.at(i) * s2.at(j) );
+                    }
                 }
             }
 
