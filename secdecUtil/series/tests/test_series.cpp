@@ -281,13 +281,22 @@ TEST_CASE( "Operator *", "[Series]" ) {
 
 };
 
-TEST_CASE( "Operator * for complex", "[Series]" ) {
+TEST_CASE( "Operator * for complex<int>", "[Series]" ) {
 
     auto one_plus_i_times_x = secdecutil::Series<std::complex<int>>(0,1,{{1,0},{0,1}});
     auto minus_one_minus_i_times_x = secdecutil::Series<std::complex<int>>(0,1,{{-1,0},{0,-1}});
     auto result_operator_minus = - one_plus_i_times_x;
     REQUIRE( result_operator_minus == minus_one_minus_i_times_x );
+    
+};
 
+TEST_CASE( "Operator * for complex<double>", "[Series]" ) {
+    
+    auto one_plus_i_times_x = secdecutil::Series<std::complex<double>>(0,1,{{1.1,0.},{0.,1.1}});
+    auto minus_one_minus_i_times_x = secdecutil::Series<std::complex<double>>(0,1,{{-1.1,0.},{0.,-1.1}});
+    auto result_operator_minus = - one_plus_i_times_x;
+    REQUIRE( result_operator_minus == minus_one_minus_i_times_x );
+    
 };
 
 TEST_CASE( "Check Multivariate Access", "[Series]" ) {
