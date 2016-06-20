@@ -274,14 +274,9 @@ namespace secdecutil {
             if ( s1.truncated_above )
             {
                 os << " + O(";
-                if ( i == 0 )
-                    os << "1";
-                else
-                {
-                    os << s1.expansion_parameter;
-                    if ( i != 1 )
-                        os << "^" << (i);
-                }
+                os << s1.expansion_parameter;
+                if ( i != 1 )
+                    os << "^" << (i);
                 os << ")";
             }
 

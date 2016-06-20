@@ -434,7 +434,7 @@ TEST_CASE( "Naming the expansion parameter for operator <<" ) {
     auto plus_order_one = secdecutil::Series<int>(-3,-1,{1,1,8},true);
     std::stringstream stream_order_one;
     stream_order_one << plus_order_one;
-    std::string target_order_one = " + (1)*x^-3 + (1)*x^-2 + (8)*x^-1 + O(1)";
+    std::string target_order_one = " + (1)*x^-3 + (1)*x^-2 + (8)*x^-1 + O(x^0)";
     REQUIRE( stream_order_one.str() == target_order_one );
 
     auto plus_order_eps = secdecutil::Series<int>(-2,0,{1,1,8},true);
