@@ -676,17 +676,19 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             # define the CFunctions for FORM
             # TODO: How to determine which derivatives of the user input ``functions`` are needed? How to communicate it to the user?
             all_functions = list(functions)
-            functions_for_insertion = [FORM_names['cal_I']] + [ FORM_names['regular']+str(i) for i in range(len(regular_parts)) ]
+            functions_for_insertion = []
 
             # compute the required derivatives
             derivatives = {}
             def update_derivatives(basename, derivative_tracker, full_expression):
                 derivatives[basename] = full_expression # include undifferentiated expression
                 all_functions.append(basename) # define the symbol as CFunction in FORM
+                functions_for_insertion.append(basename) # "mark" for insertion
                 for multiindex,expression in derivative_tracker.compute_derivatives(full_expression).items():
                     name = _derivative_muliindex_to_name(basename, multiindex)
                     derivatives[name] = expression
                     all_functions.append(name) # define the symbol as CFunction in FORM
+                    functions_for_insertion.append(name) # "mark" for insertion
 
             #  - for the contour deformation
             if contour_deformation_polynomial is not None:
