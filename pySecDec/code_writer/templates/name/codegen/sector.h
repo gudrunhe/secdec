@@ -31,7 +31,7 @@ CFunctions log, SecDecInternalDenominator;
 
 * We rewrite function calls as symbols
 AutoDeclare Symbols SecDecInternalCall, SecDecInternalDenominatorCall;
-#Do function = {`functions'}
+#Do function = {`functions',log}
   AutoDeclare Symbols `function'Call;
 #EndDo
 
