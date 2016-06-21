@@ -261,7 +261,7 @@ B `regulators';
 
           #$labelCounter = $labelCounter + 1;
 
-          L arguments = SecDecInternalLabel`function'Call`$labelCounter'Arg * fDUMMYarguments(`$args');
+          L arguments = fDUMMYarguments(`$args');
 
           #call beginArgumentDepth(`$depth')
             Id `function'(`$args') = `function'Call`$labelCounter';
@@ -272,8 +272,6 @@ B `regulators';
 *         Define `$argCounter' by loking at the term with the empty function "fDUMMYarguments"
           Id fDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ sDUMMYexponent?$argCounter = 0;
           .sort
-*         `$argCounter' as defined above is too big by one.
-          #$argCounter = $argCounter - 1;
 
 *         Add all arguments to top level polynomial for simultaneous optimization.
           Id sDUMMYtoOptimize = sDUMMYtoOptimize + arguments;
@@ -344,10 +342,10 @@ B `regulators';
 * {
   #Do function = {`functions',log,SecDecInternalDenominator}
     #Do callIndex = 1, `largestLabel`function''
-      B label`function'Call`callIndex'Arg;
+      B SecDecInternalLabel`function'Call`callIndex'Arg;
       .sort
       #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-        L arg`argIndex' = toOptimize[label`function'Call`callIndex'Arg ^ `numberOfArgs`function'Label`callIndex'];
+        L arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
       #EndDo
       .sort
       #write <sector_`sectorID'_`cppOrder'.cpp> ""
@@ -363,7 +361,7 @@ B `regulators';
       #EndDo
       #write <sector_`sectorID'_`cppOrder'.cpp> ");" currentExpr
       #write <sector_`sectorID'_`cppOrder'.cpp> ""
-      multiply replace_(label`function'Call`callIndex'Arg, 0);
+      multiply replace_(SecDecInternalLabel`function'Call`callIndex'Arg, 0);
       .sort
     #EndDo
   #EndDo
@@ -380,7 +378,7 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `IV'"
   #EndDo
   #Do RP = {`realParameters'}
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `RP"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `RP'"
   #EndDo
   #Do CP = {`complexParameters'}
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `CP'"
