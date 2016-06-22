@@ -11,9 +11,9 @@ sector%%-stamp : sector%%.h
 	$(FORM) -D sectorID=$(patsubst sector%%.h,%%,$<) write_integrand.frm
 
 	@ # move source code to appropriate directory
-	mv sector_$(patsubst sector%%.h,%%,$<).hpp ../integrands
-	mv sector_$(patsubst sector%%.h,%%,$<)_*.hpp ../integrands
-	mv sector_$(patsubst sector%%.h,%%,$<)_*.cpp ../integrands
+	$(PYTHON) mv.py sector_$(patsubst sector%%.h,%%,$<).hpp ../integrands
+	$(PYTHON) mv.py sector_$(patsubst sector%%.h,%%,$<)_*.hpp ../integrands
+	$(PYTHON) mv.py sector_$(patsubst sector%%.h,%%,$<)_*.cpp ../integrands
 
 	@ # "mark" done
 	touch $@
@@ -23,8 +23,8 @@ contour_deformation_sector%%-stamp : contour_deformation_sector%%.h
 	$(FORM) -D sectorID=$(patsubst contour_deformation_sector%%.h,%%,$<) write_contourdef.frm
 
 	@ # move source code to appropriate directory
-	mv contour_deformation_sector_$(patsubst contour_deformation_sector%%.h,%%,$<).hpp ../integrands
-	mv contour_deformation_sector_$(patsubst contour_deformation_sector%%.h,%%,$<).cpp ../integrands
+	$(PYTHON) mv.py contour_deformation_sector_$(patsubst contour_deformation_sector%%.h,%%,$<).hpp ../integrands
+	$(PYTHON) mv.py contour_deformation_sector_$(patsubst contour_deformation_sector%%.h,%%,$<).cpp ../integrands
 
 	@ # "mark" done
 	touch $@

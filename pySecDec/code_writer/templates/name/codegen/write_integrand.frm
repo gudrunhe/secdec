@@ -73,35 +73,35 @@ B `regulators';
 * We are writing a the c++ file "sector_`sectorID'_`cppOrder'.cpp"
 * and the corresponding header "sector_`sectorID'_`cppOrder'.hpp".
 * The header can already completely be written here:
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#ifndef __SecDec_include_guard_`name'_sector_`sectorID'_order_`cppOrder'"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#define __SecDec_include_guard_`name'_sector_`sectorID'_order_`cppOrder'"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#include <`name'/config.hpp>"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "{"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  #if `name'_contour_deformation"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    IntegrandFunction"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  #else `name'_contour_deformation"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    DeformableIntegrandFunction"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  #endif"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  sector_`sectorID'__order_`cppOrder'__integrand;"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "}"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#endif"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#ifndef __SecDec_include_guard_`name'_sector_`sectorID'_order_`cppOrder'#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#define __SecDec_include_guard_`name'_sector_`sectorID'_order_`cppOrder'#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#include <`name'/config.hpp>#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  #if `name'_contour_deformation#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    IntegrandFunction#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  #else `name'_contour_deformation#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    DeformableIntegrandFunction#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  #endif#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  sector_`sectorID'__order_`cppOrder'__integrand;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "}#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
 
 * Open the namspace in which the sector is to be implemented
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "{"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'__order_`cppOrder'__integrand"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  ("
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    #if `name'_contour_deformation"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const integration_variables,"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    #else `name'_contour_deformation"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const integration_variables,"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    #endif"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const real_parameters,"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    complex_t const * const complex_parameters"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  )"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  {"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'__order_`cppOrder'__integrand#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    #if `name'_contour_deformation#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const integration_variables,#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    #else `name'_contour_deformation#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const integration_variables,#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    #endif#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const real_parameters,#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    complex_t const * const complex_parameters#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  {#@SecDecInternalNewline@#"
 
 * extract the order in the regulators that we are about to process
   #$currentOrder = 1;
@@ -308,35 +308,35 @@ B `regulators';
 
   #$counter = 0;
   #Do IV = {`integrationVariables'}
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#define `IV' integration_variables[`$counter']"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#define `IV' integration_variables[`$counter']#@SecDecInternalNewline@#"
     #$counter = $counter + 1;
   #EndDo
   #$counter = 0;
   #Do RP = {`realParameters'}
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#define `RP' real_parameters[`$counter']"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#define `RP' real_parameters[`$counter']#@SecDecInternalNewline@#"
     #$counter = $counter + 1;
   #EndDo
   #$counter = 0;
   #Do CP = {`complexParameters'}
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#define `CP' complex_parameters[`$counter']"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#define `CP' complex_parameters[`$counter']#@SecDecInternalNewline@#"
     #$counter = $counter + 1;
   #EndDo
 * }
 
 * Processing denominators in FORM is easiest if packed into a function.
 * Define that function as c preprocessor macro.
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalDenominator(x) 1./(x)"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalDenominator(x) 1./(x)#@SecDecInternalNewline@#"
 
 * Define "SecDecInternalAbbreviation[0]" as c preprocessor variable "result".
 * Since FORM does not use "SecDecInternalAbbreviation[0]", we can use it.
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define result SecDecInternalAbbreviation[0]"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define result SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
 
 * write Abbreviations in c format
   Format float 20;
   Format C;
-  #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalAbbreviation[`optimmaxvar_' + 1];"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "%%O"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
 
 * Replace all function calls by symbols for simultaneous optimization.
 * {
@@ -348,19 +348,19 @@ B `regulators';
         L arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
       #EndDo
       .sort
-      #write <sector_`sectorID'_`cppOrder'.cpp> ""
-      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t `function'Call`callIndex' ="
-      #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
+      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t `function'Call`callIndex' =#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "`function'(#@SecDecInternalNewline@#"
       #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
         #If `argIndex' == `numberOfArgs`function'Label`callIndex''
-          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'
+          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E#@SecDecInternalNewline@#"  arg`argIndex'
         #Else
-          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E," arg`argIndex'
+          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E,#@SecDecInternalNewline@#" arg`argIndex'
         #EndIf
         drop arg`argIndex';
       #EndDo
-      #write <sector_`sectorID'_`cppOrder'.cpp> ");" currentExpr
-      #write <sector_`sectorID'_`cppOrder'.cpp> ""
+      #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#" currentExpr
+      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
       multiply replace_(SecDecInternalLabel`function'Call`callIndex'Arg, 0);
       .sort
     #EndDo
@@ -368,27 +368,27 @@ B `regulators';
 * }
 
 * write the integrand
-  #write <sector_`sectorID'_`cppOrder'.cpp> ""
-  #write <sector_`sectorID'_`cppOrder'.cpp> "result = %%e" toOptimize(result)
-  #write <sector_`sectorID'_`cppOrder'.cpp> "return result;"
-  #write <sector_`sectorID'_`cppOrder'.cpp> ""
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "result = %%e#@SecDecInternalNewline@#" toOptimize(result)
+  #write <sector_`sectorID'_`cppOrder'.cpp> "return result;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * undefine the c preprocessor macros
   #Do IV = {`integrationVariables'}
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `IV'"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `IV'#@SecDecInternalNewline@#"
   #EndDo
   #Do RP = {`realParameters'}
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `RP'"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `RP'#@SecDecInternalNewline@#"
   #EndDo
   #Do CP = {`complexParameters'}
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `CP'"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `CP'#@SecDecInternalNewline@#"
   #EndDo
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalDenominator"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef result"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalDenominator#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef result#@SecDecInternalNewline@#"
 
 * Close the c++ function and namespaces
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  };"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "};"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
 #EndDo
 
 ******* TODO: continue adaptation of this file below
@@ -397,9 +397,9 @@ B `regulators';
 * Write a c++ header that collects all the functions in a Series
 * "Format rational": Need the indices as integers.
 Format rational;
-#write <sector_`sectorID'.hpp> "#ifndef __SecDec_include_guard_`name'_sector_`sectorID'"
-#write <sector_`sectorID'.hpp> "#define __SecDec_include_guard_`name'_sector_`sectorID'"
-#write <sector_`sectorID'.hpp> "#include <`name'/util/series.hpp>"
+#write <sector_`sectorID'.hpp> "#ifndef __SecDec_include_guard_`name'_sector_`sectorID'#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#define __SecDec_include_guard_`name'_sector_`sectorID'#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#include <`name'/util/series.hpp>#@SecDecInternalNewline@#"
 #Do shiftedOrder = 0, `numOrders'
 * Calculate the (possibly negative) order in the regulator
   #$order = `shiftedOrder'-`highestPole';
@@ -413,20 +413,20 @@ Format rational;
     #Redefine cppOrder "`$order'"
   #endif
 * include correspoinding c++ header file
-#write <sector_`sectorID'.hpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>"
+#write <sector_`sectorID'.hpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
 #EndDo
-#write <sector_`sectorID'.hpp> "#if `name'_contour_deformation"
-#write <sector_`sectorID'.hpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'.hpp>"
-#write <sector_`sectorID'.hpp> "#endif"
-#write <sector_`sectorID'.hpp> "namespace `name'"
-#write <sector_`sectorID'.hpp> "{"
-#write <sector_`sectorID'.hpp> "  Series<integrand_t> integrand_of_sector_`sectorID'"
-#write <sector_`sectorID'.hpp> "  ("
-#write <sector_`sectorID'.hpp> "      /*order_min*/ -`highestPole',"
-#write <sector_`sectorID'.hpp> "      /*truncated_below*/ false,"
-#write <sector_`sectorID'.hpp> "      /*order_max*/ `numOrders' - (`highestPole'),"
-#write <sector_`sectorID'.hpp> "      /*truncated_above*/ true,"
-#write <sector_`sectorID'.hpp> "      {"
+#write <sector_`sectorID'.hpp> "#if `name'_contour_deformation#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'.hpp>#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "namespace `name'#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "{#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "  Series<integrand_t> integrand_of_sector_`sectorID'#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "  (#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "      /*order_min*/ -`highestPole',#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "      /*truncated_below*/ false,#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "      /*order_max*/ `numOrders' - (`highestPole'),#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "      /*truncated_above*/ true,#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "      {#@SecDecInternalNewline@#"
 #Do shiftedOrder = 0, `numOrders'
 * Calculate the (possibly negative) order in the regulator
   #$order = `shiftedOrder'-`highestPole';
@@ -440,18 +440,18 @@ Format rational;
     #Redefine cppOrder "`$order'"
   #endif
 * add corresponding function to the Series
-#write <sector_`sectorID'.hpp> "{"
-#write <sector_`sectorID'.hpp> "/*number of Feynman parameters*/ `NumFP',"
-#write <sector_`sectorID'.hpp> "sector_`sectorID'__order_`cppOrder'__integrand,"
-#write <sector_`sectorID'.hpp> "#if `name'_contour_deformation"
-#write <sector_`sectorID'.hpp> "sector_`sectorID'__contourdef,"
-#write <sector_`sectorID'.hpp> "sector_`sectorID'__F"
-#write <sector_`sectorID'.hpp> "#endif"
-#write <sector_`sectorID'.hpp> "},"
+#write <sector_`sectorID'.hpp> "{#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "/*number of Feynman parameters*/ `NumFP',#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "sector_`sectorID'__order_`cppOrder'__integrand,#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#if `name'_contour_deformation#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "sector_`sectorID'__contourdef,#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "sector_`sectorID'__F#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "},#@SecDecInternalNewline@#"
 #EndDo
-#write <sector_`sectorID'.hpp> "      }"
-#write <sector_`sectorID'.hpp> "  );"
-#write <sector_`sectorID'.hpp> "};"
-#write <sector_`sectorID'.hpp> "#endif"
+#write <sector_`sectorID'.hpp> "      }#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "  );#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "};#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
 
 .end
