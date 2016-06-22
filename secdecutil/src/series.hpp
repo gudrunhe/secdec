@@ -1,8 +1,7 @@
-#ifndef __SecDec_include_guard_series
-#define __SecDec_include_guard_series
+#ifndef SecDecUtil_series_hpp_included
+#define SecDecUtil_series_hpp_included
 
 #include <iostream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
