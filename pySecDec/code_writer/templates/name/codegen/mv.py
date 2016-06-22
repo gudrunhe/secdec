@@ -15,13 +15,19 @@ is the second command line argument.
 '''
 
 from sys import argv
-from os import remove
+from os import remove, path
 
-src_filename, dest_filename = argv[-2:]
+dest_dirname = argv[-1]
+src_filenames = argv[1:-1]
 
-with open(src_filename, 'r') as src:
-    with open(dest_filename, 'w') as dest:
+for src_filename in src_filenames:
+    dest_filepath = path.join(dest_dirname, src_filename)
+    txt = []
+    with open(src_filename, 'r') as src:
         for line in src:
-            dest.write(line.strip('\\\t\n ').replace("#@SecDecInternalNewline@#",'\n'))
+            txt.append(line.strip('\\\t\n '))
+    txt = ''.join(txt).replace("#@SecDecInternalNewline@#",'\n')
+    with open(dest_filepath, 'w') as dest:
+        dest.write(txt)
 
-remove(src_filename)
+    remove(src_filename)
