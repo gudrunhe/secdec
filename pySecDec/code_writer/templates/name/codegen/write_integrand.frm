@@ -126,6 +126,13 @@ B `regulators';
     #$counter = $counter + 1;
   #EndDo
 
+* Expand logs *BEFORE* insertions and only at top level in order to avoid
+* introducing log(<negative real>).
+  factarg log;
+  repeat Id log(?head, sDUMMY1?, sDUMMY2?) = log(?head, sDUMMY1) + log(sDUMMY2);
+  repeat Id log(sDUMMY1? ^ sDUMMY2?) = log(sDUMMY1) * sDUMMY2;
+  .sort
+
 * perform innermost replacements first
   #Do minusDepth = - `insertionDepth' , 0
     #$depth = - `minusDepth';
@@ -141,14 +148,6 @@ B `regulators';
         factarg SecDecInternalDenominator;
         chainout SecDecInternalDenominator;
         repeat Id fDUMMY?(?sDUMMY) * SecDecInternalDenominator(fDUMMY?(?sDUMMY)) = 1;
-      #call endArgumentDepth(`$depth')
-      .sort
-
-*     expand logs
-      #call beginArgumentDepth(`$depth')
-        factarg log;
-        repeat Id log(?head, sDUMMY1?, sDUMMY2?) = log(?head, sDUMMY1) + log(sDUMMY2);
-        repeat Id log(sDUMMY1? ^ sDUMMY2?) = log(sDUMMY1) * sDUMMY2;
       #call endArgumentDepth(`$depth')
       .sort
 
