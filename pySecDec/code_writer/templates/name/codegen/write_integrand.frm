@@ -190,7 +190,7 @@ B `regulators';
 *       This "if" evaluates to true only if the expression above was matched.
 *       If the expression above does not match, there is nothing to do.
         #If `i' == 0
-          L replacement = (``functionForInsertion'')*replace_(`replaceArg');
+          #call generateReplacement`functionForInsertion'(`replaceArg')
           .sort
           drop replacement;
           #call beginArgumentDepth(`$depth')

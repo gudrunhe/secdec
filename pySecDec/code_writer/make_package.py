@@ -4,10 +4,12 @@ This module implements the main program - the function
 
 """
 
+from __future__ import print_function
 from ..misc import sympify_symbols, rangecomb
 from ..algebra import _Expression, Expression, Polynomial, \
                       ExponentiatedPolynomial, Pow, Product, \
-                      DerivativeTracker, Function, Sum
+                      ProductRule, DerivativeTracker, Function, \
+                      Sum
 from .. import decomposition
 from ..subtraction import integrate_pole_part
 from ..expansion import expand_singular, expand_Taylor
@@ -233,6 +235,76 @@ def _make_FORM_definition(name, expression):
         name,
         str(expression).replace('**','^')
     )
+
+def _make_FORM_function_definition(name, expression, limit):
+    '''
+    Split an `expression` whose string representation
+    exceeds the `limit` of characters. Return a FORM
+    procedure "defineReplacementExpression`name`"
+    that defines `expression` as local expression
+    named ``replacement``.
+
+    :param name:
+        string;
+        The name of the expression. It is part of the
+        name of the resulting FORM procedure
+        "defineReplacementExpression`name`".
+
+    :param expression:
+        :class:`pySecDec.algebra._Expression`;
+        The expression to be split.
+
+    :param limit:
+        integer;
+        The maximum number of characters in each
+        subexpression.
+
+    '''
+    first_line = "#procedure generateReplacement%s(?replaceArg)" % name
+    last_line = "#endProcedure"
+    codelines = []
+
+    def recursion(start_i, expression):
+        str_expression = str(expression)
+
+        if len(str_expression) <= limit: # no need to split
+            codelines.append( "  L tmp%i = (%s)*replace_(`?replaceArg');" % (start_i,str_expression) )
+            return start_i + 1
+
+        if type(expression) == ProductRule:
+            expression = expression.to_sum()
+
+        if type(expression) == Sum:
+            relevant_indices = []
+            i = start_i
+            for summand in expression.summands:
+                i = recursion(i, summand)
+                relevant_indices.append(i - 1)
+            codelines.append( "  .sort" )
+            codelines.append( "  L tmp%i = " % i + "+".join("tmp%i" % j for j in relevant_indices) + ";" )
+            return i + 1
+
+        if type(expression) == Product:
+            relevant_indices = []
+            i = start_i
+            for factor in expression.factors:
+                i = recursion(i, factor)
+                relevant_indices.append(i - 1)
+            codelines.append( "  .sort" )
+            codelines.append( "  L tmp%i = " % i + "*".join("tmp%i" % j for j in relevant_indices) + ";" )
+            return i + 1
+
+        # rescue: print warning and write unsplit expression
+        print( 'WARNING: Could not split "%s" (not implemented for %s)' % (name,type(expression)) )
+        codelines.append("  L tmp%i = (%s)*replace_(`?replaceArg');" % (start_i, str_expression))
+        return start_i + 1
+
+    largest_i = recursion(1, expression) - 1
+    codelines.append( "  .sort" )
+    codelines.append( "  drop " + ",".join("tmp%i" % j for j in range(1,largest_i+1)) + ";" )
+    codelines.append( "  L replacement = tmp%i;" % largest_i )
+    codelines.append( "  .sort" )
+    return "\n".join(chain([first_line],codelines,[last_line,'']))
 
 def _make_FORM_shifted_orders(positive_powers):
     r'''
@@ -710,8 +782,8 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
 
             # generate the function definitions for the insertion in FORM
-            form_function_definitions = ''.join(
-                _make_FORM_definition(name, expression)
+            FORM_function_definitions = ''.join(
+                _make_FORM_function_definition(name, expression, limit=10**6)
                 for name, expression in derivatives.items()
             )
             form_insertions = _make_FORM_list(derivatives.keys())
@@ -725,7 +797,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             # parse template file "sector.h"
             template_replacements['functions'] = _make_FORM_list(all_functions)
-            template_replacements['function_definitions'] = form_function_definitions # '* dummy' # TODO: 'function_definitions' should be of the form '#define f "x^2 + 2*x^5*y"\n#define ...' --> generate from ``derivatives``
+            template_replacements['function_definitions'] = FORM_function_definitions
             template_replacements['number_of_integration_variables'] = len(integration_variables)
             template_replacements['number_of_regulators'] = len(regulators)
             template_replacements['integration_variables'] = _make_FORM_list(integration_variables)
@@ -740,7 +812,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             # TODO: adapt and parse "contour_deformation.h"
 
             # TODO: remove commented print statements below
-            #print(form_function_definitions)
+            #print(FORM_function_definitions)
             #print(form_insertions)
             #for i,p in enumerate(symbolic_regular_parts):
             #    print(p.compute_derivatives(regular_parts[i]))

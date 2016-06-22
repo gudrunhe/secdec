@@ -2,9 +2,9 @@
 
 from .make_package import *
 from .make_package import _convert_input, _make_FORM_definition, \
-                          _make_FORM_list, _derivative_muliindex_to_name, \
-                          _make_FORM_shifted_orders
-from ..algebra import Polynomial, Function
+                          _make_FORM_function_definition, _make_FORM_list, \
+                          _derivative_muliindex_to_name, _make_FORM_shifted_orders
+from ..algebra import Function, Polynomial, Product, ProductRule, Sum
 from nose.plugins.attrib import attr
 import sys, shutil
 import unittest
@@ -106,6 +106,114 @@ class TestWriteFORMCode(TestMakePackage):
 
         FORM_code = _make_FORM_definition(f_dummy.symbol, x*x + 3*y*z)
         target_FORM_code = '#define f " + (3)*y*z + (1)*x^2"\n'
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
+    def test_make_FORM_function_definition_sum(self):
+        symbols = ['x','y']
+        x = Polynomial([[1,0]], [1], symbols)
+        y = Polynomial([[0,1]], [1], symbols)
+
+        name = 'myName'
+        expression = Sum(Sum(x**2 + 10 * y, x**2 + 10 * y), y * x)
+        limit = 20
+        FORM_code = _make_FORM_function_definition(name, expression, limit)
+
+        target_FORM_code  = "#procedure generateReplacementmyName(?replaceArg)\n"
+        target_FORM_code += "  L tmp1 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  L tmp2 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  L tmp3 = tmp1+tmp2;\n"
+        target_FORM_code += "  L tmp4 = ( + (1)*x*y)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  L tmp5 = tmp3+tmp4;\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  drop tmp1,tmp2,tmp3,tmp4,tmp5;\n"
+        target_FORM_code += "  L replacement = tmp5;\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "#endProcedure\n"
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
+    def test_make_FORM_function_definition_sum_product(self):
+        symbols = ['x','y']
+        x = Polynomial([[1,0]], [1], symbols)
+        y = Polynomial([[0,1]], [1], symbols)
+
+        name = 'myName'
+        expression = Sum(Product(x**2 + 10 * y, x**2 + 10 * y), y * x)
+        limit = 20
+        FORM_code = _make_FORM_function_definition(name, expression, limit)
+
+        target_FORM_code  = "#procedure generateReplacementmyName(?replaceArg)\n"
+        target_FORM_code += "  L tmp1 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  L tmp2 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  L tmp3 = tmp1*tmp2;\n"
+        target_FORM_code += "  L tmp4 = ( + (1)*x*y)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  L tmp5 = tmp3+tmp4;\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  drop tmp1,tmp2,tmp3,tmp4,tmp5;\n"
+        target_FORM_code += "  L replacement = tmp5;\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "#endProcedure\n"
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
+    def test_make_FORM_function_definition_product_rule(self):
+        symbols = ['x','y']
+        x = Polynomial([[1,0]], [1], symbols)
+        y = Polynomial([[0,1]], [1], symbols)
+
+        name = 'myName'
+        expression = ProductRule(Sum(x**2 + 10 * y, y * x), x**2 + 10 * y)
+        limit = 20
+        FORM_code = _make_FORM_function_definition(name, expression, limit)
+
+        target_FORM_code  = "#procedure generateReplacementmyName(?replaceArg)\n"
+        target_FORM_code += "  L tmp1 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  L tmp2 = ( + (1)*x*y)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  L tmp3 = tmp1+tmp2;\n"
+        target_FORM_code += "  L tmp4 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  L tmp5 = tmp3*tmp4;\n"
+        target_FORM_code += "  L tmp6 = ( + (1))*replace_(`?replaceArg');\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  L tmp7 = tmp5*tmp6;\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  L tmp8 = tmp7;\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  drop tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8;\n"
+        target_FORM_code += "  L replacement = tmp8;\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "#endProcedure\n"
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
+    def test_make_FORM_function_definition_polynomial(self):
+        symbols = ['x','y']
+        x = Polynomial([[1,0]], [1], symbols)
+        y = Polynomial([[0,1]], [1], symbols)
+
+        name = 'myName'
+        expression = (x**2 + 10 * y + y * x) * (x**2 + 10 * y)
+        limit = 20
+        FORM_code = _make_FORM_function_definition(name, expression, limit)
+
+        # ``expression`` has type `Polynomial` --> fall back to rescue since splitting is not implemented
+        target_FORM_code  = "#procedure generateReplacementmyName(?replaceArg)\n"
+        target_FORM_code += "  L tmp1 = ( + (100)*y**2 + (10)*x*y**2 + (20)*x**2*y + (1)*x**3*y + (1)*x**4)*replace_(`?replaceArg');\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "  drop tmp1;\n"
+        target_FORM_code += "  L replacement = tmp1;\n"
+        target_FORM_code += "  .sort\n"
+        target_FORM_code += "#endProcedure\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 
