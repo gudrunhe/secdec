@@ -20,6 +20,9 @@ namespace %(name)s
     // TODO: set this variable in the Makefile
     #define %(name)s_contour_deformation %(contour_deformation)i
 
+    // whether or not complex parameters are present
+    #define %(name)s_has_complex_parameters %(have_complex_parameters)i
+
     // basic data types
     // --{
     typedef double real_t;
