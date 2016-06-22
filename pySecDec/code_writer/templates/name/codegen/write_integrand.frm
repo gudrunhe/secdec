@@ -330,13 +330,14 @@ B `regulators';
 * Define "SecDecInternalAbbreviation[0]" as c preprocessor variable "result".
 * Since FORM does not use "SecDecInternalAbbreviation[0]", we can use it.
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define result SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * write Abbreviations in c format
   Format float 20;
   Format C;
-  #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * Replace all function calls by symbols for simultaneous optimization.
 * {
@@ -348,19 +349,17 @@ B `regulators';
         L arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
       #EndDo
       .sort
-      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t `function'Call`callIndex' =#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "`function'(#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t `function'Call`callIndex' = "
+      #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
       #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
         #If `argIndex' == `numberOfArgs`function'Label`callIndex''
-          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E#@SecDecInternalNewline@#"  arg`argIndex'
+          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'
         #Else
-          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E,#@SecDecInternalNewline@#" arg`argIndex'
+          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E," arg`argIndex'
         #EndIf
         drop arg`argIndex';
       #EndDo
       #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#" currentExpr
-      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
       multiply replace_(SecDecInternalLabel`function'Call`callIndex'Arg, 0);
       .sort
     #EndDo
@@ -392,6 +391,10 @@ B `regulators';
 #EndDo
 
 ******* TODO: continue adaptation of this file below
+
+* TODO: temporary dummy file and .end during development --> remove
+#write <sector_`sectorID'.hpp> "dummy#@SecDecInternalNewline@#"
+.end
 
 ******* TODO: how to initialize the multivariate series ---> finish python's algebraic part before bothering with the syntax here
 * Write a c++ header that collects all the functions in a Series
