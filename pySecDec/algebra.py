@@ -1392,6 +1392,16 @@ class ProductRule(_Expression):
 
         return self
 
+    def to_sum(self):
+        'Convert the :class:`.ProductRule` to :class:`.Sum`'
+        summands = []
+        for coeff, term in zip(self.coeffs, self.factorlist):
+            factors = []
+            for j, derivative_multiindex in enumerate(term):
+                factors.append(self.expressions[j][tuple(derivative_multiindex)])
+            summands.append(Product(*factors, copy=False) * int(coeff))
+        return Sum(*summands, copy=False)
+
     @doc(_Expression.docstring_of_replace)
     def replace(self, index, value, remove=False):
         summands = []

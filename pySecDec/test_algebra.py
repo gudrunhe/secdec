@@ -603,6 +603,12 @@ class TestProductRule(unittest.TestCase):
         self.assertLess(len(simplified_ddp0_dx_dx.coeffs), len(ddp0_dx_dx.coeffs))
 
     #@attr('active')
+    def test_to_sum(self):
+        p0_sum = self.p0.copy().to_sum()
+        self.assertTrue(type(p0_sum) is Sum)
+        self.assertEqual(   (sp.sympify(p0_sum) - sp.sympify(self.p0)).simplify()   ,   0   )
+
+    #@attr('active')
     def test_replace(self):
         z = sp.symbols('z')
         dddp0_dxdydx = self.p0.derive(0).derive(1).derive(0).simplify()
