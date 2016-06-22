@@ -70,8 +70,7 @@ namespace %(name)s
     #if %(name)s_contour_deformation
         struct sign_check_error : public std::runtime_error
         {
-            sign_check_error (const std::string& what_arg) : std::runtime_error(what_arg) {};
-            sign_check_error (const char*        what_arg) : std::runtime_error(what_arg) {};
+            using std::runtime_error::runtime_error;
         };
     #endif
 
