@@ -83,7 +83,7 @@ namespace %(name)s
     {
         const int number_of_integration_variables;
 
-        #if %(name)s_contour_deformation
+        #if !%(name)s_contour_deformation
 
             const std::function<IntegrandFunction> integrand;
 
