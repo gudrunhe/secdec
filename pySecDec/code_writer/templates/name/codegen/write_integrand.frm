@@ -1,6 +1,25 @@
 #-
 Off statistics;
 
+* Define two general procedures that write c++ code to define and undefine
+* c++ preprocessor varibables accessing a c++ array.
+#procedure cppDefine(?FORMNames,cppArrayName)
+  #$counter = 0;
+  #Do varname = {`?FORMNames'}
+    #If x`varname' != x
+      #write <sector_`sectorID'_`cppOrder'.cpp> "#define `varname' `cppArrayName'[`$counter']#@SecDecInternalNewline@#"
+      #$counter = $counter + 1;
+    #EndIf
+  #EndDo
+#endProcedure
+#procedure cppUndefine(?FORMNames)
+  #Do varname = {`?FORMNames'}
+    #If x`varname' != x
+      #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `varname'#@SecDecInternalNewline@#"
+    #EndIf
+  #EndDo
+#endProcedure
+
 * define two procedures to open and close a nested argument section
 #procedure beginArgumentDepth(depth)
   #Do recursiveDepth = 1, `depth'
@@ -305,21 +324,10 @@ B `regulators';
 * "Format rational": Need the indices as integers.
   Format rational;
 
-  #$counter = 0;
-  #Do IV = {`integrationVariables'}
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#define `IV' integration_variables[`$counter']#@SecDecInternalNewline@#"
-    #$counter = $counter + 1;
-  #EndDo
-  #$counter = 0;
-  #Do RP = {`realParameters'}
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#define `RP' real_parameters[`$counter']#@SecDecInternalNewline@#"
-    #$counter = $counter + 1;
-  #EndDo
-  #$counter = 0;
-  #Do CP = {`complexParameters'}
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#define `CP' complex_parameters[`$counter']#@SecDecInternalNewline@#"
-    #$counter = $counter + 1;
-  #EndDo
+* call the general procedure to write the corresponding c++ code define in the beginning of this file
+  #call cppDefine(`integrationVariables',integration_variables)
+  #call cppDefine(`realParameters',real_parameters)
+  #call cppDefine(`complexParameters',complex_parameters)
 * }
 
 * Processing denominators in FORM is easiest if packed into a function.
@@ -372,15 +380,9 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * undefine the c preprocessor macros
-  #Do IV = {`integrationVariables'}
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `IV'#@SecDecInternalNewline@#"
-  #EndDo
-  #Do RP = {`realParameters'}
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `RP'#@SecDecInternalNewline@#"
-  #EndDo
-  #Do CP = {`complexParameters'}
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `CP'#@SecDecInternalNewline@#"
-  #EndDo
+  #call cppUndefine(`integrationVariables')
+  #call cppUndefine(`realParameters')
+  #call cppUndefine(`complexParameters')
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalDenominator#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef result#@SecDecInternalNewline@#"
 
