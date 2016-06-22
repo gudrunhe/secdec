@@ -1,5 +1,5 @@
-#ifndef __SecDec_include_guard_%(name)s_integrands
-#define __SecDec_include_guard_%(name)s_integrands
+#ifndef %(name)s_integrands_integrands_hpp_included
+#define %(name)s_integrands_integrands_hpp_included
 %(sector_includes)s
 
 namespace %(name)s

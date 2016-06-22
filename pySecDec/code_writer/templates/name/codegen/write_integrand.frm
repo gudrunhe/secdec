@@ -92,8 +92,8 @@ B `regulators';
 * We are writing a the c++ file "sector_`sectorID'_`cppOrder'.cpp"
 * and the corresponding header "sector_`sectorID'_`cppOrder'.hpp".
 * The header can already completely be written here:
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#ifndef __SecDec_include_guard_`name'_sector_`sectorID'_order_`cppOrder'#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#define __SecDec_include_guard_`name'_sector_`sectorID'_order_`cppOrder'#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#ifndef `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#define `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "#include <`name'/config.hpp>#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
@@ -401,8 +401,8 @@ B `regulators';
 * Write a c++ header that collects all the functions in a Series
 * "Format rational": Need the indices as integers.
 Format rational;
-#write <sector_`sectorID'.hpp> "#ifndef __SecDec_include_guard_`name'_sector_`sectorID'#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "#define __SecDec_include_guard_`name'_sector_`sectorID'#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#ifndef `name'_codegen_sector_`sectorID'_hpp_included#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#define `name'_codegen_sector_`sectorID'_hpp_included#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "#include <`name'/util/series.hpp>#@SecDecInternalNewline@#"
 #Do shiftedOrder = 0, `numOrders'
 * Calculate the (possibly negative) order in the regulator

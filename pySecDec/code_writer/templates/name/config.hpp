@@ -1,5 +1,5 @@
-#ifndef __SecDec_include_guard_%(name)s_config
-#define __SecDec_include_guard_%(name)s_config
+#ifndef %(name)s_config_hpp_included
+#define %(name)s_config_hpp_included
 
 #include <array>
 #include <cmath>
