@@ -30,7 +30,7 @@ AutoDeclare CFunctions d;
 CFunctions log, SecDecInternalDenominator;
 
 * We rewrite function calls as symbols
-AutoDeclare Symbols SecDecInternalCall, SecDecInternalDenominatorCall;
+AutoDeclare Symbols SecDecInternalDenominatorCall;
 #Do function = {`functions',log}
   AutoDeclare Symbols `function'Call;
 #EndDo
@@ -51,7 +51,7 @@ AutoDeclare Symbols SecDecInternalLabel;
 %(regulator_powers)s
 
 * The array of abbreviations
-ExtraSymbols,array,abbreviation;
+ExtraSymbols,array,SecDecInternalAbbreviation;
 
 * Define the dummy functions introduced in python and their derivatives.
 #define functionsForInsertion "%(functions_for_insertion)s"
