@@ -17,7 +17,8 @@ namespace %(name)s
     using namespace secdecutil;
 
     // whether or not to use contour deformation
-    // TODO: set this variable in the Makefile
+    // Note: To switch contour deformation off, also change the
+    //       corresponding variable in the "Makefile.conf".
     #define %(name)s_contour_deformation %(contour_deformation)i
 
     // whether or not complex parameters are present
