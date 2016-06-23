@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "../src/series.hpp"
+#include "../secdecutil/series.hpp"
 
 #include <complex>
 #include <sstream>
