@@ -1,0 +1,11 @@
+# extracted packages
+/Cuba-*/
+/form-*/
+/gsl-*/
+/secdecutil-*/
+
+# installation targets
+/bin/
+/include/
+/install/
+/lib/
