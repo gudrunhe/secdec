@@ -10,12 +10,8 @@
 #include <vector>
 // TODO: which of these headers are needed?
 
-namespace secdecutil {}; // TODO: include external library "secdecutil" instead of this
-
 namespace %(name)s
 {
-    using namespace secdecutil;
-
     // whether or not to use contour deformation
     // Note: To switch contour deformation off, also change the
     //       corresponding variable in the "Makefile.conf".
