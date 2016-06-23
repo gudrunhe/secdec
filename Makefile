@@ -5,7 +5,7 @@ TOPDIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 CONFIGURE_COMMON = CFLAGS=-fexceptions --prefix=$(TOPDIR)/install --libdir=$(TOPDIR)/lib --includedir=$(TOPDIR)/include --bindir=$(TOPDIR)/bin
 
 # the included packages
-PACKAGES = Cuba form gsl
+PACKAGES = Cuba form gsl secdecutil
 
 
 .PHONY : all clean $(PACKAGES)
@@ -21,6 +21,9 @@ formCONFIGURE = $(CONFIGURE_COMMON)
 
 gslVERSION = 2.1
 gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static
+
+secdecutilVERSION = 0.1.0
+secdecutilCONFIGURE = $(CONFIGURE_COMMON)
 
 
 $(PACKAGES) :
