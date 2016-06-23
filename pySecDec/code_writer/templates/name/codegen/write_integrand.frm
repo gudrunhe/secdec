@@ -102,7 +102,7 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.hpp> "  #else#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "    IntegrandFunction#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "  #endif#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  sector_`sectorID'__order_`cppOrder'__integrand;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "}#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
 
@@ -110,7 +110,7 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'__order_`cppOrder'__integrand#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'_order_`cppOrder'_integrand#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "    #if `name'_contour_deformation#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const integration_variables,#@SecDecInternalNewline@#"
@@ -446,10 +446,10 @@ Format rational;
 * add corresponding function to the Series
 #write <sector_`sectorID'.hpp> "{#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "/*number of Feynman parameters*/ `NumFP',#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "sector_`sectorID'__order_`cppOrder'__integrand,#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "sector_`sectorID'_order_`cppOrder'_integrand,#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "#if `name'_contour_deformation#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "sector_`sectorID'__contourdef,#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "sector_`sectorID'__F#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "sector_`sectorID'_contourdef,#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "sector_`sectorID'_F#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "},#@SecDecInternalNewline@#"
 #EndDo
