@@ -90,13 +90,9 @@ class TestConvertInput(TestMakePackage):
         self.assertRaisesRegexp(AssertionError, 'form_insertion_depth.*integer', _convert_input, **polynomials_to_decompose_noninteger_insertion_depth)
 
 # --------------------------------- write FORM code ---------------------------------
-#@attr('active')
-class TestWriteFORMCode(TestMakePackage):
-    def setUp(self):
-        self.tmpdir = 'tmpdir_test_convert_input_python' + python_major_version
-
+class TestMakeFORMDefinition(unittest.TestCase):
     #@attr('active')
-    def test_make_FORM_definition(self):
+    def test_function(self):
         polysymbols = sp.symbols("x y z")
         x = Polynomial([[1,0,0]], [1], polysymbols)
         y = Polynomial([[0,1,0]], [1], polysymbols)
@@ -110,7 +106,7 @@ class TestWriteFORMCode(TestMakePackage):
         self.assertEqual(FORM_code, target_FORM_code)
 
     #@attr('active')
-    def test_make_FORM_function_definition_sum(self):
+    def test_sum(self):
         symbols = ['x','y']
         x = Polynomial([[1,0]], [1], symbols)
         y = Polynomial([[0,1]], [1], symbols)
@@ -136,8 +132,9 @@ class TestWriteFORMCode(TestMakePackage):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
+class TestMakeFORMFunctionDefinition(unittest.TestCase):
     #@attr('active')
-    def test_make_FORM_function_definition_sum_product(self):
+    def test_sum_product(self):
         symbols = ['x','y']
         x = Polynomial([[1,0]], [1], symbols)
         y = Polynomial([[0,1]], [1], symbols)
@@ -164,7 +161,7 @@ class TestWriteFORMCode(TestMakePackage):
         self.assertEqual(FORM_code, target_FORM_code)
 
     #@attr('active')
-    def test_make_FORM_function_definition_product_rule(self):
+    def test_product_rule(self):
         symbols = ['x','y']
         x = Polynomial([[1,0]], [1], symbols)
         y = Polynomial([[0,1]], [1], symbols)
@@ -196,7 +193,7 @@ class TestWriteFORMCode(TestMakePackage):
         self.assertEqual(FORM_code, target_FORM_code)
 
     #@attr('active')
-    def test_make_FORM_function_definition_polynomial(self):
+    def test_polynomial(self):
         symbols = ['x','y']
         x = Polynomial([[1,0]], [1], symbols)
         y = Polynomial([[0,1]], [1], symbols)
@@ -217,6 +214,7 @@ class TestWriteFORMCode(TestMakePackage):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
+class TestMiscellaneous(unittest.TestCase):
     #@attr('active')
     def test_derivative_muliindex_to_name(self):
         basename = 'f'
