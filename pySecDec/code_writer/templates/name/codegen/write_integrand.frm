@@ -134,22 +134,22 @@ B `regulators';
 
 * construct function argument for the left hand side of the `id` statement
 * Example:
-* Id f(x$sDUMMY1, y$sDUMMY2) = ...
+* Id f(x$SecDecInternalsDUMMY1, y$SecDecInternalsDUMMY2) = ...
   #redefine matchArg ""
   #$counter = 1;
   #Do var = {`integrationVariables', `regulators'}
     #If `$counter' != 1
       #redefine matchArg "`matchArg' , "
     #EndIf
-    #redefine matchArg "`matchArg' `var'?$sDUMMY`$counter'"
+    #redefine matchArg "`matchArg' `var'?$SecDecInternalsDUMMY`$counter'"
     #$counter = $counter + 1;
   #EndDo
 
 * Expand logs *BEFORE* insertions and only at top level in order to avoid
 * introducing log(<negative real>).
   factarg log;
-  repeat Id log(?head, sDUMMY1?, sDUMMY2?) = log(?head, sDUMMY1) + log(sDUMMY2);
-  repeat Id log(sDUMMY1? ^ sDUMMY2?) = log(sDUMMY1) * sDUMMY2;
+  repeat Id log(?head, SecDecInternalsDUMMY1?, SecDecInternalsDUMMY2?) = log(?head, SecDecInternalsDUMMY1) + log(SecDecInternalsDUMMY2);
+  repeat Id log(SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?) = log(SecDecInternalsDUMMY1) * SecDecInternalsDUMMY2;
   .sort
 
 * perform innermost replacements first
@@ -166,16 +166,16 @@ B `regulators';
         Denominators SecDecInternalDenominator;
         factarg SecDecInternalDenominator;
         chainout SecDecInternalDenominator;
-        repeat Id fDUMMY?(?sDUMMY) * SecDecInternalDenominator(fDUMMY?(?sDUMMY)) = 1;
+        repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
       #call endArgumentDepth(`$depth')
       .sort
 
 *     some simplifications
       #call beginArgumentDepth(`$depth')
         Id log(1) = 0;
-        repeat Id sDUMMY1? ^ sDUMMY2?neg_ = SecDecInternalDenominator(sDUMMY1) ^ (-sDUMMY2);
-        repeat Id 1/sDUMMY? = SecDecInternalDenominator(sDUMMY);
-        repeat Id sDUMMY? * SecDecInternalDenominator(sDUMMY?) = 1;
+        repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
+        repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
+        repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
       #call endArgumentDepth(`$depth')
       .sort
 
@@ -193,7 +193,7 @@ B `regulators';
           #If `$counter' != 1
             #redefine replaceArg "`replaceArg' , "
           #EndIf
-          #redefine replaceArg "`replaceArg' `var',$sDUMMY`$counter'"
+          #redefine replaceArg "`replaceArg' `var',$SecDecInternalsDUMMY`$counter'"
           #$counter = $counter + 1;
         #EndDo
 
@@ -202,7 +202,7 @@ B `regulators';
           #If `j' != 1
             #redefine idArg "`idArg', "
           #EndIf
-          #redefine idArg "`idArg'`$sDUMMY`j''"
+          #redefine idArg "`idArg'`$SecDecInternalsDUMMY`j''"
         #EndDo
 
 *       This "if" evaluates to true only if the expression above was matched.
@@ -228,14 +228,14 @@ B `regulators';
 * denominator.
 * {
   #If `stabilize'
-    L denom = sDUMMYdenominator;
+    L denom = SecDecInternalsDUMMYdenominator;
     #Do IV = {`integrationVariables'}
       #Do i = 1,1
-        if ( match(SecDecInternalDenominator(`IV') * SecDecInternalDenominator(sDUMMY?!{`IV'}$arg)) ) redefine i "0";
+        if ( match(SecDecInternalDenominator(`IV') * SecDecInternalDenominator(SecDecInternalsDUMMY?!{`IV'}$arg)) ) redefine i "0";
         .sort
         #if `i' == 0
           multiply numerator($arg);
-          Id numerator($arg) * sDUMMYdenominator = SecDecInternalDenominator($arg) * sDUMMYdenominator;
+          Id numerator($arg) * SecDecInternalsDUMMYdenominator = SecDecInternalDenominator($arg) * SecDecInternalsDUMMYdenominator;
           Id numerator($arg) * SecDecInternalDenominator($arg) = 1;
           Id numerator($arg) = $arg;
           Id `FP' * SecDecInternalDenominator(`FP') = 1;
@@ -243,7 +243,7 @@ B `regulators';
         #EndIf
       #EndDo
     #EndDo
-    Id sDUMMYdenominator = 1;
+    Id SecDecInternalsDUMMYdenominator = 1;
     .sort
     multiply denom;
     .sort
@@ -254,7 +254,7 @@ B `regulators';
 
 * Replace all function calls by symbols for simultaneous optimization.
 * {
-  Local toOptimize = sDUMMYtoOptimize;
+  Local toOptimize = SecDecInternalsDUMMYtoOptimize;
 
   #Do function = {`functions',log,SecDecInternalDenominator}
     #$labelCounter = 0;
@@ -270,7 +270,7 @@ B `regulators';
       #Do i = 1,1
 *       set dollar variable
         #call beginArgumentDepth(`$depth')
-          if ( match(`function'(?sDUMMY$args)) ) redefine i "0";
+          if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
         #call endArgumentDepth(`$depth')
         .sort
 
@@ -279,20 +279,20 @@ B `regulators';
 
           #$labelCounter = $labelCounter + 1;
 
-          L arguments = fDUMMYarguments(`$args');
+          L arguments = SecDecInternalfDUMMYarguments(`$args');
 
           #call beginArgumentDepth(`$depth')
-            Id `function'(`$args') = `function'Call`$labelCounter';
+            Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
           #call endArgumentDepth(`$depth')
 
-          repeat Id fDUMMYarguments(sDUMMY?, ?otherArgs) = SecDecInternalLabel`function'Call`$labelCounter'Arg * (sDUMMY + fDUMMYarguments(?otherArgs));
+          repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) = SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
 
-*         Define `$argCounter' by loking at the term with the empty function "fDUMMYarguments"
-          Id fDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ sDUMMYexponent?$argCounter = 0;
+*         Define `$argCounter' by loking at the term with the empty function "SecDecInternalfDUMMYarguments"
+          Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
           .sort
 
 *         Add all arguments to top level polynomial for simultaneous optimization.
-          Id sDUMMYtoOptimize = sDUMMYtoOptimize + arguments;
+          Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + arguments;
 
           #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
 
@@ -305,7 +305,7 @@ B `regulators';
 
   #EndDo
 
-  Id sDUMMYtoOptimize = expression;
+  Id SecDecInternalsDUMMYtoOptimize = expression;
   .sort
 
   drop expression, arguments;
@@ -356,7 +356,7 @@ B `regulators';
         L arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
       #EndDo
       .sort
-      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t `function'Call`callIndex' = "
+      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternal`function'Call`callIndex' = "
       #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
       #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
         #If `argIndex' == `numberOfArgs`function'Label`callIndex''

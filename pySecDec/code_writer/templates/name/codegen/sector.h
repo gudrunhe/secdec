@@ -19,10 +19,10 @@ Symbols `integrationVariables'
 #define functions "%(functions)s"
 CFunctions `functions';
 
-*** TODO: add prefix "SecDecInternal" to all internal variables and disallow user variables with that prefix
+*** TODO: disallow user variables with prefix "SecDecInternal" in python
 * Temporary functions and symbols for replacements in FORM
-AutoDeclare CFunctions fDUMMY;
-AutoDeclare Symbols sDUMMY;
+AutoDeclare CFunctions SecDecInternalfDUMMY;
+AutoDeclare Symbols SecDecInternalsDUMMY;
 
 * TODO: How to determine which derivatives of the user input ``functions`` are needed? How to communicate it to the user? --> quick and dirty solution for a start:
 AutoDeclare CFunctions d;
@@ -33,7 +33,7 @@ CFunctions log, SecDecInternalDenominator;
 
 * We rewrite function calls as symbols
 #Do function = {`functions',log,SecDecInternalDenominator}
-  AutoDeclare Symbols `function'Call;
+  AutoDeclare Symbols SecDecInternal`function'Call;
 #EndDo
 
 * We need labels for the code optimization
