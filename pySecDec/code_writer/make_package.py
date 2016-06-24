@@ -811,16 +811,3 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                                 os.path.join(target_directory, name, 'codegen', 'sector%i.h' % sector_index), # dest
                                 template_replacements)
             # TODO: adapt and parse "contour_deformation.h"
-
-            # TODO: remove commented print statements below
-            #print(FORM_function_definitions)
-            #print(form_insertions)
-            #for i,p in enumerate(symbolic_regular_parts):
-            #    print(p.compute_derivatives(regular_parts[i]))
-            #    print()
-            #    print()
-
-            print(integrand)
-
-# TODO: compute required derivatives
-# TODO: implement code writing
