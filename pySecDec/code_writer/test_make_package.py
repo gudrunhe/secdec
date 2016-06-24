@@ -1,9 +1,11 @@
 """Unit tests for the template parser module"""
 
+from __future__ import print_function
 from .make_package import *
 from .make_package import _convert_input, _make_FORM_definition, \
                           _make_FORM_function_definition, _make_FORM_list, \
-                          _derivative_muliindex_to_name, _make_FORM_shifted_orders
+                          _derivative_muliindex_to_name, _make_FORM_shifted_orders, \
+                          _make_FORM_Series_initilization
 from ..algebra import Function, Polynomial, Product, ProductRule, Sum
 from nose.plugins.attrib import attr
 import sys, shutil
@@ -211,6 +213,154 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         target_FORM_code += "  L replacement = tmp1;\n"
         target_FORM_code += "  .sort\n"
         target_FORM_code += "#endProcedure\n"
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+#@attr('active')
+class TestMakeFORMSeriesInitialization(unittest.TestCase):
+    #@attr('active')
+    def test_one_variable(self):
+        min_orders = [-2]
+        max_orders = [+2]
+        sector_ID = 42
+
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID)
+
+        target_FORM_code  = '{-2,2,{'
+        target_FORM_code +=    '{sector_42_order_n2_numIV,sector_42_order_n2_integrand},'
+        target_FORM_code +=    '{sector_42_order_n1_numIV,sector_42_order_n1_integrand},'
+        target_FORM_code +=    '{sector_42_order_0_numIV,sector_42_order_0_integrand},'
+        target_FORM_code +=    '{sector_42_order_1_numIV,sector_42_order_1_integrand},'
+        target_FORM_code +=    '{sector_42_order_2_numIV,sector_42_order_2_integrand}'
+        target_FORM_code += '},true}'
+
+        print('is:')
+        print(FORM_code)
+        print()
+        print('should:')
+        print(target_FORM_code)
+        print('----------------')
+        print()
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
+    def test_two_variables(self):
+        min_orders = [-2, -1]
+        max_orders = [+0, +2]
+        sector_ID = 8
+
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID)
+
+        target_FORM_code  = '{-2,0,{'
+        target_FORM_code +=   '{-1,2,{'
+        target_FORM_code +=       '{sector_8_order_n2_n1_numIV,sector_8_order_n2_n1_integrand},'
+        target_FORM_code +=       '{sector_8_order_n2_0_numIV,sector_8_order_n2_0_integrand},'
+        target_FORM_code +=       '{sector_8_order_n2_1_numIV,sector_8_order_n2_1_integrand},'
+        target_FORM_code +=       '{sector_8_order_n2_2_numIV,sector_8_order_n2_2_integrand}'
+        target_FORM_code +=   '},true},'
+        target_FORM_code +=   '{-1,2,{'
+        target_FORM_code +=       '{sector_8_order_n1_n1_numIV,sector_8_order_n1_n1_integrand},'
+        target_FORM_code +=       '{sector_8_order_n1_0_numIV,sector_8_order_n1_0_integrand},'
+        target_FORM_code +=       '{sector_8_order_n1_1_numIV,sector_8_order_n1_1_integrand},'
+        target_FORM_code +=       '{sector_8_order_n1_2_numIV,sector_8_order_n1_2_integrand}'
+        target_FORM_code +=   '},true},'
+        target_FORM_code +=   '{-1,2,{'
+        target_FORM_code +=       '{sector_8_order_0_n1_numIV,sector_8_order_0_n1_integrand},'
+        target_FORM_code +=       '{sector_8_order_0_0_numIV,sector_8_order_0_0_integrand},'
+        target_FORM_code +=       '{sector_8_order_0_1_numIV,sector_8_order_0_1_integrand},'
+        target_FORM_code +=       '{sector_8_order_0_2_numIV,sector_8_order_0_2_integrand}'
+        target_FORM_code +=   '},true}'
+        target_FORM_code += '},true}'
+
+        print('is:')
+        print(FORM_code)
+        print()
+        print('should:')
+        print(target_FORM_code)
+        print('----------------')
+        print()
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
+    def test_three_variables(self):
+        min_orders = [-1, -3, +0]
+        max_orders = [+0, -1, +2]
+        sector_ID = 90
+
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID)
+
+        target_FORM_code  = '{-1,0,{'
+        target_FORM_code +=   '{-3,-1,{'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand},'
+        target_FORM_code +=       '{sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand},'
+        target_FORM_code +=       '{sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand}'
+        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand},'
+        target_FORM_code +=       '{sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand},'
+        target_FORM_code +=       '{sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand}'
+        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand},'
+        target_FORM_code +=       '{sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand},'
+        target_FORM_code +=       '{sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand}'
+        target_FORM_code +=     '},true}'
+        target_FORM_code +=   '},true},'
+        target_FORM_code +=   '{-3,-1,{'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand},'
+        target_FORM_code +=       '{sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand},'
+        target_FORM_code +=       '{sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand}'
+        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand},'
+        target_FORM_code +=       '{sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand},'
+        target_FORM_code +=       '{sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand}'
+        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand},'
+        target_FORM_code +=       '{sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand},'
+        target_FORM_code +=       '{sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
+        target_FORM_code +=     '},true}'
+        target_FORM_code +=   '},true}'
+        target_FORM_code += '},true}'
+
+        print('is:')
+        print(FORM_code)
+        print()
+        print('should:')
+        print(target_FORM_code)
+        print('----------------')
+        print()
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
+    def test_three_variables_simple(self):
+        min_orders = [+0, -1, +2]
+        max_orders = [+0, -1, +2]
+        sector_ID = 90
+
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID)
+
+        target_FORM_code  = '{0,0,{'
+        target_FORM_code +=   '{-1,-1,{'
+        target_FORM_code +=     '{2,2,{'
+        target_FORM_code +=         '{sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
+        target_FORM_code +=     '},true}'
+        target_FORM_code +=   '},true}'
+        target_FORM_code += '},true}'
+
+        print('is:')
+        print(FORM_code)
+        print()
+        print('should:')
+        print(target_FORM_code)
+        print('----------------')
+        print()
 
         self.assertEqual(FORM_code, target_FORM_code)
 

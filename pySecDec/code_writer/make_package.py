@@ -347,6 +347,46 @@ FORM_names = dict(
     regular=internal_prefix+'Regular'
 )
 
+def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID):
+    '''
+    Write the c++ code that initilizes the container class
+    (``Series<Series<...<Series<IntegrandContainer>>...>``).
+
+    '''
+    assert len(min_orders) == len(max_orders)
+    last_regulator_index = len(min_orders) - 1
+
+    def multiindex_to_cpp_order(multiindex):
+        '(-1,3,2,-4) --> n1_3_2_n4'
+        snippets = []
+        for order in multiindex:
+            snippets.append(str(order).replace('-','n'))
+        return '_'.join(snippets)
+
+    current_orders = np.array(min_orders) # use as nonlocal variable in `recursion`
+    def recursion(regulator_index):
+        if regulator_index < last_regulator_index:
+            outstr_body_snippets = []
+            outstr_head = '{%i,%i,{' % (min_orders[regulator_index],max_orders[regulator_index])
+            for this_regulator_order in range(min_orders[regulator_index],max_orders[regulator_index]+1):
+                current_orders[regulator_index] = this_regulator_order
+                outstr_body_snippets.append( recursion(regulator_index + 1) )
+            outstr_tail = '},true}'
+            return ''.join( (outstr_head, ','.join(outstr_body_snippets), outstr_tail) )
+        else: # regulator_index == last_regulator_index; i.e. processing last regulator
+            outstr_head = '{%i,%i,{{' % (min_orders[regulator_index],max_orders[regulator_index])
+            outstr_body_snippets = []
+            for this_regulator_order in range(min_orders[regulator_index],max_orders[regulator_index]+1):
+                current_orders[regulator_index] = this_regulator_order
+                outstr_body_snippets.append(
+                    'sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' \
+                    % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders))
+                )
+            outstr_tail = '}},true}'
+            return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
+
+    return recursion(0)
+
 
 # ---------------------------------- main function ----------------------------------
 def make_package(target_directory, name, integration_variables, regulators, requested_orders,
