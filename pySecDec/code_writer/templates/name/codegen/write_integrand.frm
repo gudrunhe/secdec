@@ -47,7 +47,7 @@ Global expansion = `integrand';
 
 * Enumerate the poles
 #$counter = 1;
-#Do highestPole = `highestPoles'
+#Do highestPole = {`highestPoles',}
   #define highestPole`$counter' "`highestPole'"
   #$counter = $counter + 1;
 #EndDo
