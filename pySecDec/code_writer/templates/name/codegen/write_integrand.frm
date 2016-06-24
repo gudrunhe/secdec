@@ -449,17 +449,10 @@ Format rational;
 #write <sector_`sectorID'.hpp> "{#@SecDecInternalNewline@#"
 
 * define the data type of the container
-* For two regulators, the resulting code should read:
-* "secdecutil::Series<secdecutil::Series<IntegrandContainer>>#@SecDecInternalNewline@#integrand_of_sector_`sectorID'#@SecDecInternalNewline@#"
-#Do i = 1, `numReg'
-  #write <sector_`sectorID'.hpp> "  secdecutil::Series<"
-#EndDo
-#write <sector_`sectorID'.hpp> "  IntegrandContainer"
-#Do i = 1, `numReg'
-  #write <sector_`sectorID'.hpp> "  >"
-#EndDo
-#write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "  integrand_of_sector_`sectorID'#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "`integrandContainerType'#@SecDecInternalNewline@#"
+
+* write the c++ name of the conatainer instance
+#write <sector_`sectorID'.hpp> "integrand_of_sector_`sectorID'#@SecDecInternalNewline@#"
 
 * write constructor of the integrand container class
 #write <sector_`sectorID'.hpp> "`integrandContainerInitializer';#@SecDecInternalNewline@#"

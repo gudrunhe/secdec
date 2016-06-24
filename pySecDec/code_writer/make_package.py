@@ -155,7 +155,8 @@ def _parse_global_templates(target_directory, name, integration_variables,
                             regulators, polynomial_names, real_parameters,
                             complex_parameters, form_optimization_level,
                             form_work_space, form_insertion_depth, stabilize,
-                            requested_orders, contour_deformation_polynomial):
+                            requested_orders, contour_deformation_polynomial,
+                            integrand_container_type):
     '''
     Create the `target_directory` and return the two
     optional arguments passed to :func:`parse_template_tree`.
@@ -166,7 +167,9 @@ def _parse_global_templates(target_directory, name, integration_variables,
     # initialize template replacements
     template_replacements = dict(
                                      name = name,
+                                     number_of_real_parameters = len(real_parameters),
                                      real_parameters = _make_FORM_list(real_parameters),
+                                     number_of_complex_parameters = len(complex_parameters),
                                      complex_parameters = _make_FORM_list(complex_parameters),
                                      have_complex_parameters = len(complex_parameters) > 0,
                                      number_of_regulators = len(regulators),
@@ -179,7 +182,8 @@ def _parse_global_templates(target_directory, name, integration_variables,
                                      form_insertion_depth = form_insertion_depth,
                                      contour_deformation = int(contour_deformation_polynomial is not None),
                                      stabilize = int(stabilize),
-                                     requested_orders = _make_FORM_list(requested_orders)
+                                     requested_orders = _make_FORM_list(requested_orders),
+                                     integrand_container_type = integrand_container_type
                                 )
 
     # configure template parser
@@ -569,13 +573,19 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                    form_work_space, form_insertion_depth, stabilize,
                    contour_deformation_polynomial, decomposition_method)
 
+    # construct the c++ type of the integrand container class
+    # for two regulators, the resulting code should read:
+    # "secdecutil::Series<secdecutil::Series<IntegrandContainer>>"
+    integrand_container_type = 'secdecutil::Series<' * len(regulators) + 'IntegrandContainer' + '>' * len(regulators)
+
     # configure the template parser and parse global files
     template_sources, target_directory, template_replacements, file_renamings = \
         _parse_global_templates(
         target_directory, name, integration_variables, regulators,
         polynomial_names, real_parameters, complex_parameters,
         form_optimization_level, form_work_space, form_insertion_depth,
-        stabilize, requested_orders, contour_deformation_polynomial
+        stabilize, requested_orders, contour_deformation_polynomial,
+        integrand_container_type
     )
 
     # get the highest poles from the ``prefactor``
@@ -852,3 +862,11 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                                 os.path.join(target_directory, name, 'codegen', 'sector%i.h' % sector_index), # dest
                                 template_replacements)
             # TODO: adapt and parse "contour_deformation.h"
+
+    # parse the template file "integrands.hpp"
+    template_replacements['number_of_sectors'] = sector_index
+    template_replacements['sector_includes'] = ''.join( '#include <%s/integrands/sector_%i.hpp>\n' % (name, i) for i in range(1,sector_index+1) )
+    template_replacements['sectors_initializer'] = ','.join( 'integrand_of_sector_%i' % i for i in range(1,sector_index+1) )
+    parse_template_file(os.path.join(template_sources, 'name', 'integrands', 'integrands.hpp'), # source
+                        os.path.join(target_directory,  name , 'integrands', 'integrands.hpp'), # dest
+                        template_replacements)
