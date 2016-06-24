@@ -391,71 +391,113 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
 #EndDo
 
-******* TODO: continue adaptation of this file below
 
-* TODO: temporary dummy file and .end during development --> remove
-#write <sector_`sectorID'.hpp> "dummy#@SecDecInternalNewline@#"
-.end
+* Here, all integrand functions are written to the hard disc.
+* We still need a header file that collects the whole sector.
 
-******* TODO: how to initialize the multivariate series ---> finish python's algebraic part before bothering with the syntax here
-* Write a c++ header that collects all the functions in a Series
+* clear last step
+.store
+
 * "Format rational": Need the indices as integers.
 Format rational;
+
+* open the c++ include guard
 #write <sector_`sectorID'.hpp> "#ifndef `name'_codegen_sector_`sectorID'_hpp_included#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "#define `name'_codegen_sector_`sectorID'_hpp_included#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "#include <`name'/util/series.hpp>#@SecDecInternalNewline@#"
-#Do shiftedOrder = 0, `numOrders'
-* Calculate the (possibly negative) order in the regulator
-  #$order = `shiftedOrder'-`highestPole';
-* Since we are not allowed to have a "-" in c++ function names,
-* replace the "-" by an "n" if required
-  #if `$order' < 0
-    #$absOfOrder = - $order;
-    #Redefine cppOrder "n`$absOfOrder'"
-  #else
-    #$absOfOrder = + $order;
-    #Redefine cppOrder "`$order'"
-  #endif
-* include correspoinding c++ header file
-#write <sector_`sectorID'.hpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
+
+* include series class
+#write <sector_`sectorID'.hpp> "#include <secdecutil/series.hpp>#@SecDecInternalNewline@#"
+
+#Do shiftedOrderIndex = 1, `numOrders'
+* Construct `cppOrder' for use in the function and file names.
+* {
+  #Redefine cppOrder ""
+  #Do regulatorIndex = 1, `numReg'
+    #$absOfOrder = `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''-`highestPole`regulatorIndex'';
+
+*   Since we are not allowed to have a "-" in c++ function names,
+*   replace the "-" by an "n" if required
+    #if `$absOfOrder' < 0
+      #$absOfOrder = - $absOfOrder;
+      #Redefine cppOrder "`cppOrder'n`$absOfOrder'"
+    #else
+      #Redefine cppOrder "`cppOrder'`$absOfOrder'"
+    #endif
+
+*   Separate the orders in the different regulators by underscores
+    #if `regulatorIndex' != `numReg'
+      #Redefine cppOrder "`cppOrder'_"
+    #endif
+  #EndDo
+* }
+
+* include the headers for all orders in this sector
+  #write <sector_`sectorID'.hpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
+
+* define c++ preprocessor macros for the number of integration variables in each integrand
+* TODO: actually check if some are missing in the expression; at the moment we just write them all even if they are not used
+  #write <sector_`sectorID'.hpp> "#define sector_`sectorID'_order_`cppOrder'_numIV `numIV'#@SecDecInternalNewline@#"
 #EndDo
+
+* include contour deformation header (if needed)
 #write <sector_`sectorID'.hpp> "#if `name'_contour_deformation#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'.hpp>#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
+
+* open c++ namespace
 #write <sector_`sectorID'.hpp> "namespace `name'#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "{#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "  Series<integrand_t> integrand_of_sector_`sectorID'#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "  (#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "      /*order_min*/ -`highestPole',#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "      /*truncated_below*/ false,#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "      /*order_max*/ `numOrders' - (`highestPole'),#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "      /*truncated_above*/ true,#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "      {#@SecDecInternalNewline@#"
-#Do shiftedOrder = 0, `numOrders'
-* Calculate the (possibly negative) order in the regulator
-  #$order = `shiftedOrder'-`highestPole';
-* Since we are not allowed to have a "-" in c++ function names,
-* replace the "-" by an "n" if required
-  #if `$order' < 0
-    #$absOfOrder = - $order;
-    #Redefine cppOrder "n`$absOfOrder'"
-  #else
-    #$absOfOrder = + $order;
-    #Redefine cppOrder "`$order'"
-  #endif
-* add corresponding function to the Series
-#write <sector_`sectorID'.hpp> "{#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "/*number of Feynman parameters*/ `NumFP',#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "sector_`sectorID'_order_`cppOrder'_integrand,#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "#if `name'_contour_deformation#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "sector_`sectorID'_contourdef,#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "sector_`sectorID'_F#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "},#@SecDecInternalNewline@#"
+
+* define the data type of the container
+* For two regulators, the resulting code should read:
+* "secdecutil::Series<secdecutil::Series<IntegrandContainer>>#@SecDecInternalNewline@#integrand_of_sector_`sectorID'#@SecDecInternalNewline@#"
+#Do i = 1, `numReg'
+  #write <sector_`sectorID'.hpp> "  secdecutil::Series<"
 #EndDo
-#write <sector_`sectorID'.hpp> "      }#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "  );#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "  IntegrandContainer"
+#Do i = 1, `numReg'
+  #write <sector_`sectorID'.hpp> "  >"
+#EndDo
+#write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "  integrand_of_sector_`sectorID'#@SecDecInternalNewline@#"
+
+* write constructor of the integrand container class
+#write <sector_`sectorID'.hpp> "`integrandContainerInitializer';#@SecDecInternalNewline@#"
+
+* undefine the c++ preprocessor macros for the number of integration variables
+*{
+#Do shiftedOrderIndex = 1, `numOrders'
+* Construct `cppOrder' for use in the function and file names.
+* {
+  #Redefine cppOrder ""
+  #Do regulatorIndex = 1, `numReg'
+    #$absOfOrder = `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''-`highestPole`regulatorIndex'';
+
+*   Since we are not allowed to have a "-" in c++ function names,
+*   replace the "-" by an "n" if required
+    #if `$absOfOrder' < 0
+      #$absOfOrder = - $absOfOrder;
+      #Redefine cppOrder "`cppOrder'n`$absOfOrder'"
+    #else
+      #Redefine cppOrder "`cppOrder'`$absOfOrder'"
+    #endif
+
+*   Separate the orders in the different regulators by underscores
+    #if `regulatorIndex' != `numReg'
+      #Redefine cppOrder "`cppOrder'_"
+    #endif
+  #EndDo
+* }
+
+* undefine the c++ preprocessor macros
+  #write <sector_`sectorID'.hpp> "#undef sector_`sectorID'_order_`cppOrder'_numIV#@SecDecInternalNewline@#"
+#EndDo
+*}
+
+* close c++ namespace
 #write <sector_`sectorID'.hpp> "};#@SecDecInternalNewline@#"
+
+* finalize include guard
 #write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
 
 .end

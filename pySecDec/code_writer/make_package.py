@@ -843,6 +843,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             template_replacements['number_of_regulators'] = len(regulators)
             template_replacements['integration_variables'] = _make_FORM_list(integration_variables)
             template_replacements['integrand'] = integrand
+            template_replacements['integrand_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, requested_orders, sector_index)
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
             template_replacements['regulator_powers'] = regulator_powers
             template_replacements['number_of_orders'] = number_of_orders
