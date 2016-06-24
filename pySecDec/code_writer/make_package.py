@@ -169,7 +169,10 @@ def _parse_global_templates(target_directory, name, integration_variables,
                                      real_parameters = _make_FORM_list(real_parameters),
                                      complex_parameters = _make_FORM_list(complex_parameters),
                                      have_complex_parameters = len(complex_parameters) > 0,
+                                     number_of_regulators = len(regulators),
                                      regulators = _make_FORM_list(regulators),
+                                     number_of_integration_variables = len(integration_variables),
+                                     integration_variables = _make_FORM_list(integration_variables),
                                      polynomial_names = _make_FORM_list(regulators),
                                      form_optimization_level = form_optimization_level,
                                      form_work_space = form_work_space,
@@ -839,9 +842,6 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             # parse template file "sector.h"
             template_replacements['functions'] = _make_FORM_list(all_functions)
             template_replacements['function_definitions'] = FORM_function_definitions
-            template_replacements['number_of_integration_variables'] = len(integration_variables)
-            template_replacements['number_of_regulators'] = len(regulators)
-            template_replacements['integration_variables'] = _make_FORM_list(integration_variables)
             template_replacements['integrand'] = integrand
             template_replacements['integrand_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, requested_orders, sector_index)
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
