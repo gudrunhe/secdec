@@ -3,6 +3,8 @@
 
 * number of integration variables
 #define numIV "%(number_of_integration_variables)i"
+
+* number of regulators
 #define numReg "%(number_of_regulators)i"
 
 #define integrationVariables "%(integration_variables)s"
@@ -30,8 +32,7 @@ AutoDeclare CFunctions d;
 CFunctions log, SecDecInternalDenominator;
 
 * We rewrite function calls as symbols
-AutoDeclare Symbols SecDecInternalDenominatorCall;
-#Do function = {`functions',log}
+#Do function = {`functions',log,SecDecInternalDenominator}
   AutoDeclare Symbols `function'Call;
 #EndDo
 
