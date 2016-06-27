@@ -312,6 +312,31 @@ B `regulators';
   .sort
 * }
 
+* Find and count the occuring integration variables.
+* {
+  #redefine occurringIntegrationVariables ""
+  #$counter = 0;
+
+  #Do IV = {`integrationVariables'}
+
+    #redefine IVOccurs "0"
+    if ( occurs(`IV') ) redefine IVOccurs "1";
+    .sort
+
+    #If `IVOccurs'
+      #$counter = $counter + 1;
+      #If `$counter' == 1
+        #redefine occurringIntegrationVariables "`IV'"
+      #Else
+        #redefine occurringIntegrationVariables "`occurringIntegrationVariables',`IV'"
+      #EndIf
+    #EndIf
+
+  #EndDo
+
+  #redefine numOccurringIVOrder`shiftedOrderIndex' "`$counter'"
+* }
+
 * Simultaneously optimize the integrand and all occuring function arguments.
   AB `integrationVariables', `realParameters', `complexParameters';
   Format O`optimizationLevel';
@@ -325,7 +350,7 @@ B `regulators';
   Format rational;
 
 * call the general procedure to write the corresponding c++ code define in the beginning of this file
-  #call cppDefine(`integrationVariables',integration_variables)
+  #call cppDefine(`occurringIntegrationVariables',integration_variables)
   #call cppDefine(`realParameters',real_parameters)
   #call cppDefine(`complexParameters',complex_parameters)
 * }
@@ -380,7 +405,7 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * undefine the c preprocessor macros
-  #call cppUndefine(`integrationVariables')
+  #call cppUndefine(`occurringIntegrationVariables')
   #call cppUndefine(`realParameters')
   #call cppUndefine(`complexParameters')
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalDenominator#@SecDecInternalNewline@#"
@@ -408,6 +433,8 @@ Format rational;
 * include series class
 #write <sector_`sectorID'.hpp> "#include <secdecutil/series.hpp>#@SecDecInternalNewline@#"
 
+#write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
+
 #Do shiftedOrderIndex = 1, `numOrders'
 * Construct `cppOrder' for use in the function and file names.
 * {
@@ -431,18 +458,19 @@ Format rational;
   #EndDo
 * }
 
+* define c++ preprocessor macros for the number of integration variables in each integrand
+  #write <sector_`sectorID'.hpp> "#define sector_`sectorID'_order_`cppOrder'_numIV `numOccurringIVOrder`shiftedOrderIndex''#@SecDecInternalNewline@#"
+
 * include the headers for all orders in this sector
   #write <sector_`sectorID'.hpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
 
-* define c++ preprocessor macros for the number of integration variables in each integrand
-* TODO: actually check if some are missing in the expression; at the moment we just write them all even if they are not used
-  #write <sector_`sectorID'.hpp> "#define sector_`sectorID'_order_`cppOrder'_numIV `numIV'#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
 #EndDo
 
 * include contour deformation header (if needed)
 #write <sector_`sectorID'.hpp> "#if `name'_contour_deformation#@SecDecInternalNewline@#"
 #write <sector_`sectorID'.hpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'.hpp>#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@##@SecDecInternalNewline@#"
 
 * open c++ namespace
 #write <sector_`sectorID'.hpp> "namespace `name'#@SecDecInternalNewline@#"
@@ -456,6 +484,11 @@ Format rational;
 
 * write constructor of the integrand container class
 #write <sector_`sectorID'.hpp> "`integrandContainerInitializer';#@SecDecInternalNewline@#"
+
+* close c++ namespace
+#write <sector_`sectorID'.hpp> "};#@SecDecInternalNewline@#"
+
+#write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
 
 * undefine the c++ preprocessor macros for the number of integration variables
 *{
@@ -486,9 +519,6 @@ Format rational;
   #write <sector_`sectorID'.hpp> "#undef sector_`sectorID'_order_`cppOrder'_numIV#@SecDecInternalNewline@#"
 #EndDo
 *}
-
-* close c++ namespace
-#write <sector_`sectorID'.hpp> "};#@SecDecInternalNewline@#"
 
 * finalize include guard
 #write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
