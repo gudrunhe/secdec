@@ -9,7 +9,7 @@ source:
 test.o : compile
 
 test : test.o
-	$(CPP) $(CPPFLAGS) -o $@ $+ $(LDFLAGS)
+	$(CPP) $(CPPFLAGS) -o $@ $+ $(TOPDIR)/integrands/integrands.a $(LDFLAGS)
 
 very-clean : clean
 	for dir in */; do $(MAKE) -C $$dir $@; done
