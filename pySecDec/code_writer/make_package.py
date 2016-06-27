@@ -469,9 +469,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         .. seealso::
             :mod:`pySecDec.loop_integral`
 
-    Note that the `polynomial_names` refer to the
-    `polynomials_to_decompose` **without** their
-    exponents.
+        Note that the `polynomial_names` refer to the
+        `polynomials_to_decompose` **without** their
+        exponents.
 
     :param prefactor:
         string or sympy expression,
