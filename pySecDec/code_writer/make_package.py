@@ -56,8 +56,10 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                                           % (expression,name_of_make_argument_being_parsed,type(expression)))
                 else:
                     expression.exponent = Polynomial.from_expression(expression.exponent, polysymbols)
+                expression.coeffs = np.array( _parse_expressions(expression.coeffs, polysymbols, _Expression, 'coeff of ' + name_of_make_argument_being_parsed) )
             elif type(expression) == Polynomial:
-                expression = ExponentiatedPolynomial(expression.expolist, expression.coeffs,
+                expression = ExponentiatedPolynomial(expression.expolist,
+                                                     np.array( _parse_expressions(expression.coeffs, polysymbols, _Expression, 'coeff of ' + name_of_make_argument_being_parsed) ), # coeffs
                                                      Polynomial.from_expression(1, polysymbols), # exponent
                                                      polysymbols, copy=False)
             else:
@@ -66,11 +68,13 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                     assert len(expression.args) == 2
                     expression_base = Polynomial.from_expression(expression.args[0], polysymbols)
                     expression_exponent = Polynomial.from_expression(expression.args[1], polysymbols)
-                    expression = ExponentiatedPolynomial(expression_base.expolist, expression_base.coeffs,
+                    expression = ExponentiatedPolynomial(expression_base.expolist,
+                                                         np.array( _parse_expressions(expression_base.coeffs, polysymbols, _Expression, 'coeff of ' + name_of_make_argument_being_parsed) ), # coeffs
                                                          expression_exponent, polysymbols, copy=False)
                 else:
                     expression = Polynomial.from_expression(expression, polysymbols)
-                    expression = ExponentiatedPolynomial(expression.expolist, expression.coeffs,
+                    expression = ExponentiatedPolynomial(expression.expolist,
+                                                         np.array( _parse_expressions(expression.coeffs, polysymbols, _Expression, 'coeff of ' + name_of_make_argument_being_parsed) ), # coeffs
                                                          Polynomial.from_expression(1, polysymbols), # exponent
                                                          polysymbols, copy=False)
         elif target_type == _Expression:
@@ -695,9 +699,6 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             for poly_name in reversed_polynomial_names:
                 primary_sector.other[i] = primary_sector.other[i].replace(-1, poly_name(*all_symbols), remove=True)
                 this_sector_remainder_expression = this_sector_remainder_expression.replace(-1, poly_name(*all_symbols), remove=True)
-
-        # convert the coefficients and exponents to `_Expression`s
-        # TODO: implement this step, the polysymbols should be `all_symbols`
 
         # we later need ``1`` packed into specific types
         polynomial_one = Polynomial(np.zeros([1,len(all_symbols)], dtype=int), np.array([1]), all_symbols, copy=False)
