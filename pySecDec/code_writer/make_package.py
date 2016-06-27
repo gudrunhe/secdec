@@ -106,7 +106,8 @@ def _convert_input(target_directory, name, integration_variables, regulators,
 
     # define the symbols of the different classes of `_Expression`s
     symbols_polynomials_to_decompose = integration_variables + regulators
-    all_symbols = symbols_other_polynomials = symbols_remainder_expression = integration_variables + regulators + polynomial_names
+    symbols_remainder_expression = integration_variables + polynomial_names
+    all_symbols = symbols_other_polynomials = integration_variables + regulators + polynomial_names
 
     # check format of `requested_orders` --> must be 1d and have the length as `regulators`
     requested_orders = np.array(requested_orders)
@@ -652,7 +653,8 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
         integration_variables = list(primary_sector.Jacobian.polysymbols) # make a copy
         symbols_polynomials_to_decompose = integration_variables + regulators
-        all_symbols = symbols_other_polynomials = symbols_remainder_expression = integration_variables + regulators + polynomial_names
+        symbols_remainder_expression = integration_variables + polynomial_names
+        all_symbols = symbols_other_polynomials = integration_variables + regulators + polynomial_names
 
         # get the indices of the `integration_variables`, the `regulators`, and the `polynomial_names` in the polysymbols
         integration_variable_indices = list(range(len(integration_variables)))
@@ -691,8 +693,8 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
         # insert the `polynomials_to_decompose` as dummy functions into `other_polynomials` and `remainder_expression`
         # we want to remove them from the symbols --> traverse backwards and pop the last of the `polysymbols`
-        # redefine ``all_symbols`` (we are going to removed some)
-        all_symbols = integration_variables + regulators
+        # redefine ``all_symbols`` and ``symbols_remainder_expression``
+        all_symbols = symbols_remainder_expression = integration_variables + regulators
         this_sector_remainder_expression = remainder_expression
         for i in range(len(primary_sector.other) - 1): # "-1" because of ``transformations``
             decomposition.unhide(primary_sector.other[i], other_polynomials_name_hide_containers[i])
@@ -728,12 +730,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             for i in range(len(sector.other) - 1): # "-1" because of ``transformations``
                 decomposition.unhide(sector.other[i], other_polynomials_regulator_hide_containers[i])
 
-            #  - in the ``transformations``
-            this_transformation = sector.other.pop() # remove transformation from ``sector.other``
-            this_transformation.number_of_variables += len(regulators)
-            this_transformation.polysymbols += regulators
-            this_transformation.expolist = np.hstack([this_transformation.expolist, np.zeros([len(this_transformation.coeffs),len(regulators)], dtype=int)])
 
+            # extract ``this_transformation``
+            this_transformation = sector.other.pop() # remove transformation from ``sector.other``
 
             # insert the monomials of the `polynomial_names` into ``sector.other`` ``<symbol> --> xi**pow_i * <symbol>``
             # ``[:,:-len(regulators)]`` is the part of the expolist that contains only the powers of the `integration_variables` but not of the `regulators`;
@@ -754,8 +753,13 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             monomial_factors = chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other))
             monomials = Product(*monomial_factors, copy=False)
 
+            # apply ``this_transformation`` to ``this_sector_remainder_expression`` BEFORE taking derivatives
+            for variable_index, integration_variable in enumerate(integration_variables):
+                replacement = sp.sympify( Polynomial(this_transformation.expolist[variable_index:variable_index+1,:], [1], integration_variables) )
+                this_sector_remainder_expression = this_sector_remainder_expression.replace(variable_index, replacement)
+            this_sector_remainder_expression = Expression(sp.sympify(this_sector_remainder_expression), symbols_remainder_expression)
+
             # define ``cal_I``, the part of the integrand that does not lead to poles
-            # TODO: apply ``transformations`` to ``this_sector_remainder_expression`` BEFORE taking derivatives
             cal_I = Product(this_sector_remainder_expression, *(prod.factors[1] for prod in chain(sector.cast, sector.other)), copy=False)
 
             # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
