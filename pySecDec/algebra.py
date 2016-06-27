@@ -512,7 +512,7 @@ class Polynomial(_Expression):
         summand1_expolist = self.expolist[nonzero_coeffs].copy()
         summand1_expolist[:,index] -= 1
 
-        # need to have at least one term
+        # need at least one term
         if len(summand1_coeffs) == 0:
             summand1 = None
         else:
@@ -671,7 +671,7 @@ class Polynomial(_Expression):
         self.coeffs = self.coeffs[nonzero_coeffs]
         self.expolist = self.expolist[nonzero_coeffs]
 
-        # need to have at least one term
+        # need at least one term
         if len(self.coeffs) == 0:
             self.coeffs = np.array([0])
             self.expolist = np.zeros([1,self.number_of_variables], dtype=int)
@@ -1386,9 +1386,10 @@ class ProductRule(_Expression):
         self.coeffs = self.coeffs[nonzero_coeffs]
         self.factorlist = self.factorlist[nonzero_coeffs]
 
-        # return ``zero`` if no term left
+        # need at least one term
         if len(self.coeffs) == 0:
-            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
+            self.coeffs = np.array([0])
+            self.factorlist = np.zeros((1,self.factorlist.shape[1],self.number_of_variables), dtype=int)
 
         return self
 
