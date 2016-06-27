@@ -74,7 +74,8 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                                                          Polynomial.from_expression(1, polysymbols), # exponent
                                                          polysymbols, copy=False)
         elif target_type == _Expression:
-            expression = Expression(expression, polysymbols)
+            if not isinstance(expression, _Expression):
+                expression = Expression(expression, polysymbols)
         else:
             raise RuntimeError('`_parse_expressions` is only implemented for `target_type`s in %s, not for %s. (raised while parsing `%s`)' \
                                 % (set([_Expression, ExponentiatedPolynomial]), target_type, name_of_make_argument_being_parsed))
