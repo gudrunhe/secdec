@@ -207,8 +207,8 @@ def _parse_global_templates(target_directory, name, integration_variables,
                      }
 
     # the files below are only relevant for contour deformation --> do not parse if deactivated
-    if contour_deformation_polynomial is not None:
-        for filename in ['write_contourdef.frm', 'optimize.hpp', 'contour_deformation.h']:
+    if contour_deformation_polynomial is None:
+        for filename in ['write_contourdef.frm', 'contour_deformation.h']:
             file_renamings[filename] = None
 
     # get path to the directory with the template files (path relative to directory with this file: "./templates/")
