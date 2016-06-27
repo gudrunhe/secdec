@@ -803,8 +803,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 else:
                     highest_poles_current_sector = np.maximum(highest_poles_current_sector, highest_poles_current_term)
 
-                # TODO: the following multiplication can generate terms of higher orders than requested --> discard them here or in FORM?
-                integrand_summands.append(singular_expanded * regular_expanded)
+                integrand_summands.append( Product(singular_expanded,regular_expanded,copy=False) )
 
             integrand = Sum(*integrand_summands, copy=False)
 
