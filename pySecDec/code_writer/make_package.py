@@ -406,6 +406,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     Decompose, subtract and expand an expression.
     Return it as c++ package.
 
+    .. note::
+        Use ``I`` to denote the imaginary unit.
+
     :param target_directory:
         string;
         The output directory.
@@ -624,7 +627,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     sector_index = 0
 
     # define the imaginary unit
-    imaginary_unit = sp.sympify('I') # TODO: replace by "i_" in FORM
+    imaginary_unit = sp.sympify('I')
 
     # we must backwards traverse the `polynomial_names` --> create the reversed list once and for all
     reversed_polynomial_names = list(polynomial_names) # copy

@@ -312,6 +312,10 @@ B `regulators';
   .sort
 * }
 
+* translate sympy's imaginary unit to FORM's imaginary unit
+multiply replace_(I,i_);
+.sort
+
 * Find and count the occuring integration variables.
 * {
   #redefine occurringIntegrationVariables ""

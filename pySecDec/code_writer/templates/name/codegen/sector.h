@@ -16,6 +16,9 @@ Symbols `integrationVariables'
         `complexParameters'
         `regulators';
 
+* Define the imaginary unit in sympy notation.
+Symbol I;
+
 #define functions "%(functions)s"
 CFunctions `functions';
 
