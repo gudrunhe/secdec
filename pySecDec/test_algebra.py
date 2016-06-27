@@ -603,6 +603,18 @@ class TestProductRule(unittest.TestCase):
         self.assertLess(len(simplified_ddp0_dx_dx.coeffs), len(ddp0_dx_dx.coeffs))
 
     #@attr('active')
+    def test_simplify_to_zero(self):
+        p0 = Polynomial([[1,2,0]], [1])
+        p1 = Polynomial([[2,1,0]], [1])
+
+        prod_rule = ProductRule(p0,p1).derive(-1)
+        prod_rule_simplify_returned = prod_rule.simplify()
+
+        self.assertTrue(prod_rule is prod_rule_simplify_returned)
+        self.assertTrue(type(prod_rule) is ProductRule)
+        self.assertEqual( sp.sympify(prod_rule).simplify(), 0 )
+
+    #@attr('active')
     def test_to_sum(self):
         p0_sum = self.p0.copy().to_sum()
         self.assertTrue(type(p0_sum) is Sum)
