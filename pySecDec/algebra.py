@@ -1061,6 +1061,7 @@ class Sum(_Expression):
         if len(self.summands) == 1:
             return self.summands[0]
         elif len(self.summands) == 0:
+            self.summands = [zero]
             return zero
         else:
             return self
@@ -1175,6 +1176,7 @@ class Product(_Expression):
         if len(self.factors) == 1:
             return self.factors[0]
         elif len(self.factors) == 0:
+            self.factors = [one]
             return one
         else:
             return self
