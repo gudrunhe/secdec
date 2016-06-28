@@ -556,6 +556,18 @@ class TestProduct(unittest.TestCase):
         self.assertEqual(str(prod), string_prod)
         self.assertEqual(repr(prod), string_prod)
 
+    #@attr('active')
+    def test_simplify(self):
+        complicated_one = Polynomial([(2,1),(0,0),(2,1),(0,0)],['A','B','-A','-B+1'])
+        prod = Product(complicated_one,complicated_one,complicated_one)
+
+        simplified_prod = prod.simplify()
+
+        self.assertEqual( sp.sympify(simplified_prod) , 1 )
+        self.assertEqual( sp.sympify(prod) , 1 )
+        self.assertTrue(type(prod) is Product)
+        self.assertEqual(len(prod.factors), 1)
+
 class TestProductRule(unittest.TestCase):
     def setUp(self):
         self.poly1 = Polynomial.from_expression('x+x*y', ['x','y'])
@@ -874,6 +886,18 @@ class TestSum(unittest.TestCase):
         derivative_0 = sympify( psum.derive(0) )
         target_derivative_0 = sympify( '2*B*x0*x1' )
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
+
+    #@attr('active')
+    def test_simplify(self):
+        complicated_zero = Polynomial([(2,1),(0,0),(2,1),(0,0)],['A','B-1','-A','-B+1'])
+        psum = Sum(complicated_zero,complicated_zero,complicated_zero)
+
+        simplified_psum = psum.simplify()
+
+        self.assertEqual( sp.sympify(simplified_psum) , 0 )
+        self.assertEqual( sp.sympify(psum) , 0 )
+        self.assertTrue(type(psum) is Sum)
+        self.assertEqual(len(psum.summands), 1)
 
 class TestLogOfPolynomial(unittest.TestCase):
     def test_string_form(self):
