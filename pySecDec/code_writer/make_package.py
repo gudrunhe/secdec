@@ -146,8 +146,8 @@ _decomposition_strategies = dict(
                                                                  secondary=decomposition.iterative.iterative_decomposition
                                                              ),
                                     geometric=           dict(
-                                                                 primary=decomposition.iterative.primary_decomposition,
-                                                                 secondary=decomposition.iterative.iterative_decomposition
+                                                                 primary=lambda x: [decomposition.geometric.Cheng_Wu(x)],
+                                                                 secondary=decomposition.geometric.geometric_decomposition
                                                              ),
                                     iterative_no_primary=dict(
                                                                  primary=lambda x: [x], # no primary decomposition
