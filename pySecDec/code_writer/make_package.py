@@ -706,6 +706,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         for sector in strategy['secondary'](primary_sector):
             sector_index += 1
 
+            # extract ``this_transformation``
+            this_transformation = sector.other.pop() # remove transformation from ``sector.other``
+
             # unhide the regulator
             #  - in the Jacobian
             Jacobian = sector.Jacobian
@@ -722,12 +725,10 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 decomposition.unhide(poly, hidden_regulators)
 
             #  - in ``sector.other``
-            for i in range(len(sector.other) - 1): # "-1" because of ``transformations``
-                decomposition.unhide(sector.other[i], other_polynomials_regulator_hide_containers[i])
+            for poly, hide_container in zip(sector.other, other_polynomials_regulator_hide_containers):
+                hide_container.coeffs = poly.coeffs # coeffs had been hidden in `other_polynomials_name_hide_containers` --> do not overwrite
+                decomposition.unhide(poly, hide_container)
 
-
-            # extract ``this_transformation``
-            this_transformation = sector.other.pop() # remove transformation from ``sector.other``
 
             # insert the monomials of the `polynomial_names` into ``sector.other`` ``<symbol> --> xi**pow_i * <symbol>``
             # ``[:,:-len(regulators)]`` is the part of the expolist that contains only the powers of the `integration_variables` but not of the `regulators`;
