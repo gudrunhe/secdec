@@ -690,12 +690,12 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         # we want to remove them from the symbols --> traverse backwards and pop the last of the `polysymbols`
         # redefine ``all_symbols`` and ``symbols_remainder_expression``
         all_symbols = symbols_remainder_expression = integration_variables + regulators
-        this_sector_remainder_expression = remainder_expression
+        this_primary_sector_remainder_expression = remainder_expression
         for i in range(len(primary_sector.other) - 1): # "-1" because of ``transformations``
             decomposition.unhide(primary_sector.other[i], other_polynomials_name_hide_containers[i])
             for poly_name in reversed_polynomial_names:
                 primary_sector.other[i] = primary_sector.other[i].replace(-1, poly_name(*all_symbols), remove=True)
-                this_sector_remainder_expression = this_sector_remainder_expression.replace(-1, poly_name(*all_symbols), remove=True)
+                this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(-1, poly_name(*all_symbols), remove=True)
 
         # we later need ``1`` packed into specific types
         polynomial_one = Polynomial(np.zeros([1,len(all_symbols)], dtype=int), np.array([1]), all_symbols, copy=False)
@@ -752,7 +752,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             # apply ``this_transformation`` to ``this_sector_remainder_expression`` BEFORE taking derivatives
             for variable_index, integration_variable in enumerate(integration_variables):
                 replacement = sp.sympify( Polynomial(this_transformation.expolist[variable_index:variable_index+1,:], [1], integration_variables) )
-                this_sector_remainder_expression = this_sector_remainder_expression.replace(variable_index, replacement)
+                this_sector_remainder_expression = this_primary_sector_remainder_expression.replace(variable_index, replacement)
             this_sector_remainder_expression = Expression(sp.sympify(this_sector_remainder_expression), symbols_remainder_expression)
 
             # define ``cal_I``, the part of the integrand that does not lead to poles
