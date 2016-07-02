@@ -758,9 +758,20 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             # insert the monomials of the `polynomial_names` into ``sector.other`` ``<symbol> --> xi**pow_i * <symbol>``
             # ``[:,:-len(regulators)]`` is the part of the expolist that contains only the powers of the `integration_variables` but not of the `regulators`;
             #     i.e. it excludes the powers of the regulators from the modification
+            # parse exponents and coeffs (carried along as sympy expressions up to here) # TODO: parse already after primary decomposition if possible since it is slow
+            #  - in ``sector.cast``
+            for product in sector.cast:
+                mono, poly = product.factors
+                mono.exponent = Polynomial.from_expression(mono.exponent, symbols_polynomials_to_decompose)
+                poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
+                mono.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in mono.coeffs])
+                poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
+
+            #  - in ``sector.other``
             for poly in sector.other:
-                for name,(mono,_),hidden_name in zip(polynomial_names,sector.cast,other_polynomials_name_hide_containers):
-                    poly.expolist[:,:-len(regulators)] += np.einsum('i,k->ik', hidden_name.expolist[:,0], mono.expolist[0,:-len(regulators)])
+                poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
+                poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
+
 
             # factorize polynomials in ``sector.other``
             for i,to_factorize in enumerate(sector.other):
