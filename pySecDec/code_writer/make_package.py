@@ -157,9 +157,8 @@ _decomposition_strategies = dict(
 
 
 # -------------------------------- template parsing ---------------------------------
-def _parse_global_templates(target_directory, name, integration_variables,
-                            regulators, polynomial_names, real_parameters,
-                            complex_parameters, form_optimization_level,
+def _parse_global_templates(target_directory, name, regulators, polynomial_names,
+                            real_parameters, complex_parameters, form_optimization_level,
                             form_work_space, form_insertion_depth, stabilize,
                             requested_orders, contour_deformation_polynomial,
                             integrand_container_type):
@@ -168,7 +167,7 @@ def _parse_global_templates(target_directory, name, integration_variables,
     optional arguments passed to :func:`parse_template_tree`.
 
     '''
-    # TODO: check validity of symbol names and `name` in FORM and c++ (FORM: no underscores; both: no special characters, no leading numbers), and its length (due to FORM's line breaks)
+    # TODO: check validity of symbol names and `name` in FORM and c++ (FORM: no underscores; both: no special characters, no leading numbers)
 
     # initialize template replacements
     template_replacements = dict(
@@ -180,8 +179,6 @@ def _parse_global_templates(target_directory, name, integration_variables,
                                      have_complex_parameters = len(complex_parameters) > 0,
                                      number_of_regulators = len(regulators),
                                      regulators = _make_FORM_list(regulators),
-                                     number_of_integration_variables = len(integration_variables),
-                                     integration_variables = _make_FORM_list(integration_variables),
                                      polynomial_names = _make_FORM_list(regulators),
                                      form_optimization_level = form_optimization_level,
                                      form_work_space = form_work_space,
@@ -590,10 +587,10 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     # configure the template parser and parse global files
     template_sources, target_directory, template_replacements, file_renamings = \
         _parse_global_templates(
-        target_directory, name, integration_variables, regulators,
-        polynomial_names, real_parameters, complex_parameters,
-        form_optimization_level, form_work_space, form_insertion_depth,
-        stabilize, requested_orders, contour_deformation_polynomial,
+        target_directory, name, regulators, polynomial_names,
+        real_parameters, complex_parameters, form_optimization_level,
+        form_work_space, form_insertion_depth, stabilize,
+        requested_orders, contour_deformation_polynomial,
         integrand_container_type
     )
 
@@ -655,6 +652,10 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         symbols_polynomials_to_decompose = integration_variables + regulators
         symbols_remainder_expression = integration_variables + polynomial_names
         all_symbols = symbols_other_polynomials = integration_variables + regulators + polynomial_names
+
+        # define `integration_variables` in the template system
+        template_replacements['number_of_integration_variables'] = len(integration_variables)
+        template_replacements['integration_variables'] = _make_FORM_list(integration_variables)
 
         # get the indices of the `integration_variables`, the `regulators`, and the `polynomial_names` in the polysymbols
         integration_variable_indices = list(range(len(integration_variables)))
