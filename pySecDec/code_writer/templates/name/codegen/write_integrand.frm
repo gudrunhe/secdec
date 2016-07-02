@@ -162,9 +162,10 @@ B `regulators';
 *     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
       #call beginArgumentDepth(`depth')
         Denominators SecDecInternalDenominator;
-        factarg SecDecInternalDenominator;
+        factarg,(-1),SecDecInternalDenominator;
         chainout SecDecInternalDenominator;
         repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+        repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
       #call endArgumentDepth(`depth')
       .sort
 
