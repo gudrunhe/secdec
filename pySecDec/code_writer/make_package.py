@@ -692,10 +692,13 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         all_symbols = symbols_remainder_expression = integration_variables + regulators
         this_primary_sector_remainder_expression = remainder_expression
         for i in range(len(primary_sector.other) - 1): # "-1" because of ``transformations``
-            decomposition.unhide(primary_sector.other[i], other_polynomials_name_hide_containers[i])
+            poly = primary_sector.other[i]
+            decomposition.unhide(poly, other_polynomials_name_hide_containers[i])
             for poly_name in reversed_polynomial_names:
-                primary_sector.other[i] = primary_sector.other[i].replace(-1, poly_name(*all_symbols), remove=True)
-                this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(-1, poly_name(*all_symbols), remove=True)
+                poly = poly.replace(-1, poly_name(*all_symbols), remove=True)
+            primary_sector.other[i] = poly
+        for poly_name in reversed_polynomial_names:
+            this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(-1, poly_name(*all_symbols), remove=True)
 
         # we later need ``1`` packed into specific types
         polynomial_one = Polynomial(np.zeros([1,len(all_symbols)], dtype=int), np.array([1]), all_symbols, copy=False)
