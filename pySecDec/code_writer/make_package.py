@@ -348,7 +348,8 @@ def _derivative_muliindex_to_name(basename, multiindex):
 internal_prefix = 'SecDecInternal'
 FORM_names = dict(
     cal_I=internal_prefix+'CalI',
-    regular=internal_prefix+'Regular'
+    cast_polynomial=internal_prefix+'PolynomialToDecompose',
+    other_polynomial=internal_prefix+'OtherPolynomial'
 )
 
 def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID):
@@ -704,7 +705,28 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         polynomial_one = Polynomial(np.zeros([1,len(all_symbols)], dtype=int), np.array([1]), all_symbols, copy=False)
         pole_part_initializer = Pow(polynomial_one, -polynomial_one)
 
-        # TODO: exponents should not depend on the `integration_variables` --> assert in `_convert_input`
+        # define symbols for the `polynomials_to_decompose` and the `other_polynomials` --> shorter expressions and faster in python
+        symbolic_other_polynomials = [
+                                         Pow(
+                                             Function(FORM_names['other_polynomial'] + str(i), *elementary_monomials),
+                                             Expression(primary_sector.other[i].exponent, symbols_polynomials_to_decompose)
+                                         )
+                                         for i in range(len(other_polynomials))
+                                     ]
+        symbolic_polynomials_to_decompose = []
+        for i in range(len(polynomials_to_decompose)):
+            try:
+                poly_name = polynomial_names[i]
+            except IndexError:
+                poly_name = FORM_names['cast_polynomial'] + str(i)
+            symbolic_polynomials_to_decompose.append(
+                Pow(
+                    Function(str(poly_name), *elementary_monomials),
+                    Expression(primary_sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose)
+                )
+            )
+
+        # TODO: exponents should not depend on the `integration_variables` and be polynomial in the regulators --> assert in `_convert_input`
 
         for sector in strategy['secondary'](primary_sector):
             sector_index += 1
@@ -758,8 +780,13 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 this_sector_remainder_expression = this_primary_sector_remainder_expression.replace(variable_index, replacement)
             this_sector_remainder_expression = Expression(sp.sympify(this_sector_remainder_expression), symbols_remainder_expression)
 
+            # define `DerivativeTracker` for the symbolic polynomials
+            derivative_tracking_symbolic_polynomials_to_decompose = [DerivativeTracker(f) for f in symbolic_polynomials_to_decompose]
+            derivative_tracking_symbolic_other_polynomials = [DerivativeTracker(f) for f in symbolic_other_polynomials]
+
             # define ``cal_I``, the part of the integrand that does not lead to poles
-            cal_I = Product(this_sector_remainder_expression, *(prod.factors[1] for prod in chain(sector.cast, sector.other)), copy=False)
+            # use the derivative tracking dummy functions for the polynomials --> faster
+            cal_I = Product(this_sector_remainder_expression, *chain(derivative_tracking_symbolic_polynomials_to_decompose, derivative_tracking_symbolic_other_polynomials), copy=False)
 
             # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
             # symbolic cal_I wrapped in a `DerivativeTracker` to keep track of derivatives
@@ -820,6 +847,20 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 )
 
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
+
+            #  - for the polynomials
+            for prod, tracker in chain(
+                zip(sector.cast , derivative_tracking_symbolic_polynomials_to_decompose),
+                zip(sector.other, derivative_tracking_symbolic_other_polynomials)
+            ):
+                _, expression = prod.factors
+                expression.exponent = 1 # exponent is already part of the `tracker`
+                basename = tracker.expression.base.symbol
+                update_derivatives(
+                    basename=basename, # name as defined in `polynomial_names` or dummy name
+                    derivative_tracker=tracker,
+                    full_expression=expression.copy()
+                )
 
 
             # generate the function definitions for the insertion in FORM
