@@ -152,39 +152,37 @@ B `regulators';
   repeat Id log(SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?) = log(SecDecInternalsDUMMY1) * SecDecInternalsDUMMY2;
   .sort
 
-* perform innermost replacements first
-  #Do minusDepth = - `insertionDepth' , 0
-    #$depth = - `minusDepth';
+* Since we need intermediate ".sort" instructions, we cannot use the "repeat" environment.
+* The following construction is suggested in the FORM documentation.
+  #Do i = 1,1
 
-*   Since we need intermediate ".sort" instructions, we cannot use the "repeat" environment.
-*   The following construction is suggested in the FORM documentation.
-    #Do i = 1,1
+    #Do depth = 0, `insertionDepth'
 
 *     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
 *     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
-      #call beginArgumentDepth(`$depth')
+      #call beginArgumentDepth(`depth')
         Denominators SecDecInternalDenominator;
         factarg SecDecInternalDenominator;
         chainout SecDecInternalDenominator;
         repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
-      #call endArgumentDepth(`$depth')
+      #call endArgumentDepth(`depth')
       .sort
 
 *     some simplifications
-      #call beginArgumentDepth(`$depth')
+      #call beginArgumentDepth(`depth')
         Id log(1) = 0;
         repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
         repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
         repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
-      #call endArgumentDepth(`$depth')
+      #call endArgumentDepth(`depth')
       .sort
 
       #Do functionForInsertion = {`functionsForInsertion'}
 
 *       set dollar variables
-        #call beginArgumentDepth(`$depth')
+        #call beginArgumentDepth(`depth')
           if ( match(`functionForInsertion'(`matchArg')) ) redefine i "0";
-        #call endArgumentDepth(`$depth')
+        #call endArgumentDepth(`depth')
         .sort
 
         #redefine replaceArg ""
@@ -211,9 +209,9 @@ B `regulators';
           #call generateReplacement`functionForInsertion'(`replaceArg')
           .sort
           drop replacement;
-          #call beginArgumentDepth(`$depth')
+          #call beginArgumentDepth(`depth')
             id `functionForInsertion'(`idArg') = replacement;
-          #call endArgumentDepth(`$depth')
+          #call endArgumentDepth(`depth')
           .sort
         #EndIf
 
@@ -259,9 +257,7 @@ B `regulators';
   #Do function = {`functions',log,SecDecInternalDenominator}
     #$labelCounter = 0;
 
-*   process innermost function calls first
-    #Do minusDepth = - `insertionDepth' , 0
-      #$depth = - `minusDepth';
+    #Do depth = 0, `insertionDepth'
 
 *     Since we need intermediate ".sort" instructions, we cannot use the
 *     "repeat" environment.
@@ -269,9 +265,9 @@ B `regulators';
 
       #Do i = 1,1
 *       set dollar variable
-        #call beginArgumentDepth(`$depth')
+        #call beginArgumentDepth(`depth')
           if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-        #call endArgumentDepth(`$depth')
+        #call endArgumentDepth(`depth')
         .sort
 
 *       The following "#if" evaluates to true only if there are logs or denominators left.
@@ -281,9 +277,9 @@ B `regulators';
 
           L arguments = SecDecInternalfDUMMYarguments(`$args');
 
-          #call beginArgumentDepth(`$depth')
+          #call beginArgumentDepth(`depth')
             Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
-          #call endArgumentDepth(`$depth')
+          #call endArgumentDepth(`depth')
 
           repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) = SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
 
