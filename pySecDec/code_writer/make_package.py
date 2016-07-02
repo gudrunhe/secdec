@@ -643,9 +643,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
         # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
         integration_variables = list(primary_sector.Jacobian.polysymbols) # make a copy
-        symbols_polynomials_to_decompose = integration_variables + regulators
+        symbols_polynomials_to_decompose = symbols_other_polynomials = integration_variables + regulators
         symbols_remainder_expression = integration_variables + polynomial_names
-        all_symbols = symbols_other_polynomials = integration_variables + regulators + polynomial_names
+        all_symbols = integration_variables + regulators + polynomial_names
 
         # define `integration_variables` in the template system
         template_replacements['number_of_integration_variables'] = len(integration_variables)
