@@ -772,22 +772,10 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             # intialize expansion
             pole_parts = [s.factors[1].simplify() for s in subtracted]
             regular_parts = [Product( *([s.factors[0]] + s.factors[2:]), copy=False ) for s in subtracted]
-            # introduce dummy functions --> faster in python
-            symbolic_regular_parts = \
-            [
-                DerivativeTracker\
-                (
-                    Function\
-                    (
-                        FORM_names['regular'] + str(i), *elementary_monomials
-                    ), copy=False
-                )
-                for i,_ in enumerate(subtracted)
-            ]
 
             # expand poles
             integrand_summands = []
-            for i,(regular,singular) in enumerate(zip(symbolic_regular_parts, pole_parts)):
+            for i,(regular,singular) in enumerate(zip(regular_parts, pole_parts)):
                 # must expand every term to the requested order plus the highest pole it multiplies
                 # We calculated the highest pole order of the prefactor (variable ``highest_prefactor_pole_orders``) above.
                 # In addition, we have to take the poles of the current term into account.
@@ -831,14 +819,6 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                     sector.cast[contour_deformation_polynomial_index] # full expression
                 )
 
-            #  - for the "regular parts" arising in the subtraction
-            for index, (regular_part, symbolic_regular_part) in enumerate(zip(regular_parts, symbolic_regular_parts)):
-                update_derivatives(basename=FORM_names['regular']+str(index), derivative_tracker=symbolic_regular_part, full_expression=regular_part)
-
-            #  - for the part of the integrand that does not lead to poles
-            # Must inherit derivatives from the "regular parts" because the derivative
-            # tracker does not work any more after "cal_I" is hidden in them.
-                symbolic_cal_I.derivatives.update(symbolic_regular_part.derivatives)
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
 
 
