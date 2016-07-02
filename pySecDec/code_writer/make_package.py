@@ -758,6 +758,11 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             # insert the monomials of the `polynomial_names` into ``sector.other`` ``<symbol> --> xi**pow_i * <symbol>``
             # ``[:,:-len(regulators)]`` is the part of the expolist that contains only the powers of the `integration_variables` but not of the `regulators`;
             #     i.e. it excludes the powers of the regulators from the modification
+            for poly, hidden_name in zip(sector.other, other_polynomials_name_hide_containers):
+                for i,(polyname,prod) in enumerate(zip(polynomial_names,sector.cast)):
+                    mono,_ = prod.factors
+                    poly.expolist[:,:-len(regulators)] += np.einsum('i,k->ik', hidden_name.expolist[:,i], mono.expolist[0,:-len(regulators)])
+
             # parse exponents and coeffs (carried along as sympy expressions up to here) # TODO: parse already after primary decomposition if possible since it is slow
             #  - in ``sector.cast``
             for product in sector.cast:
