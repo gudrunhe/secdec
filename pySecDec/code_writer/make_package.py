@@ -404,6 +404,11 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     Decompose, subtract and expand an expression.
     Return it as c++ package.
 
+    .. seealso::
+        In order to decompose a loop integral,
+        use the function
+        :func:`pySecDec.loop_integral.loop_package`.
+
     .. note::
         Use ``I`` to denote the imaginary unit.
 
@@ -555,7 +560,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
         'iterative' and 'geometric' are only valid for
         loop integrals. An end user should always use
-        the default 'iterative_no_primary'.
+        the default 'iterative_no_primary' here.
+        In order to compute loop integrals, please use the
+        function :func:`pySecDec.loop_integral.loop_package`.
 
     '''
     # convert input data types to the data types we need

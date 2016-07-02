@@ -25,6 +25,7 @@ Reference Guide
 .. autoclass:: pySecDec.loop_integral.LoopIntegral
 .. autoclass:: pySecDec.loop_integral.LoopIntegralFromGraph
 .. autoclass:: pySecDec.loop_integral.LoopIntegralFromPropagators
+.. autofunction:: pySecDec.loop_integral.loop_package
 
 .. automodule:: pySecDec.subtraction
     :members:

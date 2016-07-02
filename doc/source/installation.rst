@@ -41,6 +41,8 @@ If you have `pip`, you should type
 
 instead, for the same reasons as mentioned :ref:`above <install_from_PyPI>`.
 
+.. _installation_normaliz:
+
 The Geomethod and Normaliz
 --------------------------
 
