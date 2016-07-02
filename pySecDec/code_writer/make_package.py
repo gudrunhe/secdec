@@ -716,22 +716,27 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         symbolic_other_polynomials = [
                                          Pow(
                                              Function(FORM_names['other_polynomial'] + str(i), *elementary_monomials),
-                                             Expression(primary_sector.other[i].exponent, symbols_polynomials_to_decompose)
+                                             Expression(primary_sector.other[i].exponent, symbols_polynomials_to_decompose),
+                                             copy = False
                                          )
                                          for i in range(len(other_polynomials))
                                      ]
+        names_other_polynomials = [FORM_names['other_polynomial'] + str(i) for i in range(len(other_polynomials))]
         symbolic_polynomials_to_decompose = []
+        names_polynomials_to_decompose = []
         for i in range(len(polynomials_to_decompose)):
             try:
-                poly_name = polynomial_names[i]
+                poly_name = str(polynomial_names[i])
             except IndexError:
                 poly_name = FORM_names['cast_polynomial'] + str(i)
             symbolic_polynomials_to_decompose.append(
                 Pow(
-                    Function(str(poly_name), *elementary_monomials),
-                    Expression(primary_sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose)
+                    Function(poly_name, *elementary_monomials),
+                    Expression(primary_sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose),
+                    copy = False
                 )
             )
+            names_polynomials_to_decompose.append(poly_name)
 
         # TODO: exponents should not depend on the `integration_variables` and be polynomial in the regulators --> assert in `_convert_input`
 
@@ -872,13 +877,12 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
 
             #  - for the polynomials
-            for prod, tracker in chain(
-                zip(sector.cast , derivative_tracking_symbolic_polynomials_to_decompose),
-                zip(sector.other, derivative_tracking_symbolic_other_polynomials)
+            for prod, tracker, basename in chain(
+                zip(sector.cast , derivative_tracking_symbolic_polynomials_to_decompose, names_polynomials_to_decompose),
+                zip(sector.other, derivative_tracking_symbolic_other_polynomials, names_other_polynomials)
             ):
                 _, expression = prod.factors
                 expression.exponent = 1 # exponent is already part of the `tracker`
-                basename = tracker.expression.base.symbol
                 update_derivatives(
                     basename=basename, # name as defined in `polynomial_names` or dummy name
                     derivative_tracker=tracker,
