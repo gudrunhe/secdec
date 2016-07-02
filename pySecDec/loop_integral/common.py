@@ -312,3 +312,11 @@ class LoopIntegral(object):
                 gamma_fac *= 1/sp.gamma(eff_power)
 
         return gamma_fac
+
+    @cached_property
+    def integration_variables(self):
+        variables = []
+        for FP,power in zip(self.Feynman_parameters, self.powerlist):
+            if not (power.is_integer and power.is_nonpositive):
+                variables.append(FP)
+        return variables

@@ -1100,11 +1100,13 @@ class TestPowerlist(unittest.TestCase):
         if powerlist[2].is_integer and powerlist[2].is_nonpositive:
             target_U = '''z1 + z2'''
             target_F = '''-(ssp1*z1*z2)'''
-            target_numerator_polysymbols = sp.sympify(['z1', 'z2', 'F', 'U'])
+            target_integration_variables = sp.sympify(['z1', 'z2'])
         else:
             target_U = '''z1 + z2 + z3'''
             target_F = '''-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)'''
-            target_numerator_polysymbols = sp.sympify(['z1', 'z2', 'z3', 'F', 'U'])
+            target_integration_variables = sp.sympify(['z1', 'z2', 'z3'])
+
+        symbols_F_U = sp.sympify(['F', 'U'])
 
         target_Nu = {  '1': '-1'
                      , '0': '1'
@@ -1240,7 +1242,10 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (li.exponent_F - target_exponent_F).simplify(), 0 )
         self.assertEqual( (li.Gamma_factor - target_gamma).simplify(), 0 )
 
-        self.assertEqual( li.numerator.polysymbols, target_numerator_polysymbols)
+        self.assertEqual( li.U.polysymbols, target_integration_variables)
+        self.assertEqual( li.F.polysymbols, target_integration_variables)
+        self.assertEqual( li.numerator.polysymbols, target_integration_variables + symbols_F_U)
+        self.assertEqual( li.integration_variables, target_integration_variables)
 
     def test_one_power(self):
         self.tri1L_powers('1')
