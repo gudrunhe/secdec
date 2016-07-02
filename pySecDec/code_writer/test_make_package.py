@@ -69,15 +69,15 @@ class TestConvertInput(TestMakePackage):
 
         polynomials_to_decompose_wrong_polysymbols_in_exponent = correct_input.copy()
         polynomials_to_decompose_wrong_polysymbols_in_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0],[1,1,1,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha'],exponent=Polynomial([[0,0,1]],[1],['x0','x1','x2']))]
-        self.assertRaisesRegexp(ValueError, r"exponent.*\(\-s\) \+ \(\-t\)\*z0\*z1\*z2.*polynomials_to_decompose.*symbols.*\(is.*z0, z1, z2.*should.*\z0, z1, z2, eps, alpha", _convert_input, **polynomials_to_decompose_wrong_polysymbols_in_exponent)
+        _convert_input(**polynomials_to_decompose_wrong_polysymbols_in_exponent) # should be ok
 
         polynomials_to_decompose_wrong_polysymbols_in_coeff = correct_input.copy()
         polynomials_to_decompose_wrong_polysymbols_in_coeff['polynomials_to_decompose'] = [1,Polynomial([[0,0,0],[1,1,1]],[Polynomial([[0,0,0]], ['-s'], ['eps','alpha']),'-t'],['z0','z1','z2','eps','alpha'])]
-        self.assertRaisesRegexp(ValueError, r"\(\-s\).*coeff of polynomials_to_decompose.*symbols.*\(is.*eps, alpha.*should.*\z0, z1, z2, eps, alpha", _convert_input, **polynomials_to_decompose_wrong_polysymbols_in_coeff)
+        _convert_input(**polynomials_to_decompose_wrong_polysymbols_in_coeff) # should be ok
 
         polynomials_to_decompose_polynomial_in_coeff = correct_input.copy()
         polynomials_to_decompose_polynomial_in_coeff['polynomials_to_decompose'] = [1,Polynomial([[0,0,0],[1,1,1]],[Polynomial([[0,0,0]], ['-s'], ['z0','z1','z2','eps','alpha']),'-t'],['z0','z1','z2','eps','alpha'])]
-        _convert_input(**polynomials_to_decompose_polynomial_in_coeff)
+        _convert_input(**polynomials_to_decompose_polynomial_in_coeff) # should be ok
 
         polynomials_to_decompose_sympy_exponent = correct_input.copy()
         polynomials_to_decompose_sympy_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0],[1,1,1,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha'],exponent='1+eps')]
@@ -85,7 +85,7 @@ class TestConvertInput(TestMakePackage):
 
         polynomials_to_decompose_wrong_type_in_exponent = correct_input.copy()
         polynomials_to_decompose_wrong_type_in_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0],[1,1,1,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha'],exponent=ExponentiatedPolynomial([[0,0,1]],[1],polysymbols=['z0','z1','z2','eps','alpha']))]
-        self.assertRaisesRegexp(ValueError, r"exponent.*\(\-s\) \+ \(\-t\)\*z0\*z1\*z2.*polynomials_to_decompose.*type.*Polynomial.*ExponentiatedPolynomial", _convert_input, **polynomials_to_decompose_wrong_type_in_exponent)
+        _convert_input(**polynomials_to_decompose_wrong_type_in_exponent) # should be ok
 
         polynomials_to_decompose_nontrivial_as_string = correct_input.copy()
         polynomials_to_decompose_nontrivial_as_string['polynomials_to_decompose'] = ['1', '(-s -t*z0*z1*z2)**(2-4*eps+alpha)']

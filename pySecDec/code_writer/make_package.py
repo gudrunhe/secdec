@@ -26,6 +26,8 @@ import os
 # To find the main function `make_package`, it is easiest to full-text search
 # for "def make_package(".
 
+_sympy_one = sp.sympify(1)
+
 # ----------------------------------- parse input -----------------------------------
 def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argument_being_parsed):
     '''
@@ -47,35 +49,27 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                                  % (expression, name_of_make_argument_being_parsed, expression.symbols, polysymbols))
         if target_type == ExponentiatedPolynomial:
             if type(expression) == ExponentiatedPolynomial:
-                if isinstance(expression.exponent, _Expression):
-                    if expression.exponent.symbols != polysymbols:
-                        raise ValueError('The exponent of "%s" (in `%s`) depends on the wrong `symbols` (is: %s, should be: %s). Try passing it as string or sympy expression.' \
-                                         % (expression, name_of_make_argument_being_parsed, expression.symbols, polysymbols))
-                    if type(expression.exponent) != Polynomial:
-                        raise ValueError('The exponent of "%s" (in `%s`) should be of type `Polynomial` but is of type `%s`. Try passing it as string or sympy expression.' \
-                                          % (expression,name_of_make_argument_being_parsed,type(expression)))
-                else:
-                    expression.exponent = Polynomial.from_expression(expression.exponent, polysymbols)
-                expression.coeffs = np.array( _parse_expressions(expression.coeffs, polysymbols, _Expression, 'coeff of ' + name_of_make_argument_being_parsed) )
+                expression.exponent = sp.sympify(expression.exponent)
+                expression.coeffs = np.array( sp.sympify(coeff) for coeff in expression.coeffs )
             elif type(expression) == Polynomial:
                 expression = ExponentiatedPolynomial(expression.expolist,
-                                                     np.array( _parse_expressions(expression.coeffs, polysymbols, _Expression, 'coeff of ' + name_of_make_argument_being_parsed) ), # coeffs
-                                                     Polynomial.from_expression(1, polysymbols), # exponent
+                                                     np.array( sp.sympify(coeff) for coeff in expression.coeffs ),
+                                                     _sympy_one, # exponent
                                                      polysymbols, copy=False)
             else:
                 expression = sp.sympify(expression)
                 if expression.is_Pow:
                     assert len(expression.args) == 2
                     expression_base = Polynomial.from_expression(expression.args[0], polysymbols)
-                    expression_exponent = Polynomial.from_expression(expression.args[1], polysymbols)
+                    expression_exponent = sp.sympify(expression.args[1], polysymbols)
                     expression = ExponentiatedPolynomial(expression_base.expolist,
-                                                         np.array( _parse_expressions(expression_base.coeffs, polysymbols, _Expression, 'coeff of ' + name_of_make_argument_being_parsed) ), # coeffs
+                                                         expression_base.coeffs,
                                                          expression_exponent, polysymbols, copy=False)
                 else:
                     expression = Polynomial.from_expression(expression, polysymbols)
                     expression = ExponentiatedPolynomial(expression.expolist,
-                                                         np.array( _parse_expressions(expression.coeffs, polysymbols, _Expression, 'coeff of ' + name_of_make_argument_being_parsed) ), # coeffs
-                                                         Polynomial.from_expression(1, polysymbols), # exponent
+                                                         expression.coeffs,
+                                                         _sympy_one, # exponent
                                                          polysymbols, copy=False)
         elif target_type == _Expression:
             if not isinstance(expression, _Expression):
