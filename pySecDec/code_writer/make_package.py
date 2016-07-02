@@ -764,7 +764,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             # factorize polynomials in ``sector.other``
             for i,to_factorize in enumerate(sector.other):
-                to_factorize = sector.other[i] = Product(polynomial_one, to_factorize)
+                to_factorize = sector.other[i] = Product(ExponentiatedPolynomial(np.zeros([1,len(all_symbols)], dtype=int), np.array([1]), to_factorize.exponent.copy(), all_symbols, copy=False), to_factorize)
                 decomposition.refactorize(to_factorize)
 
             # subtraction needs type `ExponentiatedPolynomial` for all factors in its monomial part
