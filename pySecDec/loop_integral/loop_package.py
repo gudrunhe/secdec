@@ -124,17 +124,8 @@ def loop_package(target_directory, name, loop_integral, requested_order,
 
         form_optimization_level = form_optimization_level,
         form_work_space = form_work_space,
-        form_insertion_depth = 20, # can have log(UorF(...)) or denominator(UorF(...)) #TODO: do we need more than ``1``?
+        form_insertion_depth = 1, # can have log(UorF(...)) or denominator(UorF(...))
 
         stabilize = stabilize, 
         decomposition_method = decomposition_method
     )
-
-
-
-
-
-
-
-
-
