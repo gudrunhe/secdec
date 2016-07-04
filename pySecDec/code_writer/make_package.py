@@ -874,12 +874,13 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                     sector.cast[contour_deformation_polynomial_index] # full expression
                 )
 
+            #  - for cal_I
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
 
-            #  - for the polynomials
+            #  - for the polynomials (`other_polynomials` first since they can reference `polynomials_to_decompose`)
             for prod, tracker, basename in chain(
-                zip(sector.cast , derivative_tracking_symbolic_polynomials_to_decompose, names_polynomials_to_decompose),
-                zip(sector.other, derivative_tracking_symbolic_other_polynomials, names_other_polynomials)
+                zip(sector.other, derivative_tracking_symbolic_other_polynomials, names_other_polynomials),
+                zip(sector.cast , derivative_tracking_symbolic_polynomials_to_decompose, names_polynomials_to_decompose)
             ):
                 _, expression = prod.factors
                 expression.exponent = 1 # exponent is already part of the `tracker`

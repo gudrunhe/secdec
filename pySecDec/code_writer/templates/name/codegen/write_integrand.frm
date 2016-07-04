@@ -154,7 +154,7 @@ B `regulators';
 
 * Since we need intermediate ".sort" instructions, we cannot use the "repeat" environment.
 * The following construction is suggested in the FORM documentation.
-  #Do i = 1,1
+  #Do iOuter = 1,1
 
     #Do depth = 0, `insertionDepth'
 
@@ -180,42 +180,48 @@ B `regulators';
 
       #Do functionForInsertion = {`functionsForInsertion'}
 
-*       set dollar variables
-        #call beginArgumentDepth(`depth')
-          if ( match(`functionForInsertion'(`matchArg')) ) redefine i "0";
-        #call endArgumentDepth(`depth')
-        .sort
+        #Do iInner = 1,1
 
-        #redefine replaceArg ""
-        #$counter = 1;
-        #Do var = {`integrationVariables', `regulators'}
-          #If `$counter' != 1
-            #redefine replaceArg "`replaceArg' , "
-          #EndIf
-          #redefine replaceArg "`replaceArg' `var',$SecDecInternalsDUMMY`$counter'"
-          #$counter = $counter + 1;
-        #EndDo
-
-        #redefine idArg ""
-        #Do j = 1,`numIV'+`numReg'
-          #If `j' != 1
-            #redefine idArg "`idArg', "
-          #EndIf
-          #redefine idArg "`idArg'`$SecDecInternalsDUMMY`j''"
-        #EndDo
-
-*       This "if" evaluates to true only if the expression above was matched.
-*       If the expression above does not match, there is nothing to do.
-        #If `i' == 0
-          #call generateReplacement`functionForInsertion'(`replaceArg')
-          .sort
-          drop replacement;
+*         set dollar variables
           #call beginArgumentDepth(`depth')
-            id `functionForInsertion'(`idArg') = replacement;
+            if ( match(`functionForInsertion'(`matchArg')) );
+              redefine iOuter "0";
+              redefine iInner "0";
+            endif;
           #call endArgumentDepth(`depth')
           .sort
-        #EndIf
 
+          #redefine replaceArg ""
+          #$counter = 1;
+          #Do var = {`integrationVariables', `regulators'}
+            #If `$counter' != 1
+              #redefine replaceArg "`replaceArg' , "
+            #EndIf
+            #redefine replaceArg "`replaceArg' `var',$SecDecInternalsDUMMY`$counter'"
+            #$counter = $counter + 1;
+          #EndDo
+
+          #redefine idArg ""
+          #Do j = 1,`numIV'+`numReg'
+            #If `j' != 1
+              #redefine idArg "`idArg', "
+            #EndIf
+            #redefine idArg "`idArg'`$SecDecInternalsDUMMY`j''"
+          #EndDo
+
+*         This "if" evaluates to true only if the expression above was matched.
+*         If the expression above does not match, there is nothing to do.
+          #If `iInner' == 0
+            #call generateReplacement`functionForInsertion'(`replaceArg')
+            .sort
+            drop replacement;
+            #call beginArgumentDepth(`depth')
+              id `functionForInsertion'(`idArg') = replacement;
+            #call endArgumentDepth(`depth')
+            .sort
+          #EndIf
+
+        #EndDo
       #EndDo
     #EndDo
   #EndDo
