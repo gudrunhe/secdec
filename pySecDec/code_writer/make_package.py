@@ -681,7 +681,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         if contour_deformation_polynomial is not None: # TODO: further checks on `contour_deformation_polynomial`, e.g. it must not depend on the regulators
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
-            symbolic_contour_deformation_polynomial = Function(str(contour_deformation_polynomial), *symbols_polynomials_to_decompose) # TODO: check that the referenced polynomial does not depend on the `regulators`
+            symbolic_contour_deformation_polynomial = Function(str_contour_deformation_polynomial, *elementary_monomials) # TODO: check that the referenced polynomial does not depend on the `regulators`
             symbolic_contour_deformation_polynomial = DerivativeTracker(symbolic_contour_deformation_polynomial)
 
             # compute the transformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
@@ -877,9 +877,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             #  - for the contour deformation
             if contour_deformation_polynomial is not None:
                 update_derivatives(
-                    contour_deformation_polynomial, # basename
+                    str_contour_deformation_polynomial, # basename
                     symbolic_contour_deformation_polynomial, # derivative tracker
-                    sector.cast[contour_deformation_polynomial_index] # full expression
+                    sector.cast[contour_deformation_polynomial_index].copy() # full expression
                 )
 
             #  - for cal_I
