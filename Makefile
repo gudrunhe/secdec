@@ -27,7 +27,7 @@ secdecutilCONFIGURE = $(CONFIGURE_COMMON)
 
 
 $(PACKAGES) :
-	tar xaf $@-$($@VERSION).tar.gz && \
+	tar -xf $@-$($@VERSION).tar.gz && \
 	cd $@-$($@VERSION) && \
 	./configure $($@CONFIGURE) && \
 	cd .. && \
