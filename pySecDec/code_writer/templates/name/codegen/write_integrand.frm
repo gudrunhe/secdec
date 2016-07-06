@@ -35,7 +35,7 @@ Off statistics;
 #include sector`sectorID'.h
 .global
 
-Global expansion = `integrand';
+#call defineExpansion
 .sort
 
 * Enumerate the regulators
@@ -129,22 +129,6 @@ B `regulators';
   #EndDo
   Local expression = expansion[$currentOrder];
 
-* Explicitly insert the functions defined in python.
-* {
-
-* construct function argument for the left hand side of the `id` statement
-* Example:
-* Id f(x$SecDecInternalsDUMMY1, y$SecDecInternalsDUMMY2) = ...
-  #redefine matchArg ""
-  #$counter = 1;
-  #Do var = {`integrationVariables', `regulators'}
-    #If `$counter' != 1
-      #redefine matchArg "`matchArg' , "
-    #EndIf
-    #redefine matchArg "`matchArg' `var'?$SecDecInternalsDUMMY`$counter'"
-    #$counter = $counter + 1;
-  #EndDo
-
 * Expand logs *BEFORE* insertions and only at top level in order to avoid
 * introducing log(<negative real>).
   factarg log;
@@ -152,78 +136,36 @@ B `regulators';
   repeat Id log(SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?) = log(SecDecInternalsDUMMY1) * SecDecInternalsDUMMY2;
   .sort
 
-* Since we need intermediate ".sort" instructions, we cannot use the "repeat" environment.
-* The following construction is suggested in the FORM documentation.
-  #Do iOuter = 1,1
+* Explicitly insert the functions defined in python.
+* {
 
-    #Do depth = 0, `insertionDepth'
+  #Do depth = 0, `insertionDepth'
 
-*     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
-*     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
-      #call beginArgumentDepth(`depth')
-        Denominators SecDecInternalDenominator;
-        factarg,(-1),SecDecInternalDenominator;
-        chainout SecDecInternalDenominator;
-        repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
-        repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
-      #call endArgumentDepth(`depth')
-      .sort
+*   Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
+*   example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
+    #call beginArgumentDepth(`depth')
+      Denominators SecDecInternalDenominator;
+      factarg,(-1),SecDecInternalDenominator;
+      chainout SecDecInternalDenominator;
+      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+      repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
+    #call endArgumentDepth(`depth')
+    .sort
 
-*     some simplifications
-      #call beginArgumentDepth(`depth')
-        Id log(1) = 0;
-        repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
-        repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
-        repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
-      #call endArgumentDepth(`depth')
-      .sort
+*   some simplifications
+    #call beginArgumentDepth(`depth')
+      Id log(1) = 0;
+      repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
+      repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
+      repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
+    #call endArgumentDepth(`depth')
+    .sort
 
-      #Do functionForInsertion = {`functionsForInsertion'}
+    #call beginArgumentDepth(`depth')
+      #call insert
+    #call endArgumentDepth(`depth')
+    .sort
 
-        #Do iInner = 1,1
-
-*         set dollar variables
-          #call beginArgumentDepth(`depth')
-            if ( match(`functionForInsertion'(`matchArg')) );
-              redefine iOuter "0";
-              redefine iInner "0";
-            endif;
-          #call endArgumentDepth(`depth')
-          .sort
-
-          #redefine replaceArg ""
-          #$counter = 1;
-          #Do var = {`integrationVariables', `regulators'}
-            #If `$counter' != 1
-              #redefine replaceArg "`replaceArg' , "
-            #EndIf
-            #redefine replaceArg "`replaceArg' `var',$SecDecInternalsDUMMY`$counter'"
-            #$counter = $counter + 1;
-          #EndDo
-
-          #redefine idArg ""
-          #Do j = 1,`numIV'+`numReg'
-            #If `j' != 1
-              #redefine idArg "`idArg', "
-            #EndIf
-            #redefine idArg "`idArg'`$SecDecInternalsDUMMY`j''"
-          #EndDo
-
-*         This "if" evaluates to true only if the expression above was matched.
-*         If the expression above does not match, there is nothing to do.
-          #If `iInner' == 0
-            #call generateReplacement`functionForInsertion'(`replaceArg')
-            .sort
-            drop replacement;
-            #call beginArgumentDepth(`depth')
-              id `functionForInsertion'(`idArg') = replacement;
-            #call endArgumentDepth(`depth')
-            .sort
-          #EndIf
-
-        #EndDo
-      #EndDo
-    #EndDo
   #EndDo
 
 * }

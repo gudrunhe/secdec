@@ -241,7 +241,7 @@ def _make_FORM_definition(name, expression):
         str(expression).replace('**','^')
     )
 
-def _make_FORM_function_definition(name, expression, limit):
+def _make_FORM_function_definition(name, expression, args, limit):
     '''
     Split an `expression` whose string representation
     exceeds the `limit` of characters. Return a FORM
@@ -259,57 +259,65 @@ def _make_FORM_function_definition(name, expression, limit):
         :class:`pySecDec.algebra._Expression`;
         The expression to be split.
 
+    :param args:
+        iterable of sympy symbols or None;
+        The arguments of the function.
+
     :param limit:
         integer;
         The maximum number of characters in each
         subexpression.
 
     '''
-    first_line = "#procedure generateReplacement%s(?replaceArg)" % name
-    last_line = "#endProcedure"
+    if args is None:
+        FORM_args_left_hand_side = FORM_args_right_hand_side = ''
+    else:
+        FORM_args_left_hand_side = '(' + _make_FORM_list(str(arg)+'?' for arg in args) + ')'
+        FORM_args_right_hand_side = '(' + _make_FORM_list(str(arg) for arg in args) + ')'
     codelines = []
 
-    def recursion(start_i, expression):
+    def recursion(name, expression):
         str_expression = str(expression)
 
         if len(str_expression) <= limit: # no need to split
-            codelines.append( "  L tmp%i = (%s)*replace_(`?replaceArg');" % (start_i,str_expression) )
-            return start_i + 1
+            codelines.append( "  Id %s = %s;" % (name+FORM_args_left_hand_side,str_expression) )
+            return
 
         if type(expression) == ProductRule:
             expression = expression.to_sum()
 
         if type(expression) == Sum:
-            relevant_indices = []
-            i = start_i
-            for summand in expression.summands:
-                i = recursion(i, summand)
-                relevant_indices.append(i - 1)
-            codelines.append( "  .sort" )
-            codelines.append( "  L tmp%i = " % i + "+".join("tmp%i" % j for j in relevant_indices) + ";" )
-            return i + 1
+            name_next_level = 'SecDecInternalfDUMMY'+name+'Part'
+            codelines.append(
+                "  Id %s = %s;" % (
+                    name+FORM_args_left_hand_side,
+                    '+'.join( name_next_level+str(i)+FORM_args_right_hand_side for i in range(len(expression.summands)) )
+                )
+            )
+            for i,summand in enumerate(expression.summands):
+                recursion(name_next_level+str(i), summand)
+            return
 
         if type(expression) == Product:
-            relevant_indices = []
-            i = start_i
-            for factor in expression.factors:
-                i = recursion(i, factor)
-                relevant_indices.append(i - 1)
-            codelines.append( "  .sort" )
-            codelines.append( "  L tmp%i = " % i + "*".join("tmp%i" % j for j in relevant_indices) + ";" )
-            return i + 1
+            name_next_level = 'SecDecInternalfDUMMY'+name+'Part'
+            codelines.append(
+                "  Id %s = %s;" % (
+                    name+FORM_args_left_hand_side,
+                    '*'.join( name_next_level+str(i)+FORM_args_right_hand_side for i in range(len(expression.factors)) )
+                )
+            )
+            for i,factor in enumerate(expression.factors):
+                recursion(name_next_level+str(i), factor)
+            return
 
         # rescue: print warning and write unsplit expression
         print( 'WARNING: Could not split "%s" (not implemented for %s)' % (name,type(expression)) )
-        codelines.append("  L tmp%i = (%s)*replace_(`?replaceArg');" % (start_i, str_expression))
-        return start_i + 1
+        codelines.append( "  Id %s = %s;" % (name+FORM_args_left_hand_side,str_expression) )
+        return
 
-    largest_i = recursion(1, expression) - 1
-    codelines.append( "  .sort" )
-    codelines.append( "  drop " + ",".join("tmp%i" % j for j in range(1,largest_i+1)) + ";" )
-    codelines.append( "  L replacement = tmp%i;" % largest_i )
-    codelines.append( "  .sort" )
-    return "\n".join(chain([first_line],codelines,[last_line,'']))
+    recursion(name, expression)
+    codelines.append('') # empty line
+    return "\n".join(codelines)
 
 def _make_FORM_shifted_orders(positive_powers):
     r'''
@@ -852,19 +860,19 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             # define the CFunctions for FORM
             # TODO: How to determine which derivatives of the user input ``functions`` are needed? How to communicate it to the user?
             all_functions = list(functions)
-            functions_for_insertion = []
 
             # compute the required derivatives
             derivatives = {}
+            ordered_derivative_names = [] # python dictionaries are unordered but some insertions depend on others --> need an ordering
             def update_derivatives(basename, derivative_tracker, full_expression):
                 derivatives[basename] = full_expression # include undifferentiated expression
+                ordered_derivative_names.append(basename)
                 all_functions.append(basename) # define the symbol as CFunction in FORM
-                functions_for_insertion.append(basename) # "mark" for insertion
                 for multiindex,expression in derivative_tracker.compute_derivatives(full_expression).items():
                     name = _derivative_muliindex_to_name(basename, multiindex)
                     derivatives[name] = expression
+                    ordered_derivative_names.append(name)
                     all_functions.append(name) # define the symbol as CFunction in FORM
-                    functions_for_insertion.append(name) # "mark" for insertion
 
             #  - for the contour deformation
             if contour_deformation_polynomial is not None:
@@ -893,8 +901,8 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             # generate the function definitions for the insertion in FORM
             FORM_function_definitions = ''.join(
-                _make_FORM_function_definition(name, expression, limit=10**6)
-                for name, expression in derivatives.items()
+                _make_FORM_function_definition(name, derivatives[name], all_symbols, limit=10**6).replace('**','^')
+                for name in ordered_derivative_names
             )
             form_insertions = _make_FORM_list(derivatives.keys())
 
@@ -907,13 +915,12 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             # parse template file "sector.h"
             template_replacements['functions'] = _make_FORM_list(all_functions)
-            template_replacements['function_definitions'] = FORM_function_definitions
-            template_replacements['integrand'] = integrand
+            template_replacements['insert_procedure'] = FORM_function_definitions
+            template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYIntegrand', integrand, args=None, limit=10**6)
             template_replacements['integrand_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, requested_orders, sector_index)
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
             template_replacements['regulator_powers'] = regulator_powers
             template_replacements['number_of_orders'] = number_of_orders
-            template_replacements['functions_for_insertion'] = _make_FORM_list(functions_for_insertion)
             parse_template_file(os.path.join(template_sources, 'name', 'codegen', 'sector.h'), # source
                                 os.path.join(target_directory, name, 'codegen', 'sector%i.h' % sector_index), # dest
                                 template_replacements)

@@ -115,6 +115,25 @@ class TestMakeFORMDefinition(unittest.TestCase):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
+#@attr('active')
+class TestMakeFORMFunctionDefinition(unittest.TestCase):
+    #@attr('active')
+    def test_no_args(self):
+        symbols = ['x','y']
+        x = Polynomial([[1,0]], [1], symbols)
+        y = Polynomial([[0,1]], [1], symbols)
+
+        name = 'symbol'
+        expression = Sum(x**2, y**2)
+        limit = 20
+        FORM_code = _make_FORM_function_definition(name, expression, None, limit)
+
+        target_FORM_code  = "  Id symbol = SecDecInternalfDUMMYsymbolPart0+SecDecInternalfDUMMYsymbolPart1;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYsymbolPart0 =  + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYsymbolPart1 =  + (1)*y**2;\n"
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
     #@attr('active')
     def test_sum(self):
         symbols = ['x','y']
@@ -124,25 +143,16 @@ class TestMakeFORMDefinition(unittest.TestCase):
         name = 'myName'
         expression = Sum(Sum(x**2 + 10 * y, x**2 + 10 * y), y * x)
         limit = 20
-        FORM_code = _make_FORM_function_definition(name, expression, limit)
+        FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
 
-        target_FORM_code  = "#procedure generateReplacementmyName(?replaceArg)\n"
-        target_FORM_code += "  L tmp1 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  L tmp2 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  L tmp3 = tmp1+tmp2;\n"
-        target_FORM_code += "  L tmp4 = ( + (1)*x*y)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  L tmp5 = tmp3+tmp4;\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  drop tmp1,tmp2,tmp3,tmp4,tmp5;\n"
-        target_FORM_code += "  L replacement = tmp5;\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "#endProcedure\n"
+        target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y)+SecDecInternalfDUMMYmyNamePart1(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)+SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart1(x?,y?) =  + (1)*x*y;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 
-class TestMakeFORMFunctionDefinition(unittest.TestCase):
     #@attr('active')
     def test_sum_product(self):
         symbols = ['x','y']
@@ -150,23 +160,15 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         y = Polynomial([[0,1]], [1], symbols)
 
         name = 'myName'
-        expression = Sum(Product(x**2 + 10 * y, x**2 + 10 * y), y * x)
+        expression = Sum(Product(x + 2 * y, x**2 + 10 * y), y * x)
         limit = 20
-        FORM_code = _make_FORM_function_definition(name, expression, limit)
+        FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
 
-        target_FORM_code  = "#procedure generateReplacementmyName(?replaceArg)\n"
-        target_FORM_code += "  L tmp1 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  L tmp2 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  L tmp3 = tmp1*tmp2;\n"
-        target_FORM_code += "  L tmp4 = ( + (1)*x*y)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  L tmp5 = tmp3+tmp4;\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  drop tmp1,tmp2,tmp3,tmp4,tmp5;\n"
-        target_FORM_code += "  L replacement = tmp5;\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "#endProcedure\n"
+        target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y)+SecDecInternalfDUMMYmyNamePart1(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?) =  + (2)*y + (1)*x;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart1(x?,y?) =  + (1)*x*y;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 
@@ -179,26 +181,16 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         name = 'myName'
         expression = ProductRule(Sum(x**2 + 10 * y, y * x), x**2 + 10 * y)
         limit = 20
-        FORM_code = _make_FORM_function_definition(name, expression, limit)
+        FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
 
-        target_FORM_code  = "#procedure generateReplacementmyName(?replaceArg)\n"
-        target_FORM_code += "  L tmp1 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  L tmp2 = ( + (1)*x*y)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  L tmp3 = tmp1+tmp2;\n"
-        target_FORM_code += "  L tmp4 = ( + (10)*y + (1)*x**2)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  L tmp5 = tmp3*tmp4;\n"
-        target_FORM_code += "  L tmp6 = ( + (1))*replace_(`?replaceArg');\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  L tmp7 = tmp5*tmp6;\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  L tmp8 = tmp7;\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  drop tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8;\n"
-        target_FORM_code += "  L replacement = tmp8;\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "#endProcedure\n"
+        target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part1(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0Part0(x,y)+SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0Part1(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0Part0(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0Part1(x?,y?) =  + (1)*x*y;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part1(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) =  + (1);\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 
@@ -211,16 +203,10 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         name = 'myName'
         expression = (x**2 + 10 * y + y * x) * (x**2 + 10 * y)
         limit = 20
-        FORM_code = _make_FORM_function_definition(name, expression, limit)
+        FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
 
         # ``expression`` has type `Polynomial` --> fall back to rescue since splitting is not implemented
-        target_FORM_code  = "#procedure generateReplacementmyName(?replaceArg)\n"
-        target_FORM_code += "  L tmp1 = ( + (100)*y**2 + (10)*x*y**2 + (20)*x**2*y + (1)*x**3*y + (1)*x**4)*replace_(`?replaceArg');\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "  drop tmp1;\n"
-        target_FORM_code += "  L replacement = tmp1;\n"
-        target_FORM_code += "  .sort\n"
-        target_FORM_code += "#endProcedure\n"
+        target_FORM_code  = "  Id myName(x?,y?) =  + (100)*y**2 + (10)*x*y**2 + (20)*x**2*y + (1)*x**3*y + (1)*x**4;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 

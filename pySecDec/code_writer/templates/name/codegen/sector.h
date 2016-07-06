@@ -42,7 +42,13 @@ CFunctions log, SecDecInternalDenominator;
 * We need labels for the code optimization
 AutoDeclare Symbols SecDecInternalLabel;
 
-#define integrand "%(integrand)s"
+* The integrand may be longer than FORM can read in one go.
+* We use python to split the the expression if neccessary.
+* Define a procedure that defines the "integrand" expression
+#procedure defineExpansion
+  Global expansion = SecDecInternalsDUMMYIntegrand;
+  %(integrand_definition_procedure)s
+#endProcedure
 
 #define highestPoles "%(highest_regulator_poles)s"
 #define numOrders "%(number_of_orders)s"
@@ -57,9 +63,10 @@ AutoDeclare Symbols SecDecInternalLabel;
 * The array of abbreviations
 ExtraSymbols,array,SecDecInternalAbbreviation;
 
-* Define the dummy functions introduced in python and their derivatives.
-#define functionsForInsertion "%(functions_for_insertion)s"
-%(function_definitions)s
+* Define a procedure to insert the dummy functions introduced in python and their derivatives.
+#procedure insert
+  %(insert_procedure)s
+#endProcedure
 
 * Define how deep functions to be inserted are nested.
 #define insertionDepth "%(form_insertion_depth)i"
