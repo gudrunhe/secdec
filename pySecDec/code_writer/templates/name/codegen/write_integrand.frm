@@ -262,28 +262,39 @@ multiply replace_(I,i_);
 .sort
 
 * Find and count the occuring integration variables.
+* However, the implementation is not straightforward
+* if contour deformation is active.
 * {
-  #redefine occurringIntegrationVariables ""
-  #$counter = 0;
+  #If `contourDeformation'
 
-  #Do IV = {`integrationVariables'}
+    #redefine occurringIntegrationVariables "`integrationVariables'"
+    #redefine numOccurringIVOrder`shiftedOrderIndex' "`numIV'"
 
-    #redefine IVOccurs "0"
-    if ( occurs(`IV') ) redefine IVOccurs "1";
-    .sort
+  #Else
 
-    #If `IVOccurs'
-      #$counter = $counter + 1;
-      #If `$counter' == 1
-        #redefine occurringIntegrationVariables "`IV'"
-      #Else
-        #redefine occurringIntegrationVariables "`occurringIntegrationVariables',`IV'"
+    #redefine occurringIntegrationVariables ""
+    #$counter = 0;
+
+    #Do IV = {`integrationVariables'}
+
+      #redefine IVOccurs "0"
+      if ( occurs(`IV') ) redefine IVOccurs "1";
+      .sort
+
+      #If `IVOccurs'
+        #$counter = $counter + 1;
+        #If `$counter' == 1
+          #redefine occurringIntegrationVariables "`IV'"
+        #Else
+          #redefine occurringIntegrationVariables "`occurringIntegrationVariables',`IV'"
+        #EndIf
       #EndIf
-    #EndIf
 
-  #EndDo
+    #EndDo
 
-  #redefine numOccurringIVOrder`shiftedOrderIndex' "`$counter'"
+    #redefine numOccurringIVOrder`shiftedOrderIndex' "`$counter'"
+
+  #EndIf
 * }
 
 * Simultaneously optimize the integrand and all occuring function arguments.
