@@ -1,6 +1,9 @@
 * The name of the loop integral
 #define name "%(name)s"
 
+* Whether or not we are producing code for contour deformation
+#define contourDeformation "%(contour_deformation)i"
+
 * number of integration variables
 #define numIV "%(number_of_integration_variables)i"
 
@@ -62,6 +65,18 @@ AutoDeclare Symbols SecDecInternalLabel;
 
 * The array of abbreviations
 ExtraSymbols,array,SecDecInternalAbbreviation;
+
+* Define two procedures to open and close a nested argument section
+#procedure beginArgumentDepth(depth)
+  #Do recursiveDepth = 1, `depth'
+    Argument;
+  #EndDo
+#endProcedure
+#procedure endArgumentDepth(depth)
+  #Do recursiveDepth = 1, `depth'
+    EndArgument;
+  #EndDo
+#endProcedure
 
 * Define a procedure to insert the dummy functions introduced in python and their derivatives.
 #procedure insert

@@ -20,18 +20,6 @@ Off statistics;
   #EndDo
 #endProcedure
 
-* define two procedures to open and close a nested argument section
-#procedure beginArgumentDepth(depth)
-  #Do recursiveDepth = 1, `depth'
-    Argument;
-  #EndDo
-#endProcedure
-#procedure endArgumentDepth(depth)
-  #Do recursiveDepth = 1, `depth'
-    EndArgument;
-  #EndDo
-#endProcedure
-
 #include sector`sectorID'.h
 .global
 

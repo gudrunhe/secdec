@@ -646,14 +646,19 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     reversed_polynomial_names = list(polynomial_names) # copy
     reversed_polynomial_names.reverse()
 
-    # get the index of the `contour_deformation_polynomial` in `polynomial_names`
     if contour_deformation_polynomial is not None:
+        # get the index of the `contour_deformation_polynomial` in `polynomial_names`
         str_contour_deformation_polynomial = str(contour_deformation_polynomial)
         contour_deformation_polynomial_index = 0
         while str(polynomial_names[contour_deformation_polynomial_index]) != str_contour_deformation_polynomial:
             contour_deformation_polynomial_index += 1
             if len(polynomial_names) <= contour_deformation_polynomial_index:
                 raise IndexError('Could not find the `contour_deformation_polynomial` "%s" in `polynomial_names`.' % str_contour_deformation_polynomial)
+
+        # define labels for simultaneous optimization in FORM
+        FORM_label_contour_deformation_transform = sp.sympify('SecDecInternalLabelTransformation')
+        FORM_label_contour_deformation_Jacobian_matrix_index_i = sp.sympify('SecDecInternalLabelJacobianMatrixI')
+        FORM_label_contour_deformation_Jacobian_matrix_index_j = sp.sympify('SecDecInternalLabelJacobianMatrixJ')
 
     for primary_sector in strategy['primary'](initial_sector):
 
@@ -686,14 +691,16 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             # compute the transformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
             # ``z_k({x_k}) = x_k - i * lambda_k * (1 - x_k) * Re(dF_dx_k)``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
-            # Remarks:
-            #   - We account for the Re(...) in the numerics only.
-            #   - The determinant of the Jacobian matrix is calculated numerically.
-            deformation_parameters = [sp.symbols('lambda%i'%i) for i in range(len(integration_variables))] # TODO: make these symbols user defined
+            # Remark: The determinant of the Jacobian matrix is calculated numerically.
+            deformation_parameters = [sp.symbols('SecDecInternalLambda%i'%i) for i in range(len(integration_variables))]
             transformed_integration_parameters = [
-                                                     integration_variables[k] +
-                                                     ( - imaginary_unit * deformation_parameters[k] * integration_variables[k] * (1 - integration_variables[k]) ) *
-                                                     symbolic_contour_deformation_polynomial.simplify().derive(k)
+                                                     Sum(
+                                                         elementary_monomials[k],
+                                                         Product(
+                                                            ( imaginary_unit * deformation_parameters[k] * elementary_monomials[k] * (elementary_monomials[k] -  1) ),
+                                                            symbolic_contour_deformation_polynomial.derive(k),
+                                                         copy=False),
+                                                     copy=False)
                                                      for k in range(len(integration_variables))
                                                  ]
 
@@ -701,6 +708,15 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             for i in range(len(integration_variables)):
                 for j in range(len(integration_variables)):
                     contourdef_Jacobian[i,j] = transformed_integration_parameters[i].simplify().derive(j)
+
+            # pack the transformation and its Jacobian matrix into an expression suitable for simultaneous optimization in FORM
+            contourdef_expression = 0
+            for i in range(len(integration_variables)):
+                contourdef_expression += FORM_label_contour_deformation_transform ** (i + 1) * transformed_integration_parameters[i]
+                for j in range(len(integration_variables)):
+                    contourdef_expression += FORM_label_contour_deformation_Jacobian_matrix_index_i ** (i + 1) * \
+                                             FORM_label_contour_deformation_Jacobian_matrix_index_j ** (j + 1) * \
+                                             contourdef_Jacobian[i,j]
 
         # insert the `polynomials_to_decompose` as dummy functions into `other_polynomials` and `remainder_expression`
         # we want to remove them from the symbols --> traverse backwards and pop the last of the `polysymbols`
@@ -874,14 +890,6 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                     ordered_derivative_names.append(name)
                     all_functions.append(name) # define the symbol as CFunction in FORM
 
-            #  - for the contour deformation
-            if contour_deformation_polynomial is not None:
-                update_derivatives(
-                    str_contour_deformation_polynomial, # basename
-                    symbolic_contour_deformation_polynomial, # derivative tracker
-                    sector.cast[contour_deformation_polynomial_index].copy() # full expression
-                )
-
             #  - for cal_I
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
 
@@ -896,6 +904,16 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                     basename=basename, # name as defined in `polynomial_names` or dummy name
                     derivative_tracker=tracker,
                     full_expression=expression.copy()
+                )
+
+            #  - for the contour deformation
+            if contour_deformation_polynomial is not None:
+                full_expression = sector.cast[contour_deformation_polynomial_index].factors[1]
+                full_expression.exponent = 1 # exponent is already part of the `tracker`
+                update_derivatives(
+                    str_contour_deformation_polynomial, # basename
+                    symbolic_contour_deformation_polynomial, # derivative tracker
+                    full_expression.copy()
                 )
 
 
@@ -924,7 +942,15 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             parse_template_file(os.path.join(template_sources, 'name', 'codegen', 'sector.h'), # source
                                 os.path.join(target_directory, name, 'codegen', 'sector%i.h' % sector_index), # dest
                                 template_replacements)
-            # TODO: adapt and parse "contour_deformation.h"
+
+            if contour_deformation_polynomial is not None:
+                # parse template file "contour_deformation.h"
+                template_replacements['contour_deformation_polynomial'] = contour_deformation_polynomial
+                template_replacements['contourdef_expression_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYContourdefExpression', contourdef_expression, args=None, limit=10**6)
+                template_replacements['deformation_parameters'] = _make_FORM_list(deformation_parameters)
+                parse_template_file(os.path.join(template_sources, 'name', 'codegen', 'contour_deformation.h'), # source
+                                    os.path.join(target_directory, name, 'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest
+                                    template_replacements)
 
     # parse the template file "integrands.hpp"
     template_replacements['number_of_sectors'] = sector_index
