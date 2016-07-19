@@ -50,10 +50,10 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
         if target_type == ExponentiatedPolynomial:
             if type(expression) == ExponentiatedPolynomial:
                 expression.exponent = sp.sympify(expression.exponent)
-                expression.coeffs = np.array( sp.sympify(coeff) for coeff in expression.coeffs )
+                expression.coeffs = np.array([ sp.sympify(coeff) for coeff in expression.coeffs ])
             elif type(expression) == Polynomial:
                 expression = ExponentiatedPolynomial(expression.expolist,
-                                                     np.array( sp.sympify(coeff) for coeff in expression.coeffs ),
+                                                     np.array([ sp.sympify(coeff) for coeff in expression.coeffs ]),
                                                      _sympy_one, # exponent
                                                      polysymbols, copy=False)
             else:
@@ -360,7 +360,7 @@ FORM_names = dict(
     other_polynomial=internal_prefix+'OtherPolynomial'
 )
 
-def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID):
+def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation):
     '''
     Write the c++ code that initilizes the container class
     (``Series<Series<...<Series<IntegrandContainer>>...>``).
@@ -391,10 +391,17 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID):
             outstr_body_snippets = []
             for this_regulator_order in range(min_orders[regulator_index],max_orders[regulator_index]+1):
                 current_orders[regulator_index] = this_regulator_order
-                outstr_body_snippets.append(
-                    'sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' \
-                    % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders))
-                )
+                if contour_deformation:
+                    outstr_body_snippets.append(
+                        '''sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,
+                           sector_%(sector_ID)i_contour_deformation,sector_%(sector_ID)i_contour_deformation_polynomial''' \
+                        % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders))
+                    )
+                else:
+                    outstr_body_snippets.append(
+                        'sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' \
+                        % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders))
+                    )
             outstr_tail = '}},true}'
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
 
@@ -935,7 +942,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             template_replacements['functions'] = _make_FORM_list(all_functions)
             template_replacements['insert_procedure'] = FORM_function_definitions
             template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYIntegrand', integrand, args=None, limit=10**6)
-            template_replacements['integrand_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, requested_orders, sector_index)
+            template_replacements['integrand_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, requested_orders, sector_index, contour_deformation_polynomial is not None)
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
             template_replacements['regulator_powers'] = regulator_powers
             template_replacements['number_of_orders'] = number_of_orders

@@ -53,9 +53,9 @@ namespace %(name)s
         typedef integral_transformation_t ContourDeformationFunction
         (
             real_t const * const integration_variables,
-            real_t const * const deformation_parameters,
             real_t const * const real_parameters,
             complex_t const * const complex_parameters,
+            real_t const * const deformation_parameters
         );
 
     #endif
@@ -90,7 +90,7 @@ namespace %(name)s
 
             void optimize_deformation_parameters
             (
-                const real_t const * const initial_guess,
+                real_t const * const initial_guess,
                 real_t const * const real_parameters,
                 complex_t const * const complex_parameters,
                 const size_t number_of_samples = 1000,
@@ -99,44 +99,44 @@ namespace %(name)s
                 const int maxiter = 1000
             ); // TODO: what arguments are needed?
 
-            inline complex_t deformed_integrand
+            inline complex_t integrand
             (
                 real_t const * const integration_variables,
                 real_t const * const real_parameters,
                 complex_t const * const complex_parameters,
-                deformation_parameter_t const * const deformation_parameters
+                real_t const * const deformation_parameters
             ) const
             {
-                auto deformation = contour_deformation(integration_variables, Mandelstam, mass, deformation_parameters);
-                if (F(deformation.transformed_variables.data(), Mandelstam, mass).imag() > 0.)
+                auto deformation = contour_deformation(integration_variables, real_parameters, complex_parameters, deformation_parameters);
+                if (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() > 0.)
                     throw sign_check_error("Contour deformation yields the wrong sign of \"contour_deformation_polynomial.imag\". Choose smaller \"deformation_parameters.\"");
-                return deformation.Jacobian_determinant * integrand(deformation.transformed_variables.data(), Mandelstam, mass);
+                return deformation.Jacobian_determinant * undeformed_integrand(deformation.transformed_variables.data(), real_parameters, complex_parameters);
             };
             inline complex_t integrand
             (
-                integration_variable_t const * const integration_variables,
-                Mandelstam_t const * const Mandelstam,
-                mass_t const * const mass
+                real_t const * const integration_variables,
+                real_t const * const real_parameters,
+                complex_t const * const complex_parameters
             ) const
             {
-                auto deformation = contour_deformation(integration_variables, Mandelstam, mass, optimized_deformation_parameters.data());
-                if (F(deformation.transformed_variables.data(), Mandelstam, mass).imag() > 0.)
+                auto deformation = contour_deformation(integration_variables, real_parameters, complex_parameters, optimized_deformation_parameters.data());
+                if (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() > 0.)
                     throw sign_check_error("Contour deformation yields the wrong sign of \"contour_deformation_polynomial.imag\". Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters.\"");
-                return deformation.Jacobian_determinant * integrand(deformation.transformed_variables.data(), Mandelstam, mass);
+                return deformation.Jacobian_determinant * undeformed_integrand(deformation.transformed_variables.data(), real_parameters, complex_parameters);
             };
 
             // need an explicit constructor due to the private members
-            integrand_t
+            IntegrandContainer
             (
-                const int&& number_of_Feynman_parameters,
-                const IntegrandFunction&& integrand,
+                const int&& number_of_integration_variables,
+                const DeformableIntegrandFunction&& undeformed_integrand,
                 const ContourDeformationFunction&& contour_deformation,
-                const IntegrandFunction&& contour_deformation_polynomial
-            ) : number_of_Feynman_parameters(number_of_Feynman_parameters),
-                integrand(integrand),
+                const DeformableIntegrandFunction&& contour_deformation_polynomial
+            ) : number_of_integration_variables(number_of_integration_variables),
+                undeformed_integrand(undeformed_integrand),
                 contour_deformation(contour_deformation),
                 contour_deformation_polynomial(contour_deformation_polynomial),
-                optimized_deformation_parameters(number_of_Feynman_parameters, 1.0) // fill constructor (fill with ones)
+                optimized_deformation_parameters(number_of_integration_variables, 1.0) // fill constructor (fill with ones)
             {};
 
             inline const std::vector<real_t> get_optimized_deformation_parameters() const

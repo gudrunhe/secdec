@@ -218,7 +218,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         max_orders = [+2]
         sector_ID = 42
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID)
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-2,2,{'
         target_FORM_code +=    '{sector_42_order_n2_numIV,sector_42_order_n2_integrand},'
@@ -244,7 +244,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         max_orders = [+0, +2]
         sector_ID = 8
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID)
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-2,0,{'
         target_FORM_code +=   '{-1,2,{'
@@ -283,7 +283,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID)
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-1,0,{'
         target_FORM_code +=   '{-3,-1,{'
@@ -333,17 +333,117 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         self.assertEqual(FORM_code, target_FORM_code)
 
     #@attr('active')
+    def test_three_variables_with_contour_deformation(self):
+        min_orders = [-1, -3, +0]
+        max_orders = [+0, -1, +2]
+        sector_ID = 90
+
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=True)
+
+        target_FORM_code  = '{-1,0,{'
+        target_FORM_code +=   '{-3,-1,{'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        target_FORM_code +=     '},true}'
+        target_FORM_code +=   '},true},'
+        target_FORM_code +=   '{-3,-1,{'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '{0,2,{'
+        target_FORM_code +=       '{sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        target_FORM_code +=       '{sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
+        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        target_FORM_code +=     '},true}'
+        target_FORM_code +=   '},true}'
+        target_FORM_code += '},true}'
+
+        print('is:')
+        print(FORM_code)
+        print()
+        print('should:')
+        print(target_FORM_code)
+        print('----------------')
+        print()
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
     def test_three_variables_simple(self):
         min_orders = [+0, -1, +2]
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID)
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{0,0,{'
         target_FORM_code +=   '{-1,-1,{'
         target_FORM_code +=     '{2,2,{'
         target_FORM_code +=         '{sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
+        target_FORM_code +=     '},true}'
+        target_FORM_code +=   '},true}'
+        target_FORM_code += '},true}'
+
+        print('is:')
+        print(FORM_code)
+        print()
+        print('should:')
+        print(target_FORM_code)
+        print('----------------')
+        print()
+
+        self.assertEqual(FORM_code, target_FORM_code)
+
+    #@attr('active')
+    def test_three_variables_simple_with_contour_deformation(self):
+        min_orders = [+0, -1, +2]
+        max_orders = [+0, -1, +2]
+        sector_ID = 90
+
+        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=True)
+
+        target_FORM_code  = '{0,0,{'
+        target_FORM_code +=   '{-1,-1,{'
+        target_FORM_code +=     '{2,2,{'
+        target_FORM_code +=         '{sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
+          '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
         target_FORM_code += '},true}'

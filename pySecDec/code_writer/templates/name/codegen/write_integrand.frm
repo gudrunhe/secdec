@@ -128,7 +128,6 @@ B `regulators';
 * {
 
   #Do depth = 0, `insertionDepth'
-
 *   Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
 *   example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
     #call beginArgumentDepth(`depth')
@@ -136,16 +135,6 @@ B `regulators';
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
       repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
-      repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
-    #call endArgumentDepth(`depth')
-    .sort
-
-*   some simplifications
-    #call beginArgumentDepth(`depth')
-      Id log(1) = 0;
-      repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
-      repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
-      repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
     #call endArgumentDepth(`depth')
     .sort
 
@@ -154,6 +143,19 @@ B `regulators';
     #call endArgumentDepth(`depth')
     .sort
 
+*   some simplifications
+    #call beginArgumentDepth(`depth')
+      Denominators SecDecInternalDenominator;
+      factarg,(-1),SecDecInternalDenominator;
+      chainout SecDecInternalDenominator;
+      Id log(1) = 0;
+      repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
+      repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
+      repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
+      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+      repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
+    #call endArgumentDepth(`depth')
+    .sort
   #EndDo
 
 * }

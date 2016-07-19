@@ -32,8 +32,8 @@ Off statistics;
 #write <contour_deformation_sector_`sectorID'.hpp> "#include <gsl/gsl_linalg.h>#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.hpp> "namespace `name'#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.hpp> "{#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.hpp> "  ContourDeformationFunction contour_deformation;#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.hpp> "  DeformableIntegrandFunction contour_deformation_polynomial;#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.hpp> "  ContourDeformationFunction sector_`sectorID'_contour_deformation;#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.hpp> "  DeformableIntegrandFunction sector_`sectorID'_contour_deformation_polynomial;#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.hpp> "};#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
 
@@ -41,12 +41,12 @@ Off statistics;
 #write <contour_deformation_sector_`sectorID'.cpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'.hpp>#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "namespace `name'#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "{#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "  integral_transformation_t contour_deformation#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.cpp> "  integral_transformation_t sector_`sectorID'_contour_deformation#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "  (#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "      real_t const * const integration_variables,#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "      real_t const * const deformation_parameters#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "      real_t const * const real_parameters,#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "      complex_t const * const complex_parameters,#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.cpp> "      real_t const * const deformation_parameters#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "  )#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "  {#@SecDecInternalNewline@#"
 
@@ -102,14 +102,19 @@ multiply replace_(`nullifyRegulators' , SecDecInternalsDUMMYToOptimize,0);
 * Explicitly insert `F' and its derivatives
 #call insert
 
-* Define the integration, Mandelstam, and mass symbols as c preprocessor variables
+* translate sympy's imaginary unit to FORM's imaginary unit
+multiply replace_(I,i_);
+.sort
+
+* Define the integration variables, the real parameters, the complex parameters,
+* and the deformation parameters as c preprocessor variables.
 * (The c function takes them packed into an array).
 * "Format rational": Need the indices as integers.
 Format rational;
-#call cppDefine(`integrationVariables',integrationVariables)
-#call cppDefine(`realParameters',realParameters)
-#call cppDefine(`complexParameters',complexParameters)
-#call cppDefine(`deformationParameters',deformationParameters)
+#call cppDefine(`integrationVariables',integration_variables)
+#call cppDefine(`realParameters',real_parameters)
+#call cppDefine(`complexParameters',complex_parameters)
+#call cppDefine(`deformationParameters',deformation_parameters)
 
 * optimize
 AB `integrationVariables', `realParameters', `complexParameters';
@@ -121,6 +126,7 @@ Format O`optimizationLevel';
 #write <contour_deformation_sector_`sectorID'.cpp> "#define tmp SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
 
 * write the optimization symbols
+Format float 20;
 Format C;
 #write <contour_deformation_sector_`sectorID'.cpp> "complex_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "%%O#@SecDecInternalNewline@#"
@@ -129,12 +135,14 @@ Format C;
 * define the symbols "SecDecInternal...Call" as c++ variables
 * {
 
+Format rational;
+Format C;
 Bracket SecDecInternalLabel`F';
 .sort
 L expr = contourdef[SecDecInternalLabel`F'];
 .sort
 #write <contour_deformation_sector_`sectorID'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(tmp)
-#write <contour_deformation_sector_`sectorID'.cpp> "real_t SecDecInternal`F'Call = tmp.real()#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.cpp> "real_t SecDecInternal`F'Call = tmp.real();#@SecDecInternalNewline@#"
 
 #Do i = 0,`$numIVMinusOne'
   Bracket SecDecInternalLabeld`F'd`i';
@@ -142,7 +150,7 @@ L expr = contourdef[SecDecInternalLabel`F'];
   L expr = contourdef[SecDecInternalLabeld`F'd`i'];
   .sort
   #write <contour_deformation_sector_`sectorID'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(tmp)
-  #write <contour_deformation_sector_`sectorID'.cpp> "real_t SecDecInternald`F'd`i'Call = tmp.real()#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'.cpp> "real_t SecDecInternald`F'd`i'Call = tmp.real();#@SecDecInternalNewline@#"
 
   #Do j = `i',`$numIVMinusOne'
     Bracket SecDecInternalLabeldd`F'd`i'd`j';
@@ -150,29 +158,30 @@ L expr = contourdef[SecDecInternalLabel`F'];
     L expr = contourdef[SecDecInternalLabeldd`F'd`i'd`j'];
     .sort
     #write <contour_deformation_sector_`sectorID'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(tmp)
-    #write <contour_deformation_sector_`sectorID'.cpp> "real_t SecDecInternaldd`F'd`i'd`j'Call = tmp.real()#@SecDecInternalNewline@#"
+    #write <contour_deformation_sector_`sectorID'.cpp> "real_t SecDecInternaldd`F'd`i'd`j'Call = tmp.real();#@SecDecInternalNewline@#"
   #endDo
 #endDo
 
 * }
 
 * write the transformation
-Bracket SecDecInternalLabelTransform, SecDecInternalLabelJacobiI, SecDecInternalLabelJacobiJ;
+Bracket SecDecInternalLabelTransformation, SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ;
 .sort
-#write <contour_deformation_sector_`sectorID'.cpp> "Feynman_t abbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "%%O#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "std::vector<Feynman_t> transformed_parameters(`numIV');#@SecDecInternalNewline@#"
+Format float 20;
+Format C;
+#write <contour_deformation_sector_`sectorID'.cpp> "std::vector<complex_t> transformed_parameters(`numIV');#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "gsl_matrix_complex *Jacobian = #@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "    gsl_matrix_complex_alloc(`numIV',`numIV');#@SecDecInternalNewline@#"
 #Do i = 1, `numIV'
-  L expr = contourdef[SecDecInternalLabelTransform^`i'];
-  Bracket SecDecInternalLabelTransform, SecDecInternalLabelJacobiI, SecDecInternalLabelJacobiJ;
+  Bracket SecDecInternalLabelTransformation, SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ;
+  .sort
+  L expr = contourdef[SecDecInternalLabelTransformation^`i'];
   .sort
   #write <contour_deformation_sector_`sectorID'.cpp> "transformed_parameters[`i'-1] = %%e" expr(transformed_parameters[`i'-1])
   #Do j = 1, `numIV'
-    L expr = contourdef[SecDecInternalLabelJacobiI^`i' * SecDecInternalLabelJacobiJ^`j'];
-    Bracket SecDecInternalLabelTransform, SecDecInternalLabelJacobiI, SecDecInternalLabelJacobiJ;
+    Bracket SecDecInternalLabelTransformation, SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ;
+    .sort
+    L expr = contourdef[SecDecInternalLabelJacobianMatrixI^`i' * SecDecInternalLabelJacobianMatrixJ^`j'];
     .sort
     #write <contour_deformation_sector_`sectorID'.cpp> "tmp = %%e" expr(tmp)
     #write <contour_deformation_sector_`sectorID'.cpp> "gsl_matrix_complex_set#@SecDecInternalNewline@#"
@@ -214,14 +223,14 @@ L expressionF = `F'(`integrationVariables',`regulators')*replace_(`nullifyRegula
 #optimize expressionF
 
 * Write the function to optimize the contour deformation parameters
-#write <contour_deformation_sector_`sectorID'.cpp> "  integrand_return_t contour_deformation_polynomial#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.cpp> "  integrand_return_t sector_`sectorID'_contour_deformation_polynomial#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "  (#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "      Feynman_t const * const integration_variables,#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "      Mandelstam_t const * const Mandelstam,#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "      real_mass_t const * const mass#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.cpp> "      complex_t const * const integration_variables,#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.cpp> "      real_t const * const real_parameters,#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.cpp> "      complex_t const * const complex_parameters#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "  )#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "  {#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "integrand_return_t abbreviation[`optimmaxvar_'];#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_'];#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "%%O#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "tmp = %%e" expressionF(tmp)
