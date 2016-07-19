@@ -23,6 +23,8 @@
 #define STATEFILE NULL
 #define SPIN NULL
 
+const std::vector<triangle::real_t> deformation_parameters = { 1., 1., 1., 1., 1., 1., 1., 1. };
+
 struct userdata_t {
     const int epsilon_order;
     %(name)s::real_t const * const real_parameters;
@@ -36,7 +38,7 @@ static int cuba_integrand(const int *ndim, const cubareal xx[], const int *ncomp
     for (const auto &sector : %(name)s::sectors)
     {
         if (data.epsilon_order >= sector.get_order_min() && data.epsilon_order <= sector.get_order_max())
-            ff[0] += sector[data.epsilon_order].integrand(xx, data.real_parameters, data.complex_parameters);
+            ff[0] += sector[data.epsilon_order].integrand(xx, data.real_parameters, data.complex_parameters, deformation_parameters.data()).real();
         // else: does not contribute
     }
     return 0;
@@ -98,7 +100,7 @@ void integrate(const std::vector<%(name)s::real_t> &real_parameters, const std::
 int main()
 {
     // User Specified Phase-space point
-    const std::vector<%(name)s::real_t> real_parameters = { -3., -2. };
+    const std::vector<%(name)s::real_t> real_parameters = { 0.9, 0.1 };
     const std::vector<%(name)s::complex_t> complex_parameters = {  };
 
     integrate(real_parameters, complex_parameters);
