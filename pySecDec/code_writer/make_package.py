@@ -113,6 +113,16 @@ def _convert_input(target_directory, name, integration_variables, regulators,
     other_polynomials = _parse_expressions(other_polynomials, symbols_other_polynomials, ExponentiatedPolynomial, 'other_polynomials')
     remainder_expression = _parse_expressions([remainder_expression], symbols_remainder_expression, _Expression, 'remainder_expression')[0]
 
+    # the exponents be polynomials in the regulators
+    for poly in polynomials_to_decompose + other_polynomials:
+        try:
+            Polynomial.from_expression(poly.exponent, regulators)
+        except Exception as error:
+            error.args = tuple(['The exponents of the `polynomials_to_decompose` and the `other_polynomials` must be polynomials in the regulators. Error while checking: "%s"' % poly] + [arg for arg in error.args])
+            raise
+        exponent = Polynomial.from_expression(poly.exponent, integration_variables)
+        assert (exponent.expolist == 0).all(), 'The exponents of the `polynomials_to_decompose` and the `other_polynomials` must not depend on the `integration_variables`. Error while checking: "%s"' % poly
+
     # convert ``prefactor`` to sympy expression
     prefactor = sp.sympify(prefactor)
 
@@ -783,7 +793,6 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
             poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
 
-        # TODO: exponents should not depend on the `integration_variables` and be polynomial in the regulators --> assert in `_convert_input`
 
         for sector in strategy['secondary'](primary_sector):
             sector_index += 1

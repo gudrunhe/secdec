@@ -28,76 +28,81 @@ class TestMakePackage(unittest.TestCase):
 class TestConvertInput(TestMakePackage):
     def setUp(self):
         self.tmpdir = 'tmpdir_test_convert_input_python' + python_major_version
+        self.correct_input = dict(
+                                      target_directory=self.tmpdir,
+                                      name='some_integral',
+                                      integration_variables=['z0','z1','z2'],
+                                      regulators=['eps','alpha'],
+                                      requested_orders=[1,2],
+                                      polynomials_to_decompose=[1,Polynomial([[0,0,0],[1,1,1]],['-s','-t'],['z0','z1','z2','eps','alpha'])],
+                                      polynomial_names=['U','F'],
+                                      other_polynomials=['U*z1 + F'],
+                                      prefactor=1,
+                                      remainder_expression='DummyFunction(z0,eps)',
+                                      functions=['DummyFunction'],
+                                      real_parameters=['s','t'],
+                                      complex_parameters=[sp.sympify('msq')],
+                                      form_optimization_level=2,
+                                      form_work_space='500M',
+                                      form_insertion_depth=0,
+                                      stabilize=False,
+                                      contour_deformation_polynomial=None,
+                                      decomposition_method='iterative_no_primary'
+                                 )
 
     #@attr('active')
     def test_convert_input(self):
-        correct_input = dict(
-                                target_directory=self.tmpdir,
-                                name='some_integral',
-                                integration_variables=['z0','z1','z2'],
-                                regulators=['eps','alpha'],
-                                requested_orders=[1,2],
-                                polynomials_to_decompose=[1,Polynomial([[0,0,0],[1,1,1]],['-s','-t'],['z0','z1','z2','eps','alpha'])],
-                                polynomial_names=['U','F'],
-                                other_polynomials=['U*z1 + F'],
-                                prefactor=1,
-                                remainder_expression='DummyFunction(z0,eps)',
-                                functions=['DummyFunction'],
-                                real_parameters=['s','t'],
-                                complex_parameters=[sp.sympify('msq')],
-                                form_optimization_level=2,
-                                form_work_space='500M',
-                                form_insertion_depth=0,
-                                stabilize=False,
-                                contour_deformation_polynomial=None,
-                                decomposition_method='iterative_no_primary'
-                            )
+        _convert_input(**self.correct_input) # should be ok
 
-        _convert_input(**correct_input) # should be ok
-
-        requested_orders_wrong_shape = correct_input.copy()
+        requested_orders_wrong_shape = self.correct_input.copy()
         requested_orders_wrong_shape['requested_orders'] = [[1,1],[0,0]]
         self.assertRaisesRegexp(AssertionError, r'requested_orders.*wrong shape.*is \(2, 2\).*should be \(2,\)', _convert_input, **requested_orders_wrong_shape)
 
-        requested_orders_wrong_length = correct_input.copy()
+        requested_orders_wrong_length = self.correct_input.copy()
         requested_orders_wrong_length['requested_orders'] = [1,1,1]
         self.assertRaisesRegexp(AssertionError, 'length.*requested_orders.*match.*length.*regulators', _convert_input, **requested_orders_wrong_length)
 
-        polynomials_to_decompose_unrelated_polysymbols = correct_input.copy()
+        polynomials_to_decompose_unrelated_polysymbols = self.correct_input.copy()
         polynomials_to_decompose_unrelated_polysymbols['polynomials_to_decompose'] = ['1', Polynomial([[0,0,0],[1,1,1]],['-s','-t'],['x0','x1','x2'])]
         self.assertRaisesRegexp(ValueError, r"\(\-s\) \+ \(\-t\)\*x0\*x1\*x2.*polynomials_to_decompose.*symbols.*\(is.*x0, x1, x2.*should.*\z0, z1, z2, eps, alpha", _convert_input, **polynomials_to_decompose_unrelated_polysymbols)
 
-        polynomials_to_decompose_wrong_polysymbols_in_exponent = correct_input.copy()
+        polynomials_to_decompose_wrong_polysymbols_in_exponent = self.correct_input.copy()
         polynomials_to_decompose_wrong_polysymbols_in_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0],[1,1,1,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha'],exponent=Polynomial([[0,0,1]],[1],['x0','x1','x2']))]
         _convert_input(**polynomials_to_decompose_wrong_polysymbols_in_exponent) # should be ok
 
-        polynomials_to_decompose_wrong_polysymbols_in_coeff = correct_input.copy()
+        polynomials_to_decompose_wrong_polysymbols_in_coeff = self.correct_input.copy()
         polynomials_to_decompose_wrong_polysymbols_in_coeff['polynomials_to_decompose'] = [1,Polynomial([[0,0,0],[1,1,1]],[Polynomial([[0,0,0]], ['-s'], ['eps','alpha']),'-t'],['z0','z1','z2','eps','alpha'])]
         _convert_input(**polynomials_to_decompose_wrong_polysymbols_in_coeff) # should be ok
 
-        polynomials_to_decompose_polynomial_in_coeff = correct_input.copy()
+        polynomials_to_decompose_polynomial_in_coeff = self.correct_input.copy()
         polynomials_to_decompose_polynomial_in_coeff['polynomials_to_decompose'] = [1,Polynomial([[0,0,0],[1,1,1]],[Polynomial([[0,0,0]], ['-s'], ['z0','z1','z2','eps','alpha']),'-t'],['z0','z1','z2','eps','alpha'])]
         _convert_input(**polynomials_to_decompose_polynomial_in_coeff) # should be ok
 
-        polynomials_to_decompose_sympy_exponent = correct_input.copy()
+        polynomials_to_decompose_sympy_exponent = self.correct_input.copy()
         polynomials_to_decompose_sympy_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0],[1,1,1,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha'],exponent='1+eps')]
         _convert_input(**polynomials_to_decompose_sympy_exponent) # should be ok
 
-        polynomials_to_decompose_wrong_type_in_exponent = correct_input.copy()
-        polynomials_to_decompose_wrong_type_in_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0],[1,1,1,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha'],exponent=ExponentiatedPolynomial([[0,0,1]],[1],polysymbols=['z0','z1','z2','eps','alpha']))]
-        _convert_input(**polynomials_to_decompose_wrong_type_in_exponent) # should be ok
-
-        polynomials_to_decompose_nontrivial_as_string = correct_input.copy()
+        polynomials_to_decompose_nontrivial_as_string = self.correct_input.copy()
         polynomials_to_decompose_nontrivial_as_string['polynomials_to_decompose'] = ['1', '(-s -t*z0*z1*z2)**(2-4*eps+alpha)']
         _convert_input(**polynomials_to_decompose_nontrivial_as_string) # should be ok
 
-        polynomials_to_decompose_negative_insertion_depth = correct_input.copy()
+        polynomials_to_decompose_negative_insertion_depth = self.correct_input.copy()
         polynomials_to_decompose_negative_insertion_depth['form_insertion_depth'] = -3
         self.assertRaisesRegexp(AssertionError, 'form_insertion_depth.*negative', _convert_input, **polynomials_to_decompose_negative_insertion_depth)
 
-        polynomials_to_decompose_noninteger_insertion_depth = correct_input.copy()
+        polynomials_to_decompose_noninteger_insertion_depth = self.correct_input.copy()
         polynomials_to_decompose_noninteger_insertion_depth['form_insertion_depth'] = 1.2
         self.assertRaisesRegexp(AssertionError, 'form_insertion_depth.*integer', _convert_input, **polynomials_to_decompose_noninteger_insertion_depth)
+
+    #@attr('active')
+    def test_input_check_exponent(self):
+        args = self.correct_input.copy()
+
+        args['polynomials_to_decompose'] = ['(a * z0) ** (eps + z1)']
+        self.assertRaisesRegexp(AssertionError, 'exponents.*not depend on the .integration_variables', _convert_input, **args)
+
+        args['polynomials_to_decompose'] = ['(a * z0) ** (DummyFunction(eps) + 5)']
+        self.assertRaisesRegexp(sp.PolynomialError, 'polynomials.*regulators.*Error while checking: "\( \+ \(a\)\*z0\)\*\*\(DummyFunction\(eps\) \+ 5\)"', _convert_input, **args)
 
 # --------------------------------- write FORM code ---------------------------------
 class TestMakeFORMDefinition(unittest.TestCase):
