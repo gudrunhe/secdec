@@ -15,9 +15,10 @@ from ..subtraction import integrate_pole_part
 from ..expansion import expand_singular, expand_Taylor
 from ..misc import lowest_order
 from .template_parser import parse_template_file, parse_template_tree
+from itertools import chain
+from re import match
 import numpy as np
 import sympy as sp
-from itertools import chain
 import os
 
 # The only public object this module provides is the function `make_package`.
@@ -80,6 +81,24 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
         parsed.append(expression)
     return parsed
 
+def _validate(name):
+    '''
+    Check validity of `name` for usage in FORM,
+    c++, and the file system.
+    Restrictions are as follows:
+     o FORM: no underscores
+     o FORM, c++: the first character must be
+       in [A-Z, a-z]; i.e. no leading numbers
+     o all: no special characters; i.e. only
+       characters from the set [A-Z, a-z, 0-9]
+     o `name` must not begin with "SecDecInternal"
+
+    '''
+    if match(r'^[A-Z,a-z]+[A-Z,a-z,0-9]*$', name) is None:
+        raise NameError('"%s" cannot be used as symbol' % name)
+    if name.startswith('SecDecInternal'):
+        raise NameError('Symbol names must not start with "SecDecInternal"')
+
 def _convert_input(target_directory, name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
@@ -97,6 +116,11 @@ def _convert_input(target_directory, name, integration_variables, regulators,
     functions = sympify_symbols(list(functions), 'All `functions` must be symbols.')
     if contour_deformation_polynomial is not None:
         contour_deformation_polynomial = sympify_symbols([contour_deformation_polynomial], '`contour_deformation_polynomial` must be a symbol.')[0]
+
+    # check validity of symbol names and `name`
+    for symbol in chain(integration_variables, regulators, polynomial_names, real_parameters, complex_parameters, functions,
+                        [contour_deformation_polynomial] if contour_deformation_polynomial is not None else []):
+        _validate( str(symbol) )
 
     # define the symbols of the different classes of `_Expression`s
     symbols_polynomials_to_decompose = integration_variables + regulators
@@ -171,8 +195,6 @@ def _parse_global_templates(target_directory, name, regulators, polynomial_names
     optional arguments passed to :func:`parse_template_tree`.
 
     '''
-    # TODO: check validity of symbol names and `name` in FORM and c++ (FORM: no underscores; both: no special characters, no leading numbers)
-
     # initialize template replacements
     template_replacements = dict(
                                      name = name,

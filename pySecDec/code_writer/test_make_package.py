@@ -5,7 +5,7 @@ from .make_package import *
 from .make_package import _convert_input, _make_FORM_definition, \
                           _make_FORM_function_definition, _make_FORM_list, \
                           _derivative_muliindex_to_name, _make_FORM_shifted_orders, \
-                          _make_FORM_Series_initilization
+                          _make_FORM_Series_initilization, _validate
 from ..algebra import Function, Polynomial, Product, ProductRule, Sum
 from nose.plugins.attrib import attr
 import sys, shutil
@@ -103,6 +103,13 @@ class TestConvertInput(TestMakePackage):
 
         args['polynomials_to_decompose'] = ['(a * z0) ** (DummyFunction(eps) + 5)']
         self.assertRaisesRegexp(sp.PolynomialError, 'polynomials.*regulators.*Error while checking: "\( \+ \(a\)\*z0\)\*\*\(DummyFunction\(eps\) \+ 5\)"', _convert_input, **args)
+
+    #@attr('active')
+    def test_validate(self):
+        self.assertRaisesRegexp(NameError, 'not start with..SecDecInternal', _validate, 'SecDecInternalFunction')
+        self.assertRaisesRegexp(NameError, '1a.*cannot be used', _validate, '1a')
+        self.assertRaisesRegexp(NameError, 'my_symbol.*cannot be used', _validate, 'my_symbol')
+        _validate('symbol1') # should be ok
 
 # --------------------------------- write FORM code ---------------------------------
 class TestMakeFORMDefinition(unittest.TestCase):
