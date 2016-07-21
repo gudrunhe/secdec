@@ -901,7 +901,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 singular_expanded = expand_singular(Product(singular, copy=False), regulator_indices, required_orders)
 
                 highest_poles_current_term = - singular_expanded.expolist[:,regulator_indices].min(axis=0)
-                expansion_orders = requested_orders + highest_prefactor_pole_orders + highest_poles_current_term
+                expansion_orders = required_orders + highest_poles_current_term
                 regular_expanded = expand_Taylor(regular, regulator_indices, expansion_orders)
 
                 if i == 0: # first iteration; ``highest_poles_current_sector`` not yet set
@@ -968,7 +968,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             form_insertions = _make_FORM_list(derivatives.keys())
 
             # generate list over all occuring orders in the regulators
-            regulator_powers = list( rangecomb(np.zeros_like(requested_orders), requested_orders+highest_poles_current_sector) )
+            regulator_powers = list( rangecomb(np.zeros_like(required_orders), required_orders + highest_poles_current_sector) )
             number_of_orders = len(regulator_powers)
 
             # generate the definitions of the FORM preprocessor variables "shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex'"
@@ -978,7 +978,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             template_replacements['functions'] = _make_FORM_list(all_functions)
             template_replacements['insert_procedure'] = FORM_function_definitions
             template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYIntegrand', integrand, args=None, limit=10**6)
-            template_replacements['integrand_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, requested_orders, sector_index, contour_deformation_polynomial is not None)
+            template_replacements['integrand_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, required_orders, sector_index, contour_deformation_polynomial is not None)
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
             template_replacements['regulator_powers'] = regulator_powers
             template_replacements['number_of_orders'] = number_of_orders
@@ -998,7 +998,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     # parse the template file "integrands.hpp"
     template_replacements['number_of_sectors'] = sector_index
     template_replacements['lowest_orders'] = _make_FORM_list(lowest_orders)
-    template_replacements['highest_orders'] = _make_FORM_list(requested_orders + highest_prefactor_pole_orders)
+    template_replacements['highest_orders'] = _make_FORM_list(required_orders)
     template_replacements['sector_includes'] = ''.join( '#include <%s/integrands/sector_%i.hpp>\n' % (name, i) for i in range(1,sector_index+1) )
     template_replacements['sectors_initializer'] = ','.join( 'integrand_of_sector_%i' % i for i in range(1,sector_index+1) )
     parse_template_file(os.path.join(template_sources, 'name', 'integrands', 'integrands.hpp'), # source
