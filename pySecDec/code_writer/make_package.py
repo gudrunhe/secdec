@@ -644,7 +644,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     )
 
     # get the highest poles from the ``prefactor``
-    highest_prefactor_pole_orders = np.array([lowest_order(prefactor, regulator) for regulator in regulators])
+    highest_prefactor_pole_orders = -np.array([lowest_order(prefactor, regulator) for regulator in regulators])
 
     # compute the required expansion order accounting for the prefactor
     required_orders = requested_orders + highest_prefactor_pole_orders
