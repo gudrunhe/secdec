@@ -1,4 +1,4 @@
-AC_INIT([SecDecUtil], [0.1.1])
+AC_INIT([SecDecUtil], [0.1.2])
 AC_CONFIG_SRCDIR([secdecutil/series.hpp])
 AM_INIT_AUTOMAKE
 
