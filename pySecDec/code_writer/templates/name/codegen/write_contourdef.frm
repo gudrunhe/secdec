@@ -230,7 +230,7 @@ L expressionF = `F'(`integrationVariables',`regulators')*replace_(`nullifyRegula
 #write <contour_deformation_sector_`sectorID'.cpp> "      complex_t const * const complex_parameters#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "  )#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "  {#@SecDecInternalNewline@#"
-#write <contour_deformation_sector_`sectorID'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_'];#@SecDecInternalNewline@#"
+#write <contour_deformation_sector_`sectorID'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "%%O#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
 #write <contour_deformation_sector_`sectorID'.cpp> "tmp = %%e" expressionF(tmp)
