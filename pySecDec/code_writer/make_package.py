@@ -678,6 +678,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     # initialize the counter
     sector_index = 0
 
+    # initialize the global lowest orders
+    lowest_orders = requested_orders.copy()
+
     # define the imaginary unit
     imaginary_unit = sp.sympify('I')
 
@@ -910,6 +913,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
             integrand = Sum(*integrand_summands, copy=False)
 
+            # update the global lowest
+            lowest_orders = np.minimum(lowest_orders, -highest_poles_current_sector)
+
             # define the CFunctions for FORM
             # TODO: How to determine which derivatives of the user input ``functions`` are needed? How to communicate it to the user?
             all_functions = list(functions)
@@ -991,6 +997,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
     # parse the template file "integrands.hpp"
     template_replacements['number_of_sectors'] = sector_index
+    template_replacements['lowest_orders'] = _make_FORM_list(lowest_orders)
     template_replacements['sector_includes'] = ''.join( '#include <%s/integrands/sector_%i.hpp>\n' % (name, i) for i in range(1,sector_index+1) )
     template_replacements['sectors_initializer'] = ','.join( 'integrand_of_sector_%i' % i for i in range(1,sector_index+1) )
     parse_template_file(os.path.join(template_sources, 'name', 'integrands', 'integrands.hpp'), # source
