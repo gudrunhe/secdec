@@ -22,7 +22,7 @@ formCONFIGURE = $(CONFIGURE_COMMON)
 gslVERSION = 2.1
 gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static
 
-secdecutilVERSION = 0.1.1
+secdecutilVERSION = 0.1.2
 secdecutilCONFIGURE = $(CONFIGURE_COMMON)
 
 
