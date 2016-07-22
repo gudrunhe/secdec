@@ -233,11 +233,11 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-2,2,{'
-        target_FORM_code +=    '{sector_42_order_n2_numIV,sector_42_order_n2_integrand},'
-        target_FORM_code +=    '{sector_42_order_n1_numIV,sector_42_order_n1_integrand},'
-        target_FORM_code +=    '{sector_42_order_0_numIV,sector_42_order_0_integrand},'
-        target_FORM_code +=    '{sector_42_order_1_numIV,sector_42_order_1_integrand},'
-        target_FORM_code +=    '{sector_42_order_2_numIV,sector_42_order_2_integrand}'
+        target_FORM_code +=    '{42,sector_42_order_n2_numIV,sector_42_order_n2_integrand},'
+        target_FORM_code +=    '{42,sector_42_order_n1_numIV,sector_42_order_n1_integrand},'
+        target_FORM_code +=    '{42,sector_42_order_0_numIV,sector_42_order_0_integrand},'
+        target_FORM_code +=    '{42,sector_42_order_1_numIV,sector_42_order_1_integrand},'
+        target_FORM_code +=    '{42,sector_42_order_2_numIV,sector_42_order_2_integrand}'
         target_FORM_code += '},true}'
 
         print('is:')
@@ -260,22 +260,22 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
 
         target_FORM_code  = '{-2,0,{'
         target_FORM_code +=   '{-1,2,{'
-        target_FORM_code +=       '{sector_8_order_n2_n1_numIV,sector_8_order_n2_n1_integrand},'
-        target_FORM_code +=       '{sector_8_order_n2_0_numIV,sector_8_order_n2_0_integrand},'
-        target_FORM_code +=       '{sector_8_order_n2_1_numIV,sector_8_order_n2_1_integrand},'
-        target_FORM_code +=       '{sector_8_order_n2_2_numIV,sector_8_order_n2_2_integrand}'
+        target_FORM_code +=       '{8,sector_8_order_n2_n1_numIV,sector_8_order_n2_n1_integrand},'
+        target_FORM_code +=       '{8,sector_8_order_n2_0_numIV,sector_8_order_n2_0_integrand},'
+        target_FORM_code +=       '{8,sector_8_order_n2_1_numIV,sector_8_order_n2_1_integrand},'
+        target_FORM_code +=       '{8,sector_8_order_n2_2_numIV,sector_8_order_n2_2_integrand}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-1,2,{'
-        target_FORM_code +=       '{sector_8_order_n1_n1_numIV,sector_8_order_n1_n1_integrand},'
-        target_FORM_code +=       '{sector_8_order_n1_0_numIV,sector_8_order_n1_0_integrand},'
-        target_FORM_code +=       '{sector_8_order_n1_1_numIV,sector_8_order_n1_1_integrand},'
-        target_FORM_code +=       '{sector_8_order_n1_2_numIV,sector_8_order_n1_2_integrand}'
+        target_FORM_code +=       '{8,sector_8_order_n1_n1_numIV,sector_8_order_n1_n1_integrand},'
+        target_FORM_code +=       '{8,sector_8_order_n1_0_numIV,sector_8_order_n1_0_integrand},'
+        target_FORM_code +=       '{8,sector_8_order_n1_1_numIV,sector_8_order_n1_1_integrand},'
+        target_FORM_code +=       '{8,sector_8_order_n1_2_numIV,sector_8_order_n1_2_integrand}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-1,2,{'
-        target_FORM_code +=       '{sector_8_order_0_n1_numIV,sector_8_order_0_n1_integrand},'
-        target_FORM_code +=       '{sector_8_order_0_0_numIV,sector_8_order_0_0_integrand},'
-        target_FORM_code +=       '{sector_8_order_0_1_numIV,sector_8_order_0_1_integrand},'
-        target_FORM_code +=       '{sector_8_order_0_2_numIV,sector_8_order_0_2_integrand}'
+        target_FORM_code +=       '{8,sector_8_order_0_n1_numIV,sector_8_order_0_n1_integrand},'
+        target_FORM_code +=       '{8,sector_8_order_0_0_numIV,sector_8_order_0_0_integrand},'
+        target_FORM_code +=       '{8,sector_8_order_0_1_numIV,sector_8_order_0_1_integrand},'
+        target_FORM_code +=       '{8,sector_8_order_0_2_numIV,sector_8_order_0_2_integrand}'
         target_FORM_code +=   '},true}'
         target_FORM_code += '},true}'
 
@@ -300,36 +300,36 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code  = '{-1,0,{'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand},'
-        target_FORM_code +=       '{sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand},'
-        target_FORM_code +=       '{sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand}'
+        target_FORM_code +=       '{90,sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand},'
-        target_FORM_code +=       '{sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand},'
-        target_FORM_code +=       '{sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand}'
+        target_FORM_code +=       '{90,sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand},'
-        target_FORM_code +=       '{sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand},'
-        target_FORM_code +=       '{sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand}'
+        target_FORM_code +=       '{90,sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand},'
-        target_FORM_code +=       '{sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand},'
-        target_FORM_code +=       '{sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand}'
+        target_FORM_code +=       '{90,sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand},'
-        target_FORM_code +=       '{sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand},'
-        target_FORM_code +=       '{sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand}'
+        target_FORM_code +=       '{90,sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand},'
-        target_FORM_code +=       '{sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand},'
-        target_FORM_code +=       '{sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
+        target_FORM_code +=       '{90,sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand},'
+        target_FORM_code +=       '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
         target_FORM_code += '},true}'
@@ -355,53 +355,53 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code  = '{-1,0,{'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
-        target_FORM_code +=       '{sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
+        target_FORM_code +=       '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
         '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
@@ -428,7 +428,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code  = '{0,0,{'
         target_FORM_code +=   '{-1,-1,{'
         target_FORM_code +=     '{2,2,{'
-        target_FORM_code +=         '{sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
+        target_FORM_code +=         '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
         target_FORM_code += '},true}'
@@ -454,7 +454,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code  = '{0,0,{'
         target_FORM_code +=   '{-1,-1,{'
         target_FORM_code +=     '{2,2,{'
-        target_FORM_code +=         '{sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
+        target_FORM_code +=         '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
           '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'

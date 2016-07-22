@@ -425,13 +425,13 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_d
                 current_orders[regulator_index] = this_regulator_order
                 if contour_deformation:
                     outstr_body_snippets.append(
-                        '''sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,
+                        '''%(sector_ID)i,sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,
                            sector_%(sector_ID)i_contour_deformation,sector_%(sector_ID)i_contour_deformation_polynomial''' \
                         % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders))
                     )
                 else:
                     outstr_body_snippets.append(
-                        'sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' \
+                        '%(sector_ID)i,sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' \
                         % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders))
                     )
             outstr_tail = '}},true}'
@@ -631,7 +631,10 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     # construct the c++ type of the integrand container class
     # for two regulators, the resulting code should read:
     # "secdecutil::Series<secdecutil::Series<IntegrandContainer>>"
-    integrand_container_type = 'secdecutil::Series<' * len(regulators) + 'IntegrandContainer' + '>' * len(regulators)
+    if contour_deformation_polynomial is None:
+        integrand_container_type = 'secdecutil::Series<' * len(regulators) + 'SectorContainerWithoutDeformation' + '>' * len(regulators)
+    else:
+        integrand_container_type = 'secdecutil::Series<' * len(regulators) + 'SectorContainerWithDeformation' + '>' * len(regulators)
 
     # configure the template parser and parse global files
     template_sources, target_directory, template_replacements, file_renamings = \
