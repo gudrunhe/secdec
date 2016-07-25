@@ -11,6 +11,6 @@ namespace %(name)s
     const std::array<int, number_of_regulators> lowest_orders = {%(lowest_orders)s}; // not including the prefactor
     const std::array<int, number_of_regulators> highest_orders = {%(highest_orders)s}; // not including the prefactor
     const std::array<int, number_of_regulators> requested_orders = {%(requested_orders)s};
-    const std::array<%(integrand_container_type)s, number_of_sectors> sectors = {%(sectors_initializer)s};
+    const std::array<%(sector_container_type)s, number_of_sectors> sectors = {%(sectors_initializer)s};
 };
 #endif

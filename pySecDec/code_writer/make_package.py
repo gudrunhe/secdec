@@ -189,7 +189,7 @@ def _parse_global_templates(target_directory, name, regulators, polynomial_names
                             real_parameters, complex_parameters, form_optimization_level,
                             form_work_space, form_insertion_depth, stabilize,
                             requested_orders, contour_deformation_polynomial,
-                            integrand_container_type):
+                            sector_container_type):
     '''
     Create the `target_directory` and return the two
     optional arguments passed to :func:`parse_template_tree`.
@@ -212,7 +212,7 @@ def _parse_global_templates(target_directory, name, regulators, polynomial_names
                                      contour_deformation = int(contour_deformation_polynomial is not None),
                                      stabilize = int(stabilize),
                                      requested_orders = _make_FORM_list(requested_orders),
-                                     integrand_container_type = integrand_container_type
+                                     sector_container_type = sector_container_type
                                 )
 
     # configure template parser
@@ -630,11 +630,11 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
     # construct the c++ type of the integrand container class
     # for two regulators, the resulting code should read:
-    # "secdecutil::Series<secdecutil::Series<IntegrandContainer>>"
+    # "secdecutil::Series<secdecutil::Series<SectorContainerWith[out]Deformation>>"
     if contour_deformation_polynomial is None:
-        integrand_container_type = 'secdecutil::Series<' * len(regulators) + 'SectorContainerWithoutDeformation' + '>' * len(regulators)
+        sector_container_type = 'secdecutil::Series<' * len(regulators) + 'SectorContainerWithoutDeformation' + '>' * len(regulators)
     else:
-        integrand_container_type = 'secdecutil::Series<' * len(regulators) + 'SectorContainerWithDeformation' + '>' * len(regulators)
+        sector_container_type = 'secdecutil::Series<' * len(regulators) + 'SectorContainerWithDeformation' + '>' * len(regulators)
 
     # configure the template parser and parse global files
     template_sources, target_directory, template_replacements, file_renamings = \
@@ -643,7 +643,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         real_parameters, complex_parameters, form_optimization_level,
         form_work_space, form_insertion_depth, stabilize,
         requested_orders, contour_deformation_polynomial,
-        integrand_container_type
+        sector_container_type
     )
 
     # get the highest poles from the ``prefactor``
@@ -981,7 +981,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             template_replacements['functions'] = _make_FORM_list(all_functions)
             template_replacements['insert_procedure'] = FORM_function_definitions
             template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYIntegrand', integrand, args=None, limit=10**6)
-            template_replacements['integrand_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, required_orders, sector_index, contour_deformation_polynomial is not None)
+            template_replacements['sector_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, required_orders, sector_index, contour_deformation_polynomial is not None)
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
             template_replacements['regulator_powers'] = regulator_powers
             template_replacements['number_of_orders'] = number_of_orders

@@ -85,11 +85,11 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.hpp> "#include <`name'/config.hpp>#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  #if `name'_contour_deformation#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "    DeformableIntegrandFunction#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  #else#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "    IntegrandFunction#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  #endif#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    DeformableIntegrandFunction#@SecDecInternalNewline@#"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    IntegrandFunction#@SecDecInternalNewline@#"
+  #EndIf
   #write <sector_`sectorID'_`cppOrder'.hpp> "  sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "}#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
@@ -100,11 +100,11 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'_order_`cppOrder'_integrand#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    #if `name'_contour_deformation#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const integration_variables,#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    #else#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const integration_variables,#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    #endif#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const integration_variables,#@SecDecInternalNewline@#"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const integration_variables,#@SecDecInternalNewline@#"
+  #EndIf
   #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const real_parameters,#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "    complex_t const * const complex_parameters#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
@@ -418,9 +418,9 @@ Format rational;
 #EndDo
 
 * include contour deformation header (if needed)
-#write <sector_`sectorID'.hpp> "#if `name'_contour_deformation#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'.hpp>#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@##@SecDecInternalNewline@#"
+#If `contourDeformation'
+  #write <sector_`sectorID'.hpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'.hpp>#@SecDecInternalNewline@#"
+#EndIf
 
 * open c++ namespace
 #write <sector_`sectorID'.hpp> "namespace `name'#@SecDecInternalNewline@#"

@@ -5,16 +5,12 @@
 #include <cmath>
 #include <complex>
 #include <exception>
-#include <functional>
 #include <limits>
 #include <vector>
-// TODO: which of these headers are needed?
 
 namespace %(name)s
 {
     // whether or not to use contour deformation
-    // Note: To switch contour deformation off, also change the
-    //       corresponding variable in the "Makefile.conf".
     #define %(name)s_contour_deformation %(contour_deformation)i
 
     // whether or not complex parameters are present
@@ -30,6 +26,9 @@ namespace %(name)s
         typedef real_t integrand_return_t;
     #endif
     // --}
+
+    #undef %(name)s_contour_deformation %(contour_deformation)i
+    #undef %(name)s_has_complex_parameters
 
     // this error is thrown if the sign check of the deformation (contour_deformation_polynomial.imag() <= 0) fails
     struct sign_check_error : public std::runtime_error { using std::runtime_error::runtime_error; };
@@ -96,41 +95,25 @@ namespace %(name)s
         ContourDeformationFunction * const contour_deformation;
         DeformableIntegrandFunction * const contour_deformation_polynomial;
 
-        void optimize_deformation_parameters
-        (
-         real_t const * const initial_guess,
-         real_t const * const real_parameters,
-         complex_t const * const complex_parameters,
-         const size_t number_of_samples
-         );
+        std::vector<real_t> optimize_deformation_parameters (
+                                                                real_t const * const initial_guess,
+                                                                real_t const * const real_parameters,
+                                                                complex_t const * const complex_parameters,
+                                                                const size_t number_of_samples
+                                                            ) const;
+
         integrand_return_t integrand (
-                                      real_t const * const integration_variables,
-                                      real_t const * const real_parameters,
-                                      complex_t const * const complex_parameters
-                                      )
+                                         real_t const * const integration_variables,
+                                         real_t const * const real_parameters,
+                                         complex_t const * const complex_parameters,
+                                         real_t const * const deformation_parameters
+                                     ) const
         {
-            auto deformation = contour_deformation(integration_variables, real_parameters, complex_parameters, deformation_parameters.data());
+            auto deformation = contour_deformation(integration_variables, real_parameters, complex_parameters, deformation_parameters);
             if (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() > 0.)
                 throw sign_check_error("Contour deformation in sector \"" + std::to_string(sector_id) + "\" yields the wrong sign of \"contour_deformation_polynomial.imag\". Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters\" (recommended) or decrease \"deformation_parameters\".");
             return deformation.Jacobian_determinant * undeformed_integrand(deformation.transformed_variables.data(), real_parameters, complex_parameters);
         };
-
-        std::vector<real_t> deformation_parameters;
-
-        // need an explicit constructor as not all members are initialised
-        SectorContainerWithDeformation
-        (
-         const unsigned&& sector_id,
-         const unsigned&& number_of_integration_variables,
-         DeformableIntegrandFunction&& undeformed_integrand,
-         ContourDeformationFunction&& contour_deformation,
-         DeformableIntegrandFunction&& contour_deformation_polynomial
-         ) : sector_id(sector_id),
-        number_of_integration_variables(number_of_integration_variables),
-        undeformed_integrand(undeformed_integrand),
-        contour_deformation(contour_deformation),
-        contour_deformation_polynomial(contour_deformation_polynomial)
-        {};
     };
 
     // required special functions

@@ -70,7 +70,7 @@ void integrate(const std::vector<%(name)s::real_t> &real_parameters, const std::
         std::array<cubareal, NCOMP> error;
         std::array<cubareal, NCOMP> prob;
 
-        int ndim = 0;
+        unsigned ndim = 0;
         for (const auto &sector : %(name)s::sectors)
         {
             if (epsilon_order >= sector.get_order_min() && epsilon_order <= sector.get_order_max())

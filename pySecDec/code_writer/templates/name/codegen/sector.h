@@ -87,8 +87,8 @@ ExtraSymbols,array,SecDecInternalAbbreviation;
 #define insertionDepth "%(form_insertion_depth)i"
 
 * Define the data type of the integrand container class (constructed in python).
-#define integrandContainerType "%(integrand_container_type)s"
+#define integrandContainerType "%(sector_container_type)s"
 
 * Define the initializer list for the integrand container class
 * (constructed in python).
-#define integrandContainerInitializer "%(integrand_container_initializer)s"
+#define integrandContainerInitializer "%(sector_container_initializer)s"
