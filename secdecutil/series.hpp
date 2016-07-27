@@ -106,15 +106,41 @@ namespace secdecutil {
 
     public:
 
+        typedef typename std::vector<T>::iterator iterator;
+        typedef typename std::vector<T>::const_iterator const_iterator;
+        typedef typename std::vector<T>::reverse_iterator reverse_iterator;
+        typedef typename std::vector<T>::const_reverse_iterator const_reverse_iterator;
+        typedef T& reference;
+        typedef const T& const_reference;
+        typedef T value_type;
+
         std::string expansion_parameter; // default value "x" set in constructor
         const int get_order_min() const { return order_min; }
         const int get_order_max() const { return order_max; }
         const bool get_truncated_above() const { return truncated_above; }
 
-        const T& operator[](const int i) const { return content[i-order_min]; }
-        T& operator[](const int i)             { return content[i-order_min]; }
-        const T& at(const int i) const         { return content.at(i-order_min); }
-        T& at(const int i)                     { return content.at(i-order_min); }
+        iterator begin() noexcept { return content.begin(); }
+        const_iterator begin() const noexcept { return content.begin(); }
+        iterator end() noexcept { return content.end(); }
+        const_iterator end() const noexcept { return content.end(); }
+        reverse_iterator rbegin() noexcept { return content.rbegin(); }
+        const_reverse_iterator rbegin() const noexcept  { return content.rbegin(); }
+        reverse_iterator rend() noexcept { return content.rend(); }
+        const_reverse_iterator rend() const noexcept  { return content.rend(); }
+        const_iterator cbegin() const noexcept { return content.cbegin(); }
+        const_iterator cend() const noexcept { return content.cend(); }
+        const_reverse_iterator crbegin() const noexcept { return content.crbegin(); }
+        const_reverse_iterator crend() const noexcept { return content.crend(); }
+
+        reference operator[](const int i)             { return content[i-order_min]; }
+        const_reference operator[](const int i) const { return content[i-order_min]; }
+        reference at(const int i)                     { return content.at(i-order_min); }
+        const_reference at(const int i) const         { return content.at(i-order_min); }
+        reference front() { return content.front(); }
+        const_reference front() const { return content.front(); }
+        reference back() { return content.back(); }
+        const_reference back() const { return content.back(); }
+        value_type* data() noexcept { return content.data(); }
 
         /*
          *  Comparator Operators

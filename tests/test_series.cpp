@@ -118,6 +118,35 @@ TEST_CASE( "Check Access", "[Series]" ) {
 
     };
 
+    SECTION( "Access via iterators: begin, end, rbegin, rend, cbegin, cend, crbegin, crend" ) {
+
+        REQUIRE( *test_vector_series.begin() == 1 ); // first element
+        REQUIRE( *--test_vector_series.end() == 4 ); // last element
+        REQUIRE( *test_vector_series.rbegin() == 4 ); // last element
+        REQUIRE( *--test_vector_series.rend() == 1 ); // first element
+        REQUIRE( *test_vector_series.cbegin() == 1 ); // first element
+        REQUIRE( *--test_vector_series.cend() == 4 ); // last element
+        REQUIRE( *test_vector_series.crbegin() == 4 ); // last element
+        REQUIRE( *--test_vector_series.crend() == 1 ); // first element
+
+        // TODO - check if cbegin, cend, crbegin, crend really return const_iterators and not iterators
+
+    };
+
+    SECTION( "Access via element access: front, back" ) {
+
+        REQUIRE( test_vector_series.front() == 1 ); // first element
+        REQUIRE( test_vector_series.back() == 4 ); // last element
+
+    };
+
+    SECTION( "Access via element access: data" ) {
+
+        REQUIRE( *test_vector_series.data() == 1 ); // first element
+        REQUIRE( test_vector_series.data()[1] == 2 ); // second element
+
+    };
+
 };
 
 TEST_CASE( "Operators == and !=", "[Series]" ) {
