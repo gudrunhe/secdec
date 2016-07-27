@@ -1,3 +1,3 @@
 SUBDIRS = secdecutil tests
 
-nobase_include_HEADERS = secdecutil/series.hpp
+nobase_include_HEADERS = secdecutil/series.hpp secdecutil/integration.hpp
