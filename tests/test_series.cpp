@@ -3,6 +3,16 @@
 
 #include <complex>
 #include <sstream>
+#include <vector>
+#include <type_traits>
+
+// Helper struct to check is an iterator is a const_iterator
+template<typename Iterator>
+struct is_const_iterator
+{
+    typedef typename std::iterator_traits<Iterator>::pointer pointer;
+    static const bool value = std::is_const<typename std::remove_pointer<pointer>::type>::value;
+};
 
 TEST_CASE( "Constructor exceptions for vector constructor", "[Series]" ) {
 
@@ -129,7 +139,14 @@ TEST_CASE( "Check Access", "[Series]" ) {
         REQUIRE( *test_vector_series.crbegin() == 4 ); // last element
         REQUIRE( *--test_vector_series.crend() == 1 ); // first element
 
-        // TODO - check if cbegin, cend, crbegin, crend really return const_iterators and not iterators
+        REQUIRE( !is_const_iterator<decltype(test_vector_series.begin())>::value );
+        REQUIRE( !is_const_iterator<decltype(test_vector_series.end())>::value );
+        REQUIRE( !is_const_iterator<decltype(test_vector_series.rbegin())>::value );
+        REQUIRE( !is_const_iterator<decltype(test_vector_series.rend())>::value );
+        REQUIRE( is_const_iterator<decltype(test_vector_series.cbegin())>::value );
+        REQUIRE( is_const_iterator<decltype(test_vector_series.cend())>::value );
+        REQUIRE( is_const_iterator<decltype(test_vector_series.crbegin())>::value );
+        REQUIRE( is_const_iterator<decltype(test_vector_series.crend())>::value );
 
     };
 
