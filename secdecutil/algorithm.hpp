@@ -1,7 +1,7 @@
 #ifndef SecDecUtil_algorithm_hpp_included
 #define SecDecUtil_algorithm_hpp_included
 
-#include <iostream>
+#include "series.hpp"
 
 namespace secdecutil {
 
@@ -41,6 +41,30 @@ namespace secdecutil {
             return content;
         };
         transform_impl(E<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
+    };
+
+    // Specialisation for secdecutil::Series
+    template<typename out_base_type, typename in_base_type, typename T>
+    struct transform_impl<out_base_type,in_base_type,secdecutil::Series<T>>
+    {
+        using base_type = typename transform_impl<out_base_type,in_base_type,T>::base_type;
+        using new_type = secdecutil::Series<typename transform_impl<out_base_type,in_base_type,T>::new_type>;
+        secdecutil::Series<T>& nest;
+        const std::function<out_base_type(in_base_type)>& func;
+        new_type apply()
+        {
+            std::vector<typename transform_impl<out_base_type,in_base_type,T>::new_type> content;
+            for ( auto& element : nest )
+                content.push_back( transform_impl<out_base_type,in_base_type,T>(element,func).apply() );
+            return secdecutil::Series<typename transform_impl<out_base_type,in_base_type,T>::new_type>
+            (
+             nest.get_order_min(),
+             nest.get_order_max(),
+             content,
+             nest.get_truncated_above()
+             );
+        };
+        transform_impl(secdecutil::Series<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
     };
 
     template<typename out_base_type, typename in_base_type, typename T>
@@ -87,6 +111,30 @@ namespace secdecutil {
             return content;
         };
         const_transform_impl(const E<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
+    };
+
+    // Specialisation for secdecutil::Series
+    template<typename out_base_type, typename in_base_type, typename T>
+    struct const_transform_impl<out_base_type,in_base_type,secdecutil::Series<T>>
+    {
+        using base_type = typename const_transform_impl<out_base_type,in_base_type,T>::base_type;
+        using new_type = secdecutil::Series<typename const_transform_impl<out_base_type,in_base_type,T>::new_type>;
+        const secdecutil::Series<T>& nest;
+        const std::function<out_base_type(in_base_type)>& func;
+        new_type apply() const
+        {
+            std::vector<typename const_transform_impl<out_base_type,in_base_type,T>::new_type> content;
+            for ( const auto& element : nest )
+                content.push_back( const_transform_impl<out_base_type,in_base_type,T>(element,func).apply() );
+            return secdecutil::Series<typename const_transform_impl<out_base_type,in_base_type,T>::new_type>
+            (
+             nest.get_order_min(),
+             nest.get_order_max(),
+             content,
+             nest.get_truncated_above()
+             );
+        };
+        const_transform_impl(const secdecutil::Series<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
     };
 
     template<typename out_base_type, typename in_base_type, typename T>
