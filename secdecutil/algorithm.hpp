@@ -156,31 +156,70 @@ namespace secdecutil {
     struct void_transform_impl
     {
         T& nest;
-        const std::function<void(in_base_type&)>& func;
+        const std::function<void(in_base_type)>& func;
         void apply()
         {
             func(nest);
         };
-        void_transform_impl(T& nest, const std::function<void(in_base_type&)>& func): nest(nest), func(func) {};
+        void_transform_impl(T& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
     };
 
     template<typename in_base_type, template<typename... > class E, typename T>
     struct void_transform_impl<in_base_type,E<T>>
     {
         E<T>& nest;
-        const std::function<void(in_base_type&)>& func;
+        const std::function<void(in_base_type)>& func;
         void apply()
         {
             for ( auto& element : nest )
                 void_transform_impl<in_base_type,T>(element,func).apply();
         };
-        void_transform_impl(E<T>& nest, const std::function<void(in_base_type&)>& func): nest(nest), func(func) {};
+        void_transform_impl(E<T>& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
     };
 
     template<typename in_base_type, typename T>
-    void transform(T& nest, const std::function<void(in_base_type&)>& func)
+    void transform(T& nest, const std::function<void(in_base_type)>& func)
     {
         void_transform_impl<in_base_type,T>(nest, func).apply();
+    };
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    /*
+
+     Applies func to each base_type element of the nest
+     func may not modify the elements of nest (side-effects only)
+
+     */
+    template<typename in_base_type, typename T>
+    struct void_const_transform_impl
+    {
+        const T& nest;
+        const std::function<void(in_base_type)>& func;
+        void apply() const
+        {
+            func(nest);
+        };
+        void_const_transform_impl(const T& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
+    };
+
+    template<typename in_base_type, template<typename... > class E, typename T>
+    struct void_const_transform_impl<in_base_type,E<T>>
+    {
+        const E<T>& nest;
+        const std::function<void(in_base_type)>& func;
+        void apply() const
+        {
+            for ( auto& element : nest )
+                void_const_transform_impl<in_base_type,T>(element,func).apply();
+        };
+        void_const_transform_impl(const E<T>& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
+    };
+
+    template<typename in_base_type, typename T>
+    void transform(const T& nest, const std::function<void(in_base_type)>& func)
+    {
+        void_const_transform_impl<in_base_type,T>(nest, func).apply();
     };
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 

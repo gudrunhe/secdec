@@ -600,3 +600,68 @@ TEST_CASE( "increment secdecutil::Series container", "[transform]" ) {
     };
     
 };
+
+TEST_CASE( "side-effect only function on const std::vector container", "[transform]" ) {
+
+    const int zero_nest_int = 1;
+    const std::vector<int> one_nest_int = { 1, 2, 3};
+
+    const std::vector<std::vector<int>> two_nest_int =
+    {
+        { 1, 2, 3},
+        { 4, 5, 6}
+    };
+
+    const std::vector<std::vector<std::vector<int>>> three_nest_int =
+    {
+        {
+            { 1, 2, 3},
+            { 4, 5, 6, 7},
+            { 8, 9, 10}
+        },
+        {
+            { 11, 12, 13, 14}
+        }
+    };
+
+    const std::function<void(const int&, int&)> add_one_to_out = [] (const int& in, int& out) { ++out; };
+
+    SECTION( "count 0-nest" ) {
+
+        int number_of_elements = 0;
+        const std::function<void(const int&)> func = std::bind(add_one_to_out, std::placeholders::_1, std::ref(number_of_elements));
+        secdecutil::transform(zero_nest_int, func);
+
+        REQUIRE( number_of_elements == 1 );
+
+    };
+
+    SECTION( "count 1-nest" ) {
+
+        int number_of_elements = 0;
+        const std::function<void(const int&)> func = std::bind(add_one_to_out, std::placeholders::_1, std::ref(number_of_elements));
+        secdecutil::transform(one_nest_int, func);
+
+        REQUIRE( number_of_elements == 3 );
+    };
+
+    SECTION( "count 2-nest" ) {
+
+        int number_of_elements = 0;
+        const std::function<void(const int&)> func = std::bind(add_one_to_out, std::placeholders::_1, std::ref(number_of_elements));
+        secdecutil::transform(two_nest_int, func);
+
+        REQUIRE( number_of_elements == 6 );
+    };
+
+    SECTION( "count 3-nest" ) {
+
+        int number_of_elements = 0;
+        const std::function<void(const int&)> func = std::bind(add_one_to_out, std::placeholders::_1, std::ref(number_of_elements));
+        secdecutil::transform(three_nest_int, func);
+
+        REQUIRE( number_of_elements == 14 );
+
+    };
+
+};
