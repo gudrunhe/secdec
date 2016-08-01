@@ -22,7 +22,7 @@ setup(
     # long_description=long_description, #TODO: write an abstract of this package
     license='GPLv3',
     install_requires=['numpy>=1.6', 'sympy', 'setuptools>=3.3'],
-    extras_require={'testing': ['nose']},
+    extras_require={'testing': ['nose'], 'documentation': ['sphinx']},
     classifiers=['Development Status :: 3 - Alpha',
                  'Environment :: Console',
                  'Intended Audience :: Science/Research',
