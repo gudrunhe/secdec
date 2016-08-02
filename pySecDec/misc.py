@@ -1,6 +1,6 @@
 """miscellaneous routines"""
 
-from itertools import chain,combinations
+from itertools import chain, combinations, product
 import sympy as sp
 import numpy as np
 
@@ -34,6 +34,37 @@ def powerset(iterable, exclude_empty=False, stride=1):
         # The first element of the iterator is the empty set -> discard
         next(powerset_iterator)
     return powerset_iterator
+
+def rangecomb(low, high):
+    '''
+    Return an iterator over the occuring orders in a
+    multivariate series expansion between `low` and
+    `high`.
+
+    :param low:
+        vector-like array; The lowest orders.
+
+    :param high:
+        vector-like array; The highest orders.
+
+    Example:
+
+    >>> from pySecDec.misc import rangecomb
+    >>> all_orders = rangecomb([-1,-2], [0,0])
+    >>> list(all_orders)
+    [(-1, -2), (-1, -1), (-1, 0), (0, -2), (0, -1), (0, 0)]
+
+    '''
+    all_orders = []
+
+    low = np.asarray(low)
+    high = np.asarray(high)
+
+    assert len(low.shape) == 1, '``low`` is not vector like'
+    assert len(high.shape) == 1, '``high`` is not vector like'
+    assert len(low) == len(high), '``low`` (length %i) and ``high`` (length %i) must have the same length.' % (len(low),len(high))
+
+    return product( *(np.arange(l,h) for l,h in zip(low,high+1)) )
 
 def missing(full, part):
     '''

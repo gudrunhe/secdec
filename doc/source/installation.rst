@@ -57,6 +57,8 @@ instead, for the same reasons as mentioned :ref:`above <install_from_PyPI>`.
 Again, `pySecDec` is intalled into your Home directory if the ``--user`` flag
 is set.
 
+.. _installation_normaliz:
+
 The Geomethod and Normaliz
 --------------------------
 
@@ -77,6 +79,35 @@ The :mod:`geometric decomposition <pySecDec.decomposition.geometric>` module is
 designed for `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ version ``3.0.0``. We recommend to set your ``$PATH``
 such that the `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ executable is found. Alternatively, you can pass the
 path to the `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ executable directly to the functions that need it.
+
+Additional Dependencies for Generated c++ Packages
+--------------------------------------------------
+
+The intended main usage of `pySecDec` is to make it write c++ packages using the functions
+:func:`pySecDec.code_writer.make_package` and :func:`pySecDec.loop_integral.loop_package`.
+In order to build these c++ packages, the following additional non-python-based libraries
+and programs that cannot be installed via `pip` are required:
+
+ * CUBA (http://www.feynarts.de/cuba/)
+ * FORM (http://www.nikhef.nl/~form/)
+ * gsl (http://www.gnu.org/software/gsl/)
+ * SecDecUtil (part of `pySecDec`)
+
+In order to ease the usage of `pySecDec`, all these dependencies are redistributed in a
+package called `pySecDec-contrib` (to be downloaded here [link will appear soon]). Note that these (apart from
+`SecDecUtil`) are third-party tools and we do not take any responsibility of their content
+nor do we claim ownership (except for `SecDecUtil`).
+
+There are two ways to expose these packages to `pySecDec`'s c++ code:
+
+ 1. Install all of these packages to your system as described in their installation instructions.
+ 2. Extract the `pySecDec-contrib`, run ``make``, and set the environment variable ``SECDEC_CONTRIB``
+    to the path you extracted the `pySecDec-contrib` to. You may want to add the ``SECDEC_CONTRIB``
+    variable to your ``.bashrc`` or ``.profile``.
+
+We recommend the second option since it is less time consuming.
+
+.. TODO: where to download the pySecDec-contrib
 
 For Developers
 --------------
