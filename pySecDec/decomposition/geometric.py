@@ -105,9 +105,9 @@ class Polytope(object):
 
         .. note::
             This function calls the command line executable of
-            `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_
-            [BIR]_.
-            It is designed for `normaliz` version 3.0.0
+            `normaliz` [BIR]_.
+            It has been tested with `normaliz` versions 3.0.0,
+            3.1.0, and 3.1.1.
 
         :param normaliz:
             string;
@@ -249,9 +249,9 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
 
     .. note::
         This function calls the command line executable of
-        `normaliz <http://www.home.uni-osnabrueck.de/wbruns/
-        normaliz/>`_.
-        It is designed for `normaliz` version 3.0.0
+        `normaliz` [BIR]_.
+        It has been tested with `normaliz` versions 3.0.0,
+        3.1.0, and 3.1.1.
 
     :param cone:
         two dimensional array;
@@ -395,6 +395,12 @@ def geometric_decomposition(sector, normaliz='normaliz', workdir='normaliz_tmp')
     '''
     Run the sector decomposition using the geomethod
     as described in [BHJ+15]_.
+
+    .. note::
+        This function calls the command line executable of
+        `normaliz` [BIR]_.
+        It has been tested with `normaliz` versions 3.0.0,
+        3.1.0, and 3.1.1.
 
     :param sector:
         :class:`.Sector`;

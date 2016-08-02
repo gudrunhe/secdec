@@ -67,18 +67,18 @@ The Geomethod and Normaliz
     :mod:`geometric decomposition <pySecDec.decomposition.geometric>`, you
     can ignore this section for the beginning. The instructions below are
     not essential for a `pySecDec` installation. You can still install
-    `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_
+    `normaliz`
     **after** installing `pySecDec`. All but the
     :mod:`geometric decomposition <pySecDec.decomposition.geometric>`
-    routines work without `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_.
+    routines work without `normaliz`.
 
 If you want to use the :mod:`geometric decomposition <pySecDec.decomposition.geometric>`
 module, you need the
-`normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ [BIR]_ command line executable.
+`normaliz` [BIR]_ command line executable.
 The :mod:`geometric decomposition <pySecDec.decomposition.geometric>` module is
-designed for `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ version ``3.0.0``. We recommend to set your ``$PATH``
-such that the `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ executable is found. Alternatively, you can pass the
-path to the `normaliz <https://www.normaliz.uni-osnabrueck.de/>`_ executable directly to the functions that need it.
+designed for `normaliz` version ``3.0.0``. We recommend to set your ``$PATH``
+such that the `normaliz` executable is found. Alternatively, you can pass the
+path to the `normaliz` executable directly to the functions that need it.
 
 Additional Dependencies for Generated c++ Packages
 --------------------------------------------------
@@ -142,6 +142,7 @@ in the source repository to run all tests.
 To build the documentation of `pySecDec`, you need `sphinx` (http://www.sphinx-doc.org).
 If `sphinx` is installed, the command
 ::
+
     $ make doc
 
 generates the documentaion in `html` and in `pdf` format.
