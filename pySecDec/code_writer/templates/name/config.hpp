@@ -27,7 +27,7 @@ namespace %(name)s
     #endif
     // --}
 
-    #undef %(name)s_contour_deformation %(contour_deformation)i
+    #undef %(name)s_contour_deformation
     #undef %(name)s_has_complex_parameters
 
     // this error is thrown if the sign check of the deformation (contour_deformation_polynomial.imag() <= 0) fails
