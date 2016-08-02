@@ -14,6 +14,7 @@ from metadata import __version__, __authors__
 setup(
     name='pySecDec',
     packages=find_packages(),
+    package_data={'pySecDec.code_writer': ['templates' + '/*' * depth for depth in range(1,10)]},
     version=__version__,
     author=__authors__,
     author_email='secdec@projects.hepforge.org',

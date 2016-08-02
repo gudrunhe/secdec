@@ -1,0 +1,3 @@
+include COPYING
+include ez_setup.py
+recursive-exclude pySecDec test_*.py
