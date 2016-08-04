@@ -949,7 +949,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 update_derivatives(
                     basename=basename, # name as defined in `polynomial_names` or dummy name
                     derivative_tracker=tracker,
-                    full_expression=expression.copy()
+                    full_expression=expression
                 )
 
             #  - for the contour deformation
@@ -959,7 +959,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 update_derivatives(
                     str_contour_deformation_polynomial, # basename
                     symbolic_contour_deformation_polynomial, # derivative tracker
-                    full_expression.copy()
+                    full_expression
                 )
 
 

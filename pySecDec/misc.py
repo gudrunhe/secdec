@@ -206,8 +206,9 @@ def argsort_2D_array(array):
 
     '''
     # create a new view
-    # the "[:]" is essential; if it was missing, we could overwrite the input
-    array = np.asarray(array)[:]
+    # Copying the array is essential, otherwise we could overwrite the input.
+    # Moreover, sometimes the algorithm crashed if the array is not contiguous
+    array = np.asarray(array).copy()
 
     assert len(array.shape) == 2, "`array` must be two dimensional"
 
