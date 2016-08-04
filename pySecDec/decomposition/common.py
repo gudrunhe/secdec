@@ -329,7 +329,7 @@ def hide(polynomial, count):
     polynomial.number_of_variables -= count
     polynomial.polysymbols = polynomial.polysymbols[:-count]
     polynomial.expolist = polynomial.expolist[:, :-count]
-    polynomial.coeffs = np.ones_like(polynomial.coeffs)
+    polynomial.coeffs = _collision_safe_hash(polynomial.coeffs)
     return polynomial, hidden
 
 def unhide(polynomial1, polynomial2):
