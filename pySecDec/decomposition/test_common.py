@@ -215,12 +215,13 @@ class TestSymmetryFinding(unittest.TestCase):
             self.assertEqual(len(reduced_sectors), 2)
 
             # should have either `sector0` or `sector2` in `reduced_sectors`
-            have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast))
-            self.assertEqual(str(reduced_sectors[0].cast), str(sector0.cast if have_sector_0 else sector2.cast))
-            self.assertEqual(str(reduced_sectors[0].Jacobian), ' + (2)') # Jacobian coefficient should have been increased by one
+            have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast) or str(reduced_sectors[1].cast) == str(sector0.cast))
+            self.assertTrue( (str(reduced_sectors[0].cast) == str(sector0.cast if have_sector_0 else sector2.cast))
+                          or (str(reduced_sectors[1].cast) == str(sector0.cast if have_sector_0 else sector2.cast)) )
 
-            # `sector2` should be untouched
-            self.assertEqual(str(reduced_sectors[1]), str(sector1))
+            # `sector1` should be untouched and Jacobian coefficient should have been increased by one
+            self.assertTrue( (str(reduced_sectors[0].Jacobian) == ' + (2)' and str(reduced_sectors[1]) == str(sector1))
+                          or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
 
     #@attr('active')
     def test_symmetry_same_term_in_different_polynomials(self):
