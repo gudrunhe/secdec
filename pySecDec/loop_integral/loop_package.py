@@ -117,6 +117,7 @@ def loop_package(target_directory, name, loop_integral, requested_order,
 
         prefactor = sp.sympify(additional_prefactor) * loop_integral.Gamma_factor * loop_integral.regulator ** loop_integral.regulator_power,
 
+        # TODO: `measure` is a product of monomials that may have negative exponents --> it should go into `polynomials_to_decompose`
         remainder_expression = sp.sympify(loop_integral.measure), # TODO: get polysymbols right instead of sympify
 
         real_parameters = real_parameters,
