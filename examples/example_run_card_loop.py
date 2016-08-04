@@ -2,32 +2,35 @@
 from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
-li = psd.loop_integral.LoopIntegralFromGraph(
-internal_lines = [['m',[3,4]],['m',[4,5]],['m',[3,5]],[0,[1,2]],[0,[4,1]],[0,[2,5]]],
-external_lines = [['p1',1],['p2',2],['p3',3]],
+
+li = psd.loop_integral.LoopIntegralFromPropagators(
+propagators = ['k1**2','(k1+p2)**2','(k1-p1)**2','(k1-k2)**2','(k2+p2)**2','(k2-p1)**2','(k2+p2+p3)**2','(k1+p3)**2'],
+loop_momenta = ['k1','k2'],
+powerlist = [1,1,1,1,1,1,1,0],
+external_momenta = ['p1','p2','p3','p4'],
 
 replacement_rules = [
                         ('p1*p1', 0),
                         ('p2*p2', 0),
-                        ('p3*p3', 's'),
+                        ('p3*p3', 0),
                         ('p4*p4', 0),
                         ('p1*p2', 's/2'),
-                        ('p2*p3', '-s/2'),
-                        ('p1*p3', '-s/2'),
-                        ('m**2', 'msq')
+                        ('p2*p3', 't/2'),
+                        ('p1*p3', '-s/2-t/2')
                     ]
+
 )
 
 
-Mandelstam_symbols = ['s']
-mass_symbols = ['msq']
+Mandelstam_symbols = ['s', 't']
+mass_symbols = []
 
 
 loop_package(
 
 target_directory = 'pySecDec_loop_integrals',
 
-name = 'triangle',
+name = 'box2l',
 
 loop_integral = li,
 
@@ -54,6 +57,6 @@ decomposition_method = 'geometric',
 # whether or not to produce code to perform the contour deformation
 # if ``True``, it can still be deactivated in the "config.hpp"
 # if ``False``, no code for the contour deformation is generated
-contour_deformation = True,
+contour_deformation = False,
 
 )
