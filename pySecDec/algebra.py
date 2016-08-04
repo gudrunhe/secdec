@@ -10,6 +10,9 @@ class _Expression(object):
     computer algebra system.
 
     '''
+    # delete default hash function
+    __hash__ = None
+
     def __add__(self, other):
         if not isinstance(other, _Expression):
             other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
