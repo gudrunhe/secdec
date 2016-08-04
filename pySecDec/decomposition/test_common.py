@@ -1,10 +1,12 @@
 """Unit tests for the Sector container class"""
 
 from .common import *
+from .common import _sector2array, _collision_safe_hash
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
 import unittest
 import sympy as sp
 import numpy as np
+from itertools import permutations
 from nose.plugins.attrib import attr
 
 class TestSector(unittest.TestCase):
@@ -71,7 +73,7 @@ class TestHideUnhide(unittest.TestCase):
         self.polysymbols = ['x0','x1','y']
         self.p = Polynomial.from_expression('a*x0 + b*x1*y', self.polysymbols)
         self.exponentiated_p = ExponentiatedPolynomial(self.p.expolist, self.p.coeffs, 'exponent', self.polysymbols)
-        self.q = Polynomial([(0,0),(1,3)], [Polynomial([(0,1)], ['a']), 'b'])
+        self.q = Polynomial([(0,1),(1,3)], ['a', 'b'])
 
     def test_unhide_is_inverse_of_hide(self):
         for p in (self.p, self.exponentiated_p, self.q):
@@ -80,11 +82,12 @@ class TestHideUnhide(unittest.TestCase):
                 self.assertEqual(str(p_after), str(p))
 
     def test_hide(self):
+        a, b = sp.symbols('a b')
         for p in (self.p, self.exponentiated_p, self.q):
             for i in range(1,3):
                 p1, p_hidden = hide(p.copy(), i)
 
-                np.testing.assert_array_equal(p1.coeffs, [1,1])
+                np.testing.assert_array_equal(p1.coeffs, [hash(a),hash(b)])
                 np.testing.assert_array_equal(p_hidden.coeffs, p.coeffs)
 
                 np.testing.assert_array_equal(p1.expolist, p.expolist[:,:-i])
@@ -92,6 +95,166 @@ class TestHideUnhide(unittest.TestCase):
 
                 self.assertEqual(p1.polysymbols, p.polysymbols[:-i])
                 self.assertEqual(p_hidden.polysymbols, p.polysymbols[-i:])
+
+class TestSymmetryFinding(unittest.TestCase):
+    def setUp(self):
+        self.Jacobian = Polynomial([(1,0)], ['a'])
+
+        self.p0 = Polynomial([(0,1),(1,3)], ['a','b'])
+
+        self.p1_mono = Polynomial([(1,0)], [1])
+        self.p1_poly = Polynomial([(2,2),(2,1)], ['c','d'])
+        self.p1 = Product(self.p1_mono, self.p1_poly)
+
+        self.p2 = Polynomial([(2,0),(0,1),(1,1)], ['e','f','g'])
+
+        self.sector = Sector([self.p0,self.p1], [self.p2], self.Jacobian)
+
+
+        self.swapped_p0 = Polynomial([(1,0),(3,1)], ['a','b'])
+        self.swapped_Jacobian = Polynomial([(0,1)], ['swapped_Jacobian_coeff'])
+        self.sector_p0 = Sector([self.p0], Jacobian=self.Jacobian)
+        self.sector_swapped_p0 = Sector([self.swapped_p0], Jacobian=self.swapped_Jacobian)
+
+        self.a, self.b, self.c, self.d, self.e, self.f, self.g = sp.symbols('a b c d e f g')
+
+    #@attr('active')
+    def test_sector2array(self):
+        SecDecInternalCast, SecDecInternalOther = sp.symbols('SecDecInternalCast SecDecInternalOther')
+
+        combined_expolists, combined_coeffs = _sector2array(self.sector)
+
+        # note that `Sector` factorizes on construction
+        target_combined_expolists = np.array([
+                                                (1,0),            # Jacobian
+                                                (0,1),(1,3),      # p0
+                                                (3,1),(3,2),      # p1 --> note the reordering
+                                                (2,0),(0,1),(1,1) # p2
+                                            ])
+        target_combined_coeffs = np.array([
+                                               # Jacobian coefficient is ignored (replaced by a dummy)
+                                               1,
+
+                                               # p0
+                                               self.a*SecDecInternalCast(0),self.b*SecDecInternalCast(0),
+
+                                               # p1
+                                               self.d*SecDecInternalCast(1),self.c*SecDecInternalCast(1),
+
+                                               # p2
+                                               self.e*SecDecInternalOther(0),self.f*SecDecInternalOther(0),self.g*SecDecInternalOther(0)
+                                         ])
+
+        np.testing.assert_array_equal(combined_expolists, target_combined_expolists)
+        np.testing.assert_array_equal(combined_coeffs, target_combined_coeffs)
+
+    #@attr('active')
+    def test_collision_safe_hash(self):
+        class CustomHash(object):
+            def __init__(self, hash, value):
+                self.hash = hash
+                self.value = value
+            def __hash__(self):
+                return self.hash
+            def __eq__(self, other):
+                if isinstance(other, CustomHash):
+                    return self.value == other.value
+                else:
+                    return NotImplemented
+            def __ne__(self, other):
+                if isinstance(other, CustomHash):
+                    return self.value != other.value
+                else:
+                    return NotImplemented
+            def __str__(self):
+                return "CustomHash(hash=%i,value=%i)" % (self.hash,self.value)
+            __repr__ = __str__
+
+        array_with_hash_collisions = np.array([
+            CustomHash(1,1), CustomHash(2,2), CustomHash(1,1), CustomHash(1,4), CustomHash(2,5)
+        ]) # hash collision since ``CustomHash(n,1) != CustomHash(n,2)`` but hashes are equal
+
+        array_collisions_resolved = _collision_safe_hash(array_with_hash_collisions)
+
+        for i,j in permutations(range(len(array_collisions_resolved)), 2):
+            print(i,j)
+            if i==0 and j==2 or i==2 and j==0:
+                self.assertEqual(array_collisions_resolved[i], array_collisions_resolved[j])
+            else:
+                self.assertNotEqual(array_collisions_resolved[i], array_collisions_resolved[j])
+
+    #@attr('active')
+    def test_drop_symmetry_redundant_sectors_2D(self):
+        sectors = [self.sector_p0.copy(), self.sector_swapped_p0.copy()]
+        reduced_sectors = drop_symmetry_redundant_sectors(sectors)
+
+        self.assertEqual(len(reduced_sectors), 1)
+        self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('a+swapped_Jacobian_coeff'))
+        self.assertEqual( (sp.sympify(reduced_sectors[0].cast[0]) - sp.sympify(self.p0.copy())).simplify() , 0 )
+
+    #@attr('active')
+    def test_symmetry_4D(self):
+        # sectors 0 and 2 are related by permutation, sector 1 is unrelated
+        sector0_p0 = Polynomial([(0,1,1,3),(2,2,4,3)], ['a','b'])
+        sector0_p1 = Polynomial([(1,2,1,2),(1,2,3,1)], ['1','1'])
+        sector0 = Sector([sector0_p0, sector0_p1])
+
+        sector1_p0 = Polynomial([(0,5,1,3),(2,2,4,3)], ['a','b'])
+        sector1_p1 = Polynomial([(1,2,2,1),(3,2,1,1)], ['1','1'])
+        sector1 = Sector([sector1_p0, sector1_p1])
+
+        sector2_p0 = Polynomial([(4,2,3,2),(1,1,3,0)], ['b','a'])
+        sector2_p1 = Polynomial([(1,2,2,1),(3,2,1,1)], ['1','1'])
+        sector2 = Sector([sector2_p0, sector2_p1])
+
+        for i in range(2): # run twice to check if the variables `sectorI` are not modified
+            sectors_with_redundancy = (sector0, sector1, sector2)
+            reduced_sectors = drop_symmetry_redundant_sectors(sectors_with_redundancy)
+
+            # should have found the symmetry and pruned `sector0` or `sector2`
+            self.assertEqual(len(reduced_sectors), 2)
+
+            # should have either `sector0` or `sector2` in `reduced_sectors`
+            have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast))
+            self.assertEqual(str(reduced_sectors[0].cast), str(sector0.cast if have_sector_0 else sector2.cast))
+            self.assertEqual(str(reduced_sectors[0].Jacobian), ' + (2)') # Jacobian coefficient should have been increased by one
+
+            # `sector2` should be untouched
+            self.assertEqual(str(reduced_sectors[1]), str(sector1))
+
+    #@attr('active')
+    def test_symmetry_same_term_in_different_polynomials(self):
+        eps = sp.symbols('eps')
+
+        # sectors 0 and 2 are related by permutation, sector 1 is unrelated (due to exponent)
+        sector0_p0 = Polynomial([(0,1,1,3),(2,2,4,3)], ['a','b'])
+        sector0_p1 = Polynomial([(1,2,1,2),(1,2,3,1)], ['1','1'])
+        sector0 = Sector([sector0_p0, sector0_p1])
+
+        sector1_p0 = ExponentiatedPolynomial([(0,1,1,3),(2,2,4,3)], ['a','b'], exponent=eps)
+        sector1_p1 = ExponentiatedPolynomial([(1,2,1,2),(1,2,3,1)], ['1','1'], exponent=eps)
+        sector1 = Sector([sector1_p0, sector1_p1])
+
+        sector2_p0 = Polynomial([(4,2,3,2),(1,1,3,0)], ['b','a'])
+        sector2_p1 = Polynomial([(1,2,2,1),(3,2,1,1)], ['1','1'])
+        sector2 = Sector([sector2_p0, sector2_p1])
+
+        for i in range(2): # run twice to check if the variables `sectorI` are not modified
+            print(i)
+            sectors_with_redundancy = (sector0, sector1, sector2)
+            reduced_sectors = drop_symmetry_redundant_sectors(sectors_with_redundancy)
+
+            # should have found the symmetry and pruned `sector0` or `sector2`
+            self.assertEqual(len(reduced_sectors), 2)
+
+            # should have either `sector0` or `sector2` in `reduced_sectors`
+            have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast) or str(reduced_sectors[1].cast) == str(sector0.cast))
+            self.assertTrue(str(reduced_sectors[0].cast) == str(sector0.cast if have_sector_0 else sector2.cast)
+                         or str(reduced_sectors[1].cast) == str(sector0.cast if have_sector_0 else sector2.cast))
+
+            # Jacobian coefficient should have been increased by one while `sector1` should be untouched
+            self.assertTrue( (str(reduced_sectors[0].Jacobian) == ' + (2)' and str(reduced_sectors[1]) == str(sector1))
+                          or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
 
 class TestOther(unittest.TestCase):
     def test_refactorize(self):

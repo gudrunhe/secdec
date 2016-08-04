@@ -705,7 +705,56 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         FORM_label_contour_deformation_Jacobian_matrix_index_i = sp.sympify('SecDecInternalLabelJacobianMatrixI')
         FORM_label_contour_deformation_Jacobian_matrix_index_j = sp.sympify('SecDecInternalLabelJacobianMatrixJ')
 
-    for primary_sector in strategy['primary'](initial_sector):
+    def parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials, include_last_other):
+        #  - in ``sector.cast``
+        for product in sector.cast:
+            mono, poly = product.factors
+            mono.exponent = Polynomial.from_expression(mono.exponent, symbols_polynomials_to_decompose)
+            poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
+            mono.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in mono.coeffs])
+            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
+
+        #  - in ``sector.other``
+        for poly in sector.other if include_last_other else sector.other[:-1]: # [:-1] due to the `transformations`
+            poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
+            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
+
+    # investigate if we can take advantage of sector symmetries
+    # We can simplify due to symmetries if the `remainder_expression`
+    # does explicitly not depend on any integration variable (implicit
+    # dependence via `polynomial_names` is OK).
+    use_symmetries = True
+    for i,_ in enumerate(integration_variables):
+        derivative = remainder_expression.derive(i).simplify()
+        if not ( type(derivative) == Polynomial and len(derivative.coeffs) == 1 and derivative.coeffs[0] == 0 and (derivative.expolist == 0).all() ):
+            use_symmetries = False
+            break
+
+    if use_symmetries:
+        # can investigate sector symmetries
+        # we do not need `transformations` in that case --> remove from `initial_sector`
+        initial_sector.other.pop()
+
+        # run primary decomposition and squash symmetry-equal sectors
+        primary_sectors = decomposition.drop_symmetry_redundant_sectors( strategy['primary'](initial_sector) ) # TODO: rename `drop_symm...` --> `squash_symm...`
+
+        # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
+        symbols_primary_sectors = primary_sectors[0].Jacobian.polysymbols
+        for sector in primary_sectors:
+            sector.Jacobian.polysymbols = list(symbols_primary_sectors) # copy
+            for prod in sector.cast:
+                for factor in prod.factors:
+                    factor.polysymbols = list(symbols_primary_sectors) # copy
+            for poly in sector.other:
+                poly.polysymbols = list(symbols_primary_sectors) # copy
+
+        # give one primary sector as representative for the global initialization
+        primary_sectors = [primary_sectors[0]]
+
+    else: # if we cannot take advantage of symmetries
+        primary_sectors = strategy['primary'](initial_sector)
+
+    for primary_sector in primary_sectors:
 
         # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
         integration_variables = list(primary_sector.Jacobian.polysymbols) # make a copy
@@ -768,7 +817,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         # redefine ``all_symbols`` and ``symbols_remainder_expression``
         all_symbols = symbols_remainder_expression = integration_variables + regulators
         this_primary_sector_remainder_expression = remainder_expression
-        for i in range(len(primary_sector.other) - 1): # "-1" because of ``transformations``
+        for i in range(len(other_polynomials)):
             poly = primary_sector.other[i]
             decomposition.unhide(poly, other_polynomials_name_hide_containers[i])
             for poly_name in reversed_polynomial_names:
@@ -807,26 +856,26 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             )
             names_polynomials_to_decompose.append(poly_name)
 
-        # parse exponents and coeffs (carried along as sympy expressions up to here)
-        #  - in ``sector.cast``
-        for product in primary_sector.cast:
-            mono, poly = product.factors
-            mono.exponent = Polynomial.from_expression(mono.exponent, symbols_polynomials_to_decompose)
-            poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
-            mono.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in mono.coeffs])
-            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
+        if use_symmetries:
+            # search for symmetries throughout the secondary decomposition
+            secondary_sectors = []
+            for primary_sector in primary_sectors:
+                secondary_sectors.extend( strategy['secondary'](primary_sector) )
+            secondary_sectors = decomposition.drop_symmetry_redundant_sectors(secondary_sectors)
+        else:
+            parse_exponents_and_coeffs(primary_sector, symbols_polynomials_to_decompose, symbols_other_polynomials, use_symmetries)
+            secondary_sectors = strategy['secondary'](primary_sector)
 
-        #  - in ``sector.other``
-        for poly in primary_sector.other[:-1]: # [:-1] due to the `transformations`
-            poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
-            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
-
-
-        for sector in strategy['secondary'](primary_sector):
+        for sector in secondary_sectors:
             sector_index += 1
 
-            # extract ``this_transformation``
-            this_transformation = sector.other.pop() # remove transformation from ``sector.other``
+            if use_symmetries:
+                # If we use symmetries, we still have to parse the `exponents` and `coeffs`.
+                parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials, use_symmetries)
+            else:
+                # If we do not use symmetries, we have to take care of `transformations`
+                # extract ``this_transformation``
+                this_transformation = sector.other.pop() # remove transformation from ``sector.other``
 
             # unhide the regulator
             #  - in the Jacobian
@@ -869,11 +918,15 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             monomial_factors = chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other))
             monomials = Product(*monomial_factors, copy=False)
 
-            # apply ``this_transformation`` to ``this_sector_remainder_expression`` BEFORE taking derivatives
-            for variable_index, integration_variable in enumerate(integration_variables):
-                replacement = sp.sympify( Polynomial(this_transformation.expolist[variable_index:variable_index+1,:], [1], integration_variables) )
-                this_sector_remainder_expression = this_primary_sector_remainder_expression.replace(variable_index, replacement)
-            this_sector_remainder_expression = Expression(sp.sympify(this_sector_remainder_expression), symbols_remainder_expression)
+            if use_symmetries:
+                # `remainder_expression` does not depend on the integration variables in that case --> nothing to transform here
+                this_sector_remainder_expression = this_primary_sector_remainder_expression
+            else:
+                # apply ``this_transformation`` to ``this_sector_remainder_expression`` BEFORE taking derivatives
+                for variable_index, integration_variable in enumerate(integration_variables):
+                    replacement = sp.sympify( Polynomial(this_transformation.expolist[variable_index:variable_index+1,:], [1], integration_variables) )
+                    this_sector_remainder_expression = this_primary_sector_remainder_expression.replace(variable_index, replacement)
+                this_sector_remainder_expression = Expression(sp.sympify(this_sector_remainder_expression), symbols_remainder_expression)
 
             # define `DerivativeTracker` for the symbolic polynomials
             derivative_tracking_symbolic_polynomials_to_decompose = [DerivativeTracker(f) for f in symbolic_polynomials_to_decompose]
