@@ -25,7 +25,6 @@ Symbol I;
 #define functions "%(functions)s"
 CFunctions `functions';
 
-*** TODO: disallow user variables with prefix "SecDecInternal" in python
 * Temporary functions and symbols for replacements in FORM
 AutoDeclare CFunctions SecDecInternalfDUMMY;
 AutoDeclare Symbols SecDecInternalsDUMMY;

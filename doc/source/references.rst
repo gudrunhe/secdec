@@ -1,8 +1,6 @@
 ..
    Collect all citations in one place
 
-.. TODO: redirect citations in the code to this page
-
 References
 ==========
 

@@ -92,8 +92,6 @@ def _integrate_pole_part_single_index(polyprod, index):
 
     return output_summands
 
-# TODO: make this a private function --> should have a high-level function that takes a :class:`pySecDec.decomposition.Sector`.
-# TODO: raise an error if the exponent depends on the Feynman parameters in that high-level function
 def integrate_pole_part(polyprod, *indices):
     r'''
     Transform an integral of the form

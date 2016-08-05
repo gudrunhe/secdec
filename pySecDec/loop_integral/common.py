@@ -288,7 +288,7 @@ class LoopIntegral(object):
     def measure(self):
         # The monomials x_i^(nu_i-1) multiplying the integration measure.
         # The factors of 1/Gamma(nu_i) are implemented in `Gamma_factor` together with the global Gamma.
-        # TODO: define measure as a single polynomial if all powers are integer?
+        # TODO: define as Product of exponentiated monomials
         measure = 1
 
         Feynman_parameters_F_U = self.Feynman_parameters + ['F', 'U']
