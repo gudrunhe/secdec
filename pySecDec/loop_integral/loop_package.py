@@ -7,6 +7,7 @@ function :func:`.loop_package`.
 """
 
 from ..code_writer import make_package
+import numpy as np
 import sympy as sp
 
 def loop_package(target_directory, name, loop_integral, requested_order,
@@ -101,6 +102,22 @@ def loop_package(target_directory, name, loop_integral, requested_order,
             is needed. See :ref:`installation_normaliz`.
 
     '''
+    # append the regulator to the `polynomials_to_decompose` (`F` and `U`)
+    polynomials_to_decompose = [loop_integral.exponentiated_F.copy(), loop_integral.exponentiated_U.copy()]
+    for poly in polynomials_to_decompose:
+        poly.polysymbols.append(loop_integral.regulator)
+        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),1], dtype=int)])
+
+    other_polynomials = [loop_integral.numerator]
+    if sp.sympify( loop_integral.measure ) != 1:
+        # need ``loop_integral.measure`` only if it is nontrivial
+        other_polynomials += loop_integral.measure.factors
+
+    # insert the regulator to the `other_polynomials` (`numerator` and possily `measure`)
+    for poly in other_polynomials:
+        poly.polysymbols = poly.polysymbols[:-2] + [loop_integral.regulator] + poly.polysymbols[-2:]
+        poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),1], dtype=int), poly.expolist[:,-2:]])
+
     return make_package(
         target_directory = target_directory,
         name = name,
@@ -110,15 +127,12 @@ def loop_package(target_directory, name, loop_integral, requested_order,
         regulators = [loop_integral.regulator],
         requested_orders = [requested_order],
 
-        polynomials_to_decompose = sp.sympify([loop_integral.exponentiated_U, loop_integral.exponentiated_F]), # TODO: get polysymbols right instead of sympify
-        polynomial_names = ['U','F'],
-        other_polynomials = sp.sympify([loop_integral.numerator]), # TODO: get polysymbols right instead of sympify
+        polynomials_to_decompose = polynomials_to_decompose,
+        polynomial_names = ['F','U'],
+        other_polynomials = other_polynomials,
         contour_deformation_polynomial = 'F' if contour_deformation else None,
 
         prefactor = sp.sympify(additional_prefactor) * loop_integral.Gamma_factor * loop_integral.regulator ** loop_integral.regulator_power,
-
-        # TODO: `measure` is a product of monomials that may have negative exponents --> it should go into `polynomials_to_decompose`
-        remainder_expression = sp.sympify(loop_integral.measure), # TODO: get polysymbols right instead of sympify
 
         real_parameters = real_parameters,
         complex_parameters = complex_parameters,
