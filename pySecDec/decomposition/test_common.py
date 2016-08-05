@@ -184,9 +184,9 @@ class TestSymmetryFinding(unittest.TestCase):
                 self.assertNotEqual(array_collisions_resolved[i], array_collisions_resolved[j])
 
     #@attr('active')
-    def test_drop_symmetry_redundant_sectors_2D(self):
+    def test_squash_symmetry_redundant_sectors_2D(self):
         sectors = [self.sector_p0.copy(), self.sector_swapped_p0.copy()]
-        reduced_sectors = drop_symmetry_redundant_sectors(sectors)
+        reduced_sectors = squash_symmetry_redundant_sectors(sectors)
 
         self.assertEqual(len(reduced_sectors), 1)
         self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('a+swapped_Jacobian_coeff'))
@@ -209,7 +209,7 @@ class TestSymmetryFinding(unittest.TestCase):
 
         for i in range(2): # run twice to check if the variables `sectorI` are not modified
             sectors_with_redundancy = (sector0, sector1, sector2)
-            reduced_sectors = drop_symmetry_redundant_sectors(sectors_with_redundancy)
+            reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy)
 
             # should have found the symmetry and pruned `sector0` or `sector2`
             self.assertEqual(len(reduced_sectors), 2)
@@ -236,7 +236,7 @@ class TestSymmetryFinding(unittest.TestCase):
 
         for i in range(2): # run twice to check if the variables `sectorI` are not modified
             sectors_with_redundancy = (sector0, sector1)
-            reduced_sectors = drop_symmetry_redundant_sectors(sectors_with_redundancy)
+            reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy)
 
             # should have found the symmetry
             self.assertEqual(len(reduced_sectors), 1)
@@ -267,7 +267,7 @@ class TestSymmetryFinding(unittest.TestCase):
         for i in range(2): # run twice to check if the variables `sectorI` are not modified
             print(i)
             sectors_with_redundancy = (sector0, sector1, sector2)
-            reduced_sectors = drop_symmetry_redundant_sectors(sectors_with_redundancy)
+            reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy)
 
             # should have found the symmetry and pruned `sector0` or `sector2`
             self.assertEqual(len(reduced_sectors), 2)

@@ -736,7 +736,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         initial_sector.other.pop()
 
         # run primary decomposition and squash symmetry-equal sectors
-        primary_sectors = decomposition.drop_symmetry_redundant_sectors( strategy['primary'](initial_sector) ) # TODO: rename `drop_symm...` --> `squash_symm...`
+        primary_sectors = decomposition.squash_symmetry_redundant_sectors( strategy['primary'](initial_sector) )
 
         # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
         symbols_primary_sectors = primary_sectors[0].Jacobian.polysymbols
@@ -861,7 +861,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             secondary_sectors = []
             for primary_sector in primary_sectors:
                 secondary_sectors.extend( strategy['secondary'](primary_sector) )
-            secondary_sectors = decomposition.drop_symmetry_redundant_sectors(secondary_sectors)
+            secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors)
         else:
             parse_exponents_and_coeffs(primary_sector, symbols_polynomials_to_decompose, symbols_other_polynomials, use_symmetries)
             secondary_sectors = strategy['secondary'](primary_sector)

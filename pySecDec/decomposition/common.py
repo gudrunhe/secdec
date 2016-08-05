@@ -203,7 +203,7 @@ def _collision_safe_hash(iterable):
 
     return np.array(hashes)
 
-def drop_symmetry_redundant_sectors(sectors):
+def squash_symmetry_redundant_sectors(sectors):
     '''
     Reduce a list of sectors by squashing duplicates
     with equal integral.
@@ -219,7 +219,7 @@ def drop_symmetry_redundant_sectors(sectors):
 
     >>> from pySecDec.algebra import Polynomial
     >>> from pySecDec.decomposition import Sector
-    >>> from pySecDec.decomposition import drop_symmetry_redundant_sectors
+    >>> from pySecDec.decomposition import squash_symmetry_redundant_sectors
     >>>
     >>> poly = Polynomial([(0,1),(1,0)], ['a','b'])
     >>> swap = Polynomial([(1,0),(0,1)], ['a','b'])
@@ -230,7 +230,7 @@ def drop_symmetry_redundant_sectors(sectors):
     ...               Sector([swap],Jacobian=Jacobian_swap)
     ...           )
     >>>
-    >>> reduced_sectors = drop_symmetry_redundant_sectors(sectors)
+    >>> reduced_sectors = squash_symmetry_redundant_sectors(sectors)
     >>> len(reduced_sectors) # symmetry x0 <--> x1
     1
     >>> # The Jacobians are added together to account
