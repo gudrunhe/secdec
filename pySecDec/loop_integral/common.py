@@ -212,7 +212,7 @@ class LoopIntegral(object):
     @cached_property
     def numerator(self):
 
-        Feynman_parameters_F_U = self.Feynman_parameters + ['F', 'U']
+        Feynman_parameters_F_U = self.Feynman_parameters + sp.sympify(['F', 'U'])
 
         extended_expolist = []
         for exponents in self.preliminary_U.expolist:
@@ -291,7 +291,7 @@ class LoopIntegral(object):
         # TODO: define as Product of exponentiated monomials
         measure = 1
 
-        Feynman_parameters_F_U = self.Feynman_parameters + ['F', 'U']
+        Feynman_parameters_F_U = self.Feynman_parameters + sp.sympify(['F', 'U'])
 
         # The effective power to be used in the measure has to be increased by the number of derivatives.
         for i in range(self.P):
