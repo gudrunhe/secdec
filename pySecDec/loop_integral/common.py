@@ -1,6 +1,6 @@
 """Routines to Feynman parametrize a loop integral"""
 
-from ..algebra import Polynomial, ExponentiatedPolynomial
+from ..algebra import Polynomial, ExponentiatedPolynomial, Product
 from ..misc import cached_property, sympify_symbols, assert_degree_at_most_max_degree
 import sympy as sp
 import numpy as np
@@ -288,21 +288,32 @@ class LoopIntegral(object):
     def measure(self):
         # The monomials x_i^(nu_i-1) multiplying the integration measure.
         # The factors of 1/Gamma(nu_i) are implemented in `Gamma_factor` together with the global Gamma.
-        # TODO: define as Product of exponentiated monomials
-        measure = 1
+        measure_factors = []
 
         Feynman_parameters_F_U = self.Feynman_parameters + sp.sympify(['F', 'U'])
 
         # The effective power to be used in the measure has to be increased by the number of derivatives.
         for i in range(self.P):
             eff_power = self.powerlist[i] + self.derivativelist[i]
-            if eff_power != 0:
+            if eff_power not in (0,1):
                 expolist = np.zeros([1,len(Feynman_parameters_F_U)], dtype=int)
                 expolist[0][i] = 1
-                measure *= ExponentiatedPolynomial(expolist, np.array([1]), exponent = (eff_power - 1),
-                                                   polysymbols = Feynman_parameters_F_U, copy=False)
-
-        return measure.simplify()
+                measure_factors.append(
+                                          ExponentiatedPolynomial(
+                                                                     expolist, np.array([1]), exponent=eff_power-1,
+                                                                     polysymbols=Feynman_parameters_F_U, copy=False
+                                                                 )
+                                      )
+        if measure_factors:
+            return Product(*measure_factors, copy=False)
+        else:
+            return Product(
+                              ExponentiatedPolynomial(
+                                                         np.zeros([1,len(Feynman_parameters_F_U)], dtype=int),
+                                                         np.array([1]), exponent=eff_power-1,
+                                                         polysymbols=Feynman_parameters_F_U, copy=False
+                                                     )
+                          )
 
     @cached_property
     def Gamma_argument(self):
