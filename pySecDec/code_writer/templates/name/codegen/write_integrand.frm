@@ -171,11 +171,11 @@ B `regulators';
         if ( match(SecDecInternalDenominator(`IV') * SecDecInternalDenominator(SecDecInternalsDUMMY?!{`IV'}$arg)) ) redefine i "0";
         .sort
         #if `i' == 0
-          multiply numerator($arg);
-          Id numerator($arg) * SecDecInternalsDUMMYdenominator = SecDecInternalDenominator($arg) * SecDecInternalsDUMMYdenominator;
-          Id numerator($arg) * SecDecInternalDenominator($arg) = 1;
-          Id numerator($arg) = $arg;
-          Id `FP' * SecDecInternalDenominator(`FP') = 1;
+          multiply SecDecInternalfDUMMYNumerator($arg);
+          Id SecDecInternalfDUMMYNumerator($arg) * SecDecInternalsDUMMYdenominator = SecDecInternalDenominator($arg) * SecDecInternalsDUMMYdenominator;
+          Id SecDecInternalfDUMMYNumerator($arg) * SecDecInternalDenominator($arg) = 1;
+          Id SecDecInternalfDUMMYNumerator($arg) = $arg;
+          Id `IV' * SecDecInternalDenominator(`IV') = 1;
           .sort
         #EndIf
       #EndDo
