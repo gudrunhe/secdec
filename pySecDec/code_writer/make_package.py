@@ -726,7 +726,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     use_symmetries = True
     for i,_ in enumerate(integration_variables):
         derivative = remainder_expression.derive(i).simplify()
-        if not ( type(derivative) == Polynomial and len(derivative.coeffs) == 1 and derivative.coeffs[0] == 0 and (derivative.expolist == 0).all() ):
+        if not ( type(derivative) is Polynomial and np.array_equal(derivative.coeffs, [0]) and (derivative.expolist == 0).all() ):
             use_symmetries = False
             break
 
