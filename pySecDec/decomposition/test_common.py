@@ -224,6 +224,30 @@ class TestSymmetryFinding(unittest.TestCase):
                           or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
 
     #@attr('active')
+    def test_symmetry_special_sorting(self):
+        # sectors 0 and 1 are related by permutation
+        sector0_p0 = Polynomial([(0,1,2,3),(3,2,1,0)], ['a','a'])
+        sector0_p1 = Polynomial([(1,2,1,2),(1,2,3,1)], ['1','1'])
+        sector0 = Sector([sector0_p0, sector0_p1])
+
+        sector1_p0 = Polynomial([(3,1,2,0),(0,2,1,3)], ['a','a'])
+        sector1_p1 = Polynomial([(1,3,2,1),(1,1,2,2)], ['1','1'])
+        sector1 = Sector([sector1_p0, sector1_p1])
+
+        for i in range(2): # run twice to check if the variables `sectorI` are not modified
+            sectors_with_redundancy = (sector0, sector1)
+            reduced_sectors = drop_symmetry_redundant_sectors(sectors_with_redundancy)
+
+            # should have found the symmetry
+            self.assertEqual(len(reduced_sectors), 1)
+
+            # should have either `sector0` or `sector1` in `reduced_sectors` with Jacobian doubled
+            have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast) or str(reduced_sectors[1].cast) == str(sector0.cast))
+            target_reduced_sectors = [sector0.copy() if have_sector_0 else sector1.copy()]
+            target_reduced_sectors[0].Jacobian.coeffs[0] = 2
+            self.assertEqual( str(reduced_sectors), str(target_reduced_sectors) )
+
+    #@attr('active')
     def test_symmetry_same_term_in_different_polynomials(self):
         eps = sp.symbols('eps')
 
