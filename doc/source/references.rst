@@ -27,3 +27,8 @@ References
 .. [Hei08]  | G. Heinrich *Sector Decomposition*, 2008, Int.J.Mod.Phys.A23,
             | `doi:10.1142/S0217751X08040263 <http://dx.doi.org/10.1142/S0217751X08040263>`_,
             | `arXiv:0803.4177 <http://arxiv.org/abs/0803.4177>`_
+
+.. [Pak11]  | A. Pak *The toolbox of modern multi-loop calculations: novel
+              analytic and semi-analytic techniques*, 2012, J. Phys.: Conf. Ser. 368 012049,
+            | `doi:10.1088/1742-6596/368/1/012049 <http://dx.doi.org/10.1088/1742-6596/368/1/012049>`_,
+            | `arXiv:1111.0868 <http://arxiv.org/abs/1111.0868>`_

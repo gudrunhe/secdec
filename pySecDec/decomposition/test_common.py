@@ -3,6 +3,7 @@
 from .common import *
 from .common import _sector2array, _collision_safe_hash
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
+from ..matrix_sort import iterative_sort, Pak_sort
 import unittest
 import sympy as sp
 import numpy as np
@@ -96,6 +97,7 @@ class TestHideUnhide(unittest.TestCase):
                 self.assertEqual(p1.polysymbols, p.polysymbols[:-i])
                 self.assertEqual(p_hidden.polysymbols, p.polysymbols[-i:])
 
+#@attr('active')
 class TestSymmetryFinding(unittest.TestCase):
     def setUp(self):
         self.Jacobian = Polynomial([(1,0)], ['a'])
@@ -186,11 +188,13 @@ class TestSymmetryFinding(unittest.TestCase):
     #@attr('active')
     def test_squash_symmetry_redundant_sectors_2D(self):
         sectors = [self.sector_p0.copy(), self.sector_swapped_p0.copy()]
-        reduced_sectors = squash_symmetry_redundant_sectors(sectors)
 
-        self.assertEqual(len(reduced_sectors), 1)
-        self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('a+swapped_Jacobian_coeff'))
-        self.assertEqual( (sp.sympify(reduced_sectors[0].cast[0]) - sp.sympify(self.p0.copy())).simplify() , 0 )
+        for sort_function in (iterative_sort, Pak_sort):
+            reduced_sectors = squash_symmetry_redundant_sectors(sectors, sort_function)
+
+            self.assertEqual(len(reduced_sectors), 1)
+            self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('a+swapped_Jacobian_coeff'))
+            self.assertEqual( (sp.sympify(reduced_sectors[0].cast[0]) - sp.sympify(self.p0.copy())).simplify() , 0 )
 
     #@attr('active')
     def test_symmetry_4D(self):
@@ -209,19 +213,21 @@ class TestSymmetryFinding(unittest.TestCase):
 
         for i in range(2): # run twice to check if the variables `sectorI` are not modified
             sectors_with_redundancy = (sector0, sector1, sector2)
-            reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy)
 
-            # should have found the symmetry and pruned `sector0` or `sector2`
-            self.assertEqual(len(reduced_sectors), 2)
+            for sort_function in (iterative_sort, Pak_sort):
+                reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy, sort_function)
 
-            # should have either `sector0` or `sector2` in `reduced_sectors`
-            have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast) or str(reduced_sectors[1].cast) == str(sector0.cast))
-            self.assertTrue( (str(reduced_sectors[0].cast) == str(sector0.cast if have_sector_0 else sector2.cast))
-                          or (str(reduced_sectors[1].cast) == str(sector0.cast if have_sector_0 else sector2.cast)) )
+                # should have found the symmetry and pruned `sector0` or `sector2`
+                self.assertEqual(len(reduced_sectors), 2)
 
-            # `sector1` should be untouched and Jacobian coefficient should have been increased by one
-            self.assertTrue( (str(reduced_sectors[0].Jacobian) == ' + (2)' and str(reduced_sectors[1]) == str(sector1))
-                          or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
+                # should have either `sector0` or `sector2` in `reduced_sectors`
+                have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast) or str(reduced_sectors[1].cast) == str(sector0.cast))
+                self.assertTrue( (str(reduced_sectors[0].cast) == str(sector0.cast if have_sector_0 else sector2.cast))
+                              or (str(reduced_sectors[1].cast) == str(sector0.cast if have_sector_0 else sector2.cast)) )
+
+                # `sector1` should be untouched and Jacobian coefficient should have been increased by one
+                self.assertTrue( (str(reduced_sectors[0].Jacobian) == ' + (2)' and str(reduced_sectors[1]) == str(sector1))
+                              or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
 
     #@attr('active')
     def test_symmetry_special_sorting(self):
@@ -236,16 +242,18 @@ class TestSymmetryFinding(unittest.TestCase):
 
         for i in range(2): # run twice to check if the variables `sectorI` are not modified
             sectors_with_redundancy = (sector0, sector1)
-            reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy)
 
-            # should have found the symmetry
-            self.assertEqual(len(reduced_sectors), 1)
+            for sort_function in (iterative_sort, Pak_sort):
+                reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy, sort_function)
 
-            # should have either `sector0` or `sector1` in `reduced_sectors` with Jacobian doubled
-            have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast) or str(reduced_sectors[1].cast) == str(sector0.cast))
-            target_reduced_sectors = [sector0.copy() if have_sector_0 else sector1.copy()]
-            target_reduced_sectors[0].Jacobian.coeffs[0] = 2
-            self.assertEqual( str(reduced_sectors), str(target_reduced_sectors) )
+                # should have found the symmetry
+                self.assertEqual(len(reduced_sectors), 1)
+
+                # should have either `sector0` or `sector1` in `reduced_sectors` with Jacobian doubled
+                have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast) or str(reduced_sectors[1].cast) == str(sector0.cast))
+                target_reduced_sectors = [sector0.copy() if have_sector_0 else sector1.copy()]
+                target_reduced_sectors[0].Jacobian.coeffs[0] = 2
+                self.assertEqual( str(reduced_sectors), str(target_reduced_sectors) )
 
     #@attr('active')
     def test_symmetry_same_term_in_different_polynomials(self):
@@ -267,19 +275,21 @@ class TestSymmetryFinding(unittest.TestCase):
         for i in range(2): # run twice to check if the variables `sectorI` are not modified
             print(i)
             sectors_with_redundancy = (sector0, sector1, sector2)
-            reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy)
 
-            # should have found the symmetry and pruned `sector0` or `sector2`
-            self.assertEqual(len(reduced_sectors), 2)
+            for sort_function in (iterative_sort, Pak_sort):
+                reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy, sort_function)
 
-            # should have either `sector0` or `sector2` in `reduced_sectors`
-            have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast) or str(reduced_sectors[1].cast) == str(sector0.cast))
-            self.assertTrue(str(reduced_sectors[0].cast) == str(sector0.cast if have_sector_0 else sector2.cast)
-                         or str(reduced_sectors[1].cast) == str(sector0.cast if have_sector_0 else sector2.cast))
+                # should have found the symmetry and pruned `sector0` or `sector2`
+                self.assertEqual(len(reduced_sectors), 2)
 
-            # Jacobian coefficient should have been increased by one while `sector1` should be untouched
-            self.assertTrue( (str(reduced_sectors[0].Jacobian) == ' + (2)' and str(reduced_sectors[1]) == str(sector1))
-                          or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
+                # should have either `sector0` or `sector2` in `reduced_sectors`
+                have_sector_0 = (str(reduced_sectors[0].cast) == str(sector0.cast) or str(reduced_sectors[1].cast) == str(sector0.cast))
+                self.assertTrue(str(reduced_sectors[0].cast) == str(sector0.cast if have_sector_0 else sector2.cast)
+                             or str(reduced_sectors[1].cast) == str(sector0.cast if have_sector_0 else sector2.cast))
+
+                # Jacobian coefficient should have been increased by one while `sector1` should be untouched
+                self.assertTrue( (str(reduced_sectors[0].Jacobian) == ' + (2)' and str(reduced_sectors[1]) == str(sector1))
+                              or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
 
 class TestOther(unittest.TestCase):
     def test_refactorize(self):

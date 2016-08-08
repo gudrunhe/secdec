@@ -28,6 +28,9 @@ Reference Guide
 .. autoclass:: pySecDec.loop_integral.LoopIntegralFromPropagators
 .. autofunction:: pySecDec.loop_integral.loop_package
 
+.. automodule:: pySecDec.matrix_sort
+    :members:
+
 .. automodule:: pySecDec.subtraction
     :members:
 

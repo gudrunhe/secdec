@@ -1,7 +1,8 @@
 """The Sector class"""
 
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
-from ..misc import argsort_2D_array, argsort_ND_array
+from ..matrix_sort import iterative_sort, Pak_sort
+from ..misc import argsort_ND_array
 import numpy as np
 import sympy as sp
 
@@ -203,7 +204,7 @@ def _collision_safe_hash(iterable):
 
     return np.array(hashes)
 
-def squash_symmetry_redundant_sectors(sectors):
+def squash_symmetry_redundant_sectors(sectors, sort_function):
     '''
     Reduce a list of sectors by squashing duplicates
     with equal integral.
@@ -220,6 +221,7 @@ def squash_symmetry_redundant_sectors(sectors):
     >>> from pySecDec.algebra import Polynomial
     >>> from pySecDec.decomposition import Sector
     >>> from pySecDec.decomposition import squash_symmetry_redundant_sectors
+    >>> from pySecDec.matrix_sort import Pak_sort
     >>>
     >>> poly = Polynomial([(0,1),(1,0)], ['a','b'])
     >>> swap = Polynomial([(1,0),(0,1)], ['a','b'])
@@ -230,7 +232,8 @@ def squash_symmetry_redundant_sectors(sectors):
     ...               Sector([swap],Jacobian=Jacobian_swap)
     ...           )
     >>>
-    >>> reduced_sectors = squash_symmetry_redundant_sectors(sectors)
+    >>> reduced_sectors = squash_symmetry_redundant_sectors(sectors,
+    ...                   Pak_sort)
     >>> len(reduced_sectors) # symmetry x0 <--> x1
     1
     >>> # The Jacobians are added together to account
@@ -242,24 +245,13 @@ def squash_symmetry_redundant_sectors(sectors):
         iterable of :class:`.Sector`; the sectors to be
         reduced.
 
+    :param sort_function:
+        :func:`pySecDec.matrix_sort.iterative_sort` or
+        :func:`pySecDec.matrix_sort.Pak_sort`;
+        The function to be used for finding a canonical
+        form of the sectors.
+
     '''
-    def sort(array):
-        # keep sorting the 2D array (in place) along both dimensions
-        # until it no longer changes
-
-        # initilize sort keys such that we enter the while loop at least once
-        sort_key_axis_0 = None
-        sort_key_axis_1 = None
-
-        while not ( np.array_equal(sort_key_axis_0, np.arange(array.shape[0])) and np.array_equal(sort_key_axis_1, np.arange(array.shape[1]-1)) ):
-            # sort along axis 0
-            sort_key_axis_0 = argsort_2D_array(array)
-            array[:] = array[sort_key_axis_0]
-
-            # sort along axis 1 excluding the coefficients (first column)
-            sort_key_axis_1 = argsort_2D_array(array.T[1:])
-            array[:,1:] = array[:,1:][:,sort_key_axis_1]
-
     if not isinstance(sectors, list):
         sectors = list(sectors)
 
@@ -273,7 +265,7 @@ def squash_symmetry_redundant_sectors(sectors):
         this_sector_array = np.hstack([this_sector_coeffs.reshape(len(this_sector_coeffs),1),this_sector_expolist])
 
         # sort the arrays of the individual sectors to pick one specific permutation --> symmetry finding
-        sort(this_sector_array)
+        sort_function(this_sector_array)
 
         all_sectors_array.append( this_sector_array )
 

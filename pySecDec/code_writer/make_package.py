@@ -11,6 +11,7 @@ from ..algebra import _Expression, Expression, Polynomial, \
                       ProductRule, DerivativeTracker, Function, \
                       Sum
 from .. import decomposition
+from ..matrix_sort import iterative_sort, Pak_sort
 from ..subtraction import integrate_pole_part
 from ..expansion import expand_singular, expand_Taylor
 from ..misc import lowest_order
@@ -735,8 +736,10 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         # we do not need `transformations` in that case --> remove from `initial_sector`
         initial_sector.other.pop()
 
-        # run primary decomposition and squash symmetry-equal sectors
-        primary_sectors = decomposition.squash_symmetry_redundant_sectors( strategy['primary'](initial_sector) )
+        # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
+        primary_sectors = strategy['primary'](initial_sector)
+        primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, iterative_sort)
+        primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, Pak_sort)
 
         # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
         symbols_primary_sectors = primary_sectors[0].Jacobian.polysymbols
@@ -861,7 +864,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             secondary_sectors = []
             for primary_sector in primary_sectors:
                 secondary_sectors.extend( strategy['secondary'](primary_sector) )
-            secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors)
+            # find symmetries using both implemented strategies
+            secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, iterative_sort)
+            secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, Pak_sort)
         else:
             parse_exponents_and_coeffs(primary_sector, symbols_polynomials_to_decompose, symbols_other_polynomials, use_symmetries)
             secondary_sectors = strategy['secondary'](primary_sector)
