@@ -356,53 +356,53 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_n1_n3_0_contour_deformation,sector_90_order_n1_n3_0_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_n1_n3_1_contour_deformation,sector_90_order_n1_n3_1_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        '                           sector_90_order_n1_n3_2_contour_deformation,sector_90_order_n1_n3_2_contour_deformation_polynomial}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_n1_n2_0_contour_deformation,sector_90_order_n1_n2_0_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_n1_n2_1_contour_deformation,sector_90_order_n1_n2_1_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        '                           sector_90_order_n1_n2_2_contour_deformation,sector_90_order_n1_n2_2_contour_deformation_polynomial}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_n1_n1_0_contour_deformation,sector_90_order_n1_n1_0_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_n1_n1_1_contour_deformation,sector_90_order_n1_n1_1_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        '                           sector_90_order_n1_n1_2_contour_deformation,sector_90_order_n1_n1_2_contour_deformation_polynomial}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_0_n3_0_contour_deformation,sector_90_order_0_n3_0_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_0_n3_1_contour_deformation,sector_90_order_0_n3_1_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        '                           sector_90_order_0_n3_2_contour_deformation,sector_90_order_0_n3_2_contour_deformation_polynomial}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_0_n2_0_contour_deformation,sector_90_order_0_n2_0_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_0_n2_1_contour_deformation,sector_90_order_0_n2_1_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        '                           sector_90_order_0_n2_2_contour_deformation,sector_90_order_0_n2_2_contour_deformation_polynomial}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_0_n1_0_contour_deformation,sector_90_order_0_n1_0_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial},'
+        '                           sector_90_order_0_n1_1_contour_deformation,sector_90_order_0_n1_1_contour_deformation_polynomial},'
         target_FORM_code +=       '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
-        '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+        '                           sector_90_order_0_n1_2_contour_deformation,sector_90_order_0_n1_2_contour_deformation_polynomial}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
         target_FORM_code += '},true}'
@@ -455,7 +455,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=   '{-1,-1,{'
         target_FORM_code +=     '{2,2,{'
         target_FORM_code +=         '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
-          '                           sector_90_contour_deformation,sector_90_contour_deformation_polynomial}'
+          '                           sector_90_order_0_n1_2_contour_deformation,sector_90_order_0_n1_2_contour_deformation_polynomial}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
         target_FORM_code += '},true}'

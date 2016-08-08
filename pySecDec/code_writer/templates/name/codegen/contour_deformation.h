@@ -1,5 +1,3 @@
-#include sector`sectorID'.h
-
 * The "lambda" parameters controlling the size of the deformation
 #define deformationParameters "%(deformation_parameters)s"
 Symbols `deformationParameters';
