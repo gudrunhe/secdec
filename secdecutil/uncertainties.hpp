@@ -41,12 +41,12 @@ namespace secdecutil {
             } else if (operation == multiply ) {
 
                 value = gu1.value * gu2.value;
-                uncertainty = fabs(value) * sqrt( pow(gu1.uncertainty/gu1.value, 2) + pow(gu2.uncertainty/gu2.value, 2) );
+                uncertainty = std::abs(value) * sqrt( pow(gu1.uncertainty/gu1.value, 2) + pow(gu2.uncertainty/gu2.value, 2) );
 
             } else if ( operation == divide ) {
 
                 value = gu1.value / gu2.value;
-                uncertainty = fabs(value) * sqrt( pow(gu1.uncertainty/gu1.value, 2) + pow(gu2.uncertainty/gu2.value, 2) );
+                uncertainty = std::abs(value) * sqrt( pow(gu1.uncertainty/gu1.value, 2) + pow(gu2.uncertainty/gu2.value, 2) );
 
             }
 
