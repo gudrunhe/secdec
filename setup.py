@@ -11,10 +11,19 @@ import sys
 sys.path.insert(0, 'pySecDec')
 from metadata import __version__, __authors__
 
+# collect the c++ template files needed by `pySecDec.code_writer.make_package`
+import os
+cpp_template_files = []
+relpath_to_code_writer_module = os.path.join('pySecDec','code_writer')
+for dir_name, subdir_list, file_list in os.walk(relpath_to_code_writer_module):
+    relpath_to_templates = os.path.relpath(dir_name, relpath_to_code_writer_module)
+    for data_file in file_list:
+        cpp_template_files.append( os.path.join(relpath_to_templates, data_file) )
+
 setup(
     name='pySecDec',
     packages=find_packages(),
-    package_data={'pySecDec.code_writer': ['templates' + '/*' * depth for depth in range(1,10)]},
+    package_data={'pySecDec.code_writer': cpp_template_files},
     version=__version__,
     author=__authors__,
     author_email='secdec@projects.hepforge.org',
