@@ -6,3 +6,6 @@ doc/build
 coverage
 
 pySecDec.egg-info
+
+build/
+dist/

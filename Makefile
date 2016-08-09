@@ -50,6 +50,12 @@ clean:
 	rm -f .coverage
 	rm -rf coverage
 
+	# remove egg-info
+	rm -rf pySecDec.egg-info
+
+	# remove build/ und dist/
+	rm -rf build/ dist/
+
 .PHONY : check
 check : check2 check3 doctest
 
