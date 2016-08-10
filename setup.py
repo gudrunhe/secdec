@@ -28,8 +28,7 @@ setup(
     author=__authors__,
     author_email='secdec@projects.hepforge.org',
     url='secdec.hepforge.org',
-    description='An implementation of "Sector Decomposition" (see arXiv:0803.4177).',
-    # long_description=long_description, #TODO: write an abstract of this package
+    description='An implementation of "Sector Decomposition" (see arXiv:hep-ph/0004013, arXiv:0803.4177).', # TODO: cite paper for this SecDec version
     license='GPLv3',
     install_requires=['numpy>=1.6', 'sympy', 'setuptools>=3.3'],
     extras_require={'testing': ['nose'], 'documentation': ['sphinx']},

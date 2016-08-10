@@ -1,0 +1,6 @@
+This package is a collection of tools by different authors.
+It redistributes most of the dependencies of pySecDec along with
+pySecDec itself.
+
+To install pySecDec type "make" and follow the instructions
+printed to the screen.

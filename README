@@ -1,0 +1,36 @@
+Development
+-----------
+
+The ``Makefile`` in the package's
+root directory implements common development tasks.
+You can list all available targets with the command
+
+    $ make help
+
+`pySecDec` comes with a self test suite written in the `python unittest` framework.
+The most convenient way to run all test is using `nose` (http://nose.readthedocs.org).
+If `nose` is installed, type
+
+    $ make check
+
+in the source repository to run all tests. Developers should write test cases for
+ALL functions they implement and make sure that ALL tests pass before uploading a
+commit.
+
+To build the documentation of `pySecDec`, you need `sphinx` (http://www.sphinx-doc.org).
+If `sphinx` is installed, the command
+
+    $ make doc
+
+generates the documentaion in `html` and in `pdf` format. Developers should inline-document
+python functions and also keep the c++ part up to date.
+
+Making a tarball
+----------------
+
+A distributable tarball can be created by the command
+
+    $ make dist
+
+When publishing a new release, make sure that you increase the Version number of `pySecDec`
+and/or `SecDecUtil`.

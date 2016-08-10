@@ -4,6 +4,9 @@
 # timeout (in seconds) for all test cases
 TIMEOUT=600
 
+# get the pySecDec version number
+PYSECDECVERSION=$(shell python -c 'import pySecDec; print pySecDec.__version__')
+
 
 .DEFAULT_GOAL=check
 .PHONY .SILENT : help
@@ -20,6 +23,7 @@ help :
 	echo "    fast-check   use nosetests to run only quick tests"
 	echo "                 using nosetests-2.7 and nosetests3"
 	echo "    doctest      run doctest using Sphinx"
+	echo "    dist         create a tarball to be distributed"
 	echo "    clean        delete compiled and temporary files"
 	echo "    coverage     produce and show a code coverage report"
 	echo "    doc          run \"doc-html\" and \"doc-pdf\""
@@ -55,6 +59,9 @@ clean:
 
 	# remove build/ und dist/
 	rm -rf build/ dist/
+
+	# remove tarball and the directory it is created from
+	rm -rf pySecDec-$(PYSECDECVERSION)/ pySecDec-$(PYSECDECVERSION).tar.gz
 
 .PHONY : check
 check : check2 check3 doctest
@@ -104,6 +111,27 @@ run-examples :
 	    python3 $${file} || exit 1 && \
 	; \
 	done
+
+.PHONY : dist
+dist :
+	# create pySecDec dist
+	python setup.py sdist
+
+	# create SecDecUtil dist
+	cd util && \
+	$(MAKE) dist || \
+	autoreconf -i && \
+	./configure --prefix=`pwd` && \
+	$(MAKE) dist
+
+	# create dist directory tree
+	mkdir pySecDec-$(PYSECDECVERSION)/
+	cp dist_template/* pySecDec-$(PYSECDECVERSION)/
+	cp dist/*.tar.gz pySecDec-$(PYSECDECVERSION)/
+	cp util/*.tar.gz pySecDec-$(PYSECDECVERSION)/
+
+	# create tarball
+	tar -cf pySecDec-$(PYSECDECVERSION).tar.gz pySecDec-$(PYSECDECVERSION)/
 
 .SILENT .PHONY : show-todos
 grep_cmd  = grep -riG [^"au""sphinx.ext."]todo --color=auto --exclude=Makefile --exclude-dir=.git
