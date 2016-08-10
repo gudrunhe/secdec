@@ -1,5 +1,0 @@
-This package redistributes most of the dependencies of pySecDec.
-It is meant to ease the linkage of c++ packages written by pySecDec.
-
-When building such a package, just set the environment variable
-SECDEC_CONTRIB to this directory.
