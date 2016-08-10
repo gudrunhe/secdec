@@ -63,6 +63,9 @@ clean:
 	# remove tarball and the directory it is created from
 	rm -rf pySecDec-$(PYSECDECVERSION)/ pySecDec-$(PYSECDECVERSION).tar.gz
 
+	# remove the SecDecUtil tarball
+	rm -f util/secdecutil-*.tar.gz
+
 .PHONY : check
 check : check2 check3 doctest
 
