@@ -1,0 +1,3 @@
+SecDecUtil is an auxiliary package for pySecDec
+(see http://secdec.hepforge.org/ for details).
+It provides tools for the numerical integration.
