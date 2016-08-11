@@ -237,7 +237,8 @@ class LoopIntegralFromPropagators(LoopIntegral):
                 F += self.Q[i]*self.aM[i,j]*self.Q[j]
         F -= self.preliminary_U * self.J
         for i,coeff in enumerate(F.coeffs):
-            F.coeffs[i] = coeff.expand().subs(self.replacement_rules)
+            if isinstance(coeff, sp.Expr):
+                F.coeffs[i] = coeff.expand().subs(self.replacement_rules)
         return F.simplify()
 
     @cached_property
