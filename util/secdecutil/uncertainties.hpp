@@ -2,56 +2,20 @@
 #define SecDecUtil_uncertainties_hpp_included
 
 #include <cmath>
+#include <complex>
+#include <ostream>
 
 namespace secdecutil {
 
     // Warning - assumes uncorrelated errors, neglects covariance matrix
-    // TODO specialisations for complex numbers
 
     template <typename T>
     class GaussianUncertainty {
 
-    private:
-        enum Operation { add, subtract, multiply, divide };
-
     public:
-        
+
         T value;
         T uncertainty;
-
-        /*
-         *  Helper functions
-         */
-        template<int operation>
-        static GaussianUncertainty add_subtract_multiply_or_divide(const GaussianUncertainty& gu1, const GaussianUncertainty& gu2)
-        {
-            T value;
-            T uncertainty;
-
-            if (operation == add) {
-
-                value = gu1.value + gu2.value;
-                uncertainty = sqrt( pow( gu1.uncertainty, 2) + pow( gu2.uncertainty, 2) );
-
-            } else if (operation == subtract ) {
-
-                value = gu1.value - gu2.value;
-                uncertainty = sqrt( pow( gu1.uncertainty, 2) + pow( gu2.uncertainty, 2) );
-
-            } else if (operation == multiply ) {
-
-                value = gu1.value * gu2.value;
-                uncertainty = std::abs(value) * sqrt( pow(gu1.uncertainty/gu1.value, 2) + pow(gu2.uncertainty/gu2.value, 2) );
-
-            } else if ( operation == divide ) {
-
-                value = gu1.value / gu2.value;
-                uncertainty = std::abs(value) * sqrt( pow(gu1.uncertainty/gu1.value, 2) + pow(gu2.uncertainty/gu2.value, 2) );
-
-            }
-
-            return GaussianUncertainty(value, uncertainty);
-        };
 
         /*
          *  Unary Operators
@@ -69,26 +33,89 @@ namespace secdecutil {
         /*
          *  Compound assignment operators
          */
-        GaussianUncertainty& operator+=(const GaussianUncertainty& gu1)
+        template <typename Tp>
+        GaussianUncertainty<Tp>& operator+=(const GaussianUncertainty<Tp>& gu1)
         {
-            *this = *this + gu1;
+            this->value += gu1.value;
+            this->uncertainty = std::sqrt( this->uncertainty*this->uncertainty + gu1.uncertainty*gu1.uncertainty );
+            return *this;
+        };
+        template<typename Tinner>
+        GaussianUncertainty<std::complex<Tinner>>& operator+=(const GaussianUncertainty<std::complex<Tinner>>& gu1)
+        {
+            this->value += gu1.value;
+            this->uncertainty = {std::sqrt( this->uncertainty.real()*this->uncertainty.real() + gu1.uncertainty.real()*gu1.uncertainty.real() ),  // real part
+                                 std::sqrt( this->uncertainty.imag()*this->uncertainty.imag() + gu1.uncertainty.imag()*gu1.uncertainty.imag() )}; // imaginary part
             return *this;
         };
 
-        GaussianUncertainty& operator-=(const GaussianUncertainty& gu1)
+        template <typename Tp>
+        GaussianUncertainty<Tp>& operator-=(const GaussianUncertainty<Tp>& gu1)
         {
-            *this = *this - gu1;
+            this->value -= gu1.value;
+            this->uncertainty = std::sqrt( this->uncertainty*this->uncertainty + gu1.uncertainty*gu1.uncertainty );
+            return *this;
+        };
+        template<typename Tinner>
+        GaussianUncertainty<std::complex<Tinner>>& operator-=(const GaussianUncertainty<std::complex<Tinner>>& gu1)
+        {
+            this->value -= gu1.value;
+            this->uncertainty = {std::sqrt( this->uncertainty.real()*this->uncertainty.real() + gu1.uncertainty.real()*gu1.uncertainty.real() ),  // real part
+                                 std::sqrt( this->uncertainty.imag()*this->uncertainty.imag() + gu1.uncertainty.imag()*gu1.uncertainty.imag() )}; // imaginary part
             return *this;
         };
 
-        GaussianUncertainty& operator*=(const GaussianUncertainty& gu1)
+        template <typename Tp>
+        GaussianUncertainty<Tp>& operator*=(const GaussianUncertainty<Tp>& gu1)
         {
-            *this = *this * gu1;
+            T old_value = this->value;
+            this->value *= gu1.value;
+            this->uncertainty = std::abs(this->value) * std::sqrt( this->uncertainty/old_value*this->uncertainty/old_value + gu1.uncertainty/gu1.value*gu1.uncertainty/gu1.value );
             return *this;
         };
-        GaussianUncertainty& operator/=(const GaussianUncertainty& gu1)
+        template<typename Tinner>
+        GaussianUncertainty<std::complex<Tinner>>& operator*=(const GaussianUncertainty<std::complex<Tinner>>& gu1)
         {
-            *this = *this / gu1;
+            auto real0 = GaussianUncertainty<Tinner>(this->value.real(), this->uncertainty.real());
+            auto imag0 = GaussianUncertainty<Tinner>(this->value.imag(), this->uncertainty.imag());
+
+            auto real1 = GaussianUncertainty<Tinner>(gu1.value.real(), gu1.uncertainty.real());
+            auto imag1 = GaussianUncertainty<Tinner>(gu1.value.imag(), gu1.uncertainty.imag());
+
+            auto new_real_part = real0*real1 - imag0*imag1;
+            auto new_imag_part = real0*imag1 + real1*imag0;
+
+            this->value = {new_real_part.value,new_imag_part.value};
+            this->uncertainty = {new_real_part.uncertainty,new_imag_part.uncertainty};
+
+            return *this;
+        };
+
+        template<typename Tp>
+        GaussianUncertainty<Tp>& operator/=(const GaussianUncertainty<Tp>& gu1)
+        {
+            T old_value = this->value;
+            this->value /= gu1.value;
+            this->uncertainty = std::abs(this->value) * std::sqrt( this->uncertainty/old_value*this->uncertainty/old_value + gu1.uncertainty/gu1.value*gu1.uncertainty/gu1.value );
+            return *this;
+        };
+        template<typename Tinner>
+        GaussianUncertainty<std::complex<Tinner>>& operator/=(const GaussianUncertainty<std::complex<Tinner>>& gu1)
+        {
+            auto real0 = GaussianUncertainty<Tinner>(this->value.real(), this->uncertainty.real());
+            auto imag0 = GaussianUncertainty<Tinner>(this->value.imag(), this->uncertainty.imag());
+
+            auto real1 = GaussianUncertainty<Tinner>(gu1.value.real(), gu1.uncertainty.real());
+            auto imag1 = GaussianUncertainty<Tinner>(gu1.value.imag(), gu1.uncertainty.imag());
+
+            auto denominator = real1*real1 + imag1*imag1;
+
+            auto new_real_part = (real0*real1 + imag0*imag1) / denominator;
+            auto new_imag_part = (real1*imag0 - real0*imag1) / denominator;
+
+            this->value = {new_real_part.value,new_imag_part.value};
+            this->uncertainty = {new_real_part.uncertainty,new_imag_part.uncertainty};
+
             return *this;
         };
 
@@ -97,22 +124,30 @@ namespace secdecutil {
          */
         friend GaussianUncertainty operator+(const GaussianUncertainty& gu1, const GaussianUncertainty& gu2)
         {
-            return add_subtract_multiply_or_divide<add>(gu1,gu2);
+            auto output = gu1; // copy
+            output += gu2;
+            return output;
         };
 
         friend GaussianUncertainty operator-(const GaussianUncertainty& gu1, const GaussianUncertainty& gu2)
         {
-            return add_subtract_multiply_or_divide<subtract>(gu1,gu2);
+            auto output = gu1; // copy
+            output -= gu2;
+            return output;
         };
 
         friend GaussianUncertainty operator*(const GaussianUncertainty& gu1, const GaussianUncertainty& gu2)
         {
-            return add_subtract_multiply_or_divide<multiply>(gu1,gu2);
+            auto output = gu1; // copy
+            output *= gu2;
+            return output;
         };
 
         friend GaussianUncertainty operator/(const GaussianUncertainty& gu1, const GaussianUncertainty& gu2)
         {
-            return add_subtract_multiply_or_divide<divide>(gu1,gu2);
+            auto output = gu1; // copy
+            output /= gu2;
+            return output;
         };
 
         /*
@@ -120,7 +155,7 @@ namespace secdecutil {
          */
         friend std::ostream& operator<< (std::ostream& os, const GaussianUncertainty& gu1)
         {
-            os << "( " << gu1.value << " +/- " << gu1.uncertainty << " )";
+            os << gu1.value << " +/- " << gu1.uncertainty;
             return os;
         };
 
@@ -132,7 +167,7 @@ namespace secdecutil {
         {};
 
     };
-    
+
 }
 
 #endif
