@@ -16,9 +16,9 @@ for dir_name, subdir_list, file_list in os.walk(relpath_to_code_writer_module):
         cpp_template_files.append( os.path.join(relpath_to_templates, data_file) )
 
 # get the git commit id
-from subprocess import check_output as shell_call, CalledProcessError
+from subprocess import check_output as shell_call, CalledProcessError, STDOUT
 try:
-    git_id = shell_call(['git','rev-parse','HEAD'], cwd=os.path.split(os.path.abspath(__file__))[0]).strip()
+    git_id = shell_call(['git','rev-parse','HEAD'], cwd=os.path.split(os.path.abspath(__file__))[0], stderr=STDOUT).strip()
 except CalledProcessError:
     git_id = 'UNKNOWN'
 # in python3, the return type of `shell_call` may be `bytes` but we need `str`
