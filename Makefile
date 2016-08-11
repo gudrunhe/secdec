@@ -5,7 +5,7 @@
 TIMEOUT=600
 
 # get the pySecDec version number
-PYSECDECVERSION=$(shell python -c 'import pySecDec; print pySecDec.__version__')
+PYSECDECVERSION=$(shell python -c 'import pySecDec; print(pySecDec.__version__)')
 
 
 .DEFAULT_GOAL=check
