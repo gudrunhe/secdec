@@ -53,19 +53,19 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                                  % (expression, name_of_make_argument_being_parsed, expression.symbols, polysymbols))
         if target_type == ExponentiatedPolynomial:
             if type(expression) == ExponentiatedPolynomial:
-                expression.exponent = sp.sympify(expression.exponent)
-                expression.coeffs = np.array([ sp.sympify(coeff) for coeff in expression.coeffs ])
+                expression.exponent = sp.sympify(str(expression.exponent))
+                expression.coeffs = np.array([ sp.sympify(str(coeff)) for coeff in expression.coeffs ])
             elif type(expression) == Polynomial:
                 expression = ExponentiatedPolynomial(expression.expolist,
-                                                     np.array([ sp.sympify(coeff) for coeff in expression.coeffs ]),
+                                                     np.array([ sp.sympify(str(coeff)) for coeff in expression.coeffs ]),
                                                      _sympy_one, # exponent
                                                      polysymbols, copy=False)
             else:
-                expression = sp.sympify(expression)
+                expression = sp.sympify(str(expression))
                 if expression.is_Pow:
                     assert len(expression.args) == 2
                     expression_base = Polynomial.from_expression(expression.args[0], polysymbols)
-                    expression_exponent = sp.sympify(expression.args[1], polysymbols)
+                    expression_exponent = sp.sympify(str(expression.args[1]))
                     expression = ExponentiatedPolynomial(expression_base.expolist,
                                                          expression_base.coeffs,
                                                          expression_exponent, polysymbols, copy=False)

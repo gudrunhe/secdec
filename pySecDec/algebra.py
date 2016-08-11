@@ -439,7 +439,7 @@ class Polynomial(_Expression):
         if not polysymbols:
             raise TypeError("`polysymbols` must contain at least one symbol")
 
-        expression, polysymbols = sp.sympify((expression, polysymbols))
+        polysymbols = sp.sympify(polysymbols)
 
         for symbol in polysymbols:
             if not symbol.is_Symbol:
@@ -1639,4 +1639,4 @@ def Expression(expression, polysymbols):
 
         raise ValueError('Could not parse the expression')
 
-    return recursive_call(expression) if isinstance(expression, sp.Expr) else recursive_call( sp.sympify(expression) )
+    return recursive_call(expression) if isinstance(expression, sp.Expr) else recursive_call( sp.sympify(str(expression)) )
