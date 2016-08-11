@@ -11,15 +11,15 @@ CPP_PACKAGES = Cuba form gsl secdecutil
 .PHONY : clean $(CPP_PACKAGES) pySecDec
 
 .PHONY .SILENT : install
-begin_green = "\033[0;32m"
-end_green   = "\033[0m"
+begin_green = '\033[0;32m'
+end_green   = '\033[0m'
 install : $(CPP_PACKAGES) pySecDec
 	echo -e $(begin_green)
 	echo -n "Successfully built \"pySecDec\" and its dependencies. "
 	echo "To use \"pySecDec\", add the following commands to your \".bashrc\" or \".profile\":"
 	echo
 	echo "export SECDEC_CONTRIB=$(TOPDIR)"
-	echo "export PYTHONPATH=$(TOPDIR)pySecDec-$(pySecDecVERSION):\$$PYTHONPATH"
+	echo "export PYTHONPATH=$(TOPDIR)pySecDec-$(shell cd pySecDec-*; python -c 'import pySecDec; print(pySecDec.__version__)'):\$$PYTHONPATH"
 	echo -e $(end_green)
 
 pySecDec :
