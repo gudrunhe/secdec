@@ -116,7 +116,8 @@ run-examples :
 	done
 
 .PHONY : dist
-dist :
+# clean first to avoid having `.pyc` files in the dist
+dist : clean
 	# create pySecDec dist
 	python setup.py sdist
 
