@@ -241,8 +241,7 @@ def _parse_global_templates(target_directory, name, regulators, polynomial_names
             file_renamings[filename] = None
 
     # get path to the directory with the template files (path relative to directory with this file: "./templates/")
-    from . import test_make_package as _unittests_for_this_module
-    template_sources = os.path.join(os.path.split(_unittests_for_this_module.__file__)[0],'templates')
+    template_sources = os.path.join(os.path.split(os.path.abspath(__file__))[0],'templates')
 
     # initialize the target directory with the sector independent files
     parse_template_tree(template_sources, target_directory, template_replacements, file_renamings)
