@@ -756,12 +756,12 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 poly.polysymbols = list(symbols_primary_sectors) # copy
 
         # give one primary sector as representative for the global initialization
-        primary_sectors = [primary_sectors[0]]
+        primary_sectors_to_consider = [primary_sectors[0]]
 
     else: # if we cannot take advantage of symmetries
-        primary_sectors = strategy['primary'](initial_sector)
+        primary_sectors_to_consider = strategy['primary'](initial_sector)
 
-    for primary_sector in primary_sectors:
+    for primary_sector in primary_sectors_to_consider:
 
         # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
         integration_variables = list(primary_sector.Jacobian.polysymbols) # make a copy
