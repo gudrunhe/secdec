@@ -88,8 +88,7 @@ class TestHideUnhide(unittest.TestCase):
             for i in range(1,3):
                 p1, p_hidden = hide(p.copy(), i)
 
-                np.testing.assert_array_equal(p1.coeffs, [hash(a),hash(b)])
-                np.testing.assert_array_equal(p_hidden.coeffs, p.coeffs)
+                np.testing.assert_array_equal(p1.coeffs, [a,b])
 
                 np.testing.assert_array_equal(p1.expolist, p.expolist[:,:-i])
                 np.testing.assert_array_equal(p_hidden.expolist, p.expolist[:,-i:])

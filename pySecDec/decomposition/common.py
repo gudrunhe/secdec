@@ -316,12 +316,10 @@ def hide(polynomial, count):
     hidden = HideContainer()
     hidden.expolist = polynomial.expolist[:, -count:]
     hidden.polysymbols = polynomial.polysymbols[-count:]
-    hidden.coeffs = polynomial.coeffs
 
     polynomial.number_of_variables -= count
     polynomial.polysymbols = polynomial.polysymbols[:-count]
     polynomial.expolist = polynomial.expolist[:, :-count]
-    polynomial.coeffs = _collision_safe_hash(polynomial.coeffs)
     return polynomial, hidden
 
 def unhide(polynomial1, polynomial2):
@@ -340,5 +338,4 @@ def unhide(polynomial1, polynomial2):
     polynomial1.number_of_variables += len(polynomial2.polysymbols)
     polynomial1.polysymbols += polynomial2.polysymbols
     polynomial1.expolist = np.hstack([polynomial1.expolist, polynomial2.expolist])
-    polynomial1.coeffs = polynomial2.coeffs
     return polynomial1
