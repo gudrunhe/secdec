@@ -5,6 +5,7 @@ This module implements the main program - the function
 """
 
 from __future__ import print_function
+from ..metadata import version, git_id
 from ..misc import sympify_symbols, rangecomb
 from ..algebra import _Expression, Expression, Polynomial, \
                       ExponentiatedPolynomial, Pow, Product, \
@@ -17,6 +18,7 @@ from ..expansion import expand_singular, expand_Taylor
 from ..misc import lowest_order
 from .template_parser import parse_template_file, parse_template_tree
 from itertools import chain
+from time import strftime
 from re import match
 import numpy as np
 import sympy as sp
@@ -213,7 +215,10 @@ def _parse_global_templates(target_directory, name, regulators, polynomial_names
                                      contour_deformation = int(contour_deformation_polynomial is not None),
                                      stabilize = int(stabilize),
                                      requested_orders = _make_FORM_list(requested_orders),
-                                     sector_container_type = sector_container_type
+                                     sector_container_type = sector_container_type,
+                                     pySecDec_version = version,
+                                     pySecDec_git_id = git_id,
+                                     date_time = strftime("%a %d %b %Y %H:%M")
                                 )
 
     # configure template parser
