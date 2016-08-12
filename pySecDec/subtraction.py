@@ -37,8 +37,9 @@ def _integrate_pole_part_single_index(polyprod, index):
         if (regulator_part.coeffs == 0).all():
             raise ValueError('"1/0" detected.')
 
-    # TODO: finite variance of Monte Carlo integral estimator only if exponent_constant_term >-0.5   -->   should we change this to >-0.5 or even >=0?
-    if exponent_constant_term > -1:
+    # finite variance of Monte Carlo integral estimator only if ``exponent_constant_term > -0.5``
+    # to be absolutely safe here, we eliminate integrable singularities; i.e. ``exponent_constant_term >= 0``?
+    if exponent_constant_term >= 0:
         # no subtraction needed, the input `polyprod` is numerically integrable
         return [polyprod]
 

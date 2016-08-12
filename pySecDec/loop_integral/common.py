@@ -177,7 +177,6 @@ class LoopIntegral(object):
                 power_sp = sp.sympify(power)
                 power0 = power_sp.subs(regulator,0)
                 assert power0.is_Number, "The propagator powers must be numbers for vanishing regulator."
-                # TODO: how to treat integrable divergencies (0<power0<1)?
                 self.powerlist.append(power_sp)
                 if power0.is_positive:
                     self.derivativelist.append(0)
