@@ -1,6 +1,9 @@
 """
+Subtraction
+-----------
+
 Routines to isolate the divergencies in an :math:`\epsilon`
-expansion
+expansion.
 
 """
 

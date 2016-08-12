@@ -1,4 +1,8 @@
-"""The iterative sector decomposition routines"""
+"""
+
+The iterative sector decomposition routines.
+
+"""
 
 from .common import Sector, refactorize
 from ..algebra import Polynomial, Product

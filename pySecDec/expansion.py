@@ -1,4 +1,10 @@
-"Routines to series expand singular and nonsingular expressions"
+"""
+Expansion
+---------
+
+Routines to series expand singular and nonsingular expressions.
+
+"""
 
 from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial
 from numpy import iterable

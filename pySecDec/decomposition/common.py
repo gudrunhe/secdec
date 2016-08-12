@@ -1,4 +1,8 @@
-"""The Sector class"""
+'''
+This module collects routines that are used by
+multiple decompition modules.
+
+'''
 
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
 from ..matrix_sort import iterative_sort, Pak_sort

@@ -1,4 +1,7 @@
 """
+Matrix Sort
+-----------
+
 Algorithms to sort a matrix when column and
 row permutations are allowed.
 

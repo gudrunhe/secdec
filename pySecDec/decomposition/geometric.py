@@ -1,4 +1,8 @@
-"""The geometric sector decomposition routines"""
+"""
+
+The geometric sector decomposition routines.
+
+"""
 
 from .common import Sector, refactorize
 from ..algebra import Polynomial, Product

@@ -1,4 +1,10 @@
-"""Implementation of a simple computer algebra system"""
+"""
+Algebra
+-------
+
+Implementation of a simple computer algebra system.
+
+"""
 
 from .misc import argsort_2D_array, argsort_ND_array, doc
 import numpy as np

@@ -1,4 +1,28 @@
-"""Routines to Feynman parametrize a loop integral"""
+"""
+Loop Integral
+-------------
+
+This module defines routines to Feynman parametrize a
+loop integral and build a c++ package that numerically
+integrates over the sector decomposed integrand.
+
+Feynman Parametrization
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Routines to Feynman parametrize a loop integral.
+
+.. autoclass:: pySecDec.loop_integral.LoopIntegral
+.. autoclass:: pySecDec.loop_integral.LoopIntegralFromGraph
+.. autoclass:: pySecDec.loop_integral.LoopIntegralFromPropagators
+
+Loop Package
+~~~~~~~~~~~~
+
+This module contains the function that generates a c++ package.
+
+.. autofunction:: pySecDec.loop_integral.loop_package
+
+"""
 
 from .common import LoopIntegral
 from .from_graph import LoopIntegralFromGraph

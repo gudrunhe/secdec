@@ -1,4 +1,7 @@
-"""Functions to generate c++ sources from template files"""
+"""
+Functions to generate c++ sources from template files.
+
+"""
 
 import os
 
