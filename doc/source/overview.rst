@@ -419,6 +419,125 @@ decomposed:
     other=[ + (1)*x*y + (B)*y*z]
 
 
+Subtraction
+-----------
+
+In the subtraction, we want to perform those integrations
+that lead to :math:`\epsilon` divergencies. The master formula
+for one integration variables is
+
+.. math::
+    \int_0^1 {x^{(a - b \epsilon)} \cal{I} (x, \epsilon) dx} =
+    \sum_{p=0}^{|a|-1}
+        {
+            \frac{1}{a + p + 1 - b \epsilon}
+            \frac{\cal{I}^{(p)} (0, \epsilon)}{p!} +
+            \int_0^1
+            {
+                x^{(a - b \epsilon)}
+                R(x, \epsilon) dx
+            }
+        }
+
+where :math:`\cal{I}^{(p)}` is denotes the p-th derivative
+of :math:`\cal{I}` with respect to :math:`x`. The equation
+above effectively defines the remainder term :math:`R`.
+All terms on the right hand side of the equation above are
+constructed to be free of divergencies. For more details
+and the generalization to multiple variables, we refer the
+reader to [Hei08]_.
+In the following, we show how to use the implementation in
+`pySecDec`.
+
+To initialize the subtraction, we first define a factorized
+expression of the form
+:math:`x^{(-1 - b_x \epsilon)} y^{(-2 - b_y \epsilon)} \cal{I} (x, y, \epsilon)`:
+
+>>> from pySecDec.algebra import Expression
+>>> symbols = ['x','y','eps']
+>>> x_monomial = Expression('x**(-1 - b_x*eps)', symbols)
+>>> y_monomial = Expression('y**(-2 - b_y*eps)', symbols)
+>>> cal_I = Expression('cal_I(x, y, eps)', symbols)
+
+We must pack the monomials into a :class:`pySecDec.algebra.Product`:
+
+>>> from pySecDec.algebra import Product
+>>> monomials = Product(x_monomial, y_monomial)
+
+Although this seems to be to complete input according to the equation
+above, we are still missing a structure to store poles in. The function
+:func:`pySecDec.subtraction.integrate_pole_part` is designed to return
+an iterable of the same type as the input. That is particularly important
+since the output of the subtraction of one variable is the input for the
+subtraction of the next variable. We will see this iteration later. Initially,
+we do not have poles yet, therefore we define a `one` of the required type:
+
+>>> from pySecDec.algebra import Pow
+>>> import numpy as np
+>>> polynomial_one = Polynomial(np.zeros([1,len(symbols)], dtype=int), np.array([1]), symbols, copy=False)
+>>> pole_part_initializer = Pow(polynomial_one, -polynomial_one)
+
+``pole_part_initializer`` is of type :class:`pySecDec.algebra.Pow` and has ``-polynomial_one``
+in the exponent. We initialize the `base` with ``polynomial_one``; i.e. a one packed into
+a polynomial. The function :func:`pySecDec.subtraction.integrate_pole_part` populates the
+`base` with factors of :math:`b\epsilon` when poles arise.
+
+We are now ready to build the ``subtraction_initializer`` - the :class:`pySecDec.algebra.Product`
+to be passed into :func:`pySecDec.subtraction.integrate_pole_part`.
+
+>>> from pySecDec.subtraction import integrate_pole_part
+>>> subtraction_initializer = Product(monomials, pole_part_initializer, cal_I)
+>>> x_subtracted = integrate_pole_part(subtraction_initializer, 0)
+
+The second argument of :func:`pySecDec.subtraction.integrate_pole_part` specifies
+to which variable we want to apply the master formula, here we choose :math:`x`.
+First, remember that the x monomial is a dimensionally regulated :math:`x^-1`.
+Therefore, the sum collapses to only one term and we have two terms in total.
+Each term corresponds to one entry in the list ``x_subtracted``:
+
+>>> len(x_subtracted)
+2
+
+``x_subtracted`` has the same structure as our input. The first factor of each term
+stores the remaining monomials:
+
+>>> x_subtracted[0].factors[0]
+(( + (1))**( + (-b_x)*eps + (-1))) * (( + (1)*y)**( + (-b_y)*eps + (-2)))
+>>> x_subtracted[1].factors[0]
+(( + (1)*x)**( + (-b_x)*eps + (-1))) * (( + (1)*y)**( + (-b_y)*eps + (-2)))
+
+The second factor stores the :math:`\epsilon` poles. There is an epsilon pole in the first term, but
+still none in the second:
+
+>>> x_subtracted[0].factors[1]
+( + (-b_x)*eps) ** ( + (-1))
+>>> x_subtracted[1].factors[1]
+( + (1)) ** ( + (-1))
+
+The last factor catches everything that is not covered by the first two fields:
+
+>>> x_subtracted[0].factors[2]
+(cal_I( + (0), + (1)*y, + (1)*eps))
+>>> x_subtracted[1].factors[2]
+(cal_I( + (1)*x, + (1)*y, + (1)*eps)) + (( + (-1)) * (cal_I( + (0), + (1)*y, + (1)*eps)))
+
+We have now performed the subtraction for :math:`x`. Because in and output have a similar
+structure, we can easily perform the subtraction for :math:`y` as well:
+
+.. code:: python
+
+    >>> x_and_y_subtracted = []
+    >>> for s in x_subtracted:
+    ...     x_and_y_subtracted.extend( integrate_pole_part(s,1) )
+
+Alternatively, we can directly instruct :func:`pySecDec.subtraction.integrate_pole_part`
+to perform both subtractions:
+
+>>> alternative_x_and_y_subtracted = integrate_pole_part(subtraction_initializer,0,1)
+
+In both cases, the result is a list of the terms appearing on the right hand side of the
+master equation.
+
 Expansion
 ---------
 
