@@ -10,7 +10,6 @@ from nose.plugins.attrib import attr
 
 class TestMatrixSorting(unittest.TestCase):
     def setUp(self):
-        # TODO: is this the maximal representation?
         self.matrix_3_by_4 = np.array([[ 2,  2,  1,  1],
                                        [ 2,  0,  2,  1],
                                        [ 2,  2,  0,  0]])
