@@ -32,7 +32,15 @@ try:
     # hard-code the current git commit id into `metadata.py` (continued)
     with open(os.path.join('pySecDec','metadata.py'), 'r') as metadata_file:
         metadata = metadata_file.read()
-    metadata = metadata.replace("git_id = shell_call(['git','rev-parse','HEAD'], cwd=os.path.split(os.path.abspath(__file__))[0]).strip()", "git_id = '" + git_id + "'")
+    metadata = metadata.replace(
+"""
+from subprocess import check_output as shell_call
+import os
+# The following line is replaced by `setup.py` --> hard-code the commit id in distributions
+git_id = shell_call(['git','rev-parse','HEAD'], cwd=os.path.split(os.path.abspath(__file__))[0]).strip()
+# in python3, the return type of `shell_call` may be `bytes` but we need `str`
+if not isinstance(git_id, str):
+    git_id = git_id.decode()""", "git_id = '" + git_id + "'")
     with open(os.path.join('pySecDec','metadata.py'), 'w') as metadata_file:
         metadata_file.write(metadata)
 
