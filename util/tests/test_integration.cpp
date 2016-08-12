@@ -2,7 +2,7 @@
 #include <array>
 
 #include "catch.hpp"
-#include "../secdecutil/integration.hpp"
+#include "../secdecutil/integrand_container.hpp"
 
 TEST_CASE( "Check Access", "[IntegrandContainer]" ) {
 

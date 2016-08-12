@@ -1,5 +1,5 @@
-#ifndef SecDecUtil_integration_hpp_included
-#define SecDecUtil_integration_hpp_included
+#ifndef SecDecUtil_integrand_container_hpp_included
+#define SecDecUtil_integrand_container_hpp_included
 
 namespace secdecutil {
     
