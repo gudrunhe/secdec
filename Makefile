@@ -15,13 +15,15 @@ help :
 	echo "    Implemented targets:"
 	echo
 	echo "    check        use nosetests to test with python 2.7 and 3,"
-	echo "                 and run doctest using Sphinx"
+	echo "                 run doctest using Sphinx, and run the tests"
+	echo "                 of the SecDecUtil package"
 	echo "    checkX       use nosetests to test with python 2.7 or 3,"
 	echo "                 where X is one of {2,3}"
 	echo "    active-check use nosetests to run only tests marked as"
 	echo "                 \"active\" using nosetests-2.7 and nosetests3"
 	echo "    fast-check   use nosetests to run only quick tests"
 	echo "                 using nosetests-2.7 and nosetests3"
+	echo "    util-check   run the tests of the SecDecUtil package"
 	echo "    doctest      run doctest using Sphinx"
 	echo "    dist         create a tarball to be distributed"
 	echo "    clean        delete compiled and temporary files"
@@ -67,7 +69,7 @@ clean:
 	rm -f util/secdecutil-*.tar.gz
 
 .PHONY : check
-check : check2 check3 doctest
+check : check2 check3 doctest util-check
 
 .PHONY : check2
 check2 :
@@ -88,6 +90,18 @@ active-check :
 fast-check :
 	nosetests-2.7 -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
 	nosetests3    -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
+
+.PHONY : util-check
+util-check :
+	cd util && \
+	if [ -f Makefile ] ; \
+	then \
+		$(MAKE) check ; \
+	else \
+		autoreconf -i && \
+		./configure --prefix=`pwd` && \
+		$(MAKE) check ; \
+	fi
 
 .PHONY : doc
 doc : doc-html doc-pdf
