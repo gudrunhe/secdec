@@ -1,7 +1,7 @@
 #ifndef SecDecUtil_algorithm_hpp_included
 #define SecDecUtil_algorithm_hpp_included
 
-#include "series.hpp"
+#include <secdecutil/series.hpp>
 
 namespace secdecutil {
 
