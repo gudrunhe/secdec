@@ -108,9 +108,9 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
   #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.hpp> "    DeformableIntegrandFunction#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformableIntegrandFunction#@SecDecInternalNewline@#"
   #Else
-    #write <sector_`sectorID'_`cppOrder'.hpp> "    IntegrandFunction#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction#@SecDecInternalNewline@#"
   #EndIf
   #write <sector_`sectorID'_`cppOrder'.hpp> "  sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "}#@SecDecInternalNewline@#"
@@ -433,8 +433,8 @@ multiply replace_(I,i_);
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#include <gsl/gsl_linalg.h>#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "  ContourDeformationFunction sector_`sectorID'_order_`cppOrder'_contour_deformation;#@SecDecInternalNewline@#"
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "  DeformableIntegrandFunction sector_`sectorID'_order_`cppOrder'_contour_deformation_polynomial;#@SecDecInternalNewline@#"
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "  secdecutil::SectorContainerWithDeformation<real_t, complex_t>::ContourDeformationFunction sector_`sectorID'_order_`cppOrder'_contour_deformation;#@SecDecInternalNewline@#"
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "  secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformableIntegrandFunction sector_`sectorID'_order_`cppOrder'_contour_deformation_polynomial;#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "};#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
 
@@ -442,7 +442,7 @@ multiply replace_(I,i_);
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  integral_transformation_t sector_`sectorID'_order_`cppOrder'_contour_deformation#@SecDecInternalNewline@#"
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::integral_transformation_t<complex_t> sector_`sectorID'_order_`cppOrder'_contour_deformation#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const integration_variables,#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const real_parameters,#@SecDecInternalNewline@#"
@@ -659,7 +659,7 @@ multiply replace_(I,i_);
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation_free(permutation);#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_free(Jacobian);#@SecDecInternalNewline@#"
 
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "return integral_transformation_t#@SecDecInternalNewline@#"
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "return secdecutil::integral_transformation_t<complex_t>#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    {#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "        std::move(transformed_parameters),#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "        std::move(tmp)#@SecDecInternalNewline@#"

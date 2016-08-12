@@ -638,9 +638,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     # for two regulators, the resulting code should read:
     # "secdecutil::Series<secdecutil::Series<SectorContainerWith[out]Deformation>>"
     if contour_deformation_polynomial is None:
-        sector_container_type = 'secdecutil::Series<' * len(regulators) + 'SectorContainerWithoutDeformation' + '>' * len(regulators)
+        sector_container_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>' + '>' * len(regulators)
     else:
-        sector_container_type = 'secdecutil::Series<' * len(regulators) + 'SectorContainerWithDeformation' + '>' * len(regulators)
+        sector_container_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::SectorContainerWithDeformation<real_t,complex_t>' + '>' * len(regulators)
 
     # configure the template parser and parse global files
     template_sources, target_directory, template_replacements, file_renamings = \
