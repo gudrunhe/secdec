@@ -14,13 +14,10 @@ CPP_PACKAGES = Cuba form gsl secdecutil
 begin_green = '\033[0;32m'
 end_green   = '\033[0m'
 install : $(CPP_PACKAGES) pySecDec
-	echo -e $(begin_green)
-	echo -n "Successfully built \"pySecDec\" and its dependencies. "
-	echo "To use \"pySecDec\", add the following commands to your \".bashrc\" or \".profile\":"
-	echo
-	echo "export SECDEC_CONTRIB=$(TOPDIR)"
-	echo "export PYTHONPATH=$(TOPDIR)pySecDec-$(shell cd pySecDec-*; python -c 'import pySecDec; print(pySecDec.__version__)'):\$$PYTHONPATH"
-	echo -e $(end_green)
+	echo -e $(begin_green)"Successfully built \"pySecDec\" and its dependencies."$(end_green) ; \
+	echo -e $(begin_green)"To use \"pySecDec\", add the following two commands to your \".bashrc\" or \".profile\":"$(end_green) ; \
+	echo -e $(begin_green)"export SECDEC_CONTRIB=$(TOPDIR)"$(end_green) ; \
+	echo -e $(begin_green)"export PYTHONPATH=$(TOPDIR)pySecDec-$(shell cd pySecDec-*; python -c 'import pySecDec; print(pySecDec.__version__)'):\$$PYTHONPATH"$(end_green)
 
 pySecDec :
 	tar -xf $@-*.tar.gz
