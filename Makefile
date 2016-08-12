@@ -123,10 +123,14 @@ dist : clean
 
 	# create SecDecUtil dist
 	cd util && \
-	$(MAKE) dist || \
-	autoreconf -i && \
-	./configure --prefix=`pwd` && \
-	$(MAKE) dist
+	if [ -f Makefile ] ; \
+	then \
+		$(MAKE) dist ; \
+	else \
+		autoreconf -i && \
+		./configure --prefix=`pwd` && \
+		$(MAKE) dist ; \
+	fi
 
 	# create dist directory tree
 	mkdir pySecDec-$(PYSECDECVERSION)/
