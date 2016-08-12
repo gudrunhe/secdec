@@ -22,7 +22,7 @@ from time import strftime
 from re import match
 import numpy as np
 import sympy as sp
-import os
+import sys, os
 
 # The only public object this module provides is the function `make_package`.
 # The module is organized in multiple sections dedicated to specific tasks
@@ -217,6 +217,7 @@ def _parse_global_templates(target_directory, name, regulators, polynomial_names
                                      requested_orders = _make_FORM_list(requested_orders),
                                      sector_container_type = sector_container_type,
                                      pySecDec_version = version,
+                                     python_version = sys.version,
                                      pySecDec_git_id = git_id,
                                      date_time = strftime("%a %d %b %Y %H:%M")
                                 )
