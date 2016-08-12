@@ -784,10 +784,10 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             expolist[:,i] = 1
             elementary_monomials.append( Polynomial(expolist, np.array([1]), symbols_polynomials_to_decompose, copy=False) )
 
-        if contour_deformation_polynomial is not None: # TODO: further checks on `contour_deformation_polynomial`, e.g. it must not depend on the regulators
+        if contour_deformation_polynomial is not None:
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
-            symbolic_contour_deformation_polynomial = Function(str_contour_deformation_polynomial, *elementary_monomials) # TODO: check that the referenced polynomial does not depend on the `regulators`
+            symbolic_contour_deformation_polynomial = Function(str_contour_deformation_polynomial, *elementary_monomials)
             symbolic_contour_deformation_polynomial = DerivativeTracker(symbolic_contour_deformation_polynomial)
 
             # compute the transformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
