@@ -3,6 +3,8 @@
 
 #include <exception>
 #include <functional>
+#include <memory>
+#include <vector>
 
 namespace secdecutil {
 
@@ -81,6 +83,12 @@ namespace secdecutil {
                                                              const size_t number_of_samples
                                                              ) const;
 
+        // We want to bind the real, complex, and deformation parameters to the integrand.
+        // These shared pointers can be used to avoid too early deallocation.
+        // TODO: implement this for `SectorContainerWithoutDeformation` as well.
+        std::shared_ptr<std::vector<real_t>> real_parameters;
+        std::shared_ptr<std::vector<complex_t>> complex_parameters;
+        std::shared_ptr<std::vector<real_t>> deformation_parameters;
         complex_t integrand (
                                       real_t const * const integration_variables,
                                       real_t const * const real_parameters,
@@ -93,6 +101,22 @@ namespace secdecutil {
                 throw sign_check_error("Contour deformation in sector \"" + std::to_string(sector_id) + "\" yields the wrong sign of \"contour_deformation_polynomial.imag\". Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters\" (recommended) or decrease \"deformation_parameters\".");
             return deformation.Jacobian_determinant * undeformed_integrand(deformation.transformed_variables.data(), real_parameters, complex_parameters);
         };
+
+        // constructor
+        SectorContainerWithDeformation
+        (
+            const unsigned sector_id,
+            const unsigned number_of_integration_variables,
+            DeformableIntegrandFunction * const undeformed_integrand,
+            ContourDeformationFunction * const contour_deformation,
+            DeformableIntegrandFunction * const contour_deformation_polynomial
+        ) :
+        sector_id(sector_id),
+        number_of_integration_variables(number_of_integration_variables),
+        undeformed_integrand(undeformed_integrand),
+        contour_deformation(contour_deformation),
+        contour_deformation_polynomial(contour_deformation_polynomial)
+        {};
     };
 }
 
