@@ -1,109 +1,168 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
-#include <functional>
 #include <cstdint>
 #include <cuba.h>
+#include <numeric> // std::accumulate
+#include <functional> // std::bind
+#include <type_traits> // std::remove_const
+#include <typeinfo>
+
+#include <secdecutil/series.hpp> // Series
+#include <secdecutil/uncertainties.hpp> // GaussianUncertainty
+#include <secdecutil/integrand_container.hpp> // IntegrandContainer
+#include <secdecutil/algorithm.hpp> // transform
 
 #include "%(name)s.hpp"
 
-// Vegas parameters
-#define NCOMP 1
-#define NVEC 1
-#define EPSREL 1e-3
-#define EPSABS 1e-16
-#define VERBOSE 0
-#define SEED 0
-#define MINEVAL 0
-#define MAXEVAL 50000
-#define NSTART 1000
-#define NINCREASE 500
-#define NBATCH 1000
-#define GRIDNO 0
-#define STATEFILE NULL
-#define SPIN NULL
+void print_integral_info()
+{
+    std::cout << "-- print_integral_info --" << std::endl;
+    std::cout << "%(name)s::number_of_sectors " << %(name)s::number_of_sectors << std::endl;
+    std::cout << "%(name)s::number_of_regulators " << %(name)s::number_of_regulators << std::endl;
+    std::cout << "%(name)s::number_of_real_parameters " << %(name)s::number_of_real_parameters << std::endl;
+    std::cout << "%(name)s::number_of_complex_parameters " << %(name)s::number_of_complex_parameters << std::endl;
 
-const std::vector<triangle::real_t> deformation_parameters = { 1., 1., 1., 1., 1., 1., 1., 1. };
+    std::cout << "%(name)s::lowest_orders";
+    for ( const auto& lowest_order : %(name)s::lowest_orders )
+        std::cout << " " << lowest_order;
+    std::cout << std::endl;
 
-struct userdata_t {
-    const int epsilon_order;
-    %(name)s::real_t const * const real_parameters;
-    %(name)s::complex_t const * const complex_parameters;
+    std::cout << "%(name)s::highest_orders";
+    for ( const auto& highest_order : %(name)s::highest_orders )
+        std::cout << " " << highest_order;
+    std::cout << std::endl;
+
+    std::cout << "%(name)s::requested_orders";
+    for ( const auto& requested_order : %(name)s::requested_orders )
+        std::cout << " " << requested_order;
+    std::cout << std::endl;
+}
+
+// TODO - userdata should be just nest.integrand not nest
+int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
+{
+    auto& nest = *( reinterpret_cast<secdecutil::IntegrandContainer<%(name)s::integrand_return_t, %(name)s::real_t const * const> *>(userdata) );
+    result[0] = nest.integrand(integration_variables).real();
+    return 0;
 };
 
-static int cuba_integrand(const int *ndim, const cubareal xx[], const int *ncomp, cubareal ff[], void *userdata)
+template<typename integrand_return_t, typename real_t, typename complex_t>
+std::function<secdecutil::GaussianUncertainty<cubareal>(secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>)>
+cuba_integrate()
 {
-    userdata_t &data = *(reinterpret_cast<userdata_t *>(userdata));
-    ff[0] = 0.;
-    for (const auto &sector : %(name)s::sectors)
+    return [ ] (secdecutil::IntegrandContainer<integrand_return_t, real_t const * const> nest)
     {
-        if (data.epsilon_order >= sector.get_order_min() && data.epsilon_order <= sector.get_order_max())
-            ff[0] += sector[data.epsilon_order].integrand(xx, data.real_parameters, data.complex_parameters, deformation_parameters.data()).real();
-        // else: does not contribute
-    }
-    return 0;
-}
+        std::cout << "-- Integrating --" << std::endl;
 
-void integrate(const std::vector<%(name)s::real_t> &real_parameters, const std::vector<%(name)s::complex_t> &complex_parameters)
-{
+        struct cuba_parameters_t {
+            int ncomp = 1;
+            int nvec = 1;
+            cubareal epsrel = 1e-2;
+            cubareal epsabs = 1e-16;
+            int verbose = 0;
+            int seed = 0;
+            int mineval = 0;
+            int maxeval = 50000;
+            int nstart = 1000;
+            int nincrease = 500;
+            int nbatch = 1000;
+            int gridno = 0;
+            const char * statefile = nullptr;
+            void* spin = nullptr;
+        } cuba_parameters;
 
-    std::cout << "-- Integrating --" << std::endl;
-
-    if ( real_parameters.size() != %(name)s::number_of_real_parameters )
-        throw std::logic_error("Did not set the correct number of real parameters");
-
-    if ( complex_parameters.size() != + %(name)s::number_of_complex_parameters )
-        throw std::logic_error("Did not set the correct number of complex parameters");
-
-    int lowest_epsilon_order = %(name)s::sectors.at(0).get_order_min();
-    int highest_epsilon_order = %(name)s::sectors.at(0).get_order_max();
-    for (const auto &sector : %(name)s::sectors)
-    {
-        lowest_epsilon_order = std::min(lowest_epsilon_order, sector.get_order_min());
-        highest_epsilon_order = std::max(highest_epsilon_order, sector.get_order_max());
-    }
-
-    for ( int epsilon_order = lowest_epsilon_order; epsilon_order <= highest_epsilon_order; ++epsilon_order )
-    {
+        // Cuba output values
+        std::array<cubareal, 1 > integral; // ncomp
+        std::array<cubareal, 1 > error; // ncomp
+        std::array<cubareal, 1 > prob; // ncomp
         int comp, nregions, neval, fail;
-        std::array<cubareal, NCOMP> integral;
-        std::array<cubareal, NCOMP> error;
-        std::array<cubareal, NCOMP> prob;
 
-        unsigned ndim = 0;
-        for (const auto &sector : %(name)s::sectors)
-        {
-            if (epsilon_order >= sector.get_order_min() && epsilon_order <= sector.get_order_max())
-                ndim = std::max(ndim, sector[epsilon_order].number_of_integration_variables);
-            // else: does not contribute
-        }
-
-        userdata_t userdata{epsilon_order, real_parameters.data(), complex_parameters.data()};
-
-        Vegas(ndim, NCOMP, cuba_integrand, reinterpret_cast<void *>(&userdata), NVEC,
-              EPSREL, EPSABS, VERBOSE, SEED,
-              MINEVAL, MAXEVAL, NSTART, NINCREASE, NBATCH,
-              GRIDNO, STATEFILE, SPIN,
-              &neval, &fail, integral.data(), error.data(), prob.data()
+        // Cuba call
+        // TODO - userdata should be just nest.integrand not nest
+        Vegas(
+              nest.number_of_integration_variables,
+              cuba_parameters.ncomp,
+              cuba_integrand_prototype,
+              reinterpret_cast<void*>(&nest), // userdata
+              cuba_parameters.nvec,
+              cuba_parameters.epsrel,
+              cuba_parameters.epsabs,
+              cuba_parameters.verbose,
+              cuba_parameters.seed,
+              cuba_parameters.mineval,
+              cuba_parameters.maxeval,
+              cuba_parameters.nstart,
+              cuba_parameters.nincrease,
+              cuba_parameters.nbatch,
+              cuba_parameters.gridno,
+              cuba_parameters.statefile,
+              cuba_parameters.spin,
+              &neval,
+              &fail,
+              integral.data(),
+              error.data(),
+              prob.data()
               );
 
-        std::cout << "epsilon_order: " << epsilon_order << std::endl;
-        std::cout << "ndim: " << ndim << std::endl;
         std::cout << "VEGAS RESULT: " << " neval: " << neval << " fail: " << fail << std::endl;
 
-        for( unsigned comp = 0; comp < NCOMP; comp++)
+        for( unsigned comp = 0; comp < cuba_parameters.ncomp; comp++)
             std::cout << integral.at(comp) << " +- " << error.at(comp) << " p = " << prob.at(comp) << std::endl;
 
-    }
-}
+        return secdecutil::GaussianUncertainty<cubareal>(integral.at(0),error.at(0)); // TODO - allow more components
+    };
+};
+
+// TODO - Move to secdecutil
+template<typename integrand_return_t, typename real_t, typename complex_t>
+std::function<secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
+sector_to_integrand_container( const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
+{
+    auto shared_real_parameters = std::make_shared<std::vector<%(name)s::real_t>>(real_parameters);
+    auto shared_complex_parameters = std::make_shared<std::vector<%(name)s::complex_t>>(complex_parameters);
+
+    return [ shared_real_parameters, shared_complex_parameters ] (secdecutil::SectorContainerWithDeformation<real_t,complex_t> nest)
+    {
+        nest.real_parameters = shared_real_parameters;
+        nest.complex_parameters = shared_complex_parameters;
+
+        nest.deformation_parameters = std::make_shared<std::vector<%(name)s::real_t>>(nest.number_of_integration_variables,1.);
+        // TODO call optimize lambda;
+
+        auto nest_integrand = std::bind(&secdecutil::SectorContainerWithDeformation<real_t,complex_t>::integrand, nest,
+                                        std::placeholders::_1, nest.real_parameters->data(), nest.complex_parameters->data(),
+                                        nest.deformation_parameters->data());
+
+        return secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>(nest.number_of_integration_variables, nest_integrand );
+    };
+};
 
 int main()
 {
+    // TODO - write method to parse arguments and check validity
     // User Specified Phase-space point
     const std::vector<%(name)s::real_t> real_parameters = { 0.9, 0.1 };
     const std::vector<%(name)s::complex_t> complex_parameters = {  };
+    if ( real_parameters.size() != %(name)s::number_of_real_parameters )
+        throw std::logic_error("Did not set the correct number of real parameters");
+    if ( complex_parameters.size() != + %(name)s::number_of_complex_parameters )
+        throw std::logic_error("Did not set the correct number of complex parameters");
 
-    integrate(real_parameters, complex_parameters);
+    print_integral_info();
+
+    const auto sector_integrands = secdecutil::transform( %(name)s::sectors, sector_to_integrand_container<%(name)s::integrand_return_t>(real_parameters, complex_parameters) );
+
+    // const auto integrand_container_sum = sector_integrands.at(0) + sector_integrands.at(1); // Example how to add integrand containers
+
+    // Add integrands of sectors (together flag)
+    const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
+
+    // Integrate
+    auto result_all = secdecutil::transform( all_sectors,  cuba_integrate<%(name)s::integrand_return_t,%(name)s::real_t,%(name)s::complex_t>() );
+
+    std::cout << "-- All -- " << std::endl;
+    std::cout << result_all << std::endl;
 
     return 0;
 }
