@@ -2,7 +2,7 @@
 #define SecDecUtil_integrand_container_hpp_included
 
 namespace secdecutil {
-    
+
     template <typename T, typename ...Args>
     class IntegrandContainer {
 
@@ -10,10 +10,10 @@ namespace secdecutil {
         enum Operation { add, subtract, multiply, divide };
 
     public:
-        
+
         int number_of_integration_variables;
         std::function<T(Args...)> integrand;
-        
+
         /*
          *  Helper functions
          */
@@ -22,7 +22,7 @@ namespace secdecutil {
         {
             int number_of_integration_variables = std::max(ic1.number_of_integration_variables, ic2.number_of_integration_variables);
             std::function<T(Args...)> integrand;
-            
+
             if (operation == add) {
                 integrand = [ic1, ic2] (Args... x) { return ic1.integrand(x...) + ic2.integrand(x...); };
             } else if (operation == subtract ) {
@@ -37,6 +37,23 @@ namespace secdecutil {
         };
 
         /*
+         * unary operators
+         */
+        IntegrandContainer operator+() const
+        {
+            return *this;
+        };
+
+        IntegrandContainer operator-() const
+        {
+            return IntegrandContainer
+            (
+                number_of_integration_variables,
+                [this] (Args... x) { return - integrand(x...); }
+            );
+        };
+
+        /*
          *  Compound assignment operators
          */
         IntegrandContainer& operator-=(const IntegrandContainer& ic1)
@@ -44,7 +61,7 @@ namespace secdecutil {
             *this = *this - ic1;
             return *this;
         };
-        
+
         IntegrandContainer& operator+=(const IntegrandContainer& ic1)
         {
             *this = *this + ic1;
@@ -71,7 +88,7 @@ namespace secdecutil {
         {
             return add_subtract_multiply_or_divide<subtract>(ic1,ic2);
         };
-        
+
         friend IntegrandContainer operator+(const IntegrandContainer& ic1, const IntegrandContainer& ic2)
         {
             return add_subtract_multiply_or_divide<add>(ic1,ic2);
@@ -94,9 +111,9 @@ namespace secdecutil {
 
         IntegrandContainer()
         {};
-        
+
     };
-    
+
 }
 
 #endif
