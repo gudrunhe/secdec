@@ -1,8 +1,6 @@
 include ../Makefile.conf
 INTEGRAND_STAMPS = $(patsubst sector%%.h,sector%%-stamp,$(wildcard sector*.h))
 
-compile : source
-
 source : $(INTEGRAND_STAMPS)
 
 sector%%-stamp : sector%%.h

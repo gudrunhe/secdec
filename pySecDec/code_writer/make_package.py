@@ -226,14 +226,14 @@ def _parse_global_templates(target_directory, name, regulators, polynomial_names
     file_renamings = {
                           # replace "name" by the name of the integral
                           'name' : name,
-                          'name.hpp' : name + '.hpp',
 
                           # the files below are specific for each sector --> do not parse globally
                           'contour_deformation.h' : None,
                           'sector.h' : None,
 
-                          # "integrands.hpp" can only be written after the decomposition is completed
-                          'integrands.hpp' : None
+                          # "name.hpp" and "integrands.cpp" can only be written after the decomposition is completed
+                          'name.hpp' : None,
+                          'integrands.cpp' : None
                      }
 
     # the files below are only relevant for contour deformation --> do not parse if deactivated
@@ -1061,12 +1061,15 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                                     os.path.join(target_directory, name, 'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest
                                     template_replacements)
 
-    # parse the template file "integrands.hpp"
+    # parse the template files "name.hpp" and "integrands.cpp"
     template_replacements['number_of_sectors'] = sector_index
     template_replacements['lowest_orders'] = _make_FORM_list(lowest_orders)
     template_replacements['highest_orders'] = _make_FORM_list(required_orders)
-    template_replacements['sector_includes'] = ''.join( '#include <%s/integrands/sector_%i.hpp>\n' % (name, i) for i in range(1,sector_index+1) )
+    template_replacements['sector_includes'] = ''.join( '#include "sector_%i.hpp"\n' % i for i in range(1,sector_index+1) )
     template_replacements['sectors_initializer'] = ','.join( 'integrand_of_sector_%i' % i for i in range(1,sector_index+1) )
-    parse_template_file(os.path.join(template_sources, 'name', 'integrands', 'integrands.hpp'), # source
-                        os.path.join(target_directory,  name , 'integrands', 'integrands.hpp'), # dest
+    parse_template_file(os.path.join(template_sources, 'name', 'integrands', 'integrands.cpp'), # source
+                        os.path.join(target_directory,  name , 'integrands', 'integrands.cpp'), # dest
+                        template_replacements)
+    parse_template_file(os.path.join(template_sources, 'name', 'name.hpp'), # source
+                        os.path.join(target_directory,  name ,  name + '.hpp'), # dest
                         template_replacements)

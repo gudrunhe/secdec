@@ -1,15 +1,18 @@
 include ../Makefile.conf
 
-OBJECTS = $(patsubst %%.cpp,%%.o,$(wildcard *.cpp))
+STATIC_OBJECTS = $(patsubst %%.cpp,%%.static.o,$(wildcard *.cpp))
+DYNAMIC_OBJECTS = $(patsubst %%.cpp,%%.dynamic.o,$(wildcard *.cpp))
 
-compile : source integrands.a
-
-# TODO: add option for dynamic library
-integrands.a : $(OBJECTS)
+lib$(NAME).a : $(STATIC_OBJECTS)
 	ar rs $@ $+
+	cd .. && ln integrands/$@
+
+lib$(NAME).so : $(DYNAMIC_OBJECTS)
+	$(CPP) -o $@ -shared $+
+	cd .. && ln integrands/$@
 
 clean:
-	rm -f *.o
+	rm -f *.o lib$(NAME).a lib$(NAME).so
 
 very-clean : clean
-	rm -f sector_*.cpp sector_*.hpp
+	rm -f *sector_*.cpp *sector_*.hpp
