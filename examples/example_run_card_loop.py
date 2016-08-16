@@ -25,8 +25,6 @@ mass_symbols = ['msq']
 
 loop_package(
 
-target_directory = 'pySecDec_loop_integrals',
-
 name = 'triangle',
 
 loop_integral = li,

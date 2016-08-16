@@ -29,8 +29,7 @@ class TestConvertInput(TestMakePackage):
     def setUp(self):
         self.tmpdir = 'tmpdir_test_convert_input_python' + python_major_version
         self.correct_input = dict(
-                                      target_directory=self.tmpdir,
-                                      name='some_integral',
+                                      name=self.tmpdir,
                                       integration_variables=['z0','z1','z2'],
                                       regulators=['eps','alpha'],
                                       requested_orders=[1,2],
