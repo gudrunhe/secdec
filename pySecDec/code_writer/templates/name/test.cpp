@@ -11,7 +11,7 @@
 #include <secdecutil/series.hpp> // Series
 #include <secdecutil/uncertainties.hpp> // GaussianUncertainty
 #include <secdecutil/integrand_container.hpp> // IntegrandContainer
-#include <secdecutil/algorithm.hpp> // transform
+#include <secdecutil/deep_apply.hpp> // deep_apply
 
 #include "%(name)s.hpp"
 
@@ -151,7 +151,7 @@ int main()
 
     print_integral_info();
 
-    const auto sector_integrands = secdecutil::transform( %(name)s::sectors, sector_to_integrand_container<%(name)s::integrand_return_t>(real_parameters, complex_parameters) );
+    const auto sector_integrands = secdecutil::deep_apply( %(name)s::sectors, sector_to_integrand_container<%(name)s::integrand_return_t>(real_parameters, complex_parameters) );
 
     // const auto integrand_container_sum = sector_integrands.at(0) + sector_integrands.at(1); // Example how to add integrand containers
 
@@ -159,7 +159,7 @@ int main()
     const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
 
     // Integrate
-    auto result_all = secdecutil::transform( all_sectors,  cuba_integrate<%(name)s::integrand_return_t,%(name)s::real_t,%(name)s::complex_t>() );
+    auto result_all = secdecutil::deep_apply( all_sectors,  cuba_integrate<%(name)s::integrand_return_t,%(name)s::real_t,%(name)s::complex_t>() );
 
     std::cout << "-- All -- " << std::endl;
     std::cout << result_all << std::endl;
