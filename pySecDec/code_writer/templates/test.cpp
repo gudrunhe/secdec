@@ -2,7 +2,6 @@
 #include <stdexcept>
 #include <vector>
 #include <cstdint>
-#include <cuba.h>
 #include <numeric> // std::accumulate
 #include <functional> // std::bind
 #include <type_traits> // std::remove_const
@@ -40,78 +39,183 @@ void print_integral_info()
     std::cout << std::endl;
 }
 
-// TODO - userdata should be just nest.integrand not nest
-int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
+namespace cuba //TODO: move to SecDecUtil
 {
-    auto& nest = *( reinterpret_cast<secdecutil::IntegrandContainer<%(name)s::integrand_return_t, %(name)s::real_t const * const> *>(userdata) );
-    result[0] = nest.integrand(integration_variables).real(); // TODO: omit ".real()" if return type is real
-    return 0;
-};
+    #include <cuba.h>
 
-template<typename integrand_return_t, typename real_t, typename complex_t>
-std::function<secdecutil::GaussianUncertainty<cubareal>(secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>)>
-cuba_integrate()
-{
-    return [ ] (secdecutil::IntegrandContainer<integrand_return_t, real_t const * const> nest)
+    template<typename T>
+    struct CubaVegas
     {
-        std::cout << "-- Integrating --" << std::endl;
+        static int cuba_integrand_prototype(const int *ndim, const T integration_variables[], const int *ncomp, T result[], void *userdata)
+        {
+            auto& integrand_container = *( reinterpret_cast<secdecutil::IntegrandContainer<T, T const * const> *>(userdata) );
+            result[0] = integrand_container.integrand(integration_variables);
+            return 0;
+        };
+        constexpr static int ncomp = 1;
+        constexpr static int nvec = 1;
+        T epsrel;
+        T epsabs;
+        int flags;
+        int seed;
+        int mineval;
+        int maxeval;
+        int nstart;
+        int nincrease;
+        int nbatch;
+        constexpr static int gridno = 0;
+        constexpr static char * statefile = nullptr;
+        constexpr static void* spin = nullptr;
 
-        struct cuba_parameters_t {
-            int ncomp = 1;
-            int nvec = 1;
-            cubareal epsrel = 1e-2;
-            cubareal epsabs = 1e-16;
-            int verbose = 0;
-            int seed = 0;
-            int mineval = 0;
-            int maxeval = 50000;
-            int nstart = 1000;
-            int nincrease = 500;
-            int nbatch = 1000;
-            int gridno = 0;
-            const char * statefile = nullptr;
-            void* spin = nullptr;
-        } cuba_parameters;
+        CubaVegas(
+            T epsrel = 1e-2,
+            T epsabs = 1e-16,
+            int flags = 0,
+            int seed = 0,
+            int mineval = 0,
+            int maxeval = 50000,
+            int nstart = 1000,
+            int nincrease = 500,
+            int nbatch = 1000
+        ) :
+            epsrel(epsrel),epsabs(epsabs),
+            flags(flags),seed(seed),mineval(mineval),maxeval(maxeval),
+            nstart(nstart),nincrease(nincrease),nbatch(nbatch)
+        {};
 
-        // Cuba output values
-        std::array<cubareal, 1 > integral; // ncomp
-        std::array<cubareal, 1 > error; // ncomp
-        std::array<cubareal, 1 > prob; // ncomp
-        int comp, nregions, neval, fail;
+        std::function<secdecutil::GaussianUncertainty<T>(secdecutil::IntegrandContainer<T, T const * const>)>
+        integrate =
+        [ this ] (secdecutil::IntegrandContainer<T, T const * const> integrand_container)
+        {
+            std::cout << "-- Integrating --" << std::endl;
 
-        // Cuba call
-        // TODO - userdata should be just nest.integrand not nest
-        Vegas(
-              nest.number_of_integration_variables,
-              cuba_parameters.ncomp,
-              cuba_integrand_prototype,
-              reinterpret_cast<void*>(&nest), // userdata
-              cuba_parameters.nvec,
-              cuba_parameters.epsrel,
-              cuba_parameters.epsabs,
-              cuba_parameters.verbose,
-              cuba_parameters.seed,
-              cuba_parameters.mineval,
-              cuba_parameters.maxeval,
-              cuba_parameters.nstart,
-              cuba_parameters.nincrease,
-              cuba_parameters.nbatch,
-              cuba_parameters.gridno,
-              cuba_parameters.statefile,
-              cuba_parameters.spin,
-              &neval,
-              &fail,
-              integral.data(),
-              error.data(),
-              prob.data()
-              );
+            // Cuba output values
+            std::array<T, ncomp> integral;
+            std::array<T, ncomp> error;
+            std::array<T, ncomp> prob;
+            int comp, nregions, neval, fail;
 
-        std::cout << "VEGAS RESULT: " << " neval: " << neval << " fail: " << fail << std::endl;
+            // Cuba call
+            Vegas(
+                  integrand_container.number_of_integration_variables,
+                  ncomp,
+                  cuba_integrand_prototype,
+                  reinterpret_cast<void*>(&integrand_container), // userdata
+                  nvec,
+                  epsrel,
+                  epsabs,
+                  flags,
+                  seed,
+                  mineval,
+                  maxeval,
+                  nstart,
+                  nincrease,
+                  nbatch,
+                  gridno,
+                  statefile,
+                  spin,
+                  &neval,
+                  &fail,
+                  integral.data(),
+                  error.data(),
+                  prob.data()
+                  );
 
-        for( unsigned comp = 0; comp < cuba_parameters.ncomp; comp++)
-            std::cout << integral.at(comp) << " +- " << error.at(comp) << " p = " << prob.at(comp) << std::endl;
+            std::cout << "VEGAS RESULT: " << " neval: " << neval << " fail: " << fail << std::endl;
 
-        return secdecutil::GaussianUncertainty<cubareal>(integral.at(0),error.at(0)); // TODO - allow more components
+            for( unsigned comp = 0; comp < ncomp; comp++)
+                std::cout << integral.at(comp) << " +- " << error.at(comp) << " p = " << prob.at(comp) << std::endl;
+
+            return secdecutil::GaussianUncertainty<T>(integral.at(0),error.at(0));
+        };
+    };
+    template<typename T>
+    struct CubaVegas<std::complex<T>>
+    {
+        static int cuba_integrand_prototype(const int *ndim, const T integration_variables[], const int *ncomp, T result[], void *userdata)
+        {
+            auto& integrand_container = *( reinterpret_cast<secdecutil::IntegrandContainer<std::complex<T>, T const * const> *>(userdata) );
+            std::complex<T> evaluated_integrand = integrand_container.integrand(integration_variables);
+            result[0] = evaluated_integrand.real();
+            result[1] = evaluated_integrand.imag();
+            return 0;
+        };
+        constexpr static int ncomp = 2;
+        constexpr static int nvec = 1;
+        T epsrel;
+        T epsabs;
+        int flags;
+        int seed;
+        int mineval;
+        int maxeval;
+        int nstart;
+        int nincrease;
+        int nbatch;
+        constexpr static int gridno = 0;
+        constexpr static char * statefile = nullptr;
+        constexpr static void* spin = nullptr;
+
+        std::function<secdecutil::GaussianUncertainty<std::complex<T>>(secdecutil::IntegrandContainer<std::complex<T>, T const * const>)>
+        integrate =
+        [ this ] (secdecutil::IntegrandContainer<std::complex<T>, T const * const> integrand_container)
+        {
+            std::cout << "-- Integrating --" << std::endl;
+
+            // Cuba output values
+            std::array<T, ncomp> integral;
+            std::array<T, ncomp> error;
+            std::array<T, ncomp> prob;
+            int comp, nregions, neval, fail;
+
+            // Cuba call
+            Vegas(
+                  integrand_container.number_of_integration_variables,
+                  ncomp,
+                  cuba_integrand_prototype,
+                  reinterpret_cast<void*>(&integrand_container), // userdata
+                  nvec,
+                  epsrel,
+                  epsabs,
+                  flags,
+                  seed,
+                  mineval,
+                  maxeval,
+                  nstart,
+                  nincrease,
+                  nbatch,
+                  gridno,
+                  statefile,
+                  spin,
+                  &neval,
+                  &fail,
+                  integral.data(),
+                  error.data(),
+                  prob.data()
+                  );
+
+            std::cout << "VEGAS RESULT: " << " neval: " << neval << " fail: " << fail << std::endl;
+
+            for( unsigned comp = 0; comp < ncomp; comp++)
+                std::cout << integral.at(comp) << " +- " << error.at(comp) << " p = " << prob.at(comp) << std::endl;
+
+            return secdecutil::GaussianUncertainty<std::complex<T>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)});
+        };
+
+        CubaVegas(
+            T epsrel = 1e-2,
+            T epsabs = 1e-16,
+            int flags = 0,
+            int seed = 0,
+            int mineval = 0,
+            int maxeval = 50000,
+            int nstart = 1000,
+            int nincrease = 500,
+            int nbatch = 1000
+        ) :
+            epsrel(epsrel),epsabs(epsabs),
+            flags(flags),seed(seed),mineval(mineval),maxeval(maxeval),
+            nstart(nstart),nincrease(nincrease),nbatch(nbatch)
+        {};
     };
 };
 
@@ -119,7 +223,7 @@ int main()
 {
     // TODO - write method to parse arguments and check validity
     // User Specified Phase-space point
-    const std::vector<%(name)s::real_t> real_parameters = { 0.9, 0.1 };
+    const std::vector<%(name)s::real_t> real_parameters = { -3., -2. };
     const std::vector<%(name)s::complex_t> complex_parameters = {  };
     if ( real_parameters.size() != %(name)s::number_of_real_parameters )
         throw std::logic_error("Did not set the correct number of real parameters");
@@ -136,7 +240,8 @@ int main()
     const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
 
     // Integrate
-    auto result_all = secdecutil::deep_apply( all_sectors,  cuba_integrate<%(name)s::integrand_return_t,%(name)s::real_t,%(name)s::complex_t>() );
+    auto integrator = cuba::CubaVegas<%(name)s::integrand_return_t>();
+    auto result_all = secdecutil::deep_apply( all_sectors,  integrator.integrate );
 
     std::cout << "-- All -- " << std::endl;
     std::cout << result_all << std::endl;
