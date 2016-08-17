@@ -5,11 +5,11 @@ DYNAMIC_OBJECTS = $(patsubst %%.cpp,%%.dynamic.o,$(wildcard *.cpp))
 
 lib$(NAME).a : $(STATIC_OBJECTS)
 	ar rs $@ $+
-	cd .. && ln integrands/$@
+	cd .. && ln src/$@
 
 lib$(NAME).so : $(DYNAMIC_OBJECTS)
 	$(CPP) -o $@ -shared $+
-	cd .. && ln integrands/$@
+	cd .. && ln src/$@
 
 clean:
 	rm -f *.o lib$(NAME).a lib$(NAME).so

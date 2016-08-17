@@ -1064,8 +1064,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
     template_replacements['highest_orders'] = _make_FORM_list(required_orders)
     template_replacements['sector_includes'] = ''.join( '#include "sector_%i.hpp"\n' % i for i in range(1,sector_index+1) )
     template_replacements['sectors_initializer'] = ','.join( 'integrand_of_sector_%i' % i for i in range(1,sector_index+1) )
-    parse_template_file(os.path.join(template_sources, 'integrands', 'integrands.cpp'), # source
-                        os.path.join(name,             'integrands', 'integrands.cpp'), # dest
+    parse_template_file(os.path.join(template_sources, 'src', 'integrands.cpp'), # source
+                        os.path.join(name,             'src', 'integrands.cpp'), # dest
                         template_replacements)
     parse_template_file(os.path.join(template_sources, 'name.hpp'), # source
                         os.path.join(name,            name + '.hpp'), # dest
