@@ -1,6 +1,8 @@
 #ifndef SecDecUtil_integrand_container_hpp_included
 #define SecDecUtil_integrand_container_hpp_included
 
+#include <functional>
+
 namespace secdecutil {
 
     template <typename T, typename ...Args>

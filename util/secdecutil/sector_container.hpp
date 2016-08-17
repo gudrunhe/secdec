@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <secdecutil/integrand_container.hpp>
 
 namespace secdecutil {
 
@@ -38,7 +39,32 @@ namespace secdecutil {
 
         const unsigned sector_id;
         const unsigned number_of_integration_variables;
-        IntegrandFunction * const integrand;
+        IntegrandFunction * const undeformed_integrand;
+
+        std::shared_ptr<std::vector<real_t>> real_parameters;
+        std::shared_ptr<std::vector<complex_t>> complex_parameters;
+        // "integrand" must be a member function, otherwise we cannot bind the struct
+        integrand_return_t integrand
+        (
+            real_t const * const integration_variables,
+            real_t const * const real_parameters,
+            complex_t const * const complex_parameters
+        )
+        {
+            return undeformed_integrand(integration_variables, real_parameters, complex_parameters);
+        };
+
+        // constructor
+        SectorContainerWithoutDeformation
+        (
+            const unsigned sector_id,
+            const unsigned number_of_integration_variables,
+            IntegrandFunction * const undeformed_integrand
+        ) :
+        sector_id(sector_id),
+        number_of_integration_variables(number_of_integration_variables),
+        undeformed_integrand(undeformed_integrand)
+        {};
     };
 
     template<typename real_t, typename complex_t>
@@ -85,7 +111,6 @@ namespace secdecutil {
 
         // We want to bind the real, complex, and deformation parameters to the integrand.
         // These shared pointers can be used to avoid too early deallocation.
-        // TODO: implement this for `SectorContainerWithoutDeformation` as well.
         std::shared_ptr<std::vector<real_t>> real_parameters;
         std::shared_ptr<std::vector<complex_t>> complex_parameters;
         std::shared_ptr<std::vector<real_t>> deformation_parameters;
@@ -119,5 +144,4 @@ namespace secdecutil {
         {};
     };
 }
-
 #endif
