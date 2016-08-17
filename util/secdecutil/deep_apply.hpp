@@ -2,6 +2,7 @@
 #define SecDecUtil_deep_apply_hpp_included
 
 #include <secdecutil/series.hpp>
+#include <functional>
 #include <vector>
 
 /*!

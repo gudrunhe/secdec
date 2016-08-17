@@ -5,6 +5,8 @@
 #include <complex>
 #include <limits>
 #include <vector>
+#include <secdecutil/deep_apply.hpp>
+#include <secdecutil/integrand_container.hpp>
 #include <secdecutil/sector_container.hpp>
 #include <secdecutil/series.hpp>
 
@@ -27,10 +29,6 @@ namespace %(name)s
     #endif
     // --}
 
-    #undef %(name)s_contour_deformation
-    #undef %(name)s_has_complex_parameters
-
-
     const unsigned int number_of_sectors = %(number_of_sectors)i;
     const unsigned int number_of_regulators = %(number_of_regulators)i; //TODO: names of regulators
     const unsigned int number_of_real_parameters = %(number_of_real_parameters)i; //TODO: names of real_parameters
@@ -40,6 +38,27 @@ namespace %(name)s
     const std::vector<int> requested_orders = {%(requested_orders)s};
     extern const std::vector<%(sector_container_type)s> sectors;
     // TODO: prefactor
+
+    auto make_integrands
+    (
+        const std::vector<real_t>& real_parameters,
+        const std::vector<complex_t>& complex_parameters
+        #if %(name)s_contour_deformation
+            ,unsigned number_of_samples = 10000,
+            real_t deformation_parameters_initial_guess = 1.
+        #endif
+    )
+    -> decltype
+    (
+        #if %(name)s_contour_deformation
+            secdecutil::deep_apply( sectors, secdecutil::SectorContainerWithDeformation_to_IntegrandContainer(real_parameters, complex_parameters) )
+        #else
+            secdecutil::deep_apply( sectors, secdecutil::SectorContainerWithoutDeformation_to_IntegrandContainer<integrand_return_t>(real_parameters, complex_parameters) )
+        #endif
+    );
+
+    #undef %(name)s_contour_deformation
+    #undef %(name)s_has_complex_parameters
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////

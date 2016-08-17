@@ -44,7 +44,7 @@ void print_integral_info()
 int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
 {
     auto& nest = *( reinterpret_cast<secdecutil::IntegrandContainer<%(name)s::integrand_return_t, %(name)s::real_t const * const> *>(userdata) );
-    result[0] = nest.integrand(integration_variables).real();
+    result[0] = nest.integrand(integration_variables).real(); // TODO: omit ".real()" if return type is real
     return 0;
 };
 
@@ -128,7 +128,7 @@ int main()
 
     print_integral_info();
 
-    const auto sector_integrands = secdecutil::deep_apply( %(name)s::sectors, secdecutil::SectorContainerWithDeformation_to_IntegrandContainer(real_parameters, complex_parameters) );
+    const auto sector_integrands = %(name)s::make_integrands(real_parameters, complex_parameters);
 
     // const auto integrand_container_sum = sector_integrands.at(0) + sector_integrands.at(1); // Example how to add integrand containers
 
