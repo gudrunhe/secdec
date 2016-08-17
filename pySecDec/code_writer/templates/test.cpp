@@ -10,6 +10,7 @@
 
 #include <secdecutil/series.hpp> // Series
 #include <secdecutil/uncertainties.hpp> // GaussianUncertainty
+#include <secdecutil/sector_container.hpp> // SectorContainer to IntegrandContainer
 #include <secdecutil/integrand_container.hpp> // IntegrandContainer
 #include <secdecutil/deep_apply.hpp> // deep_apply
 
@@ -114,30 +115,6 @@ cuba_integrate()
     };
 };
 
-// TODO - Move to secdecutil
-template<typename integrand_return_t, typename real_t, typename complex_t>
-std::function<secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
-sector_to_integrand_container( const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
-{
-    auto shared_real_parameters = std::make_shared<std::vector<%(name)s::real_t>>(real_parameters);
-    auto shared_complex_parameters = std::make_shared<std::vector<%(name)s::complex_t>>(complex_parameters);
-
-    return [ shared_real_parameters, shared_complex_parameters ] (secdecutil::SectorContainerWithDeformation<real_t,complex_t> nest)
-    {
-        nest.real_parameters = shared_real_parameters;
-        nest.complex_parameters = shared_complex_parameters;
-
-        nest.deformation_parameters = std::make_shared<std::vector<%(name)s::real_t>>(nest.number_of_integration_variables,1.);
-        // TODO call optimize lambda;
-
-        auto nest_integrand = std::bind(&secdecutil::SectorContainerWithDeformation<real_t,complex_t>::integrand, nest,
-                                        std::placeholders::_1, nest.real_parameters->data(), nest.complex_parameters->data(),
-                                        nest.deformation_parameters->data());
-
-        return secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>(nest.number_of_integration_variables, nest_integrand );
-    };
-};
-
 int main()
 {
     // TODO - write method to parse arguments and check validity
@@ -151,7 +128,7 @@ int main()
 
     print_integral_info();
 
-    const auto sector_integrands = secdecutil::deep_apply( %(name)s::sectors, sector_to_integrand_container<%(name)s::integrand_return_t>(real_parameters, complex_parameters) );
+    const auto sector_integrands = secdecutil::deep_apply( %(name)s::sectors, secdecutil::SectorContainerWithDeformation_to_IntegrandContainer(real_parameters, complex_parameters) );
 
     // const auto integrand_container_sum = sector_integrands.at(0) + sector_integrands.at(1); // Example how to add integrand containers
 
