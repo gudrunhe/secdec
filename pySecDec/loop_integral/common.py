@@ -178,10 +178,12 @@ class LoopIntegral(object):
                 power0 = power_sp.subs(regulator,0)
                 assert power0.is_Number, "The propagator powers must be numbers for vanishing regulator."
                 self.powerlist.append(power_sp)
-                if power0.is_positive:
+                if power0 >= 1:
                     self.derivativelist.append(0)
+                elif power0.is_Integer:
+                    self.derivativelist.append(abs(power0))
                 else:
-                    self.derivativelist.append(int(abs(floor(power0))))
+                    self.derivativelist.append(int(abs(floor(power0))) + 1)
 
             self.number_of_derivatives = sum(self.derivativelist)
 
