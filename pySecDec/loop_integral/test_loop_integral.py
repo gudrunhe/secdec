@@ -1213,18 +1213,25 @@ class TestPowerlist(unittest.TestCase):
         li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist,
                                          replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
-        power0 = powerlist[2].subs(li.regulator,0)
-        if power0<0:
-            number_of_derivatives = int(abs(floor(power0)))
-        else:
-            number_of_derivatives = 0
+        number_of_derivatives = { '1': 0,
+                                  '0': 0,
+                                  '-1': 1,
+                                  '-2': 2,
+                                  '-3': 3,
+                                  '1+eps': 0,
+                                  'eps': 0,
+                                  '-1+eps': 1,
+                                  '-2+eps': 2,
+                                  '1/2+eps': 0,
+                                  '-1/2+eps': 1,
+                                  '-3/2': 2 }
 
         # The powers *cannot* be compared against SecDec3 because the implementation is different!
-        target_exponent_U = sum(powerlist) - number_of_derivatives - (li.L + 1)*li.dimensionality/2
-        target_exponent_F = - (sum(powerlist) + number_of_derivatives - li.L*li.dimensionality/2)
+        target_exponent_U = sum(powerlist) - number_of_derivatives[power] - (li.L + 1)*li.dimensionality/2
+        target_exponent_F = - (sum(powerlist) + number_of_derivatives[power] - li.L*li.dimensionality/2)
         target_gamma = sp.gamma((sum(powerlist) - li.L*li.dimensionality/2))
-        if (powerlist[2] + number_of_derivatives) !=0:
-            target_gamma /= sp.gamma(powerlist[2] + number_of_derivatives)
+        if (powerlist[2] + number_of_derivatives[power]) !=0:
+            target_gamma /= sp.gamma(powerlist[2] + number_of_derivatives[power])
 
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
