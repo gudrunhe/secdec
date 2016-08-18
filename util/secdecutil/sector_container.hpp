@@ -155,7 +155,7 @@ namespace secdecutil {
     template<typename real_t, typename complex_t>
     std::function<secdecutil::IntegrandContainer<complex_t, real_t const * const>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
     SectorContainerWithDeformation_to_IntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters,
-                                          unsigned number_of_samples = 10000, real_t deformation_parameters_initial_guess = 1.)
+                                                         unsigned number_of_samples = 10000, real_t deformation_parameters_initial_guess = 1.)
     {
         auto shared_real_parameters = std::make_shared<std::vector<real_t>>(real_parameters);
         auto shared_complex_parameters = std::make_shared<std::vector<complex_t>>(complex_parameters);
