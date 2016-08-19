@@ -6,6 +6,7 @@
  * the CUBA integrator library.
  */
 
+#include <array>
 #include <complex>
 #include <cuba.h>
 #include <secdecutil/integrand_container.hpp>
