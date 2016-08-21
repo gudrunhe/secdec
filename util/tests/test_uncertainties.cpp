@@ -146,6 +146,31 @@ TEST_CASE( "Compound Assignment Operators real zero uncertainty", "[GaussianUnce
 
 };
 
+TEST_CASE( "Compound Assignment Operators real zero value", "[GaussianUncertainty]" ) {
+
+    auto gu1 = secdecutil::GaussianUncertainty<double>(0.,1.);
+    auto gu2 = secdecutil::GaussianUncertainty<double>(1.,2.);
+
+    SECTION( "*=" )
+    {
+
+        gu1 *= gu2;
+        REQUIRE( gu1.value == Approx(0.) );
+        REQUIRE( gu1.uncertainty == Approx( 1. ) );
+
+    };
+
+    SECTION( "/=" )
+    {
+
+        gu1 /= gu2;
+        REQUIRE( gu1.value == Approx(0.) );
+        REQUIRE( gu1.uncertainty == Approx( 1. ) );
+
+    };
+
+};
+
 TEST_CASE( "Compound Assignment Operators complex", "[GaussianUncertainty]" ) {
 
     auto gu1 = secdecutil::GaussianUncertainty<dcmplx>({-1.,2.},{4.,4.});

@@ -70,7 +70,7 @@ namespace secdecutil {
         {
             T old_value = this->value;
             this->value *= gu1.value;
-            this->uncertainty = std::abs(this->value) * std::sqrt( this->uncertainty/old_value*this->uncertainty/old_value + gu1.uncertainty/gu1.value*gu1.uncertainty/gu1.value );
+            this->uncertainty = std::sqrt( this->uncertainty*gu1.value*this->uncertainty*gu1.value + gu1.uncertainty*old_value*gu1.uncertainty*old_value );
             return *this;
         };
         template<typename Tinner>
@@ -96,7 +96,7 @@ namespace secdecutil {
         {
             T old_value = this->value;
             this->value /= gu1.value;
-            this->uncertainty = std::abs(this->value) * std::sqrt( this->uncertainty/old_value*this->uncertainty/old_value + gu1.uncertainty/gu1.value*gu1.uncertainty/gu1.value );
+            this->uncertainty = std::sqrt( this->uncertainty*this->uncertainty/(gu1.value*gu1.value) + this->value*this->value*gu1.uncertainty*gu1.uncertainty/(gu1.value*gu1.value) );
             return *this;
         };
         template<typename Tinner>
@@ -163,7 +163,12 @@ namespace secdecutil {
          *  Constructor
          */
         GaussianUncertainty(T value, T uncertainty):
-        value (value), uncertainty(uncertainty)
+        value(value), uncertainty(uncertainty)
+        {};
+
+        // construct with zero uncertainty
+        GaussianUncertainty(T value):
+        value(value), uncertainty(0)
         {};
 
     };
