@@ -5,7 +5,8 @@ from .make_package import *
 from .make_package import _convert_input, _make_FORM_definition, \
                           _make_FORM_function_definition, _make_FORM_list, \
                           _derivative_muliindex_to_name, _make_FORM_shifted_orders, \
-                          _make_FORM_Series_initilization, _validate
+                          _make_FORM_Series_initilization, _validate, \
+                          _make_prefactor_function
 from ..algebra import Function, Polynomial, Product, ProductRule, Sum
 from nose.plugins.attrib import attr
 import sys, shutil
@@ -505,3 +506,93 @@ class TestMiscellaneous(unittest.TestCase):
         target_FORM_code += '#define shiftedRegulator3PowerOrder3 "1"'
 
         self.assertEqual(FORM_code, target_FORM_code)
+
+class TestWriteCppCode(unittest.TestCase):
+    #@attr('active')
+    def test_one_regulator(self):
+        expanded_prefactor = Polynomial([[-1],[0],[1]],['-c0','r0','r1'], ['eps'])
+        real_parameters = sp.sympify(['r0','r1'])
+        complex_parameters = sp.sympify(['c0'])
+
+        for i in range(2):
+            if i == 0:
+                expanded_prefactor.truncated = True
+            else:
+                expanded_prefactor.truncated = False
+
+            cpp_code = _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters)
+
+            target_cpp_code  =         '#define r0 real_parameters.at(0)\n'
+            target_cpp_code += '        #define r1 real_parameters.at(1)\n'
+            target_cpp_code += '        #define c0 complex_parameters.at(0)\n'
+            if i == 0:
+                target_cpp_code += '        return {-1,1,{{-c0},{r0},{r1}},true};\n'
+            else:
+                target_cpp_code += '        return {-1,1,{{-c0},{r0},{r1}},false};\n'
+            target_cpp_code += '        #undef r0\n'
+            target_cpp_code += '        #undef r1\n'
+            target_cpp_code += '        #undef c0'
+
+            print('i =', i)
+            print('cpp_code')
+            print(cpp_code)
+            print()
+            print('target_cpp_code')
+            print(target_cpp_code)
+            print('-----')
+
+            self.assertEqual(cpp_code, target_cpp_code)
+
+    #@attr('active')
+    def test_two_regulators(self):
+        symbols = sp.sympify(['alpha','eps'])
+        alpha_coeffs = [
+                           Polynomial([[0,0],[0,1]], ['r0','c1'], symbols),
+                           Polynomial([[0,-1]], ['c1'], symbols),
+                           Polynomial([[0,1],[0,2]], ['c0','c1'], symbols)
+                       ]
+        expanded_prefactor = Polynomial([[-1,0],[0,0],[1,0]], alpha_coeffs, symbols)
+        real_parameters = sp.sympify(['r0'])
+        complex_parameters = sp.sympify(['c0','c1'])
+
+        true_or_false = lambda b: 'true' if b else 'false'
+
+        for i in range(3):
+            if i == 0:
+                expanded_prefactor.truncated = False
+                for coeff in expanded_prefactor.coeffs:
+                    coeff.truncated = True
+            elif i == 1:
+                expanded_prefactor.truncated = True
+                for coeff in expanded_prefactor.coeffs:
+                    coeff.truncated = False
+            else:
+                expanded_prefactor.truncated = True
+                expanded_prefactor.coeffs[0].truncated = False
+                expanded_prefactor.coeffs[1].truncated = True
+                expanded_prefactor.coeffs[2].truncated = False
+
+            cpp_code = _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters)
+
+            target_cpp_code  =         '#define r0 real_parameters.at(0)\n'
+            target_cpp_code += '        #define c0 complex_parameters.at(0)\n'
+            target_cpp_code += '        #define c1 complex_parameters.at(1)\n'
+
+            target_cpp_code += '        return {-1,1,{'
+            target_cpp_code +=             '{0,1,{{r0},{c1}},%s},' % true_or_false(expanded_prefactor.coeffs[0].truncated)
+            target_cpp_code +=             '{-1,-1,{{c1}},%s},' % true_or_false(expanded_prefactor.coeffs[1].truncated)
+            target_cpp_code +=             '{1,2,{{c0},{c1}},%s}' % true_or_false(expanded_prefactor.coeffs[2].truncated)
+            target_cpp_code +=         '},%s};\n' % true_or_false(expanded_prefactor.truncated)
+
+            target_cpp_code += '        #undef r0\n'
+            target_cpp_code += '        #undef c0\n'
+            target_cpp_code += '        #undef c1'
+
+            print('i =', i)
+            print(cpp_code)
+            print()
+            print(target_cpp_code)
+            print()
+            print('-------------------------')
+
+            self.assertEqual(cpp_code, target_cpp_code)

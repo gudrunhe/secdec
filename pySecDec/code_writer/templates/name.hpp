@@ -9,6 +9,7 @@
 #include <secdecutil/integrand_container.hpp>
 #include <secdecutil/sector_container.hpp>
 #include <secdecutil/series.hpp>
+#include <secdecutil/uncertainties.hpp>
 
 namespace %(name)s
 {
@@ -37,7 +38,7 @@ namespace %(name)s
     const std::vector<int> highest_orders = {%(highest_orders)s}; // not including the prefactor // TODO: highest_prefactor_orders
     const std::vector<int> requested_orders = {%(requested_orders)s};
     extern const std::vector<%(sector_container_type)s> sectors;
-    // TODO: prefactor
+    %(prefactor_type)s  prefactor(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters);
 
     auto make_integrands
     (

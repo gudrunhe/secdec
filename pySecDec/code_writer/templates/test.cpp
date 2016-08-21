@@ -65,8 +65,15 @@ int main()
     integrator.flags = 2; // verbose output --> see cuba manual
     auto result_all = secdecutil::deep_apply( all_sectors,  integrator.integrate );
 
-    std::cout << "-- All -- " << std::endl;
-    std::cout << result_all << std::endl;
+    std::cout << "-- integral without prefactor -- " << std::endl;
+    std::cout << result_all << std::endl << std::endl;
+
+    std::cout << "-- prefactor -- " << std::endl;
+    auto prefactor = %(name)s::prefactor(real_parameters, complex_parameters);
+    std::cout << prefactor << std::endl << std::endl;
+
+    std::cout << "-- full result (prefactor*integral) -- " << std::endl;
+    std::cout << prefactor*result_all << std::endl;
 
     return 0;
 }

@@ -14,7 +14,7 @@ from ..algebra import _Expression, Expression, Polynomial, \
 from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort
 from ..subtraction import integrate_pole_part
-from ..expansion import expand_singular, expand_Taylor
+from ..expansion import expand_singular, expand_Taylor, expand_sympy
 from ..misc import lowest_order
 from .template_parser import parse_template_file, parse_template_tree
 from itertools import chain
@@ -231,9 +231,10 @@ def _parse_global_templates(name, regulators, polynomial_names,
                           'contour_deformation.h' : None,
                           'sector.h' : None,
 
-                          # "name.hpp" and "integrands.cpp" can only be written after the decomposition is completed
+                          # "integrands.cpp", "name.hpp", and "prefactor.cpp" can only be written after the decomposition is completed
+                          'integrands.cpp' : None,
                           'name.hpp' : None,
-                          'integrands.cpp' : None
+                          'prefactor.cpp' : None
                      }
 
     # the files below are only relevant for contour deformation --> do not parse if deactivated
@@ -444,6 +445,43 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_d
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
 
     return recursion(0)
+
+
+# ---------------------------------- write c++ code ---------------------------------
+def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters):
+    regulators = expanded_prefactor.polysymbols
+    last_regulator_index = len(regulators) - 1
+
+    def recursion(regulator_index,expression):
+        orders = expression.expolist[:,regulator_index]
+        min_order = orders.min()
+        max_order = orders.max()
+        if regulator_index < last_regulator_index:
+            outstr_body_snippets = []
+            outstr_head = '{%i,%i,{' % (min_order,max_order)
+            for coeff in expression.coeffs:
+                outstr_body_snippets.append( recursion(regulator_index + 1, coeff) )
+            outstr_tail = '},true}' if expression.truncated else '},false}'
+            return ''.join( (outstr_head, ','.join(outstr_body_snippets), outstr_tail) )
+        else: # regulator_index == last_regulator_index; i.e. processing last regulator
+            outstr_head = '{%i,%i,{{' % (min_order,max_order)
+            outstr_body_snippets = []
+            for coeff in expression.coeffs:
+                outstr_body_snippets.append( str(coeff.evalf(20)) )
+            outstr_tail = '}},true}' if expression.truncated else '}},false}'
+            return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
+
+    parameter_definitions = []
+    parameter_undefs = []
+    for real_or_complex in ('real','complex'):
+        for i,p in enumerate(eval(real_or_complex+'_parameters')):
+            parameter_definitions.append('#define %s %s_parameters.at(%i)' % (p,real_or_complex,i))
+            parameter_undefs.append('#undef %s' % p)
+    parameter_definitions = '\n'.join(parameter_definitions)
+    parameter_undefs = '\n'.join(parameter_undefs)
+
+    code = parameter_definitions + '\nreturn ' + recursion(0,expanded_prefactor) + ';\n' + parameter_undefs
+    return code.replace('\n', '\n        ')
 
 
 # ---------------------------------- main function ----------------------------------
@@ -1058,7 +1096,18 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                     os.path.join(name,             'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest
                                     template_replacements)
 
-    # parse the template files "name.hpp" and "integrands.cpp"
+    # expand the `prefactor` to the required orders
+    required_prefactor_orders = requested_orders - lowest_orders
+    expanded_prefactor = expand_sympy(prefactor, regulators, required_prefactor_orders)
+
+    # pack the `prefactor` into c++ function that returns a nested `Series`
+    # and takes the `real_parameters` and the `complex_parameters`
+    prefactor_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::GaussianUncertainty<' + 'integrand_return_t' + '>' * (len(regulators) + 1)
+    prefactor_function_body = _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters)
+
+    # parse the template files "integrands.cpp", "name.hpp", and "prefactor.cpp"
+    template_replacements['prefactor_type'] = prefactor_type
+    template_replacements['prefactor_function_body'] = prefactor_function_body
     template_replacements['number_of_sectors'] = sector_index
     template_replacements['lowest_orders'] = _make_FORM_list(lowest_orders)
     template_replacements['highest_orders'] = _make_FORM_list(required_orders)
@@ -1069,4 +1118,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                         template_replacements)
     parse_template_file(os.path.join(template_sources, 'name.hpp'), # source
                         os.path.join(name,            name + '.hpp'), # dest
+                        template_replacements)
+    parse_template_file(os.path.join(template_sources, 'src', 'prefactor.cpp'), # source
+                        os.path.join(name,             'src', 'prefactor.cpp'), # dest
                         template_replacements)
