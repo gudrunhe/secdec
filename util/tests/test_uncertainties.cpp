@@ -6,23 +6,31 @@
 
 using dcmplx = std::complex<double>;
 
-TEST_CASE( "Constructor", "[GaussianUncertainty]" ) {
-
-    double one = 1.;
-    double two = 2.;
-
-    REQUIRE_NOTHROW(secdecutil::GaussianUncertainty<double>(one,two));
-
-};
-
 TEST_CASE( "Access Fields", "[GaussianUncertainty]" ) {
 
     double one = 1.;
     double two = 2.;
-    auto gu1 = secdecutil::GaussianUncertainty<double>(one,two);
 
-    REQUIRE( gu1.value == one );
-    REQUIRE( gu1.uncertainty == two );
+    SECTION( "with uncertainty" )
+    {
+
+        auto gu1 = secdecutil::GaussianUncertainty<double>(one,two);
+
+        REQUIRE( gu1.value == one );
+        REQUIRE( gu1.uncertainty == two );
+
+    }
+
+    SECTION( "zero uncertainty" )
+    {
+
+        auto gu1 = secdecutil::GaussianUncertainty<double>(one);
+
+        REQUIRE( gu1.value == one );
+        REQUIRE( gu1.uncertainty == 0 );
+
+    }
+
 
 };
 
@@ -108,6 +116,31 @@ TEST_CASE( "Compound Assignment Operators real", "[GaussianUncertainty]" ) {
         gu1 /= gu2;
         REQUIRE( gu1.value == Approx( -1./3.) );
         REQUIRE( gu1.uncertainty == Approx( 1./3. * std::sqrt(61./9.) ) );
+
+    };
+
+};
+
+TEST_CASE( "Compound Assignment Operators real zero uncertainty", "[GaussianUncertainty]" ) {
+
+    auto gu1 = secdecutil::GaussianUncertainty<double>(-1.,2.);
+    auto gu2 = secdecutil::GaussianUncertainty<double>(3.);
+
+    SECTION( "*=" )
+    {
+
+        gu1 *= gu2;
+        REQUIRE( gu1.value == Approx(-3.) );
+        REQUIRE( gu1.uncertainty == Approx( 6. ) );
+
+    };
+
+    SECTION( "/=" )
+    {
+
+        gu1 /= gu2;
+        REQUIRE( gu1.value == Approx( -1./3.) );
+        REQUIRE( gu1.uncertainty == Approx( 2./3. ) );
 
     };
 
