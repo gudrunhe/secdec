@@ -51,8 +51,6 @@ int main()
     if ( complex_parameters.size() != + %(name)s::number_of_complex_parameters )
         throw std::logic_error("Did not set the correct number of complex parameters");
 
-    print_integral_info();
-
     const auto sector_integrands = %(name)s::make_integrands(real_parameters, complex_parameters);
 
     // const auto integrand_container_sum = sector_integrands.at(0) + sector_integrands.at(1); // Example how to add integrand containers
@@ -64,6 +62,12 @@ int main()
     auto integrator = secdecutil::cuba::Vegas<%(name)s::integrand_return_t>();
     integrator.flags = 2; // verbose output --> see cuba manual
     auto result_all = secdecutil::deep_apply( all_sectors,  integrator.integrate );
+
+    std::cout << "------------" << std::endl << std::endl;
+
+    std::cout << "-- integral info -- " << std::endl;
+    print_integral_info();
+    std::cout << std::endl;
 
     std::cout << "-- integral without prefactor -- " << std::endl;
     std::cout << result_all << std::endl << std::endl;
