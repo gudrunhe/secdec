@@ -6,7 +6,7 @@
 
 using dcmplx = std::complex<double>;
 
-TEST_CASE( "Access Fields", "[GaussianUncertainty]" ) {
+TEST_CASE( "Access Fields", "[UncorrelatedDeviation]" ) {
 
     double one = 1.;
     double two = 2.;
@@ -14,7 +14,7 @@ TEST_CASE( "Access Fields", "[GaussianUncertainty]" ) {
     SECTION( "with uncertainty" )
     {
 
-        auto gu1 = secdecutil::GaussianUncertainty<double>(one,two);
+        auto gu1 = secdecutil::UncorrelatedDeviation<double>(one,two);
 
         REQUIRE( gu1.value == one );
         REQUIRE( gu1.uncertainty == two );
@@ -24,7 +24,7 @@ TEST_CASE( "Access Fields", "[GaussianUncertainty]" ) {
     SECTION( "zero uncertainty" )
     {
 
-        auto gu1 = secdecutil::GaussianUncertainty<double>(one);
+        auto gu1 = secdecutil::UncorrelatedDeviation<double>(one);
 
         REQUIRE( gu1.value == one );
         REQUIRE( gu1.uncertainty == 0 );
@@ -34,9 +34,9 @@ TEST_CASE( "Access Fields", "[GaussianUncertainty]" ) {
 
 };
 
-TEST_CASE( "Unary Operators real", "[GaussianUncertainty]" ) {
+TEST_CASE( "Unary Operators real", "[UncorrelatedDeviation]" ) {
 
-    auto gu1 = secdecutil::GaussianUncertainty<double>(3.,5.);
+    auto gu1 = secdecutil::UncorrelatedDeviation<double>(3.,5.);
 
     SECTION( "+" )
     {
@@ -56,9 +56,9 @@ TEST_CASE( "Unary Operators real", "[GaussianUncertainty]" ) {
 
 };
 
-TEST_CASE( "Unary Operators complex", "[GaussianUncertainty]" ) {
+TEST_CASE( "Unary Operators complex", "[UncorrelatedDeviation]" ) {
 
-    auto gu1 = secdecutil::GaussianUncertainty<dcmplx>({3.,1.},{5.,2.});
+    auto gu1 = secdecutil::UncorrelatedDeviation<dcmplx>({3.,1.},{5.,2.});
 
     SECTION( "+" )
     {
@@ -78,10 +78,10 @@ TEST_CASE( "Unary Operators complex", "[GaussianUncertainty]" ) {
 
 };
 
-TEST_CASE( "Compound Assignment Operators real", "[GaussianUncertainty]" ) {
+TEST_CASE( "Compound Assignment Operators real", "[UncorrelatedDeviation]" ) {
 
-    auto gu1 = secdecutil::GaussianUncertainty<double>(-1.,2.);
-    auto gu2 = secdecutil::GaussianUncertainty<double>(3.,5.);
+    auto gu1 = secdecutil::UncorrelatedDeviation<double>(-1.,2.);
+    auto gu2 = secdecutil::UncorrelatedDeviation<double>(3.,5.);
 
     SECTION( "+=" )
     {
@@ -121,10 +121,10 @@ TEST_CASE( "Compound Assignment Operators real", "[GaussianUncertainty]" ) {
 
 };
 
-TEST_CASE( "Compound Assignment Operators real zero uncertainty", "[GaussianUncertainty]" ) {
+TEST_CASE( "Compound Assignment Operators real zero uncertainty", "[UncorrelatedDeviation]" ) {
 
-    auto gu1 = secdecutil::GaussianUncertainty<double>(-1.,2.);
-    auto gu2 = secdecutil::GaussianUncertainty<double>(3.);
+    auto gu1 = secdecutil::UncorrelatedDeviation<double>(-1.,2.);
+    auto gu2 = secdecutil::UncorrelatedDeviation<double>(3.);
 
     SECTION( "*=" )
     {
@@ -146,35 +146,10 @@ TEST_CASE( "Compound Assignment Operators real zero uncertainty", "[GaussianUnce
 
 };
 
-TEST_CASE( "Compound Assignment Operators real zero value", "[GaussianUncertainty]" ) {
+TEST_CASE( "Compound Assignment Operators complex", "[UncorrelatedDeviation]" ) {
 
-    auto gu1 = secdecutil::GaussianUncertainty<double>(0.,1.);
-    auto gu2 = secdecutil::GaussianUncertainty<double>(1.,2.);
-
-    SECTION( "*=" )
-    {
-
-        gu1 *= gu2;
-        REQUIRE( gu1.value == Approx(0.) );
-        REQUIRE( gu1.uncertainty == Approx( 1. ) );
-
-    };
-
-    SECTION( "/=" )
-    {
-
-        gu1 /= gu2;
-        REQUIRE( gu1.value == Approx(0.) );
-        REQUIRE( gu1.uncertainty == Approx( 1. ) );
-
-    };
-
-};
-
-TEST_CASE( "Compound Assignment Operators complex", "[GaussianUncertainty]" ) {
-
-    auto gu1 = secdecutil::GaussianUncertainty<dcmplx>({-1.,2.},{4.,4.});
-    auto gu2 = secdecutil::GaussianUncertainty<dcmplx>({3.,-2.},{3.,3.});
+    auto gu1 = secdecutil::UncorrelatedDeviation<dcmplx>({-1.,2.},{4.,4.});
+    auto gu2 = secdecutil::UncorrelatedDeviation<dcmplx>({3.,-2.},{3.,3.});
 
     SECTION( "+=" )
     {
@@ -222,10 +197,10 @@ TEST_CASE( "Compound Assignment Operators complex", "[GaussianUncertainty]" ) {
 
 };
 
-TEST_CASE( "Binary Operators real", "[GaussianUncertainty]" ) {
+TEST_CASE( "Binary Operators real", "[UncorrelatedDeviation]" ) {
 
-    auto gu1 = secdecutil::GaussianUncertainty<double>(-6.,8.);
-    auto gu2 = secdecutil::GaussianUncertainty<double>(4.,1.);
+    auto gu1 = secdecutil::UncorrelatedDeviation<double>(-6.,8.);
+    auto gu2 = secdecutil::UncorrelatedDeviation<double>(4.,1.);
 
     SECTION( "+" )
     {
@@ -263,10 +238,10 @@ TEST_CASE( "Binary Operators real", "[GaussianUncertainty]" ) {
     };
 };
 
-TEST_CASE( "Binary Operators complex", "[GaussianUncertainty]" ) {
+TEST_CASE( "Binary Operators complex", "[UncorrelatedDeviation]" ) {
 
-    auto gu1 = secdecutil::GaussianUncertainty<dcmplx>({-1.,2.},{4.,6.});
-    auto gu2 = secdecutil::GaussianUncertainty<dcmplx>({3.,-2.},{3.,8.});
+    auto gu1 = secdecutil::UncorrelatedDeviation<dcmplx>({-1.,2.},{4.,6.});
+    auto gu2 = secdecutil::UncorrelatedDeviation<dcmplx>({3.,-2.},{3.,8.});
 
     SECTION( "+" )
     {
@@ -313,18 +288,18 @@ TEST_CASE( "Binary Operators complex", "[GaussianUncertainty]" ) {
 
 };
 
-TEST_CASE( "Printing real", "[GaussianUncertainty]" ) {
+TEST_CASE( "Printing real", "[UncorrelatedDeviation]" ) {
 
-    auto gu = secdecutil::GaussianUncertainty<double>(1.0,0.5);
+    auto gu = secdecutil::UncorrelatedDeviation<double>(1.0,0.5);
     std::stringstream output;
     output << gu;
     REQUIRE( output.str() == "1 +/- 0.5" );
 
 };
 
-TEST_CASE( "Printing complex", "[GaussianUncertainty]" ) {
+TEST_CASE( "Printing complex", "[UncorrelatedDeviation]" ) {
 
-    auto gu = secdecutil::GaussianUncertainty<std::complex<double>>({1.0,1.5},{0.5,0.1});
+    auto gu = secdecutil::UncorrelatedDeviation<std::complex<double>>({1.0,1.5},{0.5,0.1});
     std::stringstream output;
     output << gu;
     REQUIRE( output.str() == "(1,1.5) +/- (0.5,0.1)" );

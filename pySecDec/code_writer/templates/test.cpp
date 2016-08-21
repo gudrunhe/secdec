@@ -9,7 +9,7 @@
 
 #include <secdecutil/cuba.hpp> // Vegas
 #include <secdecutil/series.hpp> // Series
-#include <secdecutil/uncertainties.hpp> // GaussianUncertainty
+#include <secdecutil/uncertainties.hpp> // UncorrelatedDeviation
 #include <secdecutil/sector_container.hpp> // SectorContainer to IntegrandContainer
 #include <secdecutil/integrand_container.hpp> // IntegrandContainer
 #include <secdecutil/deep_apply.hpp> // deep_apply

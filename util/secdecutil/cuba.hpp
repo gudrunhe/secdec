@@ -96,12 +96,12 @@ namespace secdecutil
             constexpr static int ncomp = 1;
             VEGAS_BODY
 
-            std::function<secdecutil::GaussianUncertainty<T>(secdecutil::IntegrandContainer<T, T const * const>)>
+            std::function<secdecutil::UncorrelatedDeviation<T>(secdecutil::IntegrandContainer<T, T const * const>)>
             integrate =
             [ this ] (secdecutil::IntegrandContainer<T, T const * const> integrand_container)
             {
                 VEGAS_INTEGRATE_BODY
-                return secdecutil::GaussianUncertainty<T>(integral.at(0),error.at(0));
+                return secdecutil::UncorrelatedDeviation<T>(integral.at(0),error.at(0));
             };
         };
         template<typename T>
@@ -119,12 +119,12 @@ namespace secdecutil
             constexpr static int ncomp = 2;
             VEGAS_BODY
 
-            std::function<secdecutil::GaussianUncertainty<std::complex<T>>(secdecutil::IntegrandContainer<std::complex<T>, T const * const>)>
+            std::function<secdecutil::UncorrelatedDeviation<std::complex<T>>(secdecutil::IntegrandContainer<std::complex<T>, T const * const>)>
             integrate =
             [ this ] (secdecutil::IntegrandContainer<std::complex<T>, T const * const> integrand_container)
             {
                 VEGAS_INTEGRATE_BODY
-                return secdecutil::GaussianUncertainty<std::complex<T>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)});
+                return secdecutil::UncorrelatedDeviation<std::complex<T>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)});
             };
         };
         #undef VEGAS_BODY
