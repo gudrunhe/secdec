@@ -182,6 +182,22 @@ B `regulators';
 
 * }
 
+* simplify again
+  #Do depth = 0, `insertionDepth'
+    #call beginArgumentDepth(`depth')
+      Denominators SecDecInternalDenominator;
+      factarg,(-1),SecDecInternalDenominator;
+      chainout SecDecInternalDenominator;
+      Id log(1) = 0;
+      repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
+      repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
+      repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
+      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+      repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
+    #call endArgumentDepth(`depth')
+    .sort
+  #EndDo
+
 * Analytically cancel the subtraction terms to avoid numerical instabilities.
 * We bring all terms that come with a "1/integration_variable" factor to a common
 * denominator.
@@ -499,7 +515,7 @@ multiply replace_(I,i_);
               #EndIf
             #EndDo
           #EndIf
-        #EndDo      
+        #EndDo
       #EndIf
 
 *     define the argument for "replace_" that sets all regulators to zero
