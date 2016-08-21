@@ -170,7 +170,12 @@ namespace secdecutil {
          */
         Series operator-() const
         {
-            return *this * (-1);
+            std::vector<T> content;
+            content.reserve(this->order_max-this->order_min+1);
+            for ( int i = this->order_min; i < this->order_max + 1; i++ )
+                content.push_back(-this->at(i));
+
+            return Series(this->order_min, this->order_max, content, this->truncated_above);
         }
 
         Series operator+() const
