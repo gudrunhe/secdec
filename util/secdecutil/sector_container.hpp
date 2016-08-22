@@ -4,6 +4,7 @@
 #include <exception>
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 #include <secdecutil/integrand_container.hpp>
 
