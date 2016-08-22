@@ -20,11 +20,6 @@ def loop_package(name, loop_integral, requested_order,
     parametrized loop integral. Return it as
     c++ package.
 
-    .. note::
-        When instanciating the
-        :class:`pySecDec.loop_integral.LoopIntegral`,
-        use the symbol ``I`` for the imaginary unit.
-
     .. seealso::
         This function is a wrapper around
         :func:`pySecDec.code_writer.make_package`.

@@ -500,9 +500,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
         use the function
         :func:`pySecDec.loop_integral.loop_package`.
 
-    .. note::
-        Use ``I`` to denote the imaginary unit.
-
     :param name:
         string;
         The name of the c++ namepace and the output
