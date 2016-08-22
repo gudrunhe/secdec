@@ -10,7 +10,7 @@ from ..code_writer import make_package
 import numpy as np
 import sympy as sp
 
-def loop_package(target_directory, name, loop_integral, requested_order,
+def loop_package(name, loop_integral, requested_order,
                  real_parameters=[], complex_parameters=[],
                  contour_deformation=True, additional_prefactor=1,
                  form_optimization_level=2, form_work_space='500M',
@@ -29,13 +29,10 @@ def loop_package(target_directory, name, loop_integral, requested_order,
         This function is a wrapper around
         :func:`pySecDec.code_writer.make_package`.
 
-    :param target_directory:
-        string;
-        The output directory.
-
     :param name:
         string;
-        The name of the c++ namespace.
+        The name of the c++ namespace and the output
+        directory.
 
     :param loop_integral:
         :class:`pySecDec.loop_integral.LoopIntegral`;
@@ -119,7 +116,6 @@ def loop_package(target_directory, name, loop_integral, requested_order,
         poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),1], dtype=int), poly.expolist[:,-2:]])
 
     return make_package(
-        target_directory = target_directory,
         name = name,
 
         integration_variables = loop_integral.integration_variables,

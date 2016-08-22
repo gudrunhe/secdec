@@ -14,7 +14,7 @@ from ..algebra import _Expression, Expression, Polynomial, \
 from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort
 from ..subtraction import integrate_pole_part
-from ..expansion import expand_singular, expand_Taylor
+from ..expansion import expand_singular, expand_Taylor, expand_sympy
 from ..misc import lowest_order
 from .template_parser import parse_template_file, parse_template_tree
 from itertools import chain
@@ -102,7 +102,7 @@ def _validate(name):
     if name.startswith('SecDecInternal'):
         raise NameError('Symbol names must not start with "SecDecInternal"')
 
-def _convert_input(target_directory, name, integration_variables, regulators,
+def _convert_input(name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
@@ -160,7 +160,7 @@ def _convert_input(target_directory, name, integration_variables, regulators,
     assert form_insertion_depth == int(form_insertion_depth), '`form_insertion_depth` must be an integer.'
     assert form_insertion_depth >= 0, '`form_insertion_depth` must not be negative.'
 
-    return (target_directory, name, integration_variables, regulators,
+    return (name, integration_variables, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
             other_polynomials, prefactor, remainder_expression, functions,
             real_parameters, complex_parameters, form_optimization_level,
@@ -188,13 +188,13 @@ _decomposition_strategies = dict(
 
 
 # -------------------------------- template parsing ---------------------------------
-def _parse_global_templates(target_directory, name, regulators, polynomial_names,
+def _parse_global_templates(name, regulators, polynomial_names,
                             real_parameters, complex_parameters, form_optimization_level,
                             form_work_space, form_insertion_depth, stabilize,
                             requested_orders, contour_deformation_polynomial,
                             sector_container_type):
     '''
-    Create the `target_directory` and return the two
+    Create the `target_directory` (given by `name`) and return the two
     optional arguments passed to :func:`parse_template_tree`.
 
     '''
@@ -226,14 +226,15 @@ def _parse_global_templates(target_directory, name, regulators, polynomial_names
     file_renamings = {
                           # replace "name" by the name of the integral
                           'name' : name,
-                          'name.hpp' : name + '.hpp',
 
                           # the files below are specific for each sector --> do not parse globally
                           'contour_deformation.h' : None,
                           'sector.h' : None,
 
-                          # "integrands.hpp" can only be written after the decomposition is completed
-                          'integrands.hpp' : None
+                          # "integrands.cpp", "name.hpp", and "prefactor.cpp" can only be written after the decomposition is completed
+                          'integrands.cpp' : None,
+                          'name.hpp' : None,
+                          'prefactor.cpp' : None
                      }
 
     # the files below are only relevant for contour deformation --> do not parse if deactivated
@@ -245,10 +246,10 @@ def _parse_global_templates(target_directory, name, regulators, polynomial_names
     template_sources = os.path.join(os.path.split(os.path.abspath(__file__))[0],'templates')
 
     # initialize the target directory with the sector independent files
-    parse_template_tree(template_sources, target_directory, template_replacements, file_renamings)
+    parse_template_tree(template_sources, name, template_replacements, file_renamings)
 
     # return parser options
-    return template_sources, target_directory, template_replacements, file_renamings
+    return template_sources, template_replacements, file_renamings
 
 
 # --------------------------------- write FORM code ---------------------------------
@@ -446,8 +447,45 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_d
     return recursion(0)
 
 
+# ---------------------------------- write c++ code ---------------------------------
+def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters):
+    regulators = expanded_prefactor.polysymbols
+    last_regulator_index = len(regulators) - 1
+
+    def recursion(regulator_index,expression):
+        orders = expression.expolist[:,regulator_index]
+        min_order = orders.min()
+        max_order = orders.max()
+        if regulator_index < last_regulator_index:
+            outstr_body_snippets = []
+            outstr_head = '{%i,%i,{' % (min_order,max_order)
+            for coeff in expression.coeffs:
+                outstr_body_snippets.append( recursion(regulator_index + 1, coeff) )
+            outstr_tail = '},true}' if expression.truncated else '},false}'
+            return ''.join( (outstr_head, ','.join(outstr_body_snippets), outstr_tail) )
+        else: # regulator_index == last_regulator_index; i.e. processing last regulator
+            outstr_head = '{%i,%i,{{' % (min_order,max_order)
+            outstr_body_snippets = []
+            for coeff in expression.coeffs:
+                outstr_body_snippets.append( str(coeff.evalf(20)) )
+            outstr_tail = '}},true}' if expression.truncated else '}},false}'
+            return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
+
+    parameter_definitions = []
+    parameter_undefs = []
+    for real_or_complex in ('real','complex'):
+        for i,p in enumerate(eval(real_or_complex+'_parameters')):
+            parameter_definitions.append('#define %s %s_parameters.at(%i)' % (p,real_or_complex,i))
+            parameter_undefs.append('#undef %s' % p)
+    parameter_definitions = '\n'.join(parameter_definitions)
+    parameter_undefs = '\n'.join(parameter_undefs)
+
+    code = parameter_definitions + '\nreturn ' + recursion(0,expanded_prefactor) + ';\n' + parameter_undefs
+    return code.replace('\n', '\n        ')
+
+
 # ---------------------------------- main function ----------------------------------
-def make_package(target_directory, name, integration_variables, regulators, requested_orders,
+def make_package(name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
@@ -465,13 +503,10 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     .. note::
         Use ``I`` to denote the imaginary unit.
 
-    :param target_directory:
-        string;
-        The output directory.
-
     :param name:
         string;
-        The name of the c++ namepace.
+        The name of the c++ namepace and the output
+        directory.
 
     :param integration_variables:
         iterable of strings or sympy symbols;
@@ -619,7 +654,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
 
     '''
     # convert input data types to the data types we need
-    target_directory, name, integration_variables, regulators, \
+    name, integration_variables, regulators, \
     requested_orders, polynomials_to_decompose, polynomial_names, \
     other_polynomials, prefactor, remainder_expression, functions, \
     real_parameters, complex_parameters, form_optimization_level, \
@@ -627,7 +662,7 @@ def make_package(target_directory, name, integration_variables, regulators, requ
     contour_deformation_polynomial, decomposition_method, \
     symbols_polynomials_to_decompose, symbols_other_polynomials, \
     symbols_remainder_expression, all_symbols = \
-    _convert_input(target_directory, name, integration_variables, regulators,
+    _convert_input(name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
@@ -643,9 +678,9 @@ def make_package(target_directory, name, integration_variables, regulators, requ
         sector_container_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::SectorContainerWithDeformation<real_t,complex_t>' + '>' * len(regulators)
 
     # configure the template parser and parse global files
-    template_sources, target_directory, template_replacements, file_renamings = \
+    template_sources, template_replacements, file_renamings = \
         _parse_global_templates(
-        target_directory, name, regulators, polynomial_names,
+        name, regulators, polynomial_names,
         real_parameters, complex_parameters, form_optimization_level,
         form_work_space, form_insertion_depth, stabilize,
         requested_orders, contour_deformation_polynomial,
@@ -1048,8 +1083,8 @@ def make_package(target_directory, name, integration_variables, regulators, requ
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
             template_replacements['regulator_powers'] = regulator_powers
             template_replacements['number_of_orders'] = number_of_orders
-            parse_template_file(os.path.join(template_sources, 'name', 'codegen', 'sector.h'), # source
-                                os.path.join(target_directory, name, 'codegen', 'sector%i.h' % sector_index), # dest
+            parse_template_file(os.path.join(template_sources, 'codegen', 'sector.h'), # source
+                                os.path.join(name,             'codegen', 'sector%i.h' % sector_index), # dest
                                 template_replacements)
 
             if contour_deformation_polynomial is not None:
@@ -1057,16 +1092,33 @@ def make_package(target_directory, name, integration_variables, regulators, requ
                 template_replacements['contour_deformation_polynomial'] = contour_deformation_polynomial
                 template_replacements['contourdef_expression_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYContourdefExpression', contourdef_expression, args=None, limit=10**6)
                 template_replacements['deformation_parameters'] = _make_FORM_list(deformation_parameters)
-                parse_template_file(os.path.join(template_sources, 'name', 'codegen', 'contour_deformation.h'), # source
-                                    os.path.join(target_directory, name, 'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest
+                parse_template_file(os.path.join(template_sources, 'codegen', 'contour_deformation.h'), # source
+                                    os.path.join(name,             'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest
                                     template_replacements)
 
-    # parse the template file "integrands.hpp"
+    # expand the `prefactor` to the required orders
+    required_prefactor_orders = requested_orders - lowest_orders
+    expanded_prefactor = expand_sympy(prefactor, regulators, required_prefactor_orders)
+
+    # pack the `prefactor` into c++ function that returns a nested `Series`
+    # and takes the `real_parameters` and the `complex_parameters`
+    prefactor_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::UncorrelatedDeviation<' + 'integrand_return_t' + '>' * (len(regulators) + 1)
+    prefactor_function_body = _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters)
+
+    # parse the template files "integrands.cpp", "name.hpp", and "prefactor.cpp"
+    template_replacements['prefactor_type'] = prefactor_type
+    template_replacements['prefactor_function_body'] = prefactor_function_body
     template_replacements['number_of_sectors'] = sector_index
     template_replacements['lowest_orders'] = _make_FORM_list(lowest_orders)
     template_replacements['highest_orders'] = _make_FORM_list(required_orders)
-    template_replacements['sector_includes'] = ''.join( '#include <%s/integrands/sector_%i.hpp>\n' % (name, i) for i in range(1,sector_index+1) )
+    template_replacements['sector_includes'] = ''.join( '#include "sector_%i.hpp"\n' % i for i in range(1,sector_index+1) )
     template_replacements['sectors_initializer'] = ','.join( 'integrand_of_sector_%i' % i for i in range(1,sector_index+1) )
-    parse_template_file(os.path.join(template_sources, 'name', 'integrands', 'integrands.hpp'), # source
-                        os.path.join(target_directory,  name , 'integrands', 'integrands.hpp'), # dest
+    parse_template_file(os.path.join(template_sources, 'src', 'integrands.cpp'), # source
+                        os.path.join(name,             'src', 'integrands.cpp'), # dest
+                        template_replacements)
+    parse_template_file(os.path.join(template_sources, 'name.hpp'), # source
+                        os.path.join(name,            name + '.hpp'), # dest
+                        template_replacements)
+    parse_template_file(os.path.join(template_sources, 'src', 'prefactor.cpp'), # source
+                        os.path.join(name,             'src', 'prefactor.cpp'), # dest
                         template_replacements)

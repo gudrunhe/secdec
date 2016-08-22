@@ -7,6 +7,7 @@ Routines to series expand singular and nonsingular expressions.
 """
 
 from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial
+from .misc import sympify_symbols
 from numpy import iterable
 import numpy as np
 import sympy as sp
@@ -237,6 +238,10 @@ def expand_singular(product, indices, orders):
 
     Return a :class:`.algebra.Polynomial` - the series expansion.
 
+    .. seealso::
+        To expand more general expressions use
+        :func:`.expand_sympy`.
+
     :param product:
         :class:`.algebra.Product` with factors of the form
         ``<polynomial>`` and ``<polynomial> ** -1``;
@@ -277,3 +282,93 @@ def expand_Taylor(expression, indices, orders):
 
     '''
     return _expand_and_flatten(expression, indices, orders, _expand_Taylor_step)
+
+def expand_sympy(expression, variables, orders):
+    '''
+    Expand a sympy expression in the `variables`
+    to given `orders`. Return the expansion as
+    nested :class:`pySecDec.algebra.Polynomial`.
+
+    .. seealso::
+        This function is a generalization of
+        :func:`.expand_singular`.
+
+    :param expression:
+        string or sympy expression;
+        The expression to be expanded
+
+    :param variables:
+        iterable of strings or sympy symbols;
+        The variables to expand the `expression`
+        in.
+
+    :param orders:
+        iterable of integers;
+        The orders to expand to.
+
+    '''
+    # basic consistency checks
+    if not isinstance(expression, sp.Expr):
+        expression = sp.sympify(expression)
+    variables = sympify_symbols(variables, 'All `variables` must be symbols.')
+    orders = np.asarray(orders)
+    assert len(orders.shape) == 1, '`orders` must be vector-like'
+    assert len(variables) == len(orders), 'The number of variables (%i) must equal the number of orders (%i).' % (len(variables), len(orders))
+
+    def recursion(expression, variables, orders, index):
+        variable = variables[index]
+        order = orders[index]
+
+        sympy_expansion = sp.series(expression, variable, n=None)
+
+        # get the lowest term
+        expansion_generator = sp.series(expression, variable, n=None)
+        lowest_order_term = next(expansion_generator)
+
+        # find out how many more terms are required:
+        #   -> step1: get the order of the lowest term
+        #      try conversion to sympy polynomial --> fails for pole
+        try:
+            lowest_order_term = sp.poly(lowest_order_term, variable)
+            lowest_order = lowest_order_term.monoms()[0][0]
+        except sp.PolynomialError:
+            # pole --> convert the inverse to polynomial
+            highest_pole = sp.poly(lowest_order_term**-1, variable)
+            lowest_order = - highest_pole.monoms()[0][0]
+
+        #   -> step2: compute how many orders lie between the lowest and the requested order
+        number_of_remaining_orders = order - lowest_order
+
+        # if `number_of_remaining_orders` is negative, the requested order is lower than the lowest order
+        if number_of_remaining_orders < 0:
+            raise ValueError( 'The lowest order in `%s` (%i) is higher than the requested order (%i)' % (variable,lowest_order,order) )
+
+        # compute the remaining terms
+        expansion_coeffs = [(lowest_order_term/variable**lowest_order).expand()]
+        truncated = True
+        for i in range(1,number_of_remaining_orders+1):
+            try:
+                next_term = next(expansion_generator)
+            except StopIteration:
+                # all higher orders are exactly zero
+                truncated = False
+                order = lowest_order + i - 1
+                break
+            expansion_coeffs.append( (next_term/variable**(lowest_order+i)).expand() )
+        expansion_coeffs = np.array(expansion_coeffs)
+
+        # create the `Polynomial`
+        expolist = np.zeros([len(expansion_coeffs),len(variables)], dtype=int)
+        expolist[:,index] = np.arange(lowest_order, order+1)
+        expansion = Polynomial(expolist, expansion_coeffs, variables, copy=False)
+        expansion.truncated = truncated
+
+        # recurse down to the next variable if any
+        if index + 1 < len(variables):
+            for i,coeff in enumerate(expansion_coeffs):
+                expansion_coeffs[i] = recursion(coeff, variables, orders, index + 1)
+
+        return expansion
+
+    # initialize the recursion
+    return recursion(expression, variables, orders, 0)

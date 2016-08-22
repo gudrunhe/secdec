@@ -1,12 +1,12 @@
 #include <vector>
 #include <functional>
 
-#include "../secdecutil/algorithm.hpp"
+#include "../secdecutil/deep_apply.hpp"
 #include "../secdecutil/series.hpp"
 
 #include "catch.hpp"
 
-TEST_CASE( "transform std::vector container to different type", "[transform]" ) {
+TEST_CASE( "deep_apply std::vector container to different type", "[deep_apply]" ) {
 
     double zero_nest_double = 1.0;
     int zero_nest_int = 1;
@@ -49,7 +49,7 @@ TEST_CASE( "transform std::vector container to different type", "[transform]" ) 
 
     SECTION( "type conversion 0-nest" ) {
 
-        auto zero_nest_double_to_int = secdecutil::transform(zero_nest_double, double_to_int);
+        auto zero_nest_double_to_int = secdecutil::deep_apply(zero_nest_double, double_to_int);
 
         REQUIRE( typeid(zero_nest_double_to_int) == typeid(int) );
         REQUIRE( zero_nest_double_to_int == zero_nest_int );
@@ -58,7 +58,7 @@ TEST_CASE( "transform std::vector container to different type", "[transform]" ) 
 
     SECTION( "type conversion 1-nest" ) {
 
-        auto one_nest_double_to_int = secdecutil::transform(one_nest_double, double_to_int);
+        auto one_nest_double_to_int = secdecutil::deep_apply(one_nest_double, double_to_int);
 
         REQUIRE( typeid(one_nest_double_to_int) == typeid(one_nest_int) );
         REQUIRE( one_nest_double_to_int == one_nest_int );
@@ -67,7 +67,7 @@ TEST_CASE( "transform std::vector container to different type", "[transform]" ) 
 
     SECTION( "type conversion 2-nest" ) {
 
-        auto two_nest_double_to_int = secdecutil::transform(two_nest_double, double_to_int);
+        auto two_nest_double_to_int = secdecutil::deep_apply(two_nest_double, double_to_int);
 
         REQUIRE( typeid(two_nest_double_to_int) == typeid(two_nest_int) );
         REQUIRE( two_nest_double_to_int == two_nest_int );
@@ -77,7 +77,7 @@ TEST_CASE( "transform std::vector container to different type", "[transform]" ) 
 
     SECTION( "type conversion 3-nest" ) {
 
-        auto three_nest_double_to_int = secdecutil::transform(three_nest_double, double_to_int);
+        auto three_nest_double_to_int = secdecutil::deep_apply(three_nest_double, double_to_int);
 
         REQUIRE( typeid(three_nest_double_to_int) == typeid(three_nest_int) );
         REQUIRE( three_nest_double_to_int == three_nest_int );
@@ -86,7 +86,7 @@ TEST_CASE( "transform std::vector container to different type", "[transform]" ) 
     
 };
 
-TEST_CASE( "transform const std::vector container to different type", "[transform]" ) {
+TEST_CASE( "deep_apply const std::vector container to different type", "[deep_apply]" ) {
 
     const double zero_nest_double = 1.0;
     const int zero_nest_int = 1;
@@ -129,7 +129,7 @@ TEST_CASE( "transform const std::vector container to different type", "[transfor
 
     SECTION( "type conversion 0-nest" ) {
 
-        auto zero_nest_double_to_int = secdecutil::transform(zero_nest_double, double_to_int);
+        auto zero_nest_double_to_int = secdecutil::deep_apply(zero_nest_double, double_to_int);
 
         REQUIRE( typeid(zero_nest_double_to_int) == typeid(int) );
         REQUIRE( zero_nest_double_to_int == zero_nest_int );
@@ -138,7 +138,7 @@ TEST_CASE( "transform const std::vector container to different type", "[transfor
 
     SECTION( "type conversion 1-nest" ) {
 
-        auto one_nest_double_to_int = secdecutil::transform(one_nest_double, double_to_int);
+        auto one_nest_double_to_int = secdecutil::deep_apply(one_nest_double, double_to_int);
 
         REQUIRE( typeid(one_nest_double_to_int) == typeid(one_nest_int) );
         REQUIRE( one_nest_double_to_int == one_nest_int );
@@ -147,7 +147,7 @@ TEST_CASE( "transform const std::vector container to different type", "[transfor
 
     SECTION( "type conversion 2-nest" ) {
 
-        auto two_nest_double_to_int = secdecutil::transform(two_nest_double, double_to_int);
+        auto two_nest_double_to_int = secdecutil::deep_apply(two_nest_double, double_to_int);
 
         REQUIRE( typeid(two_nest_double_to_int) == typeid(two_nest_int) );
         REQUIRE( two_nest_double_to_int == two_nest_int );
@@ -157,7 +157,7 @@ TEST_CASE( "transform const std::vector container to different type", "[transfor
 
     SECTION( "type conversion 3-nest" ) {
 
-        auto three_nest_double_to_int = secdecutil::transform(three_nest_double, double_to_int);
+        auto three_nest_double_to_int = secdecutil::deep_apply(three_nest_double, double_to_int);
 
         REQUIRE( typeid(three_nest_double_to_int) == typeid(three_nest_int) );
         REQUIRE( three_nest_double_to_int == three_nest_int );
@@ -166,7 +166,7 @@ TEST_CASE( "transform const std::vector container to different type", "[transfor
 
 };
 
-TEST_CASE( "increment std::vector container", "[transform]" ) {
+TEST_CASE( "increment std::vector container", "[deep_apply]" ) {
 
     int zero_nest_int = 1;
     int zero_nest_int_increment = 2;
@@ -228,7 +228,7 @@ TEST_CASE( "increment std::vector container", "[transform]" ) {
 
     SECTION( "increment 0-nest and return 0" ) {
 
-        auto zero_nest_int_to_zero = secdecutil::transform(zero_nest_int, increment_and_return_zero);
+        auto zero_nest_int_to_zero = secdecutil::deep_apply(zero_nest_int, increment_and_return_zero);
 
         REQUIRE( zero_nest_int == zero_nest_int_increment );
         REQUIRE( zero_nest_int_to_zero == zero_nest_int_zero );
@@ -237,7 +237,7 @@ TEST_CASE( "increment std::vector container", "[transform]" ) {
 
     SECTION( "increment 1-nest and return 0" ) {
 
-        auto one_nest_int_to_zero = secdecutil::transform(one_nest_int, increment_and_return_zero);
+        auto one_nest_int_to_zero = secdecutil::deep_apply(one_nest_int, increment_and_return_zero);
 
         REQUIRE( one_nest_int == one_nest_int_increment );
         REQUIRE( one_nest_int_to_zero == one_nest_int_zero );
@@ -246,7 +246,7 @@ TEST_CASE( "increment std::vector container", "[transform]" ) {
 
     SECTION( "increment 2-nest and return 0" ) {
 
-        auto two_nest_int_to_zero = secdecutil::transform(two_nest_int, increment_and_return_zero);
+        auto two_nest_int_to_zero = secdecutil::deep_apply(two_nest_int, increment_and_return_zero);
 
         REQUIRE( two_nest_int == two_nest_int_increment );
         REQUIRE( two_nest_int_to_zero == two_nest_int_zero );
@@ -255,7 +255,7 @@ TEST_CASE( "increment std::vector container", "[transform]" ) {
 
     SECTION( "increment 3-nest and return 0" ) {
 
-        auto three_nest_int_to_zero = secdecutil::transform(three_nest_int, increment_and_return_zero);
+        auto three_nest_int_to_zero = secdecutil::deep_apply(three_nest_int, increment_and_return_zero);
 
         REQUIRE( three_nest_int == three_nest_int_increment );
         REQUIRE( three_nest_int_to_zero == three_nest_int_zero );
@@ -264,7 +264,7 @@ TEST_CASE( "increment std::vector container", "[transform]" ) {
 
     SECTION( "increment 0-nest" ) {
 
-        secdecutil::transform(zero_nest_int, increment);
+        secdecutil::deep_apply(zero_nest_int, increment);
 
         REQUIRE( zero_nest_int == zero_nest_int_increment );
 
@@ -272,7 +272,7 @@ TEST_CASE( "increment std::vector container", "[transform]" ) {
 
     SECTION( "increment 1-nest" ) {
 
-        secdecutil::transform(one_nest_int, increment);
+        secdecutil::deep_apply(one_nest_int, increment);
 
         REQUIRE( one_nest_int == one_nest_int_increment );
 
@@ -280,7 +280,7 @@ TEST_CASE( "increment std::vector container", "[transform]" ) {
 
     SECTION( "increment 2-nest" ) {
 
-        secdecutil::transform(two_nest_int, increment);
+        secdecutil::deep_apply(two_nest_int, increment);
 
         REQUIRE( two_nest_int == two_nest_int_increment );
 
@@ -288,7 +288,7 @@ TEST_CASE( "increment std::vector container", "[transform]" ) {
 
     SECTION( "increment 3-nest" ) {
 
-        secdecutil::transform(three_nest_int, increment);
+        secdecutil::deep_apply(three_nest_int, increment);
         
         REQUIRE( three_nest_int == three_nest_int_increment );
         
@@ -296,7 +296,7 @@ TEST_CASE( "increment std::vector container", "[transform]" ) {
 
 };
 
-TEST_CASE( "transform secdecutil::Series container to different type", "[transform]" ) {
+TEST_CASE( "deep_apply secdecutil::Series container to different type", "[deep_apply]" ) {
 
     secdecutil::Series<double> one_nest_double = {-1,1,{1.0, 2.0, 3.0}};
     secdecutil::Series<int>  one_nest_int = {-1,1,{1, 2, 3}};
@@ -353,7 +353,7 @@ TEST_CASE( "transform secdecutil::Series container to different type", "[transfo
 
     SECTION( "type conversion 1-nest" ) {
 
-        auto one_nest_double_to_int = secdecutil::transform(one_nest_double, double_to_int);
+        auto one_nest_double_to_int = secdecutil::deep_apply(one_nest_double, double_to_int);
 
         REQUIRE( typeid(one_nest_double_to_int) == typeid(one_nest_int) );
         REQUIRE( one_nest_double_to_int == one_nest_int );
@@ -362,7 +362,7 @@ TEST_CASE( "transform secdecutil::Series container to different type", "[transfo
 
     SECTION( "type conversion 2-nest" ) {
 
-        auto two_nest_double_to_int = secdecutil::transform(two_nest_double, double_to_int);
+        auto two_nest_double_to_int = secdecutil::deep_apply(two_nest_double, double_to_int);
 
         REQUIRE( typeid(two_nest_double_to_int) == typeid(two_nest_int) );
         REQUIRE( two_nest_double_to_int == two_nest_int );
@@ -372,7 +372,7 @@ TEST_CASE( "transform secdecutil::Series container to different type", "[transfo
 
     SECTION( "type conversion 3-nest" ) {
 
-        auto three_nest_double_to_int = secdecutil::transform(three_nest_double, double_to_int);
+        auto three_nest_double_to_int = secdecutil::deep_apply(three_nest_double, double_to_int);
 
         REQUIRE( typeid(three_nest_double_to_int) == typeid(three_nest_int) );
         REQUIRE( three_nest_double_to_int == three_nest_int );
@@ -381,7 +381,7 @@ TEST_CASE( "transform secdecutil::Series container to different type", "[transfo
     
 };
 
-TEST_CASE( "transform const secdecutil::Series container to different type", "[transform]" ) {
+TEST_CASE( "deep_apply const secdecutil::Series container to different type", "[deep_apply]" ) {
 
     const secdecutil::Series<double> one_nest_double = {-1,1,{1.0, 2.0, 3.0}};
     const secdecutil::Series<int>  one_nest_int = {-1,1,{1, 2, 3}};
@@ -438,7 +438,7 @@ TEST_CASE( "transform const secdecutil::Series container to different type", "[t
 
     SECTION( "type conversion 1-nest" ) {
 
-        auto one_nest_double_to_int = secdecutil::transform(one_nest_double, double_to_int);
+        auto one_nest_double_to_int = secdecutil::deep_apply(one_nest_double, double_to_int);
 
         REQUIRE( typeid(one_nest_double_to_int) == typeid(one_nest_int) );
         REQUIRE( one_nest_double_to_int == one_nest_int );
@@ -447,7 +447,7 @@ TEST_CASE( "transform const secdecutil::Series container to different type", "[t
 
     SECTION( "type conversion 2-nest" ) {
 
-        auto two_nest_double_to_int = secdecutil::transform(two_nest_double, double_to_int);
+        auto two_nest_double_to_int = secdecutil::deep_apply(two_nest_double, double_to_int);
 
         REQUIRE( typeid(two_nest_double_to_int) == typeid(two_nest_int) );
         REQUIRE( two_nest_double_to_int == two_nest_int );
@@ -457,7 +457,7 @@ TEST_CASE( "transform const secdecutil::Series container to different type", "[t
 
     SECTION( "type conversion 3-nest" ) {
 
-        auto three_nest_double_to_int = secdecutil::transform(three_nest_double, double_to_int);
+        auto three_nest_double_to_int = secdecutil::deep_apply(three_nest_double, double_to_int);
 
         REQUIRE( typeid(three_nest_double_to_int) == typeid(three_nest_int) );
         REQUIRE( three_nest_double_to_int == three_nest_int );
@@ -466,7 +466,7 @@ TEST_CASE( "transform const secdecutil::Series container to different type", "[t
     
 };
 
-TEST_CASE( "increment secdecutil::Series container", "[transform]" ) {
+TEST_CASE( "increment secdecutil::Series container", "[deep_apply]" ) {
 
 
     secdecutil::Series<int>  one_nest_int = {-1,1,{1, 2, 3}};
@@ -550,7 +550,7 @@ TEST_CASE( "increment secdecutil::Series container", "[transform]" ) {
 
     SECTION( "increment 1-nest and return 0" ) {
 
-        auto one_nest_int_to_zero = secdecutil::transform(one_nest_int, increment_and_return_zero);
+        auto one_nest_int_to_zero = secdecutil::deep_apply(one_nest_int, increment_and_return_zero);
 
         REQUIRE( one_nest_int == one_nest_int_increment );
         REQUIRE( one_nest_int_to_zero == one_nest_int_zero );
@@ -559,7 +559,7 @@ TEST_CASE( "increment secdecutil::Series container", "[transform]" ) {
 
     SECTION( "increment 2-nest and return 0" ) {
 
-        auto two_nest_int_to_zero = secdecutil::transform(two_nest_int, increment_and_return_zero);
+        auto two_nest_int_to_zero = secdecutil::deep_apply(two_nest_int, increment_and_return_zero);
 
         REQUIRE( two_nest_int == two_nest_int_increment );
         REQUIRE( two_nest_int_to_zero == two_nest_int_zero );
@@ -568,7 +568,7 @@ TEST_CASE( "increment secdecutil::Series container", "[transform]" ) {
 
     SECTION( "increment 3-nest and return 0" ) {
 
-        auto three_nest_int_to_zero = secdecutil::transform(three_nest_int, increment_and_return_zero);
+        auto three_nest_int_to_zero = secdecutil::deep_apply(three_nest_int, increment_and_return_zero);
 
         REQUIRE( three_nest_int == three_nest_int_increment );
         REQUIRE( three_nest_int_to_zero == three_nest_int_zero );
@@ -577,7 +577,7 @@ TEST_CASE( "increment secdecutil::Series container", "[transform]" ) {
 
     SECTION( "increment 1-nest" ) {
 
-        secdecutil::transform(one_nest_int, increment);
+        secdecutil::deep_apply(one_nest_int, increment);
 
         REQUIRE( one_nest_int == one_nest_int_increment );
 
@@ -585,7 +585,7 @@ TEST_CASE( "increment secdecutil::Series container", "[transform]" ) {
 
     SECTION( "increment 2-nest" ) {
 
-        secdecutil::transform(two_nest_int, increment);
+        secdecutil::deep_apply(two_nest_int, increment);
 
         REQUIRE( two_nest_int == two_nest_int_increment );
 
@@ -593,7 +593,7 @@ TEST_CASE( "increment secdecutil::Series container", "[transform]" ) {
 
     SECTION( "increment 3-nest" ) {
 
-        secdecutil::transform(three_nest_int, increment);
+        secdecutil::deep_apply(three_nest_int, increment);
 
         REQUIRE( three_nest_int == three_nest_int_increment );
         
@@ -601,7 +601,7 @@ TEST_CASE( "increment secdecutil::Series container", "[transform]" ) {
     
 };
 
-TEST_CASE( "side-effect only function on const std::vector container", "[transform]" ) {
+TEST_CASE( "side-effect only function on const std::vector container", "[deep_apply]" ) {
 
     const int zero_nest_int = 1;
     const std::vector<int> one_nest_int = { 1, 2, 3};
@@ -630,7 +630,7 @@ TEST_CASE( "side-effect only function on const std::vector container", "[transfo
 
         int number_of_elements = 0;
         const std::function<void(const int&)> func = std::bind(add_one_to_out, std::placeholders::_1, std::ref(number_of_elements));
-        secdecutil::transform(zero_nest_int, func);
+        secdecutil::deep_apply(zero_nest_int, func);
 
         REQUIRE( number_of_elements == 1 );
 
@@ -640,7 +640,7 @@ TEST_CASE( "side-effect only function on const std::vector container", "[transfo
 
         int number_of_elements = 0;
         const std::function<void(const int&)> func = std::bind(add_one_to_out, std::placeholders::_1, std::ref(number_of_elements));
-        secdecutil::transform(one_nest_int, func);
+        secdecutil::deep_apply(one_nest_int, func);
 
         REQUIRE( number_of_elements == 3 );
     };
@@ -649,7 +649,7 @@ TEST_CASE( "side-effect only function on const std::vector container", "[transfo
 
         int number_of_elements = 0;
         const std::function<void(const int&)> func = std::bind(add_one_to_out, std::placeholders::_1, std::ref(number_of_elements));
-        secdecutil::transform(two_nest_int, func);
+        secdecutil::deep_apply(two_nest_int, func);
 
         REQUIRE( number_of_elements == 6 );
     };
@@ -658,7 +658,7 @@ TEST_CASE( "side-effect only function on const std::vector container", "[transfo
 
         int number_of_elements = 0;
         const std::function<void(const int&)> func = std::bind(add_one_to_out, std::placeholders::_1, std::ref(number_of_elements));
-        secdecutil::transform(three_nest_int, func);
+        secdecutil::deep_apply(three_nest_int, func);
 
         REQUIRE( number_of_elements == 14 );
 

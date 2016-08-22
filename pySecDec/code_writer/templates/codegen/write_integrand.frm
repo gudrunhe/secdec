@@ -104,7 +104,7 @@ B `regulators';
 * The header can already completely be written here:
   #write <sector_`sectorID'_`cppOrder'.hpp> "#ifndef `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "#define `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#include <`name'/config.hpp>#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"`name'.hpp\"#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
   #If `contourDeformation'
@@ -117,7 +117,7 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
 
 * Open the namspace in which the sector is to be implemented
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'_order_`cppOrder'_integrand#@SecDecInternalNewline@#"
@@ -181,6 +181,22 @@ B `regulators';
   #EndDo
 
 * }
+
+* simplify again
+  #Do depth = 0, `insertionDepth'
+    #call beginArgumentDepth(`depth')
+      Denominators SecDecInternalDenominator;
+      factarg,(-1),SecDecInternalDenominator;
+      chainout SecDecInternalDenominator;
+      Id log(1) = 0;
+      repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
+      repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
+      repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
+      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+      repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
+    #call endArgumentDepth(`depth')
+    .sort
+  #EndDo
 
 * Analytically cancel the subtraction terms to avoid numerical instabilities.
 * We bring all terms that come with a "1/integration_variable" factor to a common
@@ -428,7 +444,7 @@ multiply replace_(I,i_);
 *     The header can already completely be written here:
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#ifndef `name'_codegen_contour_deformation_sector_`sectorID'_order_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#define `name'_codegen_contour_deformation_sector_`sectorID'_order_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#include <`name'/config.hpp>#@SecDecInternalNewline@#"
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#include \"`name'.hpp\"#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#include <gsl/gsl_complex_math.h>#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#include <gsl/gsl_linalg.h>#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
@@ -439,7 +455,7 @@ multiply replace_(I,i_);
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
 
 *     Open the namespace and the function in the corresponding .cpp file
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::integral_transformation_t<complex_t> sector_`sectorID'_order_`cppOrder'_contour_deformation#@SecDecInternalNewline@#"
@@ -499,7 +515,7 @@ multiply replace_(I,i_);
               #EndIf
             #EndDo
           #EndIf
-        #EndDo      
+        #EndDo
       #EndIf
 
 *     define the argument for "replace_" that sets all regulators to zero
@@ -759,13 +775,13 @@ Format rational;
   #write <sector_`sectorID'.hpp> "#define sector_`sectorID'_order_`cppOrder'_numIV `numOccurringIVOrder`shiftedOrderIndex''#@SecDecInternalNewline@#"
 
 * include the headers for all orders in this sector
-  #write <sector_`sectorID'.hpp> "#include <`name'/integrands/sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'.hpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
 
   #write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
 
 * include contour deformation header (if needed)
   #If `contourDeformation'
-    #write <sector_`sectorID'.hpp> "#include <`name'/integrands/contour_deformation_sector_`sectorID'_`cppOrder'.hpp>#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'.hpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
   #EndIf
 
 #EndDo

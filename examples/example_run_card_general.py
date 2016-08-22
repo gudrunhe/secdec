@@ -3,8 +3,6 @@ from pySecDec import make_package
 
 make_package(
 
-target_directory='pySecDec_output',
-
 name='angularities',
 integration_variables = ['z%i' % i for i in range(6)],
 

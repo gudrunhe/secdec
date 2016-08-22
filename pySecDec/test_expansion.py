@@ -172,3 +172,93 @@ class TestTaylorExpansion(unittest.TestCase):
 
         self.assertEqual( (sp.sympify(expansion_in_x_and_y) - expected_expansion).simplify() , 0)
         self.assertEqual( (sp.sympify(expansion_in_y_and_x) - expected_expansion).simplify() , 0)
+
+
+class TestExpandSympy(unittest.TestCase):
+   #@attr('active')
+    def test_error_messages(self):
+        expression = 'a + b'
+        variables = ['a', 'b']
+        orders = [1,3]
+
+        self.assertRaisesRegexp(AssertionError, '(N|n)umber of variables \(2\).*must.*equal.*number of orders \(3\)', expand_sympy, expression, variables, [0,0,1])
+        self.assertRaisesRegexp(AssertionError, 'variables.*must.*symbols', expand_sympy, expression, ['a+b','x'], orders)
+        self.assertRaisesRegexp(AssertionError, 'orders.*must.*vector', expand_sympy, expression, variables, [[0,1],[1,2]])
+
+        expand_sympy(expression, variables, orders) # should be ok
+
+   #@attr('active')
+    def test_requested_order_too_low(self):
+        expression = 'x**3'
+        variables = ['x']
+        orders = [1]
+        self.assertRaisesRegexp(ValueError, 'lowest order.*x.*\(3\).*higher than.*requested.*\(1\)', expand_sympy, expression, variables, orders)
+
+   #@attr('active')
+    def test_1d(self):
+        expression = 'exp(x)/x'
+        variables = ['x']
+        orders = [1]
+
+        poly = expand_sympy(expression, variables, orders)
+
+        self.assertTrue( type(poly) is Polynomial )
+        np.testing.assert_array_equal(poly.expolist,            [[-1],[0],[  1  ]])
+        np.testing.assert_array_equal(poly.coeffs,    sp.sympify([ 1 , 1 , '1/2']))
+
+   #@attr('active')
+    def test_2d(self):
+        expression = '1/(eps+alpha)'
+        variables = sp.sympify(['alpha', 'eps'])
+        orders = [0,1]
+
+        # expansion in 'alpha' first
+        alpha_first = expand_sympy(expression, variables, orders)
+        target_alpha_first = sp.sympify('1/eps')
+
+        self.assertEqual(  (sp.sympify(alpha_first) - target_alpha_first).simplify() , 0  )
+
+        self.assertTrue( type(alpha_first) is Polynomial )
+        self.assertEqual(alpha_first.polysymbols, variables)
+        np.testing.assert_array_equal(alpha_first.expolist, [[0,0]])
+
+        alpha_poly = alpha_first.coeffs[0]
+        self.assertTrue( type(alpha_poly) is Polynomial )
+        np.testing.assert_array_equal( alpha_poly.expolist, [[0,-1]] )
+        np.testing.assert_array_equal( alpha_poly.coeffs, [1] )
+
+        # expansion in 'eps' first
+        variables = sp.sympify(['eps', 'alpha'])
+        orders = [1,0]
+        eps_first = expand_sympy(expression, variables, orders)
+        target_eps_first = sp.sympify('1/alpha - eps/alpha**2')
+
+        self.assertEqual(  (sp.sympify(eps_first) - target_eps_first).simplify() , 0  )
+
+        self.assertTrue( type(eps_first) is Polynomial )
+        self.assertEqual(eps_first.polysymbols, variables)
+        np.testing.assert_array_equal(eps_first.expolist, [[0,0],[1,0]])
+
+        eps_to_the_0 = eps_first.coeffs[0]
+        eps_to_the_1 = eps_first.coeffs[1]
+        self.assertTrue( type(eps_to_the_0) is Polynomial )
+        self.assertTrue( type(eps_to_the_1) is Polynomial )
+        np.testing.assert_array_equal( eps_to_the_0.expolist, [[0,-1]] )
+        np.testing.assert_array_equal( eps_to_the_1.expolist, [[0,-2]] )
+        np.testing.assert_array_equal( eps_to_the_0.coeffs, [ 1] )
+        np.testing.assert_array_equal( eps_to_the_1.coeffs, [-1] )
+
+    #@attr('active')
+    def test_truncation_field(self):
+        expression = 'x + x**2'
+        variables = ['x']
+
+        expansion = expand_sympy(expression, variables, orders=[1])
+        target_expansion = Polynomial([[1]],[1],['x'])
+        self.assertEqual(  (sp.sympify(expansion) - sp.sympify(target_expansion)).simplify() , 0  )
+        self.assertTrue(expansion.truncated is True)
+
+        expansion = expand_sympy(expression, variables, orders=[4])
+        target_expansion = Polynomial([[1],[2]],[1,1],['x'])
+        self.assertEqual(  (sp.sympify(expansion) - sp.sympify(target_expansion)).simplify() , 0  )
+        self.assertTrue(expansion.truncated is False)
