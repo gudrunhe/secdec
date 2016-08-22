@@ -44,7 +44,7 @@ int main()
 {
     // TODO - write method to parse arguments and check validity
     // User Specified Phase-space point
-    const std::vector<%(name)s::real_t> real_parameters = { -3., -2. };
+    const std::vector<%(name)s::real_t> real_parameters = { 0.9, 0.1 };
     const std::vector<%(name)s::complex_t> complex_parameters = {  };
     if ( real_parameters.size() != %(name)s::number_of_real_parameters )
         throw std::logic_error("Did not set the correct number of real parameters");
