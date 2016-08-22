@@ -630,10 +630,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
         If not provided, no code for contour deformation
         is created.
 
-        .. note::
-            The `contour_deformation_polynomial` must **NOT**
-            depend on the `regulators`.
-
     :param decomposition_method:
         string, optional;
         The strategy to decompose the polynomials. The
