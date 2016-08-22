@@ -122,8 +122,16 @@ namespace secdecutil {
                                       ) const
         {
             auto deformation = contour_deformation(integration_variables, real_parameters, complex_parameters, deformation_parameters);
-            if (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() > 0.)
+
+            auto untransformed_integration_variable_vector = std::vector<complex_t>(number_of_integration_variables);
+            auto untransformed_integration_variables = untransformed_integration_variable_vector.data();
+            for (int i=0; i<number_of_integration_variables; ++i)
+                untransformed_integration_variables[i] = integration_variables[i];
+
+            if (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() >
+                contour_deformation_polynomial(untransformed_integration_variables, real_parameters, complex_parameters).imag())
                 throw sign_check_error("Contour deformation in sector \"" + std::to_string(sector_id) + "\" yields the wrong sign of \"contour_deformation_polynomial.imag\". Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters\" (recommended) or decrease \"deformation_parameters\".");
+
             return deformation.Jacobian_determinant * undeformed_integrand(deformation.transformed_variables.data(), real_parameters, complex_parameters);
         };
 
