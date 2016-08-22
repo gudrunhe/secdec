@@ -38,7 +38,7 @@ requested_order = 0,
 form_optimization_level = 2,
 
 # the WorkSpace parameter for FORM
-form_work_space = '500M',
+form_work_space = '100M',
 
 # whether or not to increase numerical stability
 # Note: This is very extensive concerning both - the algebra and the numerics.
