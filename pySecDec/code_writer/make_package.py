@@ -396,7 +396,10 @@ internal_prefix = 'SecDecInternal'
 FORM_names = dict(
     cal_I=internal_prefix+'CalI',
     cast_polynomial=internal_prefix+'PolynomialToDecompose',
-    other_polynomial=internal_prefix+'OtherPolynomial'
+    other_polynomial=internal_prefix+'OtherPolynomial',
+    label_contour_deformation_transform=internal_prefix+'LabelTransformation',
+    label_contour_deformation_Jacobian_matrix_index_i=internal_prefix+'LabelJacobianMatrixI',
+    label_contour_deformation_Jacobian_matrix_index_j=internal_prefix+'LabelJacobianMatrixJ'
 )
 
 def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation):
@@ -735,9 +738,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 raise IndexError('Could not find the `contour_deformation_polynomial` "%s" in `polynomial_names`.' % str_contour_deformation_polynomial)
 
         # define labels for simultaneous optimization in FORM
-        FORM_label_contour_deformation_transform = sp.sympify('SecDecInternalLabelTransformation')
-        FORM_label_contour_deformation_Jacobian_matrix_index_i = sp.sympify('SecDecInternalLabelJacobianMatrixI')
-        FORM_label_contour_deformation_Jacobian_matrix_index_j = sp.sympify('SecDecInternalLabelJacobianMatrixJ')
+        FORM_label_contour_deformation_transform = sp.sympify(FORM_names['label_contour_deformation_transform'])
+        FORM_label_contour_deformation_Jacobian_matrix_index_i = sp.sympify(FORM_names['label_contour_deformation_Jacobian_matrix_index_i'])
+        FORM_label_contour_deformation_Jacobian_matrix_index_j = sp.sympify(FORM_names['label_contour_deformation_Jacobian_matrix_index_j'])
 
     def parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials, include_last_other):
         #  - in ``sector.cast``
