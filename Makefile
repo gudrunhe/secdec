@@ -153,7 +153,7 @@ dist : clean
 	cp util/*.tar.gz pySecDec-$(PYSECDECVERSION)/
 
 	# create tarball
-	tar -cf pySecDec-$(PYSECDECVERSION).tar.gz pySecDec-$(PYSECDECVERSION)/
+	tar -czf pySecDec-$(PYSECDECVERSION).tar.gz pySecDec-$(PYSECDECVERSION)/
 
 .SILENT .PHONY : show-todos
 grep_cmd  = grep -riG [^"au""sphinx.ext."]todo --color=auto --exclude=Makefile --exclude-dir=.git
