@@ -160,3 +160,35 @@ TEST_CASE( "Unary operators + and -", "[IntegrandContainer]" ) {
     };
 
 }
+
+TEST_CASE( "complex_to_real", "[IntegrandContainer]" ) {
+
+  std::function<std::complex<double>(int)> func = [] (int i) { return std::complex<double>(i+2,i-1); };
+
+  auto ic = secdecutil::IntegrandContainer<std::complex<double>, int>(1,func);
+  
+  SECTION ( " std::real " ) {
+
+    auto real_part = complex_to_real(ic,std::real);
+    REQUIRE( real_part.integrand(5) == Approx(7.) );
+    REQUIRE( real_part.integrand(-4) == Approx(-2.) );
+    
+  };
+
+  SECTION ( " std::imag " ) {
+    
+    auto imag_part = complex_to_real(ic,std::imag);
+    REQUIRE( imag_part.integrand(5) == Approx(4.) );
+    REQUIRE( imag_part.integrand(-4) == Approx(-5.) );
+    
+  };
+
+  SECTION ( " std::abs " ) {
+    
+    auto abs_value = complex_to_real(ic,std::abs);
+    REQUIRE( abs_value.integrand(5) == Approx(8.06225774829855) );
+    REQUIRE( abs_value.integrand(-4) == Approx(5.385164807134504) );
+    
+  };
+  
+};

@@ -1,6 +1,7 @@
 #ifndef SecDecUtil_integrand_container_hpp_included
 #define SecDecUtil_integrand_container_hpp_included
 
+#include <complex>
 #include <functional>
 
 namespace secdecutil {
@@ -116,6 +117,14 @@ namespace secdecutil {
 
     };
 
+  template<typename T, typename... Args>
+  IntegrandContainer<T, Args...> complex_to_real
+  (IntegrandContainer<std::complex<T>, Args...> ic, T (*operation) (const std::complex<T>& ))
+  {
+    std::function<T(Args...)> new_integrand = [&ic, operation] (const Args... integration_variables){ return operation(ic.integrand(integration_variables...)); };
+    return IntegrandContainer<T, Args...>(ic.number_of_integration_variables, new_integrand);
+  }
+  
 }
 
 #endif
