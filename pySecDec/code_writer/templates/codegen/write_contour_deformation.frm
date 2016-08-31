@@ -137,10 +137,10 @@
 * (The c function takes them packed into an array).
 * "Format rational": Need the indices as integers.
   Format rational;
-  #call cppDefineContourdef(`occurringIntegrationVariables',integration_variables)
-  #call cppDefineContourdef(`realParameters',real_parameters)
-  #call cppDefineContourdef(`complexParameters',complex_parameters)
-  #call cppDefineContourdef(`occurringDeformationParameters',deformation_parameters)
+  #call cppDefine(`occurringIntegrationVariables',integration_variables,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
+  #call cppDefine(`realParameters',real_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
+  #call cppDefine(`complexParameters',complex_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
+  #call cppDefine(`occurringDeformationParameters',deformation_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
 
 * optimize
   AB `integrationVariables', `realParameters', `complexParameters';
@@ -285,10 +285,10 @@
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "return tmp;#@SecDecInternalNewline@#"
 
 * undefine the c preprocessor macros
-  #call cppUndefineContourdef(`occurringIntegrationVariables')
-  #call cppUndefineContourdef(`realParameters')
-  #call cppUndefineContourdef(`complexParameters')
-  #call cppUndefineContourdef(`occurringDeformationParameters')
+  #call cppUndefine(`occurringIntegrationVariables',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
+  #call cppUndefine(`realParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
+  #call cppUndefine(`complexParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
+  #call cppUndefine(`occurringDeformationParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
 
 * Close the function and the namespace in the c++ file

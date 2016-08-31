@@ -3,38 +3,19 @@ Off statistics;
 
 * Define two general procedures that write c++ code to define and undefine
 * c++ preprocessor varibables accessing a c++ array.
-#procedure cppDefine(?FORMNames,cppArrayName)
+#procedure cppDefine(?FORMNames,cppArrayName,filename)
   #$counter = 0;
   #Do varname = {`?FORMNames'}
     #If x`varname' != x
-      #write <sector_`sectorID'_`cppOrder'.cpp> "#define `varname' `cppArrayName'[`$counter']#@SecDecInternalNewline@#"
+      #write <`filename'> "#define `varname' `cppArrayName'[`$counter']#@SecDecInternalNewline@#"
       #$counter = $counter + 1;
     #EndIf
   #EndDo
 #endProcedure
-#procedure cppUndefine(?FORMNames)
+#procedure cppUndefine(?FORMNames,filename)
   #Do varname = {`?FORMNames'}
     #If x`varname' != x
-      #write <sector_`sectorID'_`cppOrder'.cpp> "#undef `varname'#@SecDecInternalNewline@#"
-    #EndIf
-  #EndDo
-#endProcedure
-
-* Define the same two general procedures for the contour deformation
-* c++ preprocessor varibables accessing a c++ array.
-#procedure cppDefineContourdef(?FORMNames,cppArrayName)
-  #$counter = 0;
-  #Do varname = {`?FORMNames'}
-    #If x`varname' != x
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define `varname' `cppArrayName'[`$counter']#@SecDecInternalNewline@#"
-      #$counter = $counter + 1;
-    #EndIf
-  #EndDo
-#endProcedure
-#procedure cppUndefineContourdef(?FORMNames)
-  #Do varname = {`?FORMNames'}
-    #If x`varname' != x
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef `varname'#@SecDecInternalNewline@#"
+      #write <`filename'> "#undef `varname'#@SecDecInternalNewline@#"
     #EndIf
   #EndDo
 #endProcedure
@@ -359,9 +340,9 @@ multiply replace_(I,i_);
   Format rational;
 
 * call the general procedure to write the corresponding c++ code define in the beginning of this file
-  #call cppDefine(`occurringIntegrationVariables',integration_variables)
-  #call cppDefine(`realParameters',real_parameters)
-  #call cppDefine(`complexParameters',complex_parameters)
+  #call cppDefine(`occurringIntegrationVariables',integration_variables,sector_`sectorID'_`cppOrder'.cpp)
+  #call cppDefine(`realParameters',real_parameters,sector_`sectorID'_`cppOrder'.cpp)
+  #call cppDefine(`complexParameters',complex_parameters,sector_`sectorID'_`cppOrder'.cpp)
 * }
 
 * Processing denominators in FORM is easiest if packed into a function.
@@ -414,9 +395,9 @@ multiply replace_(I,i_);
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * undefine the c preprocessor macros
-  #call cppUndefine(`occurringIntegrationVariables')
-  #call cppUndefine(`realParameters')
-  #call cppUndefine(`complexParameters')
+  #call cppUndefine(`occurringIntegrationVariables',sector_`sectorID'_`cppOrder'.cpp)
+  #call cppUndefine(`realParameters',sector_`sectorID'_`cppOrder'.cpp)
+  #call cppUndefine(`complexParameters',sector_`sectorID'_`cppOrder'.cpp)
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalDenominator#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef result#@SecDecInternalNewline@#"
 
