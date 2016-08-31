@@ -171,7 +171,7 @@
   .sort
   L expr = contourdef[SecDecInternalLabel`F'];
   .sort
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(tmp)
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternal`F'Call = tmp.real();#@SecDecInternalNewline@#"
 
   #Do idx1 = {`occurringIntegrationVariableIndices',}
@@ -180,7 +180,7 @@
       .sort
       L expr = contourdef[SecDecInternalLabeld`F'd`idx1'];
       .sort
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(tmp)
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
       #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternald`F'd`idx1'Call = tmp.real();#@SecDecInternalNewline@#"
 
       #Do idx2 = {`occurringIntegrationVariableIndices',}
@@ -190,7 +190,7 @@
             .sort
             L expr = contourdef[SecDecInternalLabeldd`F'd`idx1'd`idx2'];
             .sort
-            #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(tmp)
+            #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
             #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternaldd`F'd`idx1'd`idx2'Call = tmp.real();#@SecDecInternalNewline@#"
           #EndIf
         #EndIf
@@ -221,7 +221,7 @@
       .sort
       L expr = contourdef[SecDecInternalLabelTransformation^`idx1plus1'];
       .sort
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "transformed_parameters[`$i'] = %%e" expr(transformed_parameters[`$i'])
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "transformed_parameters[`$i'] = %%e" expr(#@no_split_expression@#)
       #$j = -1;
       #Do idx2 = {`occurringIntegrationVariableIndices',}
         #If x`idx2' != x
@@ -235,7 +235,7 @@
           .sort
           L expr = contourdef[SecDecInternalLabelJacobianMatrixI^`idx1plus1' * SecDecInternalLabelJacobianMatrixJ^`idx2plus1'];
           .sort
-          #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expr(tmp)
+          #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expr(#@no_split_expression@#)
           #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_set#@SecDecInternalNewline@#"
           #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "(#@SecDecInternalNewline@#"
           #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    Jacobian,#@SecDecInternalNewline@#"
@@ -293,7 +293,7 @@
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expressionF(tmp)
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expressionF(#@no_split_expression@#)
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "return tmp;#@SecDecInternalNewline@#"
 
 * undefine the c preprocessor macros
@@ -301,6 +301,7 @@
   #call cppUndefine(`realParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`complexParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`occurringDeformationParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalMu#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
 
 * Close the function and the namespace in the c++ file
@@ -422,7 +423,7 @@
       .sort
       L expr = derivatives[SecDecInternalLabelGradient^(`idx1'+1)];
       .sort
-      #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(tmp)
+      #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
       #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_t abs_gradient_`$cppIdx1' = std::abs(tmp);#@SecDecInternalNewline@#"
       #$cppIdx2 = -1;
       #Do idx2 = {`occurringIntegrationVariableIndices',}
@@ -433,7 +434,7 @@
             .sort
             L expr = derivatives[SecDecInternalLabelHessianI^(`idx1'+1)*SecDecInternalLabelHessianJ^(`idx2'+1)];
             .sort
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(tmp)
+            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
             #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_t abs_Hessian_`$cppIdx1'_`$cppIdx2' = std::abs(tmp);#@SecDecInternalNewline@#"
           #EndIf
         #EndIf

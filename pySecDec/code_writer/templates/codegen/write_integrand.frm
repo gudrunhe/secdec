@@ -390,7 +390,7 @@ multiply replace_(I,i_);
 
 * write the integrand
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "result = %%e#@SecDecInternalNewline@#" toOptimize(result)
+  #write <sector_`sectorID'_`cppOrder'.cpp> "result = %%e#@SecDecInternalNewline@#" toOptimize(#@no_split_expression@#)
   #write <sector_`sectorID'_`cppOrder'.cpp> "return result;#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 

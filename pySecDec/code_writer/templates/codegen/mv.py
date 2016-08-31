@@ -6,6 +6,8 @@ Move a file with the following modifications:
  o remove existing newline characters
  o replace "#@SecDecInternalNewline@#" by
    newline characters
+ o replace ";#@no_split_expression@# +=" by
+   "+"
 
 This is necessary because FORMs formatting
 is incompatible with c++.
@@ -27,6 +29,7 @@ for src_filename in src_filenames:
         for line in src:
             txt.append(line.strip('\\\t\n '))
     txt = ''.join(txt).replace("#@SecDecInternalNewline@#",'\n')
+    txt = txt.replace(';#@no_split_expression@# +=', '+')
     with open(dest_filepath, 'w') as dest:
         dest.write(txt)
 
