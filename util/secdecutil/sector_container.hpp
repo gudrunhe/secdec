@@ -42,7 +42,7 @@ namespace secdecutil {
          complex_t const * const complex_parameters
          );
 
-        const unsigned sector_id;
+        const unsigned sector_id; // TODO: include order
         const unsigned number_of_integration_variables;
         IntegrandFunction * const undeformed_integrand;
 
@@ -62,11 +62,11 @@ namespace secdecutil {
         // constructor
         SectorContainerWithoutDeformation
         (
-            const unsigned sector_id,
+            const unsigned sector_id, // TODO: include order
             const unsigned number_of_integration_variables,
             IntegrandFunction * const undeformed_integrand
         ) :
-        sector_id(sector_id),
+        sector_id(sector_id), // TODO: include order
         number_of_integration_variables(number_of_integration_variables),
         undeformed_integrand(undeformed_integrand)
         {};
@@ -101,7 +101,7 @@ namespace secdecutil {
          complex_t const * const complex_parameters
          );
 
-        const unsigned sector_id;
+        const unsigned sector_id; // TODO: include order
         const unsigned number_of_integration_variables;
         DeformableIntegrandFunction * const undeformed_integrand;
         ContourDeformationFunction * const contour_deformation;
@@ -218,14 +218,14 @@ namespace secdecutil {
         // constructor
         SectorContainerWithDeformation
         (
-            const unsigned sector_id,
+            const unsigned sector_id, // TODO: include order
             const unsigned number_of_integration_variables,
             DeformableIntegrandFunction * const undeformed_integrand,
             ContourDeformationFunction * const contour_deformation,
             DeformableIntegrandFunction * const contour_deformation_polynomial,
             MaximalDeformationFunction * const maximal_allowed_deformation_parameters
         ) :
-        sector_id(sector_id),
+        sector_id(sector_id), // TODO: include order
         number_of_integration_variables(number_of_integration_variables),
         undeformed_integrand(undeformed_integrand),
         contour_deformation(contour_deformation),
