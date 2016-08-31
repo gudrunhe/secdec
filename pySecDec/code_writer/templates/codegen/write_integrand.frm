@@ -212,7 +212,9 @@ B `regulators';
 * {
   Local toOptimize = SecDecInternalsDUMMYtoOptimize;
 
-  #Do function = {`functions',log,SecDecInternalDenominator}
+  #redefine functionsToReplace "`functions',log,SecDecInternalDenominator"
+
+  #Do function = {`functionsToReplace'}
     #$labelCounter = 0;
 
     #Do depth = 0, `insertionDepth'
@@ -235,9 +237,11 @@ B `regulators';
 
           L arguments = SecDecInternalfDUMMYarguments(`$args');
 
-          #call beginArgumentDepth(`depth')
-            Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
-          #call endArgumentDepth(`depth')
+          #Do replaceDepth = 0, `insertionDepth'
+            #call beginArgumentDepth(`replaceDepth')
+              Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
+            #call endArgumentDepth(`replaceDepth')
+          #EndDo
 
           repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) = SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
 
@@ -326,7 +330,6 @@ multiply replace_(I,i_);
     #EndDo
   #EndIf
 
-
 * Simultaneously optimize the integrand and all occurring function arguments.
   AB `integrationVariables', `realParameters', `complexParameters';
   Format O`optimizationLevel';
@@ -361,31 +364,85 @@ multiply replace_(I,i_);
   #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
-* Replace all function calls by symbols for simultaneous optimization.
+* Define the function calls replaced by symbols.
+* The difficulty here is that the function arguments may
+* refer to other function calls. --> We must order the
+* definitions in the c++ file properly.
 * {
-  #Do function = {`functions',log,SecDecInternalDenominator}
+
+* Keep track of function calls that are not written to
+* the c++ file yet.
+  L unparsed = SecDecInternalsDUMMYUnparsedAppendix;
+  #Do function = {`functionsToReplace'}
     #Do callIndex = 1, `largestLabel`function''
-      B SecDecInternalLabel`function'Call`callIndex'Arg;
-      .sort
-      #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-        L arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
-      #EndDo
-      .sort
-      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternal`function'Call`callIndex' = "
-      #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
-      #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-        #If `argIndex' == `numberOfArgs`function'Label`callIndex''
-          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'
-        #Else
-          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E," arg`argIndex'
-        #EndIf
-        drop arg`argIndex';
-      #EndDo
-      #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#" currentExpr
-      multiply replace_(SecDecInternalLabel`function'Call`callIndex'Arg, 0);
-      .sort
+      Id SecDecInternalsDUMMYUnparsedAppendix = SecDecInternalsDUMMYUnparsedAppendix + SecDecInternal`function'Call`callIndex'Unparsed;
     #EndDo
   #EndDo
+
+  #Do i = 1,1
+    #Do function = {`functionsToReplace'}
+      #Do callIndex = 1, `largestLabel`function''
+        B SecDecInternalLabel`function'Call`callIndex'Arg;
+        .sort
+        #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+          L arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
+        #EndDo
+        .sort
+
+*       We do not want to define any call more than once.
+        #redefine alreadyParsed "1"
+        if ( occurs(SecDecInternal`function'Call`callIndex'Unparsed) ) redefine alreadyParsed "0";
+        .sort
+        #If `alreadyParsed' == 0
+
+*         We can write the call under consideration to the c++ file only
+*         if all dependent calls are already written.
+          #redefine dependenciesDone "1"
+          hide; nhide unparsed;
+          #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+            nhide arg`argIndex';
+          #EndDo
+          .sort
+          #Do innerFunction = {`functionsToReplace'}
+            #Do innerCallIndex = 1, `largestLabel`innerFunction''
+              #redefine dependsOnInnerFunctionCall "0"
+              if ( occurs(SecDecInternal`innerFunction'Call`innerCallIndex') ) redefine dependsOnInnerFunctionCall "1";
+              .sort
+              #If `dependsOnInnerFunctionCall'
+                if ( occurs(SecDecInternal`innerFunction'Call`innerCallIndex'Unparsed) );
+                  redefine dependenciesDone "0";
+                  redefine i "0";
+                endif;
+              #EndIf
+            #EndDo
+          #EndDo
+          .sort
+          unhide;
+          .sort
+
+          #If `dependenciesDone'
+            #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternal`function'Call`callIndex' = "
+            #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
+            #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+              #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'(#@no_split_expression@#)
+              #If `argIndex' != `numberOfArgs`function'Label`callIndex''
+                #write <sector_`sectorID'_`cppOrder'.cpp> ","
+              #EndIf
+            #EndDo
+            #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#" currentExpr
+            multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
+            .sort
+          #EndIf
+          #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+            drop arg`argIndex';
+          #EndDo
+        #EndIf
+      #EndDo
+    #EndDo
+  #EndDo
+
+  .sort
+  drop unparsed;
 * }
 
 * write the integrand
