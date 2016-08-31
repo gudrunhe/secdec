@@ -16,7 +16,9 @@ namespace %(name)s
         const std::vector<complex_t>& complex_parameters
         #if %(name)s_contour_deformation
             ,unsigned number_of_samples,
-            real_t deformation_parameters_initial_guess
+            real_t deformation_parameters_maximum,
+            real_t deformation_parameters_minimum,
+            real_t deformation_parameters_decrease_factor
         #endif
     )
     -> decltype
@@ -37,7 +39,9 @@ namespace %(name)s
                         real_parameters,
                         complex_parameters,
                         number_of_samples,
-                        deformation_parameters_initial_guess
+                        deformation_parameters_maximum,
+                        deformation_parameters_minimum,
+                        deformation_parameters_decrease_factor
                     )
             );
         #else

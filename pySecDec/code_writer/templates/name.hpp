@@ -45,8 +45,10 @@ namespace %(name)s
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters
         #if %(name)s_contour_deformation
-            ,unsigned number_of_samples = 10000,
-            real_t deformation_parameters_initial_guess = 1.
+            ,unsigned number_of_samples = 100000,
+            real_t deformation_parameters_maximum = 1.,
+            real_t deformation_parameters_minimum = 1.e-5,
+            real_t deformation_parameters_decrease_factor = 0.9
         #endif
     )
     -> decltype

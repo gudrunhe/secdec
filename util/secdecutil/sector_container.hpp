@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <gsl/gsl_qrng.h>
 #include <secdecutil/integrand_container.hpp>
 
 namespace secdecutil {
@@ -20,6 +21,9 @@ namespace secdecutil {
 
     // this error is thrown if the sign check of the deformation (contour_deformation_polynomial.imag() <= 0) fails
     struct sign_check_error : public std::runtime_error { using std::runtime_error::runtime_error; };
+
+    // this error is thrown if an error with the gsl occurs
+    struct gsl_error : public std::runtime_error { using std::runtime_error::runtime_error; };
 
 
     /*
@@ -88,13 +92,13 @@ namespace secdecutil {
          real_t const * const deformation_parameters
          );
 
-        // the call signature of the function to optimize deformation parameters (contour deformation) // TODO: do we need this?
-        typedef void OptimizeDeformationFunction
+        // the call signature of the function that computes the maximal deformation parameters
+        typedef void MaximalDeformationFunction
         (
-         real_t const * const initial_guess,
+         real_t * output_deformation_parameters,
+         real_t const * const integration_variables,
          real_t const * const real_parameters,
-         complex_t const * const complex_parameters,
-         const size_t number_of_samples
+         complex_t const * const complex_parameters
          );
 
         const unsigned sector_id;
@@ -102,13 +106,88 @@ namespace secdecutil {
         DeformableIntegrandFunction * const undeformed_integrand;
         ContourDeformationFunction * const contour_deformation;
         DeformableIntegrandFunction * const contour_deformation_polynomial;
+        MaximalDeformationFunction * const maximal_allowed_deformation_parameters;
 
+        // the function that optimizes the deformation_parameters
         std::vector<real_t> optimize_deformation_parameters (
-                                                             real_t const * const initial_guess,
-                                                             real_t const * const real_parameters,
-                                                             complex_t const * const complex_parameters,
-                                                             const size_t number_of_samples
-                                                             ) const;
+                                                                real_t const * const real_parameters,
+                                                                complex_t const * const complex_parameters,
+                                                                const unsigned number_of_samples = 100000,
+                                                                const real_t maximum = 1.,
+                                                                const real_t minimum = 1.e-5,
+                                                                const real_t decrease_factor = 0.9
+                                                            ) const
+        {
+            // define indices for the loops
+            unsigned i,j;
+
+            // if no sampling desired (number_of_samples == 0) set the deformation parameters to the maximum
+            if (number_of_samples == 0)
+                return std::vector<real_t>(number_of_integration_variables,maximum);
+
+            // initialize the output, and temporary vectors
+            std::vector<real_t> optimized_deformation_parameter_vector(number_of_integration_variables,0);
+            std::vector<real_t> temp_deformation_parameter_vector(number_of_integration_variables,0);
+            std::vector<real_t> real_sample_vector(number_of_integration_variables,0);
+            std::vector<complex_t> complex_sample_vector(number_of_integration_variables,0);
+            real_t * optimized_deformation_parameters = optimized_deformation_parameter_vector.data();
+            real_t * temp_deformation_parameters = temp_deformation_parameter_vector.data();
+            real_t * real_sample = real_sample_vector.data();
+            complex_t * complex_sample = complex_sample_vector.data();
+
+            // define a Sobol sequence using the gsl
+            // Restriction to at most 40 dimensions only because of the implementation in the gsl. --> Use a different Sobol implementation if higher dimensionality is needed.
+            int Sobol_maxdim = 40;
+            if (number_of_integration_variables > Sobol_maxdim)
+                throw gsl_error("The gsl implements Sobol sequences only up to " + std::to_string(Sobol_maxdim) +" dimensions (need " +
+                                std::to_string(number_of_integration_variables) + "). Please set the \"deformation_parameters\" manually.");
+
+            // define the generator
+            gsl_qrng * Sobol_generator = gsl_qrng_alloc(gsl_qrng_sobol, number_of_integration_variables);
+
+            // average over the lambdas obtained for the different samples
+            for (i=0; i<number_of_samples; ++i)
+            {
+                gsl_qrng_get(Sobol_generator,real_sample);
+                maximal_allowed_deformation_parameters(temp_deformation_parameters, real_sample, real_parameters, complex_parameters);
+                for (j=0; j<number_of_integration_variables; ++j)
+                    if (minimum <= temp_deformation_parameters[j] && temp_deformation_parameters[j] <= maximum)
+                        optimized_deformation_parameters[j] += temp_deformation_parameters[j] / number_of_samples;
+                    else if (temp_deformation_parameters[j] > maximum)
+                        optimized_deformation_parameters[j] += maximum / number_of_samples;
+                    else
+                        optimized_deformation_parameters[j] += minimum / number_of_samples;
+            };
+
+            // reinitialize the Sobol sequence to obtain the same samples again
+            gsl_qrng_free(Sobol_generator);
+            Sobol_generator = gsl_qrng_alloc(gsl_qrng_sobol, number_of_integration_variables);
+
+            // perform the sign check for each sample; decrease the "optimized_deformation_parameters" if necessary
+            integral_transformation_t<complex_t> deformation;
+            for (i=0; i<number_of_samples; ++i)
+            {
+                gsl_qrng_get(Sobol_generator,real_sample);
+
+                // the "contour_deformation_polynomial" takes complex --> must cast the "sample"
+                for (j=0; j<number_of_integration_variables; ++j)
+                    complex_sample[j] = real_sample[j];
+
+                deformation = contour_deformation(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters);
+                while (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() >
+                       contour_deformation_polynomial(complex_sample, real_parameters, complex_parameters).imag())
+                {
+                    for (j=0; j<number_of_integration_variables; ++j)
+                        optimized_deformation_parameters[j] *= decrease_factor;
+                    deformation = contour_deformation(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters);
+                };
+            };
+
+            // delete the quasi random number generator
+            gsl_qrng_free(Sobol_generator);
+
+            return optimized_deformation_parameter_vector;
+        };
 
         // We want to bind the real, complex, and deformation parameters to the integrand.
         // These shared pointers can be used to avoid too early deallocation.
@@ -116,17 +195,17 @@ namespace secdecutil {
         std::shared_ptr<std::vector<complex_t>> complex_parameters;
         std::shared_ptr<std::vector<real_t>> deformation_parameters;
         complex_t integrand (
-                                      real_t const * const integration_variables,
-                                      real_t const * const real_parameters,
-                                      complex_t const * const complex_parameters,
-                                      real_t const * const deformation_parameters
-                                      ) const
+                                real_t const * const integration_variables,
+                                real_t const * const real_parameters,
+                                complex_t const * const complex_parameters,
+                                real_t const * const deformation_parameters
+                            ) const
         {
             auto deformation = contour_deformation(integration_variables, real_parameters, complex_parameters, deformation_parameters);
 
             auto untransformed_integration_variable_vector = std::vector<complex_t>(number_of_integration_variables);
             auto untransformed_integration_variables = untransformed_integration_variable_vector.data();
-            for (int i=0; i<number_of_integration_variables; ++i)
+            for (unsigned i=0; i<number_of_integration_variables; ++i)
                 untransformed_integration_variables[i] = integration_variables[i];
 
             if (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() >
@@ -143,13 +222,15 @@ namespace secdecutil {
             const unsigned number_of_integration_variables,
             DeformableIntegrandFunction * const undeformed_integrand,
             ContourDeformationFunction * const contour_deformation,
-            DeformableIntegrandFunction * const contour_deformation_polynomial
+            DeformableIntegrandFunction * const contour_deformation_polynomial,
+            MaximalDeformationFunction * const maximal_allowed_deformation_parameters
         ) :
         sector_id(sector_id),
         number_of_integration_variables(number_of_integration_variables),
         undeformed_integrand(undeformed_integrand),
         contour_deformation(contour_deformation),
-        contour_deformation_polynomial(contour_deformation_polynomial)
+        contour_deformation_polynomial(contour_deformation_polynomial),
+        maximal_allowed_deformation_parameters(maximal_allowed_deformation_parameters)
         {};
     };
 
@@ -164,26 +245,38 @@ namespace secdecutil {
     template<typename real_t, typename complex_t>
     std::function<secdecutil::IntegrandContainer<complex_t, real_t const * const>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
     SectorContainerWithDeformation_to_IntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters,
-                                                         unsigned number_of_samples = 10000, real_t deformation_parameters_initial_guess = 1.)
+                                                         unsigned number_of_samples = 100000, real_t deformation_parameters_maximum = 1.,
+                                                         real_t deformation_parameters_minimum = 1.e-5, real_t deformation_parameters_decrease_factor = 0.9)
     {
         auto shared_real_parameters = std::make_shared<std::vector<real_t>>(real_parameters);
         auto shared_complex_parameters = std::make_shared<std::vector<complex_t>>(complex_parameters);
 
         return
-        [shared_real_parameters,shared_complex_parameters,number_of_samples,deformation_parameters_initial_guess]
+        [ = ]
         (secdecutil::SectorContainerWithDeformation<real_t,complex_t> sector_container)
         {
             sector_container.real_parameters = shared_real_parameters;
             sector_container.complex_parameters = shared_complex_parameters;
 
-            sector_container.deformation_parameters = std::make_shared<std::vector<real_t>>(sector_container.number_of_integration_variables,deformation_parameters_initial_guess);
-            // TODO call optimize lambda with "number_of_samples";
+            sector_container.deformation_parameters =
+                std::make_shared<std::vector<real_t>>
+                (
+                    sector_container.optimize_deformation_parameters
+                    (
+                        sector_container.real_parameters->data(),
+                        sector_container.complex_parameters->data(),
+                        number_of_samples,
+                        deformation_parameters_maximum,
+                        deformation_parameters_minimum,
+                        deformation_parameters_decrease_factor
+                    )
+                );
 
             auto integrand = std::bind(&secdecutil::SectorContainerWithDeformation<real_t,complex_t>::integrand, sector_container,
                                        std::placeholders::_1, sector_container.real_parameters->data(), sector_container.complex_parameters->data(),
                                        sector_container.deformation_parameters->data());
 
-            return secdecutil::IntegrandContainer<complex_t, real_t const * const>(sector_container.number_of_integration_variables, integrand );
+            return secdecutil::IntegrandContainer<complex_t, real_t const * const>(sector_container.number_of_integration_variables, integrand);
         };
     };
 

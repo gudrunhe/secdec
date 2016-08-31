@@ -239,7 +239,7 @@ def _parse_global_templates(name, regulators, polynomial_names,
 
     # the files below are only relevant for contour deformation --> do not parse if deactivated
     if contour_deformation_polynomial is None:
-        for filename in ['contour_deformation.h']:
+        for filename in ['contour_deformation.h','write_contour_deformation.frm']:
             file_renamings[filename] = None
 
     # get path to the directory with the template files (path relative to directory with this file: "./templates/")
@@ -396,7 +396,10 @@ internal_prefix = 'SecDecInternal'
 FORM_names = dict(
     cal_I=internal_prefix+'CalI',
     cast_polynomial=internal_prefix+'PolynomialToDecompose',
-    other_polynomial=internal_prefix+'OtherPolynomial'
+    other_polynomial=internal_prefix+'OtherPolynomial',
+    label_contour_deformation_transform=internal_prefix+'LabelTransformation',
+    label_contour_deformation_Jacobian_matrix_index_i=internal_prefix+'LabelJacobianMatrixI',
+    label_contour_deformation_Jacobian_matrix_index_j=internal_prefix+'LabelJacobianMatrixJ'
 )
 
 def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation):
@@ -433,7 +436,8 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_d
                 if contour_deformation:
                     outstr_body_snippets.append(
                         '''%(sector_ID)i,sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,
-                           sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation,sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial''' \
+                           sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation,sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial,
+                           sector_%(sector_ID)i_order_%(cpp_order)s_maximal_allowed_deformation_parameters''' \
                         % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders))
                     )
                 else:
@@ -630,10 +634,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
         If not provided, no code for contour deformation
         is created.
 
-        .. note::
-            The `contour_deformation_polynomial` must **NOT**
-            depend on the `regulators`.
-
     :param decomposition_method:
         string, optional;
         The strategy to decompose the polynomials. The
@@ -739,9 +739,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 raise IndexError('Could not find the `contour_deformation_polynomial` "%s" in `polynomial_names`.' % str_contour_deformation_polynomial)
 
         # define labels for simultaneous optimization in FORM
-        FORM_label_contour_deformation_transform = sp.sympify('SecDecInternalLabelTransformation')
-        FORM_label_contour_deformation_Jacobian_matrix_index_i = sp.sympify('SecDecInternalLabelJacobianMatrixI')
-        FORM_label_contour_deformation_Jacobian_matrix_index_j = sp.sympify('SecDecInternalLabelJacobianMatrixJ')
+        FORM_label_contour_deformation_transform = sp.sympify(FORM_names['label_contour_deformation_transform'])
+        FORM_label_contour_deformation_Jacobian_matrix_index_i = sp.sympify(FORM_names['label_contour_deformation_Jacobian_matrix_index_i'])
+        FORM_label_contour_deformation_Jacobian_matrix_index_j = sp.sympify(FORM_names['label_contour_deformation_Jacobian_matrix_index_j'])
 
     def parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials, include_last_other):
         #  - in ``sector.cast``

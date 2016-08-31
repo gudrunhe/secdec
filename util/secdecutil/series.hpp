@@ -115,9 +115,9 @@ namespace secdecutil {
         typedef T value_type;
 
         std::string expansion_parameter; // default value "x" set in constructor
-        const int get_order_min() const { return order_min; }
-        const int get_order_max() const { return order_max; }
-        const bool get_truncated_above() const { return truncated_above; }
+        int get_order_min() const { return order_min; }
+        int get_order_max() const { return order_max; }
+        bool get_truncated_above() const { return truncated_above; }
 
         iterator begin() noexcept { return content.begin(); }
         const_iterator begin() const noexcept { return content.begin(); }
