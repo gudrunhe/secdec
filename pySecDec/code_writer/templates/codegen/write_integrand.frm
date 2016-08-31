@@ -460,12 +460,13 @@ Format rational;
 * include the headers for all orders in this sector
   #write <sector_`sectorID'.hpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
 
-  #write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
-
-* include contour deformation header (if needed)
+* include contour deformation and optimize deformation_parameter headers (if needed)
   #If `contourDeformation'
     #write <sector_`sectorID'.hpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'.hpp> "#include \"optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
   #EndIf
+
+  #write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
 
 #EndDo
 

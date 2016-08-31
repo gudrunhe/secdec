@@ -436,7 +436,8 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_d
                 if contour_deformation:
                     outstr_body_snippets.append(
                         '''%(sector_ID)i,sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,
-                           sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation,sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial''' \
+                           sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation,sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial,
+                           sector_%(sector_ID)i_order_%(cpp_order)s_maximal_allowed_deformation_parameters''' \
                         % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders))
                     )
                 else:
