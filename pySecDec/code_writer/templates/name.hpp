@@ -103,9 +103,12 @@ namespace %(name)s
      *       Playing around with "std::pow" and the aforementioned switches is nevertheless
      *       worth a try in practical applications where high performance is needed.
      */
-    template <typename T> inline T pow(T base, unsigned exponent)
+    template <typename T> inline T pow(T base, int exponent)
     {
-        if (exponent == 0)
+        if (exponent < 0)
+            return 1./pow(base, -exponent);
+
+        else if (exponent == 0)
             return 1.;
 
         else if (exponent == 1)
