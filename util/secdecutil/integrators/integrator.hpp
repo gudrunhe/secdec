@@ -36,14 +36,14 @@ namespace secdecutil
   {
   protected:
     virtual std::unique_ptr<Integrator<return_t, input_t>> get_real_integrator(){
-      throw std::runtime_error("Separate integration of real and imaginary parts not available because pointer to real-valued integrator is not implemented.");
+      throw std::runtime_error("Separate integration of real and imaginary parts not available because pointer to real-valued integrator is not implemented for this integrator.");
     }
 
     virtual std::function<secdecutil::UncorrelatedDeviation<std::complex<return_t>>
       (const secdecutil::IntegrandContainer<std::complex<return_t>, input_t const * const>&)>
       integrate_together()
     {
-      throw std::runtime_error("Simultaneous integration of real and imaginary parts not implemented.");
+      throw std::runtime_error("Simultaneous integration of real and imaginary parts is not implemented for this integrator.");
     }
 	
   public:	
