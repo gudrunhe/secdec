@@ -10,6 +10,7 @@ test_uncertainties_SOURCES = main.cpp test_uncertainties.cpp catch.hpp
 
 test_cuba_LDADD = -lcuba
 if HAVE_SECDEC_CONTRIB
+test_cuba_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
 test_cuba_LDADD += -L$(SECDEC_CONTRIB)/lib
 endif
 
