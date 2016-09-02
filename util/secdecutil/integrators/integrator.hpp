@@ -4,18 +4,19 @@
 /*
  * This file defines a general integrator interface for real and complex-valued functions.
  *
- * Real integrators only have to implement the function integrate(),
+ * Real integrators only have to implement the function "integrate()",
  * which returns a function taking an integrand container and returning an UncorrelatedDeviation.
  * 
- * Complex integrators have to implement the function integrate_together()
+ * Complex integrators have to implement the function "integrate_together()"
  * to integrate real and imaginary part at the same time
- * and/or get_real_integrator(), which should return a pointer to a real-valued version of the integrator.
- * The latter can then be used to integrate real and imaginaty part separately
- * if the boolean together is set to false.
+ * and/or "get_real_integrator()", which should return a unique pointer to a real-valued version of
+ * the integrator. The latter can then be used to integrate real and imaginaty part separately
+ * if the boolean member variable "together" is set to false.
  */
 
 #include <complex>
 #include <memory>
+#include <stdexcept>
 #include <secdecutil/integrand_container.hpp>
 #include <secdecutil/uncertainties.hpp>
 
@@ -34,7 +35,7 @@ namespace secdecutil
   struct Integrator<std::complex<return_t>, input_t>
   {
   protected:
-    virtual std::shared_ptr<Integrator<return_t, input_t>> get_real_integrator(){
+    virtual std::unique_ptr<Integrator<return_t, input_t>> get_real_integrator(){
       throw std::runtime_error("Separate integration of real and imaginary parts not available because pointer to real-valued integrator is not implemented.");
     }
 
