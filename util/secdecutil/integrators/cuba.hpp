@@ -51,9 +51,8 @@ namespace secdecutil
         static const int ncomp = 1;
         CUBA_STRUCT_BODY
 
-      public:
         std::function<secdecutil::UncorrelatedDeviation<T>
-          (const secdecutil::IntegrandContainer<T, T const * const>&)> integrate()
+          (const secdecutil::IntegrandContainer<T, T const * const>&)> get_integrate()
         {
           return [this] (const secdecutil::IntegrandContainer<T, T const * const>& integrand_container)
             {
@@ -79,10 +78,9 @@ namespace secdecutil
         static const int ncomp = 2;
         CUBA_STRUCT_BODY
 
-      public:
         std::function<secdecutil::UncorrelatedDeviation<std::complex<T>>
           (const secdecutil::IntegrandContainer<std::complex<T>, T const * const>&)>
-          integrate_together()
+          get_together_integrate()
           {
             return [this] (const secdecutil::IntegrandContainer<std::complex<T>, T const * const>& integrand_container) {
               CUBA_INTEGRATE_BODY
@@ -489,4 +487,5 @@ namespace secdecutil
       #undef CUHRE_INTEGRATE_BODY
     }
 }
+
 #endif
