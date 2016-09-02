@@ -7,7 +7,7 @@
 #include <type_traits> // std::remove_const
 #include <typeinfo>
 
-#include <secdecutil/cuba.hpp> // Vegas
+#include <secdecutil/integrators/cuba.hpp> // Vegas
 #include <secdecutil/series.hpp> // Series
 #include <secdecutil/uncertainties.hpp> // UncorrelatedDeviation
 #include <secdecutil/sector_container.hpp> // SectorContainer to IntegrandContainer
