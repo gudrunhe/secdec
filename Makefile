@@ -38,21 +38,24 @@ help :
 
 .PHONY : clean
 clean:
-	#remove build doc
+	# remove build doc
 	$(MAKE) -C ./doc clean
 
-	#remove .pyc files created by python 2.7
+	# clean util
+	$(MAKE) -C ./util clean
+
+	# remove .pyc files created by python 2.7
 	rm -f ./*.pyc
 	find -P . -name '*.pyc' -delete
 
-	#remove .pyc files created by python 3
+	# remove .pyc files created by python 3
 	rm -rf ./__pycache__
 	find -P . -name __pycache__ -delete
 
-	#remove backup files
+	# remove backup files
 	find -P . -name '*~' -delete
 
-	#remove files created by coverage
+	# remove files created by coverage
 	rm -f .coverage
 	rm -rf coverage
 
