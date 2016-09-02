@@ -6,12 +6,10 @@
 #include <complex>
 #include <cuba.h>
 
-void test_integrator_real(secdecutil::Integrator<cubareal,cubareal>& integrator, cubareal epsrel){
-
-    constexpr int dimensionality = 10;
+void test_integrator_real(secdecutil::Integrator<cubareal,cubareal>& integrator, cubareal epsrel, int dimensionality = 10){
   
     const std::function<cubareal(cubareal const * const)> integrand =
-    [] (cubareal const * const variables)
+    [dimensionality] (cubareal const * const variables)
     {
         cubareal out = 1.;
         for (int i=0; i<dimensionality; ++i)
@@ -124,15 +122,14 @@ TEST_CASE( "Test Divonne integrator with complex", "[Cuba][Divonne]" ) {
   }
 };
 
-// TEST_CASE( "Test Cuhre integrator with real", "[Cuba][Cuhre]" ) {
-//   cubareal epsrel = 1e-3;
-//   auto integrator = secdecutil::cuba::Cuhre<cubareal>(epsrel);
-//   integrator.flags = 2;
-//   integrator.key = 7;
-//   integrator.maxeval = 1e8;
-//   test_integrator_real(integrator, epsrel);
-// };
-// TODO: Cuhre can't handle the 10-dim example.
+ TEST_CASE( "Test Cuhre integrator with real", "[Cuba][Cuhre]" ) {
+   int dimensionality = 5; // Cuhre can't handle the 10-dim example.
+   cubareal epsrel = 1e-3;
+   auto integrator = secdecutil::cuba::Cuhre<cubareal>(epsrel);
+   integrator.key = 7;
+   integrator.maxeval = 1e8;
+   test_integrator_real(integrator, epsrel, dimensionality);
+ };
 
 TEST_CASE( "Test Cuhre integrator with complex", "[Cuba][Cuhre]" ) {
   cubareal epsrel = 1e-3;
