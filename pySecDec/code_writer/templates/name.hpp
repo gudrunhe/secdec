@@ -3,7 +3,6 @@
 
 #include <complex>
 #include <vector>
-#include <secdecutil/deep_apply.hpp> // TODO: remove
 #include <secdecutil/integrand_container.hpp>
 #include <secdecutil/sector_container.hpp>
 #include <secdecutil/series.hpp>
@@ -38,7 +37,7 @@ namespace %(name)s
     extern const std::vector<%(sector_container_type)s> sectors;
     %(prefactor_type)s  prefactor(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters);
 
-    auto make_integrands
+    %(make_integrands_return_t)s make_integrands
     (
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters
@@ -47,14 +46,6 @@ namespace %(name)s
             real_t deformation_parameters_maximum = 1.,
             real_t deformation_parameters_minimum = 1.e-5,
             real_t deformation_parameters_decrease_factor = 0.9
-        #endif
-    )
-    -> decltype // TODO: be explicit here; i.e. do NOT use "auto ... -> decltype"
-    (
-        #if %(name)s_contour_deformation
-            secdecutil::deep_apply( sectors, secdecutil::SectorContainerWithDeformation_to_IntegrandContainer(real_parameters, complex_parameters) )
-        #else
-            secdecutil::deep_apply( sectors, secdecutil::SectorContainerWithoutDeformation_to_IntegrandContainer<integrand_return_t>(real_parameters, complex_parameters) )
         #endif
     );
 

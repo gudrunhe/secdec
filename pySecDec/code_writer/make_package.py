@@ -1166,11 +1166,17 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # pack the `prefactor` into c++ function that returns a nested `Series`
     # and takes the `real_parameters` and the `complex_parameters`
-    prefactor_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::UncorrelatedDeviation<' + 'integrand_return_t' + '>' * (len(regulators) + 1)
+    prefactor_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::UncorrelatedDeviation<integrand_return_t' + '>' * (len(regulators) + 1)
     prefactor_function_body = _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters)
+
+    # define the return type of "make_integrands"
+    make_integrands_return_t = 'std::vector<' + 'secdecutil::Series<' * len(regulators) + \
+                               'secdecutil::IntegrandContainer<integrand_return_t, real_t const * const' + \
+                               '>' * (len(regulators) + 2)
 
     # parse the template files "integrands.cpp", "name.hpp", "prefactor.cpp", and "functions.hpp"
     template_replacements['function_declarations'] = '\n'.join(function_declarations)
+    template_replacements['make_integrands_return_t'] = make_integrands_return_t
     template_replacements['prefactor_type'] = prefactor_type
     template_replacements['prefactor_function_body'] = prefactor_function_body
     template_replacements['number_of_sectors'] = sector_index
