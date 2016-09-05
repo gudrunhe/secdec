@@ -6,7 +6,7 @@ from .make_package import _convert_input, _make_FORM_definition, \
                           _make_FORM_function_definition, _make_FORM_list, \
                           _derivative_muliindex_to_name, _make_FORM_shifted_orders, \
                           _make_FORM_Series_initilization, _validate, \
-                          _make_prefactor_function
+                          _make_prefactor_function, _make_CXX_function_declaration
 from ..algebra import Function, Polynomial, Product, ProductRule, Sum
 from nose.plugins.attrib import attr
 import sys, shutil
@@ -526,7 +526,7 @@ class TestMiscellaneous(unittest.TestCase):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
-class TestWriteCppCode(unittest.TestCase):
+class TestWriteCppCodePrefactor(unittest.TestCase):
     #@attr('active')
     def test_one_regulator(self):
         expanded_prefactor = Polynomial([[-1],[0],[1]],['-c0','r0','r1'], ['eps'])
@@ -615,3 +615,28 @@ class TestWriteCppCode(unittest.TestCase):
             print('-------------------------')
 
             self.assertEqual(cpp_code, target_cpp_code)
+
+class TestWriteCppCodeFunctionDeclaration(unittest.TestCase):
+    #@attr('active')
+    def test_zero_args(self):
+        code = _make_CXX_function_declaration(function_name = 'f', number_of_arguments = 0)
+        target_code = '    integrand_return_t f();\n'
+        self.assertEqual(code, target_code)
+
+    #@attr('active')
+    def test_one_arg(self):
+        code = _make_CXX_function_declaration(function_name = 'f', number_of_arguments = 1)
+
+        target_code  = '    template<typename T0>\n'
+        target_code += '    integrand_return_t f(T0 arg0);\n'
+
+        self.assertEqual(code, target_code)
+
+    #@attr('active')
+    def test_two_args(self):
+        code = _make_CXX_function_declaration(function_name = 'f', number_of_arguments = 2)
+
+        target_code  = '    template<typename T0, typename T1>\n'
+        target_code += '    integrand_return_t f(T0 arg0, T1 arg1);\n'
+
+        self.assertEqual(code, target_code)

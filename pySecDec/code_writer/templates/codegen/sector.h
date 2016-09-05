@@ -29,10 +29,6 @@ CFunctions `functions';
 AutoDeclare CFunctions SecDecInternalfDUMMY;
 AutoDeclare Symbols SecDecInternalsDUMMY;
 
-* TODO: How to determine which derivatives of the user input ``functions`` are needed? How to communicate it to the user? --> quick and dirty solution for a start:
-AutoDeclare CFunctions d;
-* TODO: remove the line above
-
 * We generated logs in the subtraction and pack denominators into a function
 CFunctions log, SecDecInternalDenominator;
 

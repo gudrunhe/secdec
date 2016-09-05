@@ -51,7 +51,7 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
             if expression.symbols != polysymbols:
                 raise ValueError('"%s" (in `%s`) depends on the wrong `symbols` (is: %s, should be: %s). Try passing it as string or sympy expression.' \
                                  % (expression, name_of_make_argument_being_parsed, expression.symbols, polysymbols))
-        if target_type == ExponentiatedPolynomial:
+        if target_type is ExponentiatedPolynomial:
             if type(expression) == ExponentiatedPolynomial:
                 expression.exponent = sp.sympify(str(expression.exponent))
                 expression.coeffs = np.array([ sp.sympify(str(coeff)) for coeff in expression.coeffs ])
@@ -75,13 +75,13 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                                                          expression.coeffs,
                                                          _sympy_one, # exponent
                                                          polysymbols, copy=False)
-        elif target_type == _Expression:
+        elif target_type is _Expression:
             if not isinstance(expression, _Expression):
-                expression = Expression(expression, polysymbols)
+                expression, functions = Expression(expression, polysymbols, follow_functions=True)
         else:
             raise RuntimeError('`_parse_expressions` is only implemented for `target_type`s in %s, not for %s. (raised while parsing `%s`)' \
                                 % (set([_Expression, ExponentiatedPolynomial]), target_type, name_of_make_argument_being_parsed))
-        parsed.append(expression)
+        parsed.append(expression if target_type is ExponentiatedPolynomial else (expression,functions))
     return parsed
 
 def _validate(name):
@@ -116,7 +116,7 @@ def _convert_input(name, integration_variables, regulators,
     polynomial_names = sympify_symbols(list(polynomial_names), 'All `polynomial_names` must be symbols.')
     real_parameters= sympify_symbols(list(real_parameters), 'All `real_parameters` must be symbols.')
     complex_parameters = sympify_symbols(list(complex_parameters), 'All `complex_parameters` must be symbols.')
-    functions = sympify_symbols(list(functions), 'All `functions` must be symbols.')
+    functions = list(functions); sympify_symbols(functions, 'All `functions` must be symbols.'); functions = set(str(f) for f in functions)
     if contour_deformation_polynomial is not None:
         contour_deformation_polynomial = sympify_symbols([contour_deformation_polynomial], '`contour_deformation_polynomial` must be a symbol.')[0]
 
@@ -127,7 +127,7 @@ def _convert_input(name, integration_variables, regulators,
 
     # define the symbols of the different classes of `_Expression`s
     symbols_polynomials_to_decompose = integration_variables + regulators
-    symbols_remainder_expression = integration_variables + polynomial_names
+    symbols_remainder_expression = integration_variables + regulators + polynomial_names
     all_symbols = symbols_other_polynomials = integration_variables + regulators + polynomial_names
 
     # check format of `requested_orders` --> must be 1d and have the length as `regulators`
@@ -138,7 +138,7 @@ def _convert_input(name, integration_variables, regulators,
     # parse expressions
     polynomials_to_decompose = _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompose, ExponentiatedPolynomial, 'polynomials_to_decompose')
     other_polynomials = _parse_expressions(other_polynomials, symbols_other_polynomials, ExponentiatedPolynomial, 'other_polynomials')
-    remainder_expression = _parse_expressions([remainder_expression], symbols_remainder_expression, _Expression, 'remainder_expression')[0]
+    remainder_expression, function_calls = _parse_expressions([remainder_expression], symbols_remainder_expression, _Expression, 'remainder_expression')[0]
 
     # the exponents be polynomials in the regulators
     for poly in polynomials_to_decompose + other_polynomials:
@@ -162,7 +162,7 @@ def _convert_input(name, integration_variables, regulators,
 
     return (name, integration_variables, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
-            other_polynomials, prefactor, remainder_expression, functions,
+            other_polynomials, prefactor, remainder_expression, functions, function_calls,
             real_parameters, complex_parameters, form_optimization_level,
             form_work_space, form_insertion_depth, stabilize,
             contour_deformation_polynomial, decomposition_method,
@@ -231,10 +231,11 @@ def _parse_global_templates(name, regulators, polynomial_names,
                           'contour_deformation.h' : None,
                           'sector.h' : None,
 
-                          # "integrands.cpp", "name.hpp", and "prefactor.cpp" can only be written after the decomposition is completed
+                          # "integrands.cpp", "name.hpp", "prefactor.cpp", and "functions.hpp" can only be written after the decomposition is completed
                           'integrands.cpp' : None,
                           'name.hpp' : None,
-                          'prefactor.cpp' : None
+                          'prefactor.cpp' : None,
+                          'functions.hpp' : None
                      }
 
     # the files below are only relevant for contour deformation --> do not parse if deactivated
@@ -397,6 +398,7 @@ FORM_names = dict(
     cal_I=internal_prefix+'CalI',
     cast_polynomial=internal_prefix+'PolynomialToDecompose',
     other_polynomial=internal_prefix+'OtherPolynomial',
+    remainder_expression=internal_prefix+'RemainderExpression',
     label_contour_deformation_transform=internal_prefix+'LabelTransformation',
     label_contour_deformation_Jacobian_matrix_index_i=internal_prefix+'LabelJacobianMatrixI',
     label_contour_deformation_Jacobian_matrix_index_j=internal_prefix+'LabelJacobianMatrixJ'
@@ -486,6 +488,22 @@ def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parame
 
     code = parameter_definitions + '\nreturn ' + recursion(0,expanded_prefactor) + ';\n' + parameter_undefs
     return code.replace('\n', '\n        ')
+
+def _make_CXX_function_declaration(function_name, number_of_arguments):
+    '''
+    Write the declaration of a c++ function with
+    name `function_name` and `number_of_arguments`
+    arguments. The function's return type is set
+    to "integrand_return_t". The argument types
+    are templated.
+
+    '''
+    if number_of_arguments == 0:
+        return '    integrand_return_t ' + function_name + '();\n'
+
+    template_arguments = ', '.join('typename T%i' % i for i in range(number_of_arguments))
+    arguments = ', '.join('T%i arg%i' % (i,i) for i in range(number_of_arguments))
+    return '    template<' + template_arguments + '>\n    integrand_return_t ' + function_name + '(' + arguments + ');\n'
 
 
 # ---------------------------------- main function ----------------------------------
@@ -660,7 +678,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # convert input data types to the data types we need
     name, integration_variables, regulators, \
     requested_orders, polynomials_to_decompose, polynomial_names, \
-    other_polynomials, prefactor, remainder_expression, functions, \
+    other_polynomials, prefactor, remainder_expression, functions, function_calls, \
     real_parameters, complex_parameters, form_optimization_level, \
     form_work_space, form_insertion_depth, stabilize, \
     contour_deformation_polynomial, decomposition_method, \
@@ -702,6 +720,20 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # define the `Polynomial` "x0 + x1 + x2 + ..." to keep track of the transformations
     transformations = Polynomial(np.identity(len(integration_variables), dtype=int), [1]*len(integration_variables), integration_variables)
+
+    # make a copy of the `integration_variables` for later reference
+    all_integration_variables = list(integration_variables)
+
+    # intialize the c++ declarations of the `functions`
+    function_declarations = set()
+
+    # print message how to implement the dummy functions if applicable
+    if functions:
+        print(
+                 "Declarations of the `functions` and their required derivatives are provided\n" + \
+                 "in the file 'src/functions.hpp'. Please refer to that file for further\n" + \
+                 "instructions."
+             )
 
     # hide ``regulators`` and ``polynomial_names`` from decomposition
     polynomials_to_decompose_hidden_regulators = []
@@ -774,6 +806,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
         if not ( type(derivative) is Polynomial and np.array_equal(derivative.coeffs, [0]) and (derivative.expolist == 0).all() ):
             use_symmetries = False
             break
+    remainder_expression_is_trivial = use_symmetries
+
+    # Check that either the primary decomposition or the `remainder_expression` is trivial.
+    # Note that the primary decomposition is specialized for loop integrals.
+    if not remainder_expression_is_trivial and decomposition_method != 'iterative_no_primary':
+        raise NotImplementedError('The primary decomposition is only implemented for loop integrals. Please perform the primary decomposition yourself and choose ``decomposition_method="iterative_no_primary"``.')
 
     if use_symmetries:
         # can investigate sector symmetries
@@ -806,7 +844,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
         integration_variables = list(primary_sector.Jacobian.polysymbols) # make a copy
         symbols_polynomials_to_decompose = symbols_other_polynomials = integration_variables + regulators
-        symbols_remainder_expression = integration_variables + polynomial_names
+        symbols_remainder_expression = integration_variables + regulators + polynomial_names
         all_symbols = integration_variables + regulators + polynomial_names
 
         # define `integration_variables` in the template system
@@ -872,6 +910,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
             primary_sector.other[i] = poly
         for poly_name in reversed_polynomial_names:
             this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(-1, poly_name(*all_symbols), remove=True)
+
+        # If there is a nontrivial primary decomposition, remove the integration variable also from the `remainder_expression`
+        for i,var in enumerate(all_integration_variables):
+            if var not in integration_variables:
+                this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(i,1,remove=True)
+                break
 
         # we later need ``1`` packed into specific types
         polynomial_one = Polynomial(np.zeros([1,len(all_symbols)], dtype=int), np.array([1]), all_symbols, copy=False)
@@ -963,19 +1007,21 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # subtraction needs type `ExponentiatedPolynomial` for all factors in its monomial part
             Jacobian = ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
 
+            if use_symmetries:
+                # `remainder_expression` does not depend on the integration variables in that case --> nothing to transform here
+                symbolic_remainder_expression = this_primary_sector_remainder_expression
+            else:
+                # Apply ``this_transformation`` and the contour deformaion (if applicable) to
+                # the `remainder_expression` BEFORE taking derivatives.
+                # Introduce a symbol for the `remainder_expression` and insert in FORM.
+                symbolic_remainder_expression_arguments = []
+                symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *elementary_monomials)
+            derivative_tracking_symbolic_remainder_expression = DerivativeTracker(symbolic_remainder_expression)
+
             # initialize the product of monomials for the subtraction
             monomial_factors = chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other))
             monomials = Product(*monomial_factors, copy=False)
 
-            if use_symmetries:
-                # `remainder_expression` does not depend on the integration variables in that case --> nothing to transform here
-                this_sector_remainder_expression = this_primary_sector_remainder_expression
-            else:
-                # apply ``this_transformation`` to ``this_sector_remainder_expression`` BEFORE taking derivatives
-                for variable_index, integration_variable in enumerate(integration_variables):
-                    replacement = sp.sympify( Polynomial(this_transformation.expolist[variable_index:variable_index+1,:], [1], integration_variables) )
-                    this_sector_remainder_expression = this_primary_sector_remainder_expression.replace(variable_index, replacement)
-                this_sector_remainder_expression = Expression(sp.sympify(this_sector_remainder_expression), symbols_remainder_expression)
 
             # define `DerivativeTracker` for the symbolic polynomials
             derivative_tracking_symbolic_polynomials_to_decompose = [DerivativeTracker(f) for f in symbolic_polynomials_to_decompose]
@@ -983,7 +1029,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # define ``cal_I``, the part of the integrand that does not lead to poles
             # use the derivative tracking dummy functions for the polynomials --> faster
-            cal_I = Product(this_sector_remainder_expression, *chain(derivative_tracking_symbolic_polynomials_to_decompose, derivative_tracking_symbolic_other_polynomials), copy=False)
+            cal_I = Product(derivative_tracking_symbolic_remainder_expression, *chain(derivative_tracking_symbolic_polynomials_to_decompose, derivative_tracking_symbolic_other_polynomials), copy=False)
 
             # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
             # symbolic cal_I wrapped in a `DerivativeTracker` to keep track of derivatives
@@ -1021,9 +1067,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # update the global lowest
             lowest_orders = np.minimum(lowest_orders, -highest_poles_current_sector)
 
-            # define the CFunctions for FORM
-            # TODO: How to determine which derivatives of the user input ``functions`` are needed? How to communicate it to the user?
-            all_functions = list(functions)
+            # initialize the CFunctions for FORM
+            all_functions = []
 
             # compute the required derivatives
             derivatives = {}
@@ -1041,6 +1086,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
             #  - for cal_I
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
 
+            #  - for the `remainder_expression`
+            update_derivatives(basename=FORM_names['remainder_expression'],
+                               derivative_tracker=derivative_tracking_symbolic_remainder_expression,
+                               full_expression=this_primary_sector_remainder_expression)
+
             #  - for the polynomials (`other_polynomials` first since they can reference `polynomials_to_decompose`)
             for prod, tracker, basename in chain(
                 zip(sector.other, derivative_tracking_symbolic_other_polynomials, names_other_polynomials),
@@ -1054,7 +1104,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     full_expression=expression
                 )
 
-            #  - for the contour deformation
+            #  - for the contour deformation polynomial
             if contour_deformation_polynomial is not None:
                 full_expression = sector.cast[contour_deformation_polynomial_index].factors[1]
                 full_expression.exponent = 1 # exponent is already part of the `tracker`
@@ -1064,6 +1114,16 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     full_expression
                 )
 
+
+            # determine which derivatives of the user input ``functions`` are needed and
+            # generate the corresponding c++ "function_declarations"
+            for call in function_calls:
+                number_of_arguments = call.number_of_arguments
+                derivative_symbols = call.derivative_symbols
+                functions.update(derivative_symbols)
+                for derivative_symbol in derivative_symbols:
+                    function_declarations.add( _make_CXX_function_declaration(derivative_symbol, number_of_arguments) )
+            all_functions.extend(functions)
 
             # generate the function definitions for the insertion in FORM
             FORM_function_definitions = ''.join(
@@ -1109,7 +1169,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
     prefactor_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::UncorrelatedDeviation<' + 'integrand_return_t' + '>' * (len(regulators) + 1)
     prefactor_function_body = _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters)
 
-    # parse the template files "integrands.cpp", "name.hpp", and "prefactor.cpp"
+    # parse the template files "integrands.cpp", "name.hpp", "prefactor.cpp", and "functions.hpp"
+    template_replacements['function_declarations'] = '\n'.join(function_declarations)
     template_replacements['prefactor_type'] = prefactor_type
     template_replacements['prefactor_function_body'] = prefactor_function_body
     template_replacements['number_of_sectors'] = sector_index
@@ -1125,4 +1186,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                         template_replacements)
     parse_template_file(os.path.join(template_sources, 'src', 'prefactor.cpp'), # source
                         os.path.join(name,             'src', 'prefactor.cpp'), # dest
+                        template_replacements)
+    parse_template_file(os.path.join(template_sources, 'src', 'functions.hpp'), # source
+                        os.path.join(name,             'src', 'functions.hpp'), # dest
                         template_replacements)
