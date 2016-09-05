@@ -139,6 +139,27 @@ class TestFunction(unittest.TestCase):
         dgd0 = self.g.derive(0)
         self.assertEqual( (sp.sympify(dgd0) - sp.sympify('dgd0(x0,x1,2*x2*x3+x0) + dgd2(x0,x1,2*x2*x3+x0)')).simplify() , 0 )
 
+    #@attr('active')
+    def test_derivative_tracking(self):
+        polysymbols = ['x','y','z']
+        x = Polynomial.from_expression('x', polysymbols)
+        y = Polynomial.from_expression('y', polysymbols)
+        z = Polynomial.from_expression('z', polysymbols)
+
+        derivatives = set()
+        f = Function('f', x, y, derivative_symbols=derivatives).replace(-1,0)
+
+        self.assertEqual(derivatives, set(['f']))
+
+        f.derive(0)
+        self.assertEqual(derivatives, set(['f','dfd0']))
+
+        f.derive(2)
+        self.assertEqual(derivatives, set(['f','dfd0']))
+
+        f.derive(1).derive(0)
+        self.assertEqual(derivatives, set(['f','dfd0','dfd1','ddfd1d0']))
+
 class TestPolynomial(unittest.TestCase):
     def test_init(self):
         # Proper instantiation
