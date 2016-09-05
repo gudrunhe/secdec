@@ -9,7 +9,7 @@ source:
 test.o : source
 
 test : test.o lib$(NAME).a
-	$(CPP) $(CPPFLAGS) -o $@ $< $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 very-clean : clean
 	for dir in */; do $(MAKE) -C $$dir $@; done
