@@ -276,7 +276,7 @@ class Function(_Expression):
 
     def copy(self):
         "Return a copy of a :class:`.Function`."
-        return Function(self.symbol, *(arg.copy() for arg in self.arguments), copy=False, differentiated_args=self.differentiated_args, derivatives=self.derivatives)
+        return type(self)(self.symbol, *(arg.copy() for arg in self.arguments), copy=False, differentiated_args=self.differentiated_args, derivatives=self.derivatives)
 
     def simplify(self):
         'Simplify the arguments.'
@@ -317,7 +317,7 @@ class Function(_Expression):
             summands.append(
                             ProductRule(    # chain rule
                                             differentiated_arg,
-                                            Function('d%sd%i'%(self.symbol,argindex), *(arg.copy() for arg in self.arguments), differentiated_args=self.differentiated_args, copy=False),
+                                            type(self)('d%sd%i'%(self.symbol,argindex), *(arg.copy() for arg in self.arguments), differentiated_args=self.differentiated_args, copy=False),
                                             copy=False
                                        )
                            )
@@ -331,7 +331,7 @@ class Function(_Expression):
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         arguments = [arg.replace(index, value, remove) for arg in expression.arguments]
-        return Function(expression.symbol, *arguments, copy=False)
+        return type(expression)(expression.symbol, *arguments, copy=False)
 
 class Polynomial(_Expression):
     '''
