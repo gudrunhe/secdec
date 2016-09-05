@@ -591,6 +591,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
         Function symbols occuring in `remainder_expression`,
         e.g.``['f']``.
 
+        .. note::
+            The power function `pow` and the logarithm
+            `log` are already defined by default. The
+            `log` uses the nonstandard continuation
+            from a negative imaginary part on the negative
+            real axis (e.g. ``log(-1) = -i*pi``).
+
     :param real_parameters:
         iterable of strings or sympy symbols, optional;
         Symbols to be interpreted as real variables.
