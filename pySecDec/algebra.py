@@ -1605,7 +1605,7 @@ class Log(_Expression):
     def replace(expression, index, value, remove=False):
         return Log( expression.arg.replace(index,value,remove) , copy=False )
 
-def Expression(expression, polysymbols):
+def Expression(expression, polysymbols, follow_functions=False):
     '''
     Convert a sympy expression to an expression
     in terms of this module.
@@ -1620,6 +1620,15 @@ def Expression(expression, polysymbols):
         (see :class:`.Polynomial`) where
         possible.
 
+    :param follow_functions:
+        bool, optional (default = ``False``);
+        If true, return the converted expression
+        and a list of :class:`.Function`
+        that occur in the `expression`.
+        Add all occuring functions as
+        :class:`.DerivativeTracker` to keep track
+        of their derivatives.
+
     '''
     parsed_polysymbols = []
     for item in polysymbols:
@@ -1627,6 +1636,9 @@ def Expression(expression, polysymbols):
         assert item.is_Symbol, 'All `polysymbols` must be symbols'
         parsed_polysymbols.append(item)
     polysymbols = parsed_polysymbols
+
+    sympy_function_calls = []
+    functions = []
 
     def recursive_call(expression): # ``polysymbols`` from nonlocal context above
         try:
@@ -1657,8 +1669,13 @@ def Expression(expression, polysymbols):
                     return Log(recursive_call(expression.args[0]))
 
             if expression.is_Function:
-                return Function(expression.__class__.__name__, *(recursive_call(e) for e in expression.args))
+                func = Function(expression.__class__.__name__, *(recursive_call(e) for e in expression.args))
+                if follow_functions and expression not in sympy_function_calls:
+                    sympy_function_calls.append(expression)
+                    functions.append(func)
+                return func
 
         raise ValueError('Could not parse the expression')
 
-    return recursive_call(expression) if isinstance(expression, sp.Expr) else recursive_call( sp.sympify(str(expression)) )
+    parsed_expression = recursive_call(expression) if isinstance(expression, sp.Expr) else recursive_call( sp.sympify(str(expression)) )
+    return (parsed_expression, functions) if follow_functions else parsed_expression

@@ -1276,3 +1276,59 @@ class TestExpressionOperators(unittest.TestCase):
 
             pow_K_p0 = sp.sympify(sp.sympify('K') ** expr)
             self.assertEqual( (sp.sympify('K')**sympified_expr - pow_K_p0).simplify() , 0)
+
+class TestExpressionConverter(unittest.TestCase):
+    #@attr('active')
+    def test_polynomial(self):
+        sympy_poly = sp.sympify('x + x**2 - a * x*y')
+        poly = Expression(sympy_poly, ['x','y'])
+
+        self.assertTrue( type(poly) is Polynomial )
+        self.assertEqual( (sp.sympify(poly) - sympy_poly).simplify() , 0 )
+
+    #@attr('active')
+    def test_function(self):
+        a, x, my_function = sp.symbols('a x my_function')
+        sympy_function = my_function(a*x)
+        function = Expression(sympy_function, ['x'])
+
+        self.assertEqual( (sp.sympify(function) - sympy_function).simplify() , 0 )
+        self.assertTrue( type(function) is Function )
+        self.assertEqual(function.symbol, 'my_function')
+        self.assertEqual(len(function.arguments), 1)
+        self.assertTrue( type(function.arguments[0]) is Polynomial )
+        np.testing.assert_array_equal(function.arguments[0].expolist, [[1]])
+        np.testing.assert_array_equal(function.arguments[0].coeffs, [a])
+
+    #@attr('active')
+    def test_follow_functions(self):
+        string_expression = 'f1(x,y) ** f2(x*y,z) + f1(y,z) * f2(z) + f2(y*x,z)'
+        x, y, z = sp.symbols('x y z')
+        polysymbols = ['x', 'y', 'z']
+        expression, functions = Expression(string_expression, polysymbols, follow_functions=True)
+
+        expression.derive(2) # derivative by "z"
+
+        found_f1_x_y = found_f2_xy_z = found_f1_y_z = found_f2_z = False
+
+        self.assertEqual( (sp.sympify(expression) - sp.sympify(string_expression)).simplify() , 0 )
+        self.assertEqual( len(functions) , 4 )
+        for function in functions:
+            self.assertTrue( type(function) is Function )
+            if function.symbol == 'f1':
+                if sp.sympify(function.arguments) == [x,y]:
+                    self.assertEqual(function.derivative_symbols, set(['f1']))
+                    found_f1_x_y = True
+                elif sp.sympify(function.arguments) == [y,z]:
+                    self.assertEqual(function.derivative_symbols, set(['f1','df1d1']))
+                    found_f1_y_z = True
+            elif function.symbol == 'f2':
+                if sp.sympify(function.arguments) == [x*y,z]:
+                    self.assertEqual(function.derivative_symbols, set(['f2','df2d1']))
+                    found_f2_xy_z = True
+                elif sp.sympify(function.arguments) == [z]:
+                    self.assertEqual(function.derivative_symbols, set(['f2','df2d0']))
+                    found_f2_z = True
+
+        for found_call in [found_f1_x_y, found_f2_xy_z, found_f1_y_z, found_f2_z]:
+            self.assertTrue(found_call)
