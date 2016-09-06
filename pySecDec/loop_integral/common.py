@@ -119,10 +119,9 @@ class LoopIntegral(object):
         of Ref. [BHJ+15]_. If negative powers are combined with
         a tensor numerator, the derivative acts on the
         Feynman-parametrized tensor numerator as well, which
-        should lead to a consistent result.
+        leads to a consistent result.
 
     '''
-    #TODO: Prove last statement in description of powerlist, then replace `should lead` by `leads`
 
     def set_common_properties(self, replacement_rules, Feynman_parameters, regulator, regulator_power,
                               dimensionality, powerlist):
