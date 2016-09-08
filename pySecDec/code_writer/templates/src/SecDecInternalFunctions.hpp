@@ -18,11 +18,23 @@ namespace %(name)s
      * i.e. log(-1) = -i*pi.
      */
     // use std::log(real_t) but override log(complex_t)
-    using std::log;
-    inline complex_t log(complex_t arg)
-    {
-        return std::conj(  std::log( std::conj(arg) )  );
-    }
+    #define %(name)s_contour_deformation %(contour_deformation)i
+    #define %(name)s_has_complex_parameters %(have_complex_parameters)i
+    #if %(name)s_has_complex_parameters || %(name)s_contour_deformation
+        inline complex_t log(complex_t arg)
+        {
+            if (arg.imag() == 0)
+                arg = complex_t(arg.real(),-0.);
+            return std::log(arg);
+        }
+    #else
+        inline real_t log(real_t arg)
+        {
+            return std::log(arg);
+        }
+    #endif
+    #undef %(name)s_contour_deformation
+    #undef %(name)s_has_complex_parameters
 
     /*
      * We do not want to use "std::pow(double, int)" because the g++ compiler
