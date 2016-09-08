@@ -129,11 +129,9 @@ namespace secdecutil {
             std::vector<real_t> optimized_deformation_parameter_vector(number_of_integration_variables,0);
             std::vector<real_t> temp_deformation_parameter_vector(number_of_integration_variables,0);
             std::vector<real_t> real_sample_vector(number_of_integration_variables,0);
-            std::vector<complex_t> complex_sample_vector(number_of_integration_variables,0);
             real_t * optimized_deformation_parameters = optimized_deformation_parameter_vector.data();
             real_t * temp_deformation_parameters = temp_deformation_parameter_vector.data();
             real_t * real_sample = real_sample_vector.data();
-            complex_t * complex_sample = complex_sample_vector.data();
 
             // define a Sobol sequence using the gsl
             // Restriction to at most 40 dimensions only because of the implementation in the gsl. --> Use a different Sobol implementation if higher dimensionality is needed.
@@ -169,13 +167,8 @@ namespace secdecutil {
             {
                 gsl_qrng_get(Sobol_generator,real_sample);
 
-                // the "contour_deformation_polynomial" takes complex --> must cast the "sample"
-                for (j=0; j<number_of_integration_variables; ++j)
-                    complex_sample[j] = real_sample[j];
-
                 deformation = contour_deformation(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters);
-                while (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() >
-                       contour_deformation_polynomial(complex_sample, real_parameters, complex_parameters).imag())
+                while (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() > 0)
                 {
                     for (j=0; j<number_of_integration_variables; ++j)
                         optimized_deformation_parameters[j] *= decrease_factor;
@@ -203,13 +196,7 @@ namespace secdecutil {
         {
             auto deformation = contour_deformation(integration_variables, real_parameters, complex_parameters, deformation_parameters);
 
-            auto untransformed_integration_variable_vector = std::vector<complex_t>(number_of_integration_variables);
-            auto untransformed_integration_variables = untransformed_integration_variable_vector.data();
-            for (unsigned i=0; i<number_of_integration_variables; ++i)
-                untransformed_integration_variables[i] = integration_variables[i];
-
-            if (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() >
-                contour_deformation_polynomial(untransformed_integration_variables, real_parameters, complex_parameters).imag())
+            if (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() > 0)
                 throw sign_check_error("Contour deformation in sector \"" + std::to_string(sector_id) + "\" yields the wrong sign of \"contour_deformation_polynomial.imag\". Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters\" (recommended) or decrease \"deformation_parameters\".");
 
             return deformation.Jacobian_determinant * undeformed_integrand(deformation.transformed_variables.data(), real_parameters, complex_parameters);
