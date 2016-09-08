@@ -206,57 +206,67 @@
   .sort
   Format float 20;
   Format C;
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "std::vector<complex_t> transformed_parameters(`numIV');#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex *Jacobian = #@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    gsl_matrix_complex_alloc(`numOccurringIVOrder`shiftedOrderIndex'',`numOccurringIVOrder`shiftedOrderIndex'');#@SecDecInternalNewline@#"
-  #$i = -1;
-  #Do idx1 = {`occurringIntegrationVariableIndices',}
-    #If x`idx1' != x
-      #$idx1plus1DollarVar = `idx1' + 1;
-      Format rational;
-      #redefine idx1plus1 "`$idx1plus1DollarVar'"
-      Format float 20;
-      Format C;
-      #$i = $i + 1;
-      Bracket SecDecInternalLabelTransformation, SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ;
-      .sort
-      L expr = contourdef[SecDecInternalLabelTransformation^`idx1plus1'];
-      .sort
-      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "transformed_parameters[`$i'] = %%e" expr(#@no_split_expression@#)
-      #$j = -1;
-      #Do idx2 = {`occurringIntegrationVariableIndices',}
-        #If x`idx2' != x
-          #$idx2plus1DollarVar = `idx2' + 1;
-          Format rational;
-          #redefine idx2plus1 "`$idx2plus1DollarVar'"
-          Format float 20;
-          Format C;
-          #$j = $j + 1;
-          Bracket SecDecInternalLabelTransformation, SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ;
-          .sort
-          L expr = contourdef[SecDecInternalLabelJacobianMatrixI^`idx1plus1' * SecDecInternalLabelJacobianMatrixJ^`idx2plus1'];
-          .sort
-          #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expr(#@no_split_expression@#)
-          #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_set#@SecDecInternalNewline@#"
-          #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "(#@SecDecInternalNewline@#"
-          #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    Jacobian,#@SecDecInternalNewline@#"
-          #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    `$i', `$j',#@SecDecInternalNewline@#"
-          #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    {tmp.real(), tmp.imag()}#@SecDecInternalNewline@#"
-          #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
-        #EndIf
-      #EndDo
-    #EndIf
-  #EndDo
-* calculate the determinant numerically using the gsl
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation * permutation = gsl_permutation_alloc (`numOccurringIVOrder`shiftedOrderIndex'');#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "int signum;#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_linalg_complex_LU_decomp (Jacobian, permutation, &signum);#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_complex det = gsl_linalg_complex_LU_det(Jacobian, signum);#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = {GSL_REAL(det), GSL_IMAG(det)};#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "std::vector<complex_t> transformed_parameters(`numOccurringIVOrder`shiftedOrderIndex'');#@SecDecInternalNewline@#"
 
-* free manually allocated memory
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation_free(permutation);#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_free(Jacobian);#@SecDecInternalNewline@#"
+  #If `numOccurringIVOrder`shiftedOrderIndex'' != 0
+
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex *Jacobian = #@SecDecInternalNewline@#"
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    gsl_matrix_complex_alloc(`numOccurringIVOrder`shiftedOrderIndex'',`numOccurringIVOrder`shiftedOrderIndex'');#@SecDecInternalNewline@#"
+    #$i = -1;
+    #Do idx1 = {`occurringIntegrationVariableIndices',}
+      #If x`idx1' != x
+        #$idx1plus1DollarVar = `idx1' + 1;
+        Format rational;
+        #redefine idx1plus1 "`$idx1plus1DollarVar'"
+        Format float 20;
+        Format C;
+        #$i = $i + 1;
+        Bracket SecDecInternalLabelTransformation, SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ;
+        .sort
+        L expr = contourdef[SecDecInternalLabelTransformation^`idx1plus1'];
+        .sort
+        #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "transformed_parameters[`$i'] = %%e" expr(#@no_split_expression@#)
+        #$j = -1;
+        #Do idx2 = {`occurringIntegrationVariableIndices',}
+          #If x`idx2' != x
+            #$idx2plus1DollarVar = `idx2' + 1;
+            Format rational;
+            #redefine idx2plus1 "`$idx2plus1DollarVar'"
+            Format float 20;
+            Format C;
+            #$j = $j + 1;
+            Bracket SecDecInternalLabelTransformation, SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ;
+            .sort
+            L expr = contourdef[SecDecInternalLabelJacobianMatrixI^`idx1plus1' * SecDecInternalLabelJacobianMatrixJ^`idx2plus1'];
+            .sort
+            #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expr(#@no_split_expression@#)
+            #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_set#@SecDecInternalNewline@#"
+            #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "(#@SecDecInternalNewline@#"
+            #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    Jacobian,#@SecDecInternalNewline@#"
+            #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    `$i', `$j',#@SecDecInternalNewline@#"
+            #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    {tmp.real(), tmp.imag()}#@SecDecInternalNewline@#"
+            #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+          #EndIf
+        #EndDo
+      #EndIf
+    #EndDo
+
+*   calculate the determinant numerically using the gsl
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation * permutation = gsl_permutation_alloc (`numOccurringIVOrder`shiftedOrderIndex'');#@SecDecInternalNewline@#"
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "int signum;#@SecDecInternalNewline@#"
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_linalg_complex_LU_decomp (Jacobian, permutation, &signum);#@SecDecInternalNewline@#"
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_complex det = gsl_linalg_complex_LU_det(Jacobian, signum);#@SecDecInternalNewline@#"
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = {GSL_REAL(det), GSL_IMAG(det)};#@SecDecInternalNewline@#"
+
+*   free manually allocated memory
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation_free(permutation);#@SecDecInternalNewline@#"
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_free(Jacobian);#@SecDecInternalNewline@#"
+
+  #Else
+
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = 1;#@SecDecInternalNewline@#"
+
+  #Endif
 
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "return secdecutil::integral_transformation_t<complex_t>#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    {#@SecDecInternalNewline@#"
@@ -452,36 +462,40 @@
 * the first order
 * {
 
-  #$idx1 = -1;
-  #Do IV1 = {`occurringIntegrationVariables'}
-    #$idx1 = $idx1 + 1;
+  #If `numOccurringIVOrder`shiftedOrderIndex'' != 0
 
-      #$idx2 = -1;
-      #Do IV2 = {`occurringIntegrationVariables'}
-        #$idx2 = $idx2 + 1;
-        #$idx2plus1 = $idx2 + 1;
+    #$idx1 = -1;
+    #Do IV1 = {`occurringIntegrationVariables'}
+      #$idx1 = $idx1 + 1;
 
-        #If `$idx1' <= `$idx2'
-          #redefine HessianIDX "`$idx1'_`$idx2'"
-        #Else
-          #redefine HessianIDX "`$idx2'_`$idx1'"
-        #EndIf
+        #$idx2 = -1;
+        #Do IV2 = {`occurringIntegrationVariables'}
+          #$idx2 = $idx2 + 1;
+          #$idx2plus1 = $idx2 + 1;
 
-        #If `$idx2' == 0
-          #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "output_deformation_parameters[`$idx1'] = "
-          #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "abs_gradient_`$idx2' / (abs_Hessian_`HessianIDX' + tiny);#@SecDecInternalNewline@#"
-        #Else
-          #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp = abs_gradient_`$idx2' / (abs_Hessian_`HessianIDX' + tiny);#@SecDecInternalNewline@#"
-          #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "output_deformation_parameters[`$idx1'] = "
-          #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp < output_deformation_parameters[`$idx1'] ?"
-          #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp : output_deformation_parameters[`$idx1'];#@SecDecInternalNewline@#"
-        #EndIf
+          #If `$idx1' <= `$idx2'
+            #redefine HessianIDX "`$idx1'_`$idx2'"
+          #Else
+            #redefine HessianIDX "`$idx2'_`$idx1'"
+          #EndIf
 
-        #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+          #If `$idx2' == 0
+            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "output_deformation_parameters[`$idx1'] = "
+            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "abs_gradient_`$idx2' / (abs_Hessian_`HessianIDX' + tiny);#@SecDecInternalNewline@#"
+          #Else
+            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp = abs_gradient_`$idx2' / (abs_Hessian_`HessianIDX' + tiny);#@SecDecInternalNewline@#"
+            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "output_deformation_parameters[`$idx1'] = "
+            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp < output_deformation_parameters[`$idx1'] ?"
+            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp : output_deformation_parameters[`$idx1'];#@SecDecInternalNewline@#"
+          #EndIf
 
-      #EndDo
+          #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
-  #EndDo
+        #EndDo
+
+    #EndDo
+
+  #EndIf
 
 * }
 

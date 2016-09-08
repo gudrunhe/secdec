@@ -278,7 +278,9 @@ multiply replace_(I,i_);
 * Find and count the occurring integration variables.
 * {
   #redefine occurringIntegrationVariables ""
+  #redefine occurringIntegrationVariableIndices ""
   #redefine absentIntegrationVariables ""
+  #redefine absentIntegrationVariableIndices ""
   #$counterOccur = 0;
   #$counterAbsent = 0;
   #$currentIVIndex = -1;
