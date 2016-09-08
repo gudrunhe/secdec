@@ -33,6 +33,9 @@ namespace secdecutil
 
       #define CUBA_INTEGRATE_BODY \
         ndim = integrand_container.number_of_integration_variables; \
+        /* must have at least one integration variable */ \
+        if (ndim == 0) \
+            ndim = 1; \
         /* nasty removal of constness --> restored in cuba_integrand_prototype */ \
         userdata = const_cast<void*>( reinterpret_cast<const void*>(&integrand_container) ); \
         call_cuba();
