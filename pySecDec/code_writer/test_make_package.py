@@ -640,3 +640,34 @@ class TestWriteCppCodeFunctionDeclaration(unittest.TestCase):
         target_code += '    integrand_return_t f(T0 arg0, T1 arg1);\n'
 
         self.assertEqual(code, target_code)
+
+# --------------------------------- algebra helper ----------------------------------
+class TestNoDerivativeAtZeroFunction(unittest.TestCase):
+    def setUp(self):
+        self.number_of_polysymbols = 3
+        self.polysymbols = ['x%i' % i for i in range(self.number_of_polysymbols)]
+        self.variables = [Polynomial.from_expression('x%i' % i, self.polysymbols) for i in range(self.number_of_polysymbols)]
+
+    #@attr('active')
+    def test_base_function(self):
+        f_call = NoDerivativeAtZeroFunction('f', self.variables[0])
+        self.assertEqual( sp.sympify(f_call) , sp.sympify('f(x0)') )
+        self.assertEqual( sp.sympify(f_call.replace(0,0)) , 0 )
+
+    #@attr('active')
+    def test_first_derivative(self):
+        f_call = NoDerivativeAtZeroFunction('f', *self.variables)
+        dfd1 = f_call.derive(1)
+
+        self.assertEqual( sp.sympify(dfd1) , sp.sympify('dfd1(x0,x1,x2)') )
+        for i in range(self.number_of_polysymbols):
+            self.assertEqual( sp.sympify(dfd1.replace(i,0)) , 0 )
+
+    #@attr('active')
+    def test_second_derivative(self):
+        f_call = NoDerivativeAtZeroFunction('f', *self.variables)
+        dfd1 = f_call.derive(1).derive(0)
+
+        self.assertEqual( sp.sympify(dfd1) , sp.sympify('ddfd1d0(x0,x1,x2)') )
+        for i in range(self.number_of_polysymbols):
+            self.assertEqual( sp.sympify(dfd1.replace(i,0)) , 0 )

@@ -130,7 +130,6 @@ def loop_package(name, loop_integral, requested_order,
 
         form_optimization_level = form_optimization_level,
         form_work_space = form_work_space,
-        form_insertion_depth = 1, # can have log(UorF(...)) or denominator(UorF(...))
 
         stabilize = stabilize, 
         decomposition_method = decomposition_method

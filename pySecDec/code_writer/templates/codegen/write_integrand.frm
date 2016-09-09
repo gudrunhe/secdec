@@ -90,7 +90,7 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
   #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformableIntegrandFunction#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction#@SecDecInternalNewline@#"
   #Else
     #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction#@SecDecInternalNewline@#"
   #EndIf
@@ -100,17 +100,20 @@ B `regulators';
 
 * Open the namspace in which the sector is to be implemented
   #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
+  #EndIf
   #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'_order_`cppOrder'_integrand#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const integration_variables,#@SecDecInternalNewline@#"
-  #Else
-    #write <sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const integration_variables,#@SecDecInternalNewline@#"
-  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const integration_variables,#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const real_parameters,#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "    complex_t const * const complex_parameters#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.cpp> "    ,real_t const * const deformation_parameters,#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "    const real_t deformation_offset#@SecDecInternalNewline@#"
+  #EndIf
   #write <sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  {#@SecDecInternalNewline@#"
 
@@ -127,6 +130,55 @@ B `regulators';
   repeat Id log(?head, SecDecInternalsDUMMY1?, SecDecInternalsDUMMY2?) = log(?head, SecDecInternalsDUMMY1) + log(SecDecInternalsDUMMY2);
   repeat Id log(SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?) = log(SecDecInternalsDUMMY1) * SecDecInternalsDUMMY2;
   .sort
+
+* Find and count the occurring integration variables.
+* {
+  hide; nhide expression;
+  .sort
+
+  #redefine occurringIntegrationVariables ""
+  #redefine occurringIntegrationVariableIndices ""
+  #redefine absentIntegrationVariables ""
+  #redefine absentIntegrationVariableIndices ""
+  #$counterOccur = 0;
+  #$counterAbsent = 0;
+  #$currentIVIndex = -1;
+
+  #Do IV = {`integrationVariables'}
+
+    #$currentIVIndex = $currentIVIndex + 1;
+
+    #redefine IVOccurs "0"
+    if ( occurs(`IV') ) redefine IVOccurs "1";
+    .sort
+
+    #If `IVOccurs'
+      #$counterOccur = $counterOccur + 1;
+      #If `$counterOccur' == 1
+        #redefine occurringIntegrationVariables "`IV'"
+        #redefine occurringIntegrationVariableIndices "`$currentIVIndex'"
+      #Else
+        #redefine occurringIntegrationVariables "`occurringIntegrationVariables',`IV'"
+        #redefine occurringIntegrationVariableIndices "`occurringIntegrationVariableIndices',`$currentIVIndex'"
+      #EndIf
+    #Else
+      #$counterAbsent = $counterAbsent + 1;
+      #If `$counterAbsent' == 1
+        #redefine absentIntegrationVariables "`IV'"
+        #redefine absentIntegrationVariableIndices "`$currentIVIndex'"
+      #Else
+        #redefine absentIntegrationVariables "`absentIntegrationVariables',`IV'"
+        #redefine absentIntegrationVariableIndices "`absentIntegrationVariableIndices',`$currentIVIndex'"
+      #EndIf
+    #EndIf
+
+  #EndDo
+
+  #redefine numOccurringIVOrder`shiftedOrderIndex' "`$counterOccur'"
+
+  unhide;
+  .sort
+* }
 
 * Explicitly insert the functions defined in python.
 * {
@@ -152,7 +204,13 @@ B `regulators';
       Denominators SecDecInternalDenominator;
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
-      Id log(1) = 0;
+      repeat Id log(1) = 0;
+      repeat Id exp(0) = 1;
+      #If `contourDeformation'
+        #Do function = {SecDecInternalExpMinusMuOverX,dSecDecInternalXExpMinusMuOverXd1,SecDecInternalXExpMinusMuOverX}
+          repeat Id `function'(SecDecInternalsDUMMY?, 0) = 0;
+        #EndDo
+      #EndIf
       repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
       repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
       repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
@@ -170,7 +228,13 @@ B `regulators';
       Denominators SecDecInternalDenominator;
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
-      Id log(1) = 0;
+      repeat Id log(1) = 0;
+      repeat Id exp(0) = 1;
+      #If `contourDeformation'
+        #Do function = {SecDecInternalExpMinusMuOverX,dSecDecInternalXExpMinusMuOverXd1,SecDecInternalXExpMinusMuOverX}
+          repeat Id `function'(SecDecInternalsDUMMY?, 0) = 0;
+        #EndDo
+      #EndIf
       repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
       repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
       repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
@@ -180,40 +244,22 @@ B `regulators';
     .sort
   #EndDo
 
-* Analytically cancel the subtraction terms to avoid numerical instabilities.
-* We bring all terms that come with a "1/integration_variable" factor to a common
-* denominator.
-* {
-  #If `stabilize'
-    L denom = SecDecInternalsDUMMYdenominator;
-    #Do IV = {`integrationVariables'}
-      #Do i = 1,1
-        if ( match(SecDecInternalDenominator(`IV') * SecDecInternalDenominator(SecDecInternalsDUMMY?!{`IV'}$arg)) ) redefine i "0";
-        .sort
-        #if `i' == 0
-          multiply SecDecInternalfDUMMYNumerator($arg);
-          Id SecDecInternalfDUMMYNumerator($arg) * SecDecInternalsDUMMYdenominator = SecDecInternalDenominator($arg) * SecDecInternalsDUMMYdenominator;
-          Id SecDecInternalfDUMMYNumerator($arg) * SecDecInternalDenominator($arg) = 1;
-          Id SecDecInternalfDUMMYNumerator($arg) = $arg;
-          Id `IV' * SecDecInternalDenominator(`IV') = 1;
-          .sort
-        #EndIf
-      #EndDo
-    #EndDo
-    Id SecDecInternalsDUMMYdenominator = 1;
-    .sort
-    multiply denom;
-    .sort
-    drop denom;
-    .sort
-  #EndIf
-* }
+* translate sympy's imaginary unit to FORM's imaginary unit
+multiply replace_(I,i_);
+.sort
 
 * Replace all function calls by symbols for simultaneous optimization.
 * {
+
   Local toOptimize = SecDecInternalsDUMMYtoOptimize;
 
   #redefine functionsToReplace "`functions',log,SecDecInternalDenominator"
+  #If `contourDeformation'
+    #redefine functionsToReplace "`functionsToReplace',SecDecInternalContourdefJacobian"
+    #Do IV = {`integrationVariables'}
+      #redefine functionsToReplace "`functionsToReplace',SecDecInternalDeformed`IV'"
+    #EndDo
+  #EndIf
 
   #Do function = {`functionsToReplace'}
     #$labelCounter = 0;
@@ -271,53 +317,6 @@ B `regulators';
   .sort
 * }
 
-* translate sympy's imaginary unit to FORM's imaginary unit
-multiply replace_(I,i_);
-.sort
-
-* Find and count the occurring integration variables.
-* {
-  #redefine occurringIntegrationVariables ""
-  #redefine occurringIntegrationVariableIndices ""
-  #redefine absentIntegrationVariables ""
-  #redefine absentIntegrationVariableIndices ""
-  #$counterOccur = 0;
-  #$counterAbsent = 0;
-  #$currentIVIndex = -1;
-
-  #Do IV = {`integrationVariables'}
-
-    #$currentIVIndex = $currentIVIndex + 1;
-
-    #redefine IVOccurs "0"
-    if ( occurs(`IV') ) redefine IVOccurs "1";
-    .sort
-
-    #If `IVOccurs'
-      #$counterOccur = $counterOccur + 1;
-      #If `$counterOccur' == 1
-        #redefine occurringIntegrationVariables "`IV'"
-        #redefine occurringIntegrationVariableIndices "`$currentIVIndex'"
-      #Else
-        #redefine occurringIntegrationVariables "`occurringIntegrationVariables',`IV'"
-        #redefine occurringIntegrationVariableIndices "`occurringIntegrationVariableIndices',`$currentIVIndex'"
-      #EndIf
-    #Else
-      #$counterAbsent = $counterAbsent + 1;
-      #If `$counterAbsent' == 1
-        #redefine absentIntegrationVariables "`IV'"
-        #redefine absentIntegrationVariableIndices "`$currentIVIndex'"
-      #Else
-        #redefine absentIntegrationVariables "`absentIntegrationVariables',`IV'"
-        #redefine absentIntegrationVariableIndices "`absentIntegrationVariableIndices',`$currentIVIndex'"
-      #EndIf
-    #EndIf
-
-  #EndDo
-
-  #redefine numOccurringIVOrder`shiftedOrderIndex' "`$counterOccur'"
-* }
-
 * Specify the occurring deformation parameters.
   #If `contourDeformation'
     #redefine occurringDeformationParameters ""
@@ -334,7 +333,11 @@ multiply replace_(I,i_);
   #EndIf
 
 * Simultaneously optimize the integrand and all occurring function arguments.
-  AB `integrationVariables', `realParameters', `complexParameters';
+  AntiBracket `integrationVariables', `realParameters', `complexParameters'
+  #If `contourDeformation'
+    , `deformationParameters', SecDecInternalMu
+  #EndIf
+  ;
   Format O`optimizationLevel';
   .sort
   #optimize toOptimize
@@ -349,6 +352,10 @@ multiply replace_(I,i_);
   #call cppDefine(`occurringIntegrationVariables',integration_variables,sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`realParameters',real_parameters,sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`complexParameters',complex_parameters,sector_`sectorID'_`cppOrder'.cpp)
+  #If `contourDeformation'
+    #call cppDefine(`occurringDeformationParameters',deformation_parameters,sector_`sectorID'_`cppOrder'.cpp)
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalMu deformation_offset#@SecDecInternalNewline@#"
+  #EndIf
 * }
 
 * Processing denominators in FORM is easiest if packed into a function.
@@ -367,6 +374,81 @@ multiply replace_(I,i_);
   #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
+* Define the calls to the contour deformation "SecDecInternalDeformed..."
+* and "SecDecInternalContourdefJacobian".
+* {
+
+  #If `contourDeformation'
+
+    Format rational;
+
+*   We may have to call call the contour deformation multiple times with some
+*   integration variables set to zero. --> Find out which ones by looking at
+*   the arguments of the Jacobian.
+    #Do callIndex = 1, `largestLabelSecDecInternalContourdefJacobian'
+      B SecDecInternalLabelSecDecInternalContourdefJacobianCall`callIndex'Arg;
+      .sort
+      #Do argIndex = 1, `numberOfArgsSecDecInternalContourdefJacobianLabel`callIndex''
+        L arg`argIndex' = toOptimize[SecDecInternalLabelSecDecInternalContourdefJacobianCall`callIndex'Arg ^ `argIndex'];
+      #EndDo
+      .sort
+
+*     Call the contour deformation with the required arguments.
+      #write <sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternalContourdefCall`callIndex'IntegrationVariables[`numOccurringIVOrder`shiftedOrderIndex''];#@SecDecInternalNewline@#"
+      #$occurringIndex = -1;
+      #Do argIndexMinusOne = {`occurringIntegrationVariableIndices',}
+        #$argIndex = `argIndexMinusOne' + 1;
+        #If x`argIndexMinusOne' != x
+          #$occurringIndex = $occurringIndex + 1;
+          #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalContourdefCall`callIndex'IntegrationVariables[`$occurringIndex'] = %%e#@SecDecInternalNewline@#" arg`$argIndex'(#@no_split_expression@#)
+        #EndIf
+      #EndDo
+      #Do argIndex = 1, `numberOfArgsSecDecInternalContourdefJacobianLabel`callIndex''
+        drop arg`argIndex';
+      #EndDo
+      #write <sector_`sectorID'_`cppOrder'.cpp> "secdecutil::integral_transformation_t<complex_t> SecDecInternalContourdefCall`callIndex' ="
+      #write <sector_`sectorID'_`cppOrder'.cpp> "sector_`sectorID'_order_`cppOrder'_contour_deformation("
+      #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalContourdefCall`callIndex'IntegrationVariables, real_parameters,"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "complex_parameters, deformation_parameters, deformation_offset"
+      #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+      multiply replace_(SecDecInternalLabelSecDecInternalContourdefJacobianCall`callIndex'Arg,0
+      #Do IV = {`integrationVariables'}
+        , SecDecInternalLabelSecDecInternalDeformed`IV'Call`callIndex'Arg,0
+      #EndDo
+      );
+      .sort
+
+*     Define the calls to "SecDecInternalDeformed..." and "SecDecInternalContourdefJacobian".
+      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalSecDecInternalContourdefJacobianCall`callIndex' ="
+      #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalContourdefCall`callIndex'.Jacobian_determinant;#@SecDecInternalNewline@#"
+      #$counter = -1;
+      #Do IV = {`occurringIntegrationVariables',}
+        #If x`IV' != x
+          #$counter = $counter + 1;
+          #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalSecDecInternalDeformed`IV'Call`callIndex' ="
+          #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalContourdefCall`callIndex'.transformed_variables[`$counter'];#@SecDecInternalNewline@#"
+        #EndIf
+      #EndDo
+      multiply replace_(SecDecInternalsDUMMY,SecDecInternalsDUMMY
+      #Do IV = {`absentIntegrationVariables',}
+        #If x`IV' != x
+          ,SecDecInternalSecDecInternalDeformed`IV'Call`callIndex',0
+        #EndIf
+      #EndDo
+      );
+      .sort
+
+    #EndDo
+
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+    Format float 20;
+    Format C;
+
+  #EndIf
+
+* }
+
 * Define the function calls replaced by symbols.
 * The difficulty here is that the function arguments may
 * refer to other function calls. --> We must order the
@@ -376,14 +458,14 @@ multiply replace_(I,i_);
 * Keep track of function calls that are not written to
 * the c++ file yet.
   L unparsed = SecDecInternalsDUMMYUnparsedAppendix;
-  #Do function = {`functionsToReplace'}
+  #Do function = {`functions',log,SecDecInternalDenominator}
     #Do callIndex = 1, `largestLabel`function''
       Id SecDecInternalsDUMMYUnparsedAppendix = SecDecInternalsDUMMYUnparsedAppendix + SecDecInternal`function'Call`callIndex'Unparsed;
     #EndDo
   #EndDo
 
   #Do i = 1,1
-    #Do function = {`functionsToReplace'}
+    #Do function = {`functions',log,SecDecInternalDenominator}
       #Do callIndex = 1, `largestLabel`function''
         B SecDecInternalLabel`function'Call`callIndex'Arg;
         .sort
@@ -406,7 +488,7 @@ multiply replace_(I,i_);
             nhide arg`argIndex';
           #EndDo
           .sort
-          #Do innerFunction = {`functionsToReplace'}
+          #Do innerFunction = {`functions',log,SecDecInternalDenominator}
             #Do innerCallIndex = 1, `largestLabel`innerFunction''
               #redefine dependsOnInnerFunctionCall "0"
               if ( occurs(SecDecInternal`innerFunction'Call`innerCallIndex') ) redefine dependsOnInnerFunctionCall "1";
@@ -458,6 +540,10 @@ multiply replace_(I,i_);
   #call cppUndefine(`occurringIntegrationVariables',sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`realParameters',sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`complexParameters',sector_`sectorID'_`cppOrder'.cpp)
+  #If `contourDeformation'
+    #call cppUndefine(`occurringDeformationParameters',sector_`sectorID'_`cppOrder'.cpp)
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalMu#@SecDecInternalNewline@#"
+  #EndIf
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalDenominator#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef result#@SecDecInternalNewline@#"
 
@@ -465,7 +551,7 @@ multiply replace_(I,i_);
   #write <sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
 
-* write the contour deformation if required
+* write the contour deformation optimize functions if required
   #If `contourDeformation'
     #include write_contour_deformation.frm
   #EndIf

@@ -34,7 +34,8 @@
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const integration_variables,#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const real_parameters,#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const complex_parameters,#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const deformation_parameters#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const deformation_parameters,#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      const real_t deformation_offset#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  {#@SecDecInternalNewline@#"
 
@@ -56,11 +57,8 @@
   #EndDo
   .sort
 
-* We must take only the real part of `F' and its derivatives.
+* We must take only the real part of the derivatives of `F'.
 * Collect all these and replace calls by symbols.
-  Id `F'(?args) = SecDecInternal`F'Call;
-  Id SecDecInternalsDUMMYContourdefAppendix = SecDecInternalsDUMMYContourdefAppendix +
-                                          `F'(`integrationVariables',`regulators')*SecDecInternalLabel`F';
   #Do idx1 = {`occurringIntegrationVariableIndices',}
     #If x`idx1' != x
       Id d`F'd`idx1'(?args) = SecDecInternald`F'd`idx1'Call;
@@ -79,17 +77,16 @@
   #EndDo
   Id SecDecInternalsDUMMYContourdefAppendix = 0;
 
-* Remove derivatives of `F' by absent integration variables
+* Remove labels for absent integration variables.
   #If `numIV' != `numOccurringIVOrder`shiftedOrderIndex''
-    #Do idx1 = {`absentIntegrationVariableIndices',}
-      #If x`idx1' != x
-        Id d`F'd`idx1'(?args) = 0;
-        #Do idx2 = {`absentIntegrationVariableIndices',}
-          #If x`idx2' != x
-            Id dd`F'd`idx1'd`idx2'(?args) = 0;
-          #EndIf
-        #EndDo
-      #EndIf
+    #Do label = {SecDecInternalLabelTransformation,SecDecInternalLabelJacobianMatrixI,SecDecInternalLabelJacobianMatrixJ}
+      Id `label' ^ SecDecInternalsDUMMYpower? = SecDecInternalfDUMMYLabel(SecDecInternalsDUMMYpower);
+      #Do idx = {`absentIntegrationVariableIndices',}
+        #If x`idx' != x
+          Id SecDecInternalfDUMMYLabel(`idx' + 1) = 0;
+        #EndIf
+      #EndDo
+      Id SecDecInternalfDUMMYLabel(SecDecInternalsDUMMYpower?) = `label'^(SecDecInternalsDUMMYpower);
     #EndDo
   #EndIf
 
@@ -104,14 +101,14 @@
     #$counter = $counter + 1;
   #EndDo
 
-* set all regulators and "SecDecInternalsDUMMYToOptimize" to zero
-  multiply replace_(`nullifyRegulators' , SecDecInternalsDUMMYToOptimize,0);
+* set all regulators to zero
+  multiply replace_(`nullifyRegulators');
   .sort
 
   Format rational;
   Format Normal;
 
-* define the argument for "replace_" that sets all absent integration variables to zero
+* Define the argument for "replace_" that sets all absent integration variables to zero.
   #redefine nullifyAbsentIVs ""
   #$counter = 1;
   #Do var = {`absentIntegrationVariables',}
@@ -130,7 +127,7 @@
     .sort
   #EndIf
 
-* Explicitly insert `F' and its derivatives
+* Explicitly insert the derivatives of `F'
   #call insert
 
 * translate sympy's imaginary unit to FORM's imaginary unit
@@ -146,9 +143,10 @@
   #call cppDefine(`realParameters',real_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`complexParameters',complex_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`occurringDeformationParameters',deformation_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalMu deformation_offset#@SecDecInternalNewline@#"
 
 * optimize
-  AB `integrationVariables', `realParameters', `complexParameters';
+  AntiBracket `integrationVariables', `realParameters', `complexParameters', `deformationParameters', SecDecInternalMu;
   Format O`optimizationLevel';
   .sort
   #optimize contourdef
@@ -168,12 +166,6 @@
 
   Format rational;
   Format C;
-  Bracket SecDecInternalLabel`F';
-  .sort
-  L expr = contourdef[SecDecInternalLabel`F'];
-  .sort
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternal`F'Call = tmp.real();#@SecDecInternalNewline@#"
 
   #Do idx1 = {`occurringIntegrationVariableIndices',}
     #If x`idx1' != x
@@ -221,11 +213,15 @@
         Format float 20;
         Format C;
         #$i = $i + 1;
+        Format rational;
+        #redefine i "`$i'"
+        Format float 20;
+        Format C;
         Bracket SecDecInternalLabelTransformation, SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ;
         .sort
         L expr = contourdef[SecDecInternalLabelTransformation^`idx1plus1'];
         .sort
-        #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "transformed_parameters[`$i'] = %%e" expr(#@no_split_expression@#)
+        #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "transformed_parameters[`i'] = %%e" expr(#@no_split_expression@#)
         #$j = -1;
         #Do idx2 = {`occurringIntegrationVariableIndices',}
           #If x`idx2' != x
@@ -243,7 +239,10 @@
             #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_set#@SecDecInternalNewline@#"
             #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "(#@SecDecInternalNewline@#"
             #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    Jacobian,#@SecDecInternalNewline@#"
+            Format rational;
             #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    `$i', `$j',#@SecDecInternalNewline@#"
+            Format float 20;
+            Format C;
             #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "    {tmp.real(), tmp.imag()}#@SecDecInternalNewline@#"
             #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
           #EndIf
@@ -257,6 +256,7 @@
     #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_linalg_complex_LU_decomp (Jacobian, permutation, &signum);#@SecDecInternalNewline@#"
     #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_complex det = gsl_linalg_complex_LU_det(Jacobian, signum);#@SecDecInternalNewline@#"
     #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = {GSL_REAL(det), GSL_IMAG(det)};#@SecDecInternalNewline@#"
+
 
 *   free manually allocated memory
     #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation_free(permutation);#@SecDecInternalNewline@#"

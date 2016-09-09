@@ -2,8 +2,30 @@
 #define deformationParameters "%(deformation_parameters)s"
 Symbols `deformationParameters';
 
+* The deformed integration variables
+#define deformedIVNames "%(deformed_integration_variable_names)s"
+CFunctions `deformedIVNames';
+
+* The additional parameter controlling how fast the contour deformation goes to
+* zero at the end points
+Symbol SecDecInternalMu;
+
 * Define the function that takes the real part
 CFunction SecDecInternalRealPart;
+
+* Define the function call to the Jacobian determinant
+CFunction SecDecInternalContourdefJacobian;
+
+* Define the calls to the contour deformation.
+#Do function = {`integrationVariables'}
+  AutoDeclare Symbols SecDecInternalSecDecInternalDeformed`function'Call;
+#EndDo
+AutoDeclare Symbols SecDecInternalSecDecInternalContourdefJacobianCall;
+
+* Define the function appearing in the contour deformation
+CFunctions  SecDecInternalExpMinusMuOverX,
+            SecDecInternalXExpMinusMuOverX,
+           dSecDecInternalXExpMinusMuOverXd1;
 
 * Define the name of the polynomial for the contour deformation
 * ("F" in loop integrals)

@@ -3,6 +3,12 @@
 
 #include "%(name)s.hpp"
 
+#define %(name)s_contour_deformation %(contour_deformation)i
+#if %(name)s_contour_deformation
+    #include "contour_deformation_functions.hpp"
+#endif
+#undef %(name)s_contour_deformation
+
 #include <cmath>
 #include <complex>
 
