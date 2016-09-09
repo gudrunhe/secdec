@@ -8,18 +8,19 @@
 #include <cuba.h>
 #include <string>
 
-void test_integrator_real(secdecutil::Integrator<cubareal,cubareal>& integrator, cubareal epsrel, int dimensionality = 10){
+template<typename real_t>
+void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, cubareal epsrel, int dimensionality = 10){
   
-    const std::function<cubareal(cubareal const * const)> integrand =
-    [dimensionality] (cubareal const * const variables)
+    const std::function<real_t(real_t const * const)> integrand =
+    [dimensionality] (real_t const * const variables)
     {
-        cubareal out = 1.;
+        real_t out = 1.;
         for (int i=0; i<dimensionality; ++i)
             out *= 6. * variables[i] * (1. - variables[i]);
         return out;
     };
 
-    const auto integrand_container = secdecutil::IntegrandContainer<cubareal, cubareal const * const>(dimensionality,integrand);
+    const auto integrand_container = secdecutil::IntegrandContainer<real_t, real_t const * const>(dimensionality,integrand);
     cubareal expected_result = 1.;
 
     auto computed_result = integrator.integrate(integrand_container);
@@ -30,23 +31,24 @@ void test_integrator_real(secdecutil::Integrator<cubareal,cubareal>& integrator,
     REQUIRE( computed_result.uncertainty <= epsrel );
 };
 
-void test_integrator_complex(secdecutil::Integrator<std::complex<cubareal>,cubareal>& integrator, cubareal epsrel){
+template<typename real_t>
+void test_integrator_complex(secdecutil::Integrator<std::complex<real_t>,real_t>& integrator, cubareal epsrel){
 
     constexpr int dimensionality = 4;
 
-    const std::function<std::complex<cubareal>(cubareal const * const)> integrand =
-    [] (cubareal const * const variables)
+    const std::function<std::complex<real_t>(real_t const * const)> integrand =
+    [] (real_t const * const variables)
     {
-        cubareal out_real = 1.;
+        real_t out_real = 1.;
         for (int i=0; i<dimensionality; ++i)
             out_real *= 6. * variables[i] * (1. - variables[i]);
 
-        cubareal out_imag = variables[0] * (1. - variables[0]);
+        real_t out_imag = variables[0] * (1. - variables[0]);
 
-        return std::complex<cubareal>{out_real,out_imag};
+        return std::complex<real_t>{out_real,out_imag};
     };
 
-    const auto integrand_container = secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const>(dimensionality,integrand);
+    const auto integrand_container = secdecutil::IntegrandContainer<std::complex<real_t>, real_t const * const>(dimensionality,integrand);
     std::complex<cubareal> expected_result = {1.,1./6.};
 
     auto computed_result = integrator.integrate(integrand_container);
@@ -67,7 +69,7 @@ void test_integrator_complex(secdecutil::Integrator<std::complex<cubareal>,cubar
 
 TEST_CASE( "Test Vegas integrator with real", "[Integrator][Cuba][Vegas]" ) {
   cubareal epsrel = 1e-3;
-  auto integrator = secdecutil::cuba::Vegas<cubareal>(epsrel);
+  auto integrator = secdecutil::cuba::Vegas<double>(epsrel);
   test_integrator_real(integrator, epsrel);
 };
 
@@ -84,6 +86,25 @@ TEST_CASE( "Test Vegas integrator with complex", "[Integrator][Cuba][Vegas]" ) {
   }
 };
 
+TEST_CASE( "Test Vegas integrator with long double", "[Integrator][Cuba][Vegas]" ) {
+  cubareal epsrel = 1e-3;
+  auto integrator = secdecutil::cuba::Vegas<long double>(epsrel);
+  test_integrator_real(integrator, epsrel);
+};
+	 
+TEST_CASE( "Test Vegas integrator with complex long double", "[Integrator][Cuba][Vegas]" ) {
+  cubareal epsrel = 1e-3;
+  auto integrator = secdecutil::cuba::Vegas<std::complex<long double>>(epsrel);
+  SECTION( "Integrate real and imag together" ) {
+    integrator.together = true;
+    test_integrator_complex(integrator, epsrel);
+  }
+  SECTION( "Integrate real and imag separately" ) {
+    integrator.together = false;
+    test_integrator_complex(integrator, epsrel);
+  }
+};
+ 
 TEST_CASE( "Test Suave integrator with real", "[Integrator][Cuba][Suave]" ) {
   cubareal epsrel = 1e-3;
   auto integrator = secdecutil::cuba::Suave<cubareal>(epsrel);

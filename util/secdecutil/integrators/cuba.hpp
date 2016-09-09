@@ -12,6 +12,7 @@
 #include <secdecutil/integrand_container.hpp>
 #include <secdecutil/integrators/integrator.hpp>
 #include <secdecutil/uncertainties.hpp>
+#include <vector>
 
 namespace secdecutil
 {
@@ -21,15 +22,17 @@ namespace secdecutil
       * Base class for the c++ wrapper of the Cuba library.
       * All Cuba integrators should inherit from this class.
       *
+      * Cuba always uses the float type "cubareal" as defined in "cuba.h",
+      * which can be different from the type "T" used by the IntegrandContainer.
       */
 
       #define CUBA_STRUCT_BODY \
         int ndim; \
         void * userdata; \
         virtual void call_cuba() = 0; \
-        std::array<T,ncomp> integral; \
-        std::array<T,ncomp> error; \
-        std::array<T,ncomp> prob;
+        std::array<cubareal,ncomp> integral; \
+        std::array<cubareal,ncomp> error; \
+        std::array<cubareal,ncomp> prob;
 
       #define CUBA_INTEGRATE_BODY \
         ndim = integrand_container.number_of_integration_variables; \
@@ -40,15 +43,23 @@ namespace secdecutil
         userdata = const_cast<void*>( reinterpret_cast<const void*>(&integrand_container) ); \
         call_cuba();
 
-      // real version
+      // real version for general type
       template<typename T>
       struct CubaIntegrator : Integrator<T,T>
       {
       protected:
-        static int cuba_integrand_prototype(const int *ndim, const T integration_variables[], const int *ncomp, T result[], void *userdata)
+        static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
         {
           auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<T, T const * const> *>(userdata) );
-          result[0] = integrand_container.integrand(integration_variables);
+
+          /* "integration_variables" is an array of "cubareal", but the integrand expects type T
+           * --> copy them into a vector of type T using the iterator contructor.
+           * During the copy operation the type is converted implicitly.
+           */
+          const std::vector<T> converted_integration_variables(integration_variables, integration_variables + (*ndim)*sizeof(cubareal));
+
+          result[0] = integrand_container.integrand(converted_integration_variables.data()); // implicit conversion of result from type T to cubareal
+
           return 0;
         };
         static const int ncomp = 1;
@@ -65,17 +76,51 @@ namespace secdecutil
         };
       };
 
+      // real version specialized for cubareal
+      template<>
+      struct CubaIntegrator<cubareal> : Integrator<cubareal,cubareal>
+      {
+      protected:
+        static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
+        {
+          auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<cubareal, cubareal const * const> *>(userdata) );
+          result[0] = integrand_container.integrand(integration_variables); // pass array "integration_variables" directly
+
+          return 0;
+        };
+        static const int ncomp = 1;
+        CUBA_STRUCT_BODY
+
+        std::function<secdecutil::UncorrelatedDeviation<cubareal>
+          (const secdecutil::IntegrandContainer<cubareal, cubareal const * const>&)> get_integrate()
+        {
+          return [this] (const secdecutil::IntegrandContainer<cubareal, cubareal const * const>& integrand_container)
+            {
+              CUBA_INTEGRATE_BODY
+              return secdecutil::UncorrelatedDeviation<cubareal>(integral.at(0),error.at(0));
+            };
+        };
+      };
+
+
       // complex version
       template<typename T>
       struct CubaIntegrator<std::complex<T>> : Integrator<std::complex<T>,T>
       {
       protected:
-        static int cuba_integrand_prototype(const int *ndim, const T integration_variables[], const int *ncomp, T result[], void *userdata)
+        static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
         {
           auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<std::complex<T>, T const * const> *>(userdata) );
-          std::complex<T> evaluated_integrand = integrand_container.integrand(integration_variables);
-          result[0] = evaluated_integrand.real();
-          result[1] = evaluated_integrand.imag();
+
+          /* "integration_variables" is an array of "cubareal", but the integrand expects type T
+           * --> copy them into a vector of type T using the iterator contructor.
+           * During the copy operation the type is converted implicitly.
+           */
+          const std::vector<T> converted_integration_variables(integration_variables, integration_variables + (*ndim)*sizeof(cubareal));
+
+          std::complex<T> evaluated_integrand = integrand_container.integrand(converted_integration_variables.data());
+          result[0] = evaluated_integrand.real(); // implicit conversion of result from type T to cubareal
+          result[1] = evaluated_integrand.imag(); // implicit conversion of result from type T to cubareal
           return 0;
         };
         static const int ncomp = 2;
@@ -92,6 +137,34 @@ namespace secdecutil
         };
       };
 
+      // complex version specialized for cubareal
+      template<>
+      struct CubaIntegrator<std::complex<cubareal>> : Integrator<std::complex<cubareal>,cubareal>
+      {
+      protected:
+        static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
+        {
+          auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const> *>(userdata) );
+
+          std::complex<cubareal> evaluated_integrand = integrand_container.integrand(integration_variables); // pass array "integration_variables" directly
+          result[0] = evaluated_integrand.real();
+          result[1] = evaluated_integrand.imag();
+          return 0;
+        };
+        static const int ncomp = 2;
+        CUBA_STRUCT_BODY
+
+        std::function<secdecutil::UncorrelatedDeviation<std::complex<cubareal>>
+          (const secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const>&)>
+          get_together_integrate()
+          {
+            return [this] (const secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const>& integrand_container) {
+              CUBA_INTEGRATE_BODY
+              return secdecutil::UncorrelatedDeviation<std::complex<cubareal>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)});
+            };
+        };
+      };
+
       #undef CUBA_STRUCT_BODY
       #undef CUBA_INTEGRATE_BODY
 
@@ -99,8 +172,8 @@ namespace secdecutil
 
         #define VEGAS_STRUCT_BODY \
             constexpr static long long int nvec = 1; \
-            T epsrel; \
-            T epsabs; \
+            cubareal epsrel; \
+            cubareal epsabs; \
             int flags; \
             int seed; \
             long long int mineval; \
@@ -114,8 +187,8 @@ namespace secdecutil
             \
             Vegas \
             ( \
-                T epsrel = 1e-2, \
-                T epsabs = 1e-7, \
+                cubareal epsrel = 1e-2, \
+                cubareal epsabs = 1e-7, \
                 int flags = 0, \
                 int seed = 0, \
                 long long int mineval = 0, \
@@ -194,8 +267,8 @@ namespace secdecutil
 
         #define SUAVE_STRUCT_BODY \
             constexpr static long long int nvec = 1; \
-            T epsrel; \
-            T epsabs; \
+            cubareal epsrel; \
+            cubareal epsabs; \
             int flags; \
             int seed; \
             long long int mineval; \
@@ -208,8 +281,8 @@ namespace secdecutil
             \
             Suave \
             ( \
-                T epsrel = 1e-2, \
-                T epsabs = 1e-7, \
+                cubareal epsrel = 1e-2, \
+                cubareal epsabs = 1e-7, \
                 int flags = 0, \
                 int seed = 0, \
                 long long int mineval = 0, \
@@ -287,8 +360,8 @@ namespace secdecutil
 
         #define DIVONNE_STRUCT_BODY \
             constexpr static long long int nvec = 1; \
-            T epsrel; \
-            T epsabs; \
+            cubareal epsrel; \
+            cubareal epsabs; \
             int flags; \
             int seed; \
             long long int mineval; \
@@ -310,8 +383,8 @@ namespace secdecutil
             \
             Divonne \
             ( \
-                T epsrel = 1e-2, \
-                T epsabs = 1e-7, \
+                cubareal epsrel = 1e-2, \
+                cubareal epsabs = 1e-7, \
                 int flags = 0, \
                 int seed = 0, \
                 long long int mineval = 0, \
@@ -410,8 +483,8 @@ namespace secdecutil
 
         #define CUHRE_STRUCT_BODY \
             constexpr static long long int nvec = 1; \
-            T epsrel; \
-            T epsabs; \
+            cubareal epsrel; \
+            cubareal epsabs; \
             int flags; \
             long long int mineval; \
             long long int maxeval; \
@@ -421,8 +494,8 @@ namespace secdecutil
             \
             Cuhre \
             ( \
-                T epsrel = 1e-2, \
-                T epsabs = 1e-7, \
+                cubareal epsrel = 1e-2, \
+                cubareal epsabs = 1e-7, \
                 int flags = 0, \
                 long long int mineval = 0, \
                 long long int maxeval = 1e6, \
