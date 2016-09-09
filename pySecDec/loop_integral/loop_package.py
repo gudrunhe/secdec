@@ -14,7 +14,7 @@ def loop_package(name, loop_integral, requested_order,
                  real_parameters=[], complex_parameters=[],
                  contour_deformation=True, additional_prefactor=1,
                  form_optimization_level=2, form_work_space='500M',
-                 stabilize=False, decomposition_method='iterative'):
+                 decomposition_method='iterative'):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -70,17 +70,6 @@ def loop_package(name, loop_integral, requested_order,
         string, optional;
         The FORM WorkSpace. Default: ``'500M'``.
 
-    :param stabilize:
-        bool, optional;
-        Whether or not to bring subexpression to a common
-        denominator. Default: ``False``.
-
-        .. warning::
-            This is very extensive concerning both - the
-            algebra and the numerics. It should only be
-            set to ``True`` if numerical instabilities
-            occur.
-
     :param decomposition_method:
         string, optional;
         The strategy to decompose the polynomials. The
@@ -131,6 +120,5 @@ def loop_package(name, loop_integral, requested_order,
         form_optimization_level = form_optimization_level,
         form_work_space = form_work_space,
 
-        stabilize = stabilize, 
         decomposition_method = decomposition_method
     )

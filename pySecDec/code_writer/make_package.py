@@ -106,8 +106,8 @@ def _convert_input(name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
-                   form_work_space, form_insertion_depth, stabilize,
-                   contour_deformation_polynomial, decomposition_method):
+                   form_work_space, form_insertion_depth, contour_deformation_polynomial,
+                   decomposition_method):
     'Get the data types right.'
 
     # parse symbols
@@ -164,9 +164,8 @@ def _convert_input(name, integration_variables, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
             other_polynomials, prefactor, remainder_expression, functions, function_calls,
             real_parameters, complex_parameters, form_optimization_level,
-            form_work_space, form_insertion_depth, stabilize,
-            contour_deformation_polynomial, decomposition_method,
-            symbols_polynomials_to_decompose, symbols_other_polynomials,
+            form_work_space, form_insertion_depth, contour_deformation_polynomial,
+            decomposition_method, symbols_polynomials_to_decompose, symbols_other_polynomials,
             symbols_remainder_expression, all_symbols)
 
 
@@ -190,9 +189,8 @@ _decomposition_strategies = dict(
 # -------------------------------- template parsing ---------------------------------
 def _parse_global_templates(name, regulators, polynomial_names,
                             real_parameters, complex_parameters, form_optimization_level,
-                            form_work_space, form_insertion_depth, stabilize,
-                            requested_orders, contour_deformation_polynomial,
-                            sector_container_type):
+                            form_work_space, form_insertion_depth, requested_orders,
+                            contour_deformation_polynomial, sector_container_type):
     '''
     Create the `target_directory` (given by `name`) and return the two
     optional arguments passed to :func:`parse_template_tree`.
@@ -213,7 +211,6 @@ def _parse_global_templates(name, regulators, polynomial_names,
                                      form_work_space = form_work_space,
                                      form_insertion_depth = form_insertion_depth,
                                      contour_deformation = int(contour_deformation_polynomial is not None),
-                                     stabilize = int(stabilize),
                                      requested_orders = _make_FORM_list(requested_orders),
                                      sector_container_type = sector_container_type,
                                      pySecDec_version = version,
@@ -543,7 +540,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
-                 form_insertion_depth=1, stabilize=False, contour_deformation_polynomial=None,
+                 form_insertion_depth=1, contour_deformation_polynomial=None,
                  decomposition_method='iterative_no_primary'):
     r'''
     Decompose, subtract and expand an expression.
@@ -670,17 +667,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
         How deep FORM should try to resolve nested function
         calls. Default: ``1``.
 
-    :param stabilize:
-        bool, optional;
-        Whether or not to bring subexpression to a common
-        denominator. Default: ``False``.
-
-        .. warning::
-            This is very extensive concerning both - the
-            algebra and the numerics. It should only be
-            set to ``True`` if numerical instabilities
-            occur.
-
     :param contour_deformation_polynomial:
         string or sympy symbol, optional;
         The name of the polynomial in `polynomial_names`
@@ -710,9 +696,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # convert input data types to the data types we need
     name, integration_variables, regulators, \
     requested_orders, polynomials_to_decompose, polynomial_names, \
-    other_polynomials, prefactor, remainder_expression, functions, function_calls, \
-    real_parameters, complex_parameters, form_optimization_level, \
-    form_work_space, form_insertion_depth, stabilize, \
+    other_polynomials, prefactor, remainder_expression, functions, \
+    function_calls, real_parameters, complex_parameters, \
+    form_optimization_level, form_work_space, form_insertion_depth, \
     contour_deformation_polynomial, decomposition_method, \
     symbols_polynomials_to_decompose, symbols_other_polynomials, \
     symbols_remainder_expression, all_symbols = \
@@ -720,8 +706,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
-                   form_work_space, form_insertion_depth, stabilize,
-                   contour_deformation_polynomial, decomposition_method)
+                   form_work_space, form_insertion_depth, contour_deformation_polynomial,
+                   decomposition_method)
 
     # construct the c++ type of the integrand container class
     # for two regulators, the resulting code should read:
@@ -736,9 +722,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
         _parse_global_templates(
         name, regulators, polynomial_names,
         real_parameters, complex_parameters, form_optimization_level,
-        form_work_space, form_insertion_depth, stabilize,
-        requested_orders, contour_deformation_polynomial,
-        sector_container_type
+        form_work_space, form_insertion_depth, requested_orders,
+        contour_deformation_polynomial, sector_container_type
     )
 
     # get the highest poles from the ``prefactor``

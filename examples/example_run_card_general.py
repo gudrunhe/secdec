@@ -27,11 +27,5 @@ form_optimization_level = 2,
 # the WorkSpace parameter for FORM
 form_work_space = '500M',
 
-# whether or not to increase numerical stability
-# Note: This is very extensive concerning both - the algebra and the numerics.
-#       It should only be set to ``True`` if numerical instabilities occur.
-stabilize = False,
-
-
 
 )

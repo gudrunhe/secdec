@@ -45,7 +45,6 @@ class TestConvertInput(TestMakePackage):
                                       form_optimization_level=2,
                                       form_work_space='500M',
                                       form_insertion_depth=0,
-                                      stabilize=False,
                                       contour_deformation_polynomial=None,
                                       decomposition_method='iterative_no_primary'
                                  )
