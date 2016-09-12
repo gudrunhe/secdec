@@ -19,7 +19,8 @@ namespace %(name)s
             ,unsigned number_of_samples,
             real_t deformation_parameters_maximum,
             real_t deformation_parameters_minimum,
-            real_t deformation_parameters_decrease_factor
+            real_t deformation_parameters_decrease_factor,
+            real_t deformation_parameters_deformation_offset
         #endif
     )
     {
@@ -34,7 +35,8 @@ namespace %(name)s
                         number_of_samples,
                         deformation_parameters_maximum,
                         deformation_parameters_minimum,
-                        deformation_parameters_decrease_factor
+                        deformation_parameters_decrease_factor,
+                        deformation_parameters_deformation_offset
                     )
             );
         #else

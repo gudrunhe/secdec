@@ -45,7 +45,8 @@ namespace %(name)s
             ,unsigned number_of_samples = 100000,
             real_t deformation_parameters_maximum = 1.,
             real_t deformation_parameters_minimum = 1.e-5,
-            real_t deformation_parameters_decrease_factor = 0.9
+            real_t deformation_parameters_decrease_factor = 0.9,
+            real_t deformation_parameters_deformation_offset = 1.e-3
         #endif
     );
 
