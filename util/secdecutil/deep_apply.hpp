@@ -39,12 +39,13 @@ namespace secdecutil {
         deep_apply_impl(T& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
     };
 
-    template<typename out_base_type, typename in_base_type, template<typename... > class E, typename T>
-    struct deep_apply_impl<out_base_type,in_base_type,E<T>>
+    // Specialisation for std::vector
+    template<typename out_base_type, typename in_base_type, typename T>
+    struct deep_apply_impl<out_base_type,in_base_type,std::vector<T>>
     {
         using base_type = typename deep_apply_impl<out_base_type,in_base_type,T>::base_type;
-        using new_type = E<typename deep_apply_impl<out_base_type,in_base_type,T>::new_type>;
-        E<T>& nest;
+        using new_type = std::vector<typename deep_apply_impl<out_base_type,in_base_type,T>::new_type>;
+        std::vector<T>& nest;
         const std::function<out_base_type(in_base_type)>& func;
         new_type apply()
         {
@@ -53,7 +54,7 @@ namespace secdecutil {
                 content.push_back( deep_apply_impl<out_base_type,in_base_type,T>(element,func).apply() );
             return content;
         };
-        deep_apply_impl(E<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
+        deep_apply_impl(std::vector<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
     };
 
     // Specialisation for secdecutil::Series
@@ -109,12 +110,13 @@ namespace secdecutil {
         const_deep_apply_impl(const T& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
     };
 
-    template<typename out_base_type, typename in_base_type, template<typename... > class E, typename T>
-    struct const_deep_apply_impl<out_base_type,in_base_type,E<T>>
+    // Specialisation for std::vector
+    template<typename out_base_type, typename in_base_type, typename T>
+    struct const_deep_apply_impl<out_base_type,in_base_type,std::vector<T>>
     {
         using base_type = typename const_deep_apply_impl<out_base_type,in_base_type,T>::base_type;
-        using new_type = E<typename const_deep_apply_impl<out_base_type,in_base_type,T>::new_type>;
-        const E<T>& nest;
+        using new_type = std::vector<typename const_deep_apply_impl<out_base_type,in_base_type,T>::new_type>;
+        const std::vector<T>& nest;
         const std::function<out_base_type(in_base_type)>& func;
         new_type apply() const
         {
@@ -123,7 +125,7 @@ namespace secdecutil {
                 content.push_back( const_deep_apply_impl<out_base_type,in_base_type,T>(element,func).apply() );
             return content;
         };
-        const_deep_apply_impl(const E<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
+        const_deep_apply_impl(const std::vector<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
     };
 
     // Specialisation for secdecutil::Series
@@ -177,17 +179,32 @@ namespace secdecutil {
         void_deep_apply_impl(T& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
     };
 
-    template<typename in_base_type, template<typename... > class E, typename T>
-    struct void_deep_apply_impl<in_base_type,E<T>>
+    // Specialisation for std::vector
+    template<typename in_base_type, typename T>
+    struct void_deep_apply_impl<in_base_type,std::vector<T>>
     {
-        E<T>& nest;
+        std::vector<T>& nest;
         const std::function<void(in_base_type)>& func;
         void apply()
         {
             for ( auto& element : nest )
                 void_deep_apply_impl<in_base_type,T>(element,func).apply();
         };
-        void_deep_apply_impl(E<T>& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
+        void_deep_apply_impl(std::vector<T>& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
+    };
+
+    // Specialisation for secdecutil::Series
+    template<typename in_base_type, typename T>
+    struct void_deep_apply_impl<in_base_type,secdecutil::Series<T>>
+    {
+        secdecutil::Series<T>& nest;
+        const std::function<void(in_base_type)>& func;
+        void apply()
+        {
+            for ( auto& element : nest )
+                void_deep_apply_impl<in_base_type,T>(element,func).apply();
+        };
+        void_deep_apply_impl(secdecutil::Series<T>& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
     };
 
     template<typename in_base_type, typename T>
@@ -216,17 +233,32 @@ namespace secdecutil {
         void_const_deep_apply_impl(const T& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
     };
 
-    template<typename in_base_type, template<typename... > class E, typename T>
-    struct void_const_deep_apply_impl<in_base_type,E<T>>
+    // Specialisation for std::vector
+    template<typename in_base_type, typename T>
+    struct void_const_deep_apply_impl<in_base_type,std::vector<T>>
     {
-        const E<T>& nest;
+        const std::vector<T>& nest;
         const std::function<void(in_base_type)>& func;
         void apply() const
         {
             for ( auto& element : nest )
                 void_const_deep_apply_impl<in_base_type,T>(element,func).apply();
         };
-        void_const_deep_apply_impl(const E<T>& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
+        void_const_deep_apply_impl(const std::vector<T>& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
+    };
+
+    // Specialisation for secdecutil::Series
+    template<typename in_base_type, typename T>
+    struct void_const_deep_apply_impl<in_base_type,secdecutil::Series<T>>
+    {
+        const secdecutil::Series<T>& nest;
+        const std::function<void(in_base_type)>& func;
+        void apply() const
+        {
+            for ( auto& element : nest )
+                void_const_deep_apply_impl<in_base_type,T>(element,func).apply();
+        };
+        void_const_deep_apply_impl(const secdecutil::Series<T>& nest, const std::function<void(in_base_type)>& func): nest(nest), func(func) {};
     };
 
     template<typename in_base_type, typename T>
