@@ -73,9 +73,13 @@ ExtraSymbols,array,SecDecInternalAbbreviation;
   #EndDo
 #endProcedure
 
-* Define a procedure to insert the dummy functions introduced in python and their derivatives.
-#procedure insert
-  %(insert_procedure)s
+* Define procedures to insert the dummy functions introduced in python and their derivatives.
+#procedure insertCalI
+  %(insert_cal_I_procedure)s
+#endProcedure
+
+#procedure insertOther
+  %(insert_other_procedure)s
 #endProcedure
 
 * Define how deep functions to be inserted are nested.

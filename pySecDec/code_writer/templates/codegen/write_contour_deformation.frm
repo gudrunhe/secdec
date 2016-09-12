@@ -128,7 +128,7 @@
   #EndIf
 
 * Explicitly insert the derivatives of `F'
-  #call insert
+  #call insertOther
 
 * translate sympy's imaginary unit to FORM's imaginary unit
   multiply replace_(I,i_);
@@ -286,7 +286,7 @@
     multiply replace_(`nullifyAbsentIVs');
     .sort
   #EndIf
-  #call insert
+  #call insertOther
   .sort
   #optimize expressionF
 
@@ -393,7 +393,7 @@
   .sort
 
 * Explicitly insert the derivatives of `F'
-  #call insert
+  #call insertOther
 
 * translate sympy's imaginary unit to FORM's imaginary unit
   multiply replace_(I,i_);

@@ -540,7 +540,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
-                 form_insertion_depth=1, contour_deformation_polynomial=None,
+                 form_insertion_depth=2, contour_deformation_polynomial=None,
                  decomposition_method='iterative_no_primary'):
     r'''
     Decompose, subtract and expand an expression.
@@ -665,7 +665,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     :param form_insertion_depth:
         nonnegative integer, optional;
         How deep FORM should try to resolve nested function
-        calls. Default: ``1``.
+        calls. Default: ``2``.
 
     :param contour_deformation_polynomial:
         string or sympy symbol, optional;
@@ -1133,9 +1133,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
             all_functions = []
 
             # compute the required derivatives
-            derivatives = {}
-            ordered_derivative_names = [] # python dictionaries are unordered but some insertions depend on others --> need an ordering
-            def update_derivatives(basename, derivative_tracker, full_expression):
+            cal_I_derivatives = {}
+            other_derivatives = {}
+
+            ordered_cal_I_derivative_names = [] # python dictionaries are unordered but some insertions depend on others --> need an ordering
+            ordered_other_derivative_names = [] # python dictionaries are unordered but some insertions depend on others --> need an ordering
+            def update_derivatives(basename, derivative_tracker, full_expression, derivatives=other_derivatives, ordered_derivative_names=ordered_other_derivative_names):
                 derivatives[basename] = full_expression # include undifferentiated expression
                 ordered_derivative_names.append(basename)
                 all_functions.append(basename) # define the symbol as CFunction in FORM
@@ -1146,7 +1149,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     all_functions.append(name) # define the symbol as CFunction in FORM
 
             #  - for cal_I
-            update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I)
+            update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I,
+                               derivatives=cal_I_derivatives, ordered_derivative_names=ordered_cal_I_derivative_names)
 
             #  - for the `remainder_expression`
             update_derivatives(basename=FORM_names['remainder_expression'],
@@ -1196,11 +1200,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
             all_functions.extend(functions)
 
             # generate the function definitions for the insertion in FORM
-            FORM_function_definitions = ''.join(
-                _make_FORM_function_definition(name, derivatives[name], all_symbols, limit=10**6).replace('**','^')
-                for name in ordered_derivative_names
+            FORM_cal_I_definitions = ''.join(
+                _make_FORM_function_definition(name, cal_I_derivatives[name], all_symbols, limit=10**6).replace('**','^')
+                for name in ordered_cal_I_derivative_names
             )
-            form_insertions = _make_FORM_list(derivatives.keys())
+            FORM_function_definitions = ''.join(
+                _make_FORM_function_definition(name, other_derivatives[name], all_symbols, limit=10**6).replace('**','^')
+                for name in ordered_other_derivative_names
+            )
 
             # generate list over all occuring orders in the regulators
             regulator_powers = list( rangecomb(np.zeros_like(required_orders), required_orders + highest_poles_current_sector) )
@@ -1211,7 +1218,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # parse template file "sector.h"
             template_replacements['functions'] = _make_FORM_list(all_functions)
-            template_replacements['insert_procedure'] = FORM_function_definitions
+            template_replacements['insert_cal_I_procedure'] = FORM_cal_I_definitions
+            template_replacements['insert_other_procedure'] = FORM_function_definitions
             template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYIntegrand', integrand, args=None, limit=10**6)
             template_replacements['sector_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, required_orders, sector_index, contour_deformation_polynomial is not None)
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)

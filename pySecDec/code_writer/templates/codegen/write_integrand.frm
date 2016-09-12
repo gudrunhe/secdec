@@ -180,7 +180,92 @@ B `regulators';
   .sort
 * }
 
-* Explicitly insert the functions defined in python.
+* insert calI
+  #call insertCalI
+  .sort
+
+* Replace calls to the deformation of the integration variables by symbols.
+* {
+
+  #If `contourDeformation'
+
+    #Do depth = 0, `insertionDepth'
+*     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
+*     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
+      #call beginArgumentDepth(`depth')
+        Denominators SecDecInternalDenominator;
+        factarg,(-1),SecDecInternalDenominator;
+        chainout SecDecInternalDenominator;
+        repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+      #call endArgumentDepth(`depth')
+      .sort
+
+    #EndDo
+
+    Local toOptimize = SecDecInternalsDUMMYtoOptimize;
+
+    #redefine functionsToReplace "SecDecInternalContourdefJacobian"
+    #Do IV = {`integrationVariables'}
+      #redefine functionsToReplace "`functionsToReplace',SecDecInternalDeformed`IV'"
+    #EndDo
+
+    #Do function = {`functionsToReplace'}
+      #$labelCounter = 0;
+
+      #Do depth = 0, `insertionDepth'
+
+*       Since we need intermediate ".sort" instructions, we cannot use the
+*       "repeat" environment.
+*       The following construction is suggested in the FORM documentation.
+
+        #Do i = 1,1
+*         set dollar variable
+          #call beginArgumentDepth(`depth')
+            if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
+          #call endArgumentDepth(`depth')
+          .sort
+
+*         The following "#if" evaluates to true only if there are logs or denominators left.
+          #If `i' == 0
+
+            #$labelCounter = $labelCounter + 1;
+
+            L arguments = SecDecInternalfDUMMYarguments(`$args');
+
+            #Do replaceDepth = 0, `insertionDepth'
+              #call beginArgumentDepth(`replaceDepth')
+                Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
+              #call endArgumentDepth(`replaceDepth')
+            #EndDo
+
+            repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) = SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
+
+*           Define `$argCounter' by loking at the term with the empty function "SecDecInternalfDUMMYarguments"
+            Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
+            .sort
+
+*           Add all arguments to top level polynomial for simultaneous optimization.
+            Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + arguments;
+
+            #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
+
+            .sort
+          #EndIf
+        #EndDo
+      #EndDo
+
+      #redefine largestLabel`function' "`$labelCounter'"
+
+    #EndDo
+
+    drop arguments;
+    .sort
+
+  #EndIf
+
+* }
+
+* Explicitly insert the other functions defined in python.
 * {
 
   #Do depth = 0, `insertionDepth'
@@ -195,7 +280,7 @@ B `regulators';
     .sort
 
     #call beginArgumentDepth(`depth')
-      #call insert
+      #call insertOther
     #call endArgumentDepth(`depth')
     .sort
 
@@ -251,15 +336,11 @@ multiply replace_(I,i_);
 * Replace all function calls by symbols for simultaneous optimization.
 * {
 
-  Local toOptimize = SecDecInternalsDUMMYtoOptimize;
+  #If `contourDeformation' == 0
+    Local toOptimize = SecDecInternalsDUMMYtoOptimize;
+  #EndIf
 
   #redefine functionsToReplace "`functions',log,SecDecInternalDenominator"
-  #If `contourDeformation'
-    #redefine functionsToReplace "`functionsToReplace',SecDecInternalContourdefJacobian"
-    #Do IV = {`integrationVariables'}
-      #redefine functionsToReplace "`functionsToReplace',SecDecInternalDeformed`IV'"
-    #EndDo
-  #EndIf
 
   #Do function = {`functionsToReplace'}
     #$labelCounter = 0;
