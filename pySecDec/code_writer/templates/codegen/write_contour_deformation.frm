@@ -21,7 +21,7 @@
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "  secdecutil::SectorContainerWithDeformation<real_t, complex_t>::ContourDeformationFunction sector_`sectorID'_order_`cppOrder'_contour_deformation;#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "  secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformableIntegrandFunction sector_`sectorID'_order_`cppOrder'_contour_deformation_polynomial;#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "  secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction sector_`sectorID'_order_`cppOrder'_contour_deformation_polynomial;#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "};#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
 
@@ -280,13 +280,61 @@
 * Optmimize the 2nd Symnanzik polynomial "F"
   #clearoptimize
   drop contourdef, expr;
-  L expressionF = `F'(`integrationVariables',`regulators')*replace_(`nullifyRegulators');
+
+  #$counter = -1;
+  #redefine deformedIntegrationVariables ""
+  #Do IV = {`integrationVariables',}
+    #If x`IV' != x
+      #$counter = $counter + 1;
+      #If `$counter' != 0
+        #redefine deformedIntegrationVariables "`deformedIntegrationVariables',"
+      #EndIf
+      #redefine deformedIntegrationVariables "`deformedIntegrationVariables'SecDecInternalDeformed`IV'"
+    #EndIf
+  #EndDo
+
+  L expressionF = `F'(`deformedIntegrationVariables',`regulators')*replace_(`nullifyRegulators') + SecDecInternalsDUMMYdeformedVariables;
   .sort
+
+* replace the calls to the deformed integration variables by dummy symbols
+* {
+  #Do IV = {`occurringIntegrationVariables',}
+    #If x`IV' != x
+
+      argument `F';
+        Id SecDecInternalDeformed`IV' = SecDecInternalSecDecInternalDeformed`IV'Call;
+      endArgument;
+      Id SecDecInternalsDUMMYdeformedVariables = SecDecInternalsDUMMYdeformedVariables +
+        SecDecInternalLabelSecDecInternalDeformed`IV' * SecDecInternalDeformed`IV'(`integrationVariables');
+
+    #EndIf
+  #EndDo
+
+  Id SecDecInternalsDUMMYdeformedVariables = 0;
+* }
+
+* remove calls to the deformation of absent integration variables
+  #Do IV = {`absentIntegrationVariables',}
+    #If x`IV' != x
+      argument `F';
+        Id SecDecInternalDeformed`IV' = 0;
+      endArgument;
+    #EndIf
+  #EndDo
+
+
   #If `numIV' != `numOccurringIVOrder`shiftedOrderIndex''
     multiply replace_(`nullifyAbsentIVs');
     .sort
   #EndIf
+
+* insert the deformation and `F'
+  #call insertDeformedIntegrationVariables
   #call insertOther
+  multiply replace_(I,i_);
+  .sort
+
+  AntiBracket `integrationVariables', `realParameters', `complexParameters', `deformationParameters', SecDecInternalMu;
   .sort
   #optimize expressionF
 
@@ -296,14 +344,35 @@
 * Write the function to optimize the contour deformation parameters
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'_order_`cppOrder'_contour_deformation_polynomial#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const integration_variables,#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const integration_variables,#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const real_parameters,#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const complex_parameters#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const complex_parameters,#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const deformation_parameters,#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      const real_t deformation_offset#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  {#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+* c++ define the defomed integration variables
+  #Do IV = {`occurringIntegrationVariables',}
+    #If x`IV' != x
+
+      Bracket SecDecInternalLabelSecDecInternalDeformed`IV';
+      .sort
+      L deformedIV = expressionF[SecDecInternalLabelSecDecInternalDeformed`IV'];
+      .sort
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "complex_t SecDecInternalSecDecInternalDeformed`IV'Call = %%e" deformedIV(#@no_split_expression@#)
+      #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+      multiply replace_(SecDecInternalLabelSecDecInternalDeformed`IV', 0);
+      .sort
+
+    #EndIf
+  #EndDo
+  drop deformedIV
+
+* write `F'
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expressionF(#@no_split_expression@#)
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "return tmp;#@SecDecInternalNewline@#"
 

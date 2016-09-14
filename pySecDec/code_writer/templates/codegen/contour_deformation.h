@@ -43,7 +43,11 @@ CFunctions  SecDecInternalExpMinusMuOverX,
 #EndDo
 
 * The transformation of the Feynman parameters
-* (z_k({x_k}) = x_k - i * lambda_k * (1 - x_k) * Re(dF_dx_k))
+#procedure insertDeformedIntegrationVariables
+  %(insert_deformed_integration_variables_procedure)s
+#endProcedure
+
+* The transformation of the Feynman parameters
 * and its Jacobian matrix suitable for simultaneous
 * code optimization. This expression is written by python.
 #procedure insertContourdefExpression

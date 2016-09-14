@@ -914,6 +914,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 for j in range(len(integration_variables)):
                     contourdef_Jacobian[i,j] = deformed_integration_parameters[i].simplify().derive(j)
 
+            # define the FORM procedure that inserts the deformed integration variables
+            insert_deformed_integration_variables_procedure = ''.join(
+                _make_FORM_function_definition(
+                    'SecDecInternalDeformed' + str(integration_variable), deformed_integration_parameters[idx], integration_variables, limit=10**6
+                ).replace('**','^')
+                for idx,integration_variable in enumerate(integration_variables)
+            )
+
             # pack the deformation and its Jacobian matrix into an expression suitable for simultaneous optimization in FORM
             contourdef_expression = 0
             for i in range(len(integration_variables)):
@@ -1233,6 +1241,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 # parse template file "contour_deformation.h"
                 template_replacements['deformed_integration_variable_names'] = _make_FORM_list(symbolic_deformed_variable_names)
                 template_replacements['contour_deformation_polynomial'] = contour_deformation_polynomial
+                template_replacements['insert_deformed_integration_variables_procedure'] = insert_deformed_integration_variables_procedure
                 template_replacements['contourdef_expression_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYContourdefExpression', contourdef_expression, args=None, limit=10**6)
                 template_replacements['deformation_parameters'] = _make_FORM_list(deformation_parameters)
                 parse_template_file(os.path.join(template_sources, 'codegen', 'contour_deformation.h'), # source

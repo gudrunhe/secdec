@@ -85,14 +85,6 @@ namespace secdecutil {
          const real_t deformation_offset
          );
 
-        // the call signature of an integrand to be deformed
-        typedef complex_t DeformableIntegrandFunction
-        (
-         complex_t const * const transformed_integration_variables,
-         real_t const * const real_parameters,
-         complex_t const * const complex_parameters
-         );
-
         // the call signature of the integral transformation (contour deformation)
         typedef integral_transformation_t<complex_t> ContourDeformationFunction
         (
@@ -116,7 +108,7 @@ namespace secdecutil {
         const unsigned number_of_integration_variables;
         DeformedIntegrandFunction * const deformed_integrand;
         ContourDeformationFunction * const contour_deformation;
-        DeformableIntegrandFunction * const contour_deformation_polynomial;
+        DeformedIntegrandFunction * const contour_deformation_polynomial;
         MaximalDeformationFunction * const maximal_allowed_deformation_parameters;
 
         // the function that optimizes the deformation_parameters
@@ -178,13 +170,10 @@ namespace secdecutil {
             for (i=0; i<number_of_samples; ++i)
             {
                 gsl_qrng_get(Sobol_generator,real_sample);
-                deformation = contour_deformation(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters, deformation_offset);
-                while (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() > 0)
+                while (contour_deformation_polynomial(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters, deformation_offset).imag() > 0)
                 {
                     for (j=0; j<number_of_integration_variables; ++j)
                         optimized_deformation_parameters[j] *= decrease_factor;
-
-                    deformation = contour_deformation(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters, deformation_offset);
                 };
             };
 
@@ -208,9 +197,7 @@ namespace secdecutil {
                                 const real_t deformation_offset
                             ) const
         {
-            auto deformation = contour_deformation(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset);
-
-            if (contour_deformation_polynomial(deformation.transformed_variables.data(), real_parameters, complex_parameters).imag() > 0) //TODO: move the sign check inside the "deformed integrand"
+            if (contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset).imag() > 0) //TODO: move the sign check inside the "deformed integrand"
                 throw sign_check_error("Contour deformation in sector \"" + std::to_string(sector_id) + "\" yields the wrong sign of \"contour_deformation_polynomial.imag\". Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters\" (recommended) or decrease \"deformation_parameters\"."); // TODO: include "order" in error message
 
             return deformed_integrand(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset);
@@ -223,7 +210,7 @@ namespace secdecutil {
             const unsigned number_of_integration_variables,
             DeformedIntegrandFunction * const deformed_integrand,
             ContourDeformationFunction * const contour_deformation,
-            DeformableIntegrandFunction * const contour_deformation_polynomial,
+            DeformedIntegrandFunction * const contour_deformation_polynomial,
             MaximalDeformationFunction * const maximal_allowed_deformation_parameters
         ) :
         sector_id(sector_id), // TODO: include order
