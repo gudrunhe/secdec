@@ -2,6 +2,7 @@
 #define %(name)s_src_contour_deformation_functions_hpp_included
 
 #include <cmath>
+#include <complex>
 
 namespace %(name)s
 {
@@ -31,6 +32,11 @@ namespace %(name)s
             return 0;
 
         return std::exp(-mu/x);
+    }
+
+    inline real_t SecDecInternalRealPart(complex_t x)
+    {
+        return std::real(x);
     }
 
 };

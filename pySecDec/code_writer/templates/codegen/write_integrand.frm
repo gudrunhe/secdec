@@ -87,6 +87,11 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.hpp> "#define `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"`name'.hpp\"#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"functions.hpp\"#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.hpp> "#include <gsl/gsl_complex_math.h>#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.hpp> "#include <gsl/gsl_linalg.h>#@SecDecInternalNewline@#"
+  #EndIf
   #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
   #If `contourDeformation'
@@ -100,9 +105,6 @@ B `regulators';
 
 * Open the namspace in which the sector is to be implemented
   #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
-  #EndIf
   #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'_order_`cppOrder'_integrand#@SecDecInternalNewline@#"
@@ -184,7 +186,7 @@ B `regulators';
   #call insertCalI
   .sort
 
-* Replace calls to the deformation of the integration variables by symbols.
+* Replace calls to the deformation of the integration variables "SecDecInternalDeformed..." by symbols.
 * {
 
   #If `contourDeformation'
@@ -204,13 +206,34 @@ B `regulators';
 
     Local toOptimize = SecDecInternalsDUMMYtoOptimize;
 
-    #redefine functionsToReplace "SecDecInternalContourdefJacobian"
+    #$IVindex = 0;
     #Do IV = {`integrationVariables'}
-      #redefine functionsToReplace "`functionsToReplace',SecDecInternalDeformed`IV'"
-    #EndDo
-
-    #Do function = {`functionsToReplace'}
+      #redefine function "SecDecInternalDeformed`IV'"
       #$labelCounter = 0;
+      #$IVindex = $IVindex + 1;
+
+*     Define a preprocessor variable to remove the deformed variable
+*     if the undeformed equivalent is zero.
+      #redefine matchArg ""
+      #$counter = 0;
+      #Do otherIV = {`integrationVariables'}
+        #$counter = $counter + 1;
+        #If `$counter' != 1
+          #redefine matchArg "`matchArg',"
+        #EndIf
+        #If `$counter' == `$IVindex'
+          #redefine matchArg "`matchArg'0"
+        #Else
+          #redefine matchArg "`matchArg'`otherIV'?"
+        #EndIf
+      #EndDo
+
+*     remove deformed version if undeformed variable is set to zero
+      #Do depth = 0, `insertionDepth'
+        #call beginArgumentDepth(`depth')
+          Id `function'(`matchArg') = 0;
+        #call endArgumentDepth(`depth')
+      #EndDo
 
       #Do depth = 0, `insertionDepth'
 
@@ -220,17 +243,20 @@ B `regulators';
 
         #Do i = 1,1
 *         set dollar variable
+          .sort
+          hide toOptimize;
+          .sort
           #call beginArgumentDepth(`depth')
             if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
           #call endArgumentDepth(`depth')
           .sort
+          unhide toOptimize;
+          .sort
 
-*         The following "#if" evaluates to true only if there are logs or denominators left.
+*         The following "#if" evaluates to true only if there is still something to do.
           #If `i' == 0
 
             #$labelCounter = $labelCounter + 1;
-
-            L arguments = SecDecInternalfDUMMYarguments(`$args');
 
             #Do replaceDepth = 0, `insertionDepth'
               #call beginArgumentDepth(`replaceDepth')
@@ -238,16 +264,8 @@ B `regulators';
               #call endArgumentDepth(`replaceDepth')
             #EndDo
 
-            repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) = SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
-
-*           Define `$argCounter' by loking at the term with the empty function "SecDecInternalfDUMMYarguments"
-            Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
-            .sort
-
-*           Add all arguments to top level polynomial for simultaneous optimization.
-            Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + arguments;
-
-            #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
+            Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize +
+                SecDecInternalLabel`function' ^ $labelCounter * `function'($args);
 
             .sort
           #EndIf
@@ -258,8 +276,86 @@ B `regulators';
 
     #EndDo
 
-    drop arguments;
+    #call insertDeformedIntegrationVariables;
     .sort
+
+  #EndIf
+
+* }
+
+* Replace calls to the deformation's Jacobian determinant "SecDecInternalContourdefJacobian" by symbols.
+* {
+
+  #If `contourDeformation'
+
+    #redefine function "SecDecInternalContourdefJacobian"
+    #$labelCounter = 0;
+
+*   No need for "#Do depth = 0, `insertionDepth'" because the Jacobian determinant should only occur at top level.
+
+*   Since we need intermediate ".sort" instructions, we cannot use the
+*   "repeat" environment.
+*   The following construction is suggested in the FORM documentation.
+
+    #Do i = 1,1
+*     set dollar variable
+      .sort
+      hide toOptimize;
+      .sort
+      if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
+      .sort
+      unhide toOptimize;
+      .sort
+
+*     The following "#if" evaluates to true only if there is still something to do.
+      #If `i' == 0
+
+        #$labelCounter = $labelCounter + 1;
+
+        #Do replaceDepth = 0, `insertionDepth'
+          #call beginArgumentDepth(`replaceDepth')
+            Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
+          #call endArgumentDepth(`replaceDepth')
+        #EndDo
+
+        Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + `function'($args) * SecDecInternalLabelSecDecInternalContourdefJacobianCall^`$labelCounter';
+
+*       Remember how many integration variables are nonzero.
+        #$index = 0;
+        #$nonzeroCounter = 0;
+        #redefine SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices ""
+        #Do arg = {`$args'}
+          #$index = $index + 1;
+          #If `arg' != 0
+            #$nonzeroCounter = $nonzeroCounter + 1;
+            #If `$nonzeroCounter' != 1
+              #redefine SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices "`SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices',"
+            #EndIf
+            #redefine SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices "`SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices'`$index'"
+          #EndIf
+        #EndDo
+        #redefine SecDecInternalContourdefLabel`$labelCounter'Dimensionality "`$nonzeroCounter'"
+
+      #EndIf
+      .sort
+    #EndDo
+
+    #redefine largestLabel`function' "`$labelCounter'"
+
+*   insert the Jacobian matrix
+    #call insertContourdefJacobianMatrix
+
+*   Implement commuting derivatives for the contour deformation polynomial F;
+*   i.e. replace ddFdjdi --> ddFdidj for i<=j.
+*   This is neccessary because pySecDec's algebra module does not
+*   imply commuting derivatives for general functions.
+    #Do i = 0,`$numIVMinusOne'
+      #Do j = `i',`$numIVMinusOne'
+        argument SecDecInternalRealPart;
+          Id dd`F'd`j'd`i'(?args) = dd`F'd`i'd`j'(?args);
+        endArgument;
+      #EndDo
+    #EndDo
 
   #EndIf
 
@@ -290,7 +386,6 @@ B `regulators';
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
       repeat Id log(1) = 0;
-      repeat Id exp(0) = 1;
       #If `contourDeformation'
         #Do function = {SecDecInternalExpMinusMuOverX,dSecDecInternalXExpMinusMuOverXd1,SecDecInternalXExpMinusMuOverX}
           repeat Id `function'(SecDecInternalsDUMMY?, 0) = 0;
@@ -301,6 +396,9 @@ B `regulators';
       repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
       repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
       repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
+      #If `contourDeformation'
+        repeat Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
+      #EndIf
     #call endArgumentDepth(`depth')
     .sort
   #EndDo
@@ -314,7 +412,6 @@ B `regulators';
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
       repeat Id log(1) = 0;
-      repeat Id exp(0) = 1;
       #If `contourDeformation'
         #Do function = {SecDecInternalExpMinusMuOverX,dSecDecInternalXExpMinusMuOverXd1,SecDecInternalXExpMinusMuOverX}
           repeat Id `function'(SecDecInternalsDUMMY?, 0) = 0;
@@ -325,6 +422,9 @@ B `regulators';
       repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
       repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
       repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
+      #If `contourDeformation'
+        repeat Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
+      #EndIf
     #call endArgumentDepth(`depth')
     .sort
   #EndDo
@@ -341,6 +441,9 @@ multiply replace_(I,i_);
   #EndIf
 
   #redefine functionsToReplace "`functions',log,SecDecInternalDenominator"
+  #If `contourDeformation'
+    #redefine functionsToReplace "SecDecInternalRealPart,`functionsToReplace'"
+  #EndIf
 
   #Do function = {`functionsToReplace'}
     #$labelCounter = 0;
@@ -358,7 +461,7 @@ multiply replace_(I,i_);
         #call endArgumentDepth(`depth')
         .sort
 
-*       The following "#if" evaluates to true only if there are logs or denominators left.
+*       The following "#if" evaluates to true only if there is still something to do.
         #If `i' == 0
 
           #$labelCounter = $labelCounter + 1;
@@ -442,10 +545,11 @@ multiply replace_(I,i_);
 * Processing denominators in FORM is easiest if packed into a function.
 * Define that function as c preprocessor macro.
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalDenominator(x) 1./(x)#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
 
-* Define "SecDecInternalAbbreviation[0]" as c preprocessor variable "result".
+* Define "SecDecInternalAbbreviation[0]" as c preprocessor variable "tmp".
 * Since FORM does not use "SecDecInternalAbbreviation[0]", we can use it.
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define result SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define tmp SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * write Abbreviations in c format
@@ -455,76 +559,148 @@ multiply replace_(I,i_);
   #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
+* c++ define the calls to "SecDecInternalRealPart" BEFORE computing the Jacobian determinant
+* {
+  #If `contourDeformation'
+
+    #redefine function "SecDecInternalRealPart"
+
+    #Do callIndex = 1, `largestLabel`function''
+      B SecDecInternalLabel`function'Call`callIndex'Arg;
+      .sort
+      #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+        L arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
+      #EndDo
+      .sort
+
+      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternal`function'Call`callIndex' = "
+      #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
+      #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+        #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'(#@no_split_expression@#)
+        #If `argIndex' != `numberOfArgs`function'Label`callIndex''
+          #write <sector_`sectorID'_`cppOrder'.cpp> ","
+        #EndIf
+      #EndDo
+      #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+      multiply replace_(SecDecInternalLabel`function'Call`callIndex'Arg,0);
+      .sort
+      #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+        drop arg`argIndex';
+      #EndDo
+    #EndDo
+    .sort
+
+  #EndIf
+* }
+
 * Define the calls to the contour deformation "SecDecInternalDeformed..."
 * and "SecDecInternalContourdefJacobian".
 * {
 
   #If `contourDeformation'
 
-    Format rational;
+*   c++ define the defomed integration variables
+    #Do IV = {`occurringIntegrationVariables',}
+      #If x`IV' != x
+        #Do callIndex = 1, `largestLabelSecDecInternalDeformed`IV''
 
-*   We may have to call call the contour deformation multiple times with some
-*   integration variables set to zero. --> Find out which ones by looking at
-*   the arguments of the Jacobian.
-    #Do callIndex = 1, `largestLabelSecDecInternalContourdefJacobian'
-      B SecDecInternalLabelSecDecInternalContourdefJacobianCall`callIndex'Arg;
-      .sort
-      #Do argIndex = 1, `numberOfArgsSecDecInternalContourdefJacobianLabel`callIndex''
-        L arg`argIndex' = toOptimize[SecDecInternalLabelSecDecInternalContourdefJacobianCall`callIndex'Arg ^ `argIndex'];
-      #EndDo
-      .sort
+          Bracket SecDecInternalLabelSecDecInternalDeformed`IV';
+          .sort
+          L deformedIV = toOptimize[SecDecInternalLabelSecDecInternalDeformed`IV' ^ `callIndex'];
+          .sort
+          #write <sector_`sectorID'_`cppOrder'.cpp> "complex_t SecDecInternalSecDecInternalDeformed`IV'Call`callIndex' = %%e" deformedIV(#@no_split_expression@#)
+          #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
-*     Call the contour deformation with the required arguments.
-      #write <sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternalContourdefCall`callIndex'IntegrationVariables[`numOccurringIVOrder`shiftedOrderIndex''];#@SecDecInternalNewline@#"
-      #$occurringIndex = -1;
-      #Do argIndexMinusOne = {`occurringIntegrationVariableIndices',}
-        #$argIndex = `argIndexMinusOne' + 1;
-        #If x`argIndexMinusOne' != x
-          #$occurringIndex = $occurringIndex + 1;
-          #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalContourdefCall`callIndex'IntegrationVariables[`$occurringIndex'] = %%e#@SecDecInternalNewline@#" arg`$argIndex'(#@no_split_expression@#)
-        #EndIf
-      #EndDo
-      #Do argIndex = 1, `numberOfArgsSecDecInternalContourdefJacobianLabel`callIndex''
-        drop arg`argIndex';
-      #EndDo
-      #write <sector_`sectorID'_`cppOrder'.cpp> "secdecutil::integral_transformation_t<complex_t> SecDecInternalContourdefCall`callIndex' ="
-      #write <sector_`sectorID'_`cppOrder'.cpp> "sector_`sectorID'_order_`cppOrder'_contour_deformation("
-      #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalContourdefCall`callIndex'IntegrationVariables, real_parameters,"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "complex_parameters, deformation_parameters, deformation_offset"
-      #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
-      multiply replace_(SecDecInternalLabelSecDecInternalContourdefJacobianCall`callIndex'Arg,0
-      #Do IV = {`integrationVariables'}
-        , SecDecInternalLabelSecDecInternalDeformed`IV'Call`callIndex'Arg,0
-      #EndDo
-      );
-      .sort
+        #EndDo
 
-*     Define the calls to "SecDecInternalDeformed..." and "SecDecInternalContourdefJacobian".
-      #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalSecDecInternalContourdefJacobianCall`callIndex' ="
-      #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalContourdefCall`callIndex'.Jacobian_determinant;#@SecDecInternalNewline@#"
-      #$counter = -1;
-      #Do IV = {`occurringIntegrationVariables',}
-        #If x`IV' != x
-          #$counter = $counter + 1;
-          #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalSecDecInternalDeformed`IV'Call`callIndex' ="
-          #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalContourdefCall`callIndex'.transformed_variables[`$counter'];#@SecDecInternalNewline@#"
-        #EndIf
-      #EndDo
-      multiply replace_(SecDecInternalsDUMMY,SecDecInternalsDUMMY
-      #Do IV = {`absentIntegrationVariables',}
-        #If x`IV' != x
-          ,SecDecInternalSecDecInternalDeformed`IV'Call`callIndex',0
-        #EndIf
-      #EndDo
-      );
-      .sort
+*       Remove label once all deformations of this variable are parsed.
+        multiply replace_(SecDecInternalLabelSecDecInternalDeformed`IV', 0);
+        .sort
 
+      #EndIf
+
+    drop deformedIV;
     #EndDo
 
     #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
     Format float 20;
     Format C;
+
+*   c++ define the Jacobian determinant of the contour deformation.
+*   We use th gsl to compute it numerically out of the Jacobian matrix.
+*   {
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "// variables required to compute a complex numerical determinant using the gsl#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex *Jacobian_matrix;#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_complex Jacobian_determinant;#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation * Jacobian_permutation;#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "int Jacobian_signum;#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+    #Do callIndex = 1, `largestLabelSecDecInternalContourdefJacobian'
+      #write <sector_`sectorID'_`cppOrder'.cpp> "// begin code for numerical Jacobian determinant `callIndex'#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+*     allocate memory
+      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_matrix = gsl_matrix_complex_alloc("
+      #write <sector_`sectorID'_`cppOrder'.cpp> "`SecDecInternalContourdefLabel`callIndex'Dimensionality',`SecDecInternalContourdefLabel`callIndex'Dimensionality'"
+      #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_permutation = gsl_permutation_alloc(`SecDecInternalContourdefLabel`callIndex'Dimensionality');#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+*     fill the gsl matrix
+      #$i = -1;
+      #Do idx1 = {`SecDecInternalContourdefLabel`callIndex'NonzeroIndices',}
+        #If x`idx1' != x
+          #$i = $i + 1;
+          #$j = -1;
+          #Do idx2 = {`SecDecInternalContourdefLabel`callIndex'NonzeroIndices',}
+            #If x`idx2' != x
+              Format float 20;
+              Format C;
+              #$j = $j + 1;
+              Bracket SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ, SecDecInternalLabelSecDecInternalContourdefJacobianCall;
+              .sort
+              L expr = toOptimize[SecDecInternalLabelJacobianMatrixI^`idx1' * SecDecInternalLabelJacobianMatrixJ^`idx2' * SecDecInternalLabelSecDecInternalContourdefJacobianCall^`callIndex'];
+              .sort
+              #write <sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expr(#@no_split_expression@#)
+              #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_set#@SecDecInternalNewline@#"
+              #write <sector_`sectorID'_`cppOrder'.cpp> "(#@SecDecInternalNewline@#"
+              #write <sector_`sectorID'_`cppOrder'.cpp> "    Jacobian_matrix,#@SecDecInternalNewline@#"
+              Format rational;
+              #write <sector_`sectorID'_`cppOrder'.cpp> "    `$i', `$j',#@SecDecInternalNewline@#"
+              Format float 20;
+              Format C;
+              #write <sector_`sectorID'_`cppOrder'.cpp> "    {tmp.real(), tmp.imag()}#@SecDecInternalNewline@#"
+              #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+            #EndIf
+          #EndDo
+        #EndIf
+      #EndDo
+
+*     calculate the determinant numerically using the gsl
+      #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_linalg_complex_LU_decomp(Jacobian_matrix, Jacobian_permutation, &Jacobian_signum);#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_determinant = gsl_linalg_complex_LU_det(Jacobian_matrix, Jacobian_signum);#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "complex_t SecDecInternalSecDecInternalContourdefJacobianCall`callIndex' ="
+      #write <sector_`sectorID'_`cppOrder'.cpp> "{GSL_REAL(Jacobian_determinant), GSL_IMAG(Jacobian_determinant)};#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+*     free manually allocated memory
+      #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation_free(Jacobian_permutation);#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_free(Jacobian_matrix);#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+      #write <sector_`sectorID'_`cppOrder'.cpp> "// end code for numerical Jacobian determinant `callIndex'#@SecDecInternalNewline@#"
+    #EndDo
+
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+*   }
+
+*   remove the parsed labels
+    Id SecDecInternalLabelSecDecInternalContourdefJacobianCall = 0;
+    .sort
+    drop expr;
 
   #EndIf
 
@@ -595,7 +771,7 @@ multiply replace_(I,i_);
                 #write <sector_`sectorID'_`cppOrder'.cpp> ","
               #EndIf
             #EndDo
-            #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#" currentExpr
+            #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
             multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
             .sort
           #EndIf
@@ -613,8 +789,7 @@ multiply replace_(I,i_);
 
 * write the integrand
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "result = %%e#@SecDecInternalNewline@#" toOptimize(#@no_split_expression@#)
-  #write <sector_`sectorID'_`cppOrder'.cpp> "return result;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "return %%e#@SecDecInternalNewline@#" toOptimize(#@no_split_expression@#)
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * undefine the c preprocessor macros
@@ -626,7 +801,7 @@ multiply replace_(I,i_);
     #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalMu#@SecDecInternalNewline@#"
   #EndIf
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalDenominator#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef result#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
 
 * Close the c++ function and namespaces
   #write <sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"

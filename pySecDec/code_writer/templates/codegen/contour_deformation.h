@@ -23,9 +23,13 @@ CFunction SecDecInternalContourdefJacobian;
 AutoDeclare Symbols SecDecInternalSecDecInternalContourdefJacobianCall;
 
 * Define the function appearing in the contour deformation
-CFunctions  SecDecInternalExpMinusMuOverX,
+CFunctions  SecDecIternalRealPart,
+            SecDecInternalExpMinusMuOverX,
             SecDecInternalXExpMinusMuOverX,
            dSecDecInternalXExpMinusMuOverXd1;
+
+* Define the call replacement symbols for the real part
+AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
 
 * Define the name of the polynomial for the contour deformation
 * ("F" in loop integrals)
@@ -47,9 +51,9 @@ CFunctions  SecDecInternalExpMinusMuOverX,
   %(insert_deformed_integration_variables_procedure)s
 #endProcedure
 
-* The transformation of the Feynman parameters
-* and its Jacobian matrix suitable for simultaneous
-* code optimization. This expression is written by python.
-#procedure insertContourdefExpression
-  %(contourdef_expression_definition_procedure)s
+* Procedure that inserts the Jacobian matrix
+* of the contour deformation. This procedure
+* is written by python.
+#procedure insertContourdefJacobianMatrix
+  %(insert_contourdef_Jacobian_procedure)s
 #endProcedure

@@ -85,16 +85,6 @@ namespace secdecutil {
          const real_t deformation_offset
          );
 
-        // the call signature of the integral transformation (contour deformation)
-        typedef integral_transformation_t<complex_t> ContourDeformationFunction
-        (
-         real_t const * const integration_variables,
-         real_t const * const real_parameters,
-         complex_t const * const complex_parameters,
-         real_t const * const deformation_parameters,
-         const real_t deformation_offset
-         );
-
         // the call signature of the function that computes the maximal deformation parameters
         typedef void MaximalDeformationFunction
         (
@@ -107,7 +97,6 @@ namespace secdecutil {
         const unsigned sector_id; // TODO: include order
         const unsigned number_of_integration_variables;
         DeformedIntegrandFunction * const deformed_integrand;
-        ContourDeformationFunction * const contour_deformation;
         DeformedIntegrandFunction * const contour_deformation_polynomial;
         MaximalDeformationFunction * const maximal_allowed_deformation_parameters;
 
@@ -197,7 +186,7 @@ namespace secdecutil {
                                 const real_t deformation_offset
                             ) const
         {
-            if (contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset).imag() > 0) //TODO: move the sign check inside the "deformed integrand"
+            if (contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset).imag() > 0)
                 throw sign_check_error("Contour deformation in sector \"" + std::to_string(sector_id) + "\" yields the wrong sign of \"contour_deformation_polynomial.imag\". Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters\" (recommended) or decrease \"deformation_parameters\"."); // TODO: include "order" in error message
 
             return deformed_integrand(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset);
@@ -209,14 +198,12 @@ namespace secdecutil {
             const unsigned sector_id, // TODO: include order
             const unsigned number_of_integration_variables,
             DeformedIntegrandFunction * const deformed_integrand,
-            ContourDeformationFunction * const contour_deformation,
             DeformedIntegrandFunction * const contour_deformation_polynomial,
             MaximalDeformationFunction * const maximal_allowed_deformation_parameters
         ) :
         sector_id(sector_id), // TODO: include order
         number_of_integration_variables(number_of_integration_variables),
         deformed_integrand(deformed_integrand),
-        contour_deformation(contour_deformation),
         contour_deformation_polynomial(contour_deformation_polynomial),
         maximal_allowed_deformation_parameters(maximal_allowed_deformation_parameters)
         {};

@@ -443,7 +443,7 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_d
                 if contour_deformation:
                     outstr_body_snippets.append(
                         '''%(sector_ID)i,sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,
-                           sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation,sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial,
+                           sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial,
                            sector_%(sector_ID)i_order_%(cpp_order)s_maximal_allowed_deformation_parameters''' \
                         % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders))
                     )
@@ -533,6 +533,20 @@ class NoDerivativeAtZeroFunction(Function):
             if type(arg) is Polynomial and len(arg.coeffs) == 1 and arg.coeffs[0] == 1 and (arg.expolist == 0).all():
                 return Polynomial(np.zeros([1,len(arg.polysymbols)], dtype=int), np.array([0]), arg.polysymbols, copy=False)
         return self
+
+class RealPartFunction(Function):
+    '''
+    Symbolic function that takes exactly one argument
+    and with the additional property that the
+    derivative commutes to the inside.
+
+    '''
+    def __init__(self, symbol, *arguments, **kwargs):
+        assert len(arguments) == 1, 'A `RealPartFunction` takes exactly one argument'
+        super(RealPartFunction, self).__init__(symbol, *arguments, **kwargs)
+
+    def derive(self, index):
+        return RealPartFunction(self.symbol, self.arguments[0].derive(index), copy=False)
 
 
 # ---------------------------------- main function ----------------------------------
@@ -899,7 +913,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                             -imaginary_unit * deformation_parameters[k] * \
                                                             NoDerivativeAtZeroFunction(FORM_names['XExpMinusMuOverX'], end_point_parameter, elementary_monomials[k]),
                                                             NoDerivativeAtZeroFunction(FORM_names['XExpMinusMuOverX'], end_point_parameter, (1 - elementary_monomials[k])),
-                                                            symbolic_contour_deformation_polynomial.derive(k),
+                                                            RealPartFunction('SecDecInternalRealPart', symbolic_contour_deformation_polynomial.derive(k), copy=False),
                                                          copy=False),
                                                      copy=False)
                                                      for k in range(len(integration_variables))
@@ -922,14 +936,20 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 for idx,integration_variable in enumerate(integration_variables)
             )
 
-            # pack the deformation and its Jacobian matrix into an expression suitable for simultaneous optimization in FORM
-            contourdef_expression = 0
-            for i in range(len(integration_variables)):
-                contourdef_expression += FORM_label_contour_deformation_transform ** (i + 1) * deformed_integration_parameters[i]
-                for j in range(len(integration_variables)):
-                    contourdef_expression += FORM_label_contour_deformation_Jacobian_matrix_index_i ** (i + 1) * \
-                                             FORM_label_contour_deformation_Jacobian_matrix_index_j ** (j + 1) * \
-                                             contourdef_Jacobian[i,j]
+            # define a procedure that defines the Jacobian matrix as labelled global expression in FORM
+            contourdef_Jacobian_expression = Sum(
+                                                   *(
+                                                        FORM_label_contour_deformation_Jacobian_matrix_index_i ** (i + 1) * \
+                                                        FORM_label_contour_deformation_Jacobian_matrix_index_j ** (j + 1) * \
+                                                        contourdef_Jacobian[i,j]
+                                                        for i in range(len(integration_variables))
+                                                        for j in range(len(integration_variables))
+                                                    ),
+                                                    copy = False
+                                                )
+            insert_contourdef_Jacobian_procedure = ''.join(
+                _make_FORM_function_definition('SecDecInternalContourdefJacobian', contourdef_Jacobian_expression, args=integration_variables, limit=10**6)
+            )
 
         # insert the `polynomials_to_decompose` as dummy functions into `other_polynomials` and `remainder_expression`
         # we want to remove them from the symbols --> traverse backwards and pop the last of the `polysymbols`
@@ -1076,7 +1096,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                  -imaginary_unit * deformation_parameters[k] * \
                                                  NoDerivativeAtZeroFunction(FORM_names['ExpMinusMuOverX'], end_point_parameter, elementary_monomials[k]),
                                                  NoDerivativeAtZeroFunction(FORM_names['XExpMinusMuOverX'], end_point_parameter, (1 - elementary_monomials[k])),
-                                                 symbolic_contour_deformation_polynomial.derive(k),
+                                                 RealPartFunction('SecDecInternalRealPart', symbolic_contour_deformation_polynomial.derive(k), copy=False),
                                                  copy=False
                                              ),
                                   copy=False
@@ -1242,7 +1262,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 template_replacements['deformed_integration_variable_names'] = _make_FORM_list(symbolic_deformed_variable_names)
                 template_replacements['contour_deformation_polynomial'] = contour_deformation_polynomial
                 template_replacements['insert_deformed_integration_variables_procedure'] = insert_deformed_integration_variables_procedure
-                template_replacements['contourdef_expression_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYContourdefExpression', contourdef_expression, args=None, limit=10**6)
+                template_replacements['insert_contourdef_Jacobian_procedure'] = insert_contourdef_Jacobian_procedure
                 template_replacements['deformation_parameters'] = _make_FORM_list(deformation_parameters)
                 parse_template_file(os.path.join(template_sources, 'codegen', 'contour_deformation.h'), # source
                                     os.path.join(name,             'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest

@@ -355,70 +355,70 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand,\n' + \
-        '                           sector_90_order_n1_n3_0_contour_deformation,sector_90_order_n1_n3_0_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_n1_n3_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n3_0_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand,\n' + \
-        '                           sector_90_order_n1_n3_1_contour_deformation,sector_90_order_n1_n3_1_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_n1_n3_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n3_1_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand,\n' + \
-        '                           sector_90_order_n1_n3_2_contour_deformation,sector_90_order_n1_n3_2_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_n1_n3_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n3_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand,\n' + \
-        '                           sector_90_order_n1_n2_0_contour_deformation,sector_90_order_n1_n2_0_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_n1_n2_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n2_0_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand,\n' + \
-        '                           sector_90_order_n1_n2_1_contour_deformation,sector_90_order_n1_n2_1_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_n1_n2_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n2_1_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand,\n' + \
-        '                           sector_90_order_n1_n2_2_contour_deformation,sector_90_order_n1_n2_2_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_n1_n2_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n2_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand,\n' + \
-        '                           sector_90_order_n1_n1_0_contour_deformation,sector_90_order_n1_n1_0_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_n1_n1_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n1_0_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand,\n' + \
-        '                           sector_90_order_n1_n1_1_contour_deformation,sector_90_order_n1_n1_1_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_n1_n1_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n1_1_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand,\n' + \
-        '                           sector_90_order_n1_n1_2_contour_deformation,sector_90_order_n1_n1_2_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_n1_n1_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n1_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand,\n' + \
-        '                           sector_90_order_0_n3_0_contour_deformation,sector_90_order_0_n3_0_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_0_n3_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n3_0_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand,\n' + \
-        '                           sector_90_order_0_n3_1_contour_deformation,sector_90_order_0_n3_1_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_0_n3_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n3_1_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand,\n' + \
-        '                           sector_90_order_0_n3_2_contour_deformation,sector_90_order_0_n3_2_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_0_n3_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n3_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand,\n' + \
-        '                           sector_90_order_0_n2_0_contour_deformation,sector_90_order_0_n2_0_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_0_n2_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n2_0_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand,\n' + \
-        '                           sector_90_order_0_n2_1_contour_deformation,sector_90_order_0_n2_1_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_0_n2_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n2_1_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand,\n' + \
-        '                           sector_90_order_0_n2_2_contour_deformation,sector_90_order_0_n2_2_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_0_n2_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n2_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand,\n' + \
-        '                           sector_90_order_0_n1_0_contour_deformation,sector_90_order_0_n1_0_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_0_n1_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n1_0_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand,\n' + \
-        '                           sector_90_order_0_n1_1_contour_deformation,sector_90_order_0_n1_1_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_0_n1_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n1_1_maximal_allowed_deformation_parameters},'
         target_FORM_code +=       '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
-        '                           sector_90_order_0_n1_2_contour_deformation,sector_90_order_0_n1_2_contour_deformation_polynomial,\n' + \
+        '                           sector_90_order_0_n1_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n1_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
@@ -472,7 +472,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=   '{-1,-1,{'
         target_FORM_code +=     '{2,2,{'
         target_FORM_code +=         '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
-          '                           sector_90_order_0_n1_2_contour_deformation,sector_90_order_0_n1_2_contour_deformation_polynomial,\n' + \
+          '                           sector_90_order_0_n1_2_contour_deformation_polynomial,\n' + \
           '                           sector_90_order_0_n1_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
@@ -670,3 +670,20 @@ class TestNoDerivativeAtZeroFunction(unittest.TestCase):
         self.assertEqual( sp.sympify(dfd1) , sp.sympify('ddfd1d0(x0,x1,x2)') )
         for i in range(self.number_of_polysymbols):
             self.assertEqual( sp.sympify(dfd1.replace(i,0)) , 0 )
+
+class TestRealPartFunction(unittest.TestCase):
+    def setUp(self):
+        self.number_of_polysymbols = 3
+        self.polysymbols = ['x%i' % i for i in range(self.number_of_polysymbols)]
+        self.variables = [Polynomial.from_expression('x%i' % i, self.polysymbols) for i in range(self.number_of_polysymbols)]
+
+    #@attr('active')
+    def test_base_function(self):
+        Re_x0 = RealPartFunction('Re', self.variables[0])
+        self.assertEqual( sp.sympify(Re_x0) , sp.sympify('Re(x0)') )
+
+    #@attr('active')
+    def test_derivatives(self):
+        Re_x0 = RealPartFunction('Re', self.variables[0]*self.variables[1]*self.variables[1])
+        dRe_x0d1 = Re_x0.derive(1)
+        self.assertEqual( sp.sympify(dRe_x0d1.derive(0)) , sp.sympify('Re(2*x1)') )
