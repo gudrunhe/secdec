@@ -20,9 +20,24 @@ void print_integral_info()
 {
     std::cout << "-- print_integral_info --" << std::endl;
     std::cout << "%(name)s::number_of_sectors " << %(name)s::number_of_sectors << std::endl;
+
     std::cout << "%(name)s::number_of_regulators " << %(name)s::number_of_regulators << std::endl;
+    std::cout << "%(name)s::names_of_regulators ";
+    for ( const auto& name : %(name)s::names_of_regulators )
+        std::cout << " " << name;
+    std::cout << std::endl;
+
     std::cout << "%(name)s::number_of_real_parameters " << %(name)s::number_of_real_parameters << std::endl;
+    std::cout << "%(name)s::names_of_real_parameters ";
+    for ( const auto& name : %(name)s::names_of_real_parameters )
+        std::cout << " " << name;
+    std::cout << std::endl;
+
     std::cout << "%(name)s::number_of_complex_parameters " << %(name)s::number_of_complex_parameters << std::endl;
+    std::cout << "%(name)s::names_of_complex_parameters ";
+    for ( const auto& name : %(name)s::names_of_complex_parameters )
+        std::cout << " " << name;
+    std::cout << std::endl;
 
     std::cout << "%(name)s::lowest_orders";
     for ( const auto& lowest_order : %(name)s::lowest_orders )
@@ -31,6 +46,16 @@ void print_integral_info()
 
     std::cout << "%(name)s::highest_orders";
     for ( const auto& highest_order : %(name)s::highest_orders )
+        std::cout << " " << highest_order;
+    std::cout << std::endl;
+
+    std::cout << "%(name)s::lowest_prefactor_orders";
+    for ( const auto& highest_order : %(name)s::lowest_prefactor_orders )
+        std::cout << " " << highest_order;
+    std::cout << std::endl;
+
+    std::cout << "%(name)s::highest_prefactor_orders";
+    for ( const auto& highest_order : %(name)s::highest_prefactor_orders )
         std::cout << " " << highest_order;
     std::cout << std::endl;
 

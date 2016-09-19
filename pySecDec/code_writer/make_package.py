@@ -201,11 +201,14 @@ def _parse_global_templates(name, regulators, polynomial_names,
                                      name = name,
                                      number_of_real_parameters = len(real_parameters),
                                      real_parameters = _make_FORM_list(real_parameters),
+                                     names_of_real_parameters = _make_cpp_list(real_parameters),
                                      number_of_complex_parameters = len(complex_parameters),
                                      complex_parameters = _make_FORM_list(complex_parameters),
+                                     names_of_complex_parameters = _make_cpp_list(complex_parameters),
                                      have_complex_parameters = len(complex_parameters) > 0,
                                      number_of_regulators = len(regulators),
                                      regulators = _make_FORM_list(regulators),
+                                     names_of_regulators = _make_cpp_list(regulators),
                                      polynomial_names = _make_FORM_list(regulators),
                                      form_optimization_level = form_optimization_level,
                                      form_work_space = form_work_space,
@@ -459,6 +462,16 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_d
 
 
 # ---------------------------------- write c++ code ---------------------------------
+def _make_cpp_list(python_list):
+    '''
+    Convert a python list to a string to be used
+    in c++ initializer list for a vector.
+
+    Example: ``['a', 'b', 'c'] --> '"a","b","c"'``
+
+    '''
+    return '"' + '","'.join(str(item) for item in python_list) + '"'
+
 def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters):
     regulators = expanded_prefactor.polysymbols
     last_regulator_index = len(regulators) - 1
@@ -1290,6 +1303,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
     template_replacements['number_of_sectors'] = sector_index
     template_replacements['lowest_orders'] = _make_FORM_list(lowest_orders)
     template_replacements['highest_orders'] = _make_FORM_list(required_orders)
+    template_replacements['lowest_prefactor_orders'] = _make_FORM_list(-highest_prefactor_pole_orders)
+    template_replacements['highest_prefactor_orders'] = _make_FORM_list(required_prefactor_orders)
     template_replacements['sector_includes'] = ''.join( '#include "sector_%i.hpp"\n' % i for i in range(1,sector_index+1) )
     template_replacements['sectors_initializer'] = ','.join( 'integrand_of_sector_%i' % i for i in range(1,sector_index+1) )
     parse_template_file(os.path.join(template_sources, 'src', 'integrands.cpp'), # source
@@ -1304,3 +1319,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
     parse_template_file(os.path.join(template_sources, 'src', 'functions.hpp'), # source
                         os.path.join(name,             'src', 'functions.hpp'), # dest
                         template_replacements)
+
+    # return the replacements in the template files
+    return template_replacements
