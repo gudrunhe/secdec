@@ -1424,10 +1424,11 @@ class ProductRule(_Expression):
         'Convert the :class:`.ProductRule` to :class:`.Sum`'
         summands = []
         for coeff, term in zip(self.coeffs, self.factorlist):
+            coeff = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([int(coeff)]), self.symbols, copy=False)
             factors = []
             for j, derivative_multiindex in enumerate(term):
                 factors.append(self.expressions[j][tuple(derivative_multiindex)])
-            summands.append(Product(*factors, copy=False) * int(coeff))
+            summands.append(Product(coeff, *factors, copy=False))
         return Sum(*summands, copy=False)
 
     @doc(_Expression.docstring_of_replace)

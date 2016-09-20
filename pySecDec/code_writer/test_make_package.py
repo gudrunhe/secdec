@@ -196,13 +196,12 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
 
         target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y);\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y);\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part1(x,y);\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0Part0(x,y)+SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0Part1(x,y);\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0Part0(x?,y?) =  + (10)*y + (1)*x**2;\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part0Part1(x?,y?) =  + (1)*x*y;\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0Part1(x?,y?) =  + (10)*y + (1)*x**2;\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) =  + (1);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part2(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?) =  + (1);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1Part0(x,y)+SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1Part1(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1Part0(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1Part1(x?,y?) =  + (1)*x*y;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part2(x?,y?) =  + (10)*y + (1)*x**2;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 
