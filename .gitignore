@@ -1,11 +1,12 @@
 __pycache__
 *.pyc
 doc/build
-
 .coverage
 coverage
 
 pySecDec.egg-info
+
+*.tar.gz
 
 build/
 dist/

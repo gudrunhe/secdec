@@ -58,7 +58,6 @@ namespace %(name)s
      *       Playing around with "std::pow" and the aforementioned switches is nevertheless
      *       worth a try in practical applications where high performance is needed.
      */
-    using std::pow;
     template <typename T> inline T pow(T base, int exponent)
     {
         if (exponent < 0)

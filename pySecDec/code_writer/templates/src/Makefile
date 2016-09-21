@@ -8,7 +8,7 @@ lib$(NAME).a : $(STATIC_OBJECTS)
 	cd .. && ln src/$@
 
 lib$(NAME).so : $(DYNAMIC_OBJECTS)
-	$(CXX) -o $@ -shared $+
+	$(CXX) $(LDFLAGS) -o $@ -shared $+
 	cd .. && ln src/$@
 
 clean:
