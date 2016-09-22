@@ -567,7 +567,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
-                 form_insertion_depth=2, contour_deformation_polynomial=None,
+                 form_insertion_depth=5, contour_deformation_polynomial=None,
                  decomposition_method='iterative_no_primary'):
     r'''
     Decompose, subtract and expand an expression.
@@ -692,7 +692,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     :param form_insertion_depth:
         nonnegative integer, optional;
         How deep FORM should try to resolve nested function
-        calls. Default: ``2``.
+        calls. Default: ``5``.
 
     :param contour_deformation_polynomial:
         string or sympy symbol, optional;

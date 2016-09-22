@@ -29,12 +29,12 @@ CFunctions `functions';
 AutoDeclare CFunctions SecDecInternalfDUMMY;
 AutoDeclare Symbols SecDecInternalsDUMMY;
 
-* We generated logs in the subtraction, exp in the contour deformation,
-* and pack denominators into a function
-CFunctions log, exp, SecDecInternalDenominator;
+* We generated logs in the subtraction and pack denominators
+* and powers into a functions.
+CFunctions log, pow, SecDecInternalDenominator;
 
 * We rewrite function calls as symbols
-#Do function = {`functions',log,exp,SecDecInternalDenominator}
+#Do function = {`functions',log,pow,SecDecInternalDenominator}
   AutoDeclare Symbols SecDecInternal`function'Call;
 #EndDo
 

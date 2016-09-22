@@ -192,13 +192,25 @@ B `regulators';
   #If `contourDeformation'
 
     #Do depth = 0, `insertionDepth'
-*     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
-*     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
       #call beginArgumentDepth(`depth')
+
+*       Do not expand functions to higher powers. --> Wrap into function "pow"
+*       example: "U(x,y,z)^2" --> "pow(U(x,y,z),2)"
+        repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) * SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) =
+            pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
+        repeat Id pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?) * pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?) =
+            pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
+        repeat Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
+        repeat Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+        repeat Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
+
+*       Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
+*       example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
         Denominators SecDecInternalDenominator;
         factarg,(-1),SecDecInternalDenominator;
         chainout SecDecInternalDenominator;
         repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+
       #call endArgumentDepth(`depth')
       .sort
 
@@ -365,14 +377,27 @@ B `regulators';
 * {
 
   #Do depth = 0, `insertionDepth'
-*   Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
-*   example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
     #call beginArgumentDepth(`depth')
+
+*     Do not expand functions to higher powers. --> Wrap into function "pow"
+*     example: "U(x,y,z)^2" --> "pow(U(x,y,z),2)"
+      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) * SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) =
+          pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
+      repeat Id pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?) * pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?) =
+          pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
+      repeat Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
+      repeat Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+      repeat Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
+
+*     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
+*     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
       Denominators SecDecInternalDenominator;
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
       repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+
     #call endArgumentDepth(`depth')
+
     .sort
 
     #call beginArgumentDepth(`depth')
@@ -382,6 +407,9 @@ B `regulators';
 
 *   some simplifications
     #call beginArgumentDepth(`depth')
+      repeat Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
+      repeat Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+      repeat Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
       Denominators SecDecInternalDenominator;
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
@@ -405,6 +433,10 @@ B `regulators';
 
 * }
 
+* translate sympy's imaginary unit to FORM's imaginary unit
+  multiply replace_(I,i_);
+  .sort
+
 * simplify again
   #Do depth = 0, `insertionDepth'
     #call beginArgumentDepth(`depth')
@@ -426,12 +458,15 @@ B `regulators';
         repeat Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
       #EndIf
     #call endArgumentDepth(`depth')
-    .sort
   #EndDo
-
-* translate sympy's imaginary unit to FORM's imaginary unit
-multiply replace_(I,i_);
-.sort
+  #Do depth = 0, `insertionDepth'
+    #call beginArgumentDepth(`depth')
+      repeat Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
+      repeat Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+      repeat Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
+    #call endArgumentDepth(`depth')
+  #EndDo
+  .sort
 
 * Replace all function calls by symbols for simultaneous optimization.
 * {
@@ -440,57 +475,68 @@ multiply replace_(I,i_);
     Local toOptimize = SecDecInternalsDUMMYtoOptimize;
   #EndIf
 
-  #redefine functionsToReplace "`functions',log,SecDecInternalDenominator"
+  #redefine functionsToReplace "`functions',log,pow,SecDecInternalDenominator"
   #If `contourDeformation'
     #redefine functionsToReplace "SecDecInternalRealPart,`functionsToReplace'"
   #EndIf
 
   #Do function = {`functionsToReplace'}
-    #$labelCounter = 0;
+    #redefine largestLabel`function' "0"
+  #EndDo
 
-    #Do depth = 0, `insertionDepth'
+  #Do j = 1,1
 
-*     Since we need intermediate ".sort" instructions, we cannot use the
-*     "repeat" environment.
-*     The following construction is suggested in the FORM documentation.
+    #Do function = {`functionsToReplace'}
+      #$labelCounter = `largestLabel`function'';
 
-      #Do i = 1,1
-*       set dollar variable
-        #call beginArgumentDepth(`depth')
-          if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-        #call endArgumentDepth(`depth')
-        .sort
+      #Do depth = 0, `insertionDepth'
 
-*       The following "#if" evaluates to true only if there is still something to do.
-        #If `i' == 0
+*       Since we need intermediate ".sort" instructions, we cannot use the
+*       "repeat" environment.
+*       The following construction is suggested in the FORM documentation.
 
-          #$labelCounter = $labelCounter + 1;
-
-          L arguments = SecDecInternalfDUMMYarguments(`$args');
-
-          #Do replaceDepth = 0, `insertionDepth'
-            #call beginArgumentDepth(`replaceDepth')
-              Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
-            #call endArgumentDepth(`replaceDepth')
-          #EndDo
-
-          repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) = SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
-
-*         Define `$argCounter' by loking at the term with the empty function "SecDecInternalfDUMMYarguments"
-          Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
+        #Do i = 1,1
+*         set dollar variable
+          #call beginArgumentDepth(`depth')
+            if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
+          #call endArgumentDepth(`depth')
           .sort
 
-*         Add all arguments to top level polynomial for simultaneous optimization.
-          Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + arguments;
+*         The following "#if" evaluates to true only if there is still something to do.
+          #If `i' == 0
 
-          #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
+            #redefine j "0"
 
-          .sort
-        #EndIf
+            #$labelCounter = $labelCounter + 1;
+
+            L arguments = SecDecInternalfDUMMYarguments(`$args');
+
+            #Do replaceDepth = 0, `insertionDepth'
+              #call beginArgumentDepth(`replaceDepth')
+                Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
+              #call endArgumentDepth(`replaceDepth')
+            #EndDo
+
+            repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) =
+                SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
+
+*           Define `$argCounter' by loking at the term with the empty function "SecDecInternalfDUMMYarguments"
+            Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
+            .sort
+
+*           Add all arguments to top level polynomial for simultaneous optimization.
+            Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + arguments;
+
+            #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
+
+            .sort
+          #EndIf
+        #EndDo
       #EndDo
-    #EndDo
 
-    #redefine largestLabel`function' "`$labelCounter'"
+      #redefine largestLabel`function' "`$labelCounter'"
+
+    #EndDo
 
   #EndDo
 
@@ -715,14 +761,14 @@ multiply replace_(I,i_);
 * Keep track of function calls that are not written to
 * the c++ file yet.
   L unparsed = SecDecInternalsDUMMYUnparsedAppendix;
-  #Do function = {`functions',log,SecDecInternalDenominator}
+  #Do function = {`functions',log,pow,SecDecInternalDenominator}
     #Do callIndex = 1, `largestLabel`function''
       Id SecDecInternalsDUMMYUnparsedAppendix = SecDecInternalsDUMMYUnparsedAppendix + SecDecInternal`function'Call`callIndex'Unparsed;
     #EndDo
   #EndDo
 
   #Do i = 1,1
-    #Do function = {`functions',log,SecDecInternalDenominator}
+    #Do function = {`functions',log,pow,SecDecInternalDenominator}
       #Do callIndex = 1, `largestLabel`function''
         B SecDecInternalLabel`function'Call`callIndex'Arg;
         .sort
@@ -745,7 +791,7 @@ multiply replace_(I,i_);
             nhide arg`argIndex';
           #EndDo
           .sort
-          #Do innerFunction = {`functions',log,SecDecInternalDenominator}
+          #Do innerFunction = {`functions',log,pow,SecDecInternalDenominator}
             #Do innerCallIndex = 1, `largestLabel`innerFunction''
               #redefine dependsOnInnerFunctionCall "0"
               if ( occurs(SecDecInternal`innerFunction'Call`innerCallIndex') ) redefine dependsOnInnerFunctionCall "1";
