@@ -459,13 +459,15 @@ B `regulators';
       #EndIf
     #call endArgumentDepth(`depth')
   #EndDo
-  #Do depth = 0, `insertionDepth'
-    #call beginArgumentDepth(`depth')
-      repeat Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
-      repeat Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-      repeat Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
-    #call endArgumentDepth(`depth')
-  #EndDo
+  repeat;
+    #Do depth = 0, `insertionDepth'
+      #call beginArgumentDepth(`depth')
+        Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
+        Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+        Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
+      #call endArgumentDepth(`depth')
+    #EndDo
+  endRepeat;
   .sort
 
 * Replace all function calls by symbols for simultaneous optimization.
