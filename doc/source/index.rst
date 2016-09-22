@@ -8,6 +8,7 @@ using the sector decomposition approach [BH00]_; see also [Hei08]_, [BHJ+15]_.
     :numbered:
 
     installation.rst
+    gettingstarted.rst
     overview.rst
     full_reference.rst
     references.rst

@@ -46,7 +46,7 @@ array([[1, 0],
 >>> poly.coeffs
 array([A, B], dtype=object)
 
-It is also possible to instatiate the :class:`Polynomial <pySecDec.algebra.Polynomial>`
+It is also possible to instantiate the :class:`Polynomial <pySecDec.algebra.Polynomial>`
 with by its algebraic representation:
 
 >>> poly2 = Polynomial.from_expression('A*x0 + B*x1**2', ['x0','x1'])
