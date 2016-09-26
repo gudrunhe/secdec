@@ -42,7 +42,7 @@ clean:
 	$(MAKE) -C ./doc clean
 
 	# clean util
-	$(MAKE) -C ./util clean
+	if [ -f util/Makefile ] ; then $(MAKE) -C ./util clean ; fi
 
 	# remove .pyc files created by python 2.7
 	rm -f ./*.pyc
@@ -154,6 +154,12 @@ dist : clean
 	cp dist_template/* pySecDec-$(PYSECDECVERSION)/
 	cp dist/*.tar.gz pySecDec-$(PYSECDECVERSION)/
 	cp util/*.tar.gz pySecDec-$(PYSECDECVERSION)/
+
+	# build and copy the documentation
+	$(MAKE) doc
+	mkdir pySecDec-$(PYSECDECVERSION)/doc
+	cp doc/build/latex/pySecDec.pdf pySecDec-$(PYSECDECVERSION)/doc
+	cp -r doc/build/html pySecDec-$(PYSECDECVERSION)/doc
 
 	# create tarball
 	tar -czf pySecDec-$(PYSECDECVERSION).tar.gz pySecDec-$(PYSECDECVERSION)/
