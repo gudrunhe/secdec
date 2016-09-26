@@ -736,6 +736,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                    form_work_space, form_insertion_depth, contour_deformation_polynomial,
                    decomposition_method)
 
+    print('running "make_package" for "' + name + '"')
+
     # construct the c++ type of the integrand container class
     # for two regulators, the resulting code should read:
     # "secdecutil::Series<secdecutil::Series<SectorContainerWith[out]Deformation>>"
@@ -863,9 +865,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
         initial_sector.other.pop()
 
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
-        primary_sectors = strategy['primary'](initial_sector)
+        primary_sectors = list( strategy['primary'](initial_sector) )
+        print('number of primary sectors before investigating symmetries:', len(primary_sectors))
         primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, iterative_sort)
         primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, Pak_sort)
+        print('number of primary sectors after investigating symmetries:', len(primary_sectors))
 
         # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
         symbols_primary_sectors = primary_sectors[0].Jacobian.polysymbols
@@ -883,7 +887,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     else: # if we cannot take advantage of symmetries
         primary_sectors_to_consider = strategy['primary'](initial_sector)
 
-    for primary_sector in primary_sectors_to_consider:
+    for primary_sector_index, primary_sector in enumerate(primary_sectors_to_consider):
 
         # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
         integration_variables = list(primary_sector.Jacobian.polysymbols) # make a copy
@@ -1019,15 +1023,19 @@ def make_package(name, integration_variables, regulators, requested_orders,
             secondary_sectors = []
             for primary_sector in primary_sectors:
                 secondary_sectors.extend( strategy['secondary'](primary_sector) )
+            print('number of sectors in primary sector', primary_sector_index, 'before investigating symmetries:', len(secondary_sectors))
             # find symmetries using both implemented strategies
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, iterative_sort)
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, Pak_sort)
+            print('number of sectors in primary sector', primary_sector_index, 'after investigating symmetries:', len(secondary_sectors))
         else:
             parse_exponents_and_coeffs(primary_sector, symbols_polynomials_to_decompose, symbols_other_polynomials, use_symmetries)
             secondary_sectors = strategy['secondary'](primary_sector)
 
         for sector in secondary_sectors:
             sector_index += 1
+
+            print('writing FORM files for sector', sector_index)
 
             if use_symmetries:
                 # If we use symmetries, we still have to parse the `exponents` and `coeffs`.
@@ -1286,6 +1294,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                     template_replacements)
 
     # expand the `prefactor` to the required orders
+    print('expanding the prefactor')
     required_prefactor_orders = requested_orders - lowest_orders
     expanded_prefactor = expand_sympy(prefactor, regulators, required_prefactor_orders)
 
@@ -1323,6 +1332,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
     parse_template_file(os.path.join(template_sources, 'src', 'functions.hpp'), # source
                         os.path.join(name,             'src', 'functions.hpp'), # dest
                         template_replacements)
+
+    print('"' + name + '" done')
 
     # return the replacements in the template files
     return template_replacements
