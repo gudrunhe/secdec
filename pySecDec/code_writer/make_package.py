@@ -1082,7 +1082,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 # the `remainder_expression` BEFORE taking derivatives.
                 # Introduce a symbol for the `remainder_expression` and insert in FORM.
                 symbolic_remainder_expression_arguments = []
-                symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables))
+                for expovec, coeff in zip(this_transformation.expolist, this_transformation.coeffs):
+                    expovec = np.hstack([expovec, [0]*len(regulators)])
+                    symbolic_remainder_expression_arguments.append( Polynomial([expovec], [coeff], symbols_other_polynomials) )
+                symbolic_remainder_expression_arguments += elementary_monomials[-len(regulators):]
+                symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments)
 
             # initialize the product of monomials for the subtraction
             monomial_factors = list(chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
