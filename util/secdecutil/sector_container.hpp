@@ -42,7 +42,8 @@ namespace secdecutil {
          complex_t const * const complex_parameters
          );
 
-        const unsigned sector_id; // TODO: include order
+        const unsigned sector_id;
+        const std::vector<int> orders;
         const unsigned number_of_integration_variables;
         IntegrandFunction * const undeformed_integrand;
 
@@ -62,11 +63,13 @@ namespace secdecutil {
         // constructor
         SectorContainerWithoutDeformation
         (
-            const unsigned sector_id, // TODO: include order
+            const unsigned sector_id,
+            const std::vector<int> orders,
             const unsigned number_of_integration_variables,
             IntegrandFunction * const undeformed_integrand
         ) :
-        sector_id(sector_id), // TODO: include order
+        sector_id(sector_id),
+        orders(orders),
         number_of_integration_variables(number_of_integration_variables),
         undeformed_integrand(undeformed_integrand)
         {};
@@ -94,7 +97,8 @@ namespace secdecutil {
          complex_t const * const complex_parameters
          );
 
-        const unsigned sector_id; // TODO: include order
+        const unsigned sector_id;
+        const std::vector<int> orders;
         const unsigned number_of_integration_variables;
         DeformedIntegrandFunction * const deformed_integrand;
         DeformedIntegrandFunction * const contour_deformation_polynomial;
@@ -187,7 +191,16 @@ namespace secdecutil {
                             ) const
         {
             if (contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset).imag() > 0)
-                throw sign_check_error("Contour deformation in sector \"" + std::to_string(sector_id) + "\" yields the wrong sign of \"contour_deformation_polynomial.imag\". Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters\" (recommended) or decrease \"deformation_parameters\"."); // TODO: include "order" in error message
+            {
+                auto error_message = "Contour deformation in sector \"" + std::to_string(sector_id);
+                error_message += "\", order { ";
+                for (auto order : orders)
+                    error_message += std::to_string(order) + " ";
+                error_message += "} yields the wrong sign of \"contour_deformation_polynomial.imag\".";
+                error_message += " Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters\"";
+                error_message += " (recommended) or decrease \"deformation_parameters\".";
+                throw sign_check_error(error_message);
+            }
 
             return deformed_integrand(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset);
         };
@@ -195,13 +208,15 @@ namespace secdecutil {
         // constructor
         SectorContainerWithDeformation
         (
-            const unsigned sector_id, // TODO: include order
+            const unsigned sector_id,
+            const std::vector<int> orders,
             const unsigned number_of_integration_variables,
             DeformedIntegrandFunction * const deformed_integrand,
             DeformedIntegrandFunction * const contour_deformation_polynomial,
             MaximalDeformationFunction * const maximal_allowed_deformation_parameters
         ) :
-        sector_id(sector_id), // TODO: include order
+        sector_id(sector_id),
+        orders(orders),
         number_of_integration_variables(number_of_integration_variables),
         deformed_integrand(deformed_integrand),
         contour_deformation_polynomial(contour_deformation_polynomial),

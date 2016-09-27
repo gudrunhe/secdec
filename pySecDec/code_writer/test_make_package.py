@@ -232,11 +232,11 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-2,2,{'
-        target_FORM_code +=    '{42,sector_42_order_n2_numIV,sector_42_order_n2_integrand},'
-        target_FORM_code +=    '{42,sector_42_order_n1_numIV,sector_42_order_n1_integrand},'
-        target_FORM_code +=    '{42,sector_42_order_0_numIV,sector_42_order_0_integrand},'
-        target_FORM_code +=    '{42,sector_42_order_1_numIV,sector_42_order_1_integrand},'
-        target_FORM_code +=    '{42,sector_42_order_2_numIV,sector_42_order_2_integrand}'
+        target_FORM_code +=    '{42,\{-2\},sector_42_order_n2_numIV,sector_42_order_n2_integrand},'
+        target_FORM_code +=    '{42,\{-1\},sector_42_order_n1_numIV,sector_42_order_n1_integrand},'
+        target_FORM_code +=    '{42,\{0\},sector_42_order_0_numIV,sector_42_order_0_integrand},'
+        target_FORM_code +=    '{42,\{1\},sector_42_order_1_numIV,sector_42_order_1_integrand},'
+        target_FORM_code +=    '{42,\{2\},sector_42_order_2_numIV,sector_42_order_2_integrand}'
         target_FORM_code += '},true}'
 
         print('is:')
@@ -259,22 +259,22 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
 
         target_FORM_code  = '{-2,0,{'
         target_FORM_code +=   '{-1,2,{'
-        target_FORM_code +=       '{8,sector_8_order_n2_n1_numIV,sector_8_order_n2_n1_integrand},'
-        target_FORM_code +=       '{8,sector_8_order_n2_0_numIV,sector_8_order_n2_0_integrand},'
-        target_FORM_code +=       '{8,sector_8_order_n2_1_numIV,sector_8_order_n2_1_integrand},'
-        target_FORM_code +=       '{8,sector_8_order_n2_2_numIV,sector_8_order_n2_2_integrand}'
+        target_FORM_code +=       '{8,\{-2,-1\},sector_8_order_n2_n1_numIV,sector_8_order_n2_n1_integrand},'
+        target_FORM_code +=       '{8,\{-2,0\},sector_8_order_n2_0_numIV,sector_8_order_n2_0_integrand},'
+        target_FORM_code +=       '{8,\{-2,1\},sector_8_order_n2_1_numIV,sector_8_order_n2_1_integrand},'
+        target_FORM_code +=       '{8,\{-2,2\},sector_8_order_n2_2_numIV,sector_8_order_n2_2_integrand}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-1,2,{'
-        target_FORM_code +=       '{8,sector_8_order_n1_n1_numIV,sector_8_order_n1_n1_integrand},'
-        target_FORM_code +=       '{8,sector_8_order_n1_0_numIV,sector_8_order_n1_0_integrand},'
-        target_FORM_code +=       '{8,sector_8_order_n1_1_numIV,sector_8_order_n1_1_integrand},'
-        target_FORM_code +=       '{8,sector_8_order_n1_2_numIV,sector_8_order_n1_2_integrand}'
+        target_FORM_code +=       '{8,\{-1,-1\},sector_8_order_n1_n1_numIV,sector_8_order_n1_n1_integrand},'
+        target_FORM_code +=       '{8,\{-1,0\},sector_8_order_n1_0_numIV,sector_8_order_n1_0_integrand},'
+        target_FORM_code +=       '{8,\{-1,1\},sector_8_order_n1_1_numIV,sector_8_order_n1_1_integrand},'
+        target_FORM_code +=       '{8,\{-1,2\},sector_8_order_n1_2_numIV,sector_8_order_n1_2_integrand}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-1,2,{'
-        target_FORM_code +=       '{8,sector_8_order_0_n1_numIV,sector_8_order_0_n1_integrand},'
-        target_FORM_code +=       '{8,sector_8_order_0_0_numIV,sector_8_order_0_0_integrand},'
-        target_FORM_code +=       '{8,sector_8_order_0_1_numIV,sector_8_order_0_1_integrand},'
-        target_FORM_code +=       '{8,sector_8_order_0_2_numIV,sector_8_order_0_2_integrand}'
+        target_FORM_code +=       '{8,\{0,-1\},sector_8_order_0_n1_numIV,sector_8_order_0_n1_integrand},'
+        target_FORM_code +=       '{8,\{0,0\},sector_8_order_0_0_numIV,sector_8_order_0_0_integrand},'
+        target_FORM_code +=       '{8,\{0,1\},sector_8_order_0_1_numIV,sector_8_order_0_1_integrand},'
+        target_FORM_code +=       '{8,\{0,2\},sector_8_order_0_2_numIV,sector_8_order_0_2_integrand}'
         target_FORM_code +=   '},true}'
         target_FORM_code += '},true}'
 
@@ -299,36 +299,36 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code  = '{-1,0,{'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand}'
+        target_FORM_code +=       '{90,\{-1,-3,0\},sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand},'
+        target_FORM_code +=       '{90,\{-1,-3,1\},sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand},'
+        target_FORM_code +=       '{90,\{-1,-3,2\},sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand}'
+        target_FORM_code +=       '{90,\{-1,-2,0\},sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand},'
+        target_FORM_code +=       '{90,\{-1,-2,1\},sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand},'
+        target_FORM_code +=       '{90,\{-1,-2,2\},sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand}'
+        target_FORM_code +=       '{90,\{-1,-1,0\},sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand},'
+        target_FORM_code +=       '{90,\{-1,-1,1\},sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand},'
+        target_FORM_code +=       '{90,\{-1,-1,2\},sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand}'
+        target_FORM_code +=       '{90,\{0,-3,0\},sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand},'
+        target_FORM_code +=       '{90,\{0,-3,1\},sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand},'
+        target_FORM_code +=       '{90,\{0,-3,2\},sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand}'
+        target_FORM_code +=       '{90,\{0,-2,0\},sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand},'
+        target_FORM_code +=       '{90,\{0,-2,1\},sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand},'
+        target_FORM_code +=       '{90,\{0,-2,2\},sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand},'
-        target_FORM_code +=       '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
+        target_FORM_code +=       '{90,\{0,-1,0\},sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand},'
+        target_FORM_code +=       '{90,\{0,-1,1\},sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand},'
+        target_FORM_code +=       '{90,\{0,-1,2\},sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
         target_FORM_code += '},true}'
@@ -354,70 +354,70 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code  = '{-1,0,{'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand,\n' + \
+        target_FORM_code +=       '{90,\{-1,-3,0\},sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand,\n' + \
         '                           sector_90_order_n1_n3_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n3_0_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand,\n' + \
+        target_FORM_code +=       '{90,\{-1,-3,1\},sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand,\n' + \
         '                           sector_90_order_n1_n3_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n3_1_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand,\n' + \
+        target_FORM_code +=       '{90,\{-1,-3,2\},sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand,\n' + \
         '                           sector_90_order_n1_n3_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n3_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand,\n' + \
+        target_FORM_code +=       '{90,\{-1,-2,0\},sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand,\n' + \
         '                           sector_90_order_n1_n2_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n2_0_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand,\n' + \
+        target_FORM_code +=       '{90,\{-1,-2,1\},sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand,\n' + \
         '                           sector_90_order_n1_n2_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n2_1_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand,\n' + \
+        target_FORM_code +=       '{90,\{-1,-2,2\},sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand,\n' + \
         '                           sector_90_order_n1_n2_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n2_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand,\n' + \
+        target_FORM_code +=       '{90,\{-1,-1,0\},sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand,\n' + \
         '                           sector_90_order_n1_n1_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n1_0_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand,\n' + \
+        target_FORM_code +=       '{90,\{-1,-1,1\},sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand,\n' + \
         '                           sector_90_order_n1_n1_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n1_1_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand,\n' + \
+        target_FORM_code +=       '{90,\{-1,-1,2\},sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand,\n' + \
         '                           sector_90_order_n1_n1_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n1_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true},'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand,\n' + \
+        target_FORM_code +=       '{90,\{0,-3,0\},sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand,\n' + \
         '                           sector_90_order_0_n3_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n3_0_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand,\n' + \
+        target_FORM_code +=       '{90,\{0,-3,1\},sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand,\n' + \
         '                           sector_90_order_0_n3_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n3_1_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand,\n' + \
+        target_FORM_code +=       '{90,\{0,-3,2\},sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand,\n' + \
         '                           sector_90_order_0_n3_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n3_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand,\n' + \
+        target_FORM_code +=       '{90,\{0,-2,0\},sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand,\n' + \
         '                           sector_90_order_0_n2_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n2_0_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand,\n' + \
+        target_FORM_code +=       '{90,\{0,-2,1\},sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand,\n' + \
         '                           sector_90_order_0_n2_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n2_1_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand,\n' + \
+        target_FORM_code +=       '{90,\{0,-2,2\},sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand,\n' + \
         '                           sector_90_order_0_n2_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n2_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true},'
         target_FORM_code +=     '{0,2,{'
-        target_FORM_code +=       '{90,sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand,\n' + \
+        target_FORM_code +=       '{90,\{0,-1,0\},sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand,\n' + \
         '                           sector_90_order_0_n1_0_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n1_0_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand,\n' + \
+        target_FORM_code +=       '{90,\{0,-1,1\},sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand,\n' + \
         '                           sector_90_order_0_n1_1_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n1_1_maximal_allowed_deformation_parameters},'
-        target_FORM_code +=       '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
+        target_FORM_code +=       '{90,\{0,-1,2\},sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
         '                           sector_90_order_0_n1_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n1_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true}'
@@ -445,7 +445,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code  = '{0,0,{'
         target_FORM_code +=   '{-1,-1,{'
         target_FORM_code +=     '{2,2,{'
-        target_FORM_code +=         '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
+        target_FORM_code +=         '{90,\{0,-1,2\},sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
         target_FORM_code +=     '},true}'
         target_FORM_code +=   '},true}'
         target_FORM_code += '},true}'
@@ -471,7 +471,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code  = '{0,0,{'
         target_FORM_code +=   '{-1,-1,{'
         target_FORM_code +=     '{2,2,{'
-        target_FORM_code +=         '{90,sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
+        target_FORM_code +=         '{90,\{0,-1,2\},sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
           '                           sector_90_order_0_n1_2_contour_deformation_polynomial,\n' + \
           '                           sector_90_order_0_n1_2_maximal_allowed_deformation_parameters}'
         target_FORM_code +=     '},true}'

@@ -8,7 +8,7 @@ import unittest
 python_major_version = sys.version[0]
 
 class TestPlotDiagram(unittest.TestCase):
-    @attr('active')
+    #@attr('active')
     def test_no_powerlist(self):
         int_lines = [['m',['a',4]],['m',[4,5]],['m',['a',5]],[0,[1,2]],[0,[4,1]],[0,[2,5]]]
         ext_lines = [['p1',1],['p2',2],['p3','a']]
@@ -17,7 +17,7 @@ class TestPlotDiagram(unittest.TestCase):
         finally:
             os.remove('tmpfile_test_plot_diagram_no_powerlist_python' + python_major_version + '.pdf')
 
-    @attr('active')
+    #@attr('active')
     def test_with_powerlist(self):
         int_lines=[['m',[1,5]],['m',[2,6]],['M',[1,2]],['M',[3,5]],
                    ['m',[3,6]],['m',[4,6]],['M',[4,5]]]
