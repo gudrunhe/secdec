@@ -6,9 +6,12 @@ function :func:`.loop_package`.
 
 """
 
+from .from_graph import LoopIntegralFromGraph
+from .draw import plot_diagram
 from ..code_writer import make_package
 import numpy as np
 import sympy as sp
+import os
 
 def loop_package(name, loop_integral, requested_order,
                  real_parameters=[], complex_parameters=[],
@@ -83,6 +86,9 @@ def loop_package(name, loop_integral, requested_order,
             is needed. See :ref:`installation_normaliz`.
 
     '''
+    # convert `name` to string
+    name = str(name)
+
     # append the regulator to the `polynomials_to_decompose` (`F` and `U`)
     polynomials_to_decompose = [loop_integral.exponentiated_F.copy(), loop_integral.exponentiated_U.copy()]
     for poly in polynomials_to_decompose:
@@ -99,7 +105,7 @@ def loop_package(name, loop_integral, requested_order,
         poly.polysymbols = poly.polysymbols[:-2] + [loop_integral.regulator] + poly.polysymbols[-2:]
         poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),1], dtype=int), poly.expolist[:,-2:]])
 
-    return make_package(
+    make_package_return_value = make_package(
         name = name,
 
         integration_variables = loop_integral.integration_variables,
@@ -122,3 +128,12 @@ def loop_package(name, loop_integral, requested_order,
 
         decomposition_method = decomposition_method
     )
+
+    if isinstance(loop_integral, LoopIntegralFromGraph):
+        try:
+            plot_diagram(loop_integral.internal_lines, loop_integral.external_lines,
+                         os.path.join(name, name), loop_integral.powerlist)
+        except Exception as error:
+            print('WARNING: Could not draw the Feynman diagram "%s". Reason: %s' % (name,error))
+
+    return make_package_return_value

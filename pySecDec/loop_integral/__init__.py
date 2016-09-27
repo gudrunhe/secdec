@@ -22,9 +22,17 @@ This module contains the function that generates a c++ package.
 
 .. autofunction:: pySecDec.loop_integral.loop_package
 
+Drawing Feynman Diagrams
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the following function to draw Feynman diagrams.
+
+.. autofunction:: pySecDec.loop_integral.draw.plot_diagram
+
 """
 
 from .common import LoopIntegral
 from .from_graph import LoopIntegralFromGraph
 from .from_propagators import LoopIntegralFromPropagators
 from .loop_package import loop_package
+from .draw import plot_diagram
