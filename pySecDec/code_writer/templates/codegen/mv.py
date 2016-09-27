@@ -8,6 +8,8 @@ Move a file with the following modifications:
    newline characters
  o replace ";#@no_split_expression@# +=" by
    "+"
+ o replace "#@SecDecInternalDblquote@#" by
+   the double-quote character '"'
 
 This is necessary because FORMs formatting
 is incompatible with c++.
@@ -30,6 +32,7 @@ for src_filename in src_filenames:
             txt.append(line.strip('\\\t\n '))
     txt = ''.join(txt).replace("#@SecDecInternalNewline@#",'\n')
     txt = txt.replace(';#@no_split_expression@# +=', '+')
+    txt = txt.replace('#@SecDecInternalDblquote@#', '"')
     with open(dest_filepath, 'w') as dest:
         dest.write(txt)
 

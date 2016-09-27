@@ -166,7 +166,7 @@ TEST_CASE( "Check Access", "[Series]" ) {
 
 };
 
-TEST_CASE( "Operators == and !=", "[Series]" ) {
+TEST_CASE( "Operators == and !=", "[Series]") {
 
     auto series_one = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1});
     auto series_two = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1});
@@ -369,7 +369,7 @@ TEST_CASE( "Check Multivariate Access", "[Series]" ) {
 
 };
 
-TEST_CASE( "Multivariate Operator +" ) {
+TEST_CASE( "Multivariate Operator +" , "[Series]" ) {
     auto multivariate_series_one =
     secdecutil::Series<secdecutil::Series<int>>(0,2,{
         secdecutil::Series<int>(0,2,{1,1,1}),
@@ -403,7 +403,7 @@ TEST_CASE( "Multivariate Operator +" ) {
 
 };
 
-TEST_CASE( "Multivariate Operator -" ) {
+TEST_CASE( "Multivariate Operator -" , "[Series]" ) {
     auto multivariate_series_one =
     secdecutil::Series<secdecutil::Series<int>>(0,2,{
         secdecutil::Series<int>(0,2,{1,1,1}),
@@ -437,7 +437,7 @@ TEST_CASE( "Multivariate Operator -" ) {
 
 };
 
-TEST_CASE( "Multivariate Operator *" ) {
+TEST_CASE( "Multivariate Operator *" , "[Series]" ) {
 
     auto multivariate_series_one =
     secdecutil::Series<secdecutil::Series<int>>(0,1,{
@@ -461,7 +461,28 @@ TEST_CASE( "Multivariate Operator *" ) {
     };
 };
 
-TEST_CASE( "Naming the expansion parameter for operator <<" ) {
+TEST_CASE( "Mismatch in expansion parameters in binary operators", "[Series]" ) {
+
+    // default expansion parameter: 'x'
+    auto one_plus_x = secdecutil::Series<int>(0,1,{1,1},false);
+    auto one_plus_eps = secdecutil::Series<int>(0,2,{1,1,8},true,"eps");
+
+    REQUIRE_THROWS_AS(one_plus_x + one_plus_eps, secdecutil::expansion_parameter_mismatch_error);
+    REQUIRE_THROWS_AS(one_plus_x - one_plus_eps, secdecutil::expansion_parameter_mismatch_error);
+    REQUIRE_THROWS_AS(one_plus_x * one_plus_eps, secdecutil::expansion_parameter_mismatch_error);
+
+    try
+    {
+        one_plus_x * one_plus_eps;
+    }
+    catch (secdecutil::expansion_parameter_mismatch_error& error)
+    {
+        REQUIRE(error.what() == std::string("\"x\" != \"eps\""));
+    }
+
+};
+
+TEST_CASE( "Naming the expansion parameter for operator <<" , "[Series]" ) {
 
     // default expansion parameter: 'x'
     auto one_plus_x = secdecutil::Series<int>(0,1,{1,1},false);
@@ -483,11 +504,43 @@ TEST_CASE( "Naming the expansion parameter for operator <<" ) {
     std::string target_order_one = " + (1)*x^-3 + (1)*x^-2 + (8)*x^-1 + O(x^0)";
     REQUIRE( stream_order_one.str() == target_order_one );
 
-    auto plus_order_eps = secdecutil::Series<int>(-2,0,{1,1,8},true);
-    plus_order_eps.expansion_parameter = "eps"; // rename
+    auto plus_order_eps = secdecutil::Series<int>(-2,0,{1,1,8},true,"eps"); // name on construction
     std::stringstream stream_order_eps;
     stream_order_eps << plus_order_eps;
     std::string target_order_eps = " + (1)*eps^-2 + (1)*eps^-1 + (8) + O(eps)";
     REQUIRE( stream_order_eps.str() == target_order_eps );
+
+};
+
+TEST_CASE( "Propagation of the expansion parameter in arithmetic operations" , "[Series]" ) {
+
+    auto s1 = secdecutil::Series<int>(0,1,{1,1},true,"eps");
+
+    SECTION( " + " ) {
+
+        auto added_series = s1 + s1;
+        REQUIRE( added_series.expansion_parameter == "eps" );
+
+        auto plus_series = + s1;
+        REQUIRE( plus_series.expansion_parameter == "eps" );
+
+    };
+
+    SECTION( " - " ) {
+
+        auto subtracted_series = s1 - s1;
+        REQUIRE( subtracted_series.expansion_parameter == "eps" );
+
+        auto minus_series = - s1;
+        REQUIRE( minus_series.expansion_parameter == "eps" );
+
+    };
+
+    SECTION( " * " ) {
+
+        auto multiplied_series = s1 * s1;
+        REQUIRE( multiplied_series.expansion_parameter == "eps" );
+
+    };
 
 };

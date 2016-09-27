@@ -1,11 +1,15 @@
 #ifndef SecDecUtil_series_hpp_included
 #define SecDecUtil_series_hpp_included
 
+#include <exception>
 #include <iostream>
 #include <string>
 #include <vector>
 
 namespace secdecutil {
+
+    // this exception is thrown when a binary operator on Series with different expansion parameters is called
+    struct expansion_parameter_mismatch_error : public std::runtime_error { using std::runtime_error::runtime_error; };
 
     /*!
      * Store an expression of the form
@@ -46,7 +50,8 @@ namespace secdecutil {
         template<bool subtract>
         static Series sub_or_add(const Series& s1, const Series& s2)
         {
-            // TODO Check expansion parameter
+            if (s1.expansion_parameter != s2.expansion_parameter)
+                throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
 
             // Assume series are not truncated
             bool truncated_above = false;
@@ -101,7 +106,7 @@ namespace secdecutil {
                     }
                 }
             }
-            return Series(order_min, order_max, content, truncated_above);
+            return Series(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
         }
 
     public:
@@ -175,7 +180,7 @@ namespace secdecutil {
             for ( int i = this->order_min; i < this->order_max + 1; i++ )
                 content.push_back(-this->at(i));
 
-            return Series(this->order_min, this->order_max, content, this->truncated_above);
+            return Series(this->order_min, this->order_max, content, this->truncated_above, this->expansion_parameter);
         }
 
         Series operator+() const
@@ -228,7 +233,8 @@ namespace secdecutil {
         // (\Sum_i=a1^b1 c_i * eps^i) * (\Sum_j=a2^b2 c'_j * eps^j)
         friend Series operator*(const Series& s1, const Series& s2)
         {
-            // TODO Check expansion parameter
+            if (s1.expansion_parameter != s2.expansion_parameter)
+                throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
 
             // Assume series are not truncated
             bool truncated_above = false;
@@ -265,7 +271,7 @@ namespace secdecutil {
                 }
             }
 
-            return Series(order_min, order_max, content, truncated_above);
+            return Series(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
         }
 
         // d * \Sum_i=a1^b1 c_i * eps^i = \Sum_i=a1^b1 d* c_i * eps^i
@@ -318,11 +324,12 @@ namespace secdecutil {
                int order_min,
                int order_max,
                std::vector<T> content,
-               bool truncated_above = true
+               bool truncated_above = true,
+               const std::string expansion_parameter = "x"
                ) :
         order_min(order_min), order_max(order_max),
         content(content), truncated_above(truncated_above),
-        expansion_parameter("x")
+        expansion_parameter(expansion_parameter)
         {
             if ( content.size() != (order_max-order_min+1) )
                 throw std::invalid_argument("Incorrect number of series coefficients. got: " + std::to_string(content.size()) + ", expected: " + std::to_string(order_max-order_min+1));

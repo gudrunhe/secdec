@@ -225,11 +225,12 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
 class TestMakeFORMSeriesInitialization(unittest.TestCase):
     #@attr('active')
     def test_one_variable(self):
+        regulator_names = ['eps']
         min_orders = [-2]
         max_orders = [+2]
         sector_ID = 42
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
+        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-2,2,{'
         target_FORM_code +=    '{42,\{-2\},sector_42_order_n2_numIV,sector_42_order_n2_integrand},'
@@ -237,7 +238,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=    '{42,\{0\},sector_42_order_0_numIV,sector_42_order_0_integrand},'
         target_FORM_code +=    '{42,\{1\},sector_42_order_1_numIV,sector_42_order_1_integrand},'
         target_FORM_code +=    '{42,\{2\},sector_42_order_2_numIV,sector_42_order_2_integrand}'
-        target_FORM_code += '},true}'
+        target_FORM_code += '},true,#@SecDecInternalDblquote@#eps#@SecDecInternalDblquote@#}'
 
         print('is:')
         print(FORM_code)
@@ -251,11 +252,12 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
 
     #@attr('active')
     def test_two_variables(self):
+        regulator_names = ['reg1', 'reg2']
         min_orders = [-2, -1]
         max_orders = [+0, +2]
         sector_ID = 8
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
+        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-2,0,{'
         target_FORM_code +=   '{-1,2,{'
@@ -263,20 +265,20 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=       '{8,\{-2,0\},sector_8_order_n2_0_numIV,sector_8_order_n2_0_integrand},'
         target_FORM_code +=       '{8,\{-2,1\},sector_8_order_n2_1_numIV,sector_8_order_n2_1_integrand},'
         target_FORM_code +=       '{8,\{-2,2\},sector_8_order_n2_2_numIV,sector_8_order_n2_2_integrand}'
-        target_FORM_code +=   '},true},'
+        target_FORM_code +=   '},true,#@SecDecInternalDblquote@#reg2#@SecDecInternalDblquote@#},'
         target_FORM_code +=   '{-1,2,{'
         target_FORM_code +=       '{8,\{-1,-1\},sector_8_order_n1_n1_numIV,sector_8_order_n1_n1_integrand},'
         target_FORM_code +=       '{8,\{-1,0\},sector_8_order_n1_0_numIV,sector_8_order_n1_0_integrand},'
         target_FORM_code +=       '{8,\{-1,1\},sector_8_order_n1_1_numIV,sector_8_order_n1_1_integrand},'
         target_FORM_code +=       '{8,\{-1,2\},sector_8_order_n1_2_numIV,sector_8_order_n1_2_integrand}'
-        target_FORM_code +=   '},true},'
+        target_FORM_code +=   '},true,#@SecDecInternalDblquote@#reg2#@SecDecInternalDblquote@#},'
         target_FORM_code +=   '{-1,2,{'
         target_FORM_code +=       '{8,\{0,-1\},sector_8_order_0_n1_numIV,sector_8_order_0_n1_integrand},'
         target_FORM_code +=       '{8,\{0,0\},sector_8_order_0_0_numIV,sector_8_order_0_0_integrand},'
         target_FORM_code +=       '{8,\{0,1\},sector_8_order_0_1_numIV,sector_8_order_0_1_integrand},'
         target_FORM_code +=       '{8,\{0,2\},sector_8_order_0_2_numIV,sector_8_order_0_2_integrand}'
-        target_FORM_code +=   '},true}'
-        target_FORM_code += '},true}'
+        target_FORM_code +=   '},true,#@SecDecInternalDblquote@#reg2#@SecDecInternalDblquote@#}'
+        target_FORM_code += '},true,#@SecDecInternalDblquote@#reg1#@SecDecInternalDblquote@#}'
 
         print('is:')
         print(FORM_code)
@@ -290,11 +292,12 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
 
     #@attr('active')
     def test_three_variables(self):
+        regulator_names = ['a','b','c']
         min_orders = [-1, -3, +0]
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
+        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-1,0,{'
         target_FORM_code +=   '{-3,-1,{'
@@ -302,36 +305,36 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=       '{90,\{-1,-3,0\},sector_90_order_n1_n3_0_numIV,sector_90_order_n1_n3_0_integrand},'
         target_FORM_code +=       '{90,\{-1,-3,1\},sector_90_order_n1_n3_1_numIV,sector_90_order_n1_n3_1_integrand},'
         target_FORM_code +=       '{90,\{-1,-3,2\},sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand}'
-        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{-1,-2,0\},sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand},'
         target_FORM_code +=       '{90,\{-1,-2,1\},sector_90_order_n1_n2_1_numIV,sector_90_order_n1_n2_1_integrand},'
         target_FORM_code +=       '{90,\{-1,-2,2\},sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand}'
-        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{-1,-1,0\},sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand},'
         target_FORM_code +=       '{90,\{-1,-1,1\},sector_90_order_n1_n1_1_numIV,sector_90_order_n1_n1_1_integrand},'
         target_FORM_code +=       '{90,\{-1,-1,2\},sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand}'
-        target_FORM_code +=     '},true}'
-        target_FORM_code +=   '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#}'
+        target_FORM_code +=   '},true,#@SecDecInternalDblquote@#b#@SecDecInternalDblquote@#},'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{0,-3,0\},sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand},'
         target_FORM_code +=       '{90,\{0,-3,1\},sector_90_order_0_n3_1_numIV,sector_90_order_0_n3_1_integrand},'
         target_FORM_code +=       '{90,\{0,-3,2\},sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand}'
-        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{0,-2,0\},sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand},'
         target_FORM_code +=       '{90,\{0,-2,1\},sector_90_order_0_n2_1_numIV,sector_90_order_0_n2_1_integrand},'
         target_FORM_code +=       '{90,\{0,-2,2\},sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand}'
-        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{0,-1,0\},sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand},'
         target_FORM_code +=       '{90,\{0,-1,1\},sector_90_order_0_n1_1_numIV,sector_90_order_0_n1_1_integrand},'
         target_FORM_code +=       '{90,\{0,-1,2\},sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
-        target_FORM_code +=     '},true}'
-        target_FORM_code +=   '},true}'
-        target_FORM_code += '},true}'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#}'
+        target_FORM_code +=   '},true,#@SecDecInternalDblquote@#b#@SecDecInternalDblquote@#}'
+        target_FORM_code += '},true,#@SecDecInternalDblquote@#a#@SecDecInternalDblquote@#}'
 
         print('is:')
         print(FORM_code)
@@ -345,11 +348,12 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
 
     #@attr('active')
     def test_three_variables_with_contour_deformation(self):
+        regulator_names = ['a','b','c']
         min_orders = [-1, -3, +0]
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=True)
+        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=True)
 
         target_FORM_code  = '{-1,0,{'
         target_FORM_code +=   '{-3,-1,{'
@@ -363,7 +367,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=       '{90,\{-1,-3,2\},sector_90_order_n1_n3_2_numIV,sector_90_order_n1_n3_2_integrand,\n' + \
         '                           sector_90_order_n1_n3_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n3_2_maximal_allowed_deformation_parameters}'
-        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{-1,-2,0\},sector_90_order_n1_n2_0_numIV,sector_90_order_n1_n2_0_integrand,\n' + \
         '                           sector_90_order_n1_n2_0_contour_deformation_polynomial,\n' + \
@@ -374,7 +378,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=       '{90,\{-1,-2,2\},sector_90_order_n1_n2_2_numIV,sector_90_order_n1_n2_2_integrand,\n' + \
         '                           sector_90_order_n1_n2_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n2_2_maximal_allowed_deformation_parameters}'
-        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{-1,-1,0\},sector_90_order_n1_n1_0_numIV,sector_90_order_n1_n1_0_integrand,\n' + \
         '                           sector_90_order_n1_n1_0_contour_deformation_polynomial,\n' + \
@@ -385,8 +389,8 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=       '{90,\{-1,-1,2\},sector_90_order_n1_n1_2_numIV,sector_90_order_n1_n1_2_integrand,\n' + \
         '                           sector_90_order_n1_n1_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_n1_n1_2_maximal_allowed_deformation_parameters}'
-        target_FORM_code +=     '},true}'
-        target_FORM_code +=   '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#}'
+        target_FORM_code +=   '},true,#@SecDecInternalDblquote@#b#@SecDecInternalDblquote@#},'
         target_FORM_code +=   '{-3,-1,{'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{0,-3,0\},sector_90_order_0_n3_0_numIV,sector_90_order_0_n3_0_integrand,\n' + \
@@ -398,7 +402,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=       '{90,\{0,-3,2\},sector_90_order_0_n3_2_numIV,sector_90_order_0_n3_2_integrand,\n' + \
         '                           sector_90_order_0_n3_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n3_2_maximal_allowed_deformation_parameters}'
-        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{0,-2,0\},sector_90_order_0_n2_0_numIV,sector_90_order_0_n2_0_integrand,\n' + \
         '                           sector_90_order_0_n2_0_contour_deformation_polynomial,\n' + \
@@ -409,7 +413,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=       '{90,\{0,-2,2\},sector_90_order_0_n2_2_numIV,sector_90_order_0_n2_2_integrand,\n' + \
         '                           sector_90_order_0_n2_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n2_2_maximal_allowed_deformation_parameters}'
-        target_FORM_code +=     '},true},'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#},'
         target_FORM_code +=     '{0,2,{'
         target_FORM_code +=       '{90,\{0,-1,0\},sector_90_order_0_n1_0_numIV,sector_90_order_0_n1_0_integrand,\n' + \
         '                           sector_90_order_0_n1_0_contour_deformation_polynomial,\n' + \
@@ -420,9 +424,9 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=       '{90,\{0,-1,2\},sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
         '                           sector_90_order_0_n1_2_contour_deformation_polynomial,\n' + \
         '                           sector_90_order_0_n1_2_maximal_allowed_deformation_parameters}'
-        target_FORM_code +=     '},true}'
-        target_FORM_code +=   '},true}'
-        target_FORM_code += '},true}'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#}'
+        target_FORM_code +=   '},true,#@SecDecInternalDblquote@#b#@SecDecInternalDblquote@#}'
+        target_FORM_code += '},true,#@SecDecInternalDblquote@#a#@SecDecInternalDblquote@#}'
 
         print('is:')
         print(FORM_code)
@@ -436,19 +440,20 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
 
     #@attr('active')
     def test_three_variables_simple(self):
+        regulator_names = ['a','b','c']
         min_orders = [+0, -1, +2]
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=False)
+        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{0,0,{'
         target_FORM_code +=   '{-1,-1,{'
         target_FORM_code +=     '{2,2,{'
         target_FORM_code +=         '{90,\{0,-1,2\},sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand}'
-        target_FORM_code +=     '},true}'
-        target_FORM_code +=   '},true}'
-        target_FORM_code += '},true}'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#c#@SecDecInternalDblquote@#}'
+        target_FORM_code +=   '},true,#@SecDecInternalDblquote@#b#@SecDecInternalDblquote@#}'
+        target_FORM_code += '},true,#@SecDecInternalDblquote@#a#@SecDecInternalDblquote@#}'
 
         print('is:')
         print(FORM_code)
@@ -462,11 +467,12 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
 
     #@attr('active')
     def test_three_variables_simple_with_contour_deformation(self):
+        regulator_names = ['mu','nu','alpha']
         min_orders = [+0, -1, +2]
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation=True)
+        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=True)
 
         target_FORM_code  = '{0,0,{'
         target_FORM_code +=   '{-1,-1,{'
@@ -474,9 +480,9 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         target_FORM_code +=         '{90,\{0,-1,2\},sector_90_order_0_n1_2_numIV,sector_90_order_0_n1_2_integrand,\n' + \
           '                           sector_90_order_0_n1_2_contour_deformation_polynomial,\n' + \
           '                           sector_90_order_0_n1_2_maximal_allowed_deformation_parameters}'
-        target_FORM_code +=     '},true}'
-        target_FORM_code +=   '},true}'
-        target_FORM_code += '},true}'
+        target_FORM_code +=     '},true,#@SecDecInternalDblquote@#alpha#@SecDecInternalDblquote@#}'
+        target_FORM_code +=   '},true,#@SecDecInternalDblquote@#nu#@SecDecInternalDblquote@#}'
+        target_FORM_code += '},true,#@SecDecInternalDblquote@#mu#@SecDecInternalDblquote@#}'
 
         print('is:')
         print(FORM_code)
@@ -539,6 +545,7 @@ class TestWriteCppCodePrefactor(unittest.TestCase):
         expanded_prefactor = Polynomial([[-1],[0],[1]],['-c0','r0','r1'], ['eps'])
         real_parameters = sp.sympify(['r0','r1'])
         complex_parameters = sp.sympify(['c0'])
+        regulator_names = ['a']
 
         for i in range(2):
             if i == 0:
@@ -552,9 +559,9 @@ class TestWriteCppCodePrefactor(unittest.TestCase):
             target_cpp_code += '        #define r1 real_parameters.at(1)\n'
             target_cpp_code += '        #define c0 complex_parameters.at(0)\n'
             if i == 0:
-                target_cpp_code += '        return {-1,1,{{-c0},{r0},{r1}},true};\n'
+                target_cpp_code += '        return {-1,1,{{-c0},{r0},{r1}},true,"eps"};\n'
             else:
-                target_cpp_code += '        return {-1,1,{{-c0},{r0},{r1}},false};\n'
+                target_cpp_code += '        return {-1,1,{{-c0},{r0},{r1}},false,"eps"};\n'
             target_cpp_code += '        #undef r0\n'
             target_cpp_code += '        #undef r1\n'
             target_cpp_code += '        #undef c0'
@@ -605,10 +612,10 @@ class TestWriteCppCodePrefactor(unittest.TestCase):
             target_cpp_code += '        #define c1 complex_parameters.at(1)\n'
 
             target_cpp_code += '        return {-1,1,{'
-            target_cpp_code +=             '{0,1,{{r0},{c1}},%s},' % true_or_false(expanded_prefactor.coeffs[0].truncated)
-            target_cpp_code +=             '{-1,-1,{{c1}},%s},' % true_or_false(expanded_prefactor.coeffs[1].truncated)
-            target_cpp_code +=             '{1,2,{{c0},{c1}},%s}' % true_or_false(expanded_prefactor.coeffs[2].truncated)
-            target_cpp_code +=         '},%s};\n' % true_or_false(expanded_prefactor.truncated)
+            target_cpp_code +=             '{0,1,{{r0},{c1}},%s,"eps"},' % true_or_false(expanded_prefactor.coeffs[0].truncated)
+            target_cpp_code +=             '{-1,-1,{{c1}},%s,"eps"},' % true_or_false(expanded_prefactor.coeffs[1].truncated)
+            target_cpp_code +=             '{1,2,{{c0},{c1}},%s,"eps"}' % true_or_false(expanded_prefactor.coeffs[2].truncated)
+            target_cpp_code +=         '},%s,"alpha"};\n' % true_or_false(expanded_prefactor.truncated)
 
             target_cpp_code += '        #undef r0\n'
             target_cpp_code += '        #undef c0\n'

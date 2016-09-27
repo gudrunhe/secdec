@@ -412,7 +412,7 @@ FORM_names = dict(
     label_contour_deformation_Jacobian_matrix_index_j=internal_prefix+'LabelJacobianMatrixJ'
 )
 
-def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_deformation):
+def _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation):
     '''
     Write the c++ code that initilizes the container class
     (``Series<Series<...<Series<IntegrandContainer>>...>``).
@@ -436,7 +436,7 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_d
             for this_regulator_order in range(min_orders[regulator_index],max_orders[regulator_index]+1):
                 current_orders[regulator_index] = this_regulator_order
                 outstr_body_snippets.append( recursion(regulator_index + 1) )
-            outstr_tail = '},true}'
+            outstr_tail = '},true,#@SecDecInternalDblquote@#%s#@SecDecInternalDblquote@#}' % regulator_names[regulator_index]
             return ''.join( (outstr_head, ','.join(outstr_body_snippets), outstr_tail) )
         else: # regulator_index == last_regulator_index; i.e. processing last regulator
             outstr_head = '{%i,%i,{{' % (min_orders[regulator_index],max_orders[regulator_index])
@@ -455,7 +455,7 @@ def _make_FORM_Series_initilization(min_orders, max_orders, sector_ID, contour_d
                         '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' \
                         % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
                     )
-            outstr_tail = '}},true}'
+            outstr_tail = '}},true,#@SecDecInternalDblquote@#%s#@SecDecInternalDblquote@#}' % regulator_names[regulator_index]
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
 
     return recursion(0)
@@ -485,14 +485,16 @@ def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parame
             outstr_head = '{%i,%i,{' % (min_order,max_order)
             for coeff in expression.coeffs:
                 outstr_body_snippets.append( recursion(regulator_index + 1, coeff) )
-            outstr_tail = '},true}' if expression.truncated else '},false}'
+            outstr_tail = '},true' if expression.truncated else '},false'
+            outstr_tail += ',"%s"}' % regulators[regulator_index]
             return ''.join( (outstr_head, ','.join(outstr_body_snippets), outstr_tail) )
         else: # regulator_index == last_regulator_index; i.e. processing last regulator
             outstr_head = '{%i,%i,{{' % (min_order,max_order)
             outstr_body_snippets = []
             for coeff in expression.coeffs:
                 outstr_body_snippets.append( str(coeff.evalf(20)) )
-            outstr_tail = '}},true}' if expression.truncated else '}},false}'
+            outstr_tail = '}},true' if expression.truncated else '}},false'
+            outstr_tail += ',"%s"}' % regulators[regulator_index]
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
 
     parameter_definitions = []
@@ -1274,7 +1276,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
             template_replacements['insert_cal_I_procedure'] = FORM_cal_I_definitions
             template_replacements['insert_other_procedure'] = FORM_function_definitions
             template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYIntegrand', integrand, args=None, limit=10**6)
-            template_replacements['sector_container_initializer'] = _make_FORM_Series_initilization(-highest_poles_current_sector, required_orders, sector_index, contour_deformation_polynomial is not None)
+            template_replacements['sector_container_initializer'] = _make_FORM_Series_initilization(regulators, -highest_poles_current_sector,
+                                                                                                    required_orders, sector_index,
+                                                                                                    contour_deformation_polynomial is not None)
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
             template_replacements['regulator_powers'] = regulator_powers
             template_replacements['number_of_orders'] = number_of_orders

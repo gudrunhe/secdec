@@ -75,7 +75,8 @@ namespace secdecutil {
              nest.get_order_min(),
              nest.get_order_max(),
              content,
-             nest.get_truncated_above()
+             nest.get_truncated_above(),
+             nest.expansion_parameter
              );
         };
         deep_apply_impl(secdecutil::Series<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
@@ -146,7 +147,8 @@ namespace secdecutil {
              nest.get_order_min(),
              nest.get_order_max(),
              content,
-             nest.get_truncated_above()
+             nest.get_truncated_above(),
+             nest.expansion_parameter
              );
         };
         const_deep_apply_impl(const secdecutil::Series<T>& nest, const std::function<out_base_type(in_base_type)>& func): nest(nest), func(func) {};
