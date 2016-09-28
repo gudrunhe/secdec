@@ -13,9 +13,9 @@ class TestPlotDiagram(unittest.TestCase):
         int_lines = [['m',['a',4]],['m',[4,5]],['m',['a',5]],[0,[1,2]],[0,[4,1]],[0,[2,5]]]
         ext_lines = [['p1',1],['p2',2],['p3','a']]
         try:
-            plot_diagram(int_lines, ext_lines, 'tmpfile_test_plot_diagram_no_powerlist_python' + python_major_version)
+            plot_diagram(int_lines, ext_lines, 'tmpfile_test_plot_diagram_no_powerlist_python' + python_major_version, extension='ps')
         finally:
-            os.remove('tmpfile_test_plot_diagram_no_powerlist_python' + python_major_version + '.pdf')
+            os.remove('tmpfile_test_plot_diagram_no_powerlist_python' + python_major_version + '.ps')
 
     #@attr('active')
     def test_with_powerlist(self):
@@ -24,6 +24,6 @@ class TestPlotDiagram(unittest.TestCase):
         ext_lines=[['p1',1],['p2',2],['p3',3],['p4',4]]
         powerlist = [2,1,0,-1,-2,1,1]
         try:
-            plot_diagram(int_lines, ext_lines, 'tmpfile_test_plot_diagram_with_powerlist_python' + python_major_version, powerlist)
+            plot_diagram(int_lines, ext_lines, 'tmpfile_test_plot_diagram_with_powerlist_python' + python_major_version, powerlist, extension='ps')
         finally:
-            os.remove('tmpfile_test_plot_diagram_with_powerlist_python' + python_major_version + '.pdf')
+            os.remove('tmpfile_test_plot_diagram_with_powerlist_python' + python_major_version + '.ps')
