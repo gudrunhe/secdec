@@ -518,6 +518,12 @@ class TestMiscellaneous(unittest.TestCase):
         target_cpp_list = '"a","b","c"'
         self.assertEqual(cpp_list, target_cpp_list)
 
+    #@attr('active')
+    def test_make_cpp_list_empty(self):
+        python_list = []
+        cpp_list = _make_cpp_list(python_list)
+        target_cpp_list = str() # empty string
+        self.assertEqual(cpp_list, target_cpp_list)
 
     #@attr('active')
     def test_make_FORM_shifted_orders(self):

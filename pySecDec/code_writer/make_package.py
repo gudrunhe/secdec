@@ -470,7 +470,11 @@ def _make_cpp_list(python_list):
     Example: ``['a', 'b', 'c'] --> '"a","b","c"'``
 
     '''
-    return '"' + '","'.join(str(item) for item in python_list) + '"'
+    joined_inner_part = '","'.join(str(item) for item in python_list)
+    if len(joined_inner_part) == 0:
+        return ''
+    else:
+        return '"' + joined_inner_part + '"'
 
 def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters):
     regulators = expanded_prefactor.polysymbols
