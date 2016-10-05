@@ -173,9 +173,9 @@ class TestTaylorExpansion(unittest.TestCase):
         self.assertEqual( (sp.sympify(expansion_in_x_and_y) - expected_expansion).simplify() , 0)
         self.assertEqual( (sp.sympify(expansion_in_y_and_x) - expected_expansion).simplify() , 0)
 
-
+#@attr('active')
 class TestExpandSympy(unittest.TestCase):
-   #@attr('active')
+    #@attr('active')
     def test_error_messages(self):
         expression = 'a + b'
         variables = ['a', 'b']
@@ -187,14 +187,14 @@ class TestExpandSympy(unittest.TestCase):
 
         expand_sympy(expression, variables, orders) # should be ok
 
-   #@attr('active')
+    #@attr('active')
     def test_requested_order_too_low(self):
         expression = 'x**3'
         variables = ['x']
         orders = [1]
         self.assertRaisesRegexp(ValueError, 'lowest order.*x.*\(3\).*higher than.*requested.*\(1\)', expand_sympy, expression, variables, orders)
 
-   #@attr('active')
+    #@attr('active')
     def test_1d(self):
         expression = 'exp(x)/x'
         variables = ['x']
@@ -206,7 +206,7 @@ class TestExpandSympy(unittest.TestCase):
         np.testing.assert_array_equal(poly.expolist,            [[-1],[0],[  1  ]])
         np.testing.assert_array_equal(poly.coeffs,    sp.sympify([ 1 , 1 , '1/2']))
 
-   #@attr('active')
+    #@attr('active')
     def test_2d(self):
         expression = '1/(eps+alpha)'
         variables = sp.sympify(['alpha', 'eps'])
@@ -262,3 +262,30 @@ class TestExpandSympy(unittest.TestCase):
         target_expansion = Polynomial([[1],[2]],[1,1],['x'])
         self.assertEqual(  (sp.sympify(expansion) - sp.sympify(target_expansion)).simplify() , 0  )
         self.assertTrue(expansion.truncated is False)
+
+    #@attr('active')
+    def test_missing_intermediate_order(self):
+        expression = 'exp(3*EulerGamma*eps)*gamma(3*eps)'
+        variables = ['eps']
+
+        expansion = expand_sympy(expression, variables, orders=[4])
+
+        target_expansion_expolist = np.arange(6).reshape([6,1]) - 1
+        target_expansion_coeffs = [
+                                      '1/(3)',                                         # eps ** -1
+                                      0,                                               # eps **  0
+                                      'pi**2/4',                                       # eps **  1
+                                      '3*polygamma(2,1)/2',                            # eps **  2
+                                      '27*pi**4/160',                                  # eps **  3
+                                      '9/40*(5*pi**2*polygamma(2,1)+3*polygamma(4,1))' # eps **  4
+                                  ]
+        target_expansion = Polynomial(target_expansion_expolist, target_expansion_coeffs, ['eps'])
+
+        self.assertEqual( sp.sympify(expansion - target_expansion).simplify() , 0 )
+
+        np.testing.assert_array_equal(expansion.expolist, target_expansion.expolist)
+        np.testing.assert_array_equal(expansion.coeffs, target_expansion.coeffs)
+        self.assertTrue(expansion.truncated is True)
+
+        for coeff in expansion.coeffs:
+            self.assertTrue(isinstance(coeff, sp.Expr))

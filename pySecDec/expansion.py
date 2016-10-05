@@ -12,6 +12,8 @@ from numpy import iterable
 import numpy as np
 import sympy as sp
 
+_sympy_zero = sp.sympify(0)
+
 # ------------------------ private functions ------------------------
 
 def _expand_Taylor_step(expression, index, order):
@@ -344,29 +346,37 @@ def expand_sympy(expression, variables, orders):
             raise ValueError( 'The lowest order in `%s` (%i) is higher than the requested order (%i)' % (variable,lowest_order,order) )
 
         # compute the remaining terms
-        expansion_coeffs = [(lowest_order_term/variable**lowest_order).expand()]
+        coeffs = []
+        next_term = lowest_order_term
+        current_order = lowest_order
         truncated = True
-        for i in range(1,number_of_remaining_orders+1):
+        while current_order <= order:
+            coeffs.append( (next_term/variable**(current_order)).expand() )
+            current_order += 1
             try:
                 next_term = next(expansion_generator)
             except StopIteration:
                 # all higher orders are exactly zero
                 truncated = False
-                order = lowest_order + i - 1
                 break
-            expansion_coeffs.append( (next_term/variable**(lowest_order+i)).expand() )
-        expansion_coeffs = np.array(expansion_coeffs)
+            current_term_order = sp.poly(next_term, variable).monoms()[0][0]
+            # if some intermediate orders are zero, append zeros to the expansion
+            while current_order < current_term_order and current_order <= order:
+                coeffs.append(_sympy_zero)
+                current_order += 1
+
+        coeffs = np.array(coeffs)
 
         # create the `Polynomial`
-        expolist = np.zeros([len(expansion_coeffs),len(variables)], dtype=int)
-        expolist[:,index] = np.arange(lowest_order, order+1)
-        expansion = Polynomial(expolist, expansion_coeffs, variables, copy=False)
+        expolist = np.zeros([len(coeffs),len(variables)], dtype=int)
+        expolist[:,index] = np.arange(lowest_order, current_order)
+        expansion = Polynomial(expolist, coeffs, variables, copy=False)
         expansion.truncated = truncated
 
         # recurse down to the next variable if any
         if index + 1 < len(variables):
-            for i,coeff in enumerate(expansion_coeffs):
-                expansion_coeffs[i] = recursion(coeff, variables, orders, index + 1)
+            for i,coeff in enumerate(coeffs):
+                coeffs[i] = recursion(coeff, variables, orders, index + 1)
 
         return expansion
 
