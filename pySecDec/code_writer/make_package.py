@@ -925,7 +925,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             symbolic_contour_deformation_polynomial = DerivativeTracker(symbolic_contour_deformation_polynomial)
 
             # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
-            # ``z_k({x_k}) = x_k - i * lambda_k * x_k*exp(-mu/x_k) * (1-x_k)exp(-mu/(1-x_k)) * Re(dF_dx_k)``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
+            # ``z_k({x_k}) = x_k - i * lambda_k * x_k*exp(-mu/x_k) * (1-x_k) * Re(dF_dx_k)``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
             # Remark: The determinant of the Jacobian matrix is calculated numerically.
             deformation_parameters = [sp.symbols(FORM_names['deformation_parameter_i'] % i) for i in range(len(integration_variables))]
             end_point_parameter = Polynomial(np.zeros([1,len(symbols_polynomials_to_decompose)]), np.array([sp.symbols(FORM_names['end_point_parameter'])]), symbols_polynomials_to_decompose, copy=False)
@@ -935,7 +935,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                          Product(
                                                             -imaginary_unit * deformation_parameters[k] * \
                                                             NoDerivativeAtZeroFunction(FORM_names['XExpMinusMuOverX'], end_point_parameter, elementary_monomials[k]),
-                                                            NoDerivativeAtZeroFunction(FORM_names['XExpMinusMuOverX'], end_point_parameter, (1 - elementary_monomials[k])),
+                                                            (1 - elementary_monomials[k]),
                                                             RealPartFunction('SecDecInternalRealPart', symbolic_contour_deformation_polynomial.derive(k), copy=False),
                                                          copy=False),
                                                      copy=False)
@@ -1107,10 +1107,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
             monomials = Product(*monomial_factors, copy=False)
 
             if contour_deformation_polynomial is not None:
-                # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k*exp(-mu/x_k) * (1-x_k)exp(-mu/(1-x_k)) * Re(dF_dx_k)`` to the monomials.
+                # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k*exp(-mu/x_k) * (1-x_k) * Re(dF_dx_k)`` to the monomials.
                 # Split as ``z_k({x_k}) = monomials[k] * <something in remainder_expression>``
                 # where ``monomials[k] = x_k``; i.e. unchanged
-                # and where ``<something in remainder_expression> = 1 - i * lambda_k * exp(-mu/x_k) * (1-x_k)exp(-mu/(1-x_k)) * Re(dF_dx_k)``.
+                # and where ``<something in remainder_expression> = 1 - i * lambda_k * exp(-mu/x_k) * (1-x_k) * Re(dF_dx_k)``.
                 # That amounts to multiplying ``<something in remainder_expression> ** <exponent_of_monomial>`` to `remainder_expression`
                 additional_deformation_factors = []
                 monomial_powers = np.zeros(len(integration_variables), dtype=object)
@@ -1126,7 +1126,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                       Product(
                                                  -imaginary_unit * deformation_parameters[k] * \
                                                  NoDerivativeAtZeroFunction(FORM_names['ExpMinusMuOverX'], end_point_parameter, elementary_monomials[k]),
-                                                 NoDerivativeAtZeroFunction(FORM_names['XExpMinusMuOverX'], end_point_parameter, (1 - elementary_monomials[k])),
+                                                 (1 - elementary_monomials[k]),
                                                  RealPartFunction('SecDecInternalRealPart', symbolic_contour_deformation_polynomial.derive(k), copy=False),
                                                  copy=False
                                              ),
