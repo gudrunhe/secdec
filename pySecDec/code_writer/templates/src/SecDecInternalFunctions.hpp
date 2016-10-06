@@ -43,24 +43,25 @@ namespace %(name)s
     #undef %(name)s_has_complex_parameters
 
     /*
-     * The c++ standard demands that "pow(double, int)" is cast to
-     * "pow(double, double)" which is extremely inefficient. You can
-     * try to comment out "using std::pow" and uncomment the implementation
-     * of the power function below to increase performance.
-     * Using std::pow and the flags "-O2" and "-ffast-math" with g++ is even faster,
-     * but "-ffast-math" is g++ specific and allows "unsafe math optimizations".
-     * The intel compiler produces code that runs faster when using std::pow and
-     * "-O2" than with this function.
-     * Playing around with the diffent implementations of the power function
-     * and the aforementioned switches is worth a try in practical applications
-     * where high performance is needed.
+     * We do not want to use "std::pow(double, int)" because the g++ compiler
+     * casts it to "pow(double, double)" which is extremely inefficient but
+     * demanded by the c++ standard.
+     *
+     * Note: Using std::pow and the flags "-O2" and "-ffast-math" with g++ is even faster,
+     *       but "-ffast-math" is g++ specific and allows "unsafe math optimizations".
+     *       The intel compiler produces code that runs faster when using std::pow and
+     *       "-O2" than with this function.
+     *       However, the c++ standard requires that the second argument of
+     *       "std::pow(double, int)" is casted to double. To comply with the standard, we
+     *       decided to implement our own optimized power function rather than relying on
+     *       the compiler to perform optimizations possibly disallowed by the c++ standard.
+     *       Playing around with "std::pow" and the aforementioned switches is nevertheless
+     *       worth a try in practical applications where high performance is needed.
      */
-    using std::pow;
-    /*
-    template <typename T> inline T pow(T base, int exponent)
+    template <typename T> inline T int_pow(T base, int exponent)
     {
         if (exponent < 0)
-            return 1./pow(base, -exponent);
+	    return 1./int_pow(base, -exponent);
 
         else if (exponent == 0)
             return 1.;
@@ -120,7 +121,7 @@ namespace %(name)s
         }
 
         unsigned half_exponent = exponent / 2;
-        T out = pow(base, half_exponent);
+        T out = int_pow(base, half_exponent);
 
         out *= out;
         if (2 * half_exponent == exponent) // exponent is even
@@ -128,7 +129,14 @@ namespace %(name)s
         else // exponent is odd --> need another factor of the base due to integer division above
             return out * base;
     }
-    */
+
+    real_t inline pow(real_t x, int y){
+      return int_pow(x, y);
+    }
+
+    complex_t inline pow(complex_t x, int y){
+      return int_pow(x, y);
+    }
 
     // --}
 
