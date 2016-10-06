@@ -22,8 +22,8 @@ namespace %(name)s
         if (x == 0)
             return 0;
 
-        real_t minus_mu_over_x = -mu/x;
-        return std::exp(minus_mu_over_x) - minus_mu_over_x * std::exp(minus_mu_over_x);
+        real_t mu_over_x = mu/x;
+        return std::exp(-mu_over_x) * (1.0 + mu_over_x);
     }
 
     inline real_t SecDecInternalExpMinusMuOverX(real_t mu, real_t x)
