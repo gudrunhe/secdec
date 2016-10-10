@@ -111,6 +111,15 @@ class TestConvertInput(TestMakePackage):
         self.assertRaisesRegexp(NameError, 'my_symbol.*cannot be used', _validate, 'my_symbol')
         _validate('symbol1') # should be ok
 
+    #@attr('active')
+    def test_remainder_expression_with_polynomial_reference(self):
+        # `make_package` should raise an error if the `remainder_expression`
+        # refers to any of the `polynomial_names`
+        keyword_arguments = self.correct_input.copy()
+        keyword_arguments['remainder_expression'] = 'firstPolynomialName'
+        keyword_arguments['polynomial_names'] = ['firstPolynomialName']
+        self.assertRaisesRegexp(ValueError, r'polynomial_names.*firstPolynomialName.*not.*remainder_expression', _convert_input, **keyword_arguments)
+
 # --------------------------------- write FORM code ---------------------------------
 class TestMakeFORMDefinition(unittest.TestCase):
     #@attr('active')

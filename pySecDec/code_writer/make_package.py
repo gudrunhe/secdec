@@ -160,6 +160,15 @@ def _convert_input(name, integration_variables, regulators,
     assert form_insertion_depth == int(form_insertion_depth), '`form_insertion_depth` must be an integer.'
     assert form_insertion_depth >= 0, '`form_insertion_depth` must not be negative.'
 
+    # check that the `remainder_expression` does not refer to any of the `polynomial_names`
+    for poly_name in polynomial_names:
+        error = sp.symbols('SecDecInternalError')
+        remainder_expression = remainder_expression.replace(-1, error, remove=True)
+    symbols_remainder_expression = integration_variables + regulators
+    str_remainder_expression = str(remainder_expression)
+    if 'SecDecInternalError' in str_remainder_expression:
+        raise ValueError('The `polynomial_names` %s cannot be used in the `remainder_expression`.' % polynomial_names)
+
     return (name, integration_variables, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
             other_polynomials, prefactor, remainder_expression, functions, function_calls,
@@ -661,11 +670,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
         In addition, all dummy function must be listed
         in `functions`.
 
-        The `polynomial_names` can be used like in
-        `other_polynomials`. In particular, they go
-        **without** arguments, e.g.
-        ``remainder_expression='exp(g(U,F))'``.
-
     :param functions:
         iterable of strings or sympy symbols, optional;
         Function symbols occuring in `remainder_expression`,
@@ -843,8 +847,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # investigate if we can take advantage of sector symmetries
     # We can simplify due to symmetries if the `remainder_expression`
-    # does explicitly not depend on any integration variable (implicit
-    # dependence via `polynomial_names` is OK).
+    # does explicitly not depend on any integration variable.
     use_symmetries = True
     for i,_ in enumerate(integration_variables):
         derivative = remainder_expression.derive(i).simplify()
@@ -891,7 +894,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
         integration_variables = list(primary_sector.Jacobian.polysymbols) # make a copy
         symbols_polynomials_to_decompose = symbols_other_polynomials = integration_variables + regulators
-        symbols_remainder_expression = integration_variables + regulators + polynomial_names
+        symbols_remainder_expression = integration_variables + regulators
         all_symbols = integration_variables + regulators + polynomial_names
 
         # define `integration_variables` in the template system
@@ -967,21 +970,20 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 _make_FORM_function_definition('SecDecInternalContourdefJacobian', contourdef_Jacobian_expression, args=integration_variables, limit=10**6)
             )
 
-        # insert the `polynomials_to_decompose` as dummy functions into `other_polynomials` and `remainder_expression`
+        # insert the `polynomials_to_decompose` as dummy functions into `other_polynomials`
         # we want to remove them from the symbols --> traverse backwards and pop the last of the `polysymbols`
-        # redefine ``all_symbols`` and ``symbols_remainder_expression``
-        all_symbols = symbols_remainder_expression = integration_variables + regulators
-        this_primary_sector_remainder_expression = remainder_expression
+        # redefine ``all_symbols``
+        all_symbols = integration_variables + regulators
         for i in range(len(other_polynomials)):
             poly = primary_sector.other[i]
             decomposition.unhide(poly, other_polynomials_name_hide_containers[i])
             for poly_name in reversed_polynomial_names:
                 poly = poly.replace(-1, poly_name(*all_symbols), remove=True)
             primary_sector.other[i] = poly
-        for poly_name in reversed_polynomial_names:
-            this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(-1, poly_name(*all_symbols), remove=True)
 
-        # If there is a nontrivial primary decomposition, remove the integration variable also from the `remainder_expression`
+        this_primary_sector_remainder_expression = remainder_expression
+
+        # If there is a nontrivial primary decomposition, remove the integration variables from the `remainder_expression`
         for i,var in enumerate(all_integration_variables):
             if var not in integration_variables:
                 this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(i,1,remove=True)
