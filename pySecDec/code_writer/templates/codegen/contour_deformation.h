@@ -37,12 +37,13 @@ AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
 
 * We typically use commutativity of derivative to sort them.
 * However, for contour deformation we need the unsorted second
-* derivatives of `F', e.g. "ddFd1d0" in addition to "ddFd0d1".
+* derivatives of the "SecDecInternalContourDeformationPolynomial",
+* e.g. "ddFd1d0" in addition to "ddFd0d1".
 #$numIVMinusOne = `numIV' - 1;
 #Do i = 0,`$numIVMinusOne'
   #Do j = 0,`$numIVMinusOne'
-    CFunctions dd`F'd`i'd`j', SecDecInternaldd`F'd`i'd`j';
-    Symbol SecDecInternaldd`F'd`i'd`j'Call;
+    CFunctions ddSecDecInternalContourDeformationPolynomiald`i'd`j';
+    Symbol SecDecInternalddSecDecInternalContourDeformationPolynomiald`i'd`j'Call;
   #EndDo
 #EndDo
 

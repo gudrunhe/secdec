@@ -398,6 +398,7 @@ FORM_names = dict(
     cal_I=internal_prefix+'CalI',
     cast_polynomial=internal_prefix+'PolynomialToDecompose',
     other_polynomial=internal_prefix+'OtherPolynomial',
+    contour_deformation_polynomial=internal_prefix+'ContourDeformationPolynomial',
     remainder_expression=internal_prefix+'RemainderExpression',
     contourdef_transform=internal_prefix+'ContourdefDeformation',
     contourdef_Jacobian=internal_prefix+'ContourdefJacobian',
@@ -407,7 +408,6 @@ FORM_names = dict(
     additional_deformation_factor=internal_prefix+'AdditionalDeformationFactor',
     ExpMinusMuOverX=internal_prefix+'ExpMinusMuOverX',
     XExpMinusMuOverX=internal_prefix+'XExpMinusMuOverX',
-    label_contour_deformation_transform=internal_prefix+'LabelTransformation',
     label_contour_deformation_Jacobian_matrix_index_i=internal_prefix+'LabelJacobianMatrixI',
     label_contour_deformation_Jacobian_matrix_index_j=internal_prefix+'LabelJacobianMatrixJ'
 )
@@ -824,7 +824,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 raise IndexError('Could not find the `contour_deformation_polynomial` "%s" in `polynomial_names`.' % str_contour_deformation_polynomial)
 
         # define labels for simultaneous optimization in FORM
-        FORM_label_contour_deformation_transform = sp.sympify(FORM_names['label_contour_deformation_transform'])
         FORM_label_contour_deformation_Jacobian_matrix_index_i = sp.sympify(FORM_names['label_contour_deformation_Jacobian_matrix_index_i'])
         FORM_label_contour_deformation_Jacobian_matrix_index_j = sp.sympify(FORM_names['label_contour_deformation_Jacobian_matrix_index_j'])
 
@@ -915,7 +914,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
-            symbolic_contour_deformation_polynomial = Function(str_contour_deformation_polynomial, *elementary_monomials)
+            symbolic_contour_deformation_polynomial = Function(FORM_names['contour_deformation_polynomial'], *elementary_monomials)
             symbolic_contour_deformation_polynomial = DerivativeTracker(symbolic_contour_deformation_polynomial)
 
             # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
@@ -1236,7 +1235,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 full_expression = sector.cast[contour_deformation_polynomial_index].factors[1]
                 full_expression.exponent = 1 # exponent is already part of the `tracker`
                 update_derivatives(
-                    str_contour_deformation_polynomial, # basename
+                    FORM_names['contour_deformation_polynomial'], # basename
                     symbolic_contour_deformation_polynomial, # derivative tracker
                     full_expression
                 )

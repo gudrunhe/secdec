@@ -364,7 +364,7 @@ B `regulators';
     #Do i = 0,`$numIVMinusOne'
       #Do j = `i',`$numIVMinusOne'
         argument SecDecInternalRealPart;
-          Id dd`F'd`j'd`i'(?args) = dd`F'd`i'd`j'(?args);
+          Id ddSecDecInternalContourDeformationPolynomiald`j'd`i'(?args) = ddSecDecInternalContourDeformationPolynomiald`i'd`j'(?args);
         endArgument;
       #EndDo
     #EndDo
