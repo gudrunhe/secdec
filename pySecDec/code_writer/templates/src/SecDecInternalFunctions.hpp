@@ -130,13 +130,17 @@ namespace %(name)s
             return out * base;
     }
 
-    real_t inline pow(real_t x, int y){
-      return int_pow(x, y);
+    real_t inline pow(real_t x, int y)
+    {
+        return int_pow(x, y);
     }
 
-    complex_t inline pow(complex_t x, int y){
-      return int_pow(x, y);
+    complex_t inline pow(complex_t x, int y)
+    {
+        return int_pow(x, y);
     }
+
+    using std::pow;
 
     // --}
 
