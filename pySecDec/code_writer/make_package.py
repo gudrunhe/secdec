@@ -779,13 +779,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # intialize the c++ declarations of the `functions`
     function_declarations = set()
 
-    # print message how to implement the dummy functions if applicable
-    if functions:
-        print(
-                 "Declarations of the `functions` and their required derivatives are provided\n" + \
-                 "in the file 'src/functions.hpp'. Please refer to that file for further\n" + \
-                 "instructions."
-             )
+    have_dummy_functions = True if functions else False
 
     # hide ``regulators`` and ``polynomial_names`` from decomposition
     polynomials_to_decompose_hidden_regulators = []
@@ -1342,6 +1336,15 @@ def make_package(name, integration_variables, regulators, requested_orders,
                         template_replacements)
 
     print('"' + name + '" done')
+
+    # print message how to implement the dummy functions if applicable
+    have_dummy_functions = True if functions else False
+    if have_dummy_functions:
+        print(
+                 "Declarations of the `functions` and their required derivatives are provided\n" + \
+                 "in the file 'src/functions.hpp'. Please refer to that file for further\n" + \
+                 "instructions."
+             )
 
     # return the replacements in the template files
     return template_replacements
