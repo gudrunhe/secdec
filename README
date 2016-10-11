@@ -17,6 +17,9 @@ in the source repository to run all tests. Developers should write test cases fo
 ALL functions they implement and make sure that ALL tests pass before uploading a
 commit.
 
+Documentation
+-------------
+
 To build the documentation of `pySecDec`, you need `sphinx` (http://www.sphinx-doc.org).
 If `sphinx` is installed, the command
 
@@ -24,6 +27,18 @@ If `sphinx` is installed, the command
 
 generates the documentaion in `html` and in `pdf` format. Developers should inline-document
 python functions and also keep the c++ part up to date.
+
+Building the documentaion in pdf format requires an up-to-date installation of a latex
+implementation. If you get an error about missing ".sty" file, do the following:
+
+ 1. If you are an administrator on your computer, try to install the missing latex packages
+    with your favorite package manager. The MiKTeX or TeXLive implementations should contain
+    all required packages.
+
+ 2. If you are not an administrator, first get the missing packages, e.g. from
+    "http://www.ctan.org/". Collect the missing files in one or more directories
+    and set the environment variable TEXINPUTS to these directories in the same
+    way as the PATH variable is typically set.
 
 Making a tarball
 ----------------
@@ -34,3 +49,9 @@ A distributable tarball can be created by the command
 
 When publishing a new release, make sure that you increase the Version number of `pySecDec`
 and/or `SecDecUtil`.
+
+"make dist" first runs "make clean" to make sure that no temporary or outdated files go into
+the distribution. Then it runs builds the source distribution of the python package as with
+"python setup.py sdist", the documentation as with "make doc", and it runs "make dist" in the
+"util" package. Note that the "util" is an autotools package and you must have the GNU autotools
+installed on your system.
