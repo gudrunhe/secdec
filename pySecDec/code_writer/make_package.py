@@ -179,20 +179,31 @@ def _convert_input(name, integration_variables, regulators,
 
 
 # ---------------------------------- decomposition ----------------------------------
-_decomposition_strategies = dict(
-                                    iterative=           dict(
-                                                                 primary=decomposition.iterative.primary_decomposition,
-                                                                 secondary=decomposition.iterative.iterative_decomposition
-                                                             ),
-                                    geometric=           dict(
-                                                                 primary=lambda x: [decomposition.geometric.Cheng_Wu(x)],
-                                                                 secondary=decomposition.geometric.geometric_decomposition # TODO: allow the user to set the path to normaliz
-                                                             ),
-                                    iterative_no_primary=dict(
-                                                                 primary=lambda x: [x], # no primary decomposition
-                                                                 secondary=decomposition.iterative.iterative_decomposition
-                                                             )
-                                )
+def get_decomposition_routines(name, normaliz, workdir):
+    '''
+    Return a dictionary with the functions
+    performing the primary and the secondary
+    decomposition.
+    Along with the name, the path to the executable
+    of normaliz and a temporary directory are passed
+    to this function.
+
+    '''
+    _decomposition_strategies = dict(
+                                        iterative=           dict(
+                                                                     primary=decomposition.iterative.primary_decomposition,
+                                                                     secondary=decomposition.iterative.iterative_decomposition
+                                                                 ),
+                                        geometric=           dict(
+                                                                     primary=lambda x: [decomposition.geometric.Cheng_Wu(x)],
+                                                                     secondary=lambda x: decomposition.geometric.geometric_decomposition(x, normaliz, workdir)
+                                                                 ),
+                                        iterative_no_primary=dict(
+                                                                     primary=lambda x: [x], # no primary decomposition
+                                                                     secondary=decomposition.iterative.iterative_decomposition
+                                                                 )
+                                    )
+    return _decomposition_strategies[name]
 
 
 # -------------------------------- template parsing ---------------------------------
@@ -583,7 +594,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
                  form_insertion_depth=5, contour_deformation_polynomial=None,
-                 decomposition_method='iterative_no_primary'):
+                 decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
+                 normaliz_workdir='normaliz_tmp'):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -729,6 +741,20 @@ def make_package(name, integration_variables, regulators, requested_orders,
         In order to compute loop integrals, please use the
         function :func:`pySecDec.loop_integral.loop_package`.
 
+    :param normaliz_executable:
+        string, optional;
+        The command to run `normaliz`. `normaliz` is only
+        required if `decomposition_method` is set to
+        'geometric'.
+        Default: 'normaliz'
+
+    :param normaliz_workdir:
+        string, optional;
+        The working directory for `normaliz`. This directory
+        is automatically created and deleted again after
+        `normaliz` finishes.
+        Default: 'normaliz_tmp'
+
     '''
     # convert input data types to the data types we need
     name, integration_variables, regulators, \
@@ -772,7 +798,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     required_orders = requested_orders + highest_prefactor_pole_orders
 
     # get the decomposition routines
-    strategy = _decomposition_strategies[decomposition_method]
+    strategy = get_decomposition_routines(decomposition_method, normaliz_executable, normaliz_workdir)
 
     # define the `Polynomial` "x0 + x1 + x2 + ..." to keep track of the transformations
     transformations = Polynomial(np.identity(len(integration_variables), dtype=int), [1]*len(integration_variables), integration_variables)

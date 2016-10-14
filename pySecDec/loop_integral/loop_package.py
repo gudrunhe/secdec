@@ -17,7 +17,9 @@ def loop_package(name, loop_integral, requested_order,
                  real_parameters=[], complex_parameters=[],
                  contour_deformation=True, additional_prefactor=1,
                  form_optimization_level=2, form_work_space='500M',
-                 decomposition_method='iterative'):
+                 decomposition_method='iterative',
+                 normaliz_executable='normaliz',
+                 normaliz_workdir='normaliz_tmp'):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -85,6 +87,20 @@ def loop_package(name, loop_integral, requested_order,
             For 'geometric', the third-party program "normaliz"
             is needed. See :ref:`installation_normaliz`.
 
+    :param normaliz_executable:
+        string, optional;
+        The command to run `normaliz`. `normaliz` is only
+        required if `decomposition_method` is set to
+        'geometric'.
+        Default: 'normaliz'
+
+    :param normaliz_workdir:
+        string, optional;
+        The working directory for `normaliz`. This directory
+        is automatically created and deleted again after
+        `normaliz` finishes.
+        Default: 'normaliz_tmp'
+
     '''
     # convert `name` to string
     name = str(name)
@@ -126,7 +142,10 @@ def loop_package(name, loop_integral, requested_order,
         form_optimization_level = form_optimization_level,
         form_work_space = form_work_space,
 
-        decomposition_method = decomposition_method
+        decomposition_method = decomposition_method,
+
+        normaliz_executable=normaliz_executable,
+        normaliz_workdir=normaliz_workdir
     )
 
     if isinstance(loop_integral, LoopIntegralFromGraph):
