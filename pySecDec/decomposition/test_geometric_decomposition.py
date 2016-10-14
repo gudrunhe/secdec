@@ -81,6 +81,13 @@ class TestGeomethod(unittest.TestCase):
 
         cone = [[ 1,  0,  0], [ 0,  1,  0], [ 0, -1, -1], [-1,  0, -1]]
 
+        # useful error message?
+        self.assertRaisesRegexp(
+                                    OSError, 'No such file or directory.*nonexistentNormalizExecutable',
+                                    triangulate, cone, normaliz='nonexistentNormalizExecutable',
+                                    workdir='tmpdir_test_triangulate_python' + python_major_version
+                               )
+
         triangulated_cones = triangulate(cone, workdir='tmpdir_test_triangulate_python' + python_major_version)
 
         # there are two possibilities for the triangualtion
@@ -451,6 +458,14 @@ class TestPolytope(unittest.TestCase):
         polytope1 = Polytope(vertices=self.vertices)
         polytope2 = Polytope(vertices=self.vertices_with_inside)
 
+        # useful error message?
+        for polytope in (polytope1, polytope2):
+            self.assertRaisesRegexp(
+                                        OSError, 'No such file or directory.*nonexistentNormalizExecutable',
+                                        polytope.complete_representation, normaliz='nonexistentNormalizExecutable',
+                                        workdir='tmpdir_test_triangulate_python' + python_major_version
+                                   )
+
         polytope1.complete_representation(workdir='tmpdir1_test_vertex2facet_python' + python_major_version)
         polytope2.complete_representation(workdir='tmpdir2_test_vertex2facet_python' + python_major_version)
 
@@ -466,6 +481,14 @@ class TestPolytope(unittest.TestCase):
     def test_facet2vertex(self):
         polytope1 = Polytope(facets=self.facets)
         polytope2 = Polytope(facets=self.facets_with_outside)
+
+        # useful error message?
+        for polytope in (polytope1, polytope2):
+            self.assertRaisesRegexp(
+                                        OSError, 'No such file or directory.*nonexistentNormalizExecutable',
+                                        polytope.complete_representation, normaliz='nonexistentNormalizExecutable',
+                                        workdir='tmpdir_test_triangulate_python' + python_major_version
+                                   )
 
         polytope1.complete_representation(workdir='tmpdir1_test_facet2vertex_python' + python_major_version)
         polytope2.complete_representation(workdir='tmpdir2_test_facet2vertex_python' + python_major_version)

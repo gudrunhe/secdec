@@ -168,7 +168,12 @@ class Polytope(object):
                 with open(os.path.join(workdir, 'stderr'),'w') as stderr:
                     # run normaliz
                     #    subprocess.check_call --> run normaliz, block until it finishes and raise error on nonzero exit status
-                    subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir)
+                    try:
+                        subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir)
+                    except OSError as error:
+                        if normaliz not in str(error):
+                            error.filename = normaliz
+                        raise
 
             # read file output from normaliz
             if self.facets is None: # reduced vertices are in cst file
@@ -323,7 +328,12 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
             with open(os.path.join(workdir, 'stderr'),'w') as stderr:
                 # run normaliz
                 #    subprocess.check_call --> run normaliz, block until it finishes and raise error on nonzero exit status
-                subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir)
+                try:
+                    subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir)
+                except OSError as error:
+                    if normaliz not in str(error):
+                        error.filename = normaliz
+                    raise
 
         # read normaliz output
         # normaliz reorders the rays and defines its ordering in "normaliz.tgn"
