@@ -1,10 +1,12 @@
 Overview
 ========
 
-`pySecDec` is consists of several modules that provide functions and classes for
+`pySecDec` consists of several modules that provide functions and classes for
 specific purposes. In this overview, we present only the most important aspects
-of selected modules. For detailed instruction of a specific function or class,
-please refer to the :doc:`reference guide <full_reference>`.
+of selected modules. These are exactly the modules necessary to set up the algebraic 
+computation of a Feynman loop integral requisite for the numerical evaluation. 
+For detailed instruction of a specific function or class,
+please be referred to the :doc:`reference guide <full_reference>`.
 
 
 .. _algebra_intro:
@@ -12,7 +14,8 @@ please refer to the :doc:`reference guide <full_reference>`.
 pySecDec.algebra
 ----------------
 
-The  `algebra` module implements a very basic computer algebra system. Although
+The  `algebra` module implements a very basic computer algebra system. `pySecDec` 
+uses both `sympy` and `numpy`. Although
 `sympy` in principle provides everything we need, it is way too slow for typical
 applications. That is because `sympy` is completely written in `python` without
 making use of any precompiled functions. `pySecDec`'s `algebra` module uses the
@@ -32,7 +35,7 @@ is a container for multivariate polynomials, i.e. functions of the form:
 
     \sum_i C_i {\prod_j { x_{j}^{\alpha_{ij}} }}
 
-A multivariate polynomial is completely determined by its `coefficients` :math:`C_i`,
+A multivariate polynomial is completely determined by its `coefficients` :math:`C_i` and 
 the exponents :math:`\alpha_{ij}`. The :class:`Polynomial <pySecDec.algebra.Polynomial>`
 class stores these in two arrays:
 
@@ -47,7 +50,7 @@ array([[1, 0],
 array([A, B], dtype=object)
 
 It is also possible to instantiate the :class:`Polynomial <pySecDec.algebra.Polynomial>`
-with by its algebraic representation:
+by its algebraic representation:
 
 >>> poly2 = Polynomial.from_expression('A*x0 + B*x1**2', ['x0','x1'])
 >>> poly2
@@ -62,7 +65,7 @@ Note that the second argument of
 :meth:`Polynomial.from_expression() <pySecDec.algebra.Polynomial.from_expression>`
 defines the variables :math:`x_j`.
 
-The :class:`Polynomial <pySecDec.algebra.Polynomial>` class implements basic operations:
+Within the :class:`Polynomial <pySecDec.algebra.Polynomial>` class, basic operations are implemented:
 
 >>> poly + 1
  + (1) + (B)*x1**2 + (A)*x0
@@ -105,7 +108,7 @@ array([[1]])
 >>> log_of_x.coeffs
 array([1], dtype=object)
 
-We have seen an `extension` the
+We have seen an `extension` to the
 :class:`Polynomial <pySecDec.algebra.Polynomial>` class, now let us consider
 a `combination`:
 
@@ -121,7 +124,7 @@ of two :class:`LogOfPolynomials <pySecDec.algebra.LogOfPolynomial>`:
 
 As suggested before, the :class:`Product <pySecDec.algebra.Product>`
 combines two :class:`Polynomials <pySecDec.algebra.Polynomial>`. They
-are accessible as the ``factors``:
+are accessible through the ``factors``:
 
 >>> more_complex_expression.factors[0]
 log( + (1)*x)
@@ -166,7 +169,7 @@ array([[1]])
 array([y], dtype=object)
 
 The second argument of the function :func:`Expression <pySecDec.algebra.Expression>`
-controls how the variables are distributed between the coefficients and the variables
+controls how the variables are distributed among the coefficients and the variables
 in the underlying :class:`Polynomials <pySecDec.algebra.Polynomial>`.
 Keep that in mind in order to avoid confusion. One can always check which symbols are
 considered as variables by asking for the ``symbols``:
@@ -182,15 +185,15 @@ considered as variables by asking for the ``symbols``:
 Feynman Parametrization of Loop Integrals
 -----------------------------------------
 
-The primary purpose of `pySecDec` is calculating loop integrals as they arise in fixed
-order calculations in quantum field theories. In our approach, the first step is converting
-the loop integral from the momentum representation to the Feynman parameter representation.
+The primary purpose of `pySecDec` is the numerical calculation of loop integrals as they arise in fixed
+order calculations in quantum field theories. In the first step of our approach, the loop integral is 
+converted from the momentum representation to the Feynman parameter representation.
 
 .. TODO: give a reference
 
 The module :mod:`pySecDec.loop_integral` implements exactly that conversion.
-The most basic use is to calculate the first ``U`` and the second ``F``
-Symanzik polynomial from the propagators of a loop integral.
+The most basic use is to calculate the first and the second 
+Symanzik polynomial ``U`` and ``F``, respectively, from the propagators of a loop integral.
 
 .. TODO: include Feynman diagrams?
 
@@ -249,7 +252,7 @@ With that, we can Feynman parametrize the two loop box with a numerator:
 >>> box.numerator
  + (-2*eps*p3(mu)**2 - 2*p3(mu)**2)*U**2 + (-eps + 2)*x6*F + (-eps + 2)*x5*F + (-eps + 2)*x4*F + (-eps + 2)*x3*F + (4*eps*p2(mu)*p3(mu) + 4*eps*p3(mu)**2 + 4*p2(mu)*p3(mu) + 4*p3(mu)**2)*x3*x6*U + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x3*x5*U + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x3*x4*U + (-2*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 2*eps*p3(mu)**2 - 2*p2(mu)**2 - 4*p2(mu)*p3(mu) - 2*p3(mu)**2)*x3**2*x6**2 + (4*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) + 4*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x3**2*x5*x6 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x3**2*x5**2 + (-4*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 4*p2(mu)**2 - 4*p2(mu)*p3(mu))*x3**2*x4*x6 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x3**2*x4*x5 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x3**2*x4**2 + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x2*x6*U + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x2*x5*U + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x2*x4*U + (-4*eps*p1(mu)*p3(mu) - 4*p1(mu)*p3(mu))*x2*x3*U + (4*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) + 4*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x2*x3*x6**2 + (-4*eps*p1(mu)**2 + 4*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) - 4*p1(mu)**2 + 4*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x2*x3*x5*x6 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2*x3*x5**2 + (8*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) + 8*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x2*x3*x4*x6 + (-4*eps*p1(mu)**2 + 4*eps*p1(mu)*p2(mu) - 4*p1(mu)**2 + 4*p1(mu)*p2(mu))*x2*x3*x4*x5 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x2*x3*x4**2 + (4*eps*p1(mu)*p2(mu) + 4*eps*p1(mu)*p3(mu) + 4*p1(mu)*p2(mu) + 4*p1(mu)*p3(mu))*x2*x3**2*x6 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2*x3**2*x5 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x2*x3**2*x4 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x2**2*x6**2 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x5*x6 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x2**2*x5**2 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x4*x6 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x4*x5 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x2**2*x4**2 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x3*x6 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x3*x5 + (-4*eps*p1(mu)**2 - 4*p1(mu)**2)*x2**2*x3*x4 + (-2*eps*p1(mu)**2 - 2*p1(mu)**2)*x2**2*x3**2 + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x1*x6*U + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x1*x5*U + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x1*x4*U + (4*eps*p2(mu)*p3(mu) + 4*p2(mu)*p3(mu))*x1*x3*U + (-4*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 4*p2(mu)**2 - 4*p2(mu)*p3(mu))*x1*x3*x6**2 + (4*eps*p1(mu)*p2(mu) - 4*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) + 4*p1(mu)*p2(mu) - 4*p2(mu)**2 - 4*p2(mu)*p3(mu))*x1*x3*x5*x6 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x3*x5**2 + (-8*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 8*p2(mu)**2 - 4*p2(mu)*p3(mu))*x1*x3*x4*x6 + (4*eps*p1(mu)*p2(mu) - 4*eps*p2(mu)**2 + 4*p1(mu)*p2(mu) - 4*p2(mu)**2)*x1*x3*x4*x5 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1*x3*x4**2 + (-4*eps*p2(mu)**2 - 4*eps*p2(mu)*p3(mu) - 4*p2(mu)**2 - 4*p2(mu)*p3(mu))*x1*x3**2*x6 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x3**2*x5 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1*x3**2*x4 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x2*x6**2 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x5*x6 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x2*x5**2 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x4*x6 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x4*x5 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x2*x4**2 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x3*x6 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x3*x5 + (8*eps*p1(mu)*p2(mu) + 8*p1(mu)*p2(mu))*x1*x2*x3*x4 + (4*eps*p1(mu)*p2(mu) + 4*p1(mu)*p2(mu))*x1*x2*x3**2 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x1**2*x6**2 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x5*x6 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x1**2*x5**2 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x4*x6 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x4*x5 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x1**2*x4**2 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x3*x6 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x3*x5 + (-4*eps*p2(mu)**2 - 4*p2(mu)**2)*x1**2*x3*x4 + (-2*eps*p2(mu)**2 - 2*p2(mu)**2)*x1**2*x3**2
 
-We can also generate output in terms of Mandelstam invariants:
+We can also generate the output in terms of Mandelstam invariants:
 
 >>> replacement_rules = [
 ...                        ('p1*p1', 0),
@@ -361,8 +364,8 @@ The decomposition of ``p2`` needs two iterations and yields three sectors:
     other=[]
 
 
-Note that we declared ``z`` as variable for ``p1`` although it does not depend on it.
-However, we have to do so if we want to simultaneously decompose ``p1`` and ``p2``:
+Note that we declared ``z`` as a variable for sector ``p1`` evne though it does not depend on it.
+This declaration is necessary if we want to simultaneously decompose ``p1`` and ``p2``:
 
 
 .. code:: python
