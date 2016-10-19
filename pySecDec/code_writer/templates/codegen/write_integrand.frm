@@ -133,55 +133,6 @@ B `regulators';
   repeat Id log(SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?) = log(SecDecInternalsDUMMY1) * SecDecInternalsDUMMY2;
   .sort
 
-* Find and count the occurring integration variables.
-* {
-  hide; nhide expression;
-  .sort
-
-  #redefine occurringIntegrationVariables ""
-  #redefine occurringIntegrationVariableIndices ""
-  #redefine absentIntegrationVariables ""
-  #redefine absentIntegrationVariableIndices ""
-  #$counterOccur = 0;
-  #$counterAbsent = 0;
-  #$currentIVIndex = -1;
-
-  #Do IV = {`integrationVariables'}
-
-    #$currentIVIndex = $currentIVIndex + 1;
-
-    #redefine IVOccurs "0"
-    if ( occurs(`IV') ) redefine IVOccurs "1";
-    .sort
-
-    #If `IVOccurs'
-      #$counterOccur = $counterOccur + 1;
-      #If `$counterOccur' == 1
-        #redefine occurringIntegrationVariables "`IV'"
-        #redefine occurringIntegrationVariableIndices "`$currentIVIndex'"
-      #Else
-        #redefine occurringIntegrationVariables "`occurringIntegrationVariables',`IV'"
-        #redefine occurringIntegrationVariableIndices "`occurringIntegrationVariableIndices',`$currentIVIndex'"
-      #EndIf
-    #Else
-      #$counterAbsent = $counterAbsent + 1;
-      #If `$counterAbsent' == 1
-        #redefine absentIntegrationVariables "`IV'"
-        #redefine absentIntegrationVariableIndices "`$currentIVIndex'"
-      #Else
-        #redefine absentIntegrationVariables "`absentIntegrationVariables',`IV'"
-        #redefine absentIntegrationVariableIndices "`absentIntegrationVariableIndices',`$currentIVIndex'"
-      #EndIf
-    #EndIf
-
-  #EndDo
-
-  #redefine numOccurringIVOrder`shiftedOrderIndex' "`$counterOccur'"
-
-  unhide;
-  .sort
-* }
-
 * insert calI
   #call insertCalI
   .sort
@@ -194,15 +145,16 @@ B `regulators';
     #Do depth = 0, `insertionDepth'
       #call beginArgumentDepth(`depth')
 
-*       Do not expand functions to higher powers. --> Wrap into function "pow"
-*       example: "U(x,y,z)^2" --> "pow(U(x,y,z),2)"
+*       Do not expand functions to higher powers. --> Wrap into function "SecDecInternalIntPow"
+*       example: "U(x,y,z)^2" --> "SecDecInternalIntPow(U(x,y,z),2)"
         repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) * SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) =
-            pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
-        repeat Id pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?) * pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?) =
-            pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
-        repeat Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
-        repeat Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-        repeat Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
+            SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
+        repeat Id SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?)
+                * SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?)
+                = SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
+        repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 0) = 1;
+        repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+        repeat Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
 
 *       Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
 *       example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
@@ -379,15 +331,16 @@ B `regulators';
   #Do depth = 0, `insertionDepth'
     #call beginArgumentDepth(`depth')
 
-*     Do not expand functions to higher powers. --> Wrap into function "pow"
-*     example: "U(x,y,z)^2" --> "pow(U(x,y,z),2)"
+*     Do not expand functions to higher powers. --> Wrap into function "SecDecInternalIntPow"
+*     example: "U(x,y,z)^2" --> "SecDecInternalIntPow(U(x,y,z),2)"
       repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) * SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) =
-          pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
-      repeat Id pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?) * pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?) =
-          pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
-      repeat Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
-      repeat Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-      repeat Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
+          SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
+        repeat Id SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?)
+                * SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?)
+                = SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
+      repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 0) = 1;
+      repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+      repeat Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
 
 *     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
 *     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
@@ -407,9 +360,9 @@ B `regulators';
 
 *   some simplifications
     #call beginArgumentDepth(`depth')
-      repeat Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
-      repeat Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-      repeat Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
+      repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 0) = 1;
+      repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+      repeat Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
       Denominators SecDecInternalDenominator;
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
@@ -462,9 +415,9 @@ B `regulators';
   repeat;
     #Do depth = 0, `insertionDepth'
       #call beginArgumentDepth(`depth')
-        Id pow(SecDecInternalsDUMMYbase?, 0) = 1;
-        Id pow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-        Id pow(0, SecDecInternalsDUMMYexponent?) = 0;
+        Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 0) = 1;
+        Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+        Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
       #call endArgumentDepth(`depth')
     #EndDo
   endRepeat;
@@ -477,7 +430,7 @@ B `regulators';
     Local toOptimize = SecDecInternalsDUMMYtoOptimize;
   #EndIf
 
-  #redefine functionsToReplace "`functions',log,pow,SecDecInternalDenominator"
+  #redefine functionsToReplace "`functions',log,SecDecInternalIntPow,SecDecInternalDenominator"
   #If `contourDeformation'
     #redefine functionsToReplace "SecDecInternalRealPart,`functionsToReplace'"
   #EndIf
@@ -546,6 +499,55 @@ B `regulators';
   .sort
 
   drop expression, arguments;
+  .sort
+* }
+
+* Find and count the occurring integration variables.
+* {
+  hide; nhide toOptimize;
+  .sort
+
+  #redefine occurringIntegrationVariables ""
+  #redefine occurringIntegrationVariableIndices ""
+  #redefine absentIntegrationVariables ""
+  #redefine absentIntegrationVariableIndices ""
+  #$counterOccur = 0;
+  #$counterAbsent = 0;
+  #$currentIVIndex = -1;
+
+  #Do IV = {`integrationVariables'}
+
+    #$currentIVIndex = $currentIVIndex + 1;
+
+    #redefine IVOccurs "0"
+    if ( occurs(`IV') ) redefine IVOccurs "1";
+    .sort
+
+    #If `IVOccurs'
+      #$counterOccur = $counterOccur + 1;
+      #If `$counterOccur' == 1
+        #redefine occurringIntegrationVariables "`IV'"
+        #redefine occurringIntegrationVariableIndices "`$currentIVIndex'"
+      #Else
+        #redefine occurringIntegrationVariables "`occurringIntegrationVariables',`IV'"
+        #redefine occurringIntegrationVariableIndices "`occurringIntegrationVariableIndices',`$currentIVIndex'"
+      #EndIf
+    #Else
+      #$counterAbsent = $counterAbsent + 1;
+      #If `$counterAbsent' == 1
+        #redefine absentIntegrationVariables "`IV'"
+        #redefine absentIntegrationVariableIndices "`$currentIVIndex'"
+      #Else
+        #redefine absentIntegrationVariables "`absentIntegrationVariables',`IV'"
+        #redefine absentIntegrationVariableIndices "`absentIntegrationVariableIndices',`$currentIVIndex'"
+      #EndIf
+    #EndIf
+
+  #EndDo
+
+  #redefine numOccurringIVOrder`shiftedOrderIndex' "`$counterOccur'"
+
+  unhide;
   .sort
 * }
 
@@ -763,14 +765,14 @@ B `regulators';
 * Keep track of function calls that are not written to
 * the c++ file yet.
   L unparsed = SecDecInternalsDUMMYUnparsedAppendix;
-  #Do function = {`functions',log,pow,SecDecInternalDenominator}
+  #Do function = {`functions',log,SecDecInternalIntPow,SecDecInternalDenominator}
     #Do callIndex = 1, `largestLabel`function''
       Id SecDecInternalsDUMMYUnparsedAppendix = SecDecInternalsDUMMYUnparsedAppendix + SecDecInternal`function'Call`callIndex'Unparsed;
     #EndDo
   #EndDo
 
   #Do i = 1,1
-    #Do function = {`functions',log,pow,SecDecInternalDenominator}
+    #Do function = {`functions',log,SecDecInternalIntPow,SecDecInternalDenominator}
       #Do callIndex = 1, `largestLabel`function''
         B SecDecInternalLabel`function'Call`callIndex'Arg;
         .sort
@@ -793,7 +795,7 @@ B `regulators';
             nhide arg`argIndex';
           #EndDo
           .sort
-          #Do innerFunction = {`functions',log,pow,SecDecInternalDenominator}
+          #Do innerFunction = {`functions',log,SecDecInternalIntPow,SecDecInternalDenominator}
             #Do innerCallIndex = 1, `largestLabel`innerFunction''
               #redefine dependsOnInnerFunctionCall "0"
               if ( occurs(SecDecInternal`innerFunction'Call`innerCallIndex') ) redefine dependsOnInnerFunctionCall "1";

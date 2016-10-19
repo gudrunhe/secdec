@@ -58,10 +58,10 @@ namespace %(name)s
      *       Playing around with "std::pow" and the aforementioned switches is nevertheless
      *       worth a try in practical applications where high performance is needed.
      */
-    template <typename T> inline T int_pow(T base, int exponent)
+    template <typename T> inline T SecDecInternalIntPow(T base, int exponent)
     {
         if (exponent < 0)
-	    return 1./int_pow(base, -exponent);
+	    return 1./SecDecInternalIntPow(base, -exponent);
 
         else if (exponent == 0)
             return 1.;
@@ -121,7 +121,7 @@ namespace %(name)s
         }
 
         unsigned half_exponent = exponent / 2;
-        T out = int_pow(base, half_exponent);
+        T out = SecDecInternalIntPow(base, half_exponent);
 
         out *= out;
         if (2 * half_exponent == exponent) // exponent is even
@@ -132,12 +132,12 @@ namespace %(name)s
 
     real_t inline pow(real_t x, int y)
     {
-        return int_pow(x, y);
+        return SecDecInternalIntPow(x, y);
     }
 
     complex_t inline pow(complex_t x, int y)
     {
-        return int_pow(x, y);
+        return SecDecInternalIntPow(x, y);
     }
 
     using std::pow;
