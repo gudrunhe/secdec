@@ -112,7 +112,8 @@ in the folder 'box1L', typing
  $ make 
  
 will create the libraries `libbox1L.a`,  `libbox1L.so` which can be linked to an external program calling these integrals.
-In ``standalone mode``, the C++ file ``test.cpp`` can be used to produce results for a certain kinematic point to be entered in 
+In ``standalone mode``, the C++ file ``test.cpp`` can be used to produce results for a certain kinematic point. In the latter, 
+kinematic points can be specified by adapting the line
 
 .. TODO: or a list of kinematic points, read from a kinem.input file
  
@@ -121,7 +122,7 @@ In ``standalone mode``, the C++ file ``test.cpp`` can be used to produce results
      const std::vector<box1L::real_t> real_parameters = {9.,-0.1,0.3, 1.};
   
  
-which corresponds to  `s=9,t=-0.1,s1=0.3, msq=1` i.e. the same ordering is kept as in the lists Mandelstam_symbols = ['s','t','s1'], 
+for the desired kinematics. In the above example, the values correspond to  `s=9,t=-0.1,s1=0.3, msq=1`, i.e. the same ordering is kept as in the lists Mandelstam_symbols = ['s','t','s1'], 
  mass_symbols = ['msq'] in the python input.
 
 The commands 
