@@ -11,6 +11,8 @@
 
 #include <cmath>
 #include <complex>
+#include <stdexcept>
+#include <string>
 
 namespace %(name)s
 {
@@ -26,7 +28,8 @@ namespace %(name)s
     // use std::log(real_t) but override log(complex_t)
     #define %(name)s_contour_deformation %(contour_deformation)i
     #define %(name)s_has_complex_parameters %(have_complex_parameters)i
-    #if %(name)s_has_complex_parameters || %(name)s_contour_deformation
+    #define %(name)s_enforce_complex_return_type %(enforce_complex_return_type)i
+    #if %(name)s_has_complex_parameters || %(name)s_contour_deformation || %(name)s_enforce_complex_return_type
         inline complex_t log(complex_t arg)
         {
             if (arg.imag() == 0)
@@ -36,11 +39,20 @@ namespace %(name)s
     #else
         inline real_t log(real_t arg)
         {
+            if (arg < 0)
+            {
+                std::string error_message;
+                error_message += "Encountered \"log(<negative real>)\" in a real-valued integrand function of \"%(name)s\". ";
+                error_message += "Try to enforce complex return values for the generated integrands; i.e. set ";
+                error_message += "\"enforce_complex=True\" in the corresponding call to \"loop_package\" or \"make_package\".";
+                throw std::domain_error(error_message);
+            }
             return std::log(arg);
         }
     #endif
     #undef %(name)s_contour_deformation
     #undef %(name)s_has_complex_parameters
+    #undef %(name)s_enforce_complex_return_type
 
     /*
      * We do not want to use "std::pow(double, int)" because the g++ compiler

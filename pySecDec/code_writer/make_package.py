@@ -210,7 +210,8 @@ def get_decomposition_routines(name, normaliz, workdir):
 def _parse_global_templates(name, regulators, polynomial_names,
                             real_parameters, complex_parameters, form_optimization_level,
                             form_work_space, form_insertion_depth, requested_orders,
-                            contour_deformation_polynomial, sector_container_type):
+                            contour_deformation_polynomial, sector_container_type,
+                            enforce_complex):
     '''
     Create the `target_directory` (given by `name`) and return the two
     optional arguments passed to :func:`parse_template_tree`.
@@ -239,7 +240,8 @@ def _parse_global_templates(name, regulators, polynomial_names,
                                      pySecDec_version = version,
                                      python_version = sys.version,
                                      pySecDec_git_id = git_id,
-                                     date_time = strftime("%a %d %b %Y %H:%M")
+                                     date_time = strftime("%a %d %b %Y %H:%M"),
+                                     enforce_complex_return_type=int(bool(enforce_complex)) # make sure that this is either ``0`` or ``1``
                                 )
 
     # configure template parser
@@ -595,7 +597,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
                  form_insertion_depth=5, contour_deformation_polynomial=None,
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
-                 normaliz_workdir='normaliz_tmp'):
+                 normaliz_workdir='normaliz_tmp', enforce_complex=False):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -755,6 +757,21 @@ def make_package(name, integration_variables, regulators, requested_orders,
         `normaliz` finishes.
         Default: 'normaliz_tmp'
 
+    :param enforce_complex:
+        bool, optional;
+        Whether or not the generated integrand functions
+        should have a complex return type even though
+        they might be purely real.
+        The return type of the integrands is automatically
+        complex if `contour_deformation` is ``True`` or
+        if there are `complex_parameters`. In other cases,
+        the calculation can typically be kept purely real.
+        Most commonly, this flag is needed if
+        ``log(<negative real>)`` occurs in one of the
+        integrand functions. However, `pySecDec` will suggest
+        setting this flag to ``True`` in that case.
+        Default: ``False``
+
     '''
     # convert input data types to the data types we need
     name, integration_variables, regulators, \
@@ -788,7 +805,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
         name, regulators, polynomial_names,
         real_parameters, complex_parameters, form_optimization_level,
         form_work_space, form_insertion_depth, requested_orders,
-        contour_deformation_polynomial, sector_container_type
+        contour_deformation_polynomial, sector_container_type,
+        enforce_complex
     )
 
     # get the highest poles from the ``prefactor``

@@ -17,11 +17,14 @@ namespace %(name)s
     // whether or not complex parameters are present
     #define %(name)s_has_complex_parameters %(have_complex_parameters)i
 
+    // whether or no the return type should be complex in any case
+    #define %(name)s_enforce_complex_return_type %(enforce_complex_return_type)i
+
     // basic data types
     // --{
     typedef double real_t;
     typedef std::complex<real_t> complex_t;
-    #if %(name)s_has_complex_parameters || %(name)s_contour_deformation
+    #if %(name)s_has_complex_parameters || %(name)s_contour_deformation || %(name)s_enforce_complex_return_type
         typedef complex_t integrand_return_t;
     #else
         typedef real_t integrand_return_t;
@@ -63,6 +66,7 @@ namespace %(name)s
 
     #undef %(name)s_contour_deformation
     #undef %(name)s_has_complex_parameters
+    #undef %(name)s_enforce_complex_return_type
 
 };
 #endif

@@ -19,7 +19,8 @@ def loop_package(name, loop_integral, requested_order,
                  form_optimization_level=2, form_work_space='500M',
                  decomposition_method='iterative',
                  normaliz_executable='normaliz',
-                 normaliz_workdir='normaliz_tmp'):
+                 normaliz_workdir='normaliz_tmp',
+                 enforce_complex=False):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -101,6 +102,21 @@ def loop_package(name, loop_integral, requested_order,
         `normaliz` finishes.
         Default: 'normaliz_tmp'
 
+    :param enforce_complex:
+        bool, optional;
+        Whether or not the generated integrand functions
+        should have a complex return type even though
+        they might be purely real.
+        The return type of the integrands is automatically
+        complex if `contour_deformation` is ``True`` or
+        if there are `complex_parameters`. In other cases,
+        the calculation can typically be kept purely real.
+        Most commonly, this flag is needed if
+        ``log(<negative real>)`` occurs in one of the
+        integrand functions. However, `pySecDec` will suggest
+        setting this flag to ``True`` in that case.
+        Default: ``False``
+
     '''
     # convert `name` to string
     name = str(name)
@@ -145,7 +161,9 @@ def loop_package(name, loop_integral, requested_order,
         decomposition_method = decomposition_method,
 
         normaliz_executable=normaliz_executable,
-        normaliz_workdir=normaliz_workdir
+        normaliz_workdir=normaliz_workdir,
+
+        enforce_complex=enforce_complex
     )
 
     if isinstance(loop_integral, LoopIntegralFromGraph):
