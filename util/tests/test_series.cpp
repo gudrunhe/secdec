@@ -168,18 +168,23 @@ TEST_CASE( "Check Access", "[Series]" ) {
 
 TEST_CASE( "Operators == and !=", "[Series]") {
 
-    auto series_one = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1});
-    auto series_two = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1});
-    auto series_three = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1},false);
+    auto series_1 = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1});
+    auto series_2 = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1}, true, "x");
+    auto series_3 = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1},false, "eps");
+    auto series_4 = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1},false, "eps");
+    auto series_5 = secdecutil::Series<int>(-3,4,{-5,-6,-6,0,2,3,4,-1});
+    auto series_6 = secdecutil::Series<int>(-4,4,{0,-5,-6,-7,0,2,3,4,-1});
+    auto series_7 = secdecutil::Series<int>(-3,5,{-5,-6,-7,0,2,3,4,-1,2});
+    auto series_8 = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1},false, "mu");
 
-    auto series_unidentical_one = secdecutil::Series<int>(-3,4,{-5,-6,-6,0,2,3,4,-1});
-    auto series_unidentical_two = secdecutil::Series<int>(-4,4,{0,-5,-6,-7,0,2,3,4,-1});
-    auto series_unidentical_three = secdecutil::Series<int>(-3,5,{-5,-6,-7,0,2,3,4,-1,2});
 
-    REQUIRE( series_one == series_two );
-    REQUIRE( series_one != series_unidentical_one );
-    REQUIRE( series_one != series_unidentical_two );
-    REQUIRE( series_one != series_unidentical_three );
+    REQUIRE( series_1 == series_2 );
+    REQUIRE( series_3 == series_4 );
+    REQUIRE( series_1 != series_5 );
+    REQUIRE( series_1 != series_6 );
+    REQUIRE( series_1 != series_7 );
+    REQUIRE( series_1 != series_8 );
+    REQUIRE( series_3 != series_8 );
 
 };
 
@@ -333,16 +338,16 @@ TEST_CASE( "Operator * for complex<int>", "[Series]" ) {
     auto minus_one_minus_i_times_x = secdecutil::Series<std::complex<int>>(0,1,{{-1,0},{0,-1}});
     auto result_operator_minus = - one_plus_i_times_x;
     REQUIRE( result_operator_minus == minus_one_minus_i_times_x );
-    
+
 };
 
 TEST_CASE( "Operator * for complex<double>", "[Series]" ) {
-    
+
     auto one_plus_i_times_x = secdecutil::Series<std::complex<double>>(0,1,{{1.1,0.},{0.,1.1}});
     auto minus_one_minus_i_times_x = secdecutil::Series<std::complex<double>>(0,1,{{-1.1,0.},{0.,-1.1}});
     auto result_operator_minus = - one_plus_i_times_x;
     REQUIRE( result_operator_minus == minus_one_minus_i_times_x );
-    
+
 };
 
 TEST_CASE( "Check Multivariate Access", "[Series]" ) {

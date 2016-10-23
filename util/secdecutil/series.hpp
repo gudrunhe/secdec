@@ -152,8 +152,8 @@ namespace secdecutil {
          */
         friend bool operator==(const Series& s1, const Series& s2)
         {
-            // TODO Check expansion parameter
-
+            if (s1.expansion_parameter != s2.expansion_parameter)
+                return false;
             if ( s1.order_min != s2.order_min )
                 return false;
             if ( s1.order_max != s2.order_max )
