@@ -146,6 +146,48 @@ TEST_CASE( "Compound Assignment Operators real zero uncertainty", "[Uncorrelated
 
 };
 
+TEST_CASE( "Compound Assignment Operators real plain number", "[UncorrelatedDeviation]" ) {
+
+    auto gu1 = secdecutil::UncorrelatedDeviation<double>(-1.,2.);
+
+    SECTION( "+=" )
+    {
+
+        gu1 += 3.;
+        REQUIRE( gu1.value == Approx(2.) );
+        REQUIRE( gu1.uncertainty == Approx( 2. ) );
+
+    };
+
+    SECTION( "+=" )
+    {
+
+        gu1 -= 3.;
+        REQUIRE( gu1.value == Approx(-4.) );
+        REQUIRE( gu1.uncertainty == Approx( 2. ) );
+
+    };
+
+    SECTION( "*=" )
+    {
+
+        gu1 *= 3.;
+        REQUIRE( gu1.value == Approx(-3.) );
+        REQUIRE( gu1.uncertainty == Approx( 6. ) );
+
+    };
+
+    SECTION( "/=" )
+    {
+
+        gu1 /= 3.;
+        REQUIRE( gu1.value == Approx( -1./3.) );
+        REQUIRE( gu1.uncertainty == Approx( 2./3. ) );
+
+    };
+
+};
+
 TEST_CASE( "Compound Assignment Operators complex", "[UncorrelatedDeviation]" ) {
 
     auto gu1 = secdecutil::UncorrelatedDeviation<dcmplx>({-1.,2.},{4.,4.});
@@ -197,6 +239,56 @@ TEST_CASE( "Compound Assignment Operators complex", "[UncorrelatedDeviation]" ) 
 
 };
 
+TEST_CASE( "Compound Assignment Operators complex plain number", "[UncorrelatedDeviation]" ) {
+
+    auto gu1 = secdecutil::UncorrelatedDeviation<dcmplx>({-1.,2.},{4.,4.});
+
+    SECTION( "+=" )
+    {
+
+        gu1 += dcmplx{3.,-2.};
+        REQUIRE( gu1.value.real() == Approx(2.) );
+        REQUIRE( gu1.value.imag() == Approx(0.) );
+        REQUIRE( gu1.uncertainty.real() == Approx(4.) );
+        REQUIRE( gu1.uncertainty.imag() == Approx(4.) );
+
+    };
+
+    SECTION( "-=" )
+    {
+
+        gu1 -= dcmplx{3.,-2.};
+        REQUIRE( gu1.value.real() == Approx(-4.) );
+        REQUIRE( gu1.value.imag() == Approx( 4.) );
+        REQUIRE( gu1.uncertainty.real() == Approx(4.));
+        REQUIRE( gu1.uncertainty.imag() == Approx(4.));
+
+    };
+
+    SECTION( "*=" )
+    {
+
+        gu1 *= dcmplx{3.,-2.};
+        REQUIRE( gu1.value.real() == Approx(1.) );
+        REQUIRE( gu1.value.imag() == Approx(8.) );
+        REQUIRE( gu1.uncertainty.real() == Approx( std::sqrt( (16. + 0.) * 9.  +  (4. + 0./4.) * 16.) ) );
+        REQUIRE( gu1.uncertainty.imag() == Approx( std::sqrt( (16. + 0./4.) * 4.  +  (4. + 0.) * 36.) ) );
+
+    };
+
+    SECTION( "/=" )
+    {
+
+        gu1 /= dcmplx{3.,-2.};
+        REQUIRE( gu1.value.real() == Approx(-7./13.) );
+        REQUIRE( gu1.value.imag() == Approx( 4./13.) );
+        REQUIRE( gu1.uncertainty.real() == Approx(   7./13. * std::sqrt( ((16. + 0.) * 9.  +  (4. + 0./4.) * 16.) / 49. + (0.*9.*2. + 0.*4.*2.) / 169.) )   );
+        REQUIRE( gu1.uncertainty.imag() == Approx(   4./13. * std::sqrt( ((16. + 0./4.) * 4.  +  (4. + 0.) * 36.) / 16. + (0.*9.*2. + 0.*4.*2.) / 169.) )   );
+
+    };
+
+};
+
 TEST_CASE( "Binary Operators real", "[UncorrelatedDeviation]" ) {
 
     auto gu1 = secdecutil::UncorrelatedDeviation<double>(-6.,8.);
@@ -236,6 +328,131 @@ TEST_CASE( "Binary Operators real", "[UncorrelatedDeviation]" ) {
         REQUIRE( gu3.uncertainty == Approx( 6./4. * std::sqrt(265./144.) ) );
 
     };
+};
+
+TEST_CASE( "Binary Operators real plain number", "[UncorrelatedDeviation]" ) {
+
+    auto gu1 = secdecutil::UncorrelatedDeviation<double>(-6.,8.);
+
+    SECTION( "+" )
+    {
+
+        auto gu2 = 4. + gu1;
+        REQUIRE( gu2.value == Approx(-2.) );
+        REQUIRE( gu2.uncertainty == Approx( 8. ) );
+
+        auto gu3 = gu1 + 4.;
+        REQUIRE( gu3.value == Approx(-2.) );
+        REQUIRE( gu3.uncertainty == Approx( 8. ) );
+
+    };
+
+    SECTION( "-" )
+    {
+
+        auto gu2 = 4. - gu1;
+        REQUIRE( gu2.value == Approx(+10.) );
+        REQUIRE( gu2.uncertainty == Approx( 8. ));
+
+        auto gu3 = gu1 - 4.;
+        REQUIRE( gu3.value == Approx(-10.) );
+        REQUIRE( gu3.uncertainty == Approx( 8. ));
+
+    };
+
+    SECTION( "*" )
+    {
+
+        auto gu2 = 4. * gu1;
+        REQUIRE( gu2.value == Approx(-24.) );
+        REQUIRE( gu2.uncertainty == Approx( 24. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+
+        auto gu3 = gu1 * 4.;
+        REQUIRE( gu3.value == Approx(-24.) );
+        REQUIRE( gu3.uncertainty == Approx( 24. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+
+    };
+
+    SECTION( "/" )
+    {
+        auto gu2 = 4. / gu1;
+        REQUIRE( gu2.value == Approx(-4./6.) );
+        REQUIRE( gu2.uncertainty == Approx( 4./6. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+
+        auto gu3 = gu1 / 4.;
+        REQUIRE( gu3.value == Approx(-6./4.) );
+        REQUIRE( gu3.uncertainty == Approx( 6./4. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+
+    };
+};
+
+TEST_CASE( "Implicit conversion", "[UncorrelatedDeviation]" ) {
+
+    auto gu1 = secdecutil::UncorrelatedDeviation<double>(-6.,8.);
+    auto gu2 = secdecutil::UncorrelatedDeviation<int>(4);
+
+    SECTION( "+" )
+    {
+
+        auto gu3 = gu1 + gu2;
+        REQUIRE( gu3.value == Approx(-2.) );
+        REQUIRE( gu3.uncertainty == Approx( 8. ) );
+
+        auto gu4 = gu2 + gu1;
+        REQUIRE( gu4.value == Approx(-2.) );
+        REQUIRE( gu4.uncertainty == Approx( 8. ) );
+
+    };
+
+    SECTION( "-" )
+    {
+
+        auto gu3 = gu2 - gu1;
+        REQUIRE( gu3.value == Approx(+10.) );
+        REQUIRE( gu3.uncertainty == Approx( 8. ));
+
+        auto gu4 = gu1 - gu2;
+        REQUIRE( gu4.value == Approx(-10.) );
+        REQUIRE( gu4.uncertainty == Approx( 8. ));
+
+    };
+
+    SECTION( "*" )
+    {
+
+        auto gu3 = gu1 * gu2;
+        REQUIRE( gu3.value == Approx(-24.) );
+        REQUIRE( gu3.uncertainty == Approx( 24. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+
+        auto gu4 = gu2 * gu1;
+        REQUIRE( gu4.value == Approx(-24.) );
+        REQUIRE( gu4.uncertainty == Approx( 24. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+
+    };
+
+    SECTION( "/" )
+    {
+        auto gu3 = gu1 / gu2;
+        REQUIRE( gu3.value == Approx(-6./4.) );
+        REQUIRE( gu3.uncertainty == Approx( 6./4. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+
+        auto gu4 = gu2 / gu1;
+        REQUIRE( gu4.value == Approx(-4./6.) );
+        REQUIRE( gu4.uncertainty == Approx( 4./6. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+
+    };
+};
+
+TEST_CASE( "Explicit conversion real to complex", "[UncorrelatedDeviation]" ) {
+
+    auto real_deviation = secdecutil::UncorrelatedDeviation<int>(1,0);
+    secdecutil::UncorrelatedDeviation<std::complex<int>> complex_deviation = 1;
+
+    REQUIRE( real_deviation.value          == 1 );
+    REQUIRE( real_deviation.uncertainty    == 0 );
+    REQUIRE( complex_deviation.value       == 1 );
+    REQUIRE( complex_deviation.uncertainty == 0 );
+
 };
 
 TEST_CASE( "Binary Operators complex", "[UncorrelatedDeviation]" ) {
@@ -283,6 +500,55 @@ TEST_CASE( "Binary Operators complex", "[UncorrelatedDeviation]" ) {
         REQUIRE( gu3.value.imag() == Approx( 4./13.) );
         REQUIRE(   gu3.uncertainty.real() == Approx( 7./13. * std::sqrt( ((16. + 1.) * 9.  +  (9. + 16.) * 16.) / 49. + (9.*9.*2. + 4.*4.*4.*4.*2.) / 169.) )   );
         REQUIRE(   gu3.uncertainty.imag() == Approx( 4./13. * std::sqrt( ((16. + 16.) * 4.  +  (9. + 1.) * 36.) / 16. + (9.*9.*2. + 4.*4.*4.*4.*2.) / 169.) )   );
+
+    };
+
+};
+
+TEST_CASE( "Binary Operators complex plain number", "[UncorrelatedDeviation]" ) {
+
+    auto gu1 = secdecutil::UncorrelatedDeviation<dcmplx>({-1.,2.},{4.,6.});
+
+    SECTION( "+" )
+    {
+
+        auto gu3 = gu1 + dcmplx{3.,-2.};
+        REQUIRE( gu3.value.real() == Approx(2.) );
+        REQUIRE( gu3.value.imag() == Approx(0.) );
+        REQUIRE( gu3.uncertainty.real() == Approx(4.) );
+        REQUIRE( gu3.uncertainty.imag() == Approx(6.) );
+
+    };
+
+    SECTION( "-" )
+    {
+
+        auto gu3 = gu1 - dcmplx{3.,-2.};
+        REQUIRE( gu3.value.real() == Approx(-4.) );
+        REQUIRE( gu3.value.imag() == Approx( 4.) );
+        REQUIRE( gu3.uncertainty.real() == Approx(4.));
+        REQUIRE( gu3.uncertainty.imag() == Approx(6.));
+
+    };
+
+    SECTION( "*" )
+    {
+
+        auto gu3 = gu1 * dcmplx{3.,-2.};
+        REQUIRE( gu3.value.real() == Approx(1.) );
+        REQUIRE( gu3.value.imag() == Approx(8.) );
+        REQUIRE( gu3.uncertainty.real() == Approx( std::sqrt( (16. + 0.) * 9.  +  (0. + 9.) * 16.) ) );
+        REQUIRE( gu3.uncertainty.imag() == Approx( std::sqrt( (16. + 0.) * 4.  +  (0. + 9.) * 36.) ) );
+
+    };
+
+    SECTION( "/" )
+    {
+        auto gu3 = gu1 / dcmplx{3.,-2.};
+        REQUIRE( gu3.value.real() == Approx(-7./13.) );
+        REQUIRE( gu3.value.imag() == Approx( 4./13.) );
+        REQUIRE(   gu3.uncertainty.real() == Approx( 7./13. * std::sqrt( ((16. + 0.) * 9.  +  (0. + 9.) * 16.) / 49.) )   );
+        REQUIRE(   gu3.uncertainty.imag() == Approx( 4./13. * std::sqrt( ((0. + 16.) * 4.  +  (9. + 0.) * 36.) / 16.) )   );
 
     };
 
