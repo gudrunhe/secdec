@@ -320,7 +320,7 @@
   #EndDo
 
 * c++-define the smallest nonzero number and a real temporary variable
-  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_t tiny = std::numeric_limits<real_t>::min();#@SecDecInternalNewline@#"
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_t big = std::numeric_limits<real_t>::max();#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_t real_tmp;#@SecDecInternalNewline@#"
 
 * find the maximal lambda that forces the second order to be smaller than
@@ -344,11 +344,13 @@
             #redefine HessianIDX "`$idx2'_`$idx1'"
           #EndIf
 
+          #redefine nextDeformationParameterValue "abs_Hessian_`HessianIDX' == 0. ? big : abs_gradient_`$idx2' / abs_Hessian_`HessianIDX'"
+
           #If `$idx2' == 0
             #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "output_deformation_parameters[`$idx1'] = "
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "abs_gradient_`$idx2' / (abs_Hessian_`HessianIDX' + tiny);#@SecDecInternalNewline@#"
+            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "`nextDeformationParameterValue';#@SecDecInternalNewline@#"
           #Else
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp = abs_gradient_`$idx2' / (abs_Hessian_`HessianIDX' + tiny);#@SecDecInternalNewline@#"
+            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp = `nextDeformationParameterValue';#@SecDecInternalNewline@#"
             #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "output_deformation_parameters[`$idx1'] = "
             #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp < output_deformation_parameters[`$idx1'] ?"
             #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp : output_deformation_parameters[`$idx1'];#@SecDecInternalNewline@#"
