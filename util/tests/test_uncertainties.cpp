@@ -388,19 +388,23 @@ TEST_CASE( "Binary Operators real plain number", "[UncorrelatedDeviation]" ) {
 
 TEST_CASE( "Implicit conversion", "[UncorrelatedDeviation]" ) {
 
-    auto gu1 = secdecutil::UncorrelatedDeviation<double>(-6.,8.);
-    auto gu2 = secdecutil::UncorrelatedDeviation<int>(4);
+    auto gu1 = secdecutil::UncorrelatedDeviation<std::complex<double>>(-6.,8.);
+    auto gu2 = secdecutil::UncorrelatedDeviation<double>(4);
 
     SECTION( "+" )
     {
 
         auto gu3 = gu1 + gu2;
-        REQUIRE( gu3.value == Approx(-2.) );
-        REQUIRE( gu3.uncertainty == Approx( 8. ) );
+        REQUIRE( gu3.value.real() == Approx(-2.) );
+        REQUIRE( gu3.value.imag() == Approx( 0.) );
+        REQUIRE( gu3.uncertainty.real() == Approx( 8. ) );
+        REQUIRE( gu3.uncertainty.imag() == Approx( 0. ) );
 
         auto gu4 = gu2 + gu1;
-        REQUIRE( gu4.value == Approx(-2.) );
-        REQUIRE( gu4.uncertainty == Approx( 8. ) );
+        REQUIRE( gu4.value.real() == Approx(-2.) );
+        REQUIRE( gu4.value.imag() == Approx( 0.) );
+        REQUIRE( gu4.uncertainty.real() == Approx( 8. ) );
+        REQUIRE( gu4.uncertainty.imag() == Approx( 0. ) );
 
     };
 
@@ -408,12 +412,16 @@ TEST_CASE( "Implicit conversion", "[UncorrelatedDeviation]" ) {
     {
 
         auto gu3 = gu2 - gu1;
-        REQUIRE( gu3.value == Approx(+10.) );
-        REQUIRE( gu3.uncertainty == Approx( 8. ));
+        REQUIRE( gu3.value.real() == Approx(10.) );
+        REQUIRE( gu3.value.imag() == Approx( 0.) );
+        REQUIRE( gu3.uncertainty.real() == Approx( 8. ) );
+        REQUIRE( gu3.uncertainty.imag() == Approx( 0. ) );
 
         auto gu4 = gu1 - gu2;
-        REQUIRE( gu4.value == Approx(-10.) );
-        REQUIRE( gu4.uncertainty == Approx( 8. ));
+        REQUIRE( gu4.value.real() == Approx(-10.) );
+        REQUIRE( gu4.value.imag() == Approx(  0.) );
+        REQUIRE( gu4.uncertainty.real() == Approx( 8. ) );
+        REQUIRE( gu4.uncertainty.imag() == Approx( 0. ) );
 
     };
 
@@ -421,37 +429,74 @@ TEST_CASE( "Implicit conversion", "[UncorrelatedDeviation]" ) {
     {
 
         auto gu3 = gu1 * gu2;
-        REQUIRE( gu3.value == Approx(-24.) );
-        REQUIRE( gu3.uncertainty == Approx( 24. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+        REQUIRE( gu3.value.real() == Approx(-24.) );
+        REQUIRE( gu3.value.imag() == Approx(  0.) );
+        REQUIRE( gu3.uncertainty.real() == Approx( 24. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+        REQUIRE( gu3.uncertainty.imag() == Approx( 0. ) );
 
         auto gu4 = gu2 * gu1;
-        REQUIRE( gu4.value == Approx(-24.) );
-        REQUIRE( gu4.uncertainty == Approx( 24. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+        REQUIRE( gu4.value.real() == Approx(-24.) );
+        REQUIRE( gu4.value.imag() == Approx(  0.) );
+        REQUIRE( gu4.uncertainty.real() == Approx( 24. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+        REQUIRE( gu4.uncertainty.imag() == Approx( 0. ) );
 
     };
 
     SECTION( "/" )
     {
         auto gu3 = gu1 / gu2;
-        REQUIRE( gu3.value == Approx(-6./4.) );
-        REQUIRE( gu3.uncertainty == Approx( 6./4. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+        REQUIRE( gu3.value.real() == Approx(-6./4.) );
+        REQUIRE( gu3.value.imag() == Approx(  0.) );
+        REQUIRE( gu3.uncertainty.real() == Approx( 6./4. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+        REQUIRE( gu3.uncertainty.imag() == Approx( 0. ) );
 
         auto gu4 = gu2 / gu1;
-        REQUIRE( gu4.value == Approx(-4./6.) );
-        REQUIRE( gu4.uncertainty == Approx( 4./6. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+        REQUIRE( gu4.value.real() == Approx(-4./6.) );
+        REQUIRE( gu4.value.imag() == Approx(  0.) );
+        REQUIRE( gu4.uncertainty.real() == Approx( 4./6. * std::sqrt( 3. * (8.*8.) / (6.*6.) ) ) );
+        REQUIRE( gu4.uncertainty.imag() == Approx( 0. ) );
 
     };
 };
 
-TEST_CASE( "Explicit conversion real to complex", "[UncorrelatedDeviation]" ) {
+TEST_CASE( "Explicit conversion", "[UncorrelatedDeviation]" ) {
 
-    auto real_deviation = secdecutil::UncorrelatedDeviation<int>(1,0);
-    secdecutil::UncorrelatedDeviation<std::complex<int>> complex_deviation = 1;
+    secdecutil::UncorrelatedDeviation<int> real_deviation = 1;
 
-    REQUIRE( real_deviation.value          == 1 );
-    REQUIRE( real_deviation.uncertainty    == 0 );
-    REQUIRE( complex_deviation.value       == 1 );
-    REQUIRE( complex_deviation.uncertainty == 0 );
+    secdecutil::UncorrelatedDeviation<std::complex<int>> complex_deviation_0 = 1;
+    secdecutil::UncorrelatedDeviation<std::complex<int>> complex_deviation_1 = std::complex<int>{1,2};
+    auto complex_deviation_2 = secdecutil::UncorrelatedDeviation<std::complex<int>>({1,1},2);
+    auto complex_deviation_3 = secdecutil::UncorrelatedDeviation<std::complex<int>>(1,{2,1});
+
+    secdecutil::UncorrelatedDeviation<std::complex<int>> complex_deviation_4 = real_deviation;
+
+    REQUIRE( real_deviation.value                   == 1 );
+    REQUIRE( real_deviation.uncertainty             == 0 );
+
+    REQUIRE( complex_deviation_0.value.real()       == 1 );
+    REQUIRE( complex_deviation_0.value.imag()       == 0 );
+    REQUIRE( complex_deviation_0.uncertainty.real() == 0 );
+    REQUIRE( complex_deviation_0.uncertainty.imag() == 0 );
+
+    REQUIRE( complex_deviation_1.value.real()       == 1 );
+    REQUIRE( complex_deviation_1.value.imag()       == 2 );
+    REQUIRE( complex_deviation_1.uncertainty.real() == 0 );
+    REQUIRE( complex_deviation_1.uncertainty.imag() == 0 );
+
+    REQUIRE( complex_deviation_2.value.real()       == 1 );
+    REQUIRE( complex_deviation_2.value.imag()       == 1 );
+    REQUIRE( complex_deviation_2.uncertainty.real() == 2 );
+    REQUIRE( complex_deviation_2.uncertainty.imag() == 0 );
+
+    REQUIRE( complex_deviation_3.value.real()       == 1 );
+    REQUIRE( complex_deviation_3.value.imag()       == 0 );
+    REQUIRE( complex_deviation_3.uncertainty.real() == 2 );
+    REQUIRE( complex_deviation_3.uncertainty.imag() == 1 );
+
+    REQUIRE( complex_deviation_4.value.real()       == 1 );
+    REQUIRE( complex_deviation_4.value.imag()       == 0 );
+    REQUIRE( complex_deviation_4.uncertainty.real() == 0 );
+    REQUIRE( complex_deviation_4.uncertainty.imag() == 0 );
 
 };
 
