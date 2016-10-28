@@ -166,6 +166,13 @@ TEST_CASE( "Check Access", "[Series]" ) {
 
     };
 
+    SECTION( "Access via element access: get_content" ) {
+
+        REQUIRE( test_vector_series.get_content().at(0) == 1 ); // first element
+        REQUIRE( test_vector_series.get_content()[1] == 2 ); // second element
+
+    };
+
 };
 
 TEST_CASE( "Operators == and !=", "[Series]") {
@@ -628,6 +635,41 @@ TEST_CASE( "Propagation of the expansion parameter in arithmetic operations" , "
 
         auto multiplied_series = s1 * s1;
         REQUIRE( multiplied_series.expansion_parameter == "eps" );
+
+    };
+
+};
+
+TEST_CASE( "Assignment with and without implicit conversion" , "[Series]" ) {
+
+    auto original_series = secdecutil::Series<long>              ( 0, 1, {       2, 2}                 );
+
+    auto s1              = secdecutil::Series<long>              ( 0, 1, {       2, 2}                 );
+    auto s2              = secdecutil::Series<long>              (-2,-1, {-3, 3      }, false, "lambda");
+    auto s3              = secdecutil::Series<int>               (-1, 1, {   -1, 0, 1}, false, "eps"   );
+
+    auto s4              = secdecutil::Series<std::complex<long>>( 0, 1, {       2, 2}                 );
+    auto s3_long_complex = secdecutil::Series<std::complex<long>>(-1, 1, {   -1, 0, 1}, false, "eps"   );
+
+    SECTION( " assignment without conversion " ) {
+
+        REQUIRE( s1 == original_series );
+        s1 = s2;
+        REQUIRE( s1 != original_series );
+        REQUIRE( s1 == s2              );
+
+    };
+
+    SECTION( " assignment with conversion " ) {
+
+        REQUIRE( s1 == original_series );
+        s1 = s3;
+        REQUIRE( s1 != original_series );
+        REQUIRE( s1 == s3              );
+
+        s4 = s3;
+        // REQUIRE( s4 == s3 ); // error: no implementation of "==" for types "complex<long>" and "int"
+        REQUIRE( s4 == s3_long_complex );
 
     };
 

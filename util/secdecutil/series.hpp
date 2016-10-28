@@ -181,6 +181,7 @@ namespace secdecutil {
         int get_order_min() const { return order_min; }
         int get_order_max() const { return order_max; }
         bool get_truncated_above() const { return truncated_above; }
+        const std::vector<T>& get_content() const { return content; }
 
         iterator begin() noexcept { return content.begin(); }
         const_iterator begin() const noexcept { return content.begin(); }
@@ -220,27 +221,11 @@ namespace secdecutil {
         /*
          *  Comparator Operators
          */
-        template<typename Tother>
-        friend bool operator==(const Series& s1, const Series<Tother>& s2)
-        {
-            if (s1.expansion_parameter != s2.expansion_parameter)
-                return false;
-            if ( s1.order_min != s2.order_min )
-                return false;
-            if ( s1.order_max != s2.order_max )
-                return false;
-            if ( s1.truncated_above != s2.truncated_above )
-                return false;
-            if ( s1.content != s2.content )
-                return false;
-            return true;
-        }
+        template<typename T1, typename T2>
+        friend bool operator==(const Series<T1>& s1, const Series<T2>& s2);
 
-        template<typename Tother>
-        friend bool operator!= (const Series& s1, const Series<Tother>& s2)
-        {
-            return !( s1 == s2 );
-        }
+        template<typename T1, typename T2>
+        friend bool operator!= (const Series<T1>& s1, const Series<T2>& s2);
 
         /*
          *  Unary Operators
@@ -366,9 +351,46 @@ namespace secdecutil {
                 throw std::invalid_argument("Incorrect number of series coefficients. got: " + std::to_string(content.size()) + ", expected: " + std::to_string(order_max-order_min+1));
         }
 
-        // TODO: converting constructor
+        // converting constructor
+        template<typename U>
+        Series(const Series<U>& s) :
+        order_min(s.get_order_min()), order_max(s.get_order_max()),
+        truncated_above(s.get_truncated_above()),
+        expansion_parameter(s.expansion_parameter)
+        {
+            content.reserve(order_max-order_min+1);
+            for ( const auto& item : s.get_content() )
+                content.push_back(item);
+        }
 
     };
+
+    /*
+     *  Comparator Operators
+     */
+    template<typename T1, typename T2>
+    inline bool operator==(const Series<T1>& s1, const Series<T2>& s2)
+    {
+        if (s1.expansion_parameter != s2.expansion_parameter)
+            return false;
+        if ( s1.order_min != s2.order_min )
+            return false;
+        if ( s1.order_max != s2.order_max )
+            return false;
+        if ( s1.truncated_above != s2.truncated_above )
+            return false;
+        for ( size_t idx = 0 ; idx < s1.order_max-s1.order_min+1 ; ++idx )
+            if ( s1.content.at(idx) != s2.content.at(idx) )
+                return false;
+        return true;
+    }
+
+    template<typename T1, typename T2>
+    inline bool operator!= (const Series<T1>& s1, const Series<T2>& s2)
+    {
+        return !( s1 == s2 );
+    }
+
 
     /*
      *  Binary operators
