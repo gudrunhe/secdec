@@ -34,46 +34,42 @@ namespace secdecutil {
          *  Helper functions
          */
 
-        // Checks if series has a term at order order
-        bool hasTerm(int order) const
+        /*
+         * Performs subtraction (``subtract=true``) or addition (``subtract=false``) of two series
+         * \Sum_i=a1^b1 c_i * eps^i - \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i - c'_i) * eps^i
+         * or
+         * \Sum_i=a1^b1 c_i * eps^i + \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i + c'_i) * eps^i
+         */
+        template<bool subtract, typename T1, typename T2>
+        static auto sub_or_add(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>
         {
-            if ( (order >= order_min) && (order <= order_max) )
-                return true;
+            using Tout = decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()));
 
-            return false;
-        }
-
-        // Performs subtraction (``subtract=true``) or addition (``subtract=false``) of two series
-        // \Sum_i=a1^b1 c_i * eps^i - \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i - c'_i) * eps^i
-        // or
-        // \Sum_i=a1^b1 c_i * eps^i + \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i + c'_i) * eps^i
-        template<bool subtract>
-        static Series sub_or_add(const Series& s1, const Series& s2)
-        {
             if (s1.expansion_parameter != s2.expansion_parameter)
                 throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
 
             // Assume series are not truncated
             bool truncated_above = false;
-            int order_min = std::min( s1.order_min, s2.order_min );
-            int order_max = std::max( s1.order_max, s2.order_max );
+            int order_min = std::min( s1.get_order_min(), s2.get_order_min() );
+            int order_max = std::max( s1.get_order_max(), s2.get_order_max() );
 
             // Check if new series must be truncated from above
-            if ( s1.truncated_above  )
+            if ( s1.get_truncated_above() )
             {
                 truncated_above = true;
-                if (s1.order_max < order_max)
-                    order_max = s1.order_max;
+                if (s1.get_order_max() < order_max)
+                    order_max = s1.get_order_max();
             }
 
-            if ( s2.truncated_above )
+            if ( s2.get_truncated_above() )
             {
                 truncated_above = true;
-                if (s2.order_max < order_max)
-                    order_max = s2.order_max;
+                if (s2.get_order_max() < order_max)
+                    order_max = s2.get_order_max();
             }
 
-            std::vector<T> content;
+            std::vector<Tout> content;
             content.reserve(order_max-order_min+1);
             if ( subtract ) {
                 // Perform subtraction
@@ -106,7 +102,186 @@ namespace secdecutil {
                     }
                 }
             }
-            return Series(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
+            return Series<Tout>(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
+        }
+
+        // (\Sum_i=a1^b1 c_i * eps^i) * (\Sum_j=a2^b2 c'_j * eps^j)
+        template<typename T1, typename T2>
+        static auto multiply_series(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>
+        {
+            using Tout = decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()));
+
+            if (s1.expansion_parameter != s2.expansion_parameter)
+                throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
+
+            // Determine limits of resulting series
+            bool truncated_above = false;
+            int order_min = s1.get_order_min() + s2.get_order_min();
+            int order_max = s1.get_order_max() + s2.get_order_max();
+            size_t current_index;
+
+            if ( s1.get_truncated_above() )
+            {
+                truncated_above = true;
+                order_max = std::min( order_max , s1.get_order_max() + s2.get_order_min() );
+            }
+            if ( s2.get_truncated_above() )
+            {
+                truncated_above = true;
+                order_max = std::min( order_max , s1.get_order_min() + s2.get_order_max() );
+            }
+
+            // Perform multiplication
+            std::vector<Tout> content;
+            content.reserve(order_max-order_min+1);
+            for ( int i = s1.order_min; i < s1.order_max + 1; i++ )
+            {
+                for ( int j = s2.get_order_min(); j < s2.get_order_max() + 1; j++ )
+                {
+                    current_index = i+j-order_min;
+                    if ( ( (i+j) >= order_min ) && ( (i+j) <= order_max ) && s1.hasTerm(i) && s2.hasTerm(j) )
+                    {
+                        if ( current_index < content.size() ) // term exists
+                            content.at(current_index) += ( s1.at(i) * s2.at(j) );
+                        else // term must be created
+                            content.push_back( s1.at(i) * s2.at(j) );
+                    }
+                }
+            }
+
+            return Series<Tout>(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
+        }
+
+        // d * \Sum_i=a1^b1 c_i * eps^i = \Sum_i=a1^b1 d* c_i * eps^i
+        template<bool from_left, typename T1, typename T2>
+        static auto multiply_scalar(const Series<T1>& s1, const T2& val)
+        -> Series<decltype(s1.at(s1.get_order_min()) * val)>
+        {
+            using Tout = decltype(s1.at(s1.get_order_min()) * val);
+            std::vector<Tout> content;
+            content.reserve(s1.order_max-s1.order_min+1);
+            for ( int i = s1.order_min; i < s1.order_max + 1; i++ )
+                if (from_left)
+                    content.push_back(val * s1.at(i));
+                else
+                    content.push_back(s1.at(i) * val);
+            return Series<Tout>(s1.order_min, s1.order_max, content, s1.truncated_above, s1.expansion_parameter);
+        }
+
+        /*
+         * (\Sum_i=a1^b1 c_i * eps^i) / (\Sum_j=a2^b2 c'_j * eps^j)
+         * when multiplying out "(\Sum_i=a1^b1 c_i * eps^i) * (\Sum_k=a3^b3 x_k * eps^k) = (\Sum_j=a2^b2 c'_j * eps^j)"
+         * and comparing coefficients of "eps^<power>" this comes down to solving a triangular system of equations:
+         *
+         * Suppose the x_k in "\Sum_k=a3^b3 x_k * eps^k = (\Sum_i=a1^b1 c_i * eps^i) / (\Sum_j=a2^b2 c'_j * eps^j)" are unknown, then:
+         *
+         *   (c_0  * exp^0 + c_1  * eps^1 + c_2  * eps^2 + ...) * (x_0 * exp^0 + x_1 * eps^1 + x_2 * eps^2 + ...)
+         * =  c'_0 * exp^0 + c'_1 * eps^1 + c'_2 * eps^2 + ...
+         *
+         * by comparing coefficients:
+         *
+         * c_0 * x_0                         = c'_0
+         * c_1 * x_0 + c_0 * x_1             = c'_1
+         * c_2 * x_0 + c_1 * x_1 + c_0 * x_2 = c'_2
+         *
+         */
+        template<typename T1, typename T2>
+        static auto division_series_by_series(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>
+        {
+            using Tout = decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()));
+
+            if (s1.expansion_parameter != s2.expansion_parameter)
+                throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
+
+            auto s1_content = s1.get_content();
+            auto s2_content = s2.get_content();
+
+            // result can only be not truncated if only one order in denominator
+            bool truncated_above = s2.get_order_min() == s2.get_order_max() ? s1.get_truncated_above() || s2.get_truncated_above() : true;
+
+            // Determine limits of resulting series
+            int order_min = s1.get_order_min() - s2.get_order_min();
+            int order_max = order_min + std::max(s1_content.size(),s2_content.size()) - 1;
+            if ( s1.get_truncated_above() )
+                order_max = std::min( order_max , order_min + int( s1_content.size() ) - 1 );
+            if ( s2.get_truncated_above() )
+                order_max = std::min( order_max , order_min + int( s2_content.size() ) - 1 );
+
+            // Perform backsubstitution avoiding an explicit zero, since
+            // we do not know if "Tout(0)" or "Tout()" is defined. The
+            // nested if statements drop terms that have a multiplicative
+            // zero.
+            std::vector<Tout> content;
+            Tout denominator( s2_content.at(0) );
+            content.reserve(order_max-order_min+1);
+            Tout tmp( s1_content.at(0)/ s2_content.at(0) );
+            bool tmp_initialized;
+
+            // solve  "c_i * x_0 + ... + c_0 * x_i = c'_i" for x_i
+            for ( int i = 0; i <= order_max-order_min; ++i )
+            {
+                if (i == 0)
+                {
+                    // c_0 * x_0 = c'0  <=>  x_0 = c'_0 / c_0
+                    // that is how "tmp" is initialized above
+                    content.push_back(tmp);
+
+                } else {
+
+                    // "x_i = (  c'_i - c_i * x_0 - ... - c_1 * x_(i-1)  )    /    c_0"
+
+                    tmp_initialized = false;
+
+                    // if "c'_i" available (assume "c'_i = 0" otherwise)
+                    if (s1_content.size() > i)
+                    {
+                        tmp = s1_content.at(i);
+                        tmp_initialized = true;
+                    }
+
+                    for ( int j = 0; j < i; ++j )
+                    {
+
+                        // if "c_(i-j)" available (assume "c_(i-j) = 0" otherwise)
+                        if (s2_content.size() > i-j)
+                        {
+                            if (tmp_initialized)
+                            {
+                                tmp -= content.at(j) * s2_content.at(i-j);
+                            } else {
+                                tmp = - content.at(j) * s2_content.at(i-j);
+                                tmp_initialized = true;
+                            }
+                        }
+                    }
+
+                    tmp /= denominator; // final division by "c_0"
+                    content.push_back(tmp);
+
+                }
+
+            }
+
+            return Series<Tout>(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
+
+        }
+
+        template<typename T1, typename T2>
+        static auto division_series_by_scalar(const Series<T1>& s1, const T2& value)
+        -> Series<decltype(s1.at(s1.get_order_min()) / value)>
+        {
+            using Tout = decltype(s1.at(s1.get_order_min()) / value);
+
+            // copy content
+            std::vector<Tout> content = s1.get_content();
+
+            // divide every series coefficient by the scalar
+            for ( auto& item : content )
+                item /= value;
+
+            return Series<Tout>(s1.order_min, s1.order_max, content, s1.truncated_above, s1.expansion_parameter);
         }
 
     public:
@@ -123,6 +298,7 @@ namespace secdecutil {
         int get_order_min() const { return order_min; }
         int get_order_max() const { return order_max; }
         bool get_truncated_above() const { return truncated_above; }
+        const std::vector<T>& get_content() const { return content; }
 
         iterator begin() noexcept { return content.begin(); }
         const_iterator begin() const noexcept { return content.begin(); }
@@ -148,27 +324,25 @@ namespace secdecutil {
         value_type* data() noexcept { return content.data(); }
 
         /*
-         *  Comparator Operators
+         *  Helper functions
          */
-        friend bool operator==(const Series& s1, const Series& s2)
+        // Checks if series has a term at order order
+        bool hasTerm(int order) const
         {
-            if (s1.expansion_parameter != s2.expansion_parameter)
-                return false;
-            if ( s1.order_min != s2.order_min )
-                return false;
-            if ( s1.order_max != s2.order_max )
-                return false;
-            if ( s1.truncated_above != s2.truncated_above )
-                return false;
-            if ( s1.content != s2.content )
-                return false;
-            return true;
+            if ( (order >= order_min) && (order <= order_max) )
+                return true;
+
+            return false;
         }
 
-        friend bool operator!= (const Series& s1, const Series& s2)
-        {
-            return !( s1 == s2 );
-        }
+        /*
+         *  Comparator Operators
+         */
+        template<typename T1, typename T2>
+        friend bool operator==(const Series<T1>& s1, const Series<T2>& s2);
+
+        template<typename T1, typename T2>
+        friend bool operator!= (const Series<T1>& s1, const Series<T2>& s2);
 
         /*
          *  Unary Operators
@@ -191,106 +365,76 @@ namespace secdecutil {
         /*
          *  Compound assignment operators
          */
-        Series& operator-=(const Series& s1)
+        template<typename Tother>
+        Series& operator-=(const Tother& other)
         {
-            *this = *this - s1;
+            *this = *this - other;
             return *this;
         }
 
-        Series& operator+=(const Series& s1)
+        template<typename Tother>
+        Series& operator+=(const Tother& other)
         {
-            *this = *this + s1;
+            *this = *this + other;
             return *this;
         }
 
-        Series& operator*=(const Series& s1)
+        template<typename Tother>
+        Series& operator*=(const Tother& other)
         {
-            *this = *this * s1;
+            *this = *this * other;
             return *this;
         }
 
-        Series& operator*=(const T& val)
+        template<typename Tother>
+        Series& operator/=(const Tother& other)
         {
-            *this = *this * val;
+            *this = *this / other;
             return *this;
         }
-
-        // TODO operator/=
 
         /*
          *  Binary operators
          */
-        friend Series operator-(const Series& s1, const Series& s2)
-        {
-            return sub_or_add<true>(s1,s2);
-        }
+        template<typename T1, typename T2>
+        friend auto operator+(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>;
+        template<typename T1, typename T2>
+        friend auto operator+(const Series<T1>& series, const T2& scalar)
+        -> Series<decltype(series.at(series.get_order_min()) + scalar)>;
+        template<typename T1, typename T2>
+        friend auto operator+(const T1& scalar, const Series<T2>& series)
+        -> Series<decltype(scalar + series.at(series.get_order_min()))>;
 
-        friend Series operator+(const Series& s1, const Series& s2)
-        {
-            return sub_or_add<false>(s1,s2);
-        };
+        template<typename T1, typename T2>
+        friend auto operator-(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>;
+        template<typename T1, typename T2>
+        friend auto operator-(const Series<T1>& series, const T2& scalar)
+        -> Series<decltype(series.at(series.get_order_min()) - scalar)>;
+        template<typename T1, typename T2>
+        friend auto operator-(const T1& scalar, const Series<T2>& series)
+        -> Series<decltype(scalar - series.at(series.get_order_min()))>;
 
-        // (\Sum_i=a1^b1 c_i * eps^i) * (\Sum_j=a2^b2 c'_j * eps^j)
-        friend Series operator*(const Series& s1, const Series& s2)
-        {
-            if (s1.expansion_parameter != s2.expansion_parameter)
-                throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
+        template<typename T1, typename T2>
+        friend auto operator*(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>;
+        template<typename T1, typename T2>
+        friend auto operator*(const Series<T1>& series, const T2& scalar)
+        -> Series<decltype(series.at(series.get_order_min()) * scalar)>;
+        template<typename T1, typename T2>
+        friend auto operator*(const T1& scalar, const Series<T2>& series)
+        -> Series<decltype(scalar * series.at(series.get_order_min()))>;
 
-            // Assume series are not truncated
-            bool truncated_above = false;
-            int order_min = s1.order_min + s2.order_min;
-            int order_max = s1.order_max + s2.order_max;
-            size_t current_index;
-
-            if ( s1.truncated_above )
-            {
-                truncated_above = true;
-                order_max = std::min( order_max , s1.order_max + s2.order_min );
-            }
-            if ( s2.truncated_above )
-            {
-                truncated_above = true;
-                order_max = std::min( order_max , s1.order_min + s2.order_max );
-            }
-
-            // Perform multiplication
-            std::vector<T> content;
-            content.reserve(order_max-order_min+1);
-            for ( int i = s1.order_min; i < s1.order_max + 1; i++ )
-            {
-                for ( int j = s2.order_min; j < s2.order_max + 1; j++ )
-                {
-                    current_index = i+j-order_min;
-                    if ( ( (i+j) >= order_min ) && ( (i+j) <= order_max ) && s1.hasTerm(i) && s2.hasTerm(j) )
-                    {
-                        if ( current_index < content.size() ) // term exists
-                            content.at(current_index) += ( s1.at(i) * s2.at(j) );
-                        else // term must be created
-                            content.push_back( s1.at(i) * s2.at(j) );
-                    }
-                }
-            }
-
-            return Series(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
-        }
-
-        // d * \Sum_i=a1^b1 c_i * eps^i = \Sum_i=a1^b1 d* c_i * eps^i
-        friend Series operator*( const Series& s1, const T& val)
-        {
-            std::vector<T> content;
-            content.reserve(s1.order_max-s1.order_min+1);
-            for ( int i = s1.order_min; i < s1.order_max + 1; i++ )
-                content.push_back(val * s1.at(i));
-
-            return Series(s1.order_min, s1.order_max, content, s1.truncated_above);
-        }
-
-        friend Series operator*( const T& val, const Series& s1)
-        {
-            return s1*val;
-        }
-
-        // TODO friend operator/
+        template<typename T1, typename T2>
+        friend auto operator/(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>;
+        template<typename T1, typename T2>
+        friend auto operator/(const Series<T1>& series, const T2& scalar)
+        -> Series<decltype(series.at(series.get_order_min()) / scalar)>;
+        template<typename T1, typename T2>
+        friend auto operator/(const T1& scalar, const Series<T2>& series)
+        -> Series<decltype(scalar / series.at(series.get_order_min()))>;
 
         friend std::ostream& operator<< (std::ostream& os, const Series& s1)
         {
@@ -321,21 +465,141 @@ namespace secdecutil {
 
         // Constructor
         Series(
-               int order_min,
-               int order_max,
-               std::vector<T> content,
-               bool truncated_above = true,
-               const std::string expansion_parameter = "x"
+                   int order_min,
+                   int order_max,
+                   std::vector<T> content,
+                   bool truncated_above = true,
+                   const std::string expansion_parameter = "x"
                ) :
         order_min(order_min), order_max(order_max),
         content(content), truncated_above(truncated_above),
         expansion_parameter(expansion_parameter)
         {
+            if (order_min > order_max)
+                throw std::invalid_argument("\"order_min\" (" + std::to_string(order_min) + ") > \"order_max\" (" + std::to_string(order_max) + ") in series constructor.");
             if ( content.size() != (order_max-order_min+1) )
                 throw std::invalid_argument("Incorrect number of series coefficients. got: " + std::to_string(content.size()) + ", expected: " + std::to_string(order_max-order_min+1));
         }
 
+        // converting constructor
+        template<typename U>
+        Series(const Series<U>& s) :
+        order_min(s.get_order_min()), order_max(s.get_order_max()),
+        truncated_above(s.get_truncated_above()),
+        expansion_parameter(s.expansion_parameter)
+        {
+            content.reserve(order_max-order_min+1);
+            for ( const auto& item : s.get_content() )
+                content.push_back(item);
+        }
+
     };
+
+    /*
+     *  Comparator Operators
+     */
+    template<typename T1, typename T2>
+    inline bool operator==(const Series<T1>& s1, const Series<T2>& s2)
+    {
+        if (s1.expansion_parameter != s2.expansion_parameter)
+            return false;
+        if ( s1.order_min != s2.order_min )
+            return false;
+        if ( s1.order_max != s2.order_max )
+            return false;
+        if ( s1.truncated_above != s2.truncated_above )
+            return false;
+        for ( size_t idx = 0 ; idx < s1.order_max-s1.order_min+1 ; ++idx )
+            if ( s1.content.at(idx) != s2.content.at(idx) )
+                return false;
+        return true;
+    }
+
+    template<typename T1, typename T2>
+    inline bool operator!= (const Series<T1>& s1, const Series<T2>& s2)
+    {
+        return !( s1 == s2 );
+    }
+
+
+    /*
+     *  Binary operators
+     */
+    template<typename T1, typename T2>
+    inline auto operator+(const Series<T1>& s1, const Series<T2>& s2)
+    -> Series<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>
+    {
+        return s1.template sub_or_add<false>(s1,s2);
+    };
+    template<typename T1, typename T2>
+    inline auto operator+(const Series<T1>& series, const T2& scalar)
+    -> Series<decltype(series.at(series.get_order_min()) + scalar)>
+    {
+        return series.template sub_or_add<false>(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
+    };
+    template<typename T1, typename T2>
+    inline auto operator+(const T1& scalar, const Series<T2>& series)
+    -> Series<decltype(scalar + series.at(series.get_order_min()))>
+    {
+        return series.template sub_or_add<false>(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
+    };
+
+    template<typename T1, typename T2>
+    inline auto operator-(const Series<T1>& s1, const Series<T2>& s2)
+    -> Series<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>
+    {
+        return s1.template sub_or_add<true>(s1,s2);
+    };
+    template<typename T1, typename T2>
+    inline auto operator-(const Series<T1>& series, const T2& scalar)
+    -> Series<decltype(series.at(series.get_order_min()) - scalar)>
+    {
+        return series.template sub_or_add<true>(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
+    };
+    template<typename T1, typename T2>
+    inline auto operator-(const T1& scalar, const Series<T2>& series)
+    -> Series<decltype(scalar - series.at(series.get_order_min()))>
+    {
+        return series.template sub_or_add<true>(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
+    };
+
+    template<typename T1, typename T2>
+    inline auto operator*(const Series<T1>& s1, const Series<T2>& s2)
+    -> Series<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>
+    {
+        return s1.template multiply_series(s1,s2);
+    }
+    template<typename T1, typename T2>
+    inline auto operator*(const Series<T1>& s1, const T2& val)
+    -> Series<decltype(s1.at(s1.get_order_min()) * val)>
+    {
+        return s1.template multiply_scalar</* from_left = */ false>(s1, val);
+    }
+    template<typename T1, typename T2>
+    inline auto operator*(const T1& val, const Series<T2>& s1)
+    -> Series<decltype(val * s1.at(s1.get_order_min()))>
+    {
+        return s1.template multiply_scalar</* from_left = */ true>(s1, val);
+    }
+
+    template<typename T1, typename T2>
+    inline auto operator/(const Series<T1>& s1, const Series<T2>& s2)
+    -> Series<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>
+    {
+        return s1.template division_series_by_series(s1,s2);
+    }
+    template<typename T1, typename T2>
+    inline auto operator/(const Series<T1>& s1, const T2& val)
+    -> Series<decltype(s1.at(s1.get_order_min()) / val)>
+    {
+        return s1.template division_series_by_scalar(s1,val);
+    }
+    template<typename T1, typename T2>
+    inline auto operator/(const T1& val, const Series<T2>& s1)
+    -> Series<decltype(val / s1.at(s1.get_order_min()))>
+    {
+        return s1.template division_series_by_series(Series<T1>{0,0,{val},false,s1.expansion_parameter},s1);
+    }
 
 }
 

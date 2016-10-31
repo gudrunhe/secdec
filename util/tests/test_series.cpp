@@ -19,6 +19,7 @@ TEST_CASE( "Constructor exceptions for vector constructor", "[Series]" ) {
     // no content
     std::vector<int> vector_zero = {};
     REQUIRE_THROWS_AS( secdecutil::Series<int>(0,0,vector_zero), std::invalid_argument);
+    REQUIRE_THROWS_AS( secdecutil::Series<int>(0,-1,vector_zero), std::invalid_argument);
 
     // content size too small
     std::vector<int> vector_one = {1};
@@ -34,6 +35,7 @@ TEST_CASE( "Constructor exceptions for initializer list constructor", "[Series]"
 
     // no content
     REQUIRE_THROWS_AS( secdecutil::Series<int>(0,0,{}), std::invalid_argument);
+    REQUIRE_THROWS_AS( secdecutil::Series<int>(0,-1,{}), std::invalid_argument);
 
     // content size too small
     REQUIRE_THROWS_AS( secdecutil::Series<int>(0,1,{1}), std::invalid_argument);
@@ -164,6 +166,13 @@ TEST_CASE( "Check Access", "[Series]" ) {
 
     };
 
+    SECTION( "Access via element access: get_content" ) {
+
+        REQUIRE( test_vector_series.get_content().at(0) == 1 ); // first element
+        REQUIRE( test_vector_series.get_content()[1] == 2 ); // second element
+
+    };
+
 };
 
 TEST_CASE( "Operators == and !=", "[Series]") {
@@ -200,23 +209,35 @@ TEST_CASE ( "Unary Operators - and +", "[Series]" ) {
 
 TEST_CASE( "Operator +", "[Series]" ) {
 
-    auto series_one = secdecutil::Series<int>(                     -3,4,{-5 ,-6 ,-7   , 0   , 2   , 3  , 4   ,-1          });
-    auto series_exact_one = secdecutil::Series<int>(               -3,4,{-5 ,-6 ,-7   , 0   , 2   , 3  , 4   ,-1          },false);
-    auto series_two = secdecutil::Series<int>(                     -1,6,{         8   , 6   ,-7   , 0  , 8   , 5  , 4 , 1 });
-    auto series_exact_two = secdecutil::Series<int>(               -1,6,{         8   , 6   ,-7   , 0  , 8   , 5  , 4 , 1 },false);
-    auto series_one_plus_two = secdecutil::Series<int>(            -3,4,{-5 ,-6 ,-7+8 , 0+6 , 2-7 , 3+0, 4+8 ,-1+5        });
-    auto series_one_plus_exact_two = secdecutil::Series<int>(      -3,4,{-5 ,-6 ,-7+8 , 0+6 , 2-7 , 3+0 ,4+8 ,-1+5        });
-    auto series_exact_one_plus_two = secdecutil::Series<int>(      -3,6,{-5 ,-6 ,-7+8 , 0+6 , 2-7 , 3+0 ,4+8 ,-1+5, 4 , 1 });
-    auto series_exact_one_plus_exact_two = secdecutil::Series<int>(-3,6,{-5 ,-6 ,-7+8 , 0+6 , 2-7 , 3+0, 4+8 ,-1+5, 4 , 1 },false);
+    auto series_one = secdecutil::Series<int>(                     -3,4,{-5 ,-6 ,-7   , 0   , 2   , 3  , 4   ,-1          },true, "eps");
+    auto series_exact_one = secdecutil::Series<int>(               -3,4,{-5 ,-6 ,-7   , 0   , 2   , 3  , 4   ,-1          },false,"eps");
+    auto series_two = secdecutil::Series<int>(                     -1,6,{         8   , 6   ,-7   , 0  , 8   , 5  , 4 , 1 },true, "eps");
+    auto series_exact_two = secdecutil::Series<int>(               -1,6,{         8   , 6   ,-7   , 0  , 8   , 5  , 4 , 1 },false,"eps");
+    auto series_one_plus_two = secdecutil::Series<int>(            -3,4,{-5 ,-6 ,-7+8 , 0+6 , 2-7 , 3+0, 4+8 ,-1+5        },true, "eps");
+    auto series_one_plus_exact_two = secdecutil::Series<int>(      -3,4,{-5 ,-6 ,-7+8 , 0+6 , 2-7 , 3+0 ,4+8 ,-1+5        },true, "eps");
+    auto series_exact_one_plus_two = secdecutil::Series<int>(      -3,6,{-5 ,-6 ,-7+8 , 0+6 , 2-7 , 3+0 ,4+8 ,-1+5, 4 , 1 },true, "eps");
+    auto series_exact_one_plus_exact_two = secdecutil::Series<int>(-3,6,{-5 ,-6 ,-7+8 , 0+6 , 2-7 , 3+0, 4+8 ,-1+5, 4 , 1 },false,"eps");
 
-    SECTION ( " + " ) {
+    auto series_without_constant_order = secdecutil::Series<int>(       -3,-1,{-5 ,-6, -7               },false,"eps");
+    auto series_without_constant_order_plus_5 = secdecutil::Series<int>(-3, 0,{-5 ,-6, -7, 5            },false,"eps");
+    auto series_one_plus_5 = secdecutil::Series<int>(                   -3, 4,{-5 ,-6 ,-7, 5, 2, 3, 4,-1},true, "eps");
+
+    SECTION ( "Series + Series" ) {
         REQUIRE( ( series_one + series_two ) == series_one_plus_two );
         REQUIRE( ( series_one + series_exact_two ) == series_one_plus_exact_two );
         REQUIRE( ( series_exact_one + series_two ) == series_exact_one_plus_two );
         REQUIRE( ( series_exact_one + series_exact_two ) == series_exact_one_plus_exact_two );
     };
 
+    SECTION ( "Series + scalar" ) {
+        REQUIRE( ( series_without_constant_order + 5 ) == series_without_constant_order_plus_5 );
+        REQUIRE( ( 5 + series_without_constant_order ) == series_without_constant_order_plus_5 );
+        REQUIRE( ( series_one + 5 ) == series_one_plus_5 );
+        REQUIRE( ( 5 + series_one ) == series_one_plus_5 );
+    };
+
     SECTION ( "Test 1: +=" ) {
+        REQUIRE( ( series_without_constant_order += 5 ) == series_without_constant_order_plus_5 );
         REQUIRE( ( series_one += series_two ) == series_one_plus_two );
     };
 
@@ -240,33 +261,102 @@ TEST_CASE( "Operator -", "[Series]" ) {
     auto series_exact_two = secdecutil::Series<int>(                       -1,6,{         8   , 6   ,-7   , 0  , 8   , 5  , 4 , 1 },false);
     auto series_exact_one_minus_series_exact_two = secdecutil::Series<int>(-3,6,{-5 ,-6 ,-7-8 , 0-6 , 2+7 , 3-0, 4-8 ,-1-5,-4 ,-1 },false);
 
-    // Check behaviour for double as we use T(-1) in the - operator
+    auto series_exact_one_minus_five = secdecutil::Series<int>(            -3,4,{-5 ,-6 ,-7   ,-5   , 2   , 3  , 4   ,-1          },false);
+    auto five_minus_series_exact_two = secdecutil::Series<int>(            -1,6,{        -8   ,-1   , 7   , 0  ,-8   ,-5  ,-4 ,-1 },false);
+
+
+    // Check behaviour for double
     auto d_series_exact_one = secdecutil::Series<double>(                       -3,4,{-5. ,-6. ,-7.    , 0.    , 2.    , 3.   , 4.    ,-1.             },false);
     auto d_series_exact_two = secdecutil::Series<double>(                       -1,6,{           8.    , 6.    ,-7.    , 0.   , 8.    , 5.   , 4. , 1. },false);
     auto d_series_exact_one_minus_series_exact_two = secdecutil::Series<double>(-3,6,{-5. ,-6. ,-7.-8. , 0.-6. , 2.+7. , 3.-0., 4.-8. ,-1.-5.,-4. ,-1. },false);
 
-    SECTION ( " - " ) {
+    SECTION ( "Series - Series" ) {
         REQUIRE( ( series_exact_one - series_exact_two ) == series_exact_one_minus_series_exact_two );
         REQUIRE( ( d_series_exact_one - d_series_exact_two ) == d_series_exact_one_minus_series_exact_two );
     };
 
-    SECTION ( "Test 1: -= " ) {
+    SECTION ( "Series - scalar" ) {
+        REQUIRE( ( series_exact_one - 5 ) == series_exact_one_minus_five );
+        REQUIRE( ( 5 - series_exact_two ) == five_minus_series_exact_two );
+    };
+
+    SECTION ( "Test 1: -=" ) {
         REQUIRE( ( series_exact_one -= series_exact_two ) == series_exact_one_minus_series_exact_two );
     };
 
-    SECTION ( "Test 2: -= " ) {
+    SECTION ( "Test 2: -=" ) {
         REQUIRE( ( d_series_exact_one -= d_series_exact_two ) == d_series_exact_one_minus_series_exact_two );
+    };
+
+    SECTION ( "Test 3: -=" ) {
+        REQUIRE( ( series_exact_one -= 5 ) == series_exact_one_minus_five );
+    };
+
+};
+
+TEST_CASE( "Binary and compound assignment operators with different types", "[Series]" ) {
+
+    auto series1 = secdecutil::Series<std::complex<int>>              (-1,6,{             8 ,  6,- 7 ,  0 ,  8 ,  1   ,  4   , 1  });
+    auto series2 = secdecutil::Series<int>                            (-3,4,{- 5 ,- 6  ,- 7 ,  0,  2 ,  3 ,  4 ,- 1               });
+
+    auto series1_plus_series2  = secdecutil::Series<std::complex<int>>(-3,4,{- 5 ,- 6  ,  1 ,  6,- 5 ,  3 , 12 ,  0               });
+    auto series1_minus_series2 = secdecutil::Series<std::complex<int>>(-3,4,{  5 ,  6  , 15 ,  6,- 9 , -3 ,  4 ,  2               });
+    auto series2_minus_series1 = secdecutil::Series<std::complex<int>>(-3,4,{- 5 ,- 6  ,-15 ,- 6,  9 ,  3 ,- 4 ,- 2               });
+    auto series1_times_series2 = secdecutil::Series<std::complex<int>>(-4,3,{-40 ,-78  ,-57 ,  0, 25 ,-17 ,-46 ,-41               });
+
+    auto series1_times_two = secdecutil::Series<std::complex<int>>    (-1,6,{            16 , 12,-14 , 0  , 16 ,  2  ,  8   , 2  });
+    auto series2_times_two = secdecutil::Series<int>                  (-3,4,{-10 ,-12  ,-14 ,  0,  4 , 6  ,  8 , -2              });
+
+    auto series2_times_imaginary_two = secdecutil::Series<std::complex<int>>(-3,4,{{0,-10},{0,-12},{0,-14},0,{0,4},{0,6},{0,8},{0,-2}});
+
+    SECTION ( " + " ) {
+        REQUIRE( ( series1 +  series2 ) == series1_plus_series2 );
+        REQUIRE( ( series2 +  series1 ) == series1_plus_series2 );
+        REQUIRE( ( series1 += series2 ) == series1_plus_series2 );
+        // REQUIRE( ( series2 += series1 ) == series1_plus_series2 ); // should not compile
+    };
+
+    SECTION ( " - " ) {
+        REQUIRE( ( series1 -  series2 ) == series1_minus_series2 );
+        REQUIRE( ( series2 -  series1 ) == series2_minus_series1 );
+        REQUIRE( ( series1 -= series2 ) == series1_minus_series2 );
+        // REQUIRE( ( series2 -= series1 ) == series1_minus_series2 ); // should not compile
+    };
+
+    SECTION ( " Series<std::complex<int>> * Series<int> " ) {
+        REQUIRE( ( series1 *  series2 ) == series1_times_series2 );
+        REQUIRE( ( series2 *  series1 ) == series1_times_series2 );
+        REQUIRE( ( series1 *= series2 ) == series1_times_series2 );
+        // REQUIRE( ( series2 *= series1 ) == series1_times_series2 ); // should not compile
+    };
+
+    SECTION ( " Series<std::complex<int>> * int " ) {
+        REQUIRE( ( 2 * series1  ) == series1_times_two );
+        REQUIRE( ( series1 *  2 ) == series1_times_two );
+        REQUIRE( ( series1 *= 2 ) == series1_times_two );
+    };
+
+    SECTION ( " Series<int> * int " ) {
+        REQUIRE( ( 2 * series2  ) == series2_times_two );
+        REQUIRE( ( series2 *  2 ) == series2_times_two );
+        REQUIRE( ( series2 *= 2 ) == series2_times_two );
+    };
+
+    SECTION ( " Series<int> * std::complex<int> " ) {
+        REQUIRE( ( std::complex<int>(0,2) * series2  ) == series2_times_imaginary_two );
+        REQUIRE( ( series2 *  std::complex<int>(0,2) ) == series2_times_imaginary_two );
+        // REQUIRE( ( series2 *= std::complex<int>(0,2) ) == series2_times_two ); // should not compile
     };
 
 };
 
 TEST_CASE( "Operator *", "[Series]" ) {
 
-    auto series_one =  secdecutil::Series<int>(                 -2,1,{-5      ,-6      ,-7      , 3          });
-    auto series_exact_one =  secdecutil::Series<int>(           -2,1,{-5      ,-6      ,-7      , 3          },false);
-    auto series_two =  secdecutil::Series<int>(                 -1,3,{         -3      , 9      , 1   , 2, 3 });
-    auto series_exact_two =  secdecutil::Series<int>(           -1,3,{         -3      , 9      , 1   , 2, 3 },false);
-    auto three_times_series_exact_one = secdecutil::Series<int>(-2,1,{ 3*(-5) , 3*(-6) , 3*(-7) , 3*3        },false);
+    auto series_one =  secdecutil::Series<int>(                 -2,1,{-5      ,-6      ,-7      , 3          },true, "eps");
+    auto series_exact_one =  secdecutil::Series<int>(           -2,1,{-5      ,-6      ,-7      , 3          },false,"eps");
+    auto series_two =  secdecutil::Series<int>(                 -1,3,{         -3      , 9      , 1   , 2, 3 },true, "eps");
+    auto series_exact_two =  secdecutil::Series<int>(           -1,3,{         -3      , 9      , 1   , 2, 3 },false,"eps");
+    auto three_times_series_exact_one = secdecutil::Series<int>(-2,1,{ 3*(-5) , 3*(-6) , 3*(-7) , 3*3        },false,"eps");
     auto series_exact_one_times_series_exact_two = secdecutil::Series<int>(-3,4,
                                                                            {
                                                                                (-5)*(-3),
@@ -277,14 +367,14 @@ TEST_CASE( "Operator *", "[Series]" ) {
                                                                                (-6)*3+(-7)*2+3*1,
                                                                                (-7)*3+3*2,
                                                                                3*3
-                                                                           },false);
+                                                                           },false,"eps");
     auto series_one_times_series_exact_two = secdecutil::Series<int>(-3,0,
                                                                      {
                                                                          (-5)*(-3),
                                                                          (-5)*9+(-6)*(-3),
                                                                          (-5)*1+(-6)*9+(-7)*(-3),
                                                                          (-5)*2+(-6)*1+(-7)*9+3*(-3)
-                                                                     });
+                                                                     },true, "eps");
     auto series_exact_one_times_series_two = secdecutil::Series<int>(-3,1,
                                                                      {
                                                                          (-5)*(-3),
@@ -292,14 +382,14 @@ TEST_CASE( "Operator *", "[Series]" ) {
                                                                          (-5)*1+(-6)*9+(-7)*(-3),
                                                                          (-5)*2+(-6)*1+(-7)*9+3*(-3),
                                                                          (-5)*3+(-6)*2+(-7)*1+3*9
-                                                                     });
+                                                                     },true, "eps");
     auto series_one_times_series_two = secdecutil::Series<int>(-3,0,
                                                                {
                                                                    (-5)*(-3),
                                                                    (-5)*9+(-6)*(-3),
                                                                    (-5)*1+(-6)*9+(-7)*(-3),
                                                                    (-5)*2+(-6)*1+(-7)*9+3*(-3)
-                                                               });
+                                                               },true, "eps");
 
     SECTION ( " * " ) {
         REQUIRE( ( series_exact_one * 3 ) == three_times_series_exact_one );
@@ -487,6 +577,67 @@ TEST_CASE( "Mismatch in expansion parameters in binary operators", "[Series]" ) 
 
 };
 
+TEST_CASE( "Operator /" , "[Series]" ) {
+
+    auto series  = secdecutil::Series<int>( 4, 5,{ 1, 1},false);
+    auto inverse = secdecutil::Series<int>(-4,-3,{ 1,-1 /* the full inverse keeps alternating +1 and -1 */},true);
+
+    auto series_more_terms  = secdecutil::Series<int>( 4, 7,{ 1, 1, 0, 0},false);
+    auto inverse_more_terms = secdecutil::Series<int>(-4,-1,{ 1,-1, 1,-1 /* the full inverse keeps alternating +1 and -1 */},true);
+
+    auto two_times_series = secdecutil::Series<int>(4,5,{2,2},false);
+
+    auto truncated_one            = secdecutil::Series<int>(0,1,{1,0    },true );
+    auto truncated_one_more_terms = secdecutil::Series<int>(0,3,{1,0,0,0},true );
+    auto exact_one                = secdecutil::Series<int>(0,0,{1      },false);
+
+    SECTION ( " series / scalar " ) {
+        REQUIRE( (two_times_series /  2) == series );
+        REQUIRE( (two_times_series /= 2) == series );
+        REQUIRE(  two_times_series  == series ); // after application of "/="
+    };
+
+    SECTION ( " scalar / series " ) {
+        REQUIRE( (            1 / series)            == inverse            );
+        REQUIRE( (            2 / two_times_series)  == inverse            );
+        REQUIRE( (            1 / series_more_terms) == inverse_more_terms );
+        REQUIRE( (truncated_one / series_more_terms) == inverse            );
+        REQUIRE( (    exact_one / series_more_terms) == inverse_more_terms );
+    };
+
+    SECTION ( " series / series " ) {
+        REQUIRE( (            series /  series            ) == truncated_one            );
+        REQUIRE( (            series /  series_more_terms ) == truncated_one_more_terms );
+        REQUIRE( ( series_more_terms /  series            ) == truncated_one_more_terms );
+        REQUIRE( ( series_more_terms /  series_more_terms ) == truncated_one_more_terms );
+        REQUIRE( (        2 * series /  two_times_series  ) == truncated_one            );
+        REQUIRE( (            series /= series            ) == truncated_one            );
+        REQUIRE(              series                        == truncated_one            ); // after application of "/="
+    };
+
+    SECTION ( " series with one term in denominator gets not truncated " ) {
+
+        auto one_term = secdecutil::Series<float>(3,3,{5.f},false);
+        auto one_term_truncated = secdecutil::Series<float>(3,3,{5.f},true);
+        auto target_inv_one_term = secdecutil::Series<float>(-3,-3,{1/5.f},false);
+        auto target_inv_one_term_truncated = secdecutil::Series<float>(-3,-3,{1/5.f},true);
+        auto target_inv_one_term_truncated_two_terms = secdecutil::Series<float>(-3,-2,{1/5.f,0},true);
+        auto inv_one_term_1 = 1/one_term;
+        auto inv_one_term_2 = exact_one/one_term;
+        auto inv_one_term_1_truncated = 1/one_term_truncated;
+        auto inv_one_term_2_truncated = exact_one/one_term_truncated;
+        auto inv_one_term_3_truncated = truncated_one/one_term;
+
+        REQUIRE( inv_one_term_1 == target_inv_one_term );
+        REQUIRE( inv_one_term_2 == target_inv_one_term );
+        REQUIRE( inv_one_term_1_truncated == target_inv_one_term_truncated );
+        REQUIRE( inv_one_term_2_truncated == target_inv_one_term_truncated );
+        REQUIRE( inv_one_term_3_truncated == target_inv_one_term_truncated_two_terms );
+
+    };
+
+};
+
 TEST_CASE( "Naming the expansion parameter for operator <<" , "[Series]" ) {
 
     // default expansion parameter: 'x'
@@ -545,6 +696,41 @@ TEST_CASE( "Propagation of the expansion parameter in arithmetic operations" , "
 
         auto multiplied_series = s1 * s1;
         REQUIRE( multiplied_series.expansion_parameter == "eps" );
+
+    };
+
+};
+
+TEST_CASE( "Assignment with and without implicit conversion" , "[Series]" ) {
+
+    auto original_series = secdecutil::Series<long>              ( 0, 1, {       2, 2}                 );
+
+    auto s1              = secdecutil::Series<long>              ( 0, 1, {       2, 2}                 );
+    auto s2              = secdecutil::Series<long>              (-2,-1, {-3, 3      }, false, "lambda");
+    auto s3              = secdecutil::Series<int>               (-1, 1, {   -1, 0, 1}, false, "eps"   );
+
+    auto s4              = secdecutil::Series<std::complex<long>>( 0, 1, {       2, 2}                 );
+    auto s3_long_complex = secdecutil::Series<std::complex<long>>(-1, 1, {   -1, 0, 1}, false, "eps"   );
+
+    SECTION( " assignment without conversion " ) {
+
+        REQUIRE( s1 == original_series );
+        s1 = s2;
+        REQUIRE( s1 != original_series );
+        REQUIRE( s1 == s2              );
+
+    };
+
+    SECTION( " assignment with conversion " ) {
+
+        REQUIRE( s1 == original_series );
+        s1 = s3;
+        REQUIRE( s1 != original_series );
+        REQUIRE( s1 == s3              );
+
+        s4 = s3;
+        // REQUIRE( s4 == s3 ); // error: no implementation of "==" for types "complex<long>" and "int"
+        REQUIRE( s4 == s3_long_complex );
 
     };
 
