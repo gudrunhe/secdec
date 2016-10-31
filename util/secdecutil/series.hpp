@@ -34,10 +34,12 @@ namespace secdecutil {
          *  Helper functions
          */
 
-        // Performs subtraction (``subtract=true``) or addition (``subtract=false``) of two series
-        // \Sum_i=a1^b1 c_i * eps^i - \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i - c'_i) * eps^i
-        // or
-        // \Sum_i=a1^b1 c_i * eps^i + \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i + c'_i) * eps^i
+        /*
+         * Performs subtraction (``subtract=true``) or addition (``subtract=false``) of two series
+         * \Sum_i=a1^b1 c_i * eps^i - \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i - c'_i) * eps^i
+         * or
+         * \Sum_i=a1^b1 c_i * eps^i + \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i + c'_i) * eps^i
+         */
         template<bool subtract, typename T1, typename T2>
         static auto sub_or_add(const Series<T1>& s1, const Series<T2>& s2)
         -> Series<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>
@@ -167,6 +169,121 @@ namespace secdecutil {
             return Series<Tout>(s1.order_min, s1.order_max, content, s1.truncated_above, s1.expansion_parameter);
         }
 
+        /*
+         * (\Sum_i=a1^b1 c_i * eps^i) / (\Sum_j=a2^b2 c'_j * eps^j)
+         * when multiplying out "(\Sum_i=a1^b1 c_i * eps^i) * (\Sum_k=a3^b3 x_k * eps^k) = (\Sum_j=a2^b2 c'_j * eps^j)"
+         * and comparing coefficients of "eps^<power>" this comes down to solving a triangular system of equations:
+         *
+         * Suppose the x_k in "\Sum_k=a3^b3 x_k * eps^k = (\Sum_i=a1^b1 c_i * eps^i) / (\Sum_j=a2^b2 c'_j * eps^j)" are unknown, then:
+         *
+         *   (c_0  * exp^0 + c_1  * eps^1 + c_2  * eps^2 + ...) * (x_0 * exp^0 + x_1 * eps^1 + x_2 * eps^2 + ...)
+         * =  c'_0 * exp^0 + c'_1 * eps^1 + c'_2 * eps^2 + ...
+         *
+         * by comparing coefficients:
+         *
+         * c_0 * x_0                         = c'_0
+         * c_1 * x_0 + c_0 * x_1             = c'_1
+         * c_2 * x_0 + c_1 * x_1 + c_0 * x_2 = c'_2
+         *
+         */
+        template<typename T1, typename T2>
+        static auto division_series_by_series(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>
+        {
+            using Tout = decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()));
+
+            if (s1.expansion_parameter != s2.expansion_parameter)
+                throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
+
+            auto s1_content = s1.get_content();
+            auto s2_content = s2.get_content();
+
+            // result can only be not truncated if only one order in denominator
+            bool truncated_above = s2.get_order_min() == s2.get_order_max() ? s1.get_truncated_above() || s2.get_truncated_above() : true;
+
+            // Determine limits of resulting series
+            int order_min = s1.get_order_min() - s2.get_order_min();
+            int order_max = order_min + std::max(s1_content.size(),s2_content.size()) - 1;
+            if ( s1.get_truncated_above() )
+                order_max = std::min( order_max , order_min + int( s1_content.size() ) - 1 );
+            if ( s2.get_truncated_above() )
+                order_max = std::min( order_max , order_min + int( s2_content.size() ) - 1 );
+
+            // Perform backsubstitution avoiding an explicit zero, since
+            // we do not know if "Tout(0)" or "Tout()" is defined. The
+            // nested if statements drop terms that have a multiplicative
+            // zero.
+            std::vector<Tout> content;
+            Tout denominator( s2_content.at(0) );
+            content.reserve(order_max-order_min+1);
+            Tout tmp( s1_content.at(0)/ s2_content.at(0) );
+            bool tmp_initialized;
+
+            // solve  "c_i * x_0 + ... + c_0 * x_i = c'_i" for x_i
+            for ( int i = 0; i <= order_max-order_min; ++i )
+            {
+                if (i == 0)
+                {
+                    // c_0 * x_0 = c'0  <=>  x_0 = c'_0 / c_0
+                    // that is how "tmp" is initialized above
+                    content.push_back(tmp);
+
+                } else {
+
+                    // "x_i = (  c'_i - c_i * x_0 - ... - c_1 * x_(i-1)  )    /    c_0"
+
+                    tmp_initialized = false;
+
+                    // if "c'_i" available (assume "c'_i = 0" otherwise)
+                    if (s1_content.size() > i)
+                    {
+                        tmp = s1_content.at(i);
+                        tmp_initialized = true;
+                    }
+
+                    for ( int j = 0; j < i; ++j )
+                    {
+
+                        // if "c_(i-j)" available (assume "c_(i-j) = 0" otherwise)
+                        if (s2_content.size() > i-j)
+                        {
+                            if (tmp_initialized)
+                            {
+                                tmp -= content.at(j) * s2_content.at(i-j);
+                            } else {
+                                tmp = - content.at(j) * s2_content.at(i-j);
+                                tmp_initialized = true;
+                            }
+                        }
+                    }
+
+                    tmp /= denominator; // final division by "c_0"
+                    content.push_back(tmp);
+
+                }
+
+            }
+
+            return Series<Tout>(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
+
+        }
+
+        template<typename T1, typename T2>
+        static auto division_series_by_scalar(const Series<T1>& s1, const T2& value)
+        -> Series<decltype(s1.at(s1.get_order_min()) / value)>
+        {
+            using Tout = decltype(s1.at(s1.get_order_min()) / value);
+
+            // copy content
+            std::vector<Tout> content = s1.get_content();
+
+            // divide every series coefficient by the scalar
+            for ( auto& item : content )
+                item /= value;
+
+            return Series<Tout>(s1.order_min, s1.order_max, content, s1.truncated_above, s1.expansion_parameter);
+        }
+
     public:
 
         typedef typename std::vector<T>::iterator iterator;
@@ -269,7 +386,12 @@ namespace secdecutil {
             return *this;
         }
 
-        // TODO operator/=
+        template<typename Tother>
+        Series& operator/=(const Tother& other)
+        {
+            *this = *this / other;
+            return *this;
+        }
 
         /*
          *  Binary operators
@@ -304,7 +426,15 @@ namespace secdecutil {
         friend auto operator*(const T1& scalar, const Series<T2>& series)
         -> Series<decltype(scalar * series.at(series.get_order_min()))>;
 
-        // TODO friend operator/
+        template<typename T1, typename T2>
+        friend auto operator/(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>;
+        template<typename T1, typename T2>
+        friend auto operator/(const Series<T1>& series, const T2& scalar)
+        -> Series<decltype(series.at(series.get_order_min()) / scalar)>;
+        template<typename T1, typename T2>
+        friend auto operator/(const T1& scalar, const Series<T2>& series)
+        -> Series<decltype(scalar / series.at(series.get_order_min()))>;
 
         friend std::ostream& operator<< (std::ostream& os, const Series& s1)
         {
@@ -450,6 +580,25 @@ namespace secdecutil {
     -> Series<decltype(val * s1.at(s1.get_order_min()))>
     {
         return s1.template multiply_scalar</* from_left = */ true>(s1, val);
+    }
+
+    template<typename T1, typename T2>
+    inline auto operator/(const Series<T1>& s1, const Series<T2>& s2)
+    -> Series<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>
+    {
+        return s1.template division_series_by_series(s1,s2);
+    }
+    template<typename T1, typename T2>
+    inline auto operator/(const Series<T1>& s1, const T2& val)
+    -> Series<decltype(s1.at(s1.get_order_min()) / val)>
+    {
+        return s1.template division_series_by_scalar(s1,val);
+    }
+    template<typename T1, typename T2>
+    inline auto operator/(const T1& val, const Series<T2>& s1)
+    -> Series<decltype(val / s1.at(s1.get_order_min()))>
+    {
+        return s1.template division_series_by_series(Series<T1>{0,0,{val},false,s1.expansion_parameter},s1);
     }
 
 }

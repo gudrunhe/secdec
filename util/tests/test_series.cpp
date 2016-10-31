@@ -577,6 +577,67 @@ TEST_CASE( "Mismatch in expansion parameters in binary operators", "[Series]" ) 
 
 };
 
+TEST_CASE( "Operator /" , "[Series]" ) {
+
+    auto series  = secdecutil::Series<int>( 4, 5,{ 1, 1},false);
+    auto inverse = secdecutil::Series<int>(-4,-3,{ 1,-1 /* the full inverse keeps alternating +1 and -1 */},true);
+
+    auto series_more_terms  = secdecutil::Series<int>( 4, 7,{ 1, 1, 0, 0},false);
+    auto inverse_more_terms = secdecutil::Series<int>(-4,-1,{ 1,-1, 1,-1 /* the full inverse keeps alternating +1 and -1 */},true);
+
+    auto two_times_series = secdecutil::Series<int>(4,5,{2,2},false);
+
+    auto truncated_one            = secdecutil::Series<int>(0,1,{1,0    },true );
+    auto truncated_one_more_terms = secdecutil::Series<int>(0,3,{1,0,0,0},true );
+    auto exact_one                = secdecutil::Series<int>(0,0,{1      },false);
+
+    SECTION ( " series / scalar " ) {
+        REQUIRE( (two_times_series /  2) == series );
+        REQUIRE( (two_times_series /= 2) == series );
+        REQUIRE(  two_times_series  == series ); // after application of "/="
+    };
+
+    SECTION ( " scalar / series " ) {
+        REQUIRE( (            1 / series)            == inverse            );
+        REQUIRE( (            2 / two_times_series)  == inverse            );
+        REQUIRE( (            1 / series_more_terms) == inverse_more_terms );
+        REQUIRE( (truncated_one / series_more_terms) == inverse            );
+        REQUIRE( (    exact_one / series_more_terms) == inverse_more_terms );
+    };
+
+    SECTION ( " series / series " ) {
+        REQUIRE( (            series /  series            ) == truncated_one            );
+        REQUIRE( (            series /  series_more_terms ) == truncated_one_more_terms );
+        REQUIRE( ( series_more_terms /  series            ) == truncated_one_more_terms );
+        REQUIRE( ( series_more_terms /  series_more_terms ) == truncated_one_more_terms );
+        REQUIRE( (        2 * series /  two_times_series  ) == truncated_one            );
+        REQUIRE( (            series /= series            ) == truncated_one            );
+        REQUIRE(              series                        == truncated_one            ); // after application of "/="
+    };
+
+    SECTION ( " series with one term in denominator gets not truncated " ) {
+
+        auto one_term = secdecutil::Series<float>(3,3,{5.f},false);
+        auto one_term_truncated = secdecutil::Series<float>(3,3,{5.f},true);
+        auto target_inv_one_term = secdecutil::Series<float>(-3,-3,{1/5.f},false);
+        auto target_inv_one_term_truncated = secdecutil::Series<float>(-3,-3,{1/5.f},true);
+        auto target_inv_one_term_truncated_two_terms = secdecutil::Series<float>(-3,-2,{1/5.f,0},true);
+        auto inv_one_term_1 = 1/one_term;
+        auto inv_one_term_2 = exact_one/one_term;
+        auto inv_one_term_1_truncated = 1/one_term_truncated;
+        auto inv_one_term_2_truncated = exact_one/one_term_truncated;
+        auto inv_one_term_3_truncated = truncated_one/one_term;
+
+        REQUIRE( inv_one_term_1 == target_inv_one_term );
+        REQUIRE( inv_one_term_2 == target_inv_one_term );
+        REQUIRE( inv_one_term_1_truncated == target_inv_one_term_truncated );
+        REQUIRE( inv_one_term_2_truncated == target_inv_one_term_truncated );
+        REQUIRE( inv_one_term_3_truncated == target_inv_one_term_truncated_two_terms );
+
+    };
+
+};
+
 TEST_CASE( "Naming the expansion parameter for operator <<" , "[Series]" ) {
 
     // default expansion parameter: 'x'
