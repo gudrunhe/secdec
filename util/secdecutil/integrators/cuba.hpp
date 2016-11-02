@@ -7,6 +7,7 @@
  */
 
 #include <array>
+#include <cmath>
 #include <complex>
 #include <cuba.h>
 #include <secdecutil/integrand_container.hpp>
@@ -58,6 +59,9 @@ namespace secdecutil
            */
           const std::vector<T> converted_integration_variables(integration_variables, integration_variables + (*ndim)*sizeof(cubareal));
 
+          // initialize result with NaN --> result will be NaN if integrand throws an error
+          result[0] = std::nan("");
+
           result[0] = integrand_container.integrand(converted_integration_variables.data()); // implicit conversion of result from type T to cubareal
 
           return 0;
@@ -84,6 +88,10 @@ namespace secdecutil
         static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
         {
           auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<cubareal, cubareal const * const> *>(userdata) );
+
+          // initialize result with NaN --> result will be NaN if integrand throws an error
+          result[0] = std::nan("");
+
           result[0] = integrand_container.integrand(integration_variables); // pass array "integration_variables" directly
 
           return 0;
@@ -118,9 +126,14 @@ namespace secdecutil
            */
           const std::vector<T> converted_integration_variables(integration_variables, integration_variables + (*ndim)*sizeof(cubareal));
 
+          // initialize result with NaN --> result will be NaN if integrand throws an error
+          result[0] = result[1] = std::nan("");
+
           std::complex<T> evaluated_integrand = integrand_container.integrand(converted_integration_variables.data());
+
           result[0] = evaluated_integrand.real(); // implicit conversion of result from type T to cubareal
           result[1] = evaluated_integrand.imag(); // implicit conversion of result from type T to cubareal
+
           return 0;
         };
         static const int ncomp = 2;
@@ -146,9 +159,14 @@ namespace secdecutil
         {
           auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const> *>(userdata) );
 
+          // initialize result with NaN --> result will be NaN if integrand throws an error
+          result[0] = result[1] = std::nan("");
+
           std::complex<cubareal> evaluated_integrand = integrand_container.integrand(integration_variables); // pass array "integration_variables" directly
+
           result[0] = evaluated_integrand.real();
           result[1] = evaluated_integrand.imag();
+
           return 0;
         };
         static const int ncomp = 2;
