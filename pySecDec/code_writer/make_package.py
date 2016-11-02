@@ -13,7 +13,7 @@ from ..algebra import _Expression, Expression, Polynomial, \
                       Sum
 from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort
-from ..subtraction import integrate_pole_part
+from ..subtraction import integrate_pole_part, pole_structure as compute_pole_structure
 from ..expansion import expand_singular, expand_Taylor, expand_sympy
 from ..misc import lowest_order
 from .template_parser import parse_template_file, parse_template_tree
@@ -253,10 +253,11 @@ def _parse_global_templates(name, regulators, polynomial_names,
                           'contour_deformation.h' : None,
                           'sector.h' : None,
 
-                          # "integrands.cpp", "name.hpp", "prefactor.cpp", and "functions.hpp" can only be written after the decomposition is completed
+                          # "integrands.cpp", "name.hpp", "prefactor.cpp", "pole_structures.cpp", and "functions.hpp" can only be written after the decomposition is completed
                           'integrands.cpp' : None,
                           'name.hpp' : None,
                           'prefactor.cpp' : None,
+                          'pole_structures.cpp' : None,
                           'functions.hpp' : None
                      }
 
@@ -855,6 +856,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # initialize the global lowest orders
     lowest_orders = requested_orders.copy()
 
+    # initialize list of pole structures
+    pole_structures = []
+
     # define the imaginary unit
     imaginary_unit = sp.sympify('I')
 
@@ -1145,6 +1149,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
             monomial_factors = list(chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
             monomials = Product(*monomial_factors, copy=False)
 
+            # compute the pole structure
+            pole_structures.append(  compute_pole_structure(monomials, *integration_variable_indices)  )
+
             if contour_deformation_polynomial is not None:
                 # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k*exp(-mu/x_k) * (1-x_k) * Re(dF_dx_k)`` to the monomials.
                 # Split as ``z_k({x_k}) = monomials[k] * <something in remainder_expression>``
@@ -1355,7 +1362,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                'secdecutil::IntegrandContainer<integrand_return_t, real_t const * const' + \
                                '>' * (len(regulators) + 2)
 
-    # parse the template files "integrands.cpp", "name.hpp", "prefactor.cpp", and "functions.hpp"
+    # parse the template files "integrands.cpp", "name.hpp", "pole_structures.cpp", "prefactor.cpp", and "functions.hpp"
     template_replacements['function_declarations'] = '\n'.join(function_declarations)
     template_replacements['make_integrands_return_t'] = make_integrands_return_t
     template_replacements['prefactor_type'] = prefactor_type
@@ -1367,18 +1374,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
     template_replacements['highest_prefactor_orders'] = _make_FORM_list(required_prefactor_orders)
     template_replacements['sector_includes'] = ''.join( '#include "sector_%i.hpp"\n' % i for i in range(1,sector_index+1) )
     template_replacements['sectors_initializer'] = ','.join( 'integrand_of_sector_%i' % i for i in range(1,sector_index+1) )
-    parse_template_file(os.path.join(template_sources, 'src', 'integrands.cpp'), # source
-                        os.path.join(name,             'src', 'integrands.cpp'), # dest
-                        template_replacements)
+    template_replacements['pole_structures_initializer'] = str(pole_structures).replace(' ','').replace('[','{').replace(']','}')
     parse_template_file(os.path.join(template_sources, 'name.hpp'), # source
                         os.path.join(name,            name + '.hpp'), # dest
                         template_replacements)
-    parse_template_file(os.path.join(template_sources, 'src', 'prefactor.cpp'), # source
-                        os.path.join(name,             'src', 'prefactor.cpp'), # dest
-                        template_replacements)
-    parse_template_file(os.path.join(template_sources, 'src', 'functions.hpp'), # source
-                        os.path.join(name,             'src', 'functions.hpp'), # dest
-                        template_replacements)
+    for filename in ['integrands.cpp', 'prefactor.cpp', 'pole_structures.cpp', 'functions.hpp']:
+        parse_template_file(os.path.join(template_sources, 'src', filename),
+                            os.path.join(name,             'src', filename),
+                            template_replacements)
 
     print('"' + name + '" done')
 

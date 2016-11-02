@@ -51,6 +51,8 @@ namespace %(name)s
     extern const std::vector<%(sector_container_type)s> sectors;
     %(prefactor_type)s  prefactor(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters);
 
+    extern const std::vector<std::vector<real_t>> pole_structures;
+
     %(make_integrands_return_t)s make_integrands
     (
         const std::vector<real_t>& real_parameters,
