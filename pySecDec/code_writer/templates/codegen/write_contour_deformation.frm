@@ -1,6 +1,8 @@
 * This file is included in "write_integrand.frm".
 * It should be seen as a procedure that writes
-* the code for the contour deformation.
+* additional code for the contour deformation,
+* namely the optimization of the parameters
+* and the contour deformation polynomial.
 * {
 
   #clearoptimize
