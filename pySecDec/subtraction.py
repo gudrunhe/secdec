@@ -13,6 +13,36 @@ import sympy as sp
 
 _sympy_one = sp.sympify(1)
 
+def pole_structure(monomial_product, *indices):
+    '''
+    Return a list of the unregulated exponents
+    of the parameters specified by `indices`
+    in `monomial_product`.
+
+    :param monomial_product:
+        :class:`pySecDec.algebra.ExponentiatedPolynomial`
+        with ``exponent`` being a :class:`.Polynomial`;
+        The monomials of the subtraction to extract the
+        pole structure from.
+
+    :param indices:
+        arbitrarily many integers;
+        The index/indices of the parameter(s) to partially
+        investigate.
+
+    '''
+    def pole_structure_one_index(monomial_product, index):
+        exponent_constant_term = 0
+        for monomial_factor in monomial_product.factors:
+            if monomial_factor.exponent.has_constant_term():
+                this_factor_exponent_constant_term = np.sum(monomial_factor.exponent.coeffs[np.where((monomial_factor.exponent.expolist == 0).all(axis=1))])
+                exponent_constant_term += this_factor_exponent_constant_term * monomial_factor.expolist[0,index]
+            # else: e.g. (z1**2)**-eps0-eps1 --> no contribution to ``a_j``
+                # exponent_constant_term += 0
+        return exponent_constant_term
+
+    return [pole_structure_one_index(monomial_product, index) for index in indices]
+
 def _integrate_pole_part_single_index(polyprod, index):
     monomial_product = polyprod.factors[0] # e.g. (z1**2)**1-eps0-eps1  *  (z1*z2)**3-4*eps1
     monomial_product_FeynmanJ_set_to_one = monomial_product.replace(index,1)

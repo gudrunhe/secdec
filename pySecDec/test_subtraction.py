@@ -126,3 +126,8 @@ class TestIntegratePolePart(unittest.TestCase):
         cal_I = Function('cal_I', Polynomial([[1]],[1])) # "cal_I(x0)"
         prod = Product(Product(monomial), pole_part_initializer, cal_I)
         self.assertRaisesRegexp(ValueError, '1/0', integrate_pole_part, prod, 0)
+
+    #@attr('active')
+    def test_pole_structure(self):
+        self.assertEqual( pole_structure(self.monomial_product1,0,1) , [-2,-4] )
+        self.assertEqual( pole_structure(self.monomial_product2,0,1) , [-2,-4] )
