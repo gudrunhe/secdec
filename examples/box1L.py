@@ -48,9 +48,4 @@ decomposition_method = 'geometric',
 # executable here
 #normaliz_executable='/path/to/normaliz',
 
-# whether or not to produce code to perform the contour deformation
-# if ``True``, it can still be deactivated in the "config.hpp"
-# if ``False``, no code for the contour deformation is generated
-contour_deformation = True,
-
 )

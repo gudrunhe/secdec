@@ -37,9 +37,4 @@ form_work_space = '100M',
 decomposition_method = 'geometric',
 normaliz_workdir = 'normaliz_tmp_bubble',
 
-# whether or not to produce code to perform the contour deformation
-# if ``True``, it can still be deactivated in the "config.hpp"
-# if ``False``, no code for the contour deformation is generated
-contour_deformation = False,
-
 )

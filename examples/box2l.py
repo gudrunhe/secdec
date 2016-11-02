@@ -52,8 +52,7 @@ decomposition_method = 'geometric',
 #normaliz_executable='/path/to/normaliz',
 
 # whether or not to produce code to perform the contour deformation
-# if ``True``, it can still be deactivated in the "config.hpp"
-# if ``False``, no code for the contour deformation is generated
+# contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
 contour_deformation = False,
 
 )

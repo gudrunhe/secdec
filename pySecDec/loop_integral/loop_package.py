@@ -15,8 +15,9 @@ import os
 
 def loop_package(name, loop_integral, requested_order,
                  real_parameters=[], complex_parameters=[],
-                 contour_deformation=True, additional_prefactor=1,
-                 form_optimization_level=2, form_work_space='500M',
+                 contour_deformation='auto', force_unsafe_deformation=False,
+                 additional_prefactor=1, form_optimization_level=2,
+                 form_work_space='500M',
                  decomposition_method='iterative',
                  normaliz_executable='normaliz',
                  normaliz_workdir='normaliz_tmp',
@@ -56,10 +57,24 @@ def loop_package(name, loop_integral, requested_order,
         as complex parameters.
 
     :param contour_deformation:
-        bool, optional;
+        bool or 'auto', optional;
         Whether or not to produce code for contour
-        deformation.
-        Default: ``True``.
+        deformation. If set to 'auto', produce code
+        for contour deformation only if the second
+        Symanzik polynomial "F" comes with a negative
+        exponent (ignoring the regulator).
+        Default: ``'auto'``.
+
+    :param force_unsafe_deformation:
+        bool, optional;
+        If both Symanzik polynomials "U" and "F" have
+        a negative exponent (ignoring the regulator),
+        the deformation parameters cannot fully be
+        checked for consistency. `pySecDec` always checks
+        the :math:`- i\delta` prescription of "F" but it
+        cannot check if the contour deformation crosses
+        complex poles of "U".
+        Default: ``False``.
 
     :param additional_prefactor:
         string or sympy expression;
@@ -118,6 +133,22 @@ def loop_package(name, loop_integral, requested_order,
         Default: ``False``
 
     '''
+    print('running "loop_package" for "' + name + '"')
+
+    if contour_deformation == 'auto':
+        # only need contour deformation of "F" has an overall negative exponent (and a noneuclidean point is calculated)
+        contour_deformation = loop_integral.exponent_F.subs(loop_integral.regulator,0) < 0
+        print(  'contour deformation is ' + ('required' if contour_deformation else 'not needed')  )
+    else:
+        contour_deformation = bool(contour_deformation)
+
+    if contour_deformation:
+        if loop_integral.exponent_U.subs(loop_integral.regulator,0) < 0: # if "U" in denominator
+            if force_unsafe_deformation:
+                print(   'WARNING: Contour deformation may silently lead to wrong results by crossing zeros of "U".'   )
+            else:
+                raise UserWarning('Contour deformation may silently lead to wrong results by crossing zeros of "U". Set ``force_unsafe_deformation=True`` in `loop_package` to proceed anyway.')
+
     # convert `name` to string
     name = str(name)
 
