@@ -163,7 +163,7 @@ namespace secdecutil {
             for (i=0; i<number_of_samples; ++i)
             {
                 gsl_qrng_get(Sobol_generator,real_sample);
-                while (contour_deformation_polynomial(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters, deformation_offset).imag() > 0)
+                while ( !contour_deformation_polynomial_passes_sign_check(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters, deformation_offset) )
                 {
                     for (j=0; j<number_of_integration_variables; ++j)
                         optimized_deformation_parameters[j] *= decrease_factor;
@@ -181,6 +181,22 @@ namespace secdecutil {
         std::shared_ptr<std::vector<real_t>> real_parameters;
         std::shared_ptr<std::vector<complex_t>> complex_parameters;
         std::shared_ptr<std::vector<real_t>> deformation_parameters;
+
+        private: const std::vector<real_t> zeros; public:
+        // function that performs the sign check for the contour deformation
+        bool contour_deformation_polynomial_passes_sign_check
+        (
+            real_t const * const integration_variables,
+            real_t const * const real_parameters,
+            complex_t const * const complex_parameters,
+            real_t const * const deformation_parameters,
+            const real_t deformation_offset
+        ) const
+        {
+            return contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset).imag()
+                <= contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, zeros.data()          , 0                 ).imag();
+        }
+
         // "integrand" must be a member function, otherwise we cannot bind the struct
         complex_t integrand (
                                 real_t const * const integration_variables,
@@ -190,7 +206,7 @@ namespace secdecutil {
                                 const real_t deformation_offset
                             ) const
         {
-            if (contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset).imag() > 0)
+            if ( !contour_deformation_polynomial_passes_sign_check(integration_variables,real_parameters,complex_parameters,deformation_parameters,deformation_offset) )
             {
                 auto error_message = "Contour deformation in sector \"" + std::to_string(sector_id);
                 error_message += "\", order { ";
@@ -220,7 +236,8 @@ namespace secdecutil {
         number_of_integration_variables(number_of_integration_variables),
         deformed_integrand(deformed_integrand),
         contour_deformation_polynomial(contour_deformation_polynomial),
-        maximal_allowed_deformation_parameters(maximal_allowed_deformation_parameters)
+        maximal_allowed_deformation_parameters(maximal_allowed_deformation_parameters),
+        zeros(number_of_integration_variables,0)
         {};
     };
 
