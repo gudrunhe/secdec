@@ -434,7 +434,9 @@ FORM_names = dict(
     label_contour_deformation_Jacobian_matrix_index_j=internal_prefix+'LabelJacobianMatrixJ'
 )
 
-def _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation):
+
+# ---------------------------------- write c++ code ---------------------------------
+def _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation):
     '''
     Write the c++ code that initilizes the container class
     (``Series<Series<...<Series<IntegrandContainer>>...>``).
@@ -482,8 +484,6 @@ def _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sec
 
     return recursion(0)
 
-
-# ---------------------------------- write c++ code ---------------------------------
 def _make_cpp_list(python_list):
     '''
     Convert a python list to a string to be used
@@ -1319,7 +1319,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             template_replacements['insert_cal_I_procedure'] = FORM_cal_I_definitions
             template_replacements['insert_other_procedure'] = FORM_function_definitions
             template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYIntegrand', integrand, args=None, limit=10**6)
-            template_replacements['sector_container_initializer'] = _make_FORM_Series_initilization(regulators, -highest_poles_current_sector,
+            template_replacements['sector_container_initializer'] = _make_CXX_Series_initialization(regulators, -highest_poles_current_sector,
                                                                                                     required_orders, sector_index,
                                                                                                     contour_deformation_polynomial is not None)
             template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)

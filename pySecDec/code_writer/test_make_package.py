@@ -5,7 +5,7 @@ from .make_package import *
 from .make_package import _convert_input, _make_FORM_definition, \
                           _make_FORM_function_definition, _make_FORM_list, \
                           _derivative_muliindex_to_name, _make_FORM_shifted_orders, \
-                          _make_FORM_Series_initilization, _validate, \
+                          _make_CXX_Series_initialization, _validate, \
                           _make_prefactor_function, _make_CXX_function_declaration, \
                           _make_cpp_list
 from ..algebra import Function, Polynomial, Product, ProductRule, Sum
@@ -231,7 +231,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         self.assertEqual(FORM_code, target_FORM_code)
 
 #@attr('active')
-class TestMakeFORMSeriesInitialization(unittest.TestCase):
+class TestMakeCXXSeriesInitialization(unittest.TestCase):
     #@attr('active')
     def test_one_variable(self):
         regulator_names = ['eps']
@@ -239,7 +239,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         max_orders = [+2]
         sector_ID = 42
 
-        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
+        FORM_code = _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-2,2,{'
         target_FORM_code +=    '{42,\{-2\},sector_42_order_n2_numIV,sector_42_order_n2_integrand},'
@@ -266,7 +266,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         max_orders = [+0, +2]
         sector_ID = 8
 
-        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
+        FORM_code = _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-2,0,{'
         target_FORM_code +=   '{-1,2,{'
@@ -306,7 +306,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
+        FORM_code = _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{-1,0,{'
         target_FORM_code +=   '{-3,-1,{'
@@ -362,7 +362,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=True)
+        FORM_code = _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=True)
 
         target_FORM_code  = '{-1,0,{'
         target_FORM_code +=   '{-3,-1,{'
@@ -454,7 +454,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
+        FORM_code = _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=False)
 
         target_FORM_code  = '{0,0,{'
         target_FORM_code +=   '{-1,-1,{'
@@ -481,7 +481,7 @@ class TestMakeFORMSeriesInitialization(unittest.TestCase):
         max_orders = [+0, -1, +2]
         sector_ID = 90
 
-        FORM_code = _make_FORM_Series_initilization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=True)
+        FORM_code = _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation=True)
 
         target_FORM_code  = '{0,0,{'
         target_FORM_code +=   '{-1,-1,{'
