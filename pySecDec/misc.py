@@ -1,4 +1,10 @@
-"""miscellaneous routines"""
+"""
+Miscellaneous
+-------------
+
+Collection of general-purpose helper functions.
+
+"""
 
 from itertools import chain, combinations, product
 import sympy as sp
