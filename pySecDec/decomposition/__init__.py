@@ -28,7 +28,13 @@ Geometric
 .. automodule:: pySecDec.decomposition.geometric
     :members:
 
+Splitting
+~~~~~~~~~
+
+.. automodule:: pySecDec.decomposition.splitting
+    :members:
+
 '''
 
-from . import iterative, geometric
+from . import iterative, geometric, splitting
 from .common import *
