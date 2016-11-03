@@ -774,6 +774,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
         Default: ``False``
 
     '''
+    print('running "make_package" for "' + name + '"')
+
     # convert input data types to the data types we need
     name, integration_variables, regulators, \
     requested_orders, polynomials_to_decompose, polynomial_names, \
@@ -789,8 +791,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
                    real_parameters, complex_parameters, form_optimization_level,
                    form_work_space, form_insertion_depth, contour_deformation_polynomial,
                    decomposition_method)
-
-    print('running "make_package" for "' + name + '"')
 
     # construct the c++ type of the integrand container class
     # for two regulators, the resulting code should read:
