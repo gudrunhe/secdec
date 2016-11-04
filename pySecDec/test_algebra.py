@@ -212,12 +212,17 @@ class TestPolynomial(unittest.TestCase):
         self.assertEqual(polynomial1.coeffs[0],Afoo)
         self.assertEqual(polynomial2.coeffs[0],A)
 
+    #@attr('active')
     def test_has_constant_term(self):
         self.assertTrue(Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D']).has_constant_term())
         self.assertTrue(Polynomial([(0,1),(0,0),(1,0),(2,1),(4,0)],['A','B','C','D',1]).has_constant_term())
 
         self.assertFalse(Polynomial([(0,1),(1,0),(2,1),(4,0)],['A','B','C','D']).has_constant_term())
         self.assertFalse(Polynomial([(0,1),(2,1),(4,0)],['A','B','D']).has_constant_term())
+
+        self.assertTrue(Polynomial([(0,1,1),(1,0,2),(2,1,3),(0,0,4)],['A','B','C','D']).has_constant_term([0,1]))
+        self.assertTrue(Polynomial([(0,2,1),(1,3,0),(2,4,1),(0,5,0)],['A','B','C','D']).has_constant_term([0,2]))
+        self.assertFalse(Polynomial([(0,1,1),(1,0,2),(2,1,3),(0,0,4)],['A','B','C','D']).has_constant_term())
 
     def test_becomes_zero_for(self):
         self.assertTrue(Polynomial([(0,1,1,0),(2,1,0,5)],['A','B']).becomes_zero_for([1,0]))

@@ -492,7 +492,7 @@ class Polynomial(_Expression):
         "Return a copy of a :class:`.Polynomial` or a subclass."
         return type(self)(self.expolist.copy(), self.coeffs.copy(), self.polysymbols, copy=False)
 
-    def has_constant_term(self):
+    def has_constant_term(self, indices=None):
         '''
         Return True if the polynomial can be written as:
 
@@ -501,8 +501,15 @@ class Polynomial(_Expression):
 
         Otherwise, return False.
 
+        :param indices:
+            list of integers or None;
+            The indices of the `polysymbols` to consider.
+            If ``None`` (default) all indices are taken
+            into account.
+
         '''
-        return (self.expolist == 0).all(axis=1).any()
+        relevant_exponents = self.expolist if indices is None else self.expolist[:,indices]
+        return (relevant_exponents == 0).all(axis=1).any()
 
     def becomes_zero_for(self, zero_params):
         '''
