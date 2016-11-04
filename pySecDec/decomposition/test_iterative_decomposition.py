@@ -20,6 +20,7 @@ class TestPrimaryDecomposition(unittest.TestCase):
 
         self.initial_sector = Sector([self.F,self.U])
 
+    #@attr('active')
     def test_primary_decomposition(self):
         primary_sectors = primary_decomposition(self.initial_sector)
 
@@ -46,6 +47,30 @@ class TestPrimaryDecomposition(unittest.TestCase):
         np.testing.assert_array_equal(U_primary[1].expolist, np.array([(1,0,0),(0,0,0),(0,1,0),(0,0,1)]))
         np.testing.assert_array_equal(U_primary[2].expolist, np.array([(1,0,0),(0,1,0),(0,0,0),(0,0,1)]))
         np.testing.assert_array_equal(U_primary[3].expolist, np.array([(1,0,0),(0,1,0),(0,0,1),(0,0,0)]))
+
+    #@attr('active')
+    def test_select_indices(self):
+        # do not consider the first and the last parameters
+        indices = [1,2]
+        primary_sectors = primary_decomposition(self.initial_sector, indices)
+
+        F_primary = [sector.cast[0].factors[1] for sector in primary_sectors]
+        U_primary = [sector.cast[1].factors[1] for sector in primary_sectors]
+
+        # 2 integration variables => 2 primary sectors
+        self.assertEqual(len(F_primary),2)
+        self.assertEqual(len(U_primary),2)
+
+
+        np.testing.assert_array_equal(F_primary[0].expolist, np.array([(0,0,1),(1,1,0)]))
+        np.testing.assert_array_equal(F_primary[1].expolist, np.array([(0,1,1),(1,0,0)]))
+
+        self.assertEqual(str(F_primary[0]), " + (-s12)*x3 + (-s23)*x0*x2")
+        self.assertEqual(str(F_primary[1]), " + (-s12)*x1*x3 + (-s23)*x0")
+
+
+        np.testing.assert_array_equal(U_primary[0].expolist, np.array([(1,0,0),(0,0,0),(0,1,0),(0,0,1)]))
+        np.testing.assert_array_equal(U_primary[1].expolist, np.array([(1,0,0),(0,1,0),(0,0,0),(0,0,1)]))
 
     #@attr('active')
     def test_keep_type(self):
@@ -195,6 +220,39 @@ class TestIterativeDecomposition(unittest.TestCase):
                 Sector(cast=[Product(p0_mono*x0**2,Polynomial([[0,0,0],[0,1,0],[0,0,1]],[1,1,1],variables))], other=[Polynomial([[1,1,0],[1,0,1]],[1,1], variables)], Jacobian=Jacobian*x0**2),
                 Sector(cast=[Product(p0_mono*x1**2,Polynomial([[1,0,0],[0,0,0],[0,0,1]],[1,1,1],variables))], other=[Polynomial([[0,1,0],[0,1,1]],[1,1], variables)], Jacobian=Jacobian*x1*x1**2),
                 Sector(cast=[Product(p0_mono*x2**3,Polynomial([[1,0,0],[0,1,0],[0,0,0]],[1,1,1],variables))], other=[Polynomial([[0,1,1],[0,0,1]],[1,1], variables)], Jacobian=Jacobian*x2*x2**2)
+            ]
+
+        self.assertEqual(len(psd_decomposition), 3)
+
+        for stringify in (str, repr):
+            self.assertEqual(stringify(psd_decomposition), stringify(target_decomposition))
+
+    #@attr('active')
+    def test_iterative_decomposition_selected_indices(self):
+        variables = ['dummy0', 'x0', 'x1', 'dummy1', 'x2', 'eps']
+        integration_variable_indices = [1,2,4]
+        x0, x1, x2 = [Polynomial.from_expression('x%i' % i, variables) for i in range(3)]
+        p0_mono = Polynomial.from_expression('x0*x1', variables)
+        p0_poly = Polynomial([[0,1,0,0,0,0],[0,0,1,0,0,1],[0,0,0,0,1,0]],[1,1,1],variables) # "x0 + eps*x1 + x2"
+        p1 = Polynomial.from_expression('x1 + eps*x2', variables)
+        Jacobian = Polynomial.from_expression('eps*x0', variables)
+        initial_sector = Sector(cast=[Product(p0_mono,p0_poly)], other=[p1], Jacobian=Jacobian)
+        psd_decomposition = list( iterative_decomposition(initial_sector,integration_variable_indices) )
+
+        target_decomposition = \
+            [
+                Sector(
+                          cast=[Product(p0_mono*x0**2,Polynomial([[0,0,0,0,0,0],[0,0,1,0,0,1],[0,0,0,0,1,0]],[1,1,1],variables))],
+                          other=[Polynomial([[0,1,1,0,0,0],[0,1,0,0,1,1]],[1,1], variables)], Jacobian=Jacobian*x0**2
+                      ),
+                Sector(
+                          cast=[Product(p0_mono*x1**2,Polynomial([[0,1,0,0,0,0],[0,0,0,0,0,1],[0,0,0,0,1,0]],[1,1,1],variables))],
+                          other=[Polynomial([[0,0,1,0,0,0],[0,0,1,0,1,1]],[1,1], variables)], Jacobian=Jacobian*x1*x1**2
+                      ),
+                Sector(
+                          cast=[Product(p0_mono*x2**3,Polynomial([[0,1,0,0,0,0],[0,0,1,0,0,1],[0,0,0,0,0,0]],[1,1,1],variables))],
+                          other=[Polynomial([[0,0,1,0,1,0],[0,0,0,0,1,1]],[1,1], variables)], Jacobian=Jacobian*x2*x2**2
+                      )
             ]
 
         self.assertEqual(len(psd_decomposition), 3)

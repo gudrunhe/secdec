@@ -11,7 +11,7 @@ import numpy as np
 
 # ********************** primary decomposition **********************
 
-def primary_decomposition_polynomial(polynomial):
+def primary_decomposition_polynomial(polynomial, indices=None):
     r'''
     Perform the primary decomposition on a single polynomial.
 
@@ -21,17 +21,26 @@ def primary_decomposition_polynomial(polynomial):
     :param polynomial:
         :class:`.algebra.Polynomial`;
         The polynomial to eliminate the Dirac delta from.
+
+    :param indices:
+        iterable of integers or None;
+        The indices of the parameters to be considered as
+        integration variables. By default (``indices=None``),
+        all parameters are considered as integration
+        variables.
+
     '''
     primary_sectors = []
 
-    # get number of Feynman parameters
-    N = polynomial.expolist.shape[1]
+    # consider all indices if `indices` is None
+    if indices is None:
+        indices = range(polynomial.expolist.shape[1])
 
     coeffs = polynomial.coeffs
     expolist = polynomial.expolist
     polysymbols = polynomial.polysymbols
 
-    for i in range(N):
+    for i in indices:
         # keep the type (`polynomial` can have a subtype of `Polynomial`)
         sectorpoly = polynomial.copy()
 
@@ -46,7 +55,7 @@ def primary_decomposition_polynomial(polynomial):
 
     return primary_sectors
 
-def primary_decomposition(sector):
+def primary_decomposition(sector, indices=None):
     r'''
     Perform the primary decomposition as described in
     chapter 3.2 (part I) of arXiv:0803.4177v2 [Hei08]_.
@@ -59,24 +68,36 @@ def primary_decomposition(sector):
     .. seealso::
         :func:`.primary_decomposition_polynomial`
 
-
     :param sector:
         :class:`.Sector`;
         The container holding the polynomials (typically
         :math:`U` and :math:`F`) to eliminate the Dirac
         delta from.
 
+    :param indices:
+        iterable of integers or None;
+        The indices of the parameters to be considered as
+        integration variables. By default (``indices=None``),
+        all parameters are considered as integration
+        variables.
+
     '''
-    # get number of Feynman parameters
-    N = sector.number_of_variables
+    # consider all variables if `indices` is None
+    # convert `indices` to list otherwise
+    if indices is None:
+        N = sector.number_of_variables
+        indices = range(N)
+    else:
+        indices = list(indices)
+        N = len(indices)
 
     # Must perform `primary_decomposition_polynomial` for each element
     # of `sector.other`, `[sector.Jacobian]`, and each of the two factors
     # of `sector.cast`.
-    primary_sector_polynomials_other = [primary_decomposition_polynomial(poly) for poly in sector.other]
-    primary_sector_polynomials_Jacobian = primary_decomposition_polynomial(sector.Jacobian)
-    primary_sector_polynomials_cast_factor0 = [primary_decomposition_polynomial(polyprod.factors[0]) for polyprod in sector.cast]
-    primary_sector_polynomials_cast_factor1 = [primary_decomposition_polynomial(polyprod.factors[1]) for polyprod in sector.cast]
+    primary_sector_polynomials_other = [primary_decomposition_polynomial(poly, indices) for poly in sector.other]
+    primary_sector_polynomials_Jacobian = primary_decomposition_polynomial(sector.Jacobian, indices)
+    primary_sector_polynomials_cast_factor0 = [primary_decomposition_polynomial(polyprod.factors[0], indices) for polyprod in sector.cast]
+    primary_sector_polynomials_cast_factor1 = [primary_decomposition_polynomial(polyprod.factors[1], indices) for polyprod in sector.cast]
 
     # Collect the primary decomposed polynomials back into the `Sector` container class
     primary_sectors = [
@@ -124,7 +145,6 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
         The polynomials of Feynman parameters to be remapped. These
         are typically :math:`F` and :math:`U`.
 
-    
     Example:
 
     .. code-block:: python
@@ -146,7 +166,7 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
 
     Jacobian.expolist[:,singular_parameters[0]] += len(singular_parameters) - 1
 
-def iteration_step(sector):
+def iteration_step(sector, indices=None):
     '''
     Run a single step of the iterative sector decomposition as described
     in chapter 3.2 (part II) of arXiv:0803.4177v2 [Hei08]_.
@@ -156,8 +176,19 @@ def iteration_step(sector):
         :class:`.Sector`;
         The sector to be decomposed.
 
+    :param indices:
+        iterable of integers or None;
+        The indices of the parameters to be considered as
+        integration variables. By default (``indices=None``),
+        all parameters are considered as integration
+        variables.
+
     '''
-    def get_poly_to_transform(sector):
+    # consider all indices if `indices` is None
+    if indices is None:
+        indices = range(sector.number_of_variables)
+
+    def get_poly_to_transform(sector, indices):
         '''
         Return a :class:`.algebra.Product` in
         `sector.cast` that is not in the desired form
@@ -167,19 +198,17 @@ def iteration_step(sector):
 
         '''
         for polyprod in sector.cast:
-            if not polyprod.factors[1].has_constant_term():
+            if not polyprod.factors[1].has_constant_term(indices):
                 return polyprod
         # Control only reaches this point if the desired form is
         # already reached.
         raise EndOfDecomposition()
 
-    N = sector.number_of_variables
-
     # find a suitable transformation for a polynomial to be cast
     singular_set_found = False
-    polyprod = get_poly_to_transform(sector)
+    polyprod = get_poly_to_transform(sector, indices)
     poly = polyprod.factors[1]
-    for singular_set in powerset(range(N),exclude_empty=True):
+    for singular_set in powerset(indices,exclude_empty=True):
         if poly.becomes_zero_for(singular_set):
             singular_set_found = True
             break
@@ -207,7 +236,7 @@ def iteration_step(sector):
             refactorize(polyprod,singular_set[0])
         yield subsector
 
-def iterative_decomposition(sector):
+def iterative_decomposition(sector, indices=None):
     '''
     Run the iterative sector decomposition as described
     in chapter 3.2 (part II) of arXiv:0803.4177v2 [Hei08]_.
@@ -218,11 +247,22 @@ def iterative_decomposition(sector):
         :class:`.Sector`;
         The sector to be decomposed.
 
+    :param indices:
+        iterable of integers or None;
+        The indices of the parameters to be considered as
+        integration variables. By default (``indices=None``),
+        all parameters are considered as integration
+        variables.
+
     '''
+    # convert `indices` to list if not None
+    if indices is not None:
+        indices = list(indices)
+
     try:
-        subsectors = iteration_step(sector) # only this line can raise `EndOfDecomposition`
+        subsectors = iteration_step(sector, indices) # only this line can raise `EndOfDecomposition`
         for subsector in subsectors:
-            for deeper_subsector in iterative_decomposition(subsector):
+            for deeper_subsector in iterative_decomposition(subsector, indices):
                 yield deeper_subsector
     except EndOfDecomposition:
         yield sector
