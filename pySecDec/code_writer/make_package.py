@@ -1072,11 +1072,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
             secondary_sectors = []
             for primary_sector in primary_sectors:
                 secondary_sectors.extend( strategy['secondary'](primary_sector) )
-            print('number of sectors in primary sector', primary_sector_index, 'before investigating symmetries:', len(secondary_sectors))
+            print('total number of sectors before investigating symmetries:', len(secondary_sectors))
             # find symmetries using both implemented strategies
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, iterative_sort)
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, Pak_sort)
-            print('number of sectors in primary sector', primary_sector_index, 'after investigating symmetries:', len(secondary_sectors))
+            print('total number of sectors after investigating symmetries', len(secondary_sectors))
         else:
             parse_exponents_and_coeffs(primary_sector, symbols_polynomials_to_decompose, symbols_other_polynomials, use_symmetries)
             secondary_sectors = strategy['secondary'](primary_sector)
