@@ -12,8 +12,6 @@ This module collects routines that are used by
 multiple decompition modules.
 
 .. autoclass:: pySecDec.decomposition.Sector
-.. autofunction:: pySecDec.decomposition.hide
-.. autofunction:: pySecDec.decomposition.unhide
 .. autofunction:: pySecDec.decomposition.squash_symmetry_redundant_sectors
 
 Iterative

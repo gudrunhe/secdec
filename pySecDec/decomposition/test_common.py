@@ -69,34 +69,6 @@ class TestSector(unittest.TestCase):
         self.assertNotEqual(str(self.sector.cast[0].factors[1]),sector.cast[0].factors[1])
 
 #@attr('active')
-class TestHideUnhide(unittest.TestCase):
-    def setUp(self):
-        self.polysymbols = ['x0','x1','y']
-        self.p = Polynomial.from_expression('a*x0 + b*x1*y', self.polysymbols)
-        self.exponentiated_p = ExponentiatedPolynomial(self.p.expolist, self.p.coeffs, 'exponent', self.polysymbols)
-        self.q = Polynomial([(0,1),(1,3)], ['a', 'b'])
-
-    def test_unhide_is_inverse_of_hide(self):
-        for p in (self.p, self.exponentiated_p, self.q):
-            for i in range(1,3):
-                p_after = unhide(*hide(p.copy(), i))
-                self.assertEqual(str(p_after), str(p))
-
-    def test_hide(self):
-        a, b = sp.symbols('a b')
-        for p in (self.p, self.exponentiated_p, self.q):
-            for i in range(1,3):
-                p1, p_hidden = hide(p.copy(), i)
-
-                np.testing.assert_array_equal(p1.coeffs, [a,b])
-
-                np.testing.assert_array_equal(p1.expolist, p.expolist[:,:-i])
-                np.testing.assert_array_equal(p_hidden.expolist, p.expolist[:,-i:])
-
-                self.assertEqual(p1.polysymbols, p.polysymbols[:-i])
-                self.assertEqual(p_hidden.polysymbols, p.polysymbols[-i:])
-
-#@attr('active')
 class TestSymmetryFinding(unittest.TestCase):
     def setUp(self):
         self.Jacobian = Polynomial([(1,0)], ['a'])
