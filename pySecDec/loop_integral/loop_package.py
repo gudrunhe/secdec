@@ -152,11 +152,13 @@ def loop_package(name, loop_integral, requested_order,
     # convert `name` to string
     name = str(name)
 
-    # append the regulator to the `polynomials_to_decompose` (`F` and `U`)
+    names_polynomials_to_decompose = sp.symbols(['F','U'])
+
+    # append the regulator and the symbols `F` and `U` to the `polynomials_to_decompose` (`F` and `U`)
     polynomials_to_decompose = [loop_integral.exponentiated_F.copy(), loop_integral.exponentiated_U.copy()]
     for poly in polynomials_to_decompose:
-        poly.polysymbols.append(loop_integral.regulator)
-        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),1], dtype=int)])
+        poly.polysymbols.extend([loop_integral.regulator] + names_polynomials_to_decompose)
+        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_polynomials_to_decompose)+1], dtype=int)])
 
     other_polynomials = [loop_integral.numerator]
     if sp.sympify( loop_integral.measure ) != 1:
@@ -177,7 +179,7 @@ def loop_package(name, loop_integral, requested_order,
         requested_orders = [requested_order],
 
         polynomials_to_decompose = polynomials_to_decompose,
-        polynomial_names = ['F','U'],
+        polynomial_names = names_polynomials_to_decompose,
         other_polynomials = other_polynomials,
         contour_deformation_polynomial = 'F' if contour_deformation else None,
 

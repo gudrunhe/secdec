@@ -126,7 +126,7 @@ def _convert_input(name, integration_variables, regulators,
         _validate( str(symbol) )
 
     # define the symbols of the different classes of `_Expression`s
-    symbols_polynomials_to_decompose = integration_variables + regulators
+    symbols_polynomials_to_decompose = integration_variables + regulators + polynomial_names
     symbols_remainder_expression = integration_variables + regulators + polynomial_names
     all_symbols = symbols_other_polynomials = integration_variables + regulators + polynomial_names
 
@@ -160,20 +160,19 @@ def _convert_input(name, integration_variables, regulators,
     assert form_insertion_depth == int(form_insertion_depth), '`form_insertion_depth` must be an integer.'
     assert form_insertion_depth >= 0, '`form_insertion_depth` must not be negative.'
 
-    # check that the `remainder_expression` does not refer to any of the `polynomial_names`
-    for poly_name in polynomial_names:
-        error = sp.symbols('SecDecInternalError')
+    # check that neither the `remainder_expression` nor the `polynomials_to_decompose` refer to any of the `polynomial_names`
+    error = sp.symbols('SecDecInternalError')
+    for _ in polynomial_names:
         remainder_expression = remainder_expression.replace(-1, error)
     str_remainder_expression = str(remainder_expression)
     if 'SecDecInternalError' in str_remainder_expression:
         raise ValueError('The `polynomial_names` %s cannot be used in the `remainder_expression`.' % polynomial_names)
-
-    # add `polynomial_names` to the symbols of the `polynomials_to_decompose` # TODO: require `polynomial_names` as symbols of the `polynomials_to_decompose` and check that they don't appear as for the `remainder_expression`
-    symbols_polynomials_to_decompose += polynomial_names
     for poly in polynomials_to_decompose:
-        poly.number_of_variables += len(polynomial_names)
-        poly.polysymbols += polynomial_names
-        poly.expolist = np.hstack([poly.expolist,np.zeros([len(poly.coeffs),len(polynomial_names)], dtype=int)])
+        for _ in polynomial_names:
+            poly = poly.replace(-1, error)
+        str_poly = str(poly)
+        if 'SecDecInternalError' in str_poly:
+            raise ValueError('The `polynomial_names` %s cannot be used in the `polynomials_to_decompose`.' % polynomial_names)
 
     return (name, integration_variables, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,

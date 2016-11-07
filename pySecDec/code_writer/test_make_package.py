@@ -35,7 +35,7 @@ class TestConvertInput(TestMakePackage):
                                       integration_variables=['z0','z1','z2'],
                                       regulators=['eps','alpha'],
                                       requested_orders=[1,2],
-                                      polynomials_to_decompose=[1,Polynomial([[0,0,0],[1,1,1]],['-s','-t'],['z0','z1','z2','eps','alpha'])],
+                                      polynomials_to_decompose=[1,Polynomial([[0,0,0,0,0,0,0],[1,1,1,0,1,0,0]],['-s','-t'],['z0','z1','z2','eps','alpha','U','F'])],
                                       polynomial_names=['U','F'],
                                       other_polynomials=['U*z1 + F'],
                                       prefactor=1,
@@ -67,19 +67,15 @@ class TestConvertInput(TestMakePackage):
         self.assertRaisesRegexp(ValueError, r"\(\-s\) \+ \(\-t\)\*x0\*x1\*x2.*polynomials_to_decompose.*symbols.*\(is.*x0, x1, x2.*should.*\z0, z1, z2, eps, alpha", _convert_input, **polynomials_to_decompose_unrelated_polysymbols)
 
         polynomials_to_decompose_wrong_polysymbols_in_exponent = self.correct_input.copy()
-        polynomials_to_decompose_wrong_polysymbols_in_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0],[1,1,1,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha'],exponent=Polynomial([[0,0,1]],[1],['x0','x1','x2']))]
+        polynomials_to_decompose_wrong_polysymbols_in_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0,0,0],[1,1,1,0,0,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha','U','F'],exponent=Polynomial([[0,0,1]],[1],['x0','x1','x2']))]
         _convert_input(**polynomials_to_decompose_wrong_polysymbols_in_exponent) # should be ok
 
-        polynomials_to_decompose_wrong_polysymbols_in_coeff = self.correct_input.copy()
-        polynomials_to_decompose_wrong_polysymbols_in_coeff['polynomials_to_decompose'] = [1,Polynomial([[0,0,0],[1,1,1]],[Polynomial([[0,0,0]], ['-s'], ['eps','alpha']),'-t'],['z0','z1','z2','eps','alpha'])]
-        _convert_input(**polynomials_to_decompose_wrong_polysymbols_in_coeff) # should be ok
-
         polynomials_to_decompose_polynomial_in_coeff = self.correct_input.copy()
-        polynomials_to_decompose_polynomial_in_coeff['polynomials_to_decompose'] = [1,Polynomial([[0,0,0],[1,1,1]],[Polynomial([[0,0,0]], ['-s'], ['z0','z1','z2','eps','alpha']),'-t'],['z0','z1','z2','eps','alpha'])]
+        polynomials_to_decompose_polynomial_in_coeff['polynomials_to_decompose'] = [1,Polynomial([[0,0,0,0,0,0,0],[1,1,1,2,3,0,0]],[Polynomial([[0,0,0,1,3,0,0]], ['-s'], ['z0','z1','z2','eps','alpha','U','F']),'-t'],['z0','z1','z2','eps','alpha','U','F'])]
         _convert_input(**polynomials_to_decompose_polynomial_in_coeff) # should be ok
 
         polynomials_to_decompose_sympy_exponent = self.correct_input.copy()
-        polynomials_to_decompose_sympy_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0],[1,1,1,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha'],exponent='1+eps')]
+        polynomials_to_decompose_sympy_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0,0,0],[1,1,1,0,0,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha','U','F'],exponent='1+eps')]
         _convert_input(**polynomials_to_decompose_sympy_exponent) # should be ok
 
         polynomials_to_decompose_nontrivial_as_string = self.correct_input.copy()
@@ -118,7 +114,17 @@ class TestConvertInput(TestMakePackage):
         keyword_arguments = self.correct_input.copy()
         keyword_arguments['remainder_expression'] = 'firstPolynomialName'
         keyword_arguments['polynomial_names'] = ['firstPolynomialName']
+        keyword_arguments['polynomials_to_decompose'] = ['z0 + z1 + z2']
         self.assertRaisesRegexp(ValueError, r'polynomial_names.*firstPolynomialName.*not.*remainder_expression', _convert_input, **keyword_arguments)
+
+    #@attr('active')
+    def test_polynomials_to_decompose_self_reference(self):
+        # `make_package` should raise an error if any of the `polynomials_to_decompose`
+        # refers to any of the `polynomial_names`
+        keyword_arguments = self.correct_input.copy()
+        keyword_arguments['polynomial_names'] = ['firstPolynomialName']
+        keyword_arguments['polynomials_to_decompose'] = ['z0 + firstPolynomialName']
+        self.assertRaisesRegexp(ValueError, r'polynomial_names.*firstPolynomialName.*not.*polynomials_to_decompose', _convert_input, **keyword_arguments)
 
 # --------------------------------- write FORM code ---------------------------------
 class TestMakeFORMDefinition(unittest.TestCase):
