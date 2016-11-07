@@ -28,9 +28,12 @@ def Cheng_Wu(sector, index=-1):
         Default: -1 (the last Feynman parameter)
 
     '''
-    Jacobian = sector.Jacobian.replace(index, value=1, remove=True)
-    other = [poly.replace(index, value=1, remove=True) for poly in sector.other]
-    cast = [Product( *(product.factors[i].replace(index, value=1, remove=True) for i in (0,1)) ) for product in sector.cast]
+    # do not remove the only parameter from the `polysymbols`
+    remove = sector.number_of_variables != 1
+
+    Jacobian = sector.Jacobian.replace(index, 1, remove)
+    other = [poly.replace(index, 1, remove) for poly in sector.other]
+    cast = [Product( *(product.factors[i].replace(index, 1, remove) for i in (0,1)) ) for product in sector.cast]
     return Sector(cast, other, Jacobian)
 
 # ********************** geometric decomposition **********************

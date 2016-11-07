@@ -4,6 +4,8 @@ from .iterative import *
 from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
 import numpy as np
+import sympy as sp
+
 import unittest
 from nose.plugins.attrib import attr
 
@@ -19,6 +21,21 @@ class TestPrimaryDecomposition(unittest.TestCase):
         self.U = Polynomial([(1,0,0,0),(0,1,0,0),(0,0,1,0),(0,0,0,1)],[1,1,1,1])
 
         self.initial_sector = Sector([self.F,self.U])
+
+    @attr('active')
+    def test_one_variable(self):
+        U = Polynomial([[1]], [  1  ], ['x0'])
+        F = Polynomial([[2]], ['msq'], ['x0'])
+        initial_sector = Sector([U,F])
+        primary_sectors = primary_decomposition(initial_sector)
+
+        target_decomposed_U = sp.sympify(1)
+        target_decomposed_F = sp.sympify('msq')
+
+        self.assertEqual( len(primary_sectors) , 1 )
+
+        self.assertEqual(  ( sp.sympify(primary_sectors[0].cast[0]) - target_decomposed_U ).simplify() , 0   )
+        self.assertEqual(  ( sp.sympify(primary_sectors[0].cast[1]) - target_decomposed_F ).simplify() , 0   )
 
     #@attr('active')
     def test_primary_decomposition(self):

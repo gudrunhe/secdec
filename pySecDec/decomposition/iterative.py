@@ -40,18 +40,26 @@ def primary_decomposition_polynomial(polynomial, indices=None):
     expolist = polynomial.expolist
     polysymbols = polynomial.polysymbols
 
-    for i in indices:
-        # keep the type (`polynomial` can have a subtype of `Polynomial`)
+    if len(indices) == 1:
+        # do not remove the only Feynman parameter from the `polysymbols`
         sectorpoly = polynomial.copy()
+        sectorpoly.expolist[:,indices[0]] = 0
 
-        # "pinch" (delete) Feynman parameter `i`
-        #   => this is equivalent to setting the exponent to zero
-        #     => that is however equivalent to setting the parameter to one
-        sectorpoly.expolist = np.delete(expolist,i,axis=1)
-        sectorpoly.polysymbols = np.delete(polysymbols,i)
-        sectorpoly.number_of_variables -= 1
+        return [sectorpoly]
 
-        primary_sectors.append(sectorpoly)
+    else:
+        for i in indices:
+            # keep the type (`polynomial` can have a subtype of `Polynomial`)
+            sectorpoly = polynomial.copy()
+
+            # "pinch" (delete) Feynman parameter `i`
+            #   => this is equivalent to setting the exponent to zero
+            #     => that is however equivalent to setting the parameter to one
+            sectorpoly.expolist = np.delete(expolist,i,axis=1)
+            sectorpoly.polysymbols = np.delete(polysymbols,i)
+            sectorpoly.number_of_variables -= 1
+
+            primary_sectors.append(sectorpoly)
 
     return primary_sectors
 

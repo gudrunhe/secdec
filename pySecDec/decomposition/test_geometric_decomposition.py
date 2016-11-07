@@ -50,6 +50,19 @@ class TestGeomethod(unittest.TestCase):
         self.assertEqual( (sp.sympify(primary_x1.cast[0].factors[1]) - (poly_sympy/x2).subs('x1',1)).simplify() , 0 )
         self.assertEqual( (sp.sympify(primary_x1.other[0]) - other_sympy.subs('x1',1)).simplify() , 0 )
 
+    @attr('active')
+    def test_Cheng_Wu_one_variable(self):
+        U = Polynomial([[1]], [  1  ], ['x0'])
+        F = Polynomial([[2]], ['msq'], ['x0'])
+        initial_sector = Sector([U,F])
+        primary_sector = Cheng_Wu(initial_sector)
+
+        target_decomposed_U = sp.sympify(1)
+        target_decomposed_F = sp.sympify('msq')
+
+        self.assertEqual(  ( sp.sympify(primary_sector.cast[0]) - target_decomposed_U ).simplify() , 0   )
+        self.assertEqual(  ( sp.sympify(primary_sector.cast[1]) - target_decomposed_F ).simplify() , 0   )
+
     def test_convex_hull(self):
         hull = convex_hull(self.p0, self.p1)
 
