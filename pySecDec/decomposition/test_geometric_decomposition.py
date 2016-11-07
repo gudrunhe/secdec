@@ -156,9 +156,10 @@ class TestGeomethod(unittest.TestCase):
 
     #@attr('active')
     def test_2D_geometric_decomposition(self):
-        poly = Polynomial.from_expression('x1 + x2 + x1*x2', ['x1','x2'])
+        poly = Polynomial.from_expression('x1 + x2 + x1*x2', ['dummy','x1','x2'])
         sector = Sector([poly])
-        subsectors = list( geometric_decomposition(sector, workdir='tmpdir_test_2D_geometric_decomposition_python' + python_major_version) )
+        indices = [1,2]
+        subsectors = list( geometric_decomposition(sector, indices, workdir='tmpdir_test_2D_geometric_decomposition_python' + python_major_version) )
 
         target_general_Jacobian = sp.sympify('x1**-2 * x2**-2 * x3')
         target_general_poly = sp.sympify('x1**-1 * x2**-1 * x3 * (x1 + x2 + x3)')
@@ -184,6 +185,14 @@ class TestGeomethod(unittest.TestCase):
         poly = Polynomial.from_expression('A*1 + B*x1 + C*x2 + D*x3 + E*x1*x2', ['x1','x2','x3']) # pyramid
         sector = Sector([poly])
         subsectors = list( geometric_decomposition(sector, workdir='tmpdir_test_3D_geometric_decomposition_python' + python_major_version) )
+
+    #@attr('active')
+    def test_3D_geometric_decomposition_selected_indices(self):
+        # 3D test case where triangulation is needed
+        poly = Polynomial.from_expression('A*1 + B*x1 + C*x2 + D*x3 + E*x1*x2', ['x1','dummy','x2','x3']) # pyramid
+        sector = Sector([poly])
+        indices = [0,2,3]
+        subsectors = list( geometric_decomposition(sector, indices, workdir='tmpdir_test_3D_geometric_decomposition_selected_indices_python' + python_major_version) )
 
 class TestPolytope(unittest.TestCase):
     def setUp(self):

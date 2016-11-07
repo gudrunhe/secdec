@@ -405,7 +405,7 @@ def transform_variables(polynomial, transformation, polysymbols='y'):
     outpoly.number_of_variables = number_of_new_variables
     return outpoly
 
-def geometric_decomposition(sector, normaliz='normaliz', workdir='normaliz_tmp'):
+def geometric_decomposition(sector, indices=None, normaliz='normaliz', workdir='normaliz_tmp'):
     '''
     Run the sector decomposition using the geomethod
     as described in [BHJ+15]_.
@@ -419,6 +419,13 @@ def geometric_decomposition(sector, normaliz='normaliz', workdir='normaliz_tmp')
     :param sector:
         :class:`.Sector`;
         The sector to be decomposed.
+
+    :param indices:
+        list of integers or None;
+        The indices of the parameters to be considered as
+        integration variables. By default (``indices=None``),
+        all parameters are considered as integration
+        variables.
 
     :param normaliz:
         string;
@@ -437,7 +444,28 @@ def geometric_decomposition(sector, normaliz='normaliz', workdir='normaliz_tmp')
             files.
 
     '''
-    sector = sector.copy()
+    original_sector = sector
+    sector = original_sector.copy()
+
+    if indices is None:
+        indices = range(original_sector.number_of_variables)
+    else:
+        # remove parameters that are not in `indices`
+        indices = list(indices)
+        sector.number_of_variables = len(indices)
+        sector.Jacobian.number_of_variables = len(indices)
+        sector.Jacobian.expolist = sector.Jacobian.expolist[:,indices]
+        sector.Jacobian.polysymbols = [sector.Jacobian.polysymbols[i] for i in indices]
+        for product in sector.cast:
+            for factor in product.factors:
+                factor.number_of_variables = len(indices)
+                factor.expolist = factor.expolist[:,indices]
+                factor.polysymbols = [factor.polysymbols[i] for i in indices]
+        for poly in sector.other:
+            poly.number_of_variables = len(indices)
+            poly.expolist = poly.expolist[:,indices]
+            poly.polysymbols = [poly.polysymbols[i] for i in indices]
+
     dim = sector.number_of_variables
 
     polytope_vertices = convex_hull( *(product.factors[1] for product in sector.cast) )
@@ -460,26 +488,22 @@ def geometric_decomposition(sector, normaliz='normaliz', workdir='normaliz_tmp')
     sector.Jacobian *= Polynomial([transformation.sum(axis=0) - 1], [1])
 
     def make_sector(cone_indices, cone):
-        subsector = sector.copy()
+        subsector = original_sector.copy()
         Jacobian_coeff = abs(np.linalg.det(cone))
         Jacobian_coeff_as_int = int(Jacobian_coeff + 0.5) # `Jacobian_coeff` is integral but numpy calculates it as float
         assert abs(Jacobian_coeff_as_int - Jacobian_coeff) < 1.0e-5 * abs(Jacobian_coeff)
         subsector.Jacobian *= Jacobian_coeff_as_int
 
         # set variables to one that are not in `cone_indices`
-        number_of_variables = len(cone_indices)
-        subsector.number_of_variables = number_of_variables
-        subsector.Jacobian.number_of_variables = number_of_variables
-        subsector.Jacobian.expolist = sector.Jacobian.expolist[:,cone_indices]
-        for product in subsector.cast:
+        number_of_variables = len(cone_indices) + original_sector.number_of_variables - len(indices)
+        assert number_of_variables == original_sector.number_of_variables
+        subsector.Jacobian.expolist[:,indices] = sector.Jacobian.expolist[:,cone_indices]
+        for resulting_product, output_product in zip(sector.cast, subsector.cast):
             for j in range(2):
-                product.factors[j].number_of_variables = number_of_variables
-                product.factors[j].expolist = product.factors[j].expolist[:,cone_indices]
-            product.number_of_variables = number_of_variables
-            refactorize(product)
-        for polynomial in subsector.other:
-            polynomial.number_of_variables = number_of_variables
-            polynomial.expolist = polynomial.expolist[:,cone_indices]
+                output_product.factors[j].expolist[:,indices] = resulting_product.factors[j].expolist[:,cone_indices]
+            refactorize(output_product)
+        for resulting_polynomial, output_polynomial in zip(sector.other, subsector.other):
+            output_polynomial.expolist[:,indices] = resulting_polynomial.expolist[:,cone_indices]
 
         return subsector
 

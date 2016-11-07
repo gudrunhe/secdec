@@ -195,11 +195,11 @@ def get_decomposition_routines(name, normaliz, workdir):
                                                                      secondary=decomposition.iterative.iterative_decomposition
                                                                  ),
                                         geometric=           dict(
-                                                                     primary=lambda x: [decomposition.geometric.Cheng_Wu(x)],
-                                                                     secondary=lambda x: decomposition.geometric.geometric_decomposition(x, normaliz, workdir)
+                                                                     primary=lambda sector, indices: [decomposition.geometric.Cheng_Wu(sector, indices[-1])],
+                                                                     secondary=lambda sector, indices: decomposition.geometric.geometric_decomposition(sector, indices, normaliz, workdir)
                                                                  ),
                                         iterative_no_primary=dict(
-                                                                     primary=lambda x: [x], # no primary decomposition
+                                                                     primary=lambda sector, indices: [sector], # no primary decomposition
                                                                      secondary=decomposition.iterative.iterative_decomposition
                                                                  )
                                     )
@@ -915,7 +915,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         initial_sector.other.pop()
 
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
-        primary_sectors = list( strategy['primary'](initial_sector) )
+        primary_sectors = list( strategy['primary'](initial_sector, range(len(integration_variables))) )
         print('number of primary sectors before investigating symmetries:', len(primary_sectors))
         primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, iterative_sort)
         primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, Pak_sort)
@@ -935,7 +935,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         primary_sectors_to_consider = [primary_sectors[0]]
 
     else: # if we cannot take advantage of symmetries
-        primary_sectors_to_consider = strategy['primary'](initial_sector)
+        primary_sectors_to_consider = strategy['primary'](initial_sector, range(len(integration_variables)))
 
     for primary_sector_index, primary_sector in enumerate(primary_sectors_to_consider):
 
@@ -1071,7 +1071,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # search for symmetries throughout the secondary decomposition
             secondary_sectors = []
             for primary_sector in primary_sectors:
-                secondary_sectors.extend( strategy['secondary'](primary_sector) )
+                secondary_sectors.extend( strategy['secondary'](primary_sector, range(len(integration_variables))) )
             print('total number of sectors before investigating symmetries:', len(secondary_sectors))
             # find symmetries using both implemented strategies
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, iterative_sort)
@@ -1079,7 +1079,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             print('total number of sectors after investigating symmetries', len(secondary_sectors))
         else:
             parse_exponents_and_coeffs(primary_sector, symbols_polynomials_to_decompose, symbols_other_polynomials, use_symmetries)
-            secondary_sectors = strategy['secondary'](primary_sector)
+            secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
         for sector in secondary_sectors:
             sector_index += 1
