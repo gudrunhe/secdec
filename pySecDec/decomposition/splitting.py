@@ -88,8 +88,14 @@ def find_singular_sets_at_one(polynomial):
         The polynomial to search in.
 
     '''
+    # ignore parameters that do not appear
+    indices_to_consider = []
+    for i in range(polynomial.number_of_variables):
+        if (polynomial.expolist[:,i] != 0).any():
+            indices_to_consider.append(i)
+
     singular_sets = []
-    for singular_set in powerset(range(len(polynomial.polysymbols))):
+    for singular_set in powerset(indices_to_consider):
         poly_copy = polynomial.copy()
         poly_copy.expolist[:,singular_set] = 0
         poly_copy.simplify()
