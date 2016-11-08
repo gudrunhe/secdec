@@ -213,3 +213,27 @@ class TestSplitSingular(unittest.TestCase):
             print(i)
             sympified_split_poly = sp.sympify(split_sectors[i].cast[0])
             self.assertEqual(  (sympified_split_poly - target_splits[i]).simplify() , 0  )
+
+    #@attr('active')
+    def test_selected_parameters(self):
+        polysymbols = ['x0','x1','x2','eps']
+        poly = Polynomial.from_expression('1 - x0 + A*x1 - x2', polysymbols)
+        exponentiated_poly = (  poly ** Polynomial.from_expression('1 - 2*eps' , polysymbols)  ).simplify()
+        initial_sector = Sector([exponentiated_poly])
+
+        split_sectors = list( split_singular(initial_sector, indices=[0,1,2]) )
+
+        # singular at 1 for "x0->1" or "x2->1"; expect split at for "x0" and "x2"
+        target_splits = []
+        target_splits.append(   sp.sympify('(1 -    x0/2  + A*x1 -    x2/2 ) ** (1 - 2*eps)')   )
+        target_splits.append(   sp.sympify('(1 -    x0/2  + A*x1 - (1-x2/2)) ** (1 - 2*eps)')   )
+        target_splits.append(   sp.sympify('(1 - (1-x0/2) + A*x1 -    x2/2 ) ** (1 - 2*eps)')   )
+        target_splits.append(   sp.sympify('(1 - (1-x0/2) + A*x1 - (1-x2/2)) ** (1 - 2*eps)')   )
+
+        target_Jacobian = sp.sympify('1/4')
+
+        self.assertEqual(len(split_sectors), 4)
+        for i in range(4):
+            print(i)
+            sympified_split_poly = sp.sympify(split_sectors[i].cast[0])
+            self.assertEqual(  (sympified_split_poly - target_splits[i]).simplify() , 0  )
