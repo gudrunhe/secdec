@@ -22,7 +22,7 @@ class TestPrimaryDecomposition(unittest.TestCase):
 
         self.initial_sector = Sector([self.F,self.U])
 
-    @attr('active')
+    #@attr('active')
     def test_one_variable(self):
         U = Polynomial([[1]], [  1  ], ['x0'])
         F = Polynomial([[2]], ['msq'], ['x0'])

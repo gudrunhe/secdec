@@ -50,7 +50,7 @@ class TestGeomethod(unittest.TestCase):
         self.assertEqual( (sp.sympify(primary_x1.cast[0].factors[1]) - (poly_sympy/x2).subs('x1',1)).simplify() , 0 )
         self.assertEqual( (sp.sympify(primary_x1.other[0]) - other_sympy.subs('x1',1)).simplify() , 0 )
 
-    @attr('active')
+    #@attr('active')
     def test_Cheng_Wu_one_variable(self):
         U = Polynomial([[1]], [  1  ], ['x0'])
         F = Polynomial([[2]], ['msq'], ['x0'])
