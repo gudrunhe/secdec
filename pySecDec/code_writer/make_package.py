@@ -860,8 +860,18 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
         original_decomposition_strategies = strategy
 
-        # combine split sectors before secondary decomposition
         def primary_decomposition_with_splitting(sector, indices):
+            # investigate symmetries before the split
+            if use_symmetries:
+                primary_sectors = list(  original_decomposition_strategies['primary'](sector, indices)  )
+                print('number of primary sectors before investigating symmetries:', len(primary_sectors))
+                primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, iterative_sort)
+                primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, Pak_sort)
+                print('number of primary sectors after investigating symmetries:', len(primary_sectors))
+            else:
+                primary_sectors = original_decomposition_strategies['primary'](sector, indices)
+
+            # combine split sectors before secondary decomposition
             for subsector in original_decomposition_strategies['primary'](sector, indices):
                 cast = []
                 other = []
@@ -873,6 +883,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
         # separate split sectors after secondary decomposition
         def secondary_decomposition_with_splitting(sector, indices):
+            # The implemented symmetry finders take a long time but do not find anything if applied here.
+            # We therefore do not waste time calling them on the split sectors.
             for subsector in original_decomposition_strategies['secondary'](sector, indices):
                 for i in range(len(subsector.cast) / len(initial_sector.cast)):
                     cast = subsector.cast[i*len(initial_sector.cast):(i+1)*len(initial_sector.cast)]
@@ -938,7 +950,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         if not ( type(derivative) is Polynomial and np.array_equal(derivative.coeffs, [0]) and (derivative.expolist == 0).all() ):
             remainder_expression_is_trivial = False
             break
-    use_symmetries = remainder_expression_is_trivial and not split # TODO: use symmetries if ``split=True``
+    use_symmetries = remainder_expression_is_trivial
 
     # Check that either the primary decomposition or the `remainder_expression` is trivial.
     # Note that the primary decomposition is specialized for loop integrals.
@@ -951,6 +963,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
         for i in range(len(integration_variables)):
             initial_sector.other.pop()
 
+    # symmetries are applied elsewhere if we split
+    if use_symmetries and not split:
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
         primary_sectors = list( strategy['primary'](initial_sector, range(len(integration_variables))) )
         print('number of primary sectors before investigating symmetries:', len(primary_sectors))
@@ -1096,7 +1110,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             )
             names_polynomials_to_decompose.append(poly_name)
 
-        if use_symmetries:
+        if use_symmetries and not split:
             # search for symmetries throughout the secondary decomposition
             secondary_sectors = []
             for primary_sector in primary_sectors:
@@ -1107,7 +1121,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, Pak_sort)
             print('total number of sectors after investigating symmetries', len(secondary_sectors))
         else:
-            parse_exponents_and_coeffs(primary_sector, all_symbols, all_symbols, use_symmetries)
+            parse_exponents_and_coeffs(primary_sector, all_symbols, all_symbols, use_symmetries and not split)
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
         for sector in secondary_sectors:
@@ -1117,7 +1131,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             if use_symmetries:
                 # If we use symmetries, we still have to parse the `exponents` and `coeffs`.
-                parse_exponents_and_coeffs(sector, all_symbols, all_symbols, use_symmetries)
+                parse_exponents_and_coeffs(sector, all_symbols, all_symbols, use_symmetries and not split)
             else:
                 # If we do not use symmetries, we have to take care of `transformations`
                 # extract ``this_transformations``
