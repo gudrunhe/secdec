@@ -102,7 +102,7 @@ class TestFindSingularSetsAtOne(unittest.TestCase):
     def test_find_singular_sets_at_one_medium(self):
         poly = Polynomial.from_expression('2 - x0 + a*x1**2*x5**4 - x3*x0**8', ['x0','x1','x2','x3','x4','x5'])
         singular_set = find_singular_sets_at_one(poly)
-        self.assertEqual(singular_set, [(0,3),(0,1,3),(0,2,3),(0,3,4),(0,3,5),(0,1,2,3),(0,1,3,4),(0,2,3,4),(0,2,3,5),(0,3,4,5),(0,1,2,3,4),(0,2,3,4,5)])
+        self.assertEqual(singular_set, [(0,3),(0,1,3),(0,3,5)])
 
     #@attr('active')
     def test_find_singular_sets_at_one_complicated(self):
@@ -113,13 +113,13 @@ class TestFindSingularSetsAtOne(unittest.TestCase):
                + (s)*x2*x3 + (s)*x1*x3**2*x4 + (s)*x1*x3**2
         poly = Polynomial.from_expression(poly, ['x0','x1','x2','x3','x4','x5'])
         singular_set = find_singular_sets_at_one(poly)
-        self.assertEqual(singular_set, [(2,3),(0,2,3),(2,3,4),(2,3,5),(0,2,3,4),(0,2,3,5),(2,3,4,5),(0,2,3,4,5)])
+        self.assertEqual(singular_set, [(2,3),(0,2,3),(2,3,4),(0,2,3,4)])
 
     #@attr('active')
     def test_find_singular_sets_only_at_one(self):
         poly = Polynomial.from_expression('2 - x0 - x2*x0**8', ['x0','x1','x2'])
         singular_set = find_singular_sets_at_one(poly)
-        self.assertEqual(singular_set, [(0,2),(0,1,2)])
+        self.assertEqual(singular_set, [(0,2)])
 
 class TestSplit(unittest.TestCase):
     #@attr('active')
@@ -205,6 +205,30 @@ class TestSplitSingular(unittest.TestCase):
         target_splits.append(   sp.sympify('1 -    x0/2  + A*x1 - (1-x2/2)')   )
         target_splits.append(   sp.sympify('1 - (1-x0/2) + A*x1 -    x2/2 ')   )
         target_splits.append(   sp.sympify('1 - (1-x0/2) + A*x1 - (1-x2/2)')   )
+
+        target_Jacobian = sp.sympify('1/4')
+
+        self.assertEqual(len(split_sectors), 4)
+        for i in range(4):
+            print(i)
+            sympified_split_poly = sp.sympify(split_sectors[i].cast[0])
+            self.assertEqual(  (sympified_split_poly - target_splits[i]).simplify() , 0  )
+
+    #@attr('active')
+    def test_selected_parameters(self):
+        polysymbols = ['x0','x1','x2','eps']
+        poly = Polynomial.from_expression('1 - x0 + A*x1 - x2', polysymbols)
+        exponentiated_poly = (  poly ** Polynomial.from_expression('1 - 2*eps' , polysymbols)  ).simplify()
+        initial_sector = Sector([exponentiated_poly])
+
+        split_sectors = list( split_singular(initial_sector, indices=[0,1,2]) )
+
+        # singular at 1 for "x0->1" or "x2->1"; expect split at for "x0" and "x2"
+        target_splits = []
+        target_splits.append(   sp.sympify('(1 -    x0/2  + A*x1 -    x2/2 ) ** (1 - 2*eps)')   )
+        target_splits.append(   sp.sympify('(1 -    x0/2  + A*x1 - (1-x2/2)) ** (1 - 2*eps)')   )
+        target_splits.append(   sp.sympify('(1 - (1-x0/2) + A*x1 -    x2/2 ) ** (1 - 2*eps)')   )
+        target_splits.append(   sp.sympify('(1 - (1-x0/2) + A*x1 - (1-x2/2)) ** (1 - 2*eps)')   )
 
         target_Jacobian = sp.sympify('1/4')
 

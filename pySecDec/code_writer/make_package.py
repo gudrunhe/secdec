@@ -603,7 +603,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
                  form_insertion_depth=5, contour_deformation_polynomial=None,
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
-                 normaliz_workdir='normaliz_tmp', enforce_complex=False):
+                 normaliz_workdir='normaliz_tmp', enforce_complex=False, split=False):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -778,6 +778,15 @@ def make_package(name, integration_variables, regulators, requested_orders,
         setting this flag to ``True`` in that case.
         Default: ``False``
 
+    :param split:
+        bool, optional;
+        Whether or not to split the integration at :math:`1/2`
+        in order to map singularities from :math:`1` to
+        :math:`0`. Set this option to ``True`` if you have
+        singularties when one or more integration variables
+        are one.
+        Default: ``False``
+
     '''
     print('running "make_package" for "' + name + '"')
 
@@ -824,8 +833,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # get the decomposition routines
     strategy = get_decomposition_routines(decomposition_method, normaliz_executable, normaliz_workdir)
 
-    # define the `Polynomial` "x0 + x1 + x2 + ..." to keep track of the transformations
-    transformations = Polynomial(np.identity(len(symbols_other_polynomials), dtype=int)[:len(integration_variables)+len(regulators)], [1]*(len(integration_variables)+len(regulators)), symbols_other_polynomials)
+    # define the monomials "x0", "x1", "x2", ... to keep track of the transformations
+    one = Polynomial([[0]*len(symbols_other_polynomials)], [1], symbols_other_polynomials)
+    transformations = []
+    for i in range(len(integration_variables)):
+        to_append = one.copy()
+        to_append.expolist[:,i] = 1
+        transformations.append(to_append)
 
     # make a copy of the `integration_variables` for later reference
     all_integration_variables = list(integration_variables)
@@ -836,7 +850,49 @@ def make_package(name, integration_variables, regulators, requested_orders,
     have_dummy_functions = True if functions else False
 
     # initialize the decomposition
-    initial_sector = decomposition.Sector(polynomials_to_decompose, other_polynomials + [transformations])
+    initial_sector = decomposition.Sector(polynomials_to_decompose, other_polynomials + transformations)
+
+    # if splitting desired, implement it as additional primary decomposition
+    if split:
+        # cannot split when using the geometric decomposition method because the integration interval is [0,inf] after the primary decomposition
+        if decomposition_method == 'geometric':
+            raise ValueError('Cannot have ``split=True`` and ``decomposition_method="geometric"``. You probably want to try ``split=True`` and ``decomposition_method="iterative"``')
+
+        original_decomposition_strategies = strategy
+
+        def primary_decomposition_with_splitting(sector, indices):
+            # investigate symmetries before the split
+            if use_symmetries:
+                primary_sectors = list(  original_decomposition_strategies['primary'](sector, indices)  )
+                print('number of primary sectors before investigating symmetries:', len(primary_sectors))
+                primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, iterative_sort)
+                primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, Pak_sort)
+                print('number of primary sectors after investigating symmetries:', len(primary_sectors))
+            else:
+                primary_sectors = original_decomposition_strategies['primary'](sector, indices)
+
+            # combine split sectors before secondary decomposition
+            for subsector in original_decomposition_strategies['primary'](sector, indices):
+                cast = []
+                other = []
+                for subsubsector in decomposition.splitting.split_singular(subsector, indices):
+                    cast.extend(subsubsector.cast)
+                    other.extend(subsubsector.other)
+                    other.append(subsubsector.Jacobian)
+                yield decomposition.Sector(cast, other)
+
+        # separate split sectors after secondary decomposition
+        def secondary_decomposition_with_splitting(sector, indices):
+            # The implemented symmetry finders take a long time but do not find anything if applied here.
+            # We therefore do not waste time calling them on the split sectors.
+            for subsector in original_decomposition_strategies['secondary'](sector, indices):
+                for i in range(len(subsector.cast) / len(initial_sector.cast)):
+                    cast = subsector.cast[i*len(initial_sector.cast):(i+1)*len(initial_sector.cast)]
+                    other = subsector.other[i*(len(initial_sector.other)+1):(i+1)*(len(initial_sector.other)+1)]
+                    yield decomposition.Sector(cast, other[:-1], Jacobian=other[-1] * subsector.Jacobian)
+
+        # apply modifications to the decomposition strategy
+        strategy = dict(primary=primary_decomposition_with_splitting, secondary=secondary_decomposition_with_splitting)
 
     # initialize the counter
     sector_index = 0
@@ -877,20 +933,24 @@ def make_package(name, integration_variables, regulators, requested_orders,
             poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
 
         #  - in ``sector.other``
-        for poly in sector.other if include_last_other else sector.other[:-1]: # [:-1] due to the `transformations`
-            poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
+        for poly in sector.other if include_last_other else sector.other:
+            try:
+                poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
+            except AttributeError:
+                pass # not an exponentiated polynomial --> nothing to do
             poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
 
     # investigate if we can take advantage of sector symmetries
     # We can simplify due to symmetries if the `remainder_expression`
-    # does explicitly not depend on any integration variable.
-    use_symmetries = True
+    # does explicitly not depend on any integration variable and if
+    # we do not split the integration region.
+    remainder_expression_is_trivial = True
     for i,_ in enumerate(integration_variables):
         derivative = remainder_expression.derive(i).simplify()
         if not ( type(derivative) is Polynomial and np.array_equal(derivative.coeffs, [0]) and (derivative.expolist == 0).all() ):
-            use_symmetries = False
+            remainder_expression_is_trivial = False
             break
-    remainder_expression_is_trivial = use_symmetries
+    use_symmetries = remainder_expression_is_trivial
 
     # Check that either the primary decomposition or the `remainder_expression` is trivial.
     # Note that the primary decomposition is specialized for loop integrals.
@@ -900,8 +960,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
     if use_symmetries:
         # can investigate sector symmetries
         # we do not need `transformations` in that case --> remove from `initial_sector`
-        initial_sector.other.pop()
+        for i in range(len(integration_variables)):
+            initial_sector.other.pop()
 
+    # symmetries are applied elsewhere if we split
+    if use_symmetries and not split:
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
         primary_sectors = list( strategy['primary'](initial_sector, range(len(integration_variables))) )
         print('number of primary sectors before investigating symmetries:', len(primary_sectors))
@@ -1047,7 +1110,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             )
             names_polynomials_to_decompose.append(poly_name)
 
-        if use_symmetries:
+        if use_symmetries and not split:
             # search for symmetries throughout the secondary decomposition
             secondary_sectors = []
             for primary_sector in primary_sectors:
@@ -1058,7 +1121,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, Pak_sort)
             print('total number of sectors after investigating symmetries', len(secondary_sectors))
         else:
-            parse_exponents_and_coeffs(primary_sector, all_symbols, all_symbols, use_symmetries)
+            parse_exponents_and_coeffs(primary_sector, all_symbols, all_symbols, use_symmetries and not split)
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
         for sector in secondary_sectors:
@@ -1068,12 +1131,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             if use_symmetries:
                 # If we use symmetries, we still have to parse the `exponents` and `coeffs`.
-                parse_exponents_and_coeffs(sector, all_symbols, all_symbols, use_symmetries)
+                parse_exponents_and_coeffs(sector, all_symbols, all_symbols, use_symmetries and not split)
             else:
                 # If we do not use symmetries, we have to take care of `transformations`
-                # extract ``this_transformation``
-                this_transformation = sector.other.pop() # remove transformation from ``sector.other``
-
+                # extract ``this_transformations``
+                this_transformations = sector.other[-len(all_integration_variables):]
+                # remove transformation from ``sector.other``
+                sector.other = sector.other[:-len(all_integration_variables)]
 
             # insert the `polynomials_to_decompose`:
             # explicitly insert monomial part as ``<symbol> --> xi**pow_i * <symbol>``
@@ -1106,10 +1170,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
             for poly_name in reversed_polynomial_names:
                 Jacobian = Jacobian.replace(-1, poly_name(*symbols_other_polynomials), remove=True)
 
-            #  - from `this_transformation`
+            #  - from `this_transformations`
             if not use_symmetries:
-                for poly_name in reversed_polynomial_names:
-                    this_transformation = this_transformation.replace(-1, poly_name(*symbols_other_polynomials), remove=True)
+                for i in range(len(all_integration_variables)):
+                    for poly_name in reversed_polynomial_names:
+                        this_transformations[i] = this_transformations[i].replace(-1, poly_name(*symbols_other_polynomials), remove=True)
 
 
             # factorize polynomials in ``sector.other``
@@ -1126,16 +1191,15 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # subtraction needs type `ExponentiatedPolynomial` for all factors in its monomial part
             Jacobian = ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
 
-            if use_symmetries:
+            if remainder_expression_is_trivial:
                 # `remainder_expression` does not depend on the integration variables in that case --> nothing to transform here
                 symbolic_remainder_expression = this_primary_sector_remainder_expression
             else:
                 # Apply ``this_transformation`` and the contour deformaion (if applicable) to
                 # the `remainder_expression` BEFORE taking derivatives.
                 # Introduce a symbol for the `remainder_expression` and insert in FORM.
-                symbolic_remainder_expression_arguments = []
-                for expovec, coeff in zip(this_transformation.expolist, this_transformation.coeffs):
-                    symbolic_remainder_expression_arguments.append( Polynomial([expovec], [coeff], symbols_other_polynomials) )
+                # Note: ``elementary_monomials[len(integration_variables):]`` are the regulators
+                symbolic_remainder_expression_arguments = this_transformations + elementary_monomials[len(integration_variables):]
                 symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments)
 
             # initialize the product of monomials for the subtraction

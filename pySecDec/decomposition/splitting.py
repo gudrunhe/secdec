@@ -88,8 +88,14 @@ def find_singular_sets_at_one(polynomial):
         The polynomial to search in.
 
     '''
+    # ignore parameters that do not appear
+    indices_to_consider = []
+    for i in range(polynomial.number_of_variables):
+        if (polynomial.expolist[:,i] != 0).any():
+            indices_to_consider.append(i)
+
     singular_sets = []
-    for singular_set in powerset(range(len(polynomial.polysymbols))):
+    for singular_set in powerset(indices_to_consider):
         poly_copy = polynomial.copy()
         poly_copy.expolist[:,singular_set] = 0
         poly_copy.simplify()
@@ -113,7 +119,7 @@ def split(sector, *indices):
         The sector to be split.
 
     :param indices:
-        integers;
+        arbitrarily many integers;
         The indices of the variables to be split.
 
     '''
@@ -172,7 +178,7 @@ def split(sector, *indices):
 
     return split_recursively(sector, indices)
 
-def split_singular(sector):
+def split_singular(sector, indices=[]):
     '''
     Split the integration interval :math:`[0,1]`
     at :math:`1/2` for the parameters that can
@@ -186,6 +192,12 @@ def split_singular(sector):
         :class:`.Sector`;
         The sector to be split.
 
+    :param indices:
+        iterables of integers;
+        The indices of the variables to be split
+        if required. An empty iterator means that
+        all variables may potentially be split.
+
     '''
     # find the parameters to be split
     singular_parameters = set()
@@ -193,6 +205,10 @@ def split_singular(sector):
         polynomial = product.factors[1]
         for singular_set in find_singular_sets_at_one(polynomial):
             singular_parameters.update(singular_set)
+
+    # restrict splitting to selected `indices`
+    if indices:
+        singular_parameters.intersection_update(indices)
 
     # order the `singular_parameters`
     singular_parameters = list(singular_parameters)

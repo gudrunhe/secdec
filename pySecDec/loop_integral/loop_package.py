@@ -21,7 +21,8 @@ def loop_package(name, loop_integral, requested_order,
                  decomposition_method='iterative',
                  normaliz_executable='normaliz',
                  normaliz_workdir='normaliz_tmp',
-                 enforce_complex=False):
+                 enforce_complex=False,
+                 split=False):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -132,6 +133,15 @@ def loop_package(name, loop_integral, requested_order,
         setting this flag to ``True`` in that case.
         Default: ``False``
 
+    :param split:
+        bool, optional;
+        Whether or not to split the integration at :math:`1/2`
+        in order to map singularities from :math:`1` to
+        :math:`0`. Set this option to ``True`` if you have
+        singularties when one or more integration variables
+        are one.
+        Default: ``False``
+
     '''
     print('running "loop_package" for "' + name + '"')
 
@@ -196,7 +206,8 @@ def loop_package(name, loop_integral, requested_order,
         normaliz_executable=normaliz_executable,
         normaliz_workdir=normaliz_workdir,
 
-        enforce_complex=enforce_complex
+        enforce_complex=enforce_complex,
+        split=split
     )
 
     if isinstance(loop_integral, LoopIntegralFromGraph):
