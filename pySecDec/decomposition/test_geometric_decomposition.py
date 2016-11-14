@@ -485,7 +485,7 @@ class TestPolytope(unittest.TestCase):
             self.assertRaisesRegexp(
                                         OSError, 'No such file or directory.*nonexistentNormalizExecutable',
                                         polytope.complete_representation, normaliz='nonexistentNormalizExecutable',
-                                        workdir='tmpdir_test_triangulate_python' + python_major_version
+                                        workdir='tmpdir_test_vertex2facet_python' + python_major_version
                                    )
 
         polytope1.complete_representation(workdir='tmpdir1_test_vertex2facet_python' + python_major_version)
@@ -509,7 +509,7 @@ class TestPolytope(unittest.TestCase):
             self.assertRaisesRegexp(
                                         OSError, 'No such file or directory.*nonexistentNormalizExecutable',
                                         polytope.complete_representation, normaliz='nonexistentNormalizExecutable',
-                                        workdir='tmpdir_test_triangulate_python' + python_major_version
+                                        workdir='tmpdir_test_facet2vertex_python' + python_major_version
                                    )
 
         polytope1.complete_representation(workdir='tmpdir1_test_facet2vertex_python' + python_major_version)
