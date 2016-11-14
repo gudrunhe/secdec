@@ -251,6 +251,12 @@ class Function(_Expression):
         If provided, add the generated derivatives
         to this set.
 
+    :param sort_derivatives:
+        bool, optional;
+        If ``True``, sort multiple derivatives
+        in increasing order.
+        Default: ``False``.
+
     '''
 #   hidden keyword arguments:
 #   :param differentiated_args:
@@ -260,6 +266,16 @@ class Function(_Expression):
 #   :param derivatives:
 #       1D-array of length ``self.number_of_variables``;
 #       This is used to cache the derivatives.
+#
+#   :param derivative_multiindex:
+#       vector-like array;
+#       The derivatives that have been taken. This is used
+#       to sort the derivatives.
+#
+#   :param basename:
+#       string;
+#       The name of the function without the "d"'s for possibly taken
+#       derivatives.
 
     def __init__(self, symbol, *arguments, **kwargs):
         copy = kwargs.get('copy', True)
@@ -271,6 +287,10 @@ class Function(_Expression):
         for arg in arguments:
             assert arg.number_of_variables == self.number_of_variables, 'Must have the same number of variables in all arguments.'
             self.arguments.append(arg.copy() if copy else arg)
+
+        self.sort_derivatives = kwargs.pop('sort_derivatives', False)
+        self.basename = kwargs.pop('basename', self.symbol)
+        self.derivative_multiindex = kwargs.pop('derivative_multiindex', np.zeros(self.number_of_variables, dtype=int))
 
         self.differentiated_args = kwargs.pop('differentiated_args', np.empty((len(self.arguments), self.number_of_variables), dtype=object))
         self.derivatives = kwargs.pop('derivatives', np.empty(self.number_of_variables, dtype=object))
@@ -288,7 +308,9 @@ class Function(_Expression):
         "Return a copy of a :class:`.Function`."
         return type(self)(self.symbol, *(arg.copy() for arg in self.arguments), copy=False,
                           differentiated_args=self.differentiated_args, derivatives=self.derivatives,
-                          derivative_symbols=self.derivative_symbols)
+                          derivative_symbols=self.derivative_symbols, basename=self.basename,
+                          derivative_multiindex=self.derivative_multiindex.copy(),
+                          sort_derivatives=self.sort_derivatives)
 
     def simplify(self):
         'Simplify the arguments.'
@@ -326,14 +348,22 @@ class Function(_Expression):
             if type(differentiated_arg) is Polynomial and (differentiated_arg.coeffs == 0).all():
                 continue
 
-            derivative_symbol = 'd%sd%i'%(self.symbol,argindex)
+            derivative_multiindex = self.derivative_multiindex.copy()
+            if self.sort_derivatives:
+                derivative_multiindex[argindex] += 1
+                derivative_symbol = 'd' * derivative_multiindex.sum() + self.basename + \
+                    ''.join( ('d%i' %argindex) * howmany for argindex,howmany in enumerate(derivative_multiindex) )
+            else:
+                derivative_symbol = 'd%sd%i'%(self.symbol,argindex)
+
             self.derivative_symbols.add(derivative_symbol)
             summands.append(
                             ProductRule(    # chain rule
                                             differentiated_arg,
                                             type(self)(derivative_symbol, *(arg.copy() for arg in self.arguments),
                                                        differentiated_args=self.differentiated_args, copy=False,
-                                                       derivative_symbols=self.derivative_symbols),
+                                                       derivative_symbols=self.derivative_symbols, basename=self.basename,
+                                                       derivative_multiindex=derivative_multiindex, sort_derivatives=self.sort_derivatives),
                                             copy=False
                                        )
                            )

@@ -160,6 +160,52 @@ class TestFunction(unittest.TestCase):
         f.derive(1).derive(0)
         self.assertEqual(derivatives, set(['f','dfd0','dfd1','ddfd1d0']))
 
+    #@attr('active')
+    def test_derivative_sorting(self):
+        polysymbols = ['x','y','z']
+        x = Polynomial.from_expression('x', polysymbols)
+        y = Polynomial.from_expression('y', polysymbols)
+        z = Polynomial.from_expression('z', polysymbols)
+
+        derivatives = set()
+        f = Function('f', x, y, z, derivative_symbols=derivatives, sort_derivatives=True)
+
+        target_derivatives = set(['f'])
+        self.assertEqual(derivatives, target_derivatives)
+
+        dfd0d1 = f.derive(1).derive(0).simplify()
+        target_derivatives.update(['f','dfd1','ddfd0d1'])
+        self.assertEqual(  (sp.sympify(dfd0d1) - sp.sympify('ddfd0d1(x,y,z)')).simplify()  ,  0  )
+        self.assertEqual(derivatives, target_derivatives)
+
+        dddfd0d0d1 = f.derive(1).derive(0).derive(0).simplify()
+        target_derivatives.update(['f','dfd1','ddfd0d1','dddfd0d0d1'])
+        self.assertEqual(  (sp.sympify(dddfd0d0d1) - sp.sympify('dddfd0d0d1(x,y,z)')).simplify()  ,  0  )
+        self.assertEqual(derivatives, target_derivatives)
+
+        ddddfd0d0d1d2_with_copy = f.derive(1).copy().derive(0).simplify().derive(2).copy().derive(0).simplify()
+        target_derivatives.update(['f','dfd1','ddfd0d1','dddfd0d1d2','ddddfd0d0d1d2'])
+        self.assertEqual(  (sp.sympify(ddddfd0d0d1d2_with_copy) - sp.sympify('ddddfd0d0d1d2(x,y,z)')).simplify()  ,  0  )
+        self.assertEqual(derivatives, target_derivatives)
+
+    #@attr('active')
+    def test_derivative_sorting_composite_arg(self):
+        polysymbols = ['x','y','z']
+        x = Polynomial.from_expression('x', polysymbols)
+        y = Polynomial.from_expression('y', polysymbols)
+        z = Polynomial.from_expression('z', polysymbols)
+
+        derivatives = set()
+        f = Function('f', x-y, x+y, z, derivative_symbols=derivatives, sort_derivatives=True)
+
+        target_derivatives = set(['f'])
+        self.assertEqual(derivatives, target_derivatives)
+
+        ddfd0d1 = f.derive(1).derive(0).simplify()
+        target_derivatives.update(['f','dfd1','dfd0','ddfd0d1','ddfd0d0','ddfd1d1'])
+        self.assertEqual(  (sp.sympify(ddfd0d1) - sp.sympify('ddfd1d1(x-y,x+y,z)-ddfd0d0(x-y,x+y,z)')).simplify()  ,  0  )
+        self.assertEqual(derivatives, target_derivatives)
+
 class TestPolynomial(unittest.TestCase):
     def test_init(self):
         # Proper instantiation
