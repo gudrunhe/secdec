@@ -48,8 +48,10 @@ def plot_diagram(internal_lines, external_lines, filename, powerlist=None, neato
 
     '''
     # pinch internal lines
-    _pinch(internal_lines, external_lines, powerlist)
-
+    if powerlist != None:
+        internal_lines = [ [mass,[vertex1,vertex2]] for mass,(vertex1,vertex2) in internal_lines ] # deep copy
+        external_lines = [ [momentum,vertex] for momentum,vertex in external_lines ] # deep copy
+        _pinch(internal_lines, external_lines, powerlist) # modify `internal_lines` and `external_lines` in place
 
     internal_edges_dot = ""
     external_edges_dot = ""
@@ -134,16 +136,15 @@ def _edgepower(begin, end, label, power=1, uniq=None):
         return edges_dot
 
 
-def _pinch(internal_lines, external_lines, powerlist=None):
-    if powerlist != None:
-        for idx, power in enumerate(powerlist):
-            if power == 0:
-                new = internal_lines[idx][1][0]
-                old = internal_lines[idx][1][1]
-                for line in internal_lines:
-                    for i in range(0, len(line[1]) ):
-                        if line[1][i] == old:
-                            line[1][i] = new
-                for line in external_lines:
-                    if line[1] == old:
-                        line[1] = new
+def _pinch(internal_lines, external_lines, powerlist):
+    for idx, power in enumerate(powerlist):
+        if power == 0:
+            new = internal_lines[idx][1][0]
+            old = internal_lines[idx][1][1]
+            for line in internal_lines:
+                for i in range(0, len(line[1]) ):
+                    if line[1][i] == old:
+                        line[1][i] = new
+            for line in external_lines:
+                if line[1] == old:
+                    line[1] = new
