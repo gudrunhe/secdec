@@ -9,6 +9,10 @@ def plot_diagram(internal_lines, external_lines, filename, powerlist=None, neato
     Thanks to Viktor Papara <papara@mpp.mpg.de> for
     his major contributions to this function.
 
+    .. warning::
+        The target is overwritten without prompt if
+        it exists already.
+
     :param internal_lines:
         list;
         Adjacency list of internal lines,
@@ -87,9 +91,15 @@ def plot_diagram(internal_lines, external_lines, filename, powerlist=None, neato
         dummy += 1
 
 
+    # find a filename that does not conflict with any existing file
+    index = 1
+    tempfile_basename = filename + '_tmp_'
+    while os.path.exists(tempfile_basename + str(index)):
+        index += 1
+
     try:
         # Write temporary dot file
-        with open(filename, "w") as dot:
+        with open(tempfile_basename + str(index), "w") as dot:
             dot.write( "graph 1 {\n" + "node [shape=point];\n"
             "{node [shape=plaintext label=\"\"] " + nodes_dot + "}\n"
             + internal_edges_dot
@@ -97,10 +107,10 @@ def plot_diagram(internal_lines, external_lines, filename, powerlist=None, neato
             + "}\n"
             )
         # Run neato on temporary dot file
-        subprocess.check_call([neato, "-T"+extension, "-Gstart="+str(Gstart), "-Gepsilon=0.000001", "-O", filename])
+        subprocess.check_call([neato, "-T"+extension, "-Gstart="+str(Gstart), "-Gepsilon=0.000001", "-o" + filename + '.' + extension, tempfile_basename + str(index)])
     finally:
         # Remove temporary file
-        os.remove(filename)
+        os.remove(tempfile_basename + str(index))
         # print internal_lines
 
 def _edgepower(begin, end, label, power=1, uniq=None):
