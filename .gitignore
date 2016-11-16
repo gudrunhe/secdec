@@ -10,3 +10,4 @@ pySecDec.egg-info
 
 build/
 dist/
+pySecDec-*/
