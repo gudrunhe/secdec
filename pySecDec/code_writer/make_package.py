@@ -384,7 +384,7 @@ def _make_FORM_function_definition(name, expression, args, limit):
 
     recursion(name, expression)
     codelines.append('') # empty line
-    return "\n".join(codelines)
+    return (  "\n".join(codelines)  ).replace('**','^')
 
 def _make_FORM_shifted_orders(positive_powers):
     r'''
@@ -1047,8 +1047,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # define the FORM procedure that inserts the deformed integration variables
             insert_deformed_integration_variables_procedure = ''.join(
                 _make_FORM_function_definition(
-                    'SecDecInternalDeformed' + str(integration_variable), deformed_integration_parameters[idx], integration_variables, limit=10**6
-                ).replace('**','^')
+                    FORM_names['deformed_variable'] + str(integration_variable), deformed_integration_parameters[idx], integration_variables, limit=10**6
+                )
                 for idx,integration_variable in enumerate(integration_variables)
             )
 
@@ -1363,11 +1363,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # generate the function definitions for the insertion in FORM
             FORM_cal_I_definitions = ''.join(
-                _make_FORM_function_definition(name, cal_I_derivatives[name], symbols_other_polynomials, limit=10**6).replace('**','^')
+                _make_FORM_function_definition(name, cal_I_derivatives[name], symbols_other_polynomials, limit=10**6)
                 for name in ordered_cal_I_derivative_names
             )
             FORM_function_definitions = ''.join(
-                _make_FORM_function_definition(name, other_derivatives[name], symbols_remainder_expression, limit=10**6).replace('**','^')
+                _make_FORM_function_definition(name, other_derivatives[name], symbols_remainder_expression, limit=10**6)
                 for name in ordered_other_derivative_names
             )
 
