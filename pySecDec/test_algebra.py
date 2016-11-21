@@ -6,78 +6,7 @@ import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
 
-class TestDerivativeTracker(unittest.TestCase):
-    #@attr('active')
-    def test_derivative_tracking(self):
-        poly = Polynomial.from_expression('x**2*y + y**2', ['x','y'])
-        tracker = DerivativeTracker(poly)
-        tracker.derive(0).derive(1)
-        target_derivatives = {(1,0): [0,(0,0)], (1,1) : [1,(1,0)]}
-        self.assertEqual(tracker.derivatives, target_derivatives)
-
-    #@attr('active')
-    def test_derivative_tracking_with_replace(self):
-        poly = Polynomial.from_expression('x**2*y + y**2 + z', ['x','y','z'])
-        tracker = DerivativeTracker(poly)
-        tracker.derive(0).replace(0,0).derive(1).replace(1,0)
-        target_derivatives = {(1,0,0): [0,(0,0,0)], (1,1,0) : [1,(1,0,0)]}
-        self.assertEqual(tracker.derivatives, target_derivatives)
-
-    #@attr('active')
-    def test_str(self):
-        # Note: ``repr`` is checked by the doctests
-        poly = Polynomial.from_expression('x**2*y + y**2 + z', ['x','y','z'])
-        tracker = DerivativeTracker(poly)
-        self.assertEqual(str(tracker), str(poly))
-
-    #@attr('active')
-    def test_compute_own_derivatives(self):
-        poly = Polynomial.from_expression('x**2*y + y**2', ['x','y'])
-        tracker = DerivativeTracker(poly)
-        tracker.derive(0).derive(1)
-        tracker.derive(1).derive(0).derive(0)
-
-        target_derivatives_as_strings = \
-        {
-            (1,0) : '2*x*y',
-            (0,1) : '2*y + x**2',
-            (1,1) : '2*x',
-            (2,1) : '2'
-        }
-        target_derivatives = {key : sp.sympify(value)
-                              for key, value in target_derivatives_as_strings.items()}
-
-        recomputed_derivatives_as_expressions = tracker.compute_derivatives()
-        recomputed_derivatives = {key : sp.sympify(value)
-                                  for key, value in recomputed_derivatives_as_expressions.items()}
-
-        self.assertEqual(recomputed_derivatives, target_derivatives)
-
-    #@attr('active')
-    def test_compute_other_derivatives(self):
-        poly = Polynomial.from_expression('x**2*y + y**2', ['x','y'])
-        tracker = DerivativeTracker(poly)
-        tracker.derive(0).derive(1)
-        tracker.derive(1).derive(0).derive(0)
-
-        other_expression = Expression('x*y', ['x','y'])
-
-        target_derivatives_as_strings = \
-        {
-            (1,0) : 'y',
-            (0,1) : 'x',
-            (1,1) : '1',
-            (2,1) : '0'
-        }
-        target_derivatives = {key : sp.sympify(value)
-                              for key, value in target_derivatives_as_strings.items()}
-
-        recomputed_derivatives_as_expressions = tracker.compute_derivatives(other_expression)
-        recomputed_derivatives = {key : sp.sympify(value)
-                                  for key, value in recomputed_derivatives_as_expressions.items()}
-
-        self.assertEqual(recomputed_derivatives, target_derivatives)
-
+#@attr('active')
 class TestFunction(unittest.TestCase):
     def setUp(self):
         self.polysymbols = ['x0', 'x1', 'x2', 'x3']
@@ -140,7 +69,7 @@ class TestFunction(unittest.TestCase):
         self.assertEqual( (sp.sympify(dgd0) - sp.sympify('dgd0(x0,x1,2*x2*x3+x0) + dgd2(x0,x1,2*x2*x3+x0)')).simplify() , 0 )
 
     #@attr('active')
-    def test_derivative_tracking(self):
+    def test_derivative_symbols(self):
         polysymbols = ['x','y','z']
         x = Polynomial.from_expression('x', polysymbols)
         y = Polynomial.from_expression('y', polysymbols)
@@ -159,6 +88,134 @@ class TestFunction(unittest.TestCase):
 
         f.derive(1).derive(0)
         self.assertEqual(derivatives, set(['f','dfd0','dfd1','ddfd1d0']))
+
+    #@attr('active')
+    def test_derivative_sorting(self):
+        polysymbols = ['x','y','z']
+        x = Polynomial.from_expression('x', polysymbols)
+        y = Polynomial.from_expression('y', polysymbols)
+        z = Polynomial.from_expression('z', polysymbols)
+
+        derivatives = set()
+        f = Function('f', x, y, z, derivative_symbols=derivatives, sort_derivatives=True)
+
+        target_derivatives = set(['f'])
+        self.assertEqual(derivatives, target_derivatives)
+
+        dfd0d1 = f.derive(1).derive(0).simplify()
+        target_derivatives.update(['f','dfd1','ddfd0d1'])
+        self.assertEqual(  (sp.sympify(dfd0d1) - sp.sympify('ddfd0d1(x,y,z)')).simplify()  ,  0  )
+        self.assertEqual(derivatives, target_derivatives)
+
+        dddfd0d0d1 = f.derive(1).derive(0).derive(0).simplify()
+        target_derivatives.update(['f','dfd1','ddfd0d1','dddfd0d0d1'])
+        self.assertEqual(  (sp.sympify(dddfd0d0d1) - sp.sympify('dddfd0d0d1(x,y,z)')).simplify()  ,  0  )
+        self.assertEqual(derivatives, target_derivatives)
+
+        ddddfd0d0d1d2_with_copy = f.derive(1).copy().derive(0).simplify().derive(2).copy().derive(0).simplify()
+        target_derivatives.update(['f','dfd1','ddfd0d1','dddfd0d1d2','ddddfd0d0d1d2'])
+        self.assertEqual(  (sp.sympify(ddddfd0d0d1d2_with_copy) - sp.sympify('ddddfd0d0d1d2(x,y,z)')).simplify()  ,  0  )
+        self.assertEqual(derivatives, target_derivatives)
+
+    #@attr('active')
+    def test_derivative_sorting_composite_arg(self):
+        polysymbols = ['x','y','z']
+        x,y,z = (Polynomial.from_expression(symbol, polysymbols) for symbol in polysymbols)
+
+        derivatives = set()
+        f = Function('f', x-y, x+y, z, derivative_symbols=derivatives, sort_derivatives=True)
+
+        target_derivatives = set(['f'])
+        self.assertEqual(derivatives, target_derivatives)
+
+        ddfd0d1 = f.derive(1).derive(0).simplify()
+        target_derivatives.update(['f','dfd1','dfd0','ddfd0d1','ddfd0d0','ddfd1d1'])
+        self.assertEqual(  (sp.sympify(ddfd0d1) - sp.sympify('ddfd1d1(x-y,x+y,z)-ddfd0d0(x-y,x+y,z)')).simplify()  ,  0  )
+        self.assertEqual(derivatives, target_derivatives)
+
+    #@attr('active')
+    def test_derivative_tracking(self):
+        x = Polynomial.from_expression('x', ['x','y'])
+        y = Polynomial.from_expression('y', ['x','y'])
+        poly = x**2*y + y**2
+        func = Function('f', x, y)
+        func.derive(0).derive(1)
+        target_derivative_tracks = {(1,0): [0,(0,0)], (1,1) : [1,(1,0)]}
+        self.assertEqual(func.derivative_tracks, target_derivative_tracks)
+
+    #@attr('active')
+    def test_derivative_tracking_with_replace(self):
+        x = Polynomial.from_expression('x', ['x','y','z'])
+        y = Polynomial.from_expression('y', ['x','y','z'])
+        z = Polynomial.from_expression('z', ['x','y','z'])
+        poly = Polynomial.from_expression('x**2*y + y**2 + z', ['x','y','z'])
+        func = Function('f', x, y, z)
+        func.derive(0).replace(0,0).derive(1).replace(1,0)
+        target_derivative_tracks = {(1,0,0): [0,(0,0,0)], (1,1,0) : [1,(1,0,0)]}
+        self.assertEqual(func.derivative_tracks, target_derivative_tracks)
+
+    #@attr('active')
+    def test_str(self):
+        # Note: ``repr`` is checked by the doctests
+        x, y, z = (Polynomial.from_expression(symbol, ['x','y','z']) for symbol in ['x','y','z'])
+        func = Function('func', x, y, z)
+        self.assertEqual(str(func), 'func( + (1)*x, + (1)*y, + (1)*z)')
+
+    #@attr('active')
+    def test_compute_own_derivatives(self):
+        polysymbols = ['x','y']
+        x,y = (Polynomial.from_expression(symbol, polysymbols) for symbol in polysymbols)
+
+        func = Function('F', x**2*y, y**2, sort_derivatives=True)
+        func.derive(0).derive(1)
+        func.derive(1).derive(0).derive(0)
+
+        target_derivatives_as_strings = \
+        {
+            (1,0) : 'dFd0(x**2*y,y**2) * 2*x*y',
+            (0,1) : 'dFd0(x**2*y,y**2) * x**2 + dFd1(x**2*y,y**2) * 2*y',
+            (1,1) : 'dFd0(x**2*y,y**2) * 2*x + ddFd0d0(x**2*y,y**2) * x**2*2*x*y + ddFd0d1(x**2*y,y**2) * 2*y*2*x*y',
+            (2,1) : 'dFd0(x**2*y,y**2) * 2 + ddFd0d0(x**2*y,y**2) * 2*x*2*x*y + ddFd0d0(x**2*y,y**2) * 6*x**2*y + dddFd0d0d0(x**2*y,y**2) * x**2*2*x*y*2*x*y +' + \
+                    'ddFd0d1(x**2*y,y**2) * 2*y*2*y + dddFd0d0d1(x**2*y,y**2) * 2*y*2*x*y*2*x*y',
+            (2,0) : 'dFd0(x**2*y,y**2) * 2*y + ddFd0d0(x**2*y,y**2) * (2*x*y)**2',
+            (3,0) : 'ddFd0d0(x**2*y,y**2) * 2*y*2*x*y + ddFd0d0(x**2*y,y**2) * 2*4*x**1*y**2 + dddFd0d0d0(x**2*y,y**2) * 4*x**2*y**2*2*x*y'
+        }
+        target_derivatives = {key : sp.sympify(value).expand()
+                              for key, value in target_derivatives_as_strings.items()}
+
+        recomputed_derivatives_as_expressions = func.compute_derivatives()
+        recomputed_derivatives = {key : sp.sympify(value).expand()
+                                  for key, value in recomputed_derivatives_as_expressions.items()}
+
+        self.assertEqual(recomputed_derivatives, target_derivatives)
+
+    #@attr('active')
+    def test_compute_other_derivatives(self):
+        polysymbols = ['x','y']
+        x,y = (Polynomial.from_expression(symbol, polysymbols) for symbol in polysymbols)
+        poly = Polynomial.from_expression('x**2*y + y**2', polysymbols)
+
+        func = Function('f', x, y)
+        func.derive(0).derive(1)
+        func.derive(1).derive(0).derive(0)
+
+        other_expression = x*y
+
+        target_derivatives_as_strings = \
+        {
+            (1,0) : 'y',
+            (0,1) : 'x',
+            (1,1) : '1',
+            (2,1) : '0'
+        }
+        target_derivatives = {key : sp.sympify(value)
+                              for key, value in target_derivatives_as_strings.items()}
+
+        recomputed_derivatives_as_expressions = func.compute_derivatives(other_expression)
+        recomputed_derivatives = {key : sp.sympify(value)
+                                  for key, value in recomputed_derivatives_as_expressions.items()}
+
+        self.assertEqual(recomputed_derivatives, target_derivatives)
 
 class TestPolynomial(unittest.TestCase):
     def test_init(self):

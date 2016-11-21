@@ -80,60 +80,124 @@ class _Expression(object):
 
         '''
 
-class DerivativeTracker(_Expression):
-    r'''
-    Keep track of all derivatives taken of an
-    :class:`._Expression`.
-    When the :meth:`.derive` method is called,
-    save the multiindex of the derivative to be
-    taken.
-
-    :param expression:
-        :class:`._Expression` in the sense of
-        this module;
-        The `expression` to track the derivatives.
-
-    :param copy:
-        bool;
-        Whether or not to copy the `expression`.
+class Function(_Expression):
+    '''
+    Symbolic function that can take care of
+    parameter transformations.
+    It keeps track of all taken derivatives:
+    When :meth:`.derive` is called, save the
+    multiindex of the taken derivative.
 
     The derivative multiindices are the keys in
-    the `dictionary` ``self.derivatives``. The
+    the dictionary ``self.derivative_tracks``. The
     values are lists with two elements: Its first
     element is the index to derive the derivative
     indicated by the multiindex in the second
     element by, in order to abtain the derivative
     indicated by the key:
 
-    >>> from pySecDec.algebra import Polynomial, DerivativeTracker
-    >>> poly = Polynomial.from_expression('x**2*y + y**2', ['x','y'])
-    >>> tracker = DerivativeTracker(poly)
-    >>> tracker.derive(0).derive(1)
-    DerivativeTracker( + (2)*x, index = (1, 1), derivatives = {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]})
-    >>> tracker.derivatives
+    >>> from pySecDec.algebra import Polynomial, Function
+    >>> x = Polynomial.from_expression('x', ['x','y'])
+    >>> y = Polynomial.from_expression('y', ['x','y'])
+    >>> poly = x**2*y + y**2
+    >>> func = Function('f', x, y)
+    >>> ddfuncd0d1 = func.derive(0).derive(1)
+    >>> func
+    Function(f( + (1)*x, + (1)*y), derivative_tracks = {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]})
+    >>> func.derivative_tracks
     {(1, 0): [0, (0, 0)], (1, 1): [1, (1, 0)]}
-    >>> tracker.compute_derivatives()
+    >>> func.compute_derivatives(poly)
     {(1, 0):  + (2)*x*y, (1, 1):  + (2)*x}
 
+    :param symbol:
+        string;
+        The symbol to be used to represent
+        the `Function`.
+
+    :param arguments:
+        arbitrarily many :class:`._Expression`;
+        The arguments of the `Function`.
+
+    :param copy:
+        bool;
+        Whether or not to copy the `arguments`.
+
+    :param sort_derivatives:
+        bool, optional;
+        If ``True``, sort multiple derivatives
+        in increasing order:
+        Default: ``False``.
+
     '''
-    def __init__(self, expression, copy=False):
-        self.expression = expression.copy() if copy else expression
-        self.number_of_variables = expression.number_of_variables
-        self.derivative_multiindex = tuple(0 for i in range(self.number_of_variables))
-        self.derivatives = {}
+#   hidden keyword arguments:
+#   :param differentiated_args:
+#       2D-array with shape ``(len(self.arguments), self.number_of_variables)``;
+#       This is used to cache the derivatives of the arguments.
+#
+#   :param derivatives:
+#       1D-array of length ``self.number_of_variables``;
+#       This is used to cache the derivatives.
+#
+#   :param derivative_multiindex:
+#       vector-like array;
+#       The derivatives that have been taken. This is used
+#       to sort the derivatives.
+#
+#   :param basename:
+#       string;
+#       The name of the function without the "d"'s for possibly taken
+#       derivatives.
+#
+#   :param derivative_tracks:
+#       dict;
+#       The paths to the taken derivatives.
+
+    def __init__(self, symbol, *arguments, **kwargs):
+        copy = kwargs.get('copy', True)
+
+        self.symbol = symbol
+        self.number_of_arguments = len(arguments)
+        self.number_of_variables = arguments[0].number_of_variables
+        self.arguments = []
+        for arg in arguments:
+            assert arg.number_of_variables == self.number_of_variables, 'Must have the same number of variables in all arguments.'
+            self.arguments.append(arg.copy() if copy else arg)
+
+        self.derivative_tracks = kwargs.pop('derivative_tracks', {})
+
+        self.sort_derivatives = kwargs.pop('sort_derivatives', False)
+        self.basename = kwargs.pop('basename', self.symbol)
+        self.derivative_multiindex = kwargs.pop('derivative_multiindex', tuple([0] * self.number_of_variables))
+
+        self.differentiated_args = kwargs.pop('differentiated_args', np.empty((len(self.arguments), self.number_of_variables), dtype=object))
+        self.derivatives = kwargs.pop('derivatives', np.empty(self.number_of_variables, dtype=object))
+        self.derivative_symbols = kwargs.pop('derivative_symbols', set())
+        self.derivative_symbols.add(self.symbol)
+
+    def __str__(self):
+        outstr_template = self.symbol + '(%s)'
+        str_args = ','.join(str(arg) for arg in self.arguments)
+        return outstr_template % str_args
+
+    def __repr__(self):
+        out = 'Function('
+        out += str(self)
+        out += ', derivative_tracks = ' + repr(self.derivative_tracks) + ')'
+        return out
 
     def compute_derivatives(self, expression=None):
         '''
         Compute all derivatives of ``expression`` that
-        are mentioned in ``self.derivatives``.
+        are mentioned in ``self.derivative_tracks``.
         The purpose of this function is to avoid
         computing the same derivatives multiple times.
 
         :param expression:
             :class:`._Expression`, optional;
             The expression to compute the derivatives of.
-            If not provided, the derivatives of
-            ``self.expression`` are computed.
+            If not provided, the derivatives are shown
+            as in terms of the `function`'s derivatives
+            ``dfd<index>``.
 
         '''
         def update(repository, multiindex, recipies, expression):
@@ -159,136 +223,21 @@ class DerivativeTracker(_Expression):
                     return required_derivative
 
         if expression is None:
-            expression = self.expression
+            expression = self
 
         derivatives = {}
-        for multiindex in self.derivatives.keys():
-            update(derivatives, multiindex, self.derivatives, expression)
+        for multiindex in self.derivative_tracks.keys():
+            update(derivatives, multiindex, self.derivative_tracks, expression)
 
         return derivatives
-
-    def derive(self, index):
-        '''
-        Generate the derivative of the `expression`
-        and update ``self.derivatives``.
-
-        '''
-        # generate the desired derivative
-        derivative = self.expression.derive(index)
-
-        # generate the multiindex of the requested derivative
-        old_multiindex = self.derivative_multiindex
-        new_multiindex = list(old_multiindex)
-        new_multiindex[index] += 1
-        new_multiindex = tuple(new_multiindex)
-        self.derivatives[new_multiindex] = [index, old_multiindex]
-
-        # generate the new instance of `DerivativeTracker`
-        new_tracker = DerivativeTracker(derivative, copy=False)
-        new_tracker.derivatives = self.derivatives
-        new_tracker.derivative_multiindex = new_multiindex
-
-        return new_tracker
-
-    def __repr__(self):
-        out = 'DerivativeTracker('
-        out += repr(self.expression)
-        out += ', index = ' + repr(self.derivative_multiindex)
-        out += ', derivatives = ' + repr(self.derivatives) + ')'
-        return out
-
-    def __str__(self):
-        return str(self.expression)
-
-    def copy(self):
-        "Return a copy of a :class:`.DerivativeTracker`."
-        out = DerivativeTracker(self.expression, copy=True)
-        out.derivatives = self.derivatives
-        out.derivative_multiindex = self.derivative_multiindex
-        return out
-
-    def simplify(self):
-        'Simplify the `expression`.'
-        self.expression = self.expression.simplify()
-        return self
-
-    @property
-    def symbols(self):
-        return self.expression.symbols
-
-    @doc(_Expression.docstring_of_replace)
-    def replace(self, index, value, remove=False):
-        if remove:
-            raise ValueError('Cannot use ``replace`` with ``remove=True`` in `DerivativeTracker`')
-
-        out = self.copy()
-        out.expression = self.expression.replace(index, value, False)
-        return out
-
-class Function(_Expression):
-    '''
-    Symbolic function that can take care of
-    parameter transformations.
-    The symbols of all derivatives that are
-    generated by :meth:`.derive` are added to
-    the set ``self.derivative_symbols``.
-
-    :param symbol:
-        string;
-        The symbol to be used to represent
-        the `Function`.
-
-    :param arguments:
-        arbitrarily many :class:`._Expression`;
-        The arguments of the `Function`.
-
-    :param copy:
-        bool;
-        Whether or not to copy the `arguments`.
-
-    :param derivative_symbols:
-        set, optional;
-        If provided, add the generated derivatives
-        to this set.
-
-    '''
-#   hidden keyword arguments:
-#   :param differentiated_args:
-#       2D-array with shape ``(len(self.arguments), self.number_of_variables)``;
-#       This is used to cache the derivatives of the arguments.
-#
-#   :param derivatives:
-#       1D-array of length ``self.number_of_variables``;
-#       This is used to cache the derivatives.
-
-    def __init__(self, symbol, *arguments, **kwargs):
-        copy = kwargs.get('copy', True)
-
-        self.symbol = symbol
-        self.number_of_arguments = len(arguments)
-        self.number_of_variables = arguments[0].number_of_variables
-        self.arguments = []
-        for arg in arguments:
-            assert arg.number_of_variables == self.number_of_variables, 'Must have the same number of variables in all arguments.'
-            self.arguments.append(arg.copy() if copy else arg)
-
-        self.differentiated_args = kwargs.pop('differentiated_args', np.empty((len(self.arguments), self.number_of_variables), dtype=object))
-        self.derivatives = kwargs.pop('derivatives', np.empty(self.number_of_variables, dtype=object))
-        self.derivative_symbols = kwargs.pop('derivative_symbols', set())
-        self.derivative_symbols.add(self.symbol)
-
-    def __repr__(self):
-        outstr_template = self.symbol + '(%s)'
-        str_args = ','.join(str(arg) for arg in self.arguments)
-        return outstr_template % str_args
-
-    __str__ = __repr__
 
     def copy(self):
         "Return a copy of a :class:`.Function`."
         return type(self)(self.symbol, *(arg.copy() for arg in self.arguments), copy=False,
                           differentiated_args=self.differentiated_args, derivatives=self.derivatives,
-                          derivative_symbols=self.derivative_symbols)
+                          derivative_symbols=self.derivative_symbols, basename=self.basename,
+                          derivative_multiindex=self.derivative_multiindex,
+                          sort_derivatives=self.sort_derivatives, derivative_tracks=self.derivative_tracks)
 
     def simplify(self):
         'Simplify the arguments.'
@@ -326,14 +275,28 @@ class Function(_Expression):
             if type(differentiated_arg) is Polynomial and (differentiated_arg.coeffs == 0).all():
                 continue
 
-            derivative_symbol = 'd%sd%i'%(self.symbol,argindex)
+            # generate the multiindex of the requested derivative
+            old_multiindex = self.derivative_multiindex
+            new_multiindex = list(old_multiindex)
+            new_multiindex[argindex] += 1
+            new_multiindex = tuple(new_multiindex)
+            self.derivative_tracks[new_multiindex] = [argindex, old_multiindex]
+
+            if self.sort_derivatives:
+                derivative_symbol = 'd' * np.sum(new_multiindex) + self.basename + \
+                    ''.join( ('d%i' %argindex) * howmany for argindex,howmany in enumerate(new_multiindex) )
+            else:
+                derivative_symbol = 'd%sd%i'%(self.symbol,argindex)
+
             self.derivative_symbols.add(derivative_symbol)
             summands.append(
                             ProductRule(    # chain rule
                                             differentiated_arg,
                                             type(self)(derivative_symbol, *(arg.copy() for arg in self.arguments),
                                                        differentiated_args=self.differentiated_args, copy=False,
-                                                       derivative_symbols=self.derivative_symbols),
+                                                       derivative_symbols=self.derivative_symbols, basename=self.basename,
+                                                       derivative_multiindex=new_multiindex, sort_derivatives=self.sort_derivatives,
+                                                       derivative_tracks=self.derivative_tracks),
                                             copy=False
                                        )
                            )
@@ -347,7 +310,14 @@ class Function(_Expression):
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         arguments = [arg.replace(index, value, remove) for arg in expression.arguments]
-        return type(expression)(expression.symbol, *arguments, copy=False, derivative_symbols=expression.derivative_symbols)
+        return type(expression)(
+                                    expression.symbol, *arguments, copy=False,
+                                    derivative_symbols=expression.derivative_symbols,
+                                    basename=expression.basename,
+                                    derivative_multiindex=expression.derivative_multiindex,
+                                    sort_derivatives=expression.sort_derivatives,
+                                    derivative_tracks=expression.derivative_tracks
+                               )
 
 class Polynomial(_Expression):
     '''
@@ -1633,9 +1603,6 @@ def Expression(expression, polysymbols, follow_functions=False):
         If true, return the converted expression
         and a list of :class:`.Function`
         that occur in the `expression`.
-        Add all occuring functions as
-        :class:`.DerivativeTracker` to keep track
-        of their derivatives.
 
     '''
     parsed_polysymbols = []

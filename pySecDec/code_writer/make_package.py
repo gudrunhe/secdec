@@ -9,8 +9,7 @@ from ..metadata import version, git_id
 from ..misc import sympify_symbols, rangecomb
 from ..algebra import _Expression, Expression, Polynomial, \
                       ExponentiatedPolynomial, Pow, Product, \
-                      ProductRule, DerivativeTracker, Function, \
-                      Sum
+                      ProductRule, Function, Sum
 from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort
 from ..subtraction import integrate_pole_part, pole_structure as compute_pole_structure
@@ -407,7 +406,7 @@ def _make_FORM_shifted_orders(positive_powers):
 def _derivative_muliindex_to_name(basename, multiindex):
     '''
     Convert a derivative multiindex as returned by
-    :meth:`pySecDec.algebra.DerivativeTracker.compute_derivatives`
+    :meth:`pySecDec.algebra.Function.compute_derivatives`
     to the form ``d...d<basename>d<index>...d<index>``.
 
     Example:
@@ -1016,8 +1015,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
-            symbolic_contour_deformation_polynomial = Function(FORM_names['contour_deformation_polynomial'], *elementary_monomials)
-            symbolic_contour_deformation_polynomial = DerivativeTracker(symbolic_contour_deformation_polynomial)
+            symbolic_contour_deformation_polynomial = Function(FORM_names['contour_deformation_polynomial'], *elementary_monomials) # TODO: reset `derivative_tracks` before every secondary sector
 
             # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
             # ``z_k({x_k}) = x_k - i * lambda_k * x_k*exp(-mu/x_k) * (1-x_k) * Re(dF_dx_k)``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
@@ -1080,7 +1078,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(i,1,remove=True)
                 break
 
-        # we later need ``1`` packed into specific types
+        # we later need ``0`` and ``1`` packed into specific types
+        polynomial_zero = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([0]), symbols_other_polynomials, copy=False)
         polynomial_one = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([1]), symbols_other_polynomials, copy=False)
         pole_part_initializer = Pow(polynomial_one, -polynomial_one)
 
@@ -1191,16 +1190,16 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # subtraction needs type `ExponentiatedPolynomial` for all factors in its monomial part
             Jacobian = ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
 
+            # Apply ``this_transformation`` and the contour deformaion (if applicable) to
+            # the `remainder_expression` BEFORE taking derivatives.
+            # Introduce a symbol for the `remainder_expression` and insert in FORM.
+            # Note: ``elementary_monomials[len(integration_variables):]`` are the regulators
             if remainder_expression_is_trivial:
-                # `remainder_expression` does not depend on the integration variables in that case --> nothing to transform here
-                symbolic_remainder_expression = this_primary_sector_remainder_expression
+                # `remainder_expression` does not depend on the integration variables in that case
+                symbolic_remainder_expression_arguments = [polynomial_zero] * len(integration_variables) + elementary_monomials[len(integration_variables):]
             else:
-                # Apply ``this_transformation`` and the contour deformaion (if applicable) to
-                # the `remainder_expression` BEFORE taking derivatives.
-                # Introduce a symbol for the `remainder_expression` and insert in FORM.
-                # Note: ``elementary_monomials[len(integration_variables):]`` are the regulators
                 symbolic_remainder_expression_arguments = this_transformations + elementary_monomials[len(integration_variables):]
-                symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments)
+            symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments)
 
             # initialize the product of monomials for the subtraction
             monomial_factors = list(chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
@@ -1210,6 +1209,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             pole_structures.append(  compute_pole_structure(monomials, *integration_variable_indices)  )
 
             if contour_deformation_polynomial is not None:
+                # TODO: reset `derivative_tracks` of `symbolic_contour_deformation_polynomial` here
+
                 # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k*exp(-mu/x_k) * (1-x_k) * Re(dF_dx_k)`` to the monomials.
                 # Split as ``z_k({x_k}) = monomials[k] * <something in remainder_expression>``
                 # where ``monomials[k] = x_k``; i.e. unchanged
@@ -1239,11 +1240,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
                            )
                     )
                 additional_deformation_factor = Product(*additional_deformation_factors, copy=False)
-            derivative_tracking_symbolic_remainder_expression = DerivativeTracker(symbolic_remainder_expression)
+            derivative_tracking_symbolic_remainder_expression = symbolic_remainder_expression # TODO: reset `derivative_tracks` here
 
-            # define `DerivativeTracker` for the symbolic polynomials
-            derivative_tracking_symbolic_polynomials_to_decompose = [DerivativeTracker(f) for f in symbolic_polynomials_to_decompose]
-            derivative_tracking_symbolic_other_polynomials = [DerivativeTracker(f) for f in symbolic_other_polynomials]
+            # define `DerivativeTracker` for the symbolic polynomials # TODO: rephrase
+            derivative_tracking_symbolic_polynomials_to_decompose = symbolic_polynomials_to_decompose # TODO: reset `derivative_tracks` here
+            derivative_tracking_symbolic_other_polynomials = symbolic_other_polynomials # TODO: reset `derivative_tracks` here
 
             # define ``cal_I``, the part of the integrand that does not lead to poles
             # use the derivative tracking dummy functions for the polynomials --> faster
@@ -1252,12 +1253,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # multiply Jacobian determinant to `cal_I`
             if contour_deformation_polynomial is not None:
                 symbolic_contourdef_Jacobian = NoDerivativeAtZeroFunction(FORM_names['contourdef_Jacobian'], *elementary_monomials[:len(integration_variables)])
-                symbolic_additional_deformation_factor = DerivativeTracker( Function(FORM_names['additional_deformation_factor'], *elementary_monomials) )
+                symbolic_additional_deformation_factor = Function(FORM_names['additional_deformation_factor'], *elementary_monomials)
                 cal_I = Product(symbolic_contourdef_Jacobian, symbolic_additional_deformation_factor, cal_I)
 
             # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
-            # symbolic cal_I wrapped in a `DerivativeTracker` to keep track of derivatives
-            symbolic_cal_I = DerivativeTracker(Function(FORM_names['cal_I'], *elementary_monomials))
+            symbolic_cal_I = Function(FORM_names['cal_I'], *elementary_monomials)
 
             # initialize the Product to be passed to `integrate_pole_part` (the subtraction) and subtract
             subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
@@ -1328,7 +1328,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 )
 
             #  - for the polynomials (`other_polynomials` first since they can reference `polynomials_to_decompose`)
-            for prod, tracker, basename in chain(
+            for prod, exponentiated_function, basename in chain(
                 zip(sector.other, derivative_tracking_symbolic_other_polynomials, names_other_polynomials),
                 zip(sector.cast , derivative_tracking_symbolic_polynomials_to_decompose, names_polynomials_to_decompose)
             ):
@@ -1336,7 +1336,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 expression.exponent = 1 # exponent is already part of the `tracker`
                 update_derivatives(
                     basename=basename, # name as defined in `polynomial_names` or dummy name
-                    derivative_tracker=tracker,
+                    derivative_tracker=exponentiated_function.base,
                     full_expression=expression
                 )
 
