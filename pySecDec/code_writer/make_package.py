@@ -31,6 +31,26 @@ import sys, os
 
 _sympy_one = sp.sympify(1)
 
+# define the internal names to be used in FORM
+internal_prefix = 'SecDecInternal'
+FORM_names = dict(
+    cal_I=internal_prefix+'CalI',
+    real_part=internal_prefix+'RealPart',
+    cast_polynomial=internal_prefix+'PolynomialToDecompose',
+    other_polynomial=internal_prefix+'OtherPolynomial',
+    remainder_expression=internal_prefix+'RemainderExpression',
+    contourdef_transform=internal_prefix+'ContourdefDeformation',
+    contourdef_Jacobian=internal_prefix+'ContourdefJacobian',
+    deformed_variable=internal_prefix+'Deformed',
+    deformation_parameter_i=internal_prefix+'Lambda%i',
+    end_point_parameter=internal_prefix+'Mu',
+    additional_deformation_factor=internal_prefix+'AdditionalDeformationFactor',
+    ExpMinusMuOverX=internal_prefix+'ExpMinusMuOverX',
+    XExpMinusMuOverX=internal_prefix+'XExpMinusMuOverX',
+    label_contour_deformation_Jacobian_matrix_index_i=internal_prefix+'LabelJacobianMatrixI',
+    label_contour_deformation_Jacobian_matrix_index_j=internal_prefix+'LabelJacobianMatrixJ'
+)
+
 # ----------------------------------- parse input -----------------------------------
 def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argument_being_parsed):
     '''
@@ -93,13 +113,14 @@ def _validate(name):
        in [A-Z, a-z]; i.e. no leading numbers
      o all: no special characters; i.e. only
        characters from the set [A-Z, a-z, 0-9]
-     o `name` must not begin with "SecDecInternal"
+     o `name` must not begin with the internal
+       prefix
 
     '''
     if match(r'^[A-Z,a-z]+[A-Z,a-z,0-9]*$', name) is None:
         raise NameError('"%s" cannot be used as symbol' % name)
-    if name.startswith('SecDecInternal'):
-        raise NameError('Symbol names must not start with "SecDecInternal"')
+    if name.startswith(internal_prefix):
+        raise NameError('Symbol names must not start with "%s"' % internal_prefix)
 
 def _convert_input(name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
@@ -160,17 +181,18 @@ def _convert_input(name, integration_variables, regulators,
     assert form_insertion_depth >= 0, '`form_insertion_depth` must not be negative.'
 
     # check that neither the `remainder_expression` nor the `polynomials_to_decompose` refer to any of the `polynomial_names`
-    error = sp.symbols('SecDecInternalError')
+    str_error = internal_prefix + 'Error'
+    error = sp.symbols(str_error)
     for _ in polynomial_names:
         remainder_expression = remainder_expression.replace(-1, error)
     str_remainder_expression = str(remainder_expression)
-    if 'SecDecInternalError' in str_remainder_expression:
+    if str_error in str_remainder_expression:
         raise ValueError('The `polynomial_names` %s cannot be used in the `remainder_expression`.' % polynomial_names)
     for poly in polynomials_to_decompose:
         for _ in polynomial_names:
             poly = poly.replace(-1, error)
         str_poly = str(poly)
-        if 'SecDecInternalError' in str_poly:
+        if str_error in str_poly:
             raise ValueError('The `polynomial_names` %s cannot be used in the `polynomials_to_decompose`.' % polynomial_names)
 
     return (name, integration_variables, regulators,
@@ -354,7 +376,7 @@ def _make_FORM_function_definition(name, expression, args, limit):
             expression = expression.to_sum()
 
         if type(expression) == Sum:
-            name_next_level = 'SecDecInternalfDUMMY'+name+'Part'
+            name_next_level = internal_prefix+'fDUMMY'+name+'Part'
             codelines.append(
                 "  Id %s = %s;" % (
                     name+FORM_args_left_hand_side,
@@ -366,7 +388,7 @@ def _make_FORM_function_definition(name, expression, args, limit):
             return
 
         if type(expression) == Product:
-            name_next_level = 'SecDecInternalfDUMMY'+name+'Part'
+            name_next_level = internal_prefix+'fDUMMY'+name+'Part'
             codelines.append(
                 "  Id %s = %s;" % (
                     name+FORM_args_left_hand_side,
@@ -419,25 +441,6 @@ def _derivative_muliindex_to_name(basename, multiindex):
     suffix = ''.join(('d' + str(i)) * depth for i,depth in enumerate(multiindex))
     return prefix + basename + suffix
 
-# define the internal names to be used in FORM
-internal_prefix = 'SecDecInternal'
-FORM_names = dict(
-    cal_I=internal_prefix+'CalI',
-    cast_polynomial=internal_prefix+'PolynomialToDecompose',
-    other_polynomial=internal_prefix+'OtherPolynomial',
-    remainder_expression=internal_prefix+'RemainderExpression',
-    contourdef_transform=internal_prefix+'ContourdefDeformation',
-    contourdef_Jacobian=internal_prefix+'ContourdefJacobian',
-    deformed_variable=internal_prefix+'Deformed',
-    deformation_parameter_i=internal_prefix+'Lambda%i',
-    end_point_parameter=internal_prefix+'Mu',
-    additional_deformation_factor=internal_prefix+'AdditionalDeformationFactor',
-    ExpMinusMuOverX=internal_prefix+'ExpMinusMuOverX',
-    XExpMinusMuOverX=internal_prefix+'XExpMinusMuOverX',
-    label_contour_deformation_Jacobian_matrix_index_i=internal_prefix+'LabelJacobianMatrixI',
-    label_contour_deformation_Jacobian_matrix_index_j=internal_prefix+'LabelJacobianMatrixJ'
-)
-
 
 # ---------------------------------- write c++ code ---------------------------------
 def _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation):
@@ -464,7 +467,7 @@ def _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sec
             for this_regulator_order in range(min_orders[regulator_index],max_orders[regulator_index]+1):
                 current_orders[regulator_index] = this_regulator_order
                 outstr_body_snippets.append( recursion(regulator_index + 1) )
-            outstr_tail = '},true,#@SecDecInternalDblquote@#%s#@SecDecInternalDblquote@#}' % regulator_names[regulator_index]
+            outstr_tail = '},true,#@%sDblquote@#%s#@%sDblquote@#}' % (internal_prefix,regulator_names[regulator_index],internal_prefix)
             return ''.join( (outstr_head, ','.join(outstr_body_snippets), outstr_tail) )
         else: # regulator_index == last_regulator_index; i.e. processing last regulator
             outstr_head = '{%i,%i,{{' % (min_orders[regulator_index],max_orders[regulator_index])
@@ -483,7 +486,7 @@ def _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sec
                         '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' \
                         % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
                     )
-            outstr_tail = '}},true,#@SecDecInternalDblquote@#%s#@SecDecInternalDblquote@#}' % regulator_names[regulator_index]
+            outstr_tail = '}},true,#@%sDblquote@#%s#@%sDblquote@#}' % (internal_prefix,regulator_names[regulator_index],internal_prefix)
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
 
     return recursion(0)
@@ -1028,7 +1031,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                             -imaginary_unit * deformation_parameters[k] * \
                                                             NoDerivativeAtZeroFunction(FORM_names['XExpMinusMuOverX'], end_point_parameter, elementary_monomials[k]),
                                                             (1 - elementary_monomials[k]),
-                                                            RealPartFunction('SecDecInternalRealPart', symbolic_contour_deformation_polynomial.derive(k), copy=False),
+                                                            RealPartFunction(FORM_names['real_part'], symbolic_contour_deformation_polynomial.derive(k), copy=False),
                                                          copy=False),
                                                      copy=False)
                                                      for k in range(len(integration_variables))
@@ -1063,7 +1066,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                     copy = False
                                                 )
             insert_contourdef_Jacobian_procedure = ''.join(
-                _make_FORM_function_definition('SecDecInternalContourdefJacobian', contourdef_Jacobian_expression, args=integration_variables, limit=10**6)
+                _make_FORM_function_definition(internal_prefix+'ContourdefJacobian', contourdef_Jacobian_expression, args=integration_variables, limit=10**6)
             )
 
         # remove `polynomial_names` from the `remainder_expression`
@@ -1230,7 +1233,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                  -imaginary_unit * deformation_parameters[k] * \
                                                  NoDerivativeAtZeroFunction(FORM_names['ExpMinusMuOverX'], end_point_parameter, elementary_monomials[k]),
                                                  (1 - elementary_monomials[k]),
-                                                 RealPartFunction('SecDecInternalRealPart', symbolic_contour_deformation_polynomial.derive(k), copy=False),
+                                                 RealPartFunction(FORM_names['real_part'], symbolic_contour_deformation_polynomial.derive(k), copy=False),
                                                  copy=False
                                              ),
                                   copy=False
@@ -1381,7 +1384,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             template_replacements['functions'] = _make_FORM_list(all_functions)
             template_replacements['insert_cal_I_procedure'] = FORM_cal_I_definitions
             template_replacements['insert_other_procedure'] = FORM_function_definitions
-            template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition('SecDecInternalsDUMMYIntegrand', integrand, args=None, limit=10**6)
+            template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition(internal_prefix+'sDUMMYIntegrand', integrand, args=None, limit=10**6)
             template_replacements['sector_container_initializer'] = _make_CXX_Series_initialization(regulators, -highest_poles_current_sector,
                                                                                                     required_orders, sector_index,
                                                                                                     contour_deformation_polynomial is not None)
