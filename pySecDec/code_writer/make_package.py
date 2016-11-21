@@ -425,7 +425,6 @@ FORM_names = dict(
     cal_I=internal_prefix+'CalI',
     cast_polynomial=internal_prefix+'PolynomialToDecompose',
     other_polynomial=internal_prefix+'OtherPolynomial',
-    contour_deformation_polynomial=internal_prefix+'ContourDeformationPolynomial',
     remainder_expression=internal_prefix+'RemainderExpression',
     contourdef_transform=internal_prefix+'ContourdefDeformation',
     contourdef_Jacobian=internal_prefix+'ContourdefJacobian',
@@ -1015,7 +1014,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
-            symbolic_contour_deformation_polynomial = Function(FORM_names['contour_deformation_polynomial'], *elementary_monomials) # TODO: reset `derivative_tracks` before every secondary sector
+            symbolic_contour_deformation_polynomial = Function(str(contour_deformation_polynomial), *elementary_monomials, sort_derivatives=True)
 
             # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
             # ``z_k({x_k}) = x_k - i * lambda_k * x_k*exp(-mu/x_k) * (1-x_k) * Re(dF_dx_k)``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
@@ -1345,7 +1344,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 full_expression = sector.cast[contour_deformation_polynomial_index].factors[1]
                 full_expression.exponent = 1 # exponent is already part of the `tracker`
                 update_derivatives(
-                    FORM_names['contour_deformation_polynomial'], # basename
+                    str(contour_deformation_polynomial), # basename
                     symbolic_contour_deformation_polynomial, # derivative tracker
                     full_expression
                 )

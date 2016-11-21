@@ -33,7 +33,7 @@ AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
 
 * Define the name of the polynomial for the contour deformation
 * ("F" in loop integrals)
-#define F "%(contour_deformation_polynomial)s"
+#define SecDecInternalContourDeformationPolynomial "%(contour_deformation_polynomial)s"
 
 * We typically use commutativity of derivative to sort them.
 * However, for contour deformation we need the unsorted second
@@ -42,8 +42,8 @@ AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
 #$numIVMinusOne = `numIV' - 1;
 #Do i = 0,`$numIVMinusOne'
   #Do j = 0,`$numIVMinusOne'
-    CFunctions ddSecDecInternalContourDeformationPolynomiald`i'd`j';
-    Symbol SecDecInternalddSecDecInternalContourDeformationPolynomiald`i'd`j'Call;
+    CFunctions dd`SecDecInternalContourDeformationPolynomial'd`i'd`j';
+    Symbol SecDecInternaldd`SecDecInternalContourDeformationPolynomial'd`i'd`j'Call;
   #EndDo
 #EndDo
 

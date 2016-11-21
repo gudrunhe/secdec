@@ -83,7 +83,7 @@
     #EndIf
   #EndDo
 
-  L expressionF = SecDecInternalContourDeformationPolynomial(`deformedIntegrationVariables',`regulators')*replace_(`nullifyRegulators') + SecDecInternalsDUMMYdeformedVariables;
+  L expressionF = `SecDecInternalContourDeformationPolynomial'(`deformedIntegrationVariables',`regulators')*replace_(`nullifyRegulators') + SecDecInternalsDUMMYdeformedVariables;
   .sort
 
 * replace the calls to the deformed integration variables by dummy symbols
@@ -91,7 +91,7 @@
   #Do IV = {`occurringIntegrationVariables',}
     #If x`IV' != x
 
-      argument SecDecInternalContourDeformationPolynomial;
+      argument `SecDecInternalContourDeformationPolynomial';
         Id SecDecInternalDeformed`IV' = SecDecInternalSecDecInternalDeformed`IV'Call;
       endArgument;
       Id SecDecInternalsDUMMYdeformedVariables = SecDecInternalsDUMMYdeformedVariables +
@@ -106,7 +106,7 @@
 * remove calls to the deformation of absent integration variables
   #Do IV = {`absentIntegrationVariables',}
     #If x`IV' != x
-      argument SecDecInternalContourDeformationPolynomial;
+      argument `SecDecInternalContourDeformationPolynomial';
         Id SecDecInternalDeformed`IV' = 0;
       endArgument;
     #EndIf
@@ -118,7 +118,7 @@
     .sort
   #EndIf
 
-* insert the deformation and SecDecInternalContourDeformationPolynomial
+* insert the deformation and `SecDecInternalContourDeformationPolynomial'
   #call insertDeformedIntegrationVariables
   argument SecDecInternalRealPart;
     #call insertDeformedIntegrationVariables
@@ -167,7 +167,7 @@
   #EndDo
   drop deformedIV
 
-* write SecDecInternalContourDeformationPolynomial
+* write `SecDecInternalContourDeformationPolynomial'
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expressionF(#@no_split_expression@#)
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "return tmp;#@SecDecInternalNewline@#"
 
@@ -231,11 +231,11 @@
   L derivatives = SecDecInternalsDUMMYDerivativesAppendix;
   #Do idx1 = {`occurringIntegrationVariableIndices',}
     #If x`idx1' != x
-      Id SecDecInternalsDUMMYDerivativesAppendix = SecDecInternalLabelGradient^(`idx1'+1) * dSecDecInternalContourDeformationPolynomiald`idx1'(`integrationVariables',`regulators') + SecDecInternalsDUMMYDerivativesAppendix;
+      Id SecDecInternalsDUMMYDerivativesAppendix = SecDecInternalLabelGradient^(`idx1'+1) * d`SecDecInternalContourDeformationPolynomial'd`idx1'(`integrationVariables',`regulators') + SecDecInternalsDUMMYDerivativesAppendix;
       #Do idx2 = {`occurringIntegrationVariableIndices',}
         #If x`idx2' != x
           #If `idx1' <= `idx2'
-            Id SecDecInternalsDUMMYDerivativesAppendix = SecDecInternalLabelHessianI^(`idx1'+1) * SecDecInternalLabelHessianJ^(`idx2'+1) * ddSecDecInternalContourDeformationPolynomiald`idx1'd`idx2'(`integrationVariables',`regulators') +
+            Id SecDecInternalsDUMMYDerivativesAppendix = SecDecInternalLabelHessianI^(`idx1'+1) * SecDecInternalLabelHessianJ^(`idx2'+1) * dd`SecDecInternalContourDeformationPolynomial'd`idx1'd`idx2'(`integrationVariables',`regulators') +
                                                          SecDecInternalsDUMMYDerivativesAppendix;
           #EndIf
         #EndIf
@@ -256,7 +256,7 @@
                    );
   .sort
 
-* Explicitly insert the derivatives of SecDecInternalContourDeformationPolynomial
+* Explicitly insert the derivatives of `SecDecInternalContourDeformationPolynomial'
   argument SecDecInternalRealPart;
     #call insertOther
   endArgument;
