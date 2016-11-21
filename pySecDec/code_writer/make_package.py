@@ -39,6 +39,7 @@ FORM_names = dict(
     cast_polynomial=internal_prefix+'PolynomialToDecompose',
     other_polynomial=internal_prefix+'OtherPolynomial',
     remainder_expression=internal_prefix+'RemainderExpression',
+    error_token=internal_prefix+'ErrorToken',
     contourdef_transform=internal_prefix+'ContourdefDeformation',
     contourdef_Jacobian=internal_prefix+'ContourdefJacobian',
     deformed_variable=internal_prefix+'Deformed',
@@ -842,6 +843,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
         to_append.expolist[:,i] = 1
         transformations.append(to_append)
 
+    # define an error token that is multiplied to expressions that should evaluate to zero
+    error_token = sp.symbols(FORM_names['error_token'])
+
     # make a copy of the `integration_variables` for later reference
     all_integration_variables = list(integration_variables)
 
@@ -906,6 +910,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # define the imaginary unit
     imaginary_unit = sp.sympify('I')
+
+    # define the dummy names for the `other_polynomials`
+    names_other_polynomials = [FORM_names['other_polynomial'] + str(i) for i in range(len(other_polynomials))]
 
     # we must backwards traverse the `polynomial_names` --> create the reversed list once and for all
     reversed_polynomial_names = list(polynomial_names) # copy
@@ -1044,15 +1051,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             contourdef_Jacobian = np.empty((len(integration_variables), len(integration_variables)), dtype=object)
             for i in range(len(integration_variables)):
                 for j in range(len(integration_variables)):
-                    contourdef_Jacobian[i,j] = deformed_integration_parameters[i].simplify().derive(j)
-
-            # define the FORM procedure that inserts the deformed integration variables
-            insert_deformed_integration_variables_procedure = ''.join(
-                _make_FORM_function_definition(
-                    FORM_names['deformed_variable'] + str(integration_variable), deformed_integration_parameters[idx], integration_variables, limit=10**6
-                )
-                for idx,integration_variable in enumerate(integration_variables)
-            )
+                    contourdef_Jacobian[i,j] = symbolic_deformed_variables[i].simplify().derive(j)
 
             # define a procedure that defines the Jacobian matrix as labelled global expression in FORM
             contourdef_Jacobian_expression = Sum(
@@ -1088,13 +1087,16 @@ def make_package(name, integration_variables, regulators, requested_orders,
         # define symbols for the `polynomials_to_decompose` and the `other_polynomials --> shorter expressions and faster in python
         symbolic_other_polynomials = [
                                          Pow(
-                                             Function(FORM_names['other_polynomial'] + str(i), *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables)),
+                                             Function(
+                                                         FORM_names['other_polynomial'] + str(i),
+                                                         *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
+                                                         sort_derivatives = True
+                                             ),
                                              Expression(primary_sector.other[i].exponent, symbols_polynomials_to_decompose),
                                              copy = False
                                          )
                                          for i in range(len(other_polynomials))
                                      ]
-        names_other_polynomials = [FORM_names['other_polynomial'] + str(i) for i in range(len(other_polynomials))]
         symbolic_polynomials_to_decompose = []
         names_polynomials_to_decompose = []
         for i in range(len(polynomials_to_decompose)):
@@ -1104,7 +1106,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 poly_name = FORM_names['cast_polynomial'] + str(i)
             symbolic_polynomials_to_decompose.append(
                 Pow(
-                    Function(poly_name, *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables)),
+                    Function(poly_name, *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables), sort_derivatives=True),
                     Expression(primary_sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose),
                     copy = False
                 )
@@ -1201,7 +1203,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 symbolic_remainder_expression_arguments = [polynomial_zero] * len(integration_variables) + elementary_monomials[len(integration_variables):]
             else:
                 symbolic_remainder_expression_arguments = this_transformations + elementary_monomials[len(integration_variables):]
-            symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments)
+            symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments, sort_derivatives=True)
 
             # initialize the product of monomials for the subtraction
             monomial_factors = list(chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
@@ -1211,8 +1213,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
             pole_structures.append(  compute_pole_structure(monomials, *integration_variable_indices)  )
 
             if contour_deformation_polynomial is not None:
-                # TODO: reset `derivative_tracks` of `symbolic_contour_deformation_polynomial` here
-
                 # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k*exp(-mu/x_k) * (1-x_k) * Re(dF_dx_k)`` to the monomials.
                 # Split as ``z_k({x_k}) = monomials[k] * <something in remainder_expression>``
                 # where ``monomials[k] = x_k``; i.e. unchanged
@@ -1242,15 +1242,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
                            )
                     )
                 additional_deformation_factor = Product(*additional_deformation_factors, copy=False)
-            derivative_tracking_symbolic_remainder_expression = symbolic_remainder_expression # TODO: reset `derivative_tracks` here
-
-            # define `DerivativeTracker` for the symbolic polynomials # TODO: rephrase
-            derivative_tracking_symbolic_polynomials_to_decompose = symbolic_polynomials_to_decompose # TODO: reset `derivative_tracks` here
-            derivative_tracking_symbolic_other_polynomials = symbolic_other_polynomials # TODO: reset `derivative_tracks` here
 
             # define ``cal_I``, the part of the integrand that does not lead to poles
             # use the derivative tracking dummy functions for the polynomials --> faster
-            cal_I = Product(derivative_tracking_symbolic_remainder_expression, *chain(derivative_tracking_symbolic_polynomials_to_decompose, derivative_tracking_symbolic_other_polynomials), copy=False)
+            cal_I = Product(symbolic_remainder_expression, *chain(symbolic_polynomials_to_decompose, symbolic_other_polynomials), copy=False)
 
             # multiply Jacobian determinant to `cal_I`
             if contour_deformation_polynomial is not None:
@@ -1295,22 +1290,27 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # initialize the CFunctions for FORM
             all_functions = []
+            deformed_integration_variable_functions = []
 
             # compute the required derivatives
             cal_I_derivatives = {}
             other_derivatives = {}
+            deformed_integration_variable_derivatives = {}
 
-            ordered_cal_I_derivative_names = [] # python dictionaries are unordered but some insertions depend on others --> need an ordering
-            ordered_other_derivative_names = [] # python dictionaries are unordered but some insertions depend on others --> need an ordering
-            def update_derivatives(basename, derivative_tracker, full_expression, derivatives=other_derivatives, ordered_derivative_names=ordered_other_derivative_names):
+            # python dictionaries are unordered but some insertions depend on others --> need an ordering
+            ordered_cal_I_derivative_names = []
+            ordered_other_derivative_names = []
+            ordered_deformed_integration_variable_derivative_names = []
+
+            def update_derivatives(basename, derivative_tracker, full_expression, derivatives=other_derivatives, ordered_derivative_names=ordered_other_derivative_names, functions=all_functions):
                 derivatives[basename] = full_expression # include undifferentiated expression
                 ordered_derivative_names.append(basename)
-                all_functions.append(basename) # define the symbol as CFunction in FORM
+                functions.append(basename) # define the symbol as CFunction in FORM
                 for multiindex,expression in derivative_tracker.compute_derivatives(full_expression).items():
                     name = _derivative_muliindex_to_name(basename, multiindex)
                     derivatives[name] = expression
                     ordered_derivative_names.append(name)
-                    all_functions.append(name) # define the symbol as CFunction in FORM
+                    functions.append(name) # define the symbol as CFunction in FORM
 
             #  - for cal_I
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I,
@@ -1318,7 +1318,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             #  - for the `remainder_expression`
             update_derivatives(basename=FORM_names['remainder_expression'],
-                               derivative_tracker=derivative_tracking_symbolic_remainder_expression,
+                               derivative_tracker=symbolic_remainder_expression,
                                full_expression=this_primary_sector_remainder_expression)
 
             #  - for the additional factors
@@ -1331,8 +1331,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             #  - for the polynomials (`other_polynomials` first since they can reference `polynomials_to_decompose`)
             for prod, exponentiated_function, basename in chain(
-                zip(sector.other, derivative_tracking_symbolic_other_polynomials, names_other_polynomials),
-                zip(sector.cast , derivative_tracking_symbolic_polynomials_to_decompose, names_polynomials_to_decompose)
+                zip(sector.other, symbolic_other_polynomials, names_other_polynomials),
+                zip(sector.cast , symbolic_polynomials_to_decompose, names_polynomials_to_decompose)
             ):
                 _, expression = prod.factors
                 expression.exponent = 1 # exponent is already part of the `tracker`
@@ -1341,6 +1341,18 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     derivative_tracker=exponentiated_function.base,
                     full_expression=expression
                 )
+
+            #  - for the deformed integration variables
+            if contour_deformation_polynomial is not None:
+                for undeformed_name,deformed_variable,derivative_tracker in zip(integration_variables,deformed_integration_parameters,symbolic_deformed_variables):
+                    update_derivatives(
+                        FORM_names['deformed_variable'] + str(undeformed_name), # basename
+                        derivative_tracker,
+                        deformed_variable, # full_expression
+                        deformed_integration_variable_derivatives, # derivatives
+                        ordered_deformed_integration_variable_derivative_names, # ordered_derivative_names
+                        deformed_integration_variable_functions # functions
+                    )
 
             #  - for the contour deformation polynomial
             if contour_deformation_polynomial is not None:
@@ -1352,6 +1364,31 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     full_expression
                 )
 
+            # Replace all derivatives that should only occur with at least one argument
+            # equal to zero and that are expected to be zero by the product of the arguments
+            # times an error token:
+            if contour_deformation_polynomial is not None:
+                #  - for the contour deformation Jacobian
+                contourdef_Jacobian_derivatives = {}
+                ordered_contourdef_Jacobian_derivative_names = [] # python dictionaries are unordered but some insertions depend on others --> need an ordering
+                for multiindex in symbolic_contourdef_Jacobian.derivative_tracks.keys():
+                    derivative_name = _derivative_muliindex_to_name(FORM_names['contourdef_Jacobian'], multiindex)
+                    contourdef_Jacobian_derivatives[derivative_name] = Product(*symbolic_contourdef_Jacobian.arguments) * error_token # expect at least one factor to be zero
+                    ordered_contourdef_Jacobian_derivative_names.append(derivative_name)
+                    all_functions.append(derivative_name) # define the symbol as CFunction in FORM
+
+                #  - for the functions (X)ExpMinusMuOverX
+                # derivatives of any argument in `symbolic_additional_deformation_factor` transform to derivatives by the first argument
+                if symbolic_additional_deformation_factor.derivative_tracks:
+                    make_multiindices = lambda start: [(0,i) for i in range(start,np.sum(symbolic_additional_deformation_factor.derivative_tracks.keys(), axis=1).max()+1)]
+                else:
+                    make_multiindices = lambda start: [(0,i) for i in range(start,2+1)] # need at least the second derivatives
+                for function_name,start in [('ExpMinusMuOverX',1),('XExpMinusMuOverX',2)]:
+                    for multiindex in make_multiindices(start):
+                        derivative_name = _derivative_muliindex_to_name(FORM_names[function_name], multiindex)
+                        deformed_integration_variable_derivatives[derivative_name] = Product(*symbolic_additional_deformation_factor.arguments) * error_token # expect at least one factor to be zero
+                        ordered_deformed_integration_variable_derivative_names.append(derivative_name)
+                        deformed_integration_variable_functions.append(derivative_name) # define the symbol as CFunction in FORM
 
             # determine which derivatives of the user input ``functions`` are needed and
             # generate the corresponding c++ "function_declarations"
@@ -1364,6 +1401,19 @@ def make_package(name, integration_variables, regulators, requested_orders,
             all_functions.extend(functions)
 
             # generate the function definitions for the insertion in FORM
+            if contour_deformation_polynomial is not None:
+                FORM_deformed_integration_variable_definitions = ''.join(
+                    _make_FORM_function_definition(
+                        name, deformed_integration_variable_derivatives[name], integration_variables, limit=10**6
+                    )
+                    for name in ordered_deformed_integration_variable_derivative_names
+                )
+                FORM_contourdef_Jacobian_derivative_definitions = ''.join(
+                    _make_FORM_function_definition(
+                        name, contourdef_Jacobian_derivatives[name], integration_variables, limit=10**6
+                    )
+                    for name in ordered_contourdef_Jacobian_derivative_names
+                )
             FORM_cal_I_definitions = ''.join(
                 _make_FORM_function_definition(name, cal_I_derivatives[name], symbols_other_polynomials, limit=10**6)
                 for name in ordered_cal_I_derivative_names
@@ -1397,10 +1447,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             if contour_deformation_polynomial is not None:
                 # parse template file "contour_deformation.h"
-                template_replacements['deformed_integration_variable_names'] = _make_FORM_list(symbolic_deformed_variable_names)
+                template_replacements['deformed_integration_variable_functions'] = _make_FORM_list(deformed_integration_variable_functions)
                 template_replacements['contour_deformation_polynomial'] = contour_deformation_polynomial
-                template_replacements['insert_deformed_integration_variables_procedure'] = insert_deformed_integration_variables_procedure
+                template_replacements['insert_deformed_integration_variables_procedure'] = FORM_deformed_integration_variable_definitions
                 template_replacements['insert_contourdef_Jacobian_procedure'] = insert_contourdef_Jacobian_procedure
+                template_replacements['insert_contourdef_Jacobian_derivatives_procedure'] = FORM_contourdef_Jacobian_derivative_definitions
                 template_replacements['deformation_parameters'] = _make_FORM_list(deformation_parameters)
                 parse_template_file(os.path.join(template_sources, 'codegen', 'contour_deformation.h'), # source
                                     os.path.join(name,             'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest

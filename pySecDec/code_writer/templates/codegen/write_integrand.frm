@@ -135,7 +135,82 @@ B `regulators';
 
 * insert calI
   #call insertCalI
+
+* insert the derivatives of the contour deformation Jacobian (should all be zero)
+  #If `contourDeformation'
+    #call insertContourdefJacobianDerivatives
+  #EndIf
   .sort
+
+* Replace calls to the deformation's Jacobian determinant "SecDecInternalContourdefJacobian" by symbols.
+* {
+
+  #If `contourDeformation'
+
+    Local toOptimize = SecDecInternalsDUMMYtoOptimize;
+
+    #redefine function "SecDecInternalContourdefJacobian"
+    #$labelCounter = 0;
+
+*   No need for "#Do depth = 0, `insertionDepth'" because the Jacobian determinant should only occur at top level.
+
+*   Since we need intermediate ".sort" instructions, we cannot use the
+*   "repeat" environment.
+*   The following construction is suggested in the FORM documentation.
+
+    #Do i = 1,1
+*     set dollar variable
+      .sort
+      hide toOptimize;
+      .sort
+      if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
+      .sort
+      unhide toOptimize;
+      .sort
+
+*     The following "#if" evaluates to true only if there is still something to do.
+      #If `i' == 0
+
+        #$labelCounter = $labelCounter + 1;
+
+        #Do replaceDepth = 0, `insertionDepth'
+          #call beginArgumentDepth(`replaceDepth')
+            Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
+          #call endArgumentDepth(`replaceDepth')
+        #EndDo
+
+        Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + `function'($args) * SecDecInternalLabelSecDecInternalContourdefJacobianCall^`$labelCounter';
+
+*       Remember how many integration variables are nonzero.
+        #$index = 0;
+        #$nonzeroCounter = 0;
+        #redefine SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices ""
+        #Do arg = {`$args',}
+          #If x`arg' != x
+            #$index = $index + 1;
+            #If `arg' != 0
+              #$nonzeroCounter = $nonzeroCounter + 1;
+              #If `$nonzeroCounter' != 1
+                #redefine SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices "`SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices',"
+              #EndIf
+              #redefine SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices "`SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices'`$index'"
+            #EndIf
+          #EndIf
+        #EndDo
+        #redefine SecDecInternalContourdefLabel`$labelCounter'Dimensionality "`$nonzeroCounter'"
+
+      #EndIf
+      .sort
+    #EndDo
+
+    #redefine largestLabel`function' "`$labelCounter'"
+
+*   insert the Jacobian matrix
+    #call insertContourdefJacobianMatrix
+
+  #EndIf
+
+* }
 
 * Replace calls to the deformation of the integration variables "SecDecInternalDeformed..." by symbols.
 * {
@@ -167,8 +242,6 @@ B `regulators';
       .sort
 
     #EndDo
-
-    Local toOptimize = SecDecInternalsDUMMYtoOptimize;
 
     #$IVindex = 0;
     #Do IV = {`integrationVariables'}
@@ -207,14 +280,9 @@ B `regulators';
 
         #Do i = 1,1
 *         set dollar variable
-          .sort
-          hide toOptimize;
-          .sort
           #call beginArgumentDepth(`depth')
             if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
           #call endArgumentDepth(`depth')
-          .sort
-          unhide toOptimize;
           .sort
 
 *         The following "#if" evaluates to true only if there is still something to do.
@@ -242,84 +310,6 @@ B `regulators';
 
     #call insertDeformedIntegrationVariables;
     .sort
-
-  #EndIf
-
-* }
-
-* Replace calls to the deformation's Jacobian determinant "SecDecInternalContourdefJacobian" by symbols.
-* {
-
-  #If `contourDeformation'
-
-    #redefine function "SecDecInternalContourdefJacobian"
-    #$labelCounter = 0;
-
-*   No need for "#Do depth = 0, `insertionDepth'" because the Jacobian determinant should only occur at top level.
-
-*   Since we need intermediate ".sort" instructions, we cannot use the
-*   "repeat" environment.
-*   The following construction is suggested in the FORM documentation.
-
-    #Do i = 1,1
-*     set dollar variable
-      .sort
-      hide toOptimize;
-      .sort
-      if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-      .sort
-      unhide toOptimize;
-      .sort
-
-*     The following "#if" evaluates to true only if there is still something to do.
-      #If `i' == 0
-
-        #$labelCounter = $labelCounter + 1;
-
-        #Do replaceDepth = 0, `insertionDepth'
-          #call beginArgumentDepth(`replaceDepth')
-            Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
-          #call endArgumentDepth(`replaceDepth')
-        #EndDo
-
-        Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + `function'($args) * SecDecInternalLabelSecDecInternalContourdefJacobianCall^`$labelCounter';
-
-*       Remember how many integration variables are nonzero.
-        #$index = 0;
-        #$nonzeroCounter = 0;
-        #redefine SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices ""
-        #Do arg = {`$args'}
-          #$index = $index + 1;
-          #If `arg' != 0
-            #$nonzeroCounter = $nonzeroCounter + 1;
-            #If `$nonzeroCounter' != 1
-              #redefine SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices "`SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices',"
-            #EndIf
-            #redefine SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices "`SecDecInternalContourdefLabel`$labelCounter'NonzeroIndices'`$index'"
-          #EndIf
-        #EndDo
-        #redefine SecDecInternalContourdefLabel`$labelCounter'Dimensionality "`$nonzeroCounter'"
-
-      #EndIf
-      .sort
-    #EndDo
-
-    #redefine largestLabel`function' "`$labelCounter'"
-
-*   insert the Jacobian matrix
-    #call insertContourdefJacobianMatrix
-
-*   Implement commuting derivatives for the contour deformation polynomial F;
-*   i.e. replace ddFdjdi --> ddFdidj for i<=j.
-*   This is neccessary because pySecDec's algebra module does not
-*   imply commuting derivatives for general functions.
-    #Do i = 0,`$numIVMinusOne'
-      #Do j = `i',`$numIVMinusOne'
-        argument SecDecInternalRealPart;
-          Id dd`SecDecInternalContourDeformationPolynomial'd`j'd`i'(?args) = dd`SecDecInternalContourDeformationPolynomial'd`i'd`j'(?args);
-        endArgument;
-      #EndDo
-    #EndDo
 
   #EndIf
 
@@ -355,6 +345,9 @@ B `regulators';
 
     #call beginArgumentDepth(`depth')
       #call insertOther
+      #If `contourDeformation'
+        #call insertDeformedIntegrationVariables
+      #EndIf
     #call endArgumentDepth(`depth')
     .sort
 
@@ -686,6 +679,7 @@ B `regulators';
     #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_complex Jacobian_determinant;#@SecDecInternalNewline@#"
     #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation * Jacobian_permutation;#@SecDecInternalNewline@#"
     #write <sector_`sectorID'_`cppOrder'.cpp> "int Jacobian_signum;#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "unsigned Jacobian_dimensionality;#@SecDecInternalNewline@#"
     #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
     #Do callIndex = 1, `largestLabelSecDecInternalContourdefJacobian'
@@ -693,10 +687,11 @@ B `regulators';
       #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 *     allocate memory
+      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_dimensionality = std::max(1,`SecDecInternalContourdefLabel`callIndex'Dimensionality');#@SecDecInternalNewline@#"
       #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_matrix = gsl_matrix_complex_alloc("
-      #write <sector_`sectorID'_`cppOrder'.cpp> "`SecDecInternalContourdefLabel`callIndex'Dimensionality',`SecDecInternalContourdefLabel`callIndex'Dimensionality'"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_dimensionality,Jacobian_dimensionality"
       #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_permutation = gsl_permutation_alloc(`SecDecInternalContourdefLabel`callIndex'Dimensionality');#@SecDecInternalNewline@#"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_permutation = gsl_permutation_alloc(Jacobian_dimensionality);#@SecDecInternalNewline@#"
       #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 *     fill the gsl matrix

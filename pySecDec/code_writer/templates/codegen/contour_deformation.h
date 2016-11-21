@@ -2,13 +2,16 @@
 #define deformationParameters "%(deformation_parameters)s"
 Symbols `deformationParameters';
 
-* The deformed integration variables
-#define deformedIVNames "%(deformed_integration_variable_names)s"
-CFunctions `deformedIVNames';
+* The deformed integration variable functions (including appearing derivatives)
+#define deformedIVFunctions "%(deformed_integration_variable_functions)s"
+CFunctions `deformedIVFunctions';
 
 * The additional parameter controlling how fast the contour deformation goes to
 * zero at the end points
 Symbol SecDecInternalMu;
+
+* We multiply the error token by terms that we expect to vanish
+Symbol SecDecInternalErrorToken;
 
 * Define the function that takes the real part
 CFunction SecDecInternalRealPart;
@@ -35,18 +38,6 @@ AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
 * ("F" in loop integrals)
 #define SecDecInternalContourDeformationPolynomial "%(contour_deformation_polynomial)s"
 
-* We typically use commutativity of derivative to sort them.
-* However, for contour deformation we need the unsorted second
-* derivatives of the "SecDecInternalContourDeformationPolynomial",
-* e.g. "ddFd1d0" in addition to "ddFd0d1".
-#$numIVMinusOne = `numIV' - 1;
-#Do i = 0,`$numIVMinusOne'
-  #Do j = 0,`$numIVMinusOne'
-    CFunctions dd`SecDecInternalContourDeformationPolynomial'd`i'd`j';
-    Symbol SecDecInternaldd`SecDecInternalContourDeformationPolynomial'd`i'd`j'Call;
-  #EndDo
-#EndDo
-
 * The transformation of the Feynman parameters
 #procedure insertDeformedIntegrationVariables
   %(insert_deformed_integration_variables_procedure)s
@@ -57,4 +48,11 @@ AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
 * is written by python.
 #procedure insertContourdefJacobianMatrix
   %(insert_contourdef_Jacobian_procedure)s
+#endProcedure
+
+* Procedure that inserts the derivatives of the
+* Jacobian matrix of the contour deformation. This
+* procedure is written by python.
+#procedure insertContourdefJacobianDerivatives
+  %(insert_contourdef_Jacobian_derivatives_procedure)s
 #endProcedure
