@@ -891,7 +891,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # The implemented symmetry finders take a long time but do not find anything if applied here.
             # We therefore do not waste time calling them on the split sectors.
             for subsector in original_decomposition_strategies['secondary'](sector, indices):
-                for i in range(len(subsector.cast) / len(initial_sector.cast)):
+                for i in range(len(subsector.cast) // len(initial_sector.cast)):
                     cast = subsector.cast[i*len(initial_sector.cast):(i+1)*len(initial_sector.cast)]
                     other = subsector.other[i*(len(initial_sector.other)+1):(i+1)*(len(initial_sector.other)+1)]
                     yield decomposition.Sector(cast, other[:-1], Jacobian=other[-1] * subsector.Jacobian)
@@ -1380,7 +1380,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 #  - for the functions (X)ExpMinusMuOverX
                 # derivatives of any argument in `symbolic_additional_deformation_factor` transform to derivatives by the first argument
                 if symbolic_additional_deformation_factor.derivative_tracks:
-                    make_multiindices = lambda start: [(0,i) for i in range(start,np.sum(symbolic_additional_deformation_factor.derivative_tracks.keys(), axis=1).max()+1)]
+                    original_multiindices = symbolic_additional_deformation_factor.derivative_tracks.keys()
+                    if not isinstance(original_multiindices, list): # python3 returns type `dict_keys` that cannot be handled by numpy.sum
+                        original_multiindices = list(original_multiindices)
+                    make_multiindices = lambda start: [(0,i) for i in range(start,np.sum(original_multiindices, axis=1).max()+1)]
                 else:
                     make_multiindices = lambda start: [(0,i) for i in range(start,2+1)] # need at least the second derivatives
                 for function_name,start in [('ExpMinusMuOverX',1),('XExpMinusMuOverX',2)]:
