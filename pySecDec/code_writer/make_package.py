@@ -1467,7 +1467,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # pack the `prefactor` into c++ function that returns a nested `Series`
     # and takes the `real_parameters` and the `complex_parameters`
-    prefactor_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::UncorrelatedDeviation<integrand_return_t' + '>' * (len(regulators) + 1)
+    prefactor_type = 'secdecutil::Series<' * len(regulators) + 'integrand_return_t' + '>' * len(regulators)
     prefactor_function_body = _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters)
 
     # define the return type of "make_integrands"
