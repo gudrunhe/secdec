@@ -1,6 +1,7 @@
 #include <secdecutil/deep_apply.hpp>
 #include <secdecutil/sector_container.hpp>
 #include <secdecutil/series.hpp>
+#include <string>
 #include <vector>
 
 #include "%(name)s.hpp"
@@ -24,6 +25,20 @@ namespace %(name)s
         #endif
     )
     {
+        if ( real_parameters.size() != %(name)s::number_of_real_parameters )
+            throw std::logic_error(
+                                        "Called \"%(name)s::make_integrands\" with " +
+                                        std::to_string(real_parameters.size()) + " \"real_parameters\" (" +
+                                        std::to_string(%(name)s::number_of_real_parameters) + " expected)."
+                                  );
+
+        if ( complex_parameters.size() != %(name)s::number_of_complex_parameters )
+            throw std::logic_error(
+                                        "Called \"%(name)s::make_integrands\" with " +
+                                        std::to_string(complex_parameters.size()) + " \"complex_parameters\" (" +
+                                        std::to_string(%(name)s::number_of_complex_parameters) + " expected)."
+                                  );
+
         #if %(name)s_contour_deformation
             return secdecutil::deep_apply
             (
