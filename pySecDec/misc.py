@@ -10,7 +10,7 @@ from itertools import chain, combinations, product
 import sympy as sp
 import numpy as np
 
-def powerset(iterable, exclude_empty=False, stride=1):
+def powerset(iterable, min_length=0, stride=1):
     """
     Return an iterator over the powerset of a given set.
     ``powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3)
@@ -20,10 +20,10 @@ def powerset(iterable, exclude_empty=False, stride=1):
         iterable;
         The set to generate the powerset for.
 
-    :param exclude_empty:
-        bool, optional;
-        If True, skip the empty set in the powerset.
-        Default is False.
+    :param min_length:
+        integer, optional;
+        Only generate sets with minimal given length.
+        Default: ``0``.
 
     :param stride:
         integer;
@@ -35,10 +35,7 @@ def powerset(iterable, exclude_empty=False, stride=1):
     """
     # taken from python's own documentation
     s = list(iterable)
-    powerset_iterator = iter(chain.from_iterable(combinations(s, r) for r in range(0,len(s)+1,stride)))
-    if exclude_empty:
-        # The first element of the iterator is the empty set -> discard
-        next(powerset_iterator)
+    powerset_iterator = iter(chain.from_iterable(combinations(s, r) for r in range(min_length,len(s)+1,stride)))
     return powerset_iterator
 
 def rangecomb(low, high):

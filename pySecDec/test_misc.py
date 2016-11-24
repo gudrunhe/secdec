@@ -67,17 +67,22 @@ class TestPowerset(unittest.TestCase):
         self.assertEqual(list(powerset(range(4))), [(),(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
 
     def test_powerset_without_empty(self):
-        self.assertEqual(list(powerset(range(0),exclude_empty=True)), [])
-        self.assertEqual(list(powerset(range(1),exclude_empty=True)), [(0,)])
-        self.assertEqual(list(powerset(range(2),exclude_empty=True)), [(0,),(1,),(0,1)])
-        self.assertEqual(list(powerset(range(3),exclude_empty=True)), [(0,),(1,),(2,),(0,1),(0,2),(1,2),(0,1,2)])
-        self.assertEqual(list(powerset(range(4),exclude_empty=True)), [(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
+        self.assertEqual(list(powerset(range(0),min_length=1)), [])
+        self.assertEqual(list(powerset(range(1),min_length=1)), [(0,)])
+        self.assertEqual(list(powerset(range(2),min_length=1)), [(0,),(1,),(0,1)])
+        self.assertEqual(list(powerset(range(3),min_length=1)), [(0,),(1,),(2,),(0,1),(0,2),(1,2),(0,1,2)])
+        self.assertEqual(list(powerset(range(4),min_length=1)), [(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
 
     #@attr('active')
     def test_strided_powerset(self):
         self.assertEqual(list(powerset(range(4),stride=2)), [(),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)])
         self.assertEqual(list(powerset(range(4),stride=3)), [(),(0,1,2),(0,1,3),(0,2,3),(1,2,3)])
-        self.assertEqual(list(powerset(range(4),stride=2,exclude_empty=True)), [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)])
+        self.assertEqual(list(powerset(range(4),stride=2,min_length=2)), [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)])
+
+    def test_minimal_powerset(self):
+        self.assertEqual(list(powerset(range(4),min_length=1)), [(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
+        self.assertEqual(list(powerset(range(4),min_length=2)), [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
+        self.assertEqual(list(powerset(range(4),stride=2,min_length=3)), [(0,1,2),(0,1,3),(0,2,3),(1,2,3)])
 
 class TestRangecomb(unittest.TestCase):
     #@attr('active')

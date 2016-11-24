@@ -216,7 +216,7 @@ def iteration_step(sector, indices=None):
     singular_set_found = False
     polyprod = get_poly_to_transform(sector, indices)
     poly = polyprod.factors[1]
-    for singular_set in powerset(indices,exclude_empty=True):
+    for singular_set in powerset(indices,min_length=2):
         if poly.becomes_zero_for(singular_set):
             singular_set_found = True
             break
