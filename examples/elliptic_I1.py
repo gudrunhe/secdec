@@ -28,7 +28,7 @@ mass_symbols = ['msq']
 
 loop_package(
 
-name = 'elliptic_box',
+name = 'elliptic_I1',
 
 loop_integral = li,
 
