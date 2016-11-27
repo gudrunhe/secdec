@@ -686,55 +686,65 @@ B `regulators';
       #write <sector_`sectorID'_`cppOrder'.cpp> "// begin code for numerical Jacobian determinant `callIndex'#@SecDecInternalNewline@#"
       #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
-*     allocate memory
-      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_dimensionality = std::max(1,`SecDecInternalContourdefLabel`callIndex'Dimensionality');#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_matrix = gsl_matrix_complex_alloc("
-      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_dimensionality,Jacobian_dimensionality"
-      #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_permutation = gsl_permutation_alloc(Jacobian_dimensionality);#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+      #If `SecDecInternalContourdefLabel`callIndex'Dimensionality' > 0
 
-*     fill the gsl matrix
-      #$i = -1;
-      #Do idx1 = {`SecDecInternalContourdefLabel`callIndex'NonzeroIndices',}
-        #If x`idx1' != x
-          #$i = $i + 1;
-          #$j = -1;
-          #Do idx2 = {`SecDecInternalContourdefLabel`callIndex'NonzeroIndices',}
-            #If x`idx2' != x
-              Format float 20;
-              Format C;
-              #$j = $j + 1;
-              Bracket SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ, SecDecInternalLabelSecDecInternalContourdefJacobianCall;
-              .sort
-              L expr = toOptimize[SecDecInternalLabelJacobianMatrixI^`idx1' * SecDecInternalLabelJacobianMatrixJ^`idx2' * SecDecInternalLabelSecDecInternalContourdefJacobianCall^`callIndex'];
-              .sort
-              #write <sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expr(#@no_split_expression@#)
-              #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_set#@SecDecInternalNewline@#"
-              #write <sector_`sectorID'_`cppOrder'.cpp> "(#@SecDecInternalNewline@#"
-              #write <sector_`sectorID'_`cppOrder'.cpp> "    Jacobian_matrix,#@SecDecInternalNewline@#"
-              Format rational;
-              #write <sector_`sectorID'_`cppOrder'.cpp> "    `$i', `$j',#@SecDecInternalNewline@#"
-              Format float 20;
-              Format C;
-              #write <sector_`sectorID'_`cppOrder'.cpp> "    {tmp.real(), tmp.imag()}#@SecDecInternalNewline@#"
-              #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
-            #EndIf
-          #EndDo
-        #EndIf
-      #EndDo
+*       allocate memory
+        #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_dimensionality = `SecDecInternalContourdefLabel`callIndex'Dimensionality';#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_matrix = gsl_matrix_complex_alloc("
+        #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_dimensionality,Jacobian_dimensionality"
+        #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_permutation = gsl_permutation_alloc(Jacobian_dimensionality);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
-*     calculate the determinant numerically using the gsl
-      #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_linalg_complex_LU_decomp(Jacobian_matrix, Jacobian_permutation, &Jacobian_signum);#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_determinant = gsl_linalg_complex_LU_det(Jacobian_matrix, Jacobian_signum);#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "complex_t SecDecInternalSecDecInternalContourdefJacobianCall`callIndex' ="
-      #write <sector_`sectorID'_`cppOrder'.cpp> "{GSL_REAL(Jacobian_determinant), GSL_IMAG(Jacobian_determinant)};#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+*       fill the gsl matrix
+        #$i = -1;
+        #Do idx1 = {`SecDecInternalContourdefLabel`callIndex'NonzeroIndices',}
+          #If x`idx1' != x
+            #$i = $i + 1;
+            #$j = -1;
+            #Do idx2 = {`SecDecInternalContourdefLabel`callIndex'NonzeroIndices',}
+              #If x`idx2' != x
+                Format float 20;
+                Format C;
+                #$j = $j + 1;
+                Bracket SecDecInternalLabelJacobianMatrixI, SecDecInternalLabelJacobianMatrixJ, SecDecInternalLabelSecDecInternalContourdefJacobianCall;
+                .sort
+                L expr = toOptimize[SecDecInternalLabelJacobianMatrixI^`idx1' * SecDecInternalLabelJacobianMatrixJ^`idx2' * SecDecInternalLabelSecDecInternalContourdefJacobianCall^`callIndex'];
+                .sort
+                #write <sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expr(#@no_split_expression@#)
+                #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_set#@SecDecInternalNewline@#"
+                #write <sector_`sectorID'_`cppOrder'.cpp> "(#@SecDecInternalNewline@#"
+                #write <sector_`sectorID'_`cppOrder'.cpp> "    Jacobian_matrix,#@SecDecInternalNewline@#"
+                Format rational;
+                #write <sector_`sectorID'_`cppOrder'.cpp> "    `$i', `$j',#@SecDecInternalNewline@#"
+                Format float 20;
+                Format C;
+                #write <sector_`sectorID'_`cppOrder'.cpp> "    {tmp.real(), tmp.imag()}#@SecDecInternalNewline@#"
+                #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+              #EndIf
+            #EndDo
+          #EndIf
+        #EndDo
 
-*     free manually allocated memory
-      #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation_free(Jacobian_permutation);#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_free(Jacobian_matrix);#@SecDecInternalNewline@#"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+*       calculate the determinant numerically using the gsl
+        #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_linalg_complex_LU_decomp(Jacobian_matrix, Jacobian_permutation, &Jacobian_signum);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "Jacobian_determinant = gsl_linalg_complex_LU_det(Jacobian_matrix, Jacobian_signum);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "complex_t SecDecInternalSecDecInternalContourdefJacobianCall`callIndex' ="
+        #write <sector_`sectorID'_`cppOrder'.cpp> "{GSL_REAL(Jacobian_determinant), GSL_IMAG(Jacobian_determinant)};#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+*       free manually allocated memory
+        #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_permutation_free(Jacobian_permutation);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "gsl_matrix_complex_free(Jacobian_matrix);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+      #Else
+
+*       dimensionality is zero --> no transformation --> determinant is one
+        #write <sector_`sectorID'_`cppOrder'.cpp> "complex_t SecDecInternalSecDecInternalContourdefJacobianCall`callIndex' = 1;#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+      #EndIf
 
       #write <sector_`sectorID'_`cppOrder'.cpp> "// end code for numerical Jacobian determinant `callIndex'#@SecDecInternalNewline@#"
     #EndDo
