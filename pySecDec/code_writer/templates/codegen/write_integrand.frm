@@ -231,6 +231,10 @@ B `regulators';
         repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
         repeat Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
 
+*       Wrap noninteger powers into the function pow.
+        repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) ^ SecDecInternalsDUMMYExponent? =
+            pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYExponent);
+
 *       Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
 *       example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
         Denominators SecDecInternalDenominator;
@@ -332,6 +336,10 @@ B `regulators';
       repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
       repeat Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
 
+*     Wrap noninteger powers into the function pow.
+      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) ^ SecDecInternalsDUMMYExponent? =
+          pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYExponent);
+
 *     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
 *     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
       Denominators SecDecInternalDenominator;
@@ -423,7 +431,7 @@ B `regulators';
     Local toOptimize = SecDecInternalsDUMMYtoOptimize;
   #EndIf
 
-  #redefine functionsToReplace "`functions',log,SecDecInternalIntPow,SecDecInternalDenominator"
+  #redefine functionsToReplace "`functions',log,pow,SecDecInternalIntPow,SecDecInternalDenominator"
   #If `contourDeformation'
     #redefine functionsToReplace "SecDecInternalRealPart,`functionsToReplace'"
   #EndIf
@@ -770,14 +778,14 @@ B `regulators';
 * Keep track of function calls that are not written to
 * the c++ file yet.
   L unparsed = SecDecInternalsDUMMYUnparsedAppendix;
-  #Do function = {`functions',log,SecDecInternalIntPow,SecDecInternalDenominator}
+  #Do function = {`functions',log,pow,SecDecInternalIntPow,SecDecInternalDenominator}
     #Do callIndex = 1, `largestLabel`function''
       Id SecDecInternalsDUMMYUnparsedAppendix = SecDecInternalsDUMMYUnparsedAppendix + SecDecInternal`function'Call`callIndex'Unparsed;
     #EndDo
   #EndDo
 
   #Do i = 1,1
-    #Do function = {`functions',log,SecDecInternalIntPow,SecDecInternalDenominator}
+    #Do function = {`functions',log,pow,SecDecInternalIntPow,SecDecInternalDenominator}
       #Do callIndex = 1, `largestLabel`function''
         B SecDecInternalLabel`function'Call`callIndex'Arg;
         .sort
@@ -800,7 +808,7 @@ B `regulators';
             nhide arg`argIndex';
           #EndDo
           .sort
-          #Do innerFunction = {`functions',log,SecDecInternalIntPow,SecDecInternalDenominator}
+          #Do innerFunction = {`functions',log,pow,SecDecInternalIntPow,SecDecInternalDenominator}
             #Do innerCallIndex = 1, `largestLabel`innerFunction''
               #redefine dependsOnInnerFunctionCall "0"
               if ( occurs(SecDecInternal`innerFunction'Call`innerCallIndex') ) redefine dependsOnInnerFunctionCall "1";
