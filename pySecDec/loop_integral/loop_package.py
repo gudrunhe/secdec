@@ -9,6 +9,7 @@ function :func:`.loop_package`.
 from .from_graph import LoopIntegralFromGraph
 from .draw import plot_diagram
 from ..code_writer import make_package
+from itertools import chain
 import numpy as np
 import sympy as sp
 import os
@@ -162,23 +163,25 @@ def loop_package(name, loop_integral, requested_order,
     # convert `name` to string
     name = str(name)
 
-    names_polynomials_to_decompose = sp.symbols(['F','U'])
+    F_and_U = [loop_integral.exponentiated_F.copy(), loop_integral.exponentiated_U.copy()]
+    names_F_and_U = sp.symbols(['F','U'])
 
-    # append the regulator and the symbols `F` and `U` to the `polynomials_to_decompose` (`F` and `U`)
-    polynomials_to_decompose = [loop_integral.exponentiated_F.copy(), loop_integral.exponentiated_U.copy()]
-    for poly in polynomials_to_decompose:
-        poly.polysymbols.extend([loop_integral.regulator] + names_polynomials_to_decompose)
-        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_polynomials_to_decompose)+1], dtype=int)])
+    # append the regulator symbol and the symbols `F` and `U` to `F` and `U`
+    for poly in F_and_U:
+        poly.polysymbols.extend([loop_integral.regulator] + names_F_and_U)
+        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_F_and_U)+1], dtype=int)])
 
-    other_polynomials = [loop_integral.numerator]
-    if sp.sympify( loop_integral.measure ) != 1:
-        # need ``loop_integral.measure`` only if it is nontrivial
-        other_polynomials += loop_integral.measure.factors
-
-    # insert the regulator to the `other_polynomials` (`numerator` and possily `measure`)
-    for poly in other_polynomials:
+    # append the regulator symbol to the `numerator` and to `measure`
+    for poly in chain([loop_integral.numerator], loop_integral.measure.factors):
         poly.polysymbols = poly.polysymbols[:-2] + [loop_integral.regulator] + poly.polysymbols[-2:]
         poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),1], dtype=int), poly.expolist[:,-2:]])
+
+    other_polynomials = [loop_integral.numerator]
+
+    polynomials_to_decompose = list(F_and_U)
+    if sp.sympify( loop_integral.measure ) != 1:
+        # need ``loop_integral.measure`` only if it is nontrivial
+        polynomials_to_decompose += loop_integral.measure.factors
 
     make_package_return_value = make_package(
         name = name,
@@ -189,7 +192,7 @@ def loop_package(name, loop_integral, requested_order,
         requested_orders = [requested_order],
 
         polynomials_to_decompose = polynomials_to_decompose,
-        polynomial_names = names_polynomials_to_decompose,
+        polynomial_names = names_F_and_U,
         other_polynomials = other_polynomials,
         contour_deformation_polynomial = 'F' if contour_deformation else None,
 
