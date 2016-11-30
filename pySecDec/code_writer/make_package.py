@@ -237,7 +237,7 @@ def get_decomposition_routines(name, normaliz, workdir):
 def _parse_global_templates(name, regulators, polynomial_names,
                             real_parameters, complex_parameters, form_optimization_level,
                             form_work_space, form_insertion_depth, requested_orders,
-                            contour_deformation_polynomial, sector_container_type,
+                            contour_deformation_polynomial, nested_series_type,
                             enforce_complex):
     '''
     Create the `target_directory` (given by `name`) and return the two
@@ -263,7 +263,7 @@ def _parse_global_templates(name, regulators, polynomial_names,
                                      form_insertion_depth = form_insertion_depth,
                                      contour_deformation = int(contour_deformation_polynomial is not None),
                                      requested_orders = _make_FORM_list(requested_orders),
-                                     sector_container_type = sector_container_type,
+                                     nested_series_type = nested_series_type,
                                      pySecDec_version = version,
                                      python_version = sys.version,
                                      pySecDec_git_id = git_id,
@@ -816,13 +816,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
                    form_work_space, form_insertion_depth, contour_deformation_polynomial,
                    positive_polynomials, decomposition_method)
 
-    # construct the c++ type of the integrand container class
+    # construct the c++ type "nested_series_t"
     # for two regulators, the resulting code should read:
-    # "secdecutil::Series<secdecutil::Series<SectorContainerWith[out]Deformation>>"
-    if contour_deformation_polynomial is None:
-        sector_container_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>' + '>' * len(regulators)
-    else:
-        sector_container_type = 'secdecutil::Series<' * len(regulators) + 'secdecutil::SectorContainerWithDeformation<real_t,complex_t>' + '>' * len(regulators)
+    # "secdecutil::Series<secdecutil::Series<T>>"
+    nested_series_type = 'secdecutil::Series<' * len(regulators) + 'T' + '>' * len(regulators)
 
     # configure the template parser and parse global files
     template_sources, template_replacements, file_renamings = \
@@ -830,7 +827,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         name, regulators, polynomial_names,
         real_parameters, complex_parameters, form_optimization_level,
         form_work_space, form_insertion_depth, requested_orders,
-        contour_deformation_polynomial, sector_container_type,
+        contour_deformation_polynomial, nested_series_type,
         enforce_complex
     )
 

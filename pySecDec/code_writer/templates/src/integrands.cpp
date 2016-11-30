@@ -9,10 +9,10 @@
 
 namespace %(name)s
 {
-    const std::vector<%(sector_container_type)s> sectors = {%(sectors_initializer)s};
+    const std::vector<nested_series_t<sector_container_t>> sectors = {%(sectors_initializer)s};
 
     #define %(name)s_contour_deformation %(contour_deformation)i
-    %(make_integrands_return_t)s make_integrands
+    std::vector<nested_series_t<secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>>> make_integrands
     (
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters

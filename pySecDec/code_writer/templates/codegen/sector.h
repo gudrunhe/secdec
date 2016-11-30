@@ -90,8 +90,8 @@ AutoDeclare Symbols SecDecInternalLabel;
 * Define how deep functions to be inserted are nested.
 #define insertionDepth "%(form_insertion_depth)i"
 
-* Define the data type of the integrand container class (constructed in python).
-#define integrandContainerType "%(sector_container_type)s"
+* Define the data type of the integrand container class.
+#define integrandContainerType "nested_series_t<sector_container_t>"
 
 * Define the initializer list for the integrand container class
 * (constructed in python).

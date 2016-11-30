@@ -76,17 +76,15 @@ int main()
     if ( complex_parameters.size() != + %(name)s::number_of_complex_parameters )
         throw std::logic_error("Did not set the correct number of complex parameters");
 
-    const auto sector_integrands = %(name)s::make_integrands(real_parameters, complex_parameters);
-
-    // const auto integrand_container_sum = sector_integrands.at(0) + sector_integrands.at(1); // Example how to add integrand containers
+    const std::vector<%(name)s::nested_series_t<%(name)s::integrand_t>> sector_integrands = %(name)s::make_integrands(real_parameters, complex_parameters);
 
     // Add integrands of sectors (together flag)
-    const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
+    const %(name)s::nested_series_t<%(name)s::integrand_t> all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
 
     // Integrate
-    auto integrator = secdecutil::cuba::Vegas<%(name)s::integrand_return_t>();
+    secdecutil::cuba::Vegas<%(name)s::integrand_return_t> integrator;
     integrator.flags = 2; // verbose output --> see cuba manual
-    auto result_all = secdecutil::deep_apply( all_sectors,  integrator.integrate );
+    const %(name)s::nested_series_t<secdecutil::UncorrelatedDeviation<%(name)s::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors,  integrator.integrate );
 
     std::cout << "------------" << std::endl << std::endl;
 
@@ -98,7 +96,7 @@ int main()
     std::cout << result_all << std::endl << std::endl;
 
     std::cout << "-- prefactor -- " << std::endl;
-    auto prefactor = %(name)s::prefactor(real_parameters, complex_parameters);
+    const %(name)s::nested_series_t<%(name)s::integrand_return_t> prefactor = %(name)s::prefactor(real_parameters, complex_parameters);
     std::cout << prefactor << std::endl << std::endl;
 
     std::cout << "-- full result (prefactor*integral) -- " << std::endl;
