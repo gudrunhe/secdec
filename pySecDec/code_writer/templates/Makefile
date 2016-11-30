@@ -1,7 +1,7 @@
 include Makefile.conf
 
 lib$(NAME).a lib$(NAME).so : source
-	$(MAKE) -C src $@
+	$(MAKE) -C src ../$@
 
 source:
 	$(MAKE) -C codegen $@

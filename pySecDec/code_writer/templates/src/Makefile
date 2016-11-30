@@ -1,15 +1,12 @@
 include ../Makefile.conf
 
-STATIC_OBJECTS = $(patsubst %%.cpp,%%.static.o,$(wildcard *.cpp))
-DYNAMIC_OBJECTS = $(patsubst %%.cpp,%%.dynamic.o,$(wildcard *.cpp))
+OBJECTS = $(patsubst %%.cpp,%%.o,$(wildcard *.cpp))
 
-lib$(NAME).a : $(STATIC_OBJECTS)
+../lib$(NAME).a : $(OBJECTS)
 	ar rs $@ $+
-	cd .. && ln src/$@
 
-lib$(NAME).so : $(DYNAMIC_OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ -shared $+
-	cd .. && ln src/$@
+../lib$(NAME).so : $(OBJECTS)
+	$(CXX) -o $@ -shared $+
 
 clean:
 	rm -f *.o lib$(NAME).a lib$(NAME).so
