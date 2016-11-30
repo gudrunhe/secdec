@@ -4,20 +4,18 @@ BUB=yyyy_bubble
 BOX=yyyy_box6Dim
 
 lib$(NAME_I2).a lib$(NAME_I2).so : $(BUB)/Makefile
-	$(MAKE) -C $(BUB)/src $@
-	ln $(BUB)/src/$@
+	$(MAKE) -C $(BUB) $@
+	ln $(BUB)/$@
 
 lib$(NAME_I4).a lib$(NAME_I4).so : $(BOX)/Makefile
-	$(MAKE) -C $(BOX)/src $@
-	ln $(BOX)/src/$@
+	$(MAKE) -C $(BOX) $@
+	ln $(BOX)/$@
 
 $(BUB)/Makefile :
 	python 4y_bubble.py
-	$(MAKE) -C $(BUB)/codegen source
 
 $(BOX)/Makefile :
 	python 4y_box.py
-	$(MAKE) -C $(BOX)/codegen source
 
 amp.o test.o : $(BUB)/Makefile $(BOX)/Makefile
 

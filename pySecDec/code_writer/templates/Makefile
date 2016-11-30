@@ -1,7 +1,7 @@
 include Makefile.conf
 
 lib$(NAME).a lib$(NAME).so : source
-	$(MAKE) -C src $@
+	$(MAKE) -C src ../$@
 
 source:
 	$(MAKE) -C codegen $@
@@ -9,7 +9,7 @@ source:
 integrate_$(NAME).o : source
 
 integrate_$(NAME) : integrate_$(NAME).o lib$(NAME).a
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $< -l$(NAME) $(LDFLAGS)
 
 very-clean : clean
 	for dir in */; do $(MAKE) -C $$dir $@; done
