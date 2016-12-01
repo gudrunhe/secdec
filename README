@@ -55,3 +55,40 @@ the distribution. Then it runs builds the source distribution of the python pack
 "python setup.py sdist", the documentation as with "make doc", and it runs "make dist" in the
 "util" package. Note that the "util" is an autotools package and you must have the GNU autotools
 installed on your system.
+
+Installation for developers
+---------------------------
+
+This section describes how to install pySecDec and easily update to the commit that is currently
+checked out in the git repository. The following steps should be seen as a guideline to achieve this:
+
+1) Clone the git repository from hepforge (ask another developer for details about that)
+
+2) Create the tarball by running "make dist". If that does not work out of the box, make sure that you
+   have recent versions of the following packages installed:
+   * python (https://www.python.org/)
+   * Sphinx (http://www.sphinx-doc.org/)
+   * The full TeX Live distribution (http://tug.org/texlive/)
+     Note that there are slimmed distributions of TeXLive that typically result in errors about missing files.
+     Follow the instructions in the section "Documentation" in that case.
+   * The GNU autotools:
+     * Autoconf(https://www.gnu.org/software/autoconf/autoconf.html)
+     * Automake(https://www.gnu.org/software/automake/)
+     * Libtool(https://www.gnu.org/software/libtool/)
+
+3) Unpack the tarball to a location OUTSIDE of the repository.
+
+4) Run "make" in the directory with the unpacked tarball. Note that makes's "-j" option sometimes causes problems.
+   If you don't see a success message after running "make -j<jmake>", rerun without the "-j" option.
+
+5) The success message tells you two environment variables to be set in the ".profile"/".bashrc". Set SECDEC_CONTRIB
+   as shown in the message, but set PYTHONPATH to the root directory of the git repository. With that, python will
+   always load the version of pySecDec that is currently checked out in the git directory.
+
+6) Open a new shell and make sure that the the environment variables PYTHONPATH and SECDEC_CONTRIB are set by typing
+   "echo ${SECDEC_CONTRIB}" and "echo ${PYTHONPATH}".
+
+7) In the shell with the new variables set, cd to the git repository and then into "util".
+   Run "./configure --prefix=$SECDEC_CONTRIB && make install" there.
+
+After following the steps above, you must run "make install" in the "util" directory whenever the secdecutil is updated.
