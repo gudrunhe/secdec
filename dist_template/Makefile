@@ -17,7 +17,7 @@ install : $(CPP_PACKAGES) pySecDec
 	echo -e $(begin_green)"Successfully built \"pySecDec\" and its dependencies."$(end_green) ; \
 	echo -e $(begin_green)"To use \"pySecDec\", add the following two commands to your \".bashrc\" or \".profile\":"$(end_green) ; \
 	echo -e $(begin_green)"export SECDEC_CONTRIB=$(TOPDIR)"$(end_green) ; \
-	echo -e $(begin_green)"export PYTHONPATH=$(TOPDIR)pySecDec-$(shell cd pySecDec-*; python -c 'import pySecDec; print(pySecDec.__version__)'):\$$PYTHONPATH"$(end_green)
+	echo -e $(begin_green)"export PYTHONPATH=$(TOPDIR)pySecDec-$(shell cd pySecDec-*/; python -c 'import pySecDec; print(pySecDec.__version__)'):\$$PYTHONPATH"$(end_green)
 
 pySecDec :
 	tar -xf $@-*.tar.gz
@@ -28,7 +28,7 @@ gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static
 secdecutilCONFIGURE = $(CONFIGURE_COMMON)
 $(CPP_PACKAGES) :
 	tar -xf $@-*.tar.gz && \
-	cd $@-* && \
+	cd $@-*/ && \
 	./configure $($@CONFIGURE) && \
 	$(MAKE) && \
 	$(MAKE) install
