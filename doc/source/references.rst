@@ -19,6 +19,11 @@ References
               *Normaliz. Algorithms for rational cones and affine monoids*,
             | available at https://www.normaliz.uni-osnabrueck.de
 
+.. [Bor14]  | S. Borowka
+              *Evaluation of multi-loop multi-scale integrals and phenomenological two-loop applications*, 2014, PhD Thesis - Technische Universität München
+            | `mediaTUM:1220360 <http://nbn-resolving.de/urn/resolver.pl?urn:nbn:de:bvb:91-diss-20140709-1220360-0-4>`_,
+            | `arXiv:1410.7939 <http://arxiv.org/abs/1410.7939>`_
+
 .. [GKR+11] | J. Gluza, K. Kajda, T. Riemann, V. Yundin
               *Numerical Evaluation of Tensor Feynman Integrals in Euclidean Kinematics*, 2011, Eur.Phys.J.C71,
             | `doi:10.1140/epjc/s10052-010-1516-y <http://dx.doi.org/10.1140/epjc/s10052-010-1516-y>`_,
