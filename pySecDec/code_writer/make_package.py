@@ -1296,10 +1296,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
             cal_I_derivatives = {}
             other_derivatives = {}
             deformed_integration_variable_derivatives = {}
+            ExpMinusMuOverX_derivatives = {}
 
             # python dictionaries are unordered but some insertions depend on others --> need an ordering
             ordered_cal_I_derivative_names = []
             ordered_other_derivative_names = []
+            ordered_ExpMinusMuOverX_derivative_names = []
             ordered_deformed_integration_variable_derivative_names = []
 
             def update_derivatives(basename, derivative_tracker, full_expression, derivatives=other_derivatives, ordered_derivative_names=ordered_other_derivative_names, functions=all_functions):
@@ -1389,8 +1391,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 for function_name,start in [('ExpMinusMuOverX',1),('XExpMinusMuOverX',2)]:
                     for multiindex in make_multiindices(start):
                         derivative_name = _derivative_muliindex_to_name(FORM_names[function_name], multiindex)
-                        deformed_integration_variable_derivatives[derivative_name] = Product(*symbolic_additional_deformation_factor.arguments) * error_token # expect at least one factor to be zero
-                        ordered_deformed_integration_variable_derivative_names.append(derivative_name)
+                        ExpMinusMuOverX_derivatives[derivative_name] = end_point_parameter * elementary_monomials[0] * error_token # expect at least one factor to be zero
+                        ordered_ExpMinusMuOverX_derivative_names.append(derivative_name)
                         deformed_integration_variable_functions.append(derivative_name) # define the symbol as CFunction in FORM
 
             # determine which derivatives of the user input ``functions`` are needed and
@@ -1410,6 +1412,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
                         name, deformed_integration_variable_derivatives[name], integration_variables, limit=10**6
                     )
                     for name in ordered_deformed_integration_variable_derivative_names
+                )
+                FORM_deformed_integration_variable_definitions += ''.join(
+                    _make_FORM_function_definition(
+                        name, ExpMinusMuOverX_derivatives[name], (FORM_names['end_point_parameter'],elementary_monomials[0]), limit=10**6
+                    )
+                    for name in ordered_ExpMinusMuOverX_derivative_names
                 )
                 FORM_contourdef_Jacobian_derivative_definitions = ''.join(
                     _make_FORM_function_definition(

@@ -552,7 +552,8 @@ B `regulators';
   .sort
 * }
 
-* Specify the occurring deformation parameters.
+* Specify the occurring/absent deformation parameters.
+* {
   #If `contourDeformation'
     #redefine occurringDeformationParameters ""
     #$counter = 1;
@@ -565,7 +566,39 @@ B `regulators';
         #$counter = $counter + 1;
       #EndIf
     #EndDo
+
+    #redefine absentDeformationParameters ""
+    #$counter = 1;
+    #Do var = {`absentIntegrationVariableIndices',}
+      #If x`var' != x
+        #If `$counter' != 1
+           #redefine absentDeformationParameters "`absentDeformationParameters',"
+        #Endif
+        #redefine absentDeformationParameters "`absentDeformationParameters'SecDecInternalLambda`var'"
+        #$counter = $counter + 1;
+      #EndIf
+    #EndDo
   #EndIf
+* }
+
+* Remove the deformation parameters of absent integration variables.
+* {
+  #If `contourDeformation'
+    #redefine replaceArg ""
+    #$counter = 1;
+    #Do var = {`absentDeformationParameters',}
+      #If x`var' != x
+        #If `$counter' != 1
+           #redefine replaceArg "`replaceArg' ,"
+        #Endif
+        #redefine replaceArg "`replaceArg' `var',0"
+        #$counter = $counter + 1;
+      #EndIf
+    #EndDo
+  multiply replace_(`replaceArg');
+  .sort
+  #EndIf
+* }
 
 * Simultaneously optimize the integrand and all occurring function arguments.
   AntiBracket `integrationVariables', `realParameters', `complexParameters'
