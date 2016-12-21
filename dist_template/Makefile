@@ -2,7 +2,7 @@
 TOPDIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # common options for all packages
-CONFIGURE_COMMON = CFLAGS=-fexceptions --prefix=$(TOPDIR)/install --libdir=$(TOPDIR)/lib --includedir=$(TOPDIR)/include --bindir=$(TOPDIR)/bin
+CONFIGURE_COMMON = --prefix=$(TOPDIR)/install --libdir=$(TOPDIR)/lib --includedir=$(TOPDIR)/include --bindir=$(TOPDIR)/bin
 
 # the included packages
 CPP_PACKAGES = Cuba form gsl secdecutil
@@ -22,7 +22,7 @@ install : $(CPP_PACKAGES) pySecDec
 pySecDec :
 	tar -xf $@-*.tar.gz
 
-CubaCONFIGURE = $(CONFIGURE_COMMON)
+CubaCONFIGURE = $(CONFIGURE_COMMON) CFLAGS="-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions"
 formCONFIGURE = $(CONFIGURE_COMMON)
 gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static
 secdecutilCONFIGURE = $(CONFIGURE_COMMON)
