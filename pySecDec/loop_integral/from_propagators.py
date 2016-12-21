@@ -342,15 +342,15 @@ class LoopIntegralFromPropagators(LoopIntegral):
         g = self.metric_tensor
         D = self.dimensionality
         L = self.L
-        Feynman_parameters_F_U = self.Feynman_parameters + sp.sympify(['F', 'U'])
-        U = Polynomial.from_expression('U', Feynman_parameters_F_U)
-        F = Polynomial.from_expression('F', Feynman_parameters_F_U)
+        Feynman_parameters_U_F = self.Feynman_parameters + sp.sympify(['U', 'F'])
+        U = Polynomial.from_expression('U', Feynman_parameters_U_F)
+        F = Polynomial.from_expression('F', Feynman_parameters_U_F)
         replacement_rules = self.replacement_rules_with_Lorentz_indices
         highest_rank = self.highest_rank
         N_nu = self.N_nu
 
         if self.numerator_input == 1:
-            return Polynomial(np.zeros([1,len(Feynman_parameters_F_U)], dtype=int), np.array([1]), Feynman_parameters_F_U, copy=False)
+            return Polynomial(np.zeros([1,len(Feynman_parameters_U_F)], dtype=int), np.array([1]), Feynman_parameters_U_F, copy=False)
 
         # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
         # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - D*L/2 - r/2)*F**(r/2)`.

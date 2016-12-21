@@ -212,23 +212,23 @@ class LoopIntegral(object):
     @cached_property
     def numerator(self):
 
-        Feynman_parameters_F_U = self.Feynman_parameters + sp.sympify(['F', 'U'])
+        Feynman_parameters_U_F = self.Feynman_parameters + sp.sympify(['U', 'F'])
 
         extended_expolist = []
         for exponents in self.preliminary_U.expolist:
             extended_expolist.append(np.concatenate([exponents,[0,0]]))
 
-        U_explicit = Polynomial(extended_expolist, self.preliminary_U.coeffs, polysymbols=Feynman_parameters_F_U)
+        U_explicit = Polynomial(extended_expolist, self.preliminary_U.coeffs, polysymbols=Feynman_parameters_U_F)
 
         extended_expolist = []
         for exponents in self.preliminary_F.expolist:
             extended_expolist.append(np.concatenate([exponents,[0,0]]))
 
-        F_explicit = Polynomial(extended_expolist, self.preliminary_F.coeffs, polysymbols=Feynman_parameters_F_U)
+        F_explicit = Polynomial(extended_expolist, self.preliminary_F.coeffs, polysymbols=Feynman_parameters_U_F)
 
         Nu = self.preliminary_numerator
-        U = Polynomial.from_expression('U', Feynman_parameters_F_U)
-        F = Polynomial.from_expression('F', Feynman_parameters_F_U)
+        U = Polynomial.from_expression('U', Feynman_parameters_U_F)
+        F = Polynomial.from_expression('F', Feynman_parameters_U_F)
 
         n = self.N_nu - self.dimensionality / 2 * (self.L + 1) - self.highest_rank
         m = self.N_nu - self.dimensionality / 2 * self.L
@@ -254,7 +254,7 @@ class LoopIntegral(object):
                     # terms with all factors of U and F stripped off:
                     term1 = n*dUdx*Nu
                     term2 = - m*dFdx*Nu
-                    term3 = Nu.derive(i) + Nu.derive(-2)*dFdx + Nu.derive(-1)*dUdx
+                    term3 = Nu.derive(i) + Nu.derive(-1)*dFdx + Nu.derive(-2)*dUdx
 
                     # If term1 vanishes, we can factor out U^n.
                     if dUdx.coeffs.any() != 0:
@@ -290,18 +290,18 @@ class LoopIntegral(object):
         # The factors of 1/Gamma(nu_i) are implemented in `Gamma_factor` together with the global Gamma.
         measure_factors = []
 
-        Feynman_parameters_F_U = self.Feynman_parameters + sp.sympify(['F', 'U'])
+        Feynman_parameters_U_F = self.Feynman_parameters + sp.sympify(['U', 'F'])
 
         # The effective power to be used in the measure has to be increased by the number of derivatives.
         for i in range(self.P):
             eff_power = self.powerlist[i] + self.derivativelist[i]
             if eff_power not in (0,1):
-                expolist = np.zeros([1,len(Feynman_parameters_F_U)], dtype=int)
+                expolist = np.zeros([1,len(Feynman_parameters_U_F)], dtype=int)
                 expolist[0][i] = 1
                 measure_factors.append(
                                           ExponentiatedPolynomial(
                                                                      expolist, np.array([1]), exponent=eff_power-1,
-                                                                     polysymbols=Feynman_parameters_F_U, copy=False
+                                                                     polysymbols=Feynman_parameters_U_F, copy=False
                                                                  )
                                       )
         if measure_factors:
@@ -309,9 +309,9 @@ class LoopIntegral(object):
         else:
             return Product(
                               ExponentiatedPolynomial(
-                                                         np.zeros([1,len(Feynman_parameters_F_U)], dtype=int),
+                                                         np.zeros([1,len(Feynman_parameters_U_F)], dtype=int),
                                                          np.array([1]), exponent=eff_power-1,
-                                                         polysymbols=Feynman_parameters_F_U, copy=False
+                                                         polysymbols=Feynman_parameters_U_F, copy=False
                                                      )
                           )
 

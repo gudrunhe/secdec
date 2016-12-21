@@ -163,13 +163,13 @@ def loop_package(name, loop_integral, requested_order,
     # convert `name` to string
     name = str(name)
 
-    F_and_U = [loop_integral.exponentiated_F.copy(), loop_integral.exponentiated_U.copy()]
-    names_F_and_U = sp.symbols(['F','U'])
+    U_and_F = [loop_integral.exponentiated_U.copy(), loop_integral.exponentiated_F.copy()]
+    names_U_and_F = sp.symbols(['U','F'])
 
-    # append the regulator symbol and the symbols `F` and `U` to `F` and `U`
-    for poly in F_and_U:
-        poly.polysymbols.extend([loop_integral.regulator] + names_F_and_U)
-        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_F_and_U)+1], dtype=int)])
+    # append the regulator symbol and the symbols `U` and `F` to `U` and `F`
+    for poly in U_and_F:
+        poly.polysymbols.extend([loop_integral.regulator] + names_U_and_F)
+        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_U_and_F)+1], dtype=int)])
 
     # append the regulator symbol to the `numerator` and to `measure`
     for poly in chain([loop_integral.numerator], loop_integral.measure.factors):
@@ -178,7 +178,7 @@ def loop_package(name, loop_integral, requested_order,
 
     other_polynomials = [loop_integral.numerator]
 
-    polynomials_to_decompose = list(F_and_U)
+    polynomials_to_decompose = list(U_and_F)
     if sp.sympify( loop_integral.measure ) != 1:
         # need ``loop_integral.measure`` only if it is nontrivial
         polynomials_to_decompose += loop_integral.measure.factors
@@ -192,7 +192,7 @@ def loop_package(name, loop_integral, requested_order,
         requested_orders = [requested_order],
 
         polynomials_to_decompose = polynomials_to_decompose,
-        polynomial_names = names_F_and_U,
+        polynomial_names = names_U_and_F,
         other_polynomials = other_polynomials,
         contour_deformation_polynomial = 'F' if contour_deformation else None,
 
@@ -206,11 +206,11 @@ def loop_package(name, loop_integral, requested_order,
 
         decomposition_method = decomposition_method,
 
-        normaliz_executable=normaliz_executable,
-        normaliz_workdir=normaliz_workdir,
+        normaliz_executable = normaliz_executable,
+        normaliz_workdir = normaliz_workdir,
 
-        enforce_complex=enforce_complex,
-        split=split
+        enforce_complex = enforce_complex,
+        split = split
     )
 
     if isinstance(loop_integral, LoopIntegralFromGraph):

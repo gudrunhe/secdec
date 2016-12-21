@@ -1106,7 +1106,7 @@ class TestPowerlist(unittest.TestCase):
             target_F = '''-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)'''
             target_integration_variables = sp.sympify(['z1', 'z2', 'z3'])
 
-        symbols_F_U = sp.sympify(['F', 'U'])
+        symbols_U_F = sp.sympify(['U', 'F'])
 
         target_Nu = {  '1': '-1'
                      , '0': '1'
@@ -1248,7 +1248,7 @@ class TestPowerlist(unittest.TestCase):
 
         self.assertEqual( li.U.polysymbols, target_integration_variables)
         self.assertEqual( li.F.polysymbols, target_integration_variables)
-        self.assertEqual( li.numerator.polysymbols, target_integration_variables + symbols_F_U)
+        self.assertEqual( li.numerator.polysymbols, target_integration_variables + symbols_U_F)
         self.assertEqual( li.integration_variables, target_integration_variables)
 
     def test_one_power(self):

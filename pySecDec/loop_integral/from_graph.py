@@ -101,7 +101,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0
         self.preliminary_numerator = Polynomial(np.zeros([1,len(self.Feynman_parameters)+2], dtype=int), \
-                                                np.array([1]), self.Feynman_parameters+sp.sympify(['F','U']), \
+                                                np.array([1]), self.Feynman_parameters+sp.sympify(['U','F']), \
                                                 copy=False)
 
     @cached_property
