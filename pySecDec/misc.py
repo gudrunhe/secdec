@@ -134,17 +134,29 @@ def det(M):
     assert M.shape[0] == M.shape[1], "`M` must be a square matrix"
     D = M.shape[0]
 
-    # Use sympy to calculate the determinant of a generic DxD Matrix, e.g.
-    # [[M_0_0__, M_0_1__]
-    #  [M_1_0__, M_1_1__]]
-    generic_m = sp.Matrix([["M_%i_%i__" % (i,j) for j in range(D)] for i in range(D)])
-    generic_det = generic_m.det(method='berkowitz').expand()
+    # stopping criterion for recursion
+    if D == 1:
+        return M[0,0]
 
-    # convert sympy output to python executable code; i.e. M_i_j__ --> M[i,j]
-    algebraic_det = str(generic_det).replace('M_','M[').replace('__',']').replace('_',',')
+    # fast check if an integer is even
+    is_even = lambda x: x == (x >> 1 << 1)
 
-    # execute the expression and return the result
-    return eval(algebraic_det)
+    def sub_indices(i):
+        'Return ``list(range(D))`` omitting `i`'
+        sub_indices = list(range(D))
+        sub_indices.remove(i)
+        return sub_indices
+
+    # resolve the first row of the matix
+    result = 0
+    for i in range(D):
+        sub_M = M[[[k] for k in range(1,D)],sub_indices(i)]
+        term = M[0,i] * det(sub_M) # recursion
+        if is_even(i):
+            result += term
+        else:
+            result -= term
+    return result
 
 def adjugate(M):
     '''
