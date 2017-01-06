@@ -64,10 +64,12 @@
   #call cppDefine(`realParameters',real_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`complexParameters',complex_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`occurringDeformationParameters',deformation_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalMu deformation_offset#@SecDecInternalNewline@#"
 
 * Since FORM does not use "abbreviation[0]", we can use it as temporary variable.
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define tmp SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
+
+* c++-define "SecDecInternalRealPart"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
 
 * Optmimize the 2nd Symnanzik polynomial "F"
 
@@ -129,7 +131,7 @@
   multiply replace_(I,i_);
   .sort
 
-  AntiBracket `integrationVariables', `realParameters', `complexParameters', `deformationParameters', SecDecInternalMu;
+  AntiBracket `integrationVariables', `realParameters', `complexParameters', `deformationParameters';
   .sort
   #optimize expressionF
 
@@ -176,7 +178,7 @@
   #call cppUndefine(`realParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`complexParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`occurringDeformationParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalMu#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalRealPart#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
 
 * Close the function and the namespace in the c++ file
