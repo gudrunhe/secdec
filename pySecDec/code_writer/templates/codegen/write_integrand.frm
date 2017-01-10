@@ -199,20 +199,20 @@ B `regulators';
     #Do depth = 0, `insertionDepth'
       #call beginArgumentDepth(`depth')
 
-*       Do not expand functions to higher powers. --> Wrap into function "SecDecInternalIntPow"
-*       example: "U(x,y,z)^2" --> "SecDecInternalIntPow(U(x,y,z),2)"
+*       Do not expand functions to higher powers. --> Wrap into function "SecDecInternalPow"
+*       example: "U(x,y,z)^2" --> "SecDecInternalPow(U(x,y,z),2)"
         repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) * SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) =
-            SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
-        repeat Id SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?)
-                * SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?)
-                = SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
-        repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 0) = 1;
-        repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-        repeat Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
+            SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
+        repeat Id SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?)
+                * SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?)
+                = SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
+        repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
+        repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+        repeat Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
 
 *       Wrap noninteger powers into the function pow.
         repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) ^ SecDecInternalsDUMMYExponent? =
-            pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYExponent);
+            SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYExponent);
 
 *       Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
 *       example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
@@ -331,20 +331,20 @@ B `regulators';
   #Do depth = 0, `insertionDepth'
     #call beginArgumentDepth(`depth')
 
-*     Do not expand functions to higher powers. --> Wrap into function "SecDecInternalIntPow"
-*     example: "U(x,y,z)^2" --> "SecDecInternalIntPow(U(x,y,z),2)"
+*     Do not expand functions to higher powers. --> Wrap into function "SecDecInternalPow"
+*     example: "U(x,y,z)^2" --> "SecDecInternalPow(U(x,y,z),2)"
       repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) * SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) =
-          SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
-        repeat Id SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?)
-                * SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?)
-                = SecDecInternalIntPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
-      repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 0) = 1;
-      repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-      repeat Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
+          SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
+        repeat Id SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?)
+                * SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?)
+                = SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
+      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
+      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+      repeat Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
 
 *     Wrap noninteger powers into the function pow.
       repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) ^ SecDecInternalsDUMMYExponent? =
-          pow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYExponent);
+          SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYExponent);
 
 *     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
 *     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
@@ -367,9 +367,9 @@ B `regulators';
 
 *   some simplifications
     #call beginArgumentDepth(`depth')
-      repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 0) = 1;
-      repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-      repeat Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
+      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
+      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+      repeat Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
       Denominators SecDecInternalDenominator;
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
@@ -399,11 +399,11 @@ B `regulators';
       factarg,(-1),SecDecInternalDenominator;
       chainout SecDecInternalDenominator;
       repeat Id log(1) = 0;
-      repeat Id SecDecInternalsDUMMY? * SecDecInternalsDUMMY? = SecDecInternalIntPow(SecDecInternalsDUMMY, 2);
-      repeat Id SecDecInternalsDUMMYbase? * SecDecInternalIntPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent?) =
-        SecDecInternalIntPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent + 1);
-      repeat Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent1?) * SecDecInternalIntPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent2?) =
-        SecDecInternalIntPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent1 + SecDecInternalsDUMMYexponent2);
+      repeat Id SecDecInternalsDUMMY? * SecDecInternalsDUMMY? = SecDecInternalPow(SecDecInternalsDUMMY, 2);
+      repeat Id SecDecInternalsDUMMYbase? * SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent?) =
+        SecDecInternalPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent + 1);
+      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent1?) * SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent2?) =
+        SecDecInternalPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent1 + SecDecInternalsDUMMYexponent2);
       repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
       repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
       repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
@@ -417,9 +417,9 @@ B `regulators';
   repeat;
     #Do depth = 0, `insertionDepth'
       #call beginArgumentDepth(`depth')
-        Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 0) = 1;
-        Id SecDecInternalIntPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-        Id SecDecInternalIntPow(0, SecDecInternalsDUMMYexponent?) = 0;
+        Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
+        Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+        Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
       #call endArgumentDepth(`depth')
     #EndDo
   endRepeat;
@@ -428,7 +428,7 @@ B `regulators';
 * Replace all function calls by symbols for simultaneous optimization.
 * {
 
-  #redefine functionsToReplace "`functions',log,pow,SecDecInternalIntPow,SecDecInternalDenominator"
+  #redefine functionsToReplace "`functions',log,SecDecInternalPow,SecDecInternalDenominator"
   #If `contourDeformation'
     #redefine functionsToReplace "SecDecInternalRealPart,`functionsToReplace'"
   #EndIf
@@ -651,7 +651,7 @@ B `regulators';
 * the c++ file yet.
 
   L unparsed = SecDecInternalsDUMMYUnparsedAppendix;
-  #redefine functionsToReplace "`functions',log,pow,SecDecInternalIntPow,SecDecInternalDenominator"
+  #redefine functionsToReplace "`functions',log,SecDecInternalPow,SecDecInternalDenominator"
   #If `contourDeformation'
     #redefine functionsToReplace "SecDecInternalRealPart,`contourdefJacobianFunctions',`deformedIntegrationVariableDerivativeFunctions',`functionsToReplace'"
   #EndIf

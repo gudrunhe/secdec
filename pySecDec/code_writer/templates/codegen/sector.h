@@ -31,10 +31,10 @@ AutoDeclare Symbols SecDecInternalsDUMMY;
 
 * We generated logs in the subtraction and pack denominators
 * and powers into a functions.
-CFunctions log, pow, SecDecInternalIntPow, SecDecInternalDenominator;
+CFunctions log, SecDecInternalPow, SecDecInternalDenominator;
 
 * We rewrite function calls as symbols
-#Do function = {`functions',log,pow,SecDecInternalIntPow,SecDecInternalDenominator}
+#Do function = {`functions',log,SecDecInternalPow,SecDecInternalDenominator}
   AutoDeclare Symbols SecDecInternal`function'Call;
 #EndDo
 

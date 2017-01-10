@@ -64,10 +64,13 @@ namespace %(name)s
      *       Playing around with "std::pow" and the aforementioned switches is nevertheless
      *       worth a try in practical applications where high performance is needed.
      */
-    template <typename T> inline T SecDecInternalIntPow(T base, int exponent)
+    template <typename Tbase, typename Texponent> inline Tbase SecDecInternalPow(Tbase base, Texponent exponent)
     {
-        if (exponent < 0)
-	    return 1./SecDecInternalIntPow(base, -exponent);
+        if (int(exponent) != exponent or exponent > 1024 or exponent < -1024)
+            return std::pow(base, exponent);
+
+        else if (exponent < 0)
+	    return 1./SecDecInternalPow(base, -exponent);
 
         else if (exponent == 0)
             return 1.;
@@ -83,7 +86,7 @@ namespace %(name)s
 
         else if (exponent == 4)
         {
-            T result = base;
+            Tbase result = base;
             result *= result;
             result *= result;
             return result;
@@ -91,7 +94,7 @@ namespace %(name)s
 
         else if (exponent == 5)
         {
-            T result = base;
+            Tbase result = base;
             result *= result;
             result *= result;
             return result * base;
@@ -99,19 +102,19 @@ namespace %(name)s
 
         else if (exponent == 6)
         {
-            T result = base * base * base;
+            Tbase result = base * base * base;
             return result * result;
         }
 
         else if (exponent == 7)
         {
-            T result = base * base * base;
+            Tbase result = base * base * base;
             return result * result * base;
         }
 
         else if (exponent == 8)
         {
-            T result = base;
+            Tbase result = base;
             result *= result;
             result *= result;
             return result * result;
@@ -119,7 +122,7 @@ namespace %(name)s
 
         else if (exponent == 16)
         {
-            T tmp = base * base;
+            Tbase tmp = base * base;
             tmp *= tmp;
             tmp *= tmp;
             tmp *= tmp;
@@ -127,7 +130,7 @@ namespace %(name)s
         }
 
         unsigned half_exponent = exponent / 2;
-        T out = SecDecInternalIntPow(base, half_exponent);
+        Tbase out = SecDecInternalPow(base, half_exponent);
 
         out *= out;
         if (2 * half_exponent == exponent) // exponent is even
@@ -138,15 +141,13 @@ namespace %(name)s
 
     real_t inline pow(real_t x, int y)
     {
-        return SecDecInternalIntPow(x, y);
+        return SecDecInternalPow(x, y);
     }
 
     complex_t inline pow(complex_t x, int y)
     {
-        return SecDecInternalIntPow(x, y);
+        return SecDecInternalPow(x, y);
     }
-
-    using std::pow;
 
     // --}
 
