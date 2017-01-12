@@ -712,7 +712,7 @@ B `regulators';
           .sort
 
           #If `dependenciesDone'
-            #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternal`function'Call`callIndex' = "
+            #write <sector_`sectorID'_`cppOrder'.cpp> "auto SecDecInternal`function'Call`callIndex' = "
             #If `numberOfArgs`function'Label`callIndex'' == 0
               #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#"  expr(#@no_split_expression@#)
             #Else
