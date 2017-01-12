@@ -3,15 +3,12 @@
 Symbols `deformationParameters';
 
 * The deformed integration variable functions (including appearing derivatives)
-#define deformedIVFunctions "%(deformed_integration_variable_functions)s"
-CFunctions `deformedIVFunctions';
+#define deformedIntegrationVariableDerivativeFunctions "%(deformed_integration_variable_derivative_functions)s"
+CFunctions `deformedIntegrationVariableDerivativeFunctions';
 
-* The additional parameter controlling how fast the contour deformation goes to
-* zero at the end points
-Symbol SecDecInternalMu;
-
-* We multiply the error token by terms that we expect to vanish
-Symbol SecDecInternalErrorToken;
+* The Jacobian determinant of the contour deformation (including appearing derivatives)
+#define contourdefJacobianFunctions "%(contourdef_Jacobian_derivative_functions)s"
+CFunctions `contourdefJacobianFunctions';
 
 * Define the function that takes the real part
 CFunction SecDecInternalRealPart;
@@ -20,16 +17,10 @@ CFunction SecDecInternalRealPart;
 CFunction SecDecInternalContourdefJacobian;
 
 * Define the calls to the contour deformation.
-#Do function = {`integrationVariables'}
-  AutoDeclare Symbols SecDecInternalSecDecInternalDeformed`function'Call;
+#Do function = {`deformedIntegrationVariableDerivativeFunctions'}
+  AutoDeclare Symbols SecDecInternal`function'Call;
 #EndDo
 AutoDeclare Symbols SecDecInternalSecDecInternalContourdefJacobianCall;
-
-* Define the function appearing in the contour deformation
-CFunctions  SecDecIternalRealPart,
-            SecDecInternalExpMinusMuOverX,
-            SecDecInternalXExpMinusMuOverX,
-           dSecDecInternalXExpMinusMuOverXd1;
 
 * Define the call replacement symbols for the real part
 AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
@@ -43,16 +34,9 @@ AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
   %(insert_deformed_integration_variables_procedure)s
 #endProcedure
 
-* Procedure that inserts the Jacobian matrix
-* of the contour deformation. This procedure
-* is written by python.
-#procedure insertContourdefJacobianMatrix
-  %(insert_contourdef_Jacobian_procedure)s
-#endProcedure
-
-* Procedure that inserts the derivatives of the
-* Jacobian matrix of the contour deformation. This
-* procedure is written by python.
+* Procedure that inserts the Jacobian determinant and
+* its required derivatives. This procedure is written
+* by python.
 #procedure insertContourdefJacobianDerivatives
   %(insert_contourdef_Jacobian_derivatives_procedure)s
 #endProcedure
