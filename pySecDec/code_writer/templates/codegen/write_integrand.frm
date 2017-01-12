@@ -20,6 +20,40 @@ Off statistics;
   #EndDo
 #endProcedure
 
+* Define a simplification procedure
+#procedure simplify
+  #Do depth = 0, `insertionDepth'
+    #call beginArgumentDepth(`depth')
+      Denominators SecDecInternalDenominator;
+      factarg,(-1),SecDecInternalDenominator;
+      chainout SecDecInternalDenominator;
+      repeat Id log(1) = 0;
+      repeat Id SecDecInternalsDUMMY? * SecDecInternalsDUMMY? = SecDecInternalPow(SecDecInternalsDUMMY, 2);
+      repeat Id SecDecInternalsDUMMYbase? * SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent?) =
+        SecDecInternalPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent + 1);
+      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent1?) * SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent2?) =
+        SecDecInternalPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent1 + SecDecInternalsDUMMYexponent2);
+      repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
+      repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
+      repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
+      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+      repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
+      #If `contourDeformation'
+        repeat Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
+      #EndIf
+    #call endArgumentDepth(`depth')
+  #EndDo
+  repeat;
+    #Do depth = 0, `insertionDepth'
+      #call beginArgumentDepth(`depth')
+        Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
+        Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+        Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
+      #call endArgumentDepth(`depth')
+    #EndDo
+  endRepeat;
+#endProcedure
+
 #include sector`sectorID'.h
 #If `contourDeformation'
   #include contour_deformation_sector`sectorID'.h
@@ -392,119 +426,12 @@ B `regulators';
   multiply replace_(I,i_);
   .sort
 
-* simplify again
-  #Do depth = 0, `insertionDepth'
-    #call beginArgumentDepth(`depth')
-      Denominators SecDecInternalDenominator;
-      factarg,(-1),SecDecInternalDenominator;
-      chainout SecDecInternalDenominator;
-      repeat Id log(1) = 0;
-      repeat Id SecDecInternalsDUMMY? * SecDecInternalsDUMMY? = SecDecInternalPow(SecDecInternalsDUMMY, 2);
-      repeat Id SecDecInternalsDUMMYbase? * SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent?) =
-        SecDecInternalPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent + 1);
-      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent1?) * SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent2?) =
-        SecDecInternalPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent1 + SecDecInternalsDUMMYexponent2);
-      repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
-      repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
-      repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
-      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
-      repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
-      #If `contourDeformation'
-        repeat Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
-      #EndIf
-    #call endArgumentDepth(`depth')
-  #EndDo
-  repeat;
-    #Do depth = 0, `insertionDepth'
-      #call beginArgumentDepth(`depth')
-        Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
-        Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-        Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
-      #call endArgumentDepth(`depth')
-    #EndDo
-  endRepeat;
+  #call simplify
   .sort
-
-* Replace all function calls by symbols for simultaneous optimization.
-* {
-
-  #redefine functionsToReplace "`functions',log,SecDecInternalPow,SecDecInternalDenominator"
-  #If `contourDeformation'
-    #redefine functionsToReplace "SecDecInternalRealPart,`functionsToReplace'"
-  #EndIf
-
-  #Do function = {`functionsToReplace'}
-    #IfNDef `largestLabel`function''
-      #redefine largestLabel`function' "0"
-    #EndIf
-  #EndDo
-
-  #Do j = 1,1
-
-    #Do function = {`functionsToReplace'}
-      #$labelCounter = `largestLabel`function'';
-
-      #Do depth = 0, `insertionDepth'
-
-*       Since we need intermediate ".sort" instructions, we cannot use the
-*       "repeat" environment.
-*       The following construction is suggested in the FORM documentation.
-
-        #Do i = 1,1
-*         set dollar variable
-          #call beginArgumentDepth(`depth')
-            if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-          #call endArgumentDepth(`depth')
-          .sort
-
-*         The following "#if" evaluates to true only if there is still something to do.
-          #If `i' == 0
-
-            #redefine j "0"
-
-            #$labelCounter = $labelCounter + 1;
-
-            L arguments = SecDecInternalfDUMMYarguments(`$args');
-
-            #Do replaceDepth = 0, `insertionDepth'
-              #call beginArgumentDepth(`replaceDepth')
-                Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
-              #call endArgumentDepth(`replaceDepth')
-            #EndDo
-
-            repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) =
-                SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
-
-*           Define `$argCounter' by loking at the term with the empty function "SecDecInternalfDUMMYarguments"
-            Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
-            .sort
-
-*           Add all arguments to top level polynomial for simultaneous optimization.
-            Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + arguments;
-
-            #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
-
-            .sort
-          #EndIf
-        #EndDo
-      #EndDo
-
-      #redefine largestLabel`function' "`$labelCounter'"
-
-    #EndDo
-
-  #EndDo
-
-  Id SecDecInternalsDUMMYtoOptimize = expression;
-  .sort
-
-  drop expression, arguments;
-  .sort
-* }
 
 * Find and count the occurring integration variables.
 * {
-  hide; nhide toOptimize;
+  hide; nhide toOptimize, expression;
   .sort
 
   #redefine occurringIntegrationVariables ""
@@ -597,6 +524,139 @@ B `regulators';
   multiply replace_(`replaceArg');
   .sort
   #EndIf
+* }
+
+  #call simplify
+  .sort
+
+* Check if any call to the deformation of the integration variables "SecDecInternalDeformed..."
+* (and appearing derivatives) is zero or one and can therefore be removed.
+* {
+
+  #If `contourDeformation'
+
+    #Do function = {`deformedIntegrationVariableDerivativeFunctions'}
+      #Do callIndex = 1, `largestLabel`function''
+
+        B SecDecInternalLabel`function'Call`callIndex'Arg;
+        .sort
+
+        L zeroCheck = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg] * SecDecInternalsDUMMYZeroCheck - SecDecInternalsDUMMYOneCheck;
+        .sort
+        hide; nhide zeroCheck;
+        .sort
+
+        #redefine callIsZero "1"
+        #redefine callIsOne "1"
+        if ( occurs(SecDecInternalsDUMMYZeroCheck) ) redefine callIsZero "0";
+        .sort
+
+        #If `callIsZero'
+          #redefine callIsOne "0"
+        #Else
+          Id SecDecInternalsDUMMYZeroCheck = SecDecInternalsDUMMYOneCheck;
+          .sort
+          if ( occurs(SecDecInternalsDUMMYOneCheck) ) redefine callIsOne "0";
+          .sort
+        #EndIf
+
+        unhide;
+        drop zeroCheck;
+        .sort
+
+        #If `callIsZero'
+          multiply replace_(SecDecInternal`function'Call`callIndex',0);
+          .sort
+        #ElseIf `callIsOne'
+          multiply replace_(SecDecInternal`function'Call`callIndex',1);
+          .sort
+        #EndIf
+
+      #EndDo
+    #EndDo
+
+  #EndIf
+
+* }
+
+  #call simplify
+  .sort
+
+* Replace all function calls by symbols for simultaneous optimization.
+* {
+
+  #redefine functionsToReplace "`functions',log,SecDecInternalPow,SecDecInternalDenominator"
+  #If `contourDeformation'
+    #redefine functionsToReplace "SecDecInternalRealPart,`functionsToReplace'"
+  #EndIf
+
+  #Do function = {`functionsToReplace'}
+    #IfNDef `largestLabel`function''
+      #redefine largestLabel`function' "0"
+    #EndIf
+  #EndDo
+
+  #Do j = 1,1
+
+    #Do function = {`functionsToReplace'}
+      #$labelCounter = `largestLabel`function'';
+
+      #Do depth = 0, `insertionDepth'
+
+*       Since we need intermediate ".sort" instructions, we cannot use the
+*       "repeat" environment.
+*       The following construction is suggested in the FORM documentation.
+
+        #Do i = 1,1
+*         set dollar variable
+          #call beginArgumentDepth(`depth')
+            if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
+          #call endArgumentDepth(`depth')
+          .sort
+
+*         The following "#if" evaluates to true only if there is still something to do.
+          #If `i' == 0
+
+            #redefine j "0"
+
+            #$labelCounter = $labelCounter + 1;
+
+            L arguments = SecDecInternalfDUMMYarguments(`$args');
+
+            #Do replaceDepth = 0, `insertionDepth'
+              #call beginArgumentDepth(`replaceDepth')
+                Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
+              #call endArgumentDepth(`replaceDepth')
+            #EndDo
+
+            repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) =
+                SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
+
+*           Define `$argCounter' by loking at the term with the empty function "SecDecInternalfDUMMYarguments"
+            Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
+            .sort
+
+*           Add all arguments to top level polynomial for simultaneous optimization.
+            Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize + arguments;
+
+            #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
+
+            .sort
+          #EndIf
+        #EndDo
+      #EndDo
+
+      #redefine largestLabel`function' "`$labelCounter'"
+
+    #EndDo
+
+  #EndDo
+
+  Id SecDecInternalsDUMMYtoOptimize = expression;
+  .sort
+
+  drop expression, arguments;
+  .sort
 * }
 
 * Simultaneously optimize the integrand and all occurring function arguments.
@@ -712,19 +772,28 @@ B `regulators';
           .sort
 
           #If `dependenciesDone'
-            #write <sector_`sectorID'_`cppOrder'.cpp> "auto SecDecInternal`function'Call`callIndex' = "
-            #If `numberOfArgs`function'Label`callIndex'' == 0
-              #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#"  expr(#@no_split_expression@#)
-            #Else
-              #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
-              #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-                #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'(#@no_split_expression@#)
-                #If `argIndex' != `numberOfArgs`function'Label`callIndex''
-                  #write <sector_`sectorID'_`cppOrder'.cpp> ","
-                #EndIf
-              #EndDo
-              #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+
+*           Define the variable only if it is used.
+            #redefine needThisCall "0"
+            if ( occurs(SecDecInternal`function'Call`callIndex') ) redefine needThisCall "1";
+            .sort
+
+            #If `needThisCall'
+              #write <sector_`sectorID'_`cppOrder'.cpp> "auto SecDecInternal`function'Call`callIndex' = "
+              #If `numberOfArgs`function'Label`callIndex'' == 0
+                #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#"  expr(#@no_split_expression@#)
+              #Else
+                #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
+                #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+                  #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'(#@no_split_expression@#)
+                  #If `argIndex' != `numberOfArgs`function'Label`callIndex''
+                    #write <sector_`sectorID'_`cppOrder'.cpp> ","
+                  #EndIf
+                #EndDo
+                #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+              #EndIf
             #EndIf
+
             multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
             .sort
           #EndIf
@@ -734,7 +803,9 @@ B `regulators';
             #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
               drop arg`argIndex';
             #EndDo
+
           #EndIf
+
         #EndIf
       #EndDo
     #EndDo
