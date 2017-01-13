@@ -206,8 +206,11 @@ namespace secdecutil {
                                 const real_t deformation_offset
                             ) const
         {
-            if ( !contour_deformation_polynomial_passes_sign_check(integration_variables,real_parameters,complex_parameters,deformation_parameters,deformation_offset) )
-            {
+            // the required sign checks are performed inside the integrand for higher performance
+            try {
+                return deformed_integrand(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset);
+            } catch (const sign_check_error& error) {
+                // rethrow but with proper error message
                 auto error_message = "Contour deformation in sector \"" + std::to_string(sector_id);
                 error_message += "\", order { ";
                 for (auto order : orders)
@@ -217,8 +220,6 @@ namespace secdecutil {
                 error_message += " (recommended) or decrease \"deformation_parameters\".";
                 throw sign_check_error(error_message);
             }
-
-            return deformed_integrand(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset);
         };
 
         // constructor

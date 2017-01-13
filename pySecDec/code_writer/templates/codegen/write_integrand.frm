@@ -165,6 +165,85 @@ B `regulators';
   repeat Id log(SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?) = log(SecDecInternalsDUMMY1) * SecDecInternalsDUMMY2;
   .sort
 
+* Find the calls to the contour deformation polynomials that need a sign check.
+* The call differ only in which Feynman paramters are set to zero. We investigate
+* that by looking at the calls to "SecDecInternalCalI".
+* {
+  #If `contourDeformation'
+
+    Local tmp = expression;
+    Local signCheck = SecDecInternalsDUMMYsignCheck;
+    .sort
+    hide; nhide tmp, signCheck;
+    .sort
+
+    #$labelCounter = 0;
+
+    #Do i = 1,1
+*     set dollar variable
+      .sort
+      hide signCheck;
+      .sort
+      if ( match(SecDecInternalCalI(?SecDecInternalsDUMMY$args)) ) redefine i "0";
+      .sort
+      unhide signCheck;
+      .sort
+
+*     The following "#if" evaluates to true only if there is still something to do.
+      #If `i' == 0
+
+        #$labelCounter = $labelCounter + 1;
+
+        Id SecDecInternalCalI(`$args') = 0;
+
+*       The sign check to be performed is:
+*       "SecDecInternalContourDeformationPolynomial(<deformed integration variables>) - SecDecInternalContourDeformationPolynomial(<undeformed integration variables>) <= 0"
+*       {
+        Id SecDecInternalsDUMMYsignCheck = SecDecInternalsDUMMYsignCheck +
+            SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`$labelCounter' *
+            (
+              SecDecInternalfDUMMYdeformedContourDeformationPolynomial($args) - `SecDecInternalContourDeformationPolynomial'($args)
+            );
+
+*       Define a variables that only keeps the integration variables in "$args"
+*       {
+        #redefine argsWithoutRegulators ""
+        #$counter = 0;
+        #Do arg = {`$args'}
+          #$counter = $counter + 1;
+          #If `$counter' <= `numIV'
+            #If `$counter' != 1
+              #redefine argsWithoutRegulators "`argsWithoutRegulators',"
+            #EndIf
+            #redefine argsWithoutRegulators "`argsWithoutRegulators'`arg'"
+          #EndIf
+        #EndDo
+*       }
+
+        #Do IV = {`integrationVariables'}
+          Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?frontArgs,`IV',?backArgs) =
+             SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?frontArgs,SecDecInternalDeformed`IV'(`argsWithoutRegulators'),?backArgs);
+        #EndDo
+
+        Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?args) = `SecDecInternalContourDeformationPolynomial'(?args);
+
+        .sort
+
+*       }
+
+      #EndIf
+    #EndDo
+
+    #redefine numberOfRequiredSignChecks "`$labelCounter'"
+
+    unhide;
+    drop tmp;
+    multiply replace_(SecDecInternalsDUMMYsignCheck,0);
+    .sort
+
+  #EndIf
+* }
+
 * insert calI
   #call insertCalI
   .sort
@@ -290,7 +369,7 @@ B `regulators';
 *           {
             Format rational;
             .sort
-            Local zeroCheck = `function'($args) * SecDecInternalsDUMMYZeroCheck - SecDecInternalsDUMMYOneCheck;
+            Local zeroCheck = `function'($args) * SecDecInternalsDUMMYZeroCheck;
             .sort
             hide; nhide zeroCheck;
             .sort
@@ -344,6 +423,7 @@ B `regulators';
         #EndDo
 
       repeat Id SecDecInternalfDUMMY`function'(?arguments) = `function'(?arguments);
+
       .sort
 
       #EndDo
@@ -652,10 +732,17 @@ B `regulators';
 
   #EndDo
 
-  Id SecDecInternalsDUMMYtoOptimize = expression;
+  #If `contourDeformation'
+    Id SecDecInternalsDUMMYtoOptimize = expression + signCheck;
+  #Else
+    Id SecDecInternalsDUMMYtoOptimize = expression;
+  #EndIf
   .sort
 
   drop expression, arguments;
+  #If `contourDeformation'
+    drop signCheck;
+  #EndIf
   .sort
 * }
 
@@ -688,6 +775,7 @@ B `regulators';
 * Define that function as c preprocessor macro.
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalDenominator(x) 1./(x)#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalImagPart(x) std::imag(x)#@SecDecInternalNewline@#"
 
 * Define "SecDecInternalAbbreviation[0]" as c preprocessor variable "tmp".
 * Since FORM does not use "SecDecInternalAbbreviation[0]", we can use it.
@@ -821,6 +909,41 @@ B `regulators';
 
 * }
 
+* write code for the sign check
+* {
+  #If `contourDeformation'
+
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#// contour deformation sign checks#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternalSignCheckExpression;#@SecDecInternalNewline@#"
+
+    hide; nhide toOptimize, expr;
+    .sort
+
+    #Do signCheckId = 1, `numberOfRequiredSignChecks'
+
+      Bracket SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId';
+      .sort
+      Local expr = toOptimize[SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId'];
+      .sort
+
+      #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
+      #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression > 0)"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+
+      multiply replace_(SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId',0);
+      .sort
+
+    #EndDo
+
+    unhide;
+    drop expr;
+    .sort
+
+    #write <sector_`sectorID'_`cppOrder'.cpp> "// end of contour deformation sign checks#@SecDecInternalNewline@#"
+
+  #EndIf
+* }
+
 * write the integrand
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "return %%e#@SecDecInternalNewline@#" toOptimize(#@no_split_expression@#)
@@ -835,6 +958,7 @@ B `regulators';
   #EndIf
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalDenominator#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalRealPart#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalImagPart#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
 
 * Close the c++ function and namespaces
