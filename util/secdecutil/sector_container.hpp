@@ -84,8 +84,7 @@ namespace secdecutil {
          real_t const * const integration_variables,
          real_t const * const real_parameters,
          complex_t const * const complex_parameters,
-         real_t const * const deformation_parameters,
-         const real_t deformation_offset
+         real_t const * const deformation_parameters
          );
 
         // the call signature of the function that computes the maximal deformation parameters
@@ -111,8 +110,7 @@ namespace secdecutil {
                                                                 const unsigned number_of_samples = 100000,
                                                                 const real_t maximum = 1.,
                                                                 const real_t minimum = 1.e-5,
-                                                                const real_t decrease_factor = 0.9,
-                                                                const real_t deformation_offset = 1.e-3
+                                                                const real_t decrease_factor = 0.9
                                                             ) const
         {
             // define indices for the loops
@@ -163,7 +161,7 @@ namespace secdecutil {
             for (i=0; i<number_of_samples; ++i)
             {
                 gsl_qrng_get(Sobol_generator,real_sample);
-                while ( !contour_deformation_polynomial_passes_sign_check(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters, deformation_offset) )
+                while ( !contour_deformation_polynomial_passes_sign_check(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters) )
                 {
                     for (j=0; j<number_of_integration_variables; ++j)
                         optimized_deformation_parameters[j] *= decrease_factor;
@@ -189,12 +187,11 @@ namespace secdecutil {
             real_t const * const integration_variables,
             real_t const * const real_parameters,
             complex_t const * const complex_parameters,
-            real_t const * const deformation_parameters,
-            const real_t deformation_offset
+            real_t const * const deformation_parameters
         ) const
         {
-            return contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset).imag()
-                <= contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, zeros.data()          , 0                 ).imag();
+            return contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters).imag()
+                <= contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, zeros.data()          ).imag();
         }
 
         // "integrand" must be a member function, otherwise we cannot bind the struct
@@ -202,13 +199,12 @@ namespace secdecutil {
                                 real_t const * const integration_variables,
                                 real_t const * const real_parameters,
                                 complex_t const * const complex_parameters,
-                                real_t const * const deformation_parameters,
-                                const real_t deformation_offset
+                                real_t const * const deformation_parameters
                             ) const
         {
             // the required sign checks are performed inside the integrand for higher performance
             try {
-                return deformed_integrand(integration_variables, real_parameters, complex_parameters, deformation_parameters, deformation_offset);
+                return deformed_integrand(integration_variables, real_parameters, complex_parameters, deformation_parameters);
             } catch (const sign_check_error& error) {
                 // rethrow but with proper error message
                 auto error_message = "Contour deformation in sector \"" + std::to_string(sector_id);
@@ -254,8 +250,7 @@ namespace secdecutil {
     std::function<secdecutil::IntegrandContainer<complex_t, real_t const * const>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
     SectorContainerWithDeformation_to_IntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters,
                                                          unsigned number_of_samples = 100000, real_t deformation_parameters_maximum = 1.,
-                                                         real_t deformation_parameters_minimum = 1.e-5, real_t deformation_parameters_decrease_factor = 0.9,
-                                                         real_t deformation_parameters_deformation_offset = 1.e-3)
+                                                         real_t deformation_parameters_minimum = 1.e-5, real_t deformation_parameters_decrease_factor = 0.9)
     {
         auto shared_real_parameters = std::make_shared<std::vector<real_t>>(real_parameters);
         auto shared_complex_parameters = std::make_shared<std::vector<complex_t>>(complex_parameters);
@@ -277,14 +272,13 @@ namespace secdecutil {
                         number_of_samples,
                         deformation_parameters_maximum,
                         deformation_parameters_minimum,
-                        deformation_parameters_decrease_factor,
-                        deformation_parameters_deformation_offset
+                        deformation_parameters_decrease_factor
                     )
                 );
 
             auto integrand = std::bind(&secdecutil::SectorContainerWithDeformation<real_t,complex_t>::integrand, sector_container,
                                        std::placeholders::_1, sector_container.real_parameters->data(), sector_container.complex_parameters->data(),
-                                       sector_container.deformation_parameters->data(), deformation_parameters_deformation_offset);
+                                       sector_container.deformation_parameters->data());
 
             return secdecutil::IntegrandContainer<complex_t, real_t const * const>(sector_container.number_of_integration_variables, integrand);
         };

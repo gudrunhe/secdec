@@ -145,8 +145,7 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const real_parameters,#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "    complex_t const * const complex_parameters#@SecDecInternalNewline@#"
   #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.cpp> "    ,real_t const * const deformation_parameters,#@SecDecInternalNewline@#"
-    #write <sector_`sectorID'_`cppOrder'.cpp> "    const real_t deformation_offset#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "    ,real_t const * const deformation_parameters#@SecDecInternalNewline@#"
   #EndIf
   #write <sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  {#@SecDecInternalNewline@#"
