@@ -85,7 +85,7 @@
     #EndIf
   #EndDo
 
-  L expressionF = `SecDecInternalContourDeformationPolynomial'(`deformedIntegrationVariables',`regulators')*replace_(`nullifyRegulators') + SecDecInternalsDUMMYdeformedVariables;
+  L expressionF = `SecDecInternalContourDeformationPolynomial'(`deformedIntegrationVariables',`regulators')*replace_(`nullifyRegulators') + SecDecInternalsDUMMYExpressionFTail;
   .sort
 
 * replace the calls to the deformed integration variables by dummy symbols
@@ -96,29 +96,12 @@
       argument `SecDecInternalContourDeformationPolynomial';
         Id SecDecInternalDeformed`IV' = SecDecInternalSecDecInternalDeformed`IV'Call;
       endArgument;
-      Id SecDecInternalsDUMMYdeformedVariables = SecDecInternalsDUMMYdeformedVariables +
+      Id SecDecInternalsDUMMYExpressionFTail = SecDecInternalsDUMMYExpressionFTail +
         SecDecInternalLabelSecDecInternalDeformed`IV' * SecDecInternalDeformed`IV'(`integrationVariables');
 
     #EndIf
   #EndDo
-
-  Id SecDecInternalsDUMMYdeformedVariables = 0;
 * }
-
-* remove calls to the deformation of absent integration variables
-  #Do IV = {`absentIntegrationVariables',}
-    #If x`IV' != x
-      argument `SecDecInternalContourDeformationPolynomial';
-        Id SecDecInternalDeformed`IV' = 0;
-      endArgument;
-    #EndIf
-  #EndDo
-
-
-  #If `numIV' != `numOccurringIVOrder`shiftedOrderIndex''
-    multiply replace_(`nullifyAbsentIVs');
-    .sort
-  #EndIf
 
 * insert the deformation and `SecDecInternalContourDeformationPolynomial'
   #call insertDeformedIntegrationVariables
@@ -131,8 +114,60 @@
   multiply replace_(I,i_);
   .sort
 
+* replace the calls to "SecDecInternalRealPart" by dummy symbols
+* {
+  #If `contourDeformation'
+
+    #redefine function "SecDecInternalRealPart"
+    #$labelCounter = 0;
+
+    #Do i = 1,1
+*     set dollar variable
+      #Do depth = 0, `insertionDepth'
+        if ( match(`function'(?SecDecInternalsDUMMY$arg)) ) redefine i "0";
+      #EndDo
+      .sort
+
+*     The following "#if" evaluates to true only if there is still something to do.
+      #If `i' == 0
+
+        #$labelCounter = $labelCounter + 1;
+
+        #Do depth = 0, `insertionDepth'
+          Id `function'($arg) = SecDecInternal`function'Call`$labelCounter';
+        #EndDo
+
+        Id SecDecInternalsDUMMYExpressionFTail = SecDecInternalsDUMMYExpressionFTail +
+            SecDecInternalLabel`function'Call`$labelCounter' * $arg;
+
+      #EndIf
+      .sort
+    #EndDo
+
+    #redefine largestLabel`function' "`$labelCounter'"
+
+  #EndIf
+* }
+
+  Id SecDecInternalsDUMMYExpressionFTail = 0;
+
+* remove calls to the deformation of absent integration variables
+  #Do IV = {`absentIntegrationVariables',}
+    #If x`IV' != x
+      Id SecDecInternalDeformed`IV' = 0;
+    #EndIf
+  #EndDo
+
+
+  #If `numIV' != `numOccurringIVOrder`shiftedOrderIndex''
+    multiply replace_(`nullifyAbsentIVs');
+    .sort
+  #EndIf
+
+  Format O`optimizationLevel';
   AntiBracket `integrationVariables', `realParameters', `complexParameters', `deformationParameters';
   .sort
+
   #optimize expressionF
 
   Format float 20;
@@ -152,6 +187,20 @@
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
+* c++ define the calls to "SecDecInternalRealPart"
+  #redefine function "SecDecInternalRealPart"
+  #Do labelID = 1, `largestLabel`function''
+    Bracket SecDecInternalLabel`function'Call`labelID';
+    .sort
+    L realPart = expressionF[SecDecInternalLabel`function'Call`labelID'];
+    .sort
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternal`function'Call`labelID' = SecDecInternalRealPart(%%E);" realPart(#@no_split_expression@#)
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+    multiply replace_(SecDecInternalLabel`function'Call`labelID', 0);
+    .sort
+  #EndDo
+  drop realPart;
+
 * c++ define the defomed integration variables
   #Do IV = {`occurringIntegrationVariables',}
     #If x`IV' != x
@@ -167,7 +216,7 @@
 
     #EndIf
   #EndDo
-  drop deformedIV
+  drop deformedIV;
 
 * write `SecDecInternalContourDeformationPolynomial'
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expressionF(#@no_split_expression@#)
@@ -185,8 +234,9 @@
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
 
-* Delete the expression "contourdef" since it is no longer needed.
-  drop contourdef;
+* Delete "expressionF" since it is no longer needed.
+  #clearoptimize
+  drop expressionF;
   .sort
 
 
