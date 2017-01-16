@@ -199,6 +199,7 @@
     multiply replace_(SecDecInternalLabel`function'Call`labelID', 0);
     .sort
   #EndDo
+  #undefine largestLabel`function'
   drop realPart;
 
 * c++ define the defomed integration variables
