@@ -58,9 +58,6 @@ AutoDeclare Symbols SecDecInternalLabel;
 * `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''.
 %(regulator_powers)s
 
-* The array of abbreviations
-ExtraSymbols,array,SecDecInternalAbbreviation;
-
 * Define two procedures to open and close a nested argument section
 #procedure beginArgumentDepth(depth)
   #Do recursiveDepth = 1, `depth'

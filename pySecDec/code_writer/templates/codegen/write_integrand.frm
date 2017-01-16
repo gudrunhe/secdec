@@ -116,24 +116,6 @@ B `regulators';
 
 * We are writing a the c++ file "sector_`sectorID'_`cppOrder'.cpp"
 * and the corresponding header "sector_`sectorID'_`cppOrder'.hpp".
-* The header can already completely be written here:
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#ifndef `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#define `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"`name'.hpp\"#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"functions.hpp\"#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction#@SecDecInternalNewline@#"
-  #Else
-    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction#@SecDecInternalNewline@#"
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "}#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
 
 * Open the namspace in which the sector is to be implemented
   #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
@@ -753,6 +735,7 @@ B `regulators';
   ;
   Format O`optimizationLevel';
   .sort
+  ExtraSymbols,array,SecDecInternalAbbreviation;
   #optimize toOptimize
 
 * Define the integration variables and parameters as c preprocessor variables
@@ -779,14 +762,35 @@ B `regulators';
 * Define "SecDecInternalAbbreviation[0]" as c preprocessor variable "tmp".
 * Since FORM does not use "SecDecInternalAbbreviation[0]", we can use it.
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define tmp SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
+
+* Define a function preprocessor macro to handle the abbrevition vectors
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalAbbreviations`shiftedOrderIndex'(ID) SecDecInternalAbbreviation[ID]#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
-* write Abbreviations in c format
+* define the abbreviations in c
   Format float 20;
   Format C;
   #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalSecondAbbreviation[sector_`sectorID'_order_`cppOrder'_optimmaxvar_second + 1];#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+* write Abbreviations in c format
   #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+* Reload "toOptmize" such that the optimization symbols of the first
+* optimization are promoted to regular FORM variables.
+  .sort
+  ExtraSymbols,array,SecDecInternalAbbreviations`shiftedOrderIndex';
+  #$toOptimize = toOptimize;
+  #clearoptimize
+  drop toOptimize;
+  .sort
+  AutoDeclare Vector SecDecInternalAbbreviations`shiftedOrderIndex';
+  Format O0;
+  Format normal;
+  Local toOptimize = `$toOptimize';
+  .sort
 
 * Define the function calls replaced by symbols.
 * The difficulty here is that the function arguments may
@@ -809,7 +813,16 @@ B `regulators';
     #EndDo
   #EndDo
 
+  #$globalLabelCounter = 1;
+  #$globalIDCounter = 1;
+  #redefine numberOfSecondAbbreviations "0"
+
   #Do i = 1,1
+    Format normal;
+    .sort
+    #redefine parseNextGlobalIDMin "`$globalIDCounter'"
+    #redefine parseNextGlobalIDMax "0"
+    Local parseNext = SecDecInternalsDUMMYparseNext;
     #Do function = {`functionsToReplace'}
       #Do callIndex = 1, `largestLabel`function''
         B SecDecInternalLabel`function'Call`callIndex'Arg;
@@ -865,37 +878,110 @@ B `regulators';
             if ( occurs(SecDecInternal`function'Call`callIndex') ) redefine needThisCall "1";
             .sort
 
+*           Prepare for another optimization
+*           {
             #If `needThisCall'
-              #write <sector_`sectorID'_`cppOrder'.cpp> "auto SecDecInternal`function'Call`callIndex' = "
-              #If `numberOfArgs`function'Label`callIndex'' == 0
-                #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#"  expr(#@no_split_expression@#)
-              #Else
-                #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
-                #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-                  #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'(#@no_split_expression@#)
-                  #If `argIndex' != `numberOfArgs`function'Label`callIndex''
-                    #write <sector_`sectorID'_`cppOrder'.cpp> ","
-                  #EndIf
-                #EndDo
-                #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
-              #EndIf
-            #EndIf
 
-            multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
-            .sort
+              #redefine parseNextGlobalIDMax "`$globalIDCounter'"
+              #redefine parseNextFunction`$globalIDCounter' "`function'"
+              #redefine parseNextCallIndex`$globalIDCounter' "`callIndex'"
+              #$globalIDCounter = $globalIDCounter + 1;
+              #redefine SecDecInternalLabel`function'Call`callIndex'GlobalIDMin "`$globalLabelCounter'"
+              Format normal;
+
+              #If `numberOfArgs`function'Label`callIndex'' == 0
+                Id SecDecInternalsDUMMYparseNext = SecDecInternalsDUMMYparseNext +
+                  expr * SecDecInternalLabelSecDecInternalGeneral ^ `$globalLabelCounter';
+                #$globalLabelCounter = $globalLabelCounter + 1;
+              #Else
+                #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+                  Id SecDecInternalsDUMMYparseNext = SecDecInternalsDUMMYparseNext +
+                    arg`argIndex' * SecDecInternalLabelSecDecInternalGeneral ^ `$globalLabelCounter';
+                  #$globalLabelCounter = $globalLabelCounter + 1;
+                #EndDo
+
+              #EndIf
+
+            #Else
+
+              multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
+
+            #EndIf
+*           }
+
           #EndIf
+
+          .sort
           #If `numberOfArgs`function'Label`callIndex'' == 0
             drop expr;
           #Else
             #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
               drop arg`argIndex';
             #EndDo
-
           #EndIf
 
         #EndIf
       #EndDo
     #EndDo
+
+*   optimize and write to c file
+*   {
+    Format float 20;
+    Format C;
+    Format O`optimizationLevel';
+    multiply replace_(SecDecInternalsDUMMYparseNext,0);
+    Bracket SecDecInternalLabelSecDecInternalGeneral;
+    .sort
+    ExtraSymbols,array,SecDecInternalSecondAbbreviation;
+    #optimize parseNext
+
+    #If `optimmaxvar_' > `numberOfSecondAbbreviations'
+      #redefine numberOfSecondAbbreviations "`optimmaxvar_'"
+    #EndIf
+
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@##@SecDecInternalNewline@#// begin next dependency level#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+    #Do globalID = `parseNextGlobalIDMin', `parseNextGlobalIDMax'
+      #redefine function "`parseNextFunction`globalID''"
+      #redefine callIndex "`parseNextCallIndex`globalID''"
+
+      #If x`function' != x
+        #write <sector_`sectorID'_`cppOrder'.cpp> "auto SecDecInternal`function'Call`callIndex' = "
+        #If `numberOfArgs`function'Label`callIndex'' == 0
+          Bracket SecDecInternalLabelSecDecInternalGeneral;
+          .sort
+          Local expr = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ `SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'];
+          .sort
+          #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#"  expr(#@no_split_expression@#)
+          drop expr;
+        #Else
+          #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
+          #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
+            Bracket SecDecInternalLabelSecDecInternalGeneral;
+            .sort
+            Local arg`argIndex' = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+`argIndex'-1)];
+            .sort
+            #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'(#@no_split_expression@#)
+            drop arg`argIndex';
+            #If `argIndex' != `numberOfArgs`function'Label`callIndex''
+              #write <sector_`sectorID'_`cppOrder'.cpp> ","
+            #EndIf
+          #EndDo
+          #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+        #EndIf
+      #EndIf
+
+      multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
+      .sort
+
+    #EndDo
+
+    #clearoptimize
+*   }
+
+    drop parseNext;
   #EndDo
 
   .sort
@@ -906,6 +992,34 @@ B `regulators';
     #undefine largestLabel`function'
   #EndDo
 
+* }
+
+* Optimize the sign check (if applicable) and the final expression
+* {
+* reduce the labels SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId' to one single label
+  #If `contourDeformation'
+    #Do signCheckId = 1, `numberOfRequiredSignChecks'
+      Id SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId' = SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal ^ `signCheckId';
+    #EndDo
+  #EndIf
+
+  Format float 20;
+  Format C;
+  Format O`optimizationLevel';
+  #If `contourDeformation'
+    Bracket SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal;
+  #EndIf
+  .sort
+  ExtraSymbols,array,SecDecInternalSecondAbbreviation;
+  #optimize toOptimize
+
+  #If `optimmaxvar_' > `numberOfSecondAbbreviations'
+    #redefine numberOfSecondAbbreviations "`optimmaxvar_'"
+  #EndIf
+
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@##@SecDecInternalNewline@#// begin final dependency level#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 * }
 
 * write code for the sign check
@@ -920,19 +1034,19 @@ B `regulators';
 
     #Do signCheckId = 1, `numberOfRequiredSignChecks'
 
-      Bracket SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId';
+      Bracket SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal;
       .sort
-      Local expr = toOptimize[SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId'];
+      Local expr = toOptimize[SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal ^ `signCheckId'];
       .sort
 
       #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
       #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression > 0)"
       #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
 
-      multiply replace_(SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId',0);
-      .sort
-
     #EndDo
+
+    multiply replace_(SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal,0);
+    .sort
 
     unhide;
     drop expr;
@@ -945,8 +1059,11 @@ B `regulators';
 
 * write the integrand
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "return %%e#@SecDecInternalNewline@#" toOptimize(#@no_split_expression@#)
+  #write <sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" toOptimize(#@no_split_expression@#)
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+* return statement
+  #write <sector_`sectorID'_`cppOrder'.cpp> "return tmp;#@SecDecInternalNewline@#"
 
 * undefine the c preprocessor macros
   #call cppUndefine(`occurringIntegrationVariables',sector_`sectorID'_`cppOrder'.cpp)
@@ -959,10 +1076,32 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalRealPart#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalImagPart#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalAbbreviations`shiftedOrderIndex'#@SecDecInternalNewline@#"
 
 * Close the c++ function and namespaces
   #write <sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
+
+* Write the corresponding header "sector_`sectorID'_`cppOrder'.hpp".
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#ifndef `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#define `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"`name'.hpp\"#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"functions.hpp\"#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#define sector_`sectorID'_order_`cppOrder'_optimmaxvar_second `numberOfSecondAbbreviations'#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction#@SecDecInternalNewline@#"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction#@SecDecInternalNewline@#"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "}#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
+
 
 * write the contour deformation optimize functions if required
   #If `contourDeformation'

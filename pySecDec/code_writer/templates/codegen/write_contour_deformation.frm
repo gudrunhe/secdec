@@ -138,7 +138,7 @@
         #EndDo
 
         Id SecDecInternalsDUMMYExpressionFTail = SecDecInternalsDUMMYExpressionFTail +
-            SecDecInternalLabel`function'Call`$labelCounter' * $arg;
+            SecDecInternalLabel`function'Call`$labelCounter' * (`$arg');
 
       #EndIf
       .sort
@@ -167,6 +167,7 @@
   Format O`optimizationLevel';
   AntiBracket `integrationVariables', `realParameters', `complexParameters', `deformationParameters';
   .sort
+  ExtraSymbols,array,SecDecInternalAbbreviation;
 
   #optimize expressionF
 
@@ -330,6 +331,7 @@
   Bracket SecDecInternalLabelGradient, SecDecInternalLabelHessianI, SecDecInternalLabelHessianJ;
   Format O`optimizationLevel';
   .sort
+  ExtraSymbols,array,SecDecInternalAbbreviation;
   #optimize derivatives
 
 * Since FORM does not use "abbreviation[0]", we can use it as temporary variable.
