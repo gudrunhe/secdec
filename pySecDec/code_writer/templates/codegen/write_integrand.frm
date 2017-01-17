@@ -786,7 +786,7 @@ B `regulators';
   #clearoptimize
   drop toOptimize;
   .sort
-  AutoDeclare Vector SecDecInternalAbbreviations`shiftedOrderIndex';
+  AutoDeclare CFunctions SecDecInternalAbbreviations`shiftedOrderIndex';
   Format O0;
   Format normal;
   Local toOptimize = `$toOptimize';
