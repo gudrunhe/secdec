@@ -492,6 +492,8 @@ B `regulators';
 
 * Find and count the occurring integration variables.
 * {
+* "Format rational" because we need the dollar variables as integers
+  Format rational;
   hide; nhide toOptimize, expression;
   .sort
 
@@ -531,9 +533,12 @@ B `regulators';
       #EndIf
     #EndIf
 
+    #redefine integrationVariable`$currentIVIndex' "`IV'"
+
   #EndDo
 
   #redefine numOccurringIVOrder`shiftedOrderIndex' "`$counterOccur'"
+  #redefine integrationVariable "SecDecInternalError"
 
   unhide;
   .sort

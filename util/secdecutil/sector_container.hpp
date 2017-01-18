@@ -121,7 +121,7 @@ namespace secdecutil {
                 return std::vector<real_t>(number_of_integration_variables,maximum);
 
             // initialize the output, and temporary vectors
-            std::vector<real_t> optimized_deformation_parameter_vector(number_of_integration_variables,0);
+            std::vector<real_t> optimized_deformation_parameter_vector(number_of_integration_variables,maximum);
             std::vector<real_t> temp_deformation_parameter_vector(number_of_integration_variables,0);
             std::vector<real_t> real_sample_vector(number_of_integration_variables,0);
             real_t * optimized_deformation_parameters = optimized_deformation_parameter_vector.data();
@@ -138,18 +138,19 @@ namespace secdecutil {
             // define the generator
             gsl_qrng * Sobol_generator = gsl_qrng_alloc(gsl_qrng_sobol, number_of_integration_variables);
 
-            // average over the lambdas obtained for the different samples
+            // find the minimum of the lambdas obtained for the different samples
             for (i=0; i<number_of_samples; ++i)
             {
                 gsl_qrng_get(Sobol_generator,real_sample);
                 maximal_allowed_deformation_parameters(temp_deformation_parameters, real_sample, real_parameters, complex_parameters);
                 for (j=0; j<number_of_integration_variables; ++j)
                     if (minimum <= temp_deformation_parameters[j] && temp_deformation_parameters[j] <= maximum)
-                        optimized_deformation_parameters[j] += temp_deformation_parameters[j] / number_of_samples;
-                    else if (temp_deformation_parameters[j] > maximum)
-                        optimized_deformation_parameters[j] += maximum / number_of_samples;
-                    else
-                        optimized_deformation_parameters[j] += minimum / number_of_samples;
+                    {
+                        if (optimized_deformation_parameters[j] > temp_deformation_parameters[j])
+                            optimized_deformation_parameters[j] = temp_deformation_parameters[j];
+                    } else if (temp_deformation_parameters[j] < minimum) {
+                        optimized_deformation_parameters[j] = minimum;
+                    }
             };
 
             // reinitialize the Sobol sequence to obtain the same samples again
