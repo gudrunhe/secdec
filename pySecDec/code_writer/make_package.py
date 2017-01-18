@@ -1129,7 +1129,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 for i,(polyname,prod) in enumerate(zip(polynomial_names,sector.cast)):
                     mono,_ = prod.factors
                     poly.expolist[:,:-len(regulators)-len(polynomial_names)] += \
-                        np.einsum('i,k->ik', poly.expolist[:,len(integration_variables)-1:-len(polynomial_names)][:,i], mono.expolist[0,:-len(regulators)-len(polynomial_names)])
+                        np.einsum('i,k->ik', poly.expolist[:,-len(polynomial_names):][:,i], mono.expolist[0,:-len(regulators)-len(polynomial_names)])
 
             # remove `polynomial_names` - keep polynomial part symbolic as dummy function:
             #  - from `other_polynomials`
