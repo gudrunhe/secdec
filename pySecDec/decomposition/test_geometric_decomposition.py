@@ -27,6 +27,13 @@ class TestGeomethod(unittest.TestCase):
                                      [0,2],
                                      [0,1]])
         self.sorted_target_hull = sort_2D_array(self.target_hull)
+        self.target_fan_p01 = [[(1,-1),(1,0),(0,1)],
+                               [(-1,1),(1,0),(0,1)]]
+        self.sorted_target_fan_p01 = sorted([sorted(cone) for cone in self.target_fan_p01])
+        self.p2 = Polynomial.from_expression('x0+x0*x2+x1*x2', ['x0','x1','x2'])
+        self.target_fan_p2 = [[(1,-1,-1),(1,-1,0),(1,0,0),(0,1,0),(0,0,1)],
+                              [(-1,1,1),(1,0,0),(0,1,0),(0,0,1)]]
+        self.sorted_target_fan_p2 = sorted([sorted(cone) for cone in self.target_fan_p2])
 
     #@attr('active')
     def test_Cheng_Wu(self):
@@ -69,6 +76,14 @@ class TestGeomethod(unittest.TestCase):
         # The ordering is not important but must be fixed to compare the arrays
         sorted_hull = sort_2D_array(hull)
         np.testing.assert_array_equal(sorted_hull, self.sorted_target_hull)
+
+    def test_generate_fan(self):
+        fan_p01 = generate_fan(self.p0,self.p1)
+        fan_p2 = generate_fan(self.p2)
+        sorted_fan_p01 = sorted([sorted(cone) for cone in fan_p01])
+        sorted_fan_p2 = sorted([sorted(cone) for cone in fan_p2])
+        np.testing.assert_array_equal(sorted_fan_p01, self.sorted_target_fan_p01)
+        np.testing.assert_array_equal(sorted_fan_p2, self.sorted_target_fan_p2)
 
     #@attr('active')
     def test_convex_hull_exponentiated_polynomial(self):

@@ -6,7 +6,7 @@ The geometric sector decomposition routines.
 
 from .common import Sector, refactorize
 from ..algebra import Polynomial, Product
-import subprocess, shutil, os, re, numpy as np
+import subprocess, shutil, os, re, itertools, numpy as np
 
 # *********************** primary decomposition ***********************
 
@@ -37,6 +37,38 @@ def Cheng_Wu(sector, index=-1):
     return Sector(cast, other, Jacobian)
 
 # ********************** geometric decomposition **********************
+def generate_fan(*polynomials):
+    '''
+    Calculate the fan of the polynomials in the input. The rays of a
+    cone are given by the exponent vectors after factoring out a monomial
+    together with the standard basis vectors. Each choice of factored out
+    monomials gives a different cone.
+    Only full (:math:`N`-) dimensional cones in :math:`R^N_{\geq 0}` need to be
+    considered.
+
+    :param polynomials:
+        abritrarily many instances of :class:`.Polynomial` where
+        all of these have an equal number of variables;
+        The polynomials to calculate the fan for.
+    '''
+    expolists = [poly.expolist.tolist() for poly in polynomials]
+    factors = itertools.product(*expolists)
+    number_of_variables = polynomials[0].number_of_variables
+    identity_matrix = set(tuple(1 if i==j else 0 for i in range(number_of_variables)) for j in range(number_of_variables))
+    fan = []
+    for factor in factors:
+        cone = []
+        for i in range(len(polynomials)):
+            cone.extend([tuple(np.subtract(vector, factor[i])) for vector in expolists[i]])
+        cone = set(hyperplane for hyperplane in cone if not all(i>0 for i in hyperplane) and not all(i==0 for i in hyperplane))
+        cone = (cone | identity_matrix )
+        if (len(cone)>=number_of_variables and
+            not any(all(element<0 for element in hyperplane) for hyperplane in cone) and
+            len(cone) == len(frozenset(cone.difference(set(tuple(np.multiply(-1,hyperplane))for hyperplane in cone))))
+           ):
+            fan.append(list(cone))
+
+    return fan
 
 def convex_hull(*polynomials):
     '''
