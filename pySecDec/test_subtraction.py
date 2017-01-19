@@ -131,3 +131,67 @@ class TestIntegratePolePart(unittest.TestCase):
     def test_pole_structure(self):
         self.assertEqual( pole_structure(self.monomial_product1,0,1) , [-2,-4] )
         self.assertEqual( pole_structure(self.monomial_product2,0,1) , [-2,-4] )
+
+class TestIntegrateByParts(unittest.TestCase):
+    def setUp(self):
+        self.symbols = ['x0', 'x1', 'x2', 'eps1', 'eps2']
+        a, b = sp.symbols('a b')
+        eps1 = Polynomial.from_expression('eps1', self.symbols)
+        eps2 = Polynomial.from_expression('eps2', self.symbols)
+        polynomial_one = Polynomial(np.zeros([1,len(self.symbols)], dtype=int), np.array([1]), self.symbols, copy=False)
+
+        def xi_to_the(index, power):
+            expovec = [0] * len(self.symbols)
+            expovec[index] = 1
+            return ExponentiatedPolynomial([expovec], [1], polysymbols=self.symbols, exponent=power + a*eps1 + b*eps2)
+
+        # construct `ibp_input` as:
+        # ``x0**(-1 + a*eps1 + b*eps2) * x1**(-2 + a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * cal_I(x0,x1,x2,eps1,eps2)``
+        monomials = Product( xi_to_the(0,-1), xi_to_the(1,-2), xi_to_the(2,2) )
+        pole_part_initializer = Pow(polynomial_one, -polynomial_one)
+        cal_I = Function(   'cal_I' , *(  Polynomial.from_expression(symbol, self.symbols) for symbol in self.symbols  )   )
+
+        self.ibp_input = Product(monomials, pole_part_initializer, cal_I)
+
+    def check_terms(self, computed, expected):
+        self.assertEqual( len(computed) , len(expected) )
+        for index,(term,target_term) in enumerate(zip(computed, expected)):
+            print('index: %i' % index)
+            sympified_term = sp.sympify(term)
+            sympified_target_term = sp.sympify(target_term)
+            difference = (sympified_term - sympified_target_term).simplify()
+            self.assertEqual(difference,0)
+
+    #@attr('active')
+    def test_power_goal_minus1(self):
+        terms_after_ibp = integrate_by_parts(self.ibp_input, -1, 0,1,2)
+        target_terms_after_ibp = \
+        [
+            'x0**(-1 + a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * 1/(-1 + a*eps1 + b*eps2) * cal_I(x0,1,x2,eps1,eps2)',
+            '- x0**(-1 + a*eps1 + b*eps2) * x1**(-1 + a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * 1/(-1 + a*eps1 + b*eps2) * dcal_Id1(x0,x1,x2,eps1,eps2)'
+        ]
+        self.check_terms(terms_after_ibp, target_terms_after_ibp)
+
+    #@attr('active')
+    def test_power_goal_0(self):
+        terms_after_ibp = integrate_by_parts(self.ibp_input, 0, 0,1,2)
+        target_terms_after_ibp = \
+        [
+            'x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2) * 1/(-1 + a*eps1 + b*eps2) * cal_I(1,1,x2,eps1,eps2)',
+            '- x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2)**2 * 1/(-1 + a*eps1 + b*eps2) * dcal_Id1(1,1,x2,eps1,eps2)',
+            'x1**(a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2)**2 * 1/(-1 + a*eps1 + b*eps2) * ddcal_Id1d1(1,x1,x2,eps1,eps2)',
+            'x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2) * 1/(-1 + a*eps1 + b*eps2) * (- x0**(a*eps1 + b*eps2) * dcal_Id0(x0,1,x2,eps1,eps2))',
+            '- x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2)**2 * 1/(-1 + a*eps1 + b*eps2) * (- x0**(a*eps1 + b*eps2) * ddcal_Id0d1(x0,1,x2,eps1,eps2))',
+            'x1**(a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2)**2 * 1/(-1 + a*eps1 + b*eps2) * (- x0**(a*eps1 + b*eps2) * dddcal_Id0d1d1(x0,x1,x2,eps1,eps2))'
+        ]
+        self.check_terms(terms_after_ibp, target_terms_after_ibp)
+
+    #@attr('active')
+    def test_select_index(self):
+        terms_after_ibp = integrate_by_parts(self.ibp_input, 0, 0)
+        target_terms_after_ibp = \
+        [
+            'x1**(-2 + a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2) * cal_I(1,x1,x2,eps1,eps2)',
+            'x1**(-2 + a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2) * (- x0**(a*eps1 + b*eps2) * dcal_Id0(x0,x1,x2,eps1,eps2))'
+        ]
+        self.check_terms(terms_after_ibp, target_terms_after_ibp)
