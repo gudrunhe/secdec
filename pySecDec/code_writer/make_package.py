@@ -12,7 +12,7 @@ from ..algebra import _Expression, Expression, Polynomial, \
                       ProductRule, Function, Sum
 from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort
-from ..subtraction import integrate_pole_part, pole_structure as compute_pole_structure
+from ..subtraction import integrate_pole_part, integrate_by_parts, pole_structure as compute_pole_structure
 from ..expansion import expand_singular, expand_Taylor, expand_sympy
 from ..misc import lowest_order, det
 from .template_parser import parse_template_file, parse_template_tree
@@ -1211,9 +1211,16 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
             symbolic_cal_I = Function(FORM_names['cal_I'], *elementary_monomials)
 
-            # initialize the Product to be passed to `integrate_pole_part` (the subtraction) and subtract
+            # initialize the Product to be passed to the subtraction
             subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
-            subtracted = integrate_pole_part(subtraction_initializer, *integration_variable_indices)
+
+            # call the subtraction routines
+            # We integrate by parts until we are left with at most logarithmic poles (``power_goal=-1``),
+            # then we do the original subtraction (`integrate_pole_part`).
+            at_most_log_poles = integrate_by_parts(subtraction_initializer, -1, *integration_variable_indices)
+            subtracted = []
+            for item in at_most_log_poles:
+                subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
 
             # intialize expansion
             pole_parts = [s.factors[1].simplify() for s in subtracted]
