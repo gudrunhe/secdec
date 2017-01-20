@@ -64,7 +64,7 @@ namespace %(name)s
      *       Playing around with "std::pow" and the aforementioned switches is nevertheless
      *       worth a try in practical applications where high performance is needed.
      */
-    template <typename Tbase, typename Texponent> inline Tbase SecDecInternalPow(Tbase base, Texponent exponent)
+    template <typename Tbase> inline Tbase SecDecInternalPow(Tbase base, real_t exponent)
     {
         if (int(exponent) != exponent or exponent > 1024 or exponent < -1024)
             return std::pow(base, exponent);
@@ -143,8 +143,16 @@ namespace %(name)s
     {
         return SecDecInternalPow(x, y);
     }
+    real_t inline pow(real_t x, real_t y)
+    {
+        return SecDecInternalPow(x, y);
+    }
 
     complex_t inline pow(complex_t x, int y)
+    {
+        return SecDecInternalPow(x, y);
+    }
+    complex_t inline pow(complex_t x, real_t y)
     {
         return SecDecInternalPow(x, y);
     }
