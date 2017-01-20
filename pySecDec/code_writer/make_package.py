@@ -557,28 +557,6 @@ def _make_CXX_function_declaration(function_name, number_of_arguments):
 
 
 # --------------------------------- algebra helper ---------------------------------
-class NoDerivativeAtZeroFunction(Function):
-    '''
-    Symbolic function with the additional property
-    that the function and all derivatives vanish at zero.
-
-    '''
-    def __init__(self, symbol, *arguments, **kwargs):
-        super(NoDerivativeAtZeroFunction, self).__init__(symbol, *arguments, **kwargs)
-
-    def replace(expression, index, value, remove=False):
-        if value == 0:
-            return Polynomial(np.zeros([1,expression.number_of_variables], dtype=int), np.array([0]), expression.symbols, copy=False)
-        else:
-            return super(NoDerivativeAtZeroFunction, expression).replace(index, value, remove)
-
-    def simplify(self):
-        super(NoDerivativeAtZeroFunction, self).simplify()
-        for i,arg in enumerate(self.arguments):
-            if type(arg) is Polynomial and len(arg.coeffs) == 1 and arg.coeffs[0] == 1 and (arg.expolist == 0).all():
-                return Polynomial(np.zeros([1,len(arg.polysymbols)], dtype=int), np.array([0]), arg.polysymbols, copy=False)
-        return self
-
 class RealPartFunction(Function):
     '''
     Symbolic function that takes exactly one argument
