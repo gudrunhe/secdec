@@ -1036,7 +1036,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                               ]
 
             # define the `symbolic_deformed_variables` to be inserted FORM
-            symbolic_deformed_variables = [ Function(deformed_name, *elementary_monomials[:len(integration_variables)]) for deformed_name in symbolic_deformed_variable_names ]
+            symbolic_deformed_variables = [ Function(deformed_name, *elementary_monomials[:len(integration_variables)], sort_derivatives=True) for deformed_name in symbolic_deformed_variable_names ]
             symbolic_deformed_variables.extend( (regulator for regulator in elementary_monomials[len(integration_variables):]) )
 
             # generate the Jacobian determinant
@@ -1322,18 +1322,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     full_expression=expression
                 )
 
-            #  - for the deformed integration variables
             if contour_deformation_polynomial is not None:
-                for undeformed_name,deformed_variable,derivative_tracker in zip(integration_variables,deformed_integration_parameters,symbolic_deformed_variables):
-                    update_derivatives(
-                        FORM_names['deformed_variable'] + str(undeformed_name), # basename
-                        derivative_tracker,
-                        deformed_variable, # full_expression
-                        deformed_integration_variable_derivatives, # derivatives
-                        ordered_deformed_integration_variable_derivative_names, # ordered_derivative_names
-                        deformed_integration_variable_derivative_functions # functions
-                    )
-
             #  - for the contour deformation Jacobian
                 update_derivatives(
                     FORM_names['contourdef_Jacobian'], # basename
@@ -1343,6 +1332,17 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     ordered_contourdef_Jacobian_derivative_names, # ordered_derivative_names
                     contourdef_Jacobian_derivative_functions # functions
                 )
+
+            #  - for the deformed integration variables
+                for undeformed_name,deformed_variable,derivative_tracker in zip(integration_variables,deformed_integration_parameters,symbolic_deformed_variables):
+                    update_derivatives(
+                        FORM_names['deformed_variable'] + str(undeformed_name), # basename
+                        derivative_tracker,
+                        deformed_variable, # full_expression
+                        deformed_integration_variable_derivatives, # derivatives
+                        ordered_deformed_integration_variable_derivative_names, # ordered_derivative_names
+                        deformed_integration_variable_derivative_functions # functions
+                    )
 
             #  - for the contour deformation polynomial
                 full_expression = sector.cast[contour_deformation_polynomial_index].factors[1]
