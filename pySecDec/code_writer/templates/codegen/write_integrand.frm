@@ -634,7 +634,11 @@ B `regulators';
           multiply replace_(SecDecInternal`function'Call`callIndex',0);
           .sort
         #ElseIf `callIsOne'
-          multiply replace_(SecDecInternal`function'Call`callIndex',1);
+          #Do depth = 0, `insertionDepth'
+            #call beginArgumentDepth(`depth')
+              Id SecDecInternal`function'Call`callIndex' = 1;
+            #call endArgumentDepth(`depth')
+          #EndDo
           .sort
         #EndIf
 
