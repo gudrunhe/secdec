@@ -965,6 +965,14 @@ B `regulators';
           .sort
           #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#"  expr(#@no_split_expression@#)
           drop expr;
+        #ElseIf `function' == SecDecInternalPow
+          Bracket SecDecInternalLabelSecDecInternalGeneral;
+          .sort
+          Local expr = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin')]
+                     ^ parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+1)];
+          .sort
+          #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
+          drop expr;
         #Else
           #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
           #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
