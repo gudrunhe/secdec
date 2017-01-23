@@ -81,6 +81,7 @@ class LoopIntegralFromGraph(LoopIntegral):
                 self.internal_lines = self.internal_lines[:i] + self.internal_lines[i+1:]
                 self.P -= 1
                 self.powerlist = self.powerlist[:i] + self.powerlist[i+1:]
+                self.derivativelist = self.derivativelist[:i] + self.derivativelist[i+1:]
                 self.Feynman_parameters = self.Feynman_parameters[:i] + self.Feynman_parameters[i+1:]
 
                 # re-connect graph after removing line -> pinch

@@ -168,6 +168,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
                 self.P -= 1
                 self.powerlist = self.powerlist[:i] + self.powerlist[i+1:]
                 self.propagators = self.propagators[:i] + self.propagators[i+1:]
+                self.derivativelist = self.derivativelist[:i] + self.derivativelist[i+1:]
                 self.Feynman_parameters = self.Feynman_parameters[:i] + self.Feynman_parameters[i+1:]
 
         # If the degree of an inverse propagator is smaller than 2,
