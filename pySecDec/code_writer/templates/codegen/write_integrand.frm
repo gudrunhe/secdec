@@ -49,6 +49,7 @@ Off statistics;
         Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
         Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
         Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
+        Id SecDecInternalPow(1, SecDecInternalsDUMMYexponent?) = 1;
       #call endArgumentDepth(`depth')
     #EndDo
   endRepeat;
