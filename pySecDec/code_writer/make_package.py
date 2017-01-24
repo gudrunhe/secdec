@@ -1215,12 +1215,30 @@ def make_package(name, integration_variables, regulators, requested_orders,
             subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
 
             # call the subtraction routines
-            # We integrate by parts until we are left with at most logarithmic poles (``power_goal=-1``),
-            # then we do the original subtraction (`integrate_pole_part`).
-            at_most_log_poles = integrate_by_parts(subtraction_initializer, -1, *integration_variable_indices)
-            subtracted = []
-            for item in at_most_log_poles:
-                subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
+            # Depending on whether contour deformation is performed, we implement two
+            # different strategies. The strategy that is use without contour deformation
+            # produces less terms but becomes unstable with contour deformation.
+            if contour_deformation_polynomial is not None:
+                # Apply the original subtraction (`integrate_pole_part`) for logarithmic poles.
+                # For higher poles, apply integration by parts.
+                subtracted = []
+                at_most_log_pole_indices = []
+                higher_pole_indices = []
+                for index,power in enumerate(pole_structures[-1]):
+                    if power < -1:
+                        higher_pole_indices.append(index)
+                    else:
+                        at_most_log_pole_indices.append(index)
+                subtracted_higher_poles = integrate_by_parts(subtraction_initializer, 0, *higher_pole_indices)
+                for item in subtracted_higher_poles:
+                    subtracted.extend(  integrate_pole_part(item, *at_most_log_pole_indices)  )
+            else:
+                # Integrate by parts until we are left with at most logarithmic poles (``power_goal=-1``),
+                # then we do the original subtraction (`integrate_pole_part`).
+                at_most_log_poles = integrate_by_parts(subtraction_initializer, -1, *integration_variable_indices)
+                subtracted = []
+                for item in at_most_log_poles:
+                    subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
 
             # intialize expansion
             pole_parts = [s.factors[1].simplify() for s in subtracted]
@@ -1251,9 +1269,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
             lowest_orders = np.minimum(lowest_orders, -highest_poles_current_sector)
 
             # initialize the CFunctions for FORM
-            all_functions = []
+            cal_I_derivative_functions = []
             contourdef_Jacobian_derivative_functions = []
             deformed_integration_variable_derivative_functions = []
+            other_functions = []
 
             # compute the required derivatives
             cal_I_derivatives = {}
@@ -1267,7 +1286,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             ordered_contourdef_Jacobian_derivative_names = []
             ordered_deformed_integration_variable_derivative_names = []
 
-            def update_derivatives(basename, derivative_tracker, full_expression, derivatives=other_derivatives, ordered_derivative_names=ordered_other_derivative_names, functions=all_functions):
+            def update_derivatives(basename, derivative_tracker, full_expression, derivatives=other_derivatives, ordered_derivative_names=ordered_other_derivative_names, functions=other_functions):
                 derivatives[basename] = full_expression # include undifferentiated expression
                 ordered_derivative_names.append(basename)
                 functions.append(basename) # define the symbol as CFunction in FORM
@@ -1279,7 +1298,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             #  - for cal_I
             update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I,
-                               derivatives=cal_I_derivatives, ordered_derivative_names=ordered_cal_I_derivative_names)
+                               derivatives=cal_I_derivatives, ordered_derivative_names=ordered_cal_I_derivative_names,
+                               functions=cal_I_derivative_functions)
 
             #  - for the `remainder_expression`
             update_derivatives(basename=FORM_names['remainder_expression'],
@@ -1346,7 +1366,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 functions.update(derivative_symbols)
                 for derivative_symbol in derivative_symbols:
                     function_declarations.add( _make_CXX_function_declaration(derivative_symbol, number_of_arguments) )
-            all_functions.extend(functions)
+            other_functions.extend(functions)
 
             # generate the function definitions for the insertion in FORM
             if contour_deformation_polynomial is not None:
@@ -1379,7 +1399,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             regulator_powers = _make_FORM_shifted_orders(regulator_powers)
 
             # parse template file "sector.h"
-            template_replacements['functions'] = _make_FORM_list(all_functions)
+            template_replacements['functions'] = _make_FORM_list(other_functions)
+            template_replacements['cal_I_derivatives'] = _make_FORM_list(cal_I_derivative_functions)
             template_replacements['insert_cal_I_procedure'] = FORM_cal_I_definitions
             template_replacements['insert_other_procedure'] = FORM_function_definitions
             template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition(internal_prefix+'sDUMMYIntegrand', integrand, args=None, limit=10**6)

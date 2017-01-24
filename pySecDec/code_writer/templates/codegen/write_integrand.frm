@@ -148,75 +148,95 @@ B `regulators';
   .sort
 
 * Find the calls to the contour deformation polynomials that need a sign check.
-* The call differ only in which Feynman paramters are set to zero. We investigate
-* that by looking at the calls to "SecDecInternalCalI".
+* The calls differ only in which Feynman paramters are set to zero or one. We
+* investigate that by looking at the calls to "SecDecInternalCalI" (and its derivatives).
 * {
   #If `contourDeformation'
 
+    #$labelCounter = 0;
     Local tmp = expression;
     Local signCheck = SecDecInternalsDUMMYsignCheck;
     .sort
     hide; nhide tmp, signCheck;
     .sort
 
-    #$labelCounter = 0;
+    #Do function = {`calIDerivatives'}
 
-    #Do i = 1,1
-*     set dollar variable
-      .sort
-      hide signCheck;
-      .sort
-      if ( match(SecDecInternalCalI(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-      .sort
-      unhide signCheck;
-      .sort
-
-*     The following "#if" evaluates to true only if there is still something to do.
-      #If `i' == 0
-
-        #$labelCounter = $labelCounter + 1;
-
-        Id SecDecInternalCalI(`$args') = 0;
-
-*       The sign check to be performed is:
-*       "SecDecInternalContourDeformationPolynomial(<deformed integration variables>) - SecDecInternalContourDeformationPolynomial(<undeformed integration variables>) <= 0"
-*       {
-        Id SecDecInternalsDUMMYsignCheck = SecDecInternalsDUMMYsignCheck +
-            SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`$labelCounter' *
-            (
-              SecDecInternalfDUMMYdeformedContourDeformationPolynomial($args) - `SecDecInternalContourDeformationPolynomial'($args)
-            );
-
-*       Define a variables that only keeps the integration variables in "$args"
-*       {
-        #redefine argsWithoutRegulators ""
-        #$counter = 0;
-        #Do arg = {`$args'}
-          #$counter = $counter + 1;
-          #If `$counter' <= `numIV'
-            #If `$counter' != 1
-              #redefine argsWithoutRegulators "`argsWithoutRegulators',"
-            #EndIf
-            #redefine argsWithoutRegulators "`argsWithoutRegulators'`arg'"
-          #EndIf
-        #EndDo
-*       }
-
-        #Do IV = {`integrationVariables'}
-          Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?frontArgs,`IV',?backArgs) =
-             SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?frontArgs,SecDecInternalDeformed`IV'(`argsWithoutRegulators'),?backArgs);
-        #EndDo
-
-        Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?args) = `SecDecInternalContourDeformationPolynomial'(?args);
-
+      #Do i = 1,1
+*       set dollar variable
+        .sort
+        hide signCheck;
+        .sort
+        if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
+        .sort
+        unhide signCheck;
         .sort
 
-*       }
+*       The following "#if" evaluates to true only if there is still something to do.
+        #If `i' == 0
 
-      #EndIf
+          #Do innerFunction = {`calIDerivatives'}
+            Id `innerFunction'(`$args') = 0;
+          #EndDo
+
+*         If all args are zero or one, the expression to be sign checked evaluates to zero
+*         --> can omit that check because it always passes.
+          #redefine needThisCheck "0"
+          #Do arg = {`$args',}
+            #If x`arg' != x
+              #If (`arg' != 0) && (`arg' != 1)
+                #redefine needThisCheck "1"
+              #EndIf
+            #EndIf
+          #EndDo
+
+          #If `needThisCheck'
+
+            #$labelCounter = $labelCounter + 1;
+
+*           The sign check to be performed is:
+*           "SecDecInternalContourDeformationPolynomial(<deformed integration variables>) - SecDecInternalContourDeformationPolynomial(<undeformed integration variables>) <= 0"
+*           {
+            Id SecDecInternalsDUMMYsignCheck = SecDecInternalsDUMMYsignCheck +
+                SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`$labelCounter' *
+                (
+                  SecDecInternalfDUMMYdeformedContourDeformationPolynomial($args) - `SecDecInternalContourDeformationPolynomial'($args)
+                );
+
+*           Define a variables that only keeps the integration variables in "$args"
+*           {
+            #redefine argsWithoutRegulators ""
+            #$counter = 0;
+            #Do arg = {`$args'}
+              #$counter = $counter + 1;
+              #If `$counter' <= `numIV'
+                #If `$counter' != 1
+                  #redefine argsWithoutRegulators "`argsWithoutRegulators',"
+                #EndIf
+                #redefine argsWithoutRegulators "`argsWithoutRegulators'`arg'"
+              #EndIf
+            #EndDo
+*           }
+
+            #Do IV = {`integrationVariables'}
+              Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?frontArgs,`IV',?backArgs) =
+                 SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?frontArgs,SecDecInternalDeformed`IV'(`argsWithoutRegulators'),?backArgs);
+            #EndDo
+
+            Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?args) = `SecDecInternalContourDeformationPolynomial'(?args);
+
+          #EndIf
+
+          .sort
+
+*         }
+
+        #EndIf
+      #EndDo
+
+      #redefine numberOfRequiredSignChecks "`$labelCounter'"
+
     #EndDo
-
-    #redefine numberOfRequiredSignChecks "`$labelCounter'"
 
     unhide;
     drop tmp;

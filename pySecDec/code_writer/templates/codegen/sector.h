@@ -22,7 +22,8 @@ Symbols `integrationVariables'
 * Define the imaginary unit in sympy notation.
 Symbol I;
 
-#define functions "%(functions)s"
+#define calIDerivatives "%(cal_I_derivatives)s"
+#define functions "`calIDerivatives',%(functions)s"
 CFunctions `functions';
 
 * Temporary functions and symbols for replacements in FORM
