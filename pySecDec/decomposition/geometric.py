@@ -563,3 +563,95 @@ def geometric_decomposition(sector, indices=None, normaliz='normaliz', workdir='
 
         else:
             yield make_sector(cone_indices, cone)
+
+def geometric_decomposition_ku(sector, indices=None, normaliz='normaliz', workdir='normaliz_tmp'):
+    '''
+    Run the sector decomposition using the original geometric
+    decomposition strategy by Kaneko and Ueda as described
+    in [KU10]_.
+
+    .. note::
+        This function calls the command line executable of
+        `normaliz` [BIR]_.
+        It has been tested with `normaliz` versions 3.0.0,
+        3.1.0, and 3.1.1.
+
+    :param sector:
+        :class:`.Sector`;
+        The sector to be decomposed.
+
+    :param indices:
+        list of integers or None;
+        The indices of the parameters to be considered as
+        integration variables. By default (``indices=None``),
+        all parameters are considered as integration
+        variables.
+
+    :param normaliz:
+        string;
+        The shell command to run `normaliz`.
+
+    :param workdir:
+        string;
+        The directory for the communication with `normaliz`.
+        A directory with the specified name will be created
+        in the current working directory. If the specified
+        directory name already exists, an :class:`OSError`
+        is raised.
+
+        .. note::
+            The communication with `normaliz` is done via
+            files.
+
+    '''
+    original_sector = sector
+    sector = original_sector.copy()
+
+    if indices is None:
+        indices = range(original_sector.number_of_variables)
+    else:
+        # remove parameters that are not in `indices`
+        indices = list(indices)
+        sector.number_of_variables = len(indices)
+        sector.Jacobian.number_of_variables = len(indices)
+        sector.Jacobian.expolist = sector.Jacobian.expolist[:,indices]
+        sector.Jacobian.polysymbols = [sector.Jacobian.polysymbols[i] for i in indices]
+        for product in sector.cast:
+            for factor in product.factors:
+                factor.number_of_variables = len(indices)
+                factor.expolist = factor.expolist[:,indices]
+                factor.polysymbols = [factor.polysymbols[i] for i in indices]
+        for poly in sector.other:
+            poly.number_of_variables = len(indices)
+            poly.expolist = poly.expolist[:,indices]
+            poly.polysymbols = [poly.polysymbols[i] for i in indices]
+
+    def make_sector_ku(cone):
+        subsector = original_sector.copy()
+        transformation = np.identity(original_sector.number_of_variables, dtype = int)
+        index_array = np.array(indices)
+        transformation[index_array.reshape(-1,1),index_array] = cone
+
+        Jacobian_coeff = abs(np.linalg.det(cone))
+        Jacobian_coeff_as_int = int(Jacobian_coeff + 0.5) # `Jacobian_coeff` is integral but numpy calculates it as float
+        assert abs(Jacobian_coeff_as_int - Jacobian_coeff) < 1.0e-5 * abs(Jacobian_coeff)
+
+        subsector.Jacobian = Jacobian_coeff_as_int*transform_variables(subsector.Jacobian, transformation, subsector.Jacobian.polysymbols)
+
+        for i,product in enumerate(subsector.cast):
+            transformed_monomial = transform_variables(product.factors[0], transformation, product.factors[0].polysymbols)
+            transformed_polynomial = transform_variables(product.factors[1], transformation, product.factors[1].polysymbols)
+            subsector.cast[i] = Product(transformed_monomial, transformed_polynomial)
+            refactorize(subsector.cast[i])
+        for i,polynomial in enumerate(subsector.other):
+            subsector.other[i] = transform_variables(polynomial, transformation, polynomial.polysymbols)
+        # this transformation produces an extra Jacobian factor
+        # can multiply part encoded in the `expolist` here but the coefficient is specific for each subsector
+        subsector.Jacobian *= Polynomial([transformation.sum(axis=0) - 1], [1])
+
+        return subsector
+
+    fan = generate_fan( *(product.factors[1] for product in sector.cast) )
+    for cone in fan:
+        for dualcone in triangulate(cone,switch_representation=True):
+            yield make_sector_ku(dualcone.T)

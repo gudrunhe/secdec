@@ -234,6 +234,36 @@ class TestGeomethod(unittest.TestCase):
             self.assertEqual( (Jacobian-target_Jacobian).simplify() , 0)
 
     #@attr('active')
+    def test_2D_geometric_decomposition_ku(self):
+        poly = Polynomial.from_expression('A*x1 + B*x2 + C*x1*x2', ['dummy','x1','x2'])
+        sector = Sector([poly])
+        indices = [1,2]
+        subsectors = list( geometric_decomposition_ku(sector, indices, workdir='tmpdir_test_2D_geometric_decomposition_ku_python' + python_major_version) )
+        print(subsectors)
+        self.assertEqual(len(subsectors), 2)
+
+        target_Jacobians = [sp.sympify('x2**1 '), sp.sympify('x1**1 ')]
+        target_polys = [sp.sympify('x2**1 * (A*x1 + B + C*x1*x2)'), sp.sympify('x1**1 * (A + B*x2 + C*x1*x2)')]
+
+        try:
+            for target_poly, target_Jacobian, subsector in zip(target_polys, target_Jacobians,subsectors):
+                try:
+                    self.assertEqual( (sp.sympify(subsector.cast[0])-target_poly).simplify() , 0)
+                    self.assertEqual( (sp.sympify(subsector.Jacobian)-target_Jacobian).simplify() , 0)
+                except AssertionError:
+                    self.assertEqual( (sp.sympify(subsector.cast[0])-target_poly.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
+                    self.assertEqual( (sp.sympify(subsector.Jacobian)-target_Jacobian.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
+        except AssertionError:
+            for target_poly, target_Jacobian, subsector in zip(target_polys, target_Jacobians,reversed(subsectors)):
+                try:
+                    self.assertEqual( (sp.sympify(subsector.cast[0])-target_poly).simplify() , 0)
+                    self.assertEqual( (sp.sympify(subsector.Jacobian)-target_Jacobian).simplify() , 0)
+                except AssertionError:
+                    self.assertEqual( (sp.sympify(subsector.cast[0])-target_poly.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
+                    self.assertEqual( (sp.sympify(subsector.Jacobian)-target_Jacobian.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
+
+
+    #@attr('active')
     def test_3D_geometric_decomposition(self):
         # 3D test case where triangulation is needed
         poly = Polynomial.from_expression('A*1 + B*x1 + C*x2 + D*x3 + E*x1*x2', ['x1','x2','x3']) # pyramid

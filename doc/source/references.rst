@@ -33,6 +33,11 @@ References
             | `doi:10.1142/S0217751X08040263 <http://dx.doi.org/10.1142/S0217751X08040263>`_,
             | `arXiv:0803.4177 <http://arxiv.org/abs/0803.4177>`_
 
+.. [KU10]   | T. Kaneko and T. Ueda
+              *A Geometric method of sector decomposition*, 2010, Comput.Phys.Comm.181
+            | `doi:10.1016/j.cpc.2010.04.001 <http://dx.doi.org/10.1016/j.cpc.2010.04.001>`_,
+            | `arXiv:0908.2897 <http://arxiv.org/abs/0908.2897>`_
+
 .. [Pak11]  | A. Pak *The toolbox of modern multi-loop calculations: novel
               analytic and semi-analytic techniques*, 2012, J. Phys.: Conf. Ser. 368 012049,
             | `doi:10.1088/1742-6596/368/1/012049 <http://dx.doi.org/10.1088/1742-6596/368/1/012049>`_,
