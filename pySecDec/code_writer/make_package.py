@@ -1215,30 +1215,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
             subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
 
             # call the subtraction routines
-            # Depending on whether contour deformation is performed, we implement two
-            # different strategies. The strategy that is use without contour deformation
-            # produces less terms but becomes unstable with contour deformation.
-            if contour_deformation_polynomial is not None:
-                # Apply the original subtraction (`integrate_pole_part`) for logarithmic poles.
-                # For higher poles, apply integration by parts.
-                subtracted = []
-                at_most_log_pole_indices = []
-                higher_pole_indices = []
-                for index,power in enumerate(pole_structures[-1]):
-                    if power < -1:
-                        higher_pole_indices.append(index)
-                    else:
-                        at_most_log_pole_indices.append(index)
-                subtracted_higher_poles = integrate_by_parts(subtraction_initializer, 0, *higher_pole_indices)
-                for item in subtracted_higher_poles:
-                    subtracted.extend(  integrate_pole_part(item, *at_most_log_pole_indices)  )
-            else:
-                # Integrate by parts until we are left with at most logarithmic poles (``power_goal=-1``),
-                # then we do the original subtraction (`integrate_pole_part`).
-                at_most_log_poles = integrate_by_parts(subtraction_initializer, -1, *integration_variable_indices)
-                subtracted = []
-                for item in at_most_log_poles:
-                    subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
+            # Integrate by parts until at most logarithmic poles (``power_goal=-1``) remain,
+            # then do the original subtraction (`integrate_pole_part`).
+            at_most_log_poles = integrate_by_parts(subtraction_initializer, -1, *integration_variable_indices)
+            subtracted = []
+            for item in at_most_log_poles:
+                subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
 
             # intialize expansion
             pole_parts = [s.factors[1].simplify() for s in subtracted]
