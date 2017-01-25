@@ -381,19 +381,6 @@ B `regulators';
               #call insertOther
             EndArgument;
             Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
-*           Remove the deformation parameters of absent integration variables.
-*           {
-            #$argCounter = 0;
-            #Do arg = {`$args',}
-              #If x`arg' != x
-                #If `arg' == 0
-                  multiply replace_(SecDecInternalLambda`$argCounter',0);
-                  .sort
-                #EndIf
-                #$argCounter = $argCounter + 1;
-              #EndIf
-            #EndDo
-*           }
             multiply replace_(I,i_);
             .sort
 
