@@ -978,11 +978,23 @@ B `regulators';
         #ElseIf `function' == SecDecInternalPow
           Bracket SecDecInternalLabelSecDecInternalGeneral;
           .sort
-          Local expr = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin')]
-                     ^ parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+1)];
+          hide; nhide exponent;
+          Local base = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin')];
+          Local exponent = SecDecInternalfDUMMY(parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+1)]);
           .sort
-          #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-          drop expr;
+          #write <sector_`sectorID'_`cppOrder'.cpp> "pow(%%E," base(#@no_split_expression@#)
+          #redefine exponentIsInteger "0"
+          if ( match(SecDecInternalfDUMMY(SecDecInternalsDUMMY?int_)) ) redefine exponentIsInteger "1";
+          Id SecDecInternalfDUMMY(SecDecInternalsDUMMY?) = SecDecInternalsDUMMY;
+          .sort
+          #If `exponentIsInteger'
+            Format rational;
+          #EndIf
+          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E);#@SecDecInternalNewline@#" exponent(#@no_split_expression@#)
+          Format C;
+          Format float 20;
+          unhide;
+          drop base,exponent;
         #Else
           #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
           #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
