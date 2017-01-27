@@ -16,7 +16,7 @@ import os
 
 def loop_package(name, loop_integral, requested_order,
                  real_parameters=[], complex_parameters=[],
-                 contour_deformation='auto', force_unsafe_deformation=False,
+                 contour_deformation='auto',
                  additional_prefactor=1, form_optimization_level=2,
                  form_work_space='500M',
                  decomposition_method='iterative',
@@ -66,17 +66,6 @@ def loop_package(name, loop_integral, requested_order,
         Symanzik polynomial "F" comes with a negative
         exponent (ignoring the regulator).
         Default: ``'auto'``.
-
-    :param force_unsafe_deformation:
-        bool, optional;
-        If both Symanzik polynomials "U" and "F" have
-        a negative exponent (ignoring the regulator),
-        the deformation parameters cannot fully be
-        checked for consistency. `pySecDec` always checks
-        the :math:`- i\delta` prescription of "F" but it
-        cannot check if the contour deformation crosses
-        complex poles of "U".
-        Default: ``False``.
 
     :param additional_prefactor:
         string or sympy expression;
@@ -153,18 +142,14 @@ def loop_package(name, loop_integral, requested_order,
     else:
         contour_deformation = bool(contour_deformation)
 
-    if contour_deformation:
-        if loop_integral.exponent_U.subs(loop_integral.regulator,0) < 0: # if "U" in denominator
-            if force_unsafe_deformation:
-                print(   'WARNING: Contour deformation may silently lead to wrong results by crossing zeros of "U".'   )
-            else:
-                raise UserWarning('Contour deformation may silently lead to wrong results by crossing zeros of "U". Set ``force_unsafe_deformation=True`` in `loop_package` to proceed anyway.')
-
     # convert `name` to string
     name = str(name)
 
     U_and_F = [loop_integral.exponentiated_U.copy(), loop_integral.exponentiated_F.copy()]
     names_U_and_F = sp.symbols(['U','F'])
+
+    # check if ``U`` is in the denomitator; i.e. if an additional sign check is needed
+    U_in_denominator = loop_integral.exponent_U.subs(loop_integral.regulator,0) < 0
 
     # append the regulator symbol and the symbols `U` and `F` to `U` and `F`
     for poly in U_and_F:
@@ -195,6 +180,7 @@ def loop_package(name, loop_integral, requested_order,
         polynomial_names = names_U_and_F,
         other_polynomials = other_polynomials,
         contour_deformation_polynomial = 'F' if contour_deformation else None,
+        positive_polynomials = ['U'] if U_in_denominator else [],
 
         prefactor = sp.sympify(additional_prefactor) * loop_integral.Gamma_factor * loop_integral.regulator ** loop_integral.regulator_power,
 

@@ -29,6 +29,10 @@ AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
 * ("F" in loop integrals)
 #define SecDecInternalContourDeformationPolynomial "%(contour_deformation_polynomial)s"
 
+* Define the polynomials that should remain positive
+* (e.g. "U" in loop integrals)
+#define positivePolynomials "%(positive_polynomials)s"
+
 * The transformation of the Feynman parameters
 #procedure insertDeformedIntegrationVariables
   %(insert_deformed_integration_variables_procedure)s

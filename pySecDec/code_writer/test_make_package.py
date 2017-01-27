@@ -47,6 +47,7 @@ class TestConvertInput(TestMakePackage):
                                       form_work_space='500M',
                                       form_insertion_depth=0,
                                       contour_deformation_polynomial=None,
+                                      positive_polynomials=[],
                                       decomposition_method='iterative_no_primary'
                                  )
 
@@ -125,6 +126,16 @@ class TestConvertInput(TestMakePackage):
         keyword_arguments['polynomial_names'] = ['firstPolynomialName']
         keyword_arguments['polynomials_to_decompose'] = ['z0 + firstPolynomialName']
         self.assertRaisesRegexp(ValueError, r'polynomial_names.*firstPolynomialName.*not.*polynomials_to_decompose', _convert_input, **keyword_arguments)
+
+    #@attr('active')
+    def test_positive_polynomials(self):
+        keyword_arguments = self.correct_input.copy()
+        keyword_arguments['positive_polynomials'] = ['U','missingInPolynomialNames','F']
+        self.assertRaisesRegexp(AssertionError, r'missingInPolynomialNames.*positive_polynomials.*not.*polynomial_names', _convert_input, **keyword_arguments)
+
+        keyword_arguments = self.correct_input.copy()
+        keyword_arguments['positive_polynomials'] = ['U','not_a + symbol','F']
+        self.assertRaisesRegexp(AssertionError, r'All.*positive_polynomials.*symbols', _convert_input, **keyword_arguments)
 
 # --------------------------------- write FORM code ---------------------------------
 class TestMakeFORMDefinition(unittest.TestCase):

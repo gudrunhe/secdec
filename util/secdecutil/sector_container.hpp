@@ -212,9 +212,9 @@ namespace secdecutil {
                 error_message += "\", order { ";
                 for (auto order : orders)
                     error_message += std::to_string(order) + " ";
-                error_message += "} yields the wrong sign of \"contour_deformation_polynomial.imag\".";
-                error_message += " Choose a larger \"number_of_samples\" in \"optimize_deformation_parameters\"";
-                error_message += " (recommended) or decrease \"deformation_parameters\".";
+                error_message += "} yields the wrong sign of \"contour_deformation_polynomial.imag\" or";
+                error_message += " \"positive_polynomial.real\". Choose a larger \"number_of_samples\" in";
+                error_message += " \"optimize_deformation_parameters\" or decrease the \"deformation_parameters\".";
                 throw sign_check_error(error_message);
             }
         };

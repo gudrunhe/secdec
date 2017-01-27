@@ -124,13 +124,14 @@ def _convert_input(name, integration_variables, regulators,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
                    form_work_space, form_insertion_depth, contour_deformation_polynomial,
-                   decomposition_method):
+                   positive_polynomials, decomposition_method):
     'Get the data types right.'
 
     # parse symbols
     integration_variables = sympify_symbols(list(integration_variables), 'All `integration_variables` must be symbols.')
     regulators = sympify_symbols(list(regulators), 'All `regulators` must be symbols.')
     polynomial_names = sympify_symbols(list(polynomial_names), 'All `polynomial_names` must be symbols.')
+    positive_polynomials = sympify_symbols(list(positive_polynomials), 'All `positive_polynomials` must be symbols.')
     real_parameters= sympify_symbols(list(real_parameters), 'All `real_parameters` must be symbols.')
     complex_parameters = sympify_symbols(list(complex_parameters), 'All `complex_parameters` must be symbols.')
     functions = list(functions); sympify_symbols(functions, 'All `functions` must be symbols.'); functions = set(str(f) for f in functions)
@@ -141,6 +142,10 @@ def _convert_input(name, integration_variables, regulators,
     for symbol in chain(integration_variables, regulators, polynomial_names, real_parameters, complex_parameters, functions,
                         [contour_deformation_polynomial] if contour_deformation_polynomial is not None else []):
         _validate( str(symbol) )
+
+    # check that all the `positive_polynomials` also appear in `polynomial_names`
+    for polyname in positive_polynomials:
+        assert polyname in polynomial_names, '"%s" found in `positive_polynomials` but not in `polynomial_names` (%s)' % (polyname,polynomial_names)
 
     # define the symbols of the different classes of `_Expression`s
     symbols_polynomials_to_decompose = integration_variables + regulators + polynomial_names
@@ -196,7 +201,7 @@ def _convert_input(name, integration_variables, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
             other_polynomials, prefactor, remainder_expression, functions, function_calls,
             real_parameters, complex_parameters, form_optimization_level,
-            form_work_space, form_insertion_depth, contour_deformation_polynomial,
+            form_work_space, form_insertion_depth, contour_deformation_polynomial, positive_polynomials,
             decomposition_method, symbols_polynomials_to_decompose, symbols_other_polynomials,
             symbols_remainder_expression, all_symbols)
 
@@ -577,7 +582,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
-                 form_insertion_depth=5, contour_deformation_polynomial=None,
+                 form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
                  normaliz_workdir='normaliz_tmp', enforce_complex=False, split=False):
     r'''
@@ -710,6 +715,17 @@ def make_package(name, integration_variables, regulators, requested_orders,
         If not provided, no code for contour deformation
         is created.
 
+    :param positive_polynomials:
+        iterable of strings or sympy symbols, optional;
+        The names of the polynomials in `polynomial_names`
+        that should always have a positive real part.
+        For loop integrals, this applies to the first Symanzik
+        polynomial ``U``.
+        If not provided, no polynomial is checked for
+        positiveness.
+        If `contour_deformation_polynomial` is ``None``, this
+        parameter is ignored.
+
     :param decomposition_method:
         string, optional;
         The strategy to decompose the polynomials. The
@@ -772,7 +788,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     other_polynomials, prefactor, remainder_expression, functions, \
     function_calls, real_parameters, complex_parameters, \
     form_optimization_level, form_work_space, form_insertion_depth, \
-    contour_deformation_polynomial, decomposition_method, \
+    contour_deformation_polynomial, positive_polynomials, decomposition_method, \
     symbols_polynomials_to_decompose, symbols_other_polynomials, \
     symbols_remainder_expression, all_symbols = \
     _convert_input(name, integration_variables, regulators,
@@ -780,7 +796,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
                    form_work_space, form_insertion_depth, contour_deformation_polynomial,
-                   decomposition_method)
+                   positive_polynomials, decomposition_method)
 
     # construct the c++ type of the integrand container class
     # for two regulators, the resulting code should read:
@@ -1401,6 +1417,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 template_replacements['contourdef_Jacobian_derivative_functions'] = _make_FORM_list(contourdef_Jacobian_derivative_functions)
                 template_replacements['deformed_integration_variable_derivative_functions'] = _make_FORM_list(deformed_integration_variable_derivative_functions)
                 template_replacements['contour_deformation_polynomial'] = contour_deformation_polynomial
+                template_replacements['positive_polynomials'] = _make_FORM_list(positive_polynomials)
                 template_replacements['insert_deformed_integration_variables_procedure'] = FORM_deformed_integration_variable_definitions
                 template_replacements['insert_contourdef_Jacobian_derivatives_procedure'] = FORM_contourdef_Jacobian_derivative_definitions
                 template_replacements['deformation_parameters'] = _make_FORM_list(deformation_parameters)

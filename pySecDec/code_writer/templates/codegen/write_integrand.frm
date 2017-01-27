@@ -153,7 +153,8 @@ B `regulators';
 * {
   #If `contourDeformation'
 
-    #$labelCounter = 0;
+    #$labelCounterF = 0;
+    #$labelCounterU = 0;
     Local tmp = expression;
     Local signCheck = SecDecInternalsDUMMYsignCheck;
     .sort
@@ -192,16 +193,25 @@ B `regulators';
 
           #If `needThisCheck'
 
-            #$labelCounter = $labelCounter + 1;
+            #$labelCounterF = $labelCounterF + 1;
 
-*           The sign check to be performed is:
-*           "SecDecInternalContourDeformationPolynomial(<deformed integration variables>) - SecDecInternalContourDeformationPolynomial(<undeformed integration variables>) <= 0"
-*           {
+*           The sign check to be performed for the contour deformation polynomial (F) is:
+*           "SecDecInternalImagPart( SecDecInternalContourDeformationPolynomial(<deformed integration variables>) - SecDecInternalContourDeformationPolynomial(<undeformed integration variables>) ) <= 0"
             Id SecDecInternalsDUMMYsignCheck = SecDecInternalsDUMMYsignCheck +
-                SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`$labelCounter' *
+                SecDecInternalLabelContourDeformationPolynomialCallSignCheck`$labelCounterF' *
                 (
                   SecDecInternalfDUMMYdeformedContourDeformationPolynomial($args) - `SecDecInternalContourDeformationPolynomial'($args)
                 );
+
+*           The sign check to be performed for the positive polynomials (e.g. U) is:
+*           "SecDecInternalRealPart( SecDecInternalPositivePolynomial(<deformed integration variables>) ) >= 0"
+            #Do positivePolynomial = {`positivePolynomials',}
+              #If x`positivePolynomial' != x
+                #$labelCounterU = $labelCounterU + 1;
+                Id SecDecInternalsDUMMYsignCheck = SecDecInternalsDUMMYsignCheck +
+                    SecDecInternalLabelUCallSignCheck`$labelCounterU' * SecDecInternalfDUMMY`positivePolynomial'($args);
+              #EndIf
+            #EndDo
 
 *           Define a variables that only keeps the integration variables in "$args"
 *           {
@@ -221,20 +231,31 @@ B `regulators';
             #Do IV = {`integrationVariables'}
               Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?frontArgs,`IV',?backArgs) =
                  SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?frontArgs,SecDecInternalDeformed`IV'(`argsWithoutRegulators'),?backArgs);
+
+              #Do positivePolynomial = {`positivePolynomials',}
+                #If x`positivePolynomial' != x
+                  Id SecDecInternalfDUMMY`positivePolynomial'(?frontArgs,`IV',?backArgs) =
+                     SecDecInternalfDUMMY`positivePolynomial'(?frontArgs,SecDecInternalDeformed`IV'(`argsWithoutRegulators'),?backArgs);
+                #EndIf
+              #EndDo
             #EndDo
 
             Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?args) = `SecDecInternalContourDeformationPolynomial'(?args);
 
+            #Do positivePolynomial = {`positivePolynomials',}
+              #If x`positivePolynomial' != x
+                Id SecDecInternalfDUMMY`positivePolynomial'(?args) = `positivePolynomial'(?args);
+              #EndIf
+            #EndDo
           #EndIf
 
           .sort
 
-*         }
-
         #EndIf
       #EndDo
 
-      #redefine numberOfRequiredSignChecks "`$labelCounter'"
+      #redefine numberOfRequiredFSignChecks "`$labelCounterF'"
+      #redefine numberOfRequiredUSignChecks "`$labelCounterU'"
 
     #EndDo
 
@@ -1035,10 +1056,13 @@ B `regulators';
 
 * Optimize the sign check (if applicable) and the final expression
 * {
-* reduce the labels SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId' to one single label
+* reduce the labels SecDecInternalLabel`ContourDeformationPolynomial/PositivePolynomial'CallSignCheck`signCheckId' to one two labels
   #If `contourDeformation'
-    #Do signCheckId = 1, `numberOfRequiredSignChecks'
-      Id SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheck`signCheckId' = SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal ^ `signCheckId';
+    #Do signCheckId = 1, `numberOfRequiredFSignChecks'
+      Id SecDecInternalLabelContourDeformationPolynomialCallSignCheck`signCheckId' = SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal ^ `signCheckId';
+    #EndDo
+    #Do signCheckId = 1, `numberOfRequiredUSignChecks'
+      Id SecDecInternalLabelUCallSignCheck`signCheckId' = SecDecInternalLabelUCallSignCheckGlobal ^ `signCheckId';
     #EndDo
   #EndIf
 
@@ -1046,7 +1070,7 @@ B `regulators';
   Format C;
   Format O`optimizationLevel';
   #If `contourDeformation'
-    Bracket SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal;
+    Bracket SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal, SecDecInternalLabelUCallSignCheckGlobal;
   #EndIf
   .sort
   ExtraSymbols,array,SecDecInternalSecondAbbreviation;
@@ -1061,7 +1085,7 @@ B `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 * }
 
-* write code for the sign check
+* write code for the sign checks
 * {
   #If `contourDeformation'
 
@@ -1071,11 +1095,11 @@ B `regulators';
     hide; nhide toOptimize, expr;
     .sort
 
-    #Do signCheckId = 1, `numberOfRequiredSignChecks'
+    #Do signCheckId = 1, `numberOfRequiredFSignChecks'
 
-      Bracket SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal;
+      Bracket SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal;
       .sort
-      Local expr = toOptimize[SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal ^ `signCheckId'];
+      Local expr = toOptimize[SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal ^ `signCheckId'];
       .sort
 
       #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
@@ -1084,7 +1108,23 @@ B `regulators';
 
     #EndDo
 
-    multiply replace_(SecDecInternalLabel`SecDecInternalContourDeformationPolynomial'CallSignCheckGlobal,0);
+    multiply replace_(SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal,0);
+    .sort
+
+    #Do signCheckId = 1, `numberOfRequiredUSignChecks'
+
+      Bracket SecDecInternalLabelUCallSignCheckGlobal;
+      .sort
+      Local expr = toOptimize[SecDecInternalLabelUCallSignCheckGlobal ^ `signCheckId'];
+      .sort
+
+      #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
+      #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression < 0)"
+      #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+
+    #EndDo
+
+    multiply replace_(SecDecInternalLabelUCallSignCheckGlobal,0);
     .sort
 
     unhide;
