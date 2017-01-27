@@ -917,7 +917,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             if len(polynomial_names) <= contour_deformation_polynomial_index:
                 raise IndexError('Could not find the `contour_deformation_polynomial` "%s" in `polynomial_names`.' % str_contour_deformation_polynomial)
 
-    def parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials, include_last_other):
+    def parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials):
         #  - in ``sector.cast``
         for product in sector.cast:
             mono, poly = product.factors
@@ -927,7 +927,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
 
         #  - in ``sector.other``
-        for poly in sector.other if include_last_other else sector.other:
+        for poly in sector.other:
             try:
                 poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
             except AttributeError:
@@ -1097,7 +1097,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, Pak_sort)
             print('total number of sectors after investigating symmetries', len(secondary_sectors))
         else:
-            parse_exponents_and_coeffs(primary_sector, all_symbols, all_symbols, use_symmetries and not split)
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
         for sector in secondary_sectors:
@@ -1105,10 +1104,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             print('writing FORM files for sector', sector_index)
 
-            if use_symmetries:
-                # If we use symmetries, we still have to parse the `exponents` and `coeffs`.
-                parse_exponents_and_coeffs(sector, all_symbols, all_symbols, use_symmetries and not split)
-            else:
+            if not use_symmetries:
                 # If we do not use symmetries, we have to take care of `transformations`
                 # extract ``this_transformations``
                 this_transformations = sector.other[-len(all_integration_variables):]
@@ -1152,6 +1148,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     for poly_name in reversed_polynomial_names:
                         this_transformations[i] = this_transformations[i].replace(-1, poly_name(*symbols_other_polynomials), remove=True)
 
+            # convert all exponents and coefficients to pySecDec expressions
+            parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials)
 
             # factorize polynomials in ``sector.other``
             for i,to_factorize in enumerate(sector.other):
