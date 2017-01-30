@@ -1010,7 +1010,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
-            symbolic_contour_deformation_polynomial = Function(str(contour_deformation_polynomial), *elementary_monomials, sort_derivatives=True)
+            symbolic_contour_deformation_polynomial = Function(str(contour_deformation_polynomial), *elementary_monomials)
 
             # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
             # ``z_k({x_k}) = x_k - i * lambda_k * x_k * (1-x_k) * Re(dF_dx_k)``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
@@ -1030,7 +1030,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                               ]
 
             # define the `symbolic_deformed_variables` to be inserted FORM
-            symbolic_deformed_variables = [ Function(deformed_name, *elementary_monomials[:len(integration_variables)], sort_derivatives=True) for deformed_name in symbolic_deformed_variable_names ]
+            symbolic_deformed_variables = [ Function(deformed_name, *elementary_monomials[:len(integration_variables)]) for deformed_name in symbolic_deformed_variable_names ]
             symbolic_deformed_variables.extend( (regulator for regulator in elementary_monomials[len(integration_variables):]) )
 
             # generate the Jacobian determinant
@@ -1062,8 +1062,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                          Pow(
                                              Function(
                                                          FORM_names['other_polynomial'] + str(i),
-                                                         *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
-                                                         sort_derivatives = True
+                                                         *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables)
                                              ),
                                              Expression(primary_sector.other[i].exponent, symbols_polynomials_to_decompose),
                                              copy = False
@@ -1079,7 +1078,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 poly_name = FORM_names['cast_polynomial'] + str(i)
             symbolic_polynomials_to_decompose.append(
                 Pow(
-                    Function(poly_name, *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables), sort_derivatives=True),
+                    Function(poly_name, *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables)),
                     Expression(primary_sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose),
                     copy = False
                 )
@@ -1174,7 +1173,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 symbolic_remainder_expression_arguments = [polynomial_zero] * len(integration_variables) + elementary_monomials[len(integration_variables):]
             else:
                 symbolic_remainder_expression_arguments = this_transformations + elementary_monomials[len(integration_variables):]
-            symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments, sort_derivatives=True)
+            symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments)
 
             # initialize the product of monomials for the subtraction
             monomial_factors = list(chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))

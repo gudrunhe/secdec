@@ -122,12 +122,6 @@ class Function(_Expression):
         bool;
         Whether or not to copy the `arguments`.
 
-    :param sort_derivatives:
-        bool, optional;
-        If ``True``, sort multiple derivatives
-        in increasing order:
-        Default: ``False``.
-
     '''
 #   hidden keyword arguments:
 #   :param differentiated_args:
@@ -165,7 +159,6 @@ class Function(_Expression):
 
         self.derivative_tracks = kwargs.pop('derivative_tracks', {})
 
-        self.sort_derivatives = kwargs.pop('sort_derivatives', False)
         self.basename = kwargs.pop('basename', self.symbol)
         self.derivative_multiindex = kwargs.pop('derivative_multiindex', tuple([0] * self.number_of_variables))
 
@@ -237,7 +230,7 @@ class Function(_Expression):
                           differentiated_args=self.differentiated_args, derivatives=self.derivatives,
                           derivative_symbols=self.derivative_symbols, basename=self.basename,
                           derivative_multiindex=self.derivative_multiindex,
-                          sort_derivatives=self.sort_derivatives, derivative_tracks=self.derivative_tracks)
+                          derivative_tracks=self.derivative_tracks)
 
     def simplify(self):
         'Simplify the arguments.'
@@ -282,11 +275,8 @@ class Function(_Expression):
             new_multiindex = tuple(new_multiindex)
             self.derivative_tracks[new_multiindex] = [argindex, old_multiindex]
 
-            if self.sort_derivatives:
-                derivative_symbol = 'd' * np.sum(new_multiindex) + self.basename + \
-                    ''.join( ('d%i' %argindex) * howmany for argindex,howmany in enumerate(new_multiindex) )
-            else:
-                derivative_symbol = 'd%sd%i'%(self.symbol,argindex)
+            derivative_symbol = 'd' * np.sum(new_multiindex) + self.basename + \
+                ''.join( ('d%i' %argindex) * howmany for argindex,howmany in enumerate(new_multiindex) )
 
             self.derivative_symbols.add(derivative_symbol)
             summands.append(
@@ -295,8 +285,7 @@ class Function(_Expression):
                                             type(self)(derivative_symbol, *(arg.copy() for arg in self.arguments),
                                                        differentiated_args=self.differentiated_args, copy=False,
                                                        derivative_symbols=self.derivative_symbols, basename=self.basename,
-                                                       derivative_multiindex=new_multiindex, sort_derivatives=self.sort_derivatives,
-                                                       derivative_tracks=self.derivative_tracks),
+                                                       derivative_multiindex=new_multiindex, derivative_tracks=self.derivative_tracks),
                                             copy=False
                                        )
                            )
@@ -315,7 +304,6 @@ class Function(_Expression):
                                     derivative_symbols=expression.derivative_symbols,
                                     basename=expression.basename,
                                     derivative_multiindex=expression.derivative_multiindex,
-                                    sort_derivatives=expression.sort_derivatives,
                                     derivative_tracks=expression.derivative_tracks
                                )
 

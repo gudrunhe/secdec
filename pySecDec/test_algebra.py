@@ -87,7 +87,7 @@ class TestFunction(unittest.TestCase):
         self.assertEqual(derivatives, set(['f','dfd0']))
 
         f.derive(1).derive(0)
-        self.assertEqual(derivatives, set(['f','dfd0','dfd1','ddfd1d0']))
+        self.assertEqual(derivatives, set(['f','dfd0','dfd1','ddfd0d1']))
 
     #@attr('active')
     def test_derivative_sorting(self):
@@ -97,7 +97,7 @@ class TestFunction(unittest.TestCase):
         z = Polynomial.from_expression('z', polysymbols)
 
         derivatives = set()
-        f = Function('f', x, y, z, derivative_symbols=derivatives, sort_derivatives=True)
+        f = Function('f', x, y, z, derivative_symbols=derivatives)
 
         target_derivatives = set(['f'])
         self.assertEqual(derivatives, target_derivatives)
@@ -123,7 +123,7 @@ class TestFunction(unittest.TestCase):
         x,y,z = (Polynomial.from_expression(symbol, polysymbols) for symbol in polysymbols)
 
         derivatives = set()
-        f = Function('f', x-y, x+y, z, derivative_symbols=derivatives, sort_derivatives=True)
+        f = Function('f', x-y, x+y, z, derivative_symbols=derivatives)
 
         target_derivatives = set(['f'])
         self.assertEqual(derivatives, target_derivatives)
@@ -166,7 +166,7 @@ class TestFunction(unittest.TestCase):
         polysymbols = ['x','y']
         x,y = (Polynomial.from_expression(symbol, polysymbols) for symbol in polysymbols)
 
-        func = Function('F', x**2*y, y**2, sort_derivatives=True)
+        func = Function('F', x**2*y, y**2)
         func.derive(0).derive(1)
         func.derive(1).derive(0).derive(0)
 
