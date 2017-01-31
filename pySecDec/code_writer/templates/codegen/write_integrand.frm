@@ -139,12 +139,6 @@ B `regulators';
     #$currentOrder = $currentOrder * `regulator`regulatorIndex''^`shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex'';
   #EndDo
   Local expression = expansion[$currentOrder];
-
-* Expand logs *BEFORE* insertions and only at top level in order to avoid
-* introducing log(<negative real>).
-  factarg log;
-  repeat Id log(?head, SecDecInternalsDUMMY1?, SecDecInternalsDUMMY2?) = log(?head, SecDecInternalsDUMMY1) + log(SecDecInternalsDUMMY2);
-  repeat Id log(SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?) = log(SecDecInternalsDUMMY1) * SecDecInternalsDUMMY2;
   .sort
 
 * Find the calls to the contour deformation polynomials that need a sign check.
