@@ -771,12 +771,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
         Default: ``False``
 
     :param split:
-        bool, optional;
-        Whether or not to split the integration at :math:`1/2`
+        bool or integer, optional;
+        Whether or not to split the integration domain
         in order to map singularities from :math:`1` to
         :math:`0`. Set this option to ``True`` if you have
         singularties when one or more integration variables
-        are one.
+        are one. If an integer is passed, that integer is
+        used as seed to generate the splitting point.
         Default: ``False``
 
     '''
@@ -865,26 +866,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 print('number of primary sectors after investigating symmetries:', len(primary_sectors))
             else:
                 primary_sectors = original_decomposition_strategies['primary'](sector, indices)
+            for output_sector in primary_sectors:
+                yield output_sector
 
-            # combine split sectors before secondary decomposition
-            for subsector in original_decomposition_strategies['primary'](sector, indices):
-                cast = []
-                other = []
-                for subsubsector in decomposition.splitting.split_singular(subsector, indices):
-                    cast.extend(subsubsector.cast)
-                    other.extend(subsubsector.other)
-                    other.append(subsubsector.Jacobian)
-                yield decomposition.Sector(cast, other)
-
-        # separate split sectors after secondary decomposition
         def secondary_decomposition_with_splitting(sector, indices):
-            # The implemented symmetry finders take a long time but do not find anything if applied here.
-            # We therefore do not waste time calling them on the split sectors.
-            for subsector in original_decomposition_strategies['secondary'](sector, indices):
-                for i in range(len(subsector.cast) // len(initial_sector.cast)):
-                    cast = subsector.cast[i*len(initial_sector.cast):(i+1)*len(initial_sector.cast)]
-                    other = subsector.other[i*(len(initial_sector.other)+1):(i+1)*(len(initial_sector.other)+1)]
-                    yield decomposition.Sector(cast, other[:-1], Jacobian=other[-1] * subsector.Jacobian)
+            # split and decompose the `sector`
+            for split_sector in decomposition.splitting.split_singular(sector, split, indices):
+                for decomposed_sector in original_decomposition_strategies['secondary'](split_sector, indices):
+                    yield decomposed_sector
 
         # apply modifications to the decomposition strategy
         strategy = dict(primary=primary_decomposition_with_splitting, secondary=secondary_decomposition_with_splitting)
