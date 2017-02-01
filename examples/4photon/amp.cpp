@@ -100,25 +100,20 @@ int main()
     const auto all_sectors_box = std::accumulate(++box_sector_integrands.begin(), box_sector_integrands.end(), *box_sector_integrands.begin() );
 
     // define the integrator
-    auto real_integrator = secdecutil::cuba::Vegas<double>();
-    real_integrator.flags = 2; // verbose output
-    real_integrator.epsrel = 1e-4;
-    real_integrator.epsabs = 1e-4;
-
-    // Integrate bubble_t
-    auto result_bub_t = secdecutil::deep_apply( all_sectors_bub_t,  real_integrator.integrate )
-                      * yyyy_bubble::prefactor(bubble_parameters_t, bubble_complex_parameters)
-                      ;
-    // Integrate bubble_u
-    auto result_bub_u = secdecutil::deep_apply( all_sectors_bub_u,  real_integrator.integrate )
-                      * yyyy_bubble::prefactor(bubble_parameters_u, bubble_complex_parameters)
-                      ;
-    // Integrate box
-
     auto complex_integrator = secdecutil::cuba::Vegas<std::complex<double>>();
     complex_integrator.flags = 2; // verbose output
     complex_integrator.epsrel = 1e-4;
     complex_integrator.epsabs = 1e-4;
+
+    // Integrate bubble_t
+    auto result_bub_t = secdecutil::deep_apply( all_sectors_bub_t,  complex_integrator.integrate )
+                      * yyyy_bubble::prefactor(bubble_parameters_t, bubble_complex_parameters)
+                      ;
+    // Integrate bubble_u
+    auto result_bub_u = secdecutil::deep_apply( all_sectors_bub_u,  complex_integrator.integrate )
+                      * yyyy_bubble::prefactor(bubble_parameters_u, bubble_complex_parameters)
+                      ;
+    // Integrate box
 
     auto result_box = secdecutil::deep_apply( all_sectors_box,  complex_integrator.integrate )
                     * yyyy_box6Dim::prefactor(box_parameters, box_complex_parameters)

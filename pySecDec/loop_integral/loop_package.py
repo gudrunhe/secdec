@@ -16,7 +16,7 @@ import os
 
 def loop_package(name, loop_integral, requested_order,
                  real_parameters=[], complex_parameters=[],
-                 contour_deformation='auto',
+                 contour_deformation=True,
                  additional_prefactor=1, form_optimization_level=2,
                  form_work_space='500M',
                  decomposition_method='iterative',
@@ -59,16 +59,13 @@ def loop_package(name, loop_integral, requested_order,
         as complex parameters.
 
     :param contour_deformation:
-        bool or 'auto', optional;
+        bool, optional;
         Whether or not to produce code for contour
-        deformation. If set to 'auto', produce code
-        for contour deformation only if the second
-        Symanzik polynomial "F" comes with a negative
-        exponent (ignoring the regulator).
-        Default: ``'auto'``.
+        deformation.
+        Default: ``True``.
 
     :param additional_prefactor:
-        string or sympy expression;
+        string or sympy expression, optional;
         An additional factor to be multiplied to the loop
         integral. It may depend on the regulator, the
         `real_parameters`, and the `complex_parameters`.
@@ -135,12 +132,8 @@ def loop_package(name, loop_integral, requested_order,
     '''
     print('running "loop_package" for "' + name + '"')
 
-    if contour_deformation == 'auto':
-        # only need contour deformation of "F" has an overall negative exponent (and a noneuclidean point is calculated)
-        contour_deformation = loop_integral.exponent_F.subs(loop_integral.regulator,0) < 0
-        print(  'contour deformation is ' + ('required' if contour_deformation else 'not needed')  )
-    else:
-        contour_deformation = bool(contour_deformation)
+    # convert `contour_deformation` to bool
+    contour_deformation = bool(contour_deformation)
 
     # convert `name` to string
     name = str(name)
