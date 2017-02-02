@@ -127,10 +127,6 @@ def split(sector, seed, *indices):
         The indices of the variables to be split.
 
     '''
-    # Jacobian must not depend on the variable denoted by index.
-    for index in indices:
-        assert (sector.Jacobian.expolist[:,index] == 0).all(), "``sector.Jacobian`` must not depend on the variables denoted by `indices`."
-
     # get the splitting point
     #  --> generate ``len(indices)`` random numbers between ``1`` and ``20``,
     #      then split at ``<random>/20``
@@ -166,8 +162,10 @@ def split(sector, seed, *indices):
         for poly in sector.other:
             remapped_other.append( remap_one_to_zero(poly, index) )
 
+        remapped_Jacobian = remap_one_to_zero(sector.Jacobian, index)
+
         subsector0 = sector.copy()
-        subsector1 = Sector(remapped_cast, remapped_other, sector.Jacobian)
+        subsector1 = Sector(remapped_cast, remapped_other, remapped_Jacobian)
 
         #  - step2: rescale the integration variable
         def multiply_by(polynomial, number, index):
@@ -179,6 +177,7 @@ def split(sector, seed, *indices):
                                               [  splitting_value  ,  1-splitting_value  ]
                                           ):
             sector.Jacobian *= remapping_factor
+            multiply_by(sector.Jacobian, remapping_factor, index)
             for prod in sector.cast:
                 mono, poly = prod.factors
                 multiply_by(mono, remapping_factor, index)

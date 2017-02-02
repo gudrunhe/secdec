@@ -126,23 +126,29 @@ class TestSplit(unittest.TestCase):
     seed = 138
 
     #@attr('active')
-    def test_require_trivial_Jacobian(self):
-        poly = Polynomial.from_expression('1 - x0 + x1', ['x0','x1'])
+    def test_nontrivial_Jacobian(self):
+        sector = Sector(
+                           cast     = [Polynomial.from_expression('1 -   x0 + x1', ['x0','x1'])],
+                           Jacobian =  Polynomial.from_expression('3 - 4*x0     ', ['x0','x1'])
+                       )
 
-        Jacobian_0  = Polynomial.from_expression('x0'   , ['x0','x1'])
-        Jacobian_1  = Polynomial.from_expression(   'x1', ['x0','x1'])
-        Jacobian_01 = Polynomial.from_expression('x0*x1', ['x0','x1'])
+        split_sectors = list(  split(sector, self.seed+1, 0)  )
 
-        sector_0  = Sector([poly], Jacobian=Jacobian_0)
-        sector_1  = Sector([poly], Jacobian=Jacobian_1)
-        sector_01 = Sector([poly], Jacobian=Jacobian_01)
+        # split at 1/4
 
-        split(sector_1 , self.seed , 0) # should be OK, Jacobian is independent of x0 for this sector
+        target_split_Jacobian_0 = sp.sympify('(3 - 4 *      x0 *    1/4  ) *    1/4 ')
+        target_split_Jacobian_1 = sp.sympify('(3 - 4 * (1 - x0 * (1-1/4))) * (1-1/4)')
 
-        self.assertRaisesRegexp(AssertionError, 'Jacobian.*not.*depend.*indices', split, sector_0 , self.seed, 0)
-        self.assertRaisesRegexp(AssertionError, 'Jacobian.*not.*depend.*indices', split, sector_01, self.seed, 0)
-        self.assertRaisesRegexp(AssertionError, 'Jacobian.*not.*depend.*indices', split, sector_1 , self.seed, 0,1)
-        self.assertRaisesRegexp(AssertionError, 'Jacobian.*not.*depend.*indices', split, sector_01, self.seed, 0,1)
+        target_split_cast_0 = sp.sympify('1 -      x0 *    1/4   + x1')
+        target_split_cast_1 = sp.sympify('1 - (1 - x0 * (1-1/4)) + x1')
+
+        self.assertEqual(len(split_sectors), 2)
+
+        self.assertEqual( (  sp.sympify(split_sectors[0].cast[0]) - target_split_cast_0  ).simplify() , 0)
+        self.assertEqual( (  sp.sympify(split_sectors[0].Jacobian) - target_split_Jacobian_0 ).simplify() , 0)
+
+        self.assertEqual( (  sp.sympify(split_sectors[1].cast[0]) - target_split_cast_1  ).simplify() , 0)
+        self.assertEqual( (  sp.sympify(split_sectors[1].Jacobian) - target_split_Jacobian_1 ).simplify() , 0)
 
     #@attr('active')
     def test_splitting(self):
