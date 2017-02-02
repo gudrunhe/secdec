@@ -584,7 +584,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
-                 normaliz_workdir='normaliz_tmp', enforce_complex=False, split=False):
+                 normaliz_workdir='normaliz_tmp', enforce_complex=False, split=False, ibp_power_goal=-1):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -779,6 +779,24 @@ def make_package(name, integration_variables, regulators, requested_orders,
         are one. If an integer is passed, that integer is
         used as seed to generate the splitting point.
         Default: ``False``
+
+    :param ibp_power_goal:
+        integer, optional;
+        The `power_goal` that is forwarded to
+        :func:`.integrate_by_parts`.
+
+        This option controls how the subtraction terms are
+        generated. Setting it to ``-numpy.inf`` disables
+        :func:`.integrate_by_parts`, while ``0`` disables
+        :func:`.integrate_pole_part`.
+
+        .. seealso::
+            To generate the subtraction terms, this function
+            first calls :func:`.integrate_by_parts` for each
+            integration variable with the give `ibp_power_goal`.
+            Then :func:`.integrate_pole_part` is called.
+
+        Default: ``-1``
 
     '''
     print('running "make_package" for "' + name + '"')
@@ -1225,9 +1243,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
             subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
 
             # call the subtraction routines
-            # Integrate by parts until at most logarithmic poles (``power_goal=-1``) remain,
+            # Integrate by parts until the `ibp_power_goal` is reached,
             # then do the original subtraction (`integrate_pole_part`).
-            at_most_log_poles = integrate_by_parts(subtraction_initializer, -1, *integration_variable_indices)
+            at_most_log_poles = integrate_by_parts(subtraction_initializer, ibp_power_goal, *integration_variable_indices)
             subtracted = []
             for item in at_most_log_poles:
                 subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )

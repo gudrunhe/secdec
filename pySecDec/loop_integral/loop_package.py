@@ -23,7 +23,7 @@ def loop_package(name, loop_integral, requested_order,
                  normaliz_executable='normaliz',
                  normaliz_workdir='normaliz_tmp',
                  enforce_complex=False,
-                 split=False):
+                 split=False, ibp_power_goal=-1):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -129,6 +129,24 @@ def loop_package(name, loop_integral, requested_order,
         are one.
         Default: ``False``
 
+    :param ibp_power_goal:
+        integer, optional;
+        The `power_goal` that is forwarded to
+        :func:`.integrate_by_parts`.
+
+        This option controls how the subtraction terms are
+        generated. Setting it to ``-numpy.inf`` disables
+        :func:`.integrate_by_parts`, while ``0`` disables
+        :func:`.integrate_pole_part`.
+
+        .. seealso::
+            To generate the subtraction terms, this function
+            first calls :func:`.integrate_by_parts` for each
+            integration variable with the give `ibp_power_goal`.
+            Then :func:`.integrate_pole_part` is called.
+
+        Default: ``-1``
+
     '''
     print('running "loop_package" for "' + name + '"')
 
@@ -189,6 +207,7 @@ def loop_package(name, loop_integral, requested_order,
         normaliz_workdir = normaliz_workdir,
 
         enforce_complex = enforce_complex,
+        ibp_power_goal = ibp_power_goal,
         split = split
     )
 
