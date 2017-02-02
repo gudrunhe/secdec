@@ -771,12 +771,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
         Default: ``False``
 
     :param split:
-        bool, optional;
-        Whether or not to split the integration at :math:`1/2`
+        bool or integer, optional;
+        Whether or not to split the integration domain
         in order to map singularities from :math:`1` to
         :math:`0`. Set this option to ``True`` if you have
         singularties when one or more integration variables
-        are one.
+        are one. If an integer is passed, that integer is
+        used as seed to generate the splitting point.
         Default: ``False``
 
     '''
@@ -865,26 +866,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 print('number of primary sectors after investigating symmetries:', len(primary_sectors))
             else:
                 primary_sectors = original_decomposition_strategies['primary'](sector, indices)
+            for output_sector in primary_sectors:
+                yield output_sector
 
-            # combine split sectors before secondary decomposition
-            for subsector in original_decomposition_strategies['primary'](sector, indices):
-                cast = []
-                other = []
-                for subsubsector in decomposition.splitting.split_singular(subsector, indices):
-                    cast.extend(subsubsector.cast)
-                    other.extend(subsubsector.other)
-                    other.append(subsubsector.Jacobian)
-                yield decomposition.Sector(cast, other)
-
-        # separate split sectors after secondary decomposition
         def secondary_decomposition_with_splitting(sector, indices):
-            # The implemented symmetry finders take a long time but do not find anything if applied here.
-            # We therefore do not waste time calling them on the split sectors.
-            for subsector in original_decomposition_strategies['secondary'](sector, indices):
-                for i in range(len(subsector.cast) // len(initial_sector.cast)):
-                    cast = subsector.cast[i*len(initial_sector.cast):(i+1)*len(initial_sector.cast)]
-                    other = subsector.other[i*(len(initial_sector.other)+1):(i+1)*(len(initial_sector.other)+1)]
-                    yield decomposition.Sector(cast, other[:-1], Jacobian=other[-1] * subsector.Jacobian)
+            # split and decompose the `sector`
+            for split_sector in decomposition.splitting.split_singular(sector, split, indices):
+                for decomposed_sector in original_decomposition_strategies['secondary'](split_sector, indices):
+                    yield decomposed_sector
 
         # apply modifications to the decomposition strategy
         strategy = dict(primary=primary_decomposition_with_splitting, secondary=secondary_decomposition_with_splitting)
@@ -1150,7 +1139,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # convert all exponents and coefficients to pySecDec expressions
             parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials)
 
-            # factorize polynomials in ``sector.other``
+            # factorize
+            #  - the polynomials in ``sector.other``
             for i,to_factorize in enumerate(sector.other):
                 to_factorize = sector.other[i] = \
                     Product(
@@ -1161,8 +1151,15 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     )
                 decomposition.refactorize(to_factorize)
 
-            # subtraction needs type `ExponentiatedPolynomial` for all factors in its monomial part
-            Jacobian = ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
+            #  - the Jacobian
+            Jacobian = \
+                    Product(
+                        ExponentiatedPolynomial(
+                            np.zeros([1,len(Jacobian.polysymbols)], dtype=int), np.array([1]), exponent=polynomial_one, polysymbols=Jacobian.polysymbols, copy=False
+                        ),
+                        ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
+                    )
+            decomposition.refactorize(Jacobian)
 
             # Apply ``this_transformation`` and the contour deformaion (if applicable) to
             # the `remainder_expression` BEFORE taking derivatives.
@@ -1176,7 +1173,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments)
 
             # initialize the product of monomials for the subtraction
-            monomial_factors = list(chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
+            monomial_factors = list(chain([Jacobian.factors[0]], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
             monomials = Product(*monomial_factors, copy=False)
 
             # compute the pole structure
@@ -1213,7 +1210,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # define ``cal_I``, the part of the integrand that does not lead to poles
             # use the derivative tracking dummy functions for the polynomials --> faster
-            cal_I = Product(symbolic_remainder_expression, *chain(symbolic_polynomials_to_decompose, symbolic_other_polynomials), copy=False)
+            cal_I = Product(symbolic_remainder_expression, *chain([Jacobian.factors[1]], symbolic_polynomials_to_decompose, symbolic_other_polynomials), copy=False)
 
             # multiply Jacobian determinant to `cal_I`
             if contour_deformation_polynomial is not None:

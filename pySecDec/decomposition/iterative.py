@@ -144,7 +144,7 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
         :math:`t_{\alpha_r} \rightarrow 0`.
 
     :param Jacobian:
-        :class:`.Polynomial` with one term and no coefficients;
+        :class:`.Polynomial`;
         The Jacobian determinant is multiplied to this polynomial.
 
     :param polynomials:
@@ -160,7 +160,6 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
         remap_parameters([1,2], Jacobian, F, U)
 
     '''
-    assert len(Jacobian.coeffs) == 1, "`Jacobian` must be a monomial."
     assert polynomials, "No polynomial for modification passed"
 
     num_parameters = polynomials[0].expolist.shape[1]
