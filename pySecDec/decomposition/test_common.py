@@ -37,6 +37,7 @@ class TestSector(unittest.TestCase):
         self.assertRaisesRegexp(AssertionError, '(f|F)irst factor.*monomial', Sector, [Product(F,U)])
         self.assertRaisesRegexp(AssertionError, 'two factors', Sector, [Product(F,U,Jacobian)])
         self.assertRaisesRegexp(AssertionError, 'at least one', Sector, [])
+        self.assertRaisesRegexp(AssertionError, 'other.*type.*Polynomial', Sector, [F], other=[Product(Jacobian,U)])
         Sector([Product(Jacobian,F)])
 
         sector = Sector([F])

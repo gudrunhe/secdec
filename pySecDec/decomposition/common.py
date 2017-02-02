@@ -68,7 +68,10 @@ class Sector(object):
             assert self.number_of_variables == poly.expolist.shape[1], "The number of variables must be equal for all input polynomials"
 
         self.Jacobian = Jacobian.copy()
+
         self.other = [poly.copy() for poly in other]
+        for poly in self.other:
+            assert isinstance(poly, Polynomial), "All elements in `other` must be of type `Polynomial`"
 
         self.cast = []
         for item in cast:
