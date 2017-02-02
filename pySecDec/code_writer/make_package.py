@@ -1139,7 +1139,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # convert all exponents and coefficients to pySecDec expressions
             parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials)
 
-            # factorize polynomials in ``sector.other``
+            # factorize
+            #  - the polynomials in ``sector.other``
             for i,to_factorize in enumerate(sector.other):
                 to_factorize = sector.other[i] = \
                     Product(
@@ -1150,8 +1151,15 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     )
                 decomposition.refactorize(to_factorize)
 
-            # subtraction needs type `ExponentiatedPolynomial` for all factors in its monomial part
-            Jacobian = ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
+            #  - the Jacobian
+            Jacobian = \
+                    Product(
+                        ExponentiatedPolynomial(
+                            np.zeros([1,len(Jacobian.polysymbols)], dtype=int), np.array([1]), exponent=polynomial_one, polysymbols=Jacobian.polysymbols, copy=False
+                        ),
+                        ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
+                    )
+            decomposition.refactorize(Jacobian)
 
             # Apply ``this_transformation`` and the contour deformaion (if applicable) to
             # the `remainder_expression` BEFORE taking derivatives.
@@ -1165,7 +1173,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments)
 
             # initialize the product of monomials for the subtraction
-            monomial_factors = list(chain([Jacobian], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
+            monomial_factors = list(chain([Jacobian.factors[0]], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
             monomials = Product(*monomial_factors, copy=False)
 
             # compute the pole structure
@@ -1202,7 +1210,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # define ``cal_I``, the part of the integrand that does not lead to poles
             # use the derivative tracking dummy functions for the polynomials --> faster
-            cal_I = Product(symbolic_remainder_expression, *chain(symbolic_polynomials_to_decompose, symbolic_other_polynomials), copy=False)
+            cal_I = Product(symbolic_remainder_expression, *chain([Jacobian.factors[1]], symbolic_polynomials_to_decompose, symbolic_other_polynomials), copy=False)
 
             # multiply Jacobian determinant to `cal_I`
             if contour_deformation_polynomial is not None:
