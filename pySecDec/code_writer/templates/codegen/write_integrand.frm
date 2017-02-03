@@ -394,6 +394,7 @@ B `regulators';
             #call insertDeformedIntegrationVariables
             Argument SecDecInternalRealPart;
               #call insertOther
+              #call insertDecomposed
             EndArgument;
             Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
             multiply replace_(I,i_);
@@ -445,65 +446,193 @@ B `regulators';
 
 * }
 
-* Explicitly insert the other functions defined in python.
+* Explicitly insert the functions defined in python.
 * {
 
-  #Do depth = 0, `insertionDepth'
-    #call beginArgumentDepth(`depth')
+  #Do insertProcedure = {insertOther,insertDecomposed}
 
-*     Do not expand functions to higher powers. --> Wrap into function "SecDecInternalPow"
-*     example: "U(x,y,z)^2" --> "SecDecInternalPow(U(x,y,z),2)"
-      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) * SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) =
-          SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
-        repeat Id SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?)
-                * SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?)
-                = SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
-      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
-      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-      repeat Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
+    #Do depth = 0, `insertionDepth'
+      #call beginArgumentDepth(`depth')
 
-*     Wrap noninteger powers into the function pow.
-      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) ^ SecDecInternalsDUMMYExponent? =
-          SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYExponent);
+*       Do not expand functions to higher powers. --> Wrap into function "SecDecInternalPow"
+*       example: "U(x,y,z)^2" --> "SecDecInternalPow(U(x,y,z),2)"
+        repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) * SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) =
+            SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
+          repeat Id SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?)
+                  * SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?)
+                  = SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
+        repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
+        repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+        repeat Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
 
-*     Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
-*     example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
-      Denominators SecDecInternalDenominator;
-      factarg,(-1),SecDecInternalDenominator;
-      chainout SecDecInternalDenominator;
-      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+*       Wrap noninteger powers into the function pow.
+        repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) ^ SecDecInternalsDUMMYExponent? =
+            SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYExponent);
 
-    #call endArgumentDepth(`depth')
+*       Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
+*       example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
+        Denominators SecDecInternalDenominator;
+        factarg,(-1),SecDecInternalDenominator;
+        chainout SecDecInternalDenominator;
+        repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
 
-    .sort
+      #call endArgumentDepth(`depth')
 
-    #call beginArgumentDepth(`depth')
-      #call insertOther
-      #If `contourDeformation'
-        #call insertDeformedIntegrationVariables
+      .sort
+
+*     Replace calls to the known functions (and appearing derivatives) by symbols.
+*     {
+
+      #Do depth = 0, `insertionDepth'
+        #call beginArgumentDepth(`depth')
+
+*         Do not expand functions to higher powers. --> Wrap into function "SecDecInternalPow"
+*         example: "U(x,y,z)^2" --> "SecDecInternalPow(U(x,y,z),2)"
+          repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) * SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) =
+              SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), 2);
+          repeat Id SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1?)
+                  * SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo2?)
+                  = SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYexpo1 + SecDecInternalsDUMMYexpo2);
+          repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
+          repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+          repeat Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
+
+*         Wrap noninteger powers into the function pow.
+          repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMYArgs) ^ SecDecInternalsDUMMYExponent? =
+              SecDecInternalPow(SecDecInternalfDUMMY(?SecDecInternalsDUMMYArgs), SecDecInternalsDUMMYExponent);
+
+*         Cancel ratios of functions and wrap denominators into the function "SecDecInternalDenominator".
+*         example: "U(x,y,z)/U(x,y,z)^2" --> "SecDecInternalDenominator(U(x,y,z))"
+          Denominators SecDecInternalDenominator;
+          factarg,(-1),SecDecInternalDenominator;
+          chainout SecDecInternalDenominator;
+          repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+
+        #call endArgumentDepth(`depth')
+        .sort
+
+      #EndDo
+
+      #If `insertProcedure' == insertOther
+        #redefine functionsToReplace "`functions'"
+      #Else
+        #redefine functionsToReplace "`decomposedPolynomialDerivatives'"
       #EndIf
-    #call endArgumentDepth(`depth')
-    .sort
 
-*   some simplifications
-    #call beginArgumentDepth(`depth')
-      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
-      repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
-      repeat Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
-      Denominators SecDecInternalDenominator;
-      factarg,(-1),SecDecInternalDenominator;
-      chainout SecDecInternalDenominator;
-      repeat Id log(1) = 0;
-      repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
-      repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
-      repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
-      repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
-      repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
-      #If `contourDeformation'
-        repeat Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
-      #EndIf
-    #call endArgumentDepth(`depth')
-    .sort
+      #Do function = {`functionsToReplace'}
+        #IfDef `largestLabel`function''
+          #$labelCounter = `largestLabel`function'';
+        #Else
+          #$labelCounter = 0;
+        #EndIf
+
+        #Do depth = 0, `insertionDepth'
+
+*         Since we need intermediate ".sort" instructions, we cannot use the
+*         "repeat" environment.
+*         The following construction is suggested in the FORM documentation.
+
+          #Do i = 1,1
+*           set dollar variable
+            #call beginArgumentDepth(`depth')
+              if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
+            #call endArgumentDepth(`depth')
+            .sort
+
+*           The following "#if" evaluates to true only if there is still something to do.
+            #If `i' == 0
+
+              #$labelCounter = $labelCounter + 1;
+
+              #Do replaceDepth = 0, `insertionDepth'
+                #call beginArgumentDepth(`replaceDepth')
+                  Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
+                #call endArgumentDepth(`replaceDepth')
+              #EndDo
+
+*             check if the requested call is zero
+*             {
+              Format rational;
+              .sort
+              Local zeroCheck = `function'($args) * SecDecInternalsDUMMYZeroCheck;
+              .sort
+              hide; nhide zeroCheck;
+              .sort
+
+              #call insertDecomposed
+              multiply replace_(I,i_);
+              .sort
+
+              #redefine callIsZero "1"
+              if ( occurs(SecDecInternalsDUMMYZeroCheck) ) redefine callIsZero "0";
+              .sort
+
+              unhide;
+              drop zeroCheck;
+              .sort
+*             }
+
+              #If `callIsZero'
+
+                multiply replace_(SecDecInternal`function'Call`$labelCounter',0);
+                #$labelCounter = $labelCounter - 1;
+
+              #Else
+
+                Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize +
+                    SecDecInternalLabel`function'Call`$labelCounter'Arg * SecDecInternalfDUMMY`function'($args);
+
+*               no arguments after "insertDeformedIntegrationVariables"
+                #redefine numberOfArgs`function'Label`$labelCounter' "0"
+
+              #EndIf
+
+              .sort
+
+            #EndIf
+          #EndDo
+
+        repeat Id SecDecInternalfDUMMY`function'(?arguments) = `function'(?arguments);
+
+        .sort
+
+        #EndDo
+
+        #redefine largestLabel`function' "`$labelCounter'"
+
+      #EndDo
+
+*     }
+
+      #call beginArgumentDepth(`depth')
+        #call `insertProcedure'
+        #If `contourDeformation'
+          #call insertDeformedIntegrationVariables
+        #EndIf
+      #call endArgumentDepth(`depth')
+      .sort
+
+*     some simplifications
+      #call beginArgumentDepth(`depth')
+        repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 0) = 1;
+        repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, 1) = SecDecInternalsDUMMYbase;
+        repeat Id SecDecInternalPow(0, SecDecInternalsDUMMYexponent?) = 0;
+        Denominators SecDecInternalDenominator;
+        factarg,(-1),SecDecInternalDenominator;
+        chainout SecDecInternalDenominator;
+        repeat Id log(1) = 0;
+        repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
+        repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
+        repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
+        repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
+        repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
+        #If `contourDeformation'
+          repeat Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
+        #EndIf
+      #call endArgumentDepth(`depth')
+      .sort
+    #EndDo
+
   #EndDo
 
 * }
@@ -620,57 +749,58 @@ B `regulators';
   #call simplify
   .sort
 
-* Check if any call to the deformation of the integration variables "SecDecInternalDeformed..."
-* (and appearing derivatives) is zero or one and can therefore be removed.
+* Check if any call that was replaced is zero or one and can therefore be removed.
 * {
 
   #If `contourDeformation'
+  #redefine functionsToReplace "`decomposedPolynomialDerivatives',`deformedIntegrationVariableDerivativeFunctions',`functions'"
+  #Else
+  #redefine functionsToReplace "`decomposedPolynomialDerivatives',`functions'"
+  #Endif
 
-    #Do function = {`deformedIntegrationVariableDerivativeFunctions'}
-      #Do callIndex = 1, `largestLabel`function''
+  #Do function = {`functionsToReplace'}
+    #Do callIndex = 1, `largestLabel`function''
 
-        B SecDecInternalLabel`function'Call`callIndex'Arg;
+      B SecDecInternalLabel`function'Call`callIndex'Arg;
+      .sort
+
+      L zeroCheck = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg] * SecDecInternalsDUMMYZeroCheck - SecDecInternalsDUMMYOneCheck;
+      .sort
+      hide; nhide zeroCheck;
+      .sort
+
+      #redefine callIsZero "1"
+      #redefine callIsOne "1"
+      if ( occurs(SecDecInternalsDUMMYZeroCheck) ) redefine callIsZero "0";
+      .sort
+
+      #If `callIsZero'
+        #redefine callIsOne "0"
+      #Else
+        Id SecDecInternalsDUMMYZeroCheck = SecDecInternalsDUMMYOneCheck;
         .sort
-
-        L zeroCheck = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg] * SecDecInternalsDUMMYZeroCheck - SecDecInternalsDUMMYOneCheck;
+        if ( occurs(SecDecInternalsDUMMYOneCheck) ) redefine callIsOne "0";
         .sort
-        hide; nhide zeroCheck;
+      #EndIf
+
+      unhide;
+      drop zeroCheck;
+      .sort
+
+      #If `callIsZero'
+        multiply replace_(SecDecInternal`function'Call`callIndex',0);
         .sort
-
-        #redefine callIsZero "1"
-        #redefine callIsOne "1"
-        if ( occurs(SecDecInternalsDUMMYZeroCheck) ) redefine callIsZero "0";
+      #ElseIf `callIsOne'
+        #Do depth = 0, `insertionDepth'
+          #call beginArgumentDepth(`depth')
+            Id SecDecInternal`function'Call`callIndex' = 1;
+          #call endArgumentDepth(`depth')
+        #EndDo
         .sort
+      #EndIf
 
-        #If `callIsZero'
-          #redefine callIsOne "0"
-        #Else
-          Id SecDecInternalsDUMMYZeroCheck = SecDecInternalsDUMMYOneCheck;
-          .sort
-          if ( occurs(SecDecInternalsDUMMYOneCheck) ) redefine callIsOne "0";
-          .sort
-        #EndIf
-
-        unhide;
-        drop zeroCheck;
-        .sort
-
-        #If `callIsZero'
-          multiply replace_(SecDecInternal`function'Call`callIndex',0);
-          .sort
-        #ElseIf `callIsOne'
-          #Do depth = 0, `insertionDepth'
-            #call beginArgumentDepth(`depth')
-              Id SecDecInternal`function'Call`callIndex' = 1;
-            #call endArgumentDepth(`depth')
-          #EndDo
-          .sort
-        #EndIf
-
-      #EndDo
     #EndDo
-
-  #EndIf
+  #EndDo
 
 * }
 
@@ -836,7 +966,7 @@ B `regulators';
 * the c++ file yet.
 
   L unparsed = SecDecInternalsDUMMYUnparsedAppendix;
-  #redefine functionsToReplace "`functions',log,SecDecInternalPow,SecDecInternalDenominator"
+  #redefine functionsToReplace "`functions',`decomposedPolynomialDerivatives',log,SecDecInternalPow,SecDecInternalDenominator"
   #If `contourDeformation'
     #redefine functionsToReplace "SecDecInternalRealPart,`contourdefJacobianFunctions',`deformedIntegrationVariableDerivativeFunctions',`functionsToReplace'"
   #EndIf

@@ -26,6 +26,9 @@ Symbol I;
 #define functions "`calIDerivatives',%(functions)s"
 CFunctions `functions';
 
+#define decomposedPolynomialDerivatives "%(decomposed_polynomial_derivatives)s"
+CFunctions `decomposedPolynomialDerivatives';
+
 * Temporary functions and symbols for replacements in FORM
 AutoDeclare CFunctions SecDecInternalfDUMMY;
 AutoDeclare Symbols SecDecInternalsDUMMY;
@@ -35,7 +38,7 @@ AutoDeclare Symbols SecDecInternalsDUMMY;
 CFunctions log, SecDecInternalPow, SecDecInternalDenominator;
 
 * We rewrite function calls as symbols
-#Do function = {`functions',log,SecDecInternalPow,SecDecInternalDenominator}
+#Do function = {`functions',`decomposedPolynomialDerivatives',log,SecDecInternalPow,SecDecInternalDenominator}
   AutoDeclare Symbols SecDecInternal`function'Call;
 #EndDo
 
@@ -78,6 +81,10 @@ AutoDeclare Symbols SecDecInternalLabel;
 
 #procedure insertOther
   %(insert_other_procedure)s
+#endProcedure
+
+#procedure insertDecomposed
+  %(insert_decomposed_procedure)s
 #endProcedure
 
 * Define how deep functions to be inserted are nested.

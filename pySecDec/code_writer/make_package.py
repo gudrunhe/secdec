@@ -1282,17 +1282,20 @@ def make_package(name, integration_variables, regulators, requested_orders,
             cal_I_derivative_functions = []
             contourdef_Jacobian_derivative_functions = []
             deformed_integration_variable_derivative_functions = []
+            decomposed_polynomial_derivatives = []
             other_functions = []
 
             # compute the required derivatives
             cal_I_derivatives = {}
             other_derivatives = {}
+            decomposed_derivatives = {}
             contourdef_Jacobian_derivatives = {}
             deformed_integration_variable_derivatives = {}
 
             # python dictionaries are unordered but some insertions depend on others --> need an ordering
             ordered_cal_I_derivative_names = []
             ordered_other_derivative_names = []
+            ordered_decomposed_derivative_names = []
             ordered_contourdef_Jacobian_derivative_names = []
             ordered_deformed_integration_variable_derivative_names = []
 
@@ -1324,17 +1327,27 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     additional_deformation_factor # full_expression
                 )
 
-            #  - for the polynomials (`other_polynomials` first since they can reference `polynomials_to_decompose`)
-            for prod, exponentiated_function, basename in chain(
-                zip(sector.other, symbolic_other_polynomials, names_other_polynomials),
-                zip(sector.cast , symbolic_polynomials_to_decompose, names_polynomials_to_decompose)
-            ):
+            #  - for the `other_polynomials`
+            for prod, exponentiated_function, basename in zip(sector.other, symbolic_other_polynomials, names_other_polynomials):
                 _, expression = prod.factors
                 expression.exponent = 1 # exponent is already part of the `tracker`
                 update_derivatives(
                     basename=basename, # name as defined in `polynomial_names` or dummy name
                     derivative_tracker=exponentiated_function.base,
                     full_expression=expression
+                )
+
+            #  - for the `polynomials_to_decompose`
+            for prod, exponentiated_function, basename in zip(sector.cast , symbolic_polynomials_to_decompose, names_polynomials_to_decompose):
+                _, expression = prod.factors
+                expression.exponent = 1 # exponent is already part of the `tracker`
+                update_derivatives(
+                    basename=basename, # name as defined in `polynomial_names` or dummy name
+                    derivative_tracker=exponentiated_function.base,
+                    full_expression=expression,
+                    derivatives=decomposed_derivatives,
+                    ordered_derivative_names=ordered_decomposed_derivative_names,
+                    functions=decomposed_polynomial_derivatives
                 )
 
             if contour_deformation_polynomial is not None:
@@ -1365,7 +1378,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 update_derivatives(
                     str(contour_deformation_polynomial), # basename
                     symbolic_contour_deformation_polynomial, # derivative tracker
-                    full_expression
+                    full_expression, # full_expression
+                    decomposed_derivatives, # derivatives
+                    ordered_decomposed_derivative_names, # ordered_derivative_names
+                    decomposed_polynomial_derivatives # functions
                 )
 
             # determine which derivatives of the user input ``functions`` are needed and
@@ -1377,6 +1393,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 for derivative_symbol in derivative_symbols:
                     function_declarations.add( _make_CXX_function_declaration(derivative_symbol, number_of_arguments) )
             other_functions.extend(functions)
+
+            # remove repetitions in `decomposed_polynomial_derivatives`
+            decomposed_polynomial_derivatives = set(decomposed_polynomial_derivatives)
 
             # generate the function definitions for the insertion in FORM
             if contour_deformation_polynomial is not None:
@@ -1396,9 +1415,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 _make_FORM_function_definition(name, cal_I_derivatives[name], symbols_other_polynomials, limit=10**6)
                 for name in ordered_cal_I_derivative_names
             )
-            FORM_function_definitions = ''.join(
+            FORM_other_definitions = ''.join(
                 _make_FORM_function_definition(name, other_derivatives[name], symbols_remainder_expression, limit=10**6)
                 for name in ordered_other_derivative_names
+            )
+            FORM_decomposed_definitions = ''.join(
+                _make_FORM_function_definition(name, decomposed_derivatives[name], symbols_remainder_expression, limit=10**6)
+                for name in ordered_decomposed_derivative_names
             )
 
             # generate list over all occuring orders in the regulators
@@ -1411,8 +1434,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # parse template file "sector.h"
             template_replacements['functions'] = _make_FORM_list(other_functions)
             template_replacements['cal_I_derivatives'] = _make_FORM_list(cal_I_derivative_functions)
+            template_replacements['decomposed_polynomial_derivatives'] = _make_FORM_list(decomposed_polynomial_derivatives)
             template_replacements['insert_cal_I_procedure'] = FORM_cal_I_definitions
-            template_replacements['insert_other_procedure'] = FORM_function_definitions
+            template_replacements['insert_other_procedure'] = FORM_other_definitions
+            template_replacements['insert_decomposed_procedure'] = FORM_decomposed_definitions
             template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition(internal_prefix+'sDUMMYIntegrand', integrand, args=None, limit=10**6)
             template_replacements['sector_container_initializer'] = _make_CXX_Series_initialization(regulators, -highest_poles_current_sector,
                                                                                                     required_orders, sector_index,

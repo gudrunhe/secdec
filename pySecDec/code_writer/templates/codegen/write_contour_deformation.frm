@@ -107,10 +107,10 @@
   #call insertDeformedIntegrationVariables
   argument SecDecInternalRealPart;
     #call insertDeformedIntegrationVariables
-    #call insertOther
+    #call insertDecomposed
   endArgument;
   #call insertDeformedIntegrationVariables
-  #call insertOther
+  #call insertDecomposed
   multiply replace_(I,i_);
   .sort
 
@@ -307,7 +307,7 @@
   .sort
 
 * Explicitly insert the derivatives of `SecDecInternalContourDeformationPolynomial'
-  #call insertOther
+  #call insertDecomposed
 
 * translate sympy's imaginary unit to FORM's imaginary unit
   multiply replace_(I,i_);
