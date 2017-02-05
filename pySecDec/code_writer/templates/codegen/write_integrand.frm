@@ -974,6 +974,7 @@ B `regulators';
   #Do function = {`functionsToReplace'}
     #Do callIndex = 1, `largestLabel`function''
       Id SecDecInternalsDUMMYUnparsedAppendix = SecDecInternalsDUMMYUnparsedAppendix + SecDecInternal`function'Call`callIndex'Unparsed;
+      Id SecDecInternal`function'Call`callIndex' = SecDecInternal`function'Call`callIndex' * SecDecInternalsDUMMYhaveUnparsedDependencies;
     #EndDo
   #EndDo
 
@@ -1008,7 +1009,6 @@ B `regulators';
 
 *         We can write the call under consideration to the c++ file only
 *         if all dependent calls are already written.
-          #redefine dependenciesDone "1"
           hide; nhide unparsed;
           #If `numberOfArgs`function'Label`callIndex'' == 0
             nhide expr;
@@ -1018,19 +1018,11 @@ B `regulators';
             #EndDo
           #EndIf
           .sort
-          #Do innerFunction = {`functionsToReplace'}
-            #Do innerCallIndex = 1, `largestLabel`innerFunction''
-              #redefine dependsOnInnerFunctionCall "0"
-              if ( occurs(SecDecInternal`innerFunction'Call`innerCallIndex') ) redefine dependsOnInnerFunctionCall "1";
-              .sort
-              #If `dependsOnInnerFunctionCall'
-                if ( occurs(SecDecInternal`innerFunction'Call`innerCallIndex'Unparsed) );
-                  redefine dependenciesDone "0";
-                  redefine i "0";
-                endif;
-              #EndIf
-            #EndDo
-          #EndDo
+          #redefine dependenciesDone "1"
+          if ( occurs(SecDecInternalsDUMMYhaveUnparsedDependencies) );
+            redefine dependenciesDone "0";
+            redefine i "0";
+          endif;
           .sort
           unhide;
           .sort
@@ -1157,6 +1149,7 @@ B `regulators';
         #EndIf
       #EndIf
 
+      Id SecDecInternal`function'Call`callIndex' = SecDecInternal`function'Call`callIndex' / SecDecInternalsDUMMYhaveUnparsedDependencies;
       multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
       .sort
 
