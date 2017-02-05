@@ -13,6 +13,7 @@ multiple decompition modules.
 
 .. autoclass:: pySecDec.decomposition.Sector
 .. autofunction:: pySecDec.decomposition.squash_symmetry_redundant_sectors_sort
+.. autofunction:: pySecDec.decomposition.squash_symmetry_redundant_sectors_dreadnaut
 
 Iterative
 ~~~~~~~~~

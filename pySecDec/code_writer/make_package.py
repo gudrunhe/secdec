@@ -1107,6 +1107,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             print('total number of sectors after investigating symmetries (iterative)', len(secondary_sectors))
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(secondary_sectors, Pak_sort)
             print('total number of sectors after investigating symmetries (iterative+Pak)', len(secondary_sectors))
+            secondary_sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(secondary_sectors)
+            print('total number of sectors after investigating symmetries (iterative+Pak+dreadnaut)', len(secondary_sectors))
         else:
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 

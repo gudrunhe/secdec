@@ -9,6 +9,7 @@ from ..matrix_sort import iterative_sort, Pak_sort
 from ..misc import argsort_ND_array
 import numpy as np
 import sympy as sp
+import subprocess, shutil, os
 
 class Sector(object):
     '''
@@ -208,10 +209,345 @@ def _collision_safe_hash(iterable):
 
     return np.array(hashes)
 
+def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
+                        dreadnaut_file, dreadnaut_hash_file, dreadnaut_canonical_file, workdir):
+    '''
+    Convert :class:`.Polynomial` `expolist` and `coeffs` to a
+    `dreadnaut` graph and write it to a file.
+
+    :param expolist:
+        iterable of iterables;
+        The variable's powers for each term.
+
+        ..note::
+            Each element in the `expolist` will be cast
+            to an `int`.
+
+    :param coeffs:
+        1d array-like with numerical or sympy-symbolic
+        (see http://www.sympy.org/) content, e.g. [x,1,2]
+        where x is a sympy symbol;
+        The coefficients of the polynomial.
+
+        ..note::
+            Each element in the `coeffs` will be cast
+            to a `str`.
+
+    :param unique_exponents:
+        A 1d array-like with int-like elements;
+        An ordered list of all different exponents that
+        appear in the input `expolist` or in any `expolist`
+        that will be compared to the input `expolist`.
+
+    :param unique_coeffs:
+        A 1d array-like with str-like elements;
+        An ordered list of all different coefficients that
+        appear in the input `coeffs` or in any `coeffs`
+        that will be compared to the input `coeffs`.
+
+
+    :param dreadnaut_file:
+        string;
+        the filename of the `dreadnaut` input card to be written.
+
+    :param dreadnaut_hash_file:
+        string;
+        the filename that `dreadnaut` should write the canonical
+        graph hash to.
+
+    :param dreadnaut_canonical_file:
+        string;
+        the filename that `dreadnaut` should write the canonical
+        graph to.
+
+    :param workdir:
+        string;
+        The directory for the communication with `dreadnaut`.
+        A directory with the specified name must exist.
+
+        .. note::
+           The communication with `dreadnaut` is done via
+           files.
+    '''
+    assert len(expolist.shape) == 2, "_array_to_dreadnaut passed invalid expolist (not 2 x 2)"
+    assert expolist.shape[0] > 0, "_array_to_dreadnaut passed invalid expolist (no terms)"
+    assert expolist.shape[1] > 0,  "_array_to_dreadnaut passed invalid expolist (no variables)"
+    assert len(unique_exponents) > 0, "_array_to_dreadnaut passed no unique exponents"
+    assert len(unique_coeffs) > 0, "_array_to_dreadnaut passed no unique coefficients"
+
+    # Note: we can also accept types similar to int such as np.int64
+    #    for exponent in unique_exponents:
+    #        assert type(exponent) is int, "_array_to_dreadnaut passed non-integer exponents (" + str(type(exponent)) + ")"
+    # Note: we can also accept types similar to str such as np.string_
+    #    for coeff in unique_coeffs:
+    #        assert type(coeff) is str, "_array_to_dreadnaut passed non-string coeffs (" + str(type(coeff)) + ")"
+
+    rows = expolist.shape[0]
+    cols = expolist.shape[1]
+    elements = rows * cols
+    number_unique_exponents = len(unique_exponents)
+    number_unique_coeffs = len(unique_coeffs)
+
+    # Number of vertices in graph
+    n = cols + rows + elements + number_unique_exponents + number_unique_coeffs
+
+    # Number of vertices generated so far
+    offset = 0
+
+    with open(os.path.join(workdir,dreadnaut_file), 'w') as f:
+
+        f.write("n=" + str(n) + "\n")
+        f.write("g" + "\n")  # g = begin entering graph
+
+        # Columns should be linked to the elements in steps of cols
+        f.write("! columns\n")
+        for column in range(0, cols):
+            f.write(str(column) + ": " +
+                    ",".join(map(str, range(column + cols + rows, column + cols + rows + elements, cols))) + ";" + "\n")
+        offset += cols
+
+        # Rows should be linked to the elements in steps of 1
+        f.write("! rows\n")
+        for row in range(0, rows):
+            f.write(str(cols + row) + ": " +
+                    ",".join(map(str, range(row * cols + cols + rows, row * cols + rows + cols + cols))) + ";" + "\n")
+        offset += rows
+
+        # Create a dictionary with keys given by the unique exponents and entries given by their vertex number
+        unique_exponent_count = 0
+        exponent_dictionary = dict()
+        for exponent in unique_exponents:
+            exponent_dictionary[int(exponent)] = offset + elements + unique_exponent_count
+            unique_exponent_count += 1
+
+        f.write("! elements\n")
+        # Iterate over elements of array row by row
+        for x in np.nditer(expolist, order='C'):                                             # sjones: vectorize rather than iterate?
+            f.write(str(offset) + ": " + str(exponent_dictionary.get(int(x))) + ";" + "\n")
+            offset += 1
+
+        f.write("! exponents\n")
+        for exponents in range(0, number_unique_exponents):
+            f.write(str(offset) + ": ;" + "\n")
+            offset += 1
+
+        f.write("! coeffs\n")
+        for coeff in unique_coeffs:
+            f.write(str(offset) + ": ")
+            terms = []
+            for row, term_coeff in enumerate(coeffs):
+                if str(term_coeff) == coeff:
+                    terms.append(cols + row)
+            f.write(",".join(map(str, terms)))
+            f.write(" ;" + "\n")
+            offset += 1
+
+        # Colour vertices: columns | rows | elements | exponent1 | exponent2 | ... | coeff1 | coeff2 | ...
+        f.write("f=[" + \
+                str(0) + ":" + str(cols - 1) + "|" + \
+                str(cols) + ":" + str(cols + rows - 1) + "|" + \
+                str(cols + rows) + ":" + str(cols + rows + elements - 1) + "|" + \
+                "|".join(map(str, range(cols + rows + elements,
+                                        cols + rows + elements + number_unique_exponents - 1))) + "|" + \
+                "|".join(map(str, range(cols + rows + elements + number_unique_exponents,
+                                        cols + rows + elements + number_unique_exponents + number_unique_coeffs - 1))) + \
+                "]" + "\n")
+
+        # Issue dreadnaut commands
+        f.write("c" + "\n")  # c = enable canonical label
+        f.write("x" + "\n")  # x = execute
+        f.write("B" + "\n")  # B = flush output after every command
+        f.write(">" + dreadnaut_hash_file + "\n") # set output to hash file
+        f.write("z" + "\n")  # z = print hash (equivalent hashes => graphs possibly the same, inequivalent hashes => graphs not the same)
+        f.write(">" + dreadnaut_canonical_file + "\n") # set output to canonical graph file
+        f.write("b"+ "\n") # b = print canonical graph (equivalent canonical graphs => equivalent input graphs)
+        f.write("->" + "\n") # set output standard out
+        f.write("q" + "\n")  # q = quit dreadnaut
+
+def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', workdir='dreadnaut_tmp', keep_workdir=False):
+    '''
+    Reduce a list of sectors by squashing duplicates
+    with equal integral.
+
+    Each :class:`.Sector` is converted to a :class:`.Polynomial`
+    which is represented as a graph following
+    the example of [BKAP]_
+    (v2.6 Figure 7, Isotopy of matrices).
+
+    We first multiply each polynomial in the sector by a unique tag
+    then sum the polynomials of the sector, this converts a
+    sector to a polynomial.
+    Next, we convert the `expolist` of the resulting
+    polynomial to a graph where each
+    unique exponent in the `expolist` is considered to be a
+    different symbol.
+    Each unique coefficient in the
+    polynomial`s `coeffs` is assigned a vertex
+    and connected to the row vertex of any term it
+    multiplies. The external program `dreadnaut` is then used
+    to bring the graph into a canonical form and provide a hash.
+    Sectors with equivalent hashes may be identical,
+    their canonical graphs are compared and if they are identical
+    the sectors are combined.
+
+    .. note::
+        This function calls the command line executable of
+        `dreadnaut` [BKAP]_.
+        It has been tested with `dreadnaut` version nauty26r7.
+
+    See also:
+    :func:`squash_symmetry_redundant_sectors_sort`
+
+    :param sectors:
+        iterable of :class:`.Sector`; the sectors to be
+        reduced.
+
+    :param dreadnaut:
+        string;
+        The shell command to run `dreadnaut`.
+
+    :param workdir:
+        string;
+        The directory for the communication with `dreadnaut`.
+        A directory with the specified name will be created
+        in the current working directory. If the specified
+        directory name already exists, an :class:`OSError`
+        is raised.
+
+        .. note::
+            The communication with `dreadnaut` is done via
+            files.
+
+    :param keep_workdir:
+        bool;
+        Whether or not to delete the `workdir` after execution.
+
+    '''
+    if not isinstance(sectors, list):
+        sectors = list(sectors)
+
+    os.mkdir(workdir)
+    try:
+        # create list of all exponents that appear in any polynomial in any sector
+        # create list of all coefficients that appear in any polynomial in any sector
+        unique_exponents = []
+        unique_coeffs = []
+        for sector in sectors:
+            this_sector_expolist, this_sector_coeffs = _sector2array(sector)
+
+            # Note:
+            # - we can not use _collision_safe_hash as the hashes may collide between sectors
+            # - we must use str as np.unique does not function correctly when array elements can not be sorted (e.g. sympy symbols)
+            this_sector_coeffs = map(str, this_sector_coeffs)
+
+            unique_exponents += np.unique(this_sector_expolist).tolist()
+            unique_coeffs += np.unique(this_sector_coeffs).tolist()
+
+        unique_exponents = np.unique(unique_exponents)
+        unique_coeffs = np.unique(unique_coeffs)
+
+        dreadnaut_hash_file_suffix = "_hash"
+        dreadnaut_canonical_file_suffix = "_canonical"
+
+        sector_number = 0
+        sector_hash_array = []
+        for sector in sectors:
+            this_sector_expolist, this_sector_coeffs = _sector2array(sector)
+
+            sector_name = str(sector_number)
+            dreadnaut_file = sector_name
+            dreadnaut_hash_file = sector_name + dreadnaut_hash_file_suffix
+            dreadnaut_canonical_file = sector_name + dreadnaut_canonical_file_suffix
+            command_line_command = dreadnaut + "<" + dreadnaut_file
+            _array_to_dreadnaut(this_sector_expolist, this_sector_coeffs, unique_exponents, unique_coeffs,\
+                                dreadnaut_file, dreadnaut_hash_file, dreadnaut_canonical_file, workdir)
+
+            # redirect dreadnaut stdout
+            with open(os.path.join(workdir, 'stdout'), 'w') as stdout:
+                # redirect dreadnaut stderr
+                with open(os.path.join(workdir, 'stderr'), 'w') as stderr:
+                    # run dreadnaut
+                    #    subprocess.check_call --> run dreadnaut, block until it finishes and raise error on nonzero exit status
+                    try:
+                    # sjones: Ugly to use the shell but we need to redirect dreadnaut_file into dreadnaut
+                        subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir,
+                                          shell=True)
+                    except OSError as error:
+                        if dreadnaut not in str(error):
+                            error.filename = dreadnaut
+                        raise
+
+            # collect dreadnaut canonical hash for sector
+            with open(os.path.join(workdir, dreadnaut_hash_file), 'r') as f:
+                sector_hash = f.readline()
+            assert len(sector_hash) > 0, "dreadnaut hash file (" + dreadnaut_hash_file + ") empty"
+
+            sector_hash_array.append(sector_hash)
+            sector_number += 1
+
+        sector_sort_index = np.argsort(sector_hash_array)
+
+        # Note:
+        # - if sector hashes are not equal the sectors are different
+        # - if sector hashes are equal then the sectors could be equivalent but this is not guaranteed,
+        #   we must check that the canonical graphs are identical
+
+        # iterate through the list of sectors, if the hashes are the same check that the canonical graph is the same, if so, squash
+        # since we know the sorted indices of the sector's hashes we only need to consider the sectors with consecutive indices
+        previous_index = sector_sort_index[0]
+        previous_sector_hash = sector_hash_array[previous_index]
+        previous_sector = sectors[previous_index].copy()
+        output = [previous_sector]
+        for sector_index in sector_sort_index[1:]:
+            if sector_hash_array[sector_index] == previous_sector_hash:
+                # load the canonical graphs are really equal
+                with open(os.path.join(workdir, str(previous_index)+dreadnaut_canonical_file_suffix)) as f:
+                    previous_canonical_graph = f.readlines()                                                # sjones: cache this to prevent re-reading the same canonical graph?
+                with open(os.path.join(workdir, str(sector_index)+dreadnaut_canonical_file_suffix)) as f:
+                    canonical_graph = f.readlines()
+
+                # The first few lines of the canonical graph file give the permutation of the vertices
+                # required to reach canonical form, this can differ for isomorphic graphs so we ignore it
+                # search for the first vertex which has a line beginning "  0 : "
+                first_line_previous_canonical_graph = 0
+                for line in previous_canonical_graph:
+                    if line[:6] == "  0 : ":
+                        break
+                    first_line_previous_canonical_graph += 1
+                first_line_canonical_graph = 0
+                for line in canonical_graph:
+                    if line[:6] == "  0 : ":
+                        break
+                    first_line_canonical_graph += 1
+
+                if canonical_graph[first_line_canonical_graph:] == \
+                        previous_canonical_graph[first_line_previous_canonical_graph:]:
+                    # squash this sector into the previous one
+                    previous_sector.Jacobian.coeffs[0] += sectors[sector_index].Jacobian.coeffs[0]
+                else:
+                    # hash collision, this sector is not equal to the previous one --> update output
+                    previous_index = sector_index
+                    previous_sector_hash = sector_hash_array[sector_index]
+                    previous_sector = sectors[sector_index].copy()
+                    output.append(previous_sector)
+            else:
+                # this sector is not equal to the previous one --> update output
+                previous_index = sector_index
+                previous_sector_hash = sector_hash_array[sector_index]
+                previous_sector = sectors[sector_index].copy()
+                output.append(previous_sector)
+
+    finally:
+        if not keep_workdir:
+            shutil.rmtree(workdir)
+
+    return output
+
 def squash_symmetry_redundant_sectors_sort(sectors, sort_function):
     '''
     Reduce a list of sectors by squashing duplicates
     with equal integral.
+
     If two sectors only differ by a permutation of the
     polysymbols (to be interpreted as integration
     variables over some inteval), then the two sectors
@@ -219,6 +555,22 @@ def squash_symmetry_redundant_sectors_sort(sectors, sort_function):
     of them and count the other twice. The multiple
     counting of a sector is accounted for by increasing
     the coefficient of the Jacobian by one.
+
+    Equivalence up to permutation is established by
+    applying the `sort_function` to each sector,
+    this brings them into a canonical form.
+    Sectors with identical canonical forms differ only
+    by a permutation.
+
+    Note: whether all symmetries are found depends on
+    the choice of `sort_function`. Neither
+    :func:`pySecDec.matrix_sort.iterative_sort`
+    nor
+    :func:`pySecDec.matrix_sort.Pak_sort` find all
+    symmetries.
+
+    See also:
+    :func:`squash_symmetry_redundant_sectors_dreadnaut`
 
     Example:
 
