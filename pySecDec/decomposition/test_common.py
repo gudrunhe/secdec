@@ -161,7 +161,7 @@ class TestSymmetryFinding(unittest.TestCase):
         sectors = [self.sector_p0.copy(), self.sector_swapped_p0.copy()]
 
         for sort_function in (iterative_sort, Pak_sort):
-            reduced_sectors = squash_symmetry_redundant_sectors(sectors, sort_function)
+            reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, sort_function)
 
             self.assertEqual(len(reduced_sectors), 1)
             self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('a+swapped_Jacobian_coeff'))
@@ -186,7 +186,7 @@ class TestSymmetryFinding(unittest.TestCase):
             sectors_with_redundancy = (sector0, sector1, sector2)
 
             for sort_function in (iterative_sort, Pak_sort):
-                reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy, sort_function)
+                reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors_with_redundancy, sort_function)
 
                 # should have found the symmetry and pruned `sector0` or `sector2`
                 self.assertEqual(len(reduced_sectors), 2)
@@ -215,7 +215,7 @@ class TestSymmetryFinding(unittest.TestCase):
             sectors_with_redundancy = (sector0, sector1)
 
             for sort_function in (iterative_sort, Pak_sort):
-                reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy, sort_function)
+                reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors_with_redundancy, sort_function)
 
                 # should have found the symmetry
                 self.assertEqual(len(reduced_sectors), 1)
@@ -248,7 +248,7 @@ class TestSymmetryFinding(unittest.TestCase):
             sectors_with_redundancy = (sector0, sector1, sector2)
 
             for sort_function in (iterative_sort, Pak_sort):
-                reduced_sectors = squash_symmetry_redundant_sectors(sectors_with_redundancy, sort_function)
+                reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors_with_redundancy, sort_function)
 
                 # should have found the symmetry and pruned `sector0` or `sector2`
                 self.assertEqual(len(reduced_sectors), 2)

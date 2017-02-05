@@ -208,7 +208,7 @@ def _collision_safe_hash(iterable):
 
     return np.array(hashes)
 
-def squash_symmetry_redundant_sectors(sectors, sort_function):
+def squash_symmetry_redundant_sectors_sort(sectors, sort_function):
     '''
     Reduce a list of sectors by squashing duplicates
     with equal integral.
@@ -224,7 +224,7 @@ def squash_symmetry_redundant_sectors(sectors, sort_function):
 
     >>> from pySecDec.algebra import Polynomial
     >>> from pySecDec.decomposition import Sector
-    >>> from pySecDec.decomposition import squash_symmetry_redundant_sectors
+    >>> from pySecDec.decomposition import squash_symmetry_redundant_sectors_sort
     >>> from pySecDec.matrix_sort import Pak_sort
     >>>
     >>> poly = Polynomial([(0,1),(1,0)], ['a','b'])
@@ -236,7 +236,7 @@ def squash_symmetry_redundant_sectors(sectors, sort_function):
     ...               Sector([swap],Jacobian=Jacobian_swap)
     ...           )
     >>>
-    >>> reduced_sectors = squash_symmetry_redundant_sectors(sectors,
+    >>> reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors,
     ...                   Pak_sort)
     >>> len(reduced_sectors) # symmetry x0 <--> x1
     1

@@ -869,8 +869,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             if use_symmetries:
                 primary_sectors = list(  original_decomposition_strategies['primary'](sector, indices)  )
                 print('number of primary sectors before investigating symmetries:', len(primary_sectors))
-                primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, iterative_sort)
-                primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, Pak_sort)
+                primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, iterative_sort)
+                primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, Pak_sort)
                 print('number of primary sectors after investigating symmetries:', len(primary_sectors))
             else:
                 primary_sectors = original_decomposition_strategies['primary'](sector, indices)
@@ -959,8 +959,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
         primary_sectors = list( strategy['primary'](initial_sector, range(len(integration_variables))) )
         print('number of primary sectors before investigating symmetries:', len(primary_sectors))
-        primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, iterative_sort)
-        primary_sectors = decomposition.squash_symmetry_redundant_sectors(primary_sectors, Pak_sort)
+        primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, iterative_sort)
+        primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, Pak_sort)
         print('number of primary sectors after investigating symmetries:', len(primary_sectors))
 
         # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
@@ -1103,9 +1103,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 secondary_sectors.extend( strategy['secondary'](primary_sector, range(len(integration_variables))) )
             print('total number of sectors before investigating symmetries:', len(secondary_sectors))
             # find symmetries using both implemented strategies
-            secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, iterative_sort)
-            secondary_sectors = decomposition.squash_symmetry_redundant_sectors(secondary_sectors, Pak_sort)
-            print('total number of sectors after investigating symmetries', len(secondary_sectors))
+            secondary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(secondary_sectors, iterative_sort)
+            print('total number of sectors after investigating symmetries (iterative)', len(secondary_sectors))
+            secondary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(secondary_sectors, Pak_sort)
+            print('total number of sectors after investigating symmetries (iterative+Pak)', len(secondary_sectors))
         else:
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
