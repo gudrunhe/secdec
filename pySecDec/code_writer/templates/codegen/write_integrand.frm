@@ -749,7 +749,8 @@ B `regulators';
   #call simplify
   .sort
 
-* Check if any call that was replaced is zero or one and can therefore be removed.
+* Explicitly insert calls with only one term since these do not lead
+* to an undesired expansion of expressions.
 * {
 
   #If `contourDeformation'
@@ -764,38 +765,12 @@ B `regulators';
       B SecDecInternalLabel`function'Call`callIndex'Arg;
       .sort
 
-      L zeroCheck = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg] * SecDecInternalsDUMMYZeroCheck - SecDecInternalsDUMMYOneCheck;
+      L thisCall = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg];
       .sort
-      hide; nhide zeroCheck;
-      .sort
+      drop thisCall;
 
-      #redefine callIsZero "1"
-      #redefine callIsOne "1"
-      if ( occurs(SecDecInternalsDUMMYZeroCheck) ) redefine callIsZero "0";
-      .sort
-
-      #If `callIsZero'
-        #redefine callIsOne "0"
-      #Else
-        Id SecDecInternalsDUMMYZeroCheck = SecDecInternalsDUMMYOneCheck;
-        .sort
-        if ( occurs(SecDecInternalsDUMMYOneCheck) ) redefine callIsOne "0";
-        .sort
-      #EndIf
-
-      unhide;
-      drop zeroCheck;
-      .sort
-
-      #If `callIsZero'
-        multiply replace_(SecDecInternal`function'Call`callIndex',0);
-        .sort
-      #ElseIf `callIsOne'
-        #Do depth = 0, `insertionDepth'
-          #call beginArgumentDepth(`depth')
-            Id SecDecInternal`function'Call`callIndex' = 1;
-          #call endArgumentDepth(`depth')
-        #EndDo
+      #If ( termsin(thisCall) == 0 ) || ( termsin(thisCall) == 1 )
+        multiply replace_(SecDecInternal`function'Call`callIndex',thisCall);
         .sort
       #EndIf
 
