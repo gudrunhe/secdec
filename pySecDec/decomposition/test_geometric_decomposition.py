@@ -108,6 +108,7 @@ class TestGeomethod(unittest.TestCase):
 
 
         cone = [[ 1,  0,  0], [ 0,  1,  0], [ 0, -1, -1], [-1,  0, -1]]
+        cone_normal = [[ -1, 1, 1], [ 1, 0, 0], [ 0, 1, 0], [ 0, 0, 1]]
 
         # useful error message?
         self.assertRaisesRegexp(
@@ -117,6 +118,7 @@ class TestGeomethod(unittest.TestCase):
                                )
 
         triangulated_cones = triangulate(cone, workdir='tmpdir_test_triangulate_python' + python_major_version)
+        triangulated_cones_normal = triangulate(cone_normal, workdir='tmpdir_test_triangulate_python' + python_major_version, switch_representation=True)
 
         # there are two possibilities for the triangualtion
         target_triangulated_cones1 = np.array([
@@ -126,6 +128,14 @@ class TestGeomethod(unittest.TestCase):
         target_triangulated_cones2 = np.array([
                                                 [[ 0, -1, -1], [ 0,  1,  0], [ 1,  0,  0]],
                                                 [[ 0, -1, -1], [ 0,  1,  0], [-1,  0, -1]]
+                                            ])
+        target_triangulated_cones1_normal = np.array([
+                                                [[ 1,  1,  0], [ 1,  0,  1], [ 0,  0, 1]],
+                                                [[ 1,  1,  0], [ 0, 1, 0], [0,  0, 1]]
+                                            ])
+        target_triangulated_cones2_normal = np.array([
+                                                [[ 1, 0, 1], [ 0,  1,  0], [ 0,  0,  1]],
+                                                [[ 1, 0, 1], [ 0,  1,  0], [ 1,  1, 0]]
                                             ])
 
         # should get one of these triangulations
@@ -144,6 +154,22 @@ class TestGeomethod(unittest.TestCase):
                 except:
                     np.testing.assert_array_equal(sort_2D_array(triangulated_cones[0]), sort_2D_array(target_triangulated_cones2[1]))
                     np.testing.assert_array_equal(sort_2D_array(triangulated_cones[1]), sort_2D_array(target_triangulated_cones2[0]))
+
+        try:
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[0]), sort_2D_array(target_triangulated_cones1_normal[0]))
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[1]), sort_2D_array(target_triangulated_cones1_normal[1]))
+        except AssertionError:
+            try:
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[0]), sort_2D_array(target_triangulated_cones1_normal[1]))
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[1]), sort_2D_array(target_triangulated_cones1_normal[0]))
+            except AssertionError:
+                try:
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[0]), sort_2D_array(target_triangulated_cones2_normal[0]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[1]), sort_2D_array(target_triangulated_cones2_normal[1]))
+                except:
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[0]), sort_2D_array(target_triangulated_cones2_normal[1]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[1]), sort_2D_array(target_triangulated_cones2_normal[0]))
+
 
     #@attr('active')
     def test_transform_variables(self):

@@ -281,7 +281,7 @@ class Polytope(object):
             shape = int(f.readline()), int(f.readline())
             return np.fromfile(f, sep=' ', dtype=int).reshape(shape)
 
-def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False):
+def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False, switch_representation=False):
     '''
     Split a cone into simplicial cones; i.e.
     cones defined by exactly :math:`D` rays
@@ -317,13 +317,20 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
         bool;
         Whether or not to delete the `workdir` after execution.
 
+    :param switch_representation:
+        bool;
+        Whether or not to switch between facet and vertex/ray
+        representation.
+
     '''
     cone = np.asarray(cone)
     # basic consistency checks
     assert len(cone.shape) == 2, '`cone` must be two dimensional'
     assert cone.shape[0] >= cone.shape[1], 'Must at least have as many rays as the dimensionality'
-    if cone.shape[0] == cone.shape[1]:
+
+    if cone.shape[0] == cone.shape[1] and not switch_representation:
         raise ValueError("`cone` is simplicial already")
+
     old_np_printoptions = np.get_printoptions()
     np.set_printoptions(threshold=np.inf)
 
@@ -332,7 +339,10 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
         # generate the normaliz run card
         run_card_as_str  = str(cone.shape[0]) + ' ' + str(cone.shape[1]) + '\n'
         run_card_as_str += str(cone).replace('[','').replace(']','').replace('\n ','\n')
-        run_card_as_str += '\nintegral_closure\n'
+        if switch_representation == False:
+            run_card_as_str += '\nintegral_closure\n'
+        else:
+            run_card_as_str += '\ninequalities\n'
 
         run_card_file_prefix = 'normaliz'
         run_card_file_suffix = '.in'
