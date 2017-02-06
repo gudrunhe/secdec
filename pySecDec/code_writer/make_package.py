@@ -226,6 +226,14 @@ def get_decomposition_routines(name, normaliz, workdir):
                                                                      primary=lambda sector, indices: [decomposition.geometric.Cheng_Wu(sector, indices[-1])],
                                                                      secondary=lambda sector, indices: decomposition.geometric.geometric_decomposition(sector, indices, normaliz, workdir)
                                                                  ),
+                                        geometric_ku=        dict(
+                                                                     primary=decomposition.iterative.primary_decomposition,
+                                                                     secondary=lambda sector, indices: decomposition.geometric.geometric_decomposition_ku(sector, indices, normaliz, workdir)
+                                                                 ),
+                                        geometric_no_primary=dict(
+                                                                     primary=lambda sector, indices: [sector], # no primary decomposition
+                                                                     secondary=lambda sector, indices: decomposition.geometric.geometric_decomposition_ku(sector, indices, normaliz, workdir)
+                                                                 ),
                                         iterative_no_primary=dict(
                                                                      primary=lambda sector, indices: [sector], # no primary decomposition
                                                                      secondary=decomposition.iterative.iterative_decomposition
@@ -732,19 +740,21 @@ def make_package(name, integration_variables, regulators, requested_orders,
         following strategies are available:
 
         * 'iterative_no_primary' (default)
+        * 'geometric_no_primary'
         * 'iterative'
         * 'geometric'
+        * 'geometric_ku'
 
-        'iterative' and 'geometric' are only valid for
-        loop integrals. An end user should always use
-        the default 'iterative_no_primary' here.
+        'iterative', 'geometric', and 'geometric_ku' are only
+        valid for loop integrals. An end user should always use
+        'iterative_no_primary' or 'geometric_no_primary' here.
         In order to compute loop integrals, please use the
         function :func:`pySecDec.loop_integral.loop_package`.
 
     :param normaliz_executable:
         string, optional;
         The command to run `normaliz`. `normaliz` is only
-        required if `decomposition_method` is set to
+        required if `decomposition_method` starts with
         'geometric'.
         Default: 'normaliz'
 
@@ -870,7 +880,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     if split:
         # cannot split when using the geometric decomposition method because the integration interval is [0,inf] after the primary decomposition
         if decomposition_method == 'geometric':
-            raise ValueError('Cannot have ``split=True`` and ``decomposition_method="geometric"``. You probably want to try ``split=True`` and ``decomposition_method="iterative"``')
+            raise ValueError('Cannot have ``split=True`` and ``decomposition_method="geometric"``. You probably want to try ``split=True`` and ``decomposition_method="geometric_ku"``')
 
         original_decomposition_strategies = strategy
 
