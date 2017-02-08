@@ -44,7 +44,6 @@ FORM_names = dict(
     contourdef_Jacobian=internal_prefix+'ContourdefJacobian',
     deformed_variable=internal_prefix+'Deformed',
     deformation_parameter_i=internal_prefix+'Lambda%i',
-    end_point_parameter=internal_prefix+'Mu',
     additional_deformation_factor=internal_prefix+'AdditionalDeformationFactor'
 )
 
@@ -1012,18 +1011,23 @@ def make_package(name, integration_variables, regulators, requested_orders,
             expolist[:,i] = 1
             elementary_monomials.append( Polynomial(expolist, np.array([1]), symbols_polynomials_to_decompose, copy=False) )
 
+        # we later need ``0`` and ``1`` packed into specific types
+        polynomial_zero = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([0]), symbols_other_polynomials, copy=False)
+        polynomial_one = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([1]), symbols_other_polynomials, copy=False)
+        pole_part_initializer = Pow(polynomial_one, -polynomial_one)
+
         if contour_deformation_polynomial is not None:
             symbolic_deformed_variable_names = [FORM_names['deformed_variable'] + str(original_varname) for original_varname in integration_variables]
+            symbolic_deformation_factor_names = [FORM_names['additional_deformation_factor'] + str(original_varname) for original_varname in integration_variables]
 
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
             symbolic_contour_deformation_polynomial = Function(str(contour_deformation_polynomial), *elementary_monomials)
 
             # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
-            # ``z_k({x_k}) = x_k - i * lambda_k * x_k * (1-x_k) * Re(dF_dx_k)``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
+            # ``z_k({x_k}) = x_k * (1 - i * lambda_k * (1-x_k) * Re(dF_dx_k))``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
             # Remark: The determinant of the Jacobian matrix is calculated numerically.
             deformation_parameters = [sp.symbols(FORM_names['deformation_parameter_i'] % i) for i in range(len(integration_variables))]
-            end_point_parameter = Polynomial(np.zeros([1,len(symbols_polynomials_to_decompose)], dtype=int), np.array([sp.symbols(FORM_names['end_point_parameter'])]), symbols_polynomials_to_decompose, copy=False)
             deformed_integration_parameters = [
                                                      Sum(
                                                          elementary_monomials[k],
@@ -1036,9 +1040,23 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                      for k in range(len(integration_variables))
                                               ]
 
-            # define the `symbolic_deformed_variables` to be inserted FORM
+            # define symbols for ``z_k({x_k}) / x_k``
+            deformation_factors = [
+                                         Sum(
+                                             polynomial_one,
+                                             Product(
+                                                -imaginary_unit * deformation_parameters[k] * polynomial_one,
+                                                1 - elementary_monomials[k],
+                                                RealPartFunction(FORM_names['real_part'], symbolic_contour_deformation_polynomial.derive(k), copy=False),
+                                             copy=False),
+                                         copy=False)
+                                         for k in range(len(integration_variables))
+                                  ]
+
+            # define the `symbolic_deformed_variables` and the `symbolic_deformation_factors` to be inserted FORM
             symbolic_deformed_variables = [ Function(deformed_name, *elementary_monomials[:len(integration_variables)]) for deformed_name in symbolic_deformed_variable_names ]
             symbolic_deformed_variables.extend( (regulator for regulator in elementary_monomials[len(integration_variables):]) )
+            symbolic_deformation_factors = [ Function(deformed_name, *elementary_monomials[:len(integration_variables)]) for deformed_name in symbolic_deformation_factor_names ]
 
             # generate the Jacobian determinant
             print('computing Jacobian determinant for primary sector', primary_sector_index)
@@ -1058,11 +1076,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
             if var not in integration_variables:
                 this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(i,1,remove=True)
                 break
-
-        # we later need ``0`` and ``1`` packed into specific types
-        polynomial_zero = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([0]), symbols_other_polynomials, copy=False)
-        polynomial_one = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([1]), symbols_other_polynomials, copy=False)
-        pole_part_initializer = Pow(polynomial_one, -polynomial_one)
 
         # define symbols for the `polynomials_to_decompose` and the `other_polynomials --> shorter expressions and faster in python
         symbolic_other_polynomials = [
@@ -1201,27 +1214,19 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k * (1-x_k) * Re(dF_dx_k)`` to the monomials.
                 # Split as ``z_k({x_k}) = monomials[k] * <something in remainder_expression>``
                 # where ``monomials[k] = x_k``; i.e. unchanged
-                # and where ``<something in remainder_expression> = 1 - i * lambda_k * (1-x_k) * Re(dF_dx_k)``.
+                # and where ``<something in remainder_expression> z_k({x_k}) / x_k = 1 - i * lambda_k * (1-x_k) * Re(dF_dx_k)``.
                 # That amounts to multiplying ``<something in remainder_expression> ** <exponent_of_monomial>`` to `remainder_expression`
                 additional_deformation_factors = []
                 monomial_powers = np.zeros(len(integration_variables), dtype=object)
                 for factor in monomial_factors:
                     for k,exponent in enumerate(factor.expolist[0,:len(integration_variables)]):
                         monomial_powers[k] += factor.exponent*exponent
-                for k,power in enumerate(monomial_powers):
+                for k,(deformation_factor,power) in enumerate(zip(symbolic_deformation_factors,monomial_powers)):
                     additional_deformation_factors.append \
                     (
                         Pow(
-                               Sum(
-                                      polynomial_one,
-                                      Product(
-                                                 -imaginary_unit * deformation_parameters[k] * (1 - elementary_monomials[k]),
-                                                 RealPartFunction(FORM_names['real_part'], symbolic_contour_deformation_polynomial.derive(k), copy=False),
-                                                 copy=False
-                                             ),
-                                  copy=False
-                                  ),
-                              power, copy=False
+                               deformation_factor,
+                               power
                            )
                     )
                 additional_deformation_factor = Product(*additional_deformation_factors, copy=False)
@@ -1326,6 +1331,16 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     symbolic_additional_deformation_factor, # derivative tracker
                     additional_deformation_factor # full_expression
                 )
+                for k,(symbolic_factor,factor) in \
+                enumerate(zip(symbolic_deformation_factors,deformation_factors)):
+                    update_derivatives(
+                        FORM_names['additional_deformation_factor'] + str(integration_variables[k]), # basename
+                        symbolic_factor, # derivative tracker
+                        factor, # full_expression
+                        deformed_integration_variable_derivatives, # derivatives
+                        ordered_deformed_integration_variable_derivative_names, # ordered_derivative_names
+                        deformed_integration_variable_derivative_functions # functions
+                    )
 
             #  - for the `other_polynomials`
             for prod, exponentiated_function, basename in zip(sector.other, symbolic_other_polynomials, names_other_polynomials):
