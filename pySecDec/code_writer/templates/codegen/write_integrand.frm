@@ -376,7 +376,7 @@ B `regulators';
 * {
 
   #If `contourDeformation'
-    #redefine insertProceduresToConsider "insertOther,insertDeformedIntegrationVariables,insertDecomposed"
+    #redefine insertProceduresToConsider "insertDeformedIntegrationVariables,insertOther,insertDeformedIntegrationVariables,insertDecomposed"
   #Else
     #redefine insertProceduresToConsider "insertOther,insertDecomposed"
   #EndIf
