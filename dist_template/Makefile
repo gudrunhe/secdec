@@ -22,7 +22,7 @@ install : $(CPP_PACKAGES) pySecDec
 pySecDec :
 	tar -xf $@-*.tar.gz
 
-CubaCONFIGURE = $(CONFIGURE_COMMON) CFLAGS="-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions"
+CubaCONFIGURE = $(CONFIGURE_COMMON) CFLAGS="-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fPIC"
 formCONFIGURE = $(CONFIGURE_COMMON)
 gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static
 secdecutilCONFIGURE = $(CONFIGURE_COMMON)
