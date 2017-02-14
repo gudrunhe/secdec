@@ -9,7 +9,7 @@ source:
 $(NAME).o : source
 
 $(NAME) : $(NAME).o lib$(NAME).a
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $< -l$(NAME) $(LDFLAGS)
 
 very-clean : clean
 	for dir in */; do $(MAKE) -C $$dir $@; done

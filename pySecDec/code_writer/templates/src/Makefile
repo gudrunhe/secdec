@@ -6,7 +6,7 @@ OBJECTS = $(patsubst %%.cpp,%%.o,$(wildcard *.cpp))
 	ar rs $@ $+
 
 ../lib$(NAME).so : $(OBJECTS)
-	$(CXX) -o $@ -shared $+
+	$(CXX) -o $@ -shared $+ $(LDFLAGS)
 
 clean:
 	rm -f *.o lib$(NAME).a lib$(NAME).so
