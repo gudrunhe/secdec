@@ -3,6 +3,9 @@ include Makefile.conf
 lib$(NAME).a lib$(NAME).so : source
 	$(MAKE) -C src ../$@
 
+$(NAME)_pylink.so : lib$(NAME).a
+	$(MAKE) -C pylink ../$@
+
 source:
 	$(MAKE) -C codegen $@
 

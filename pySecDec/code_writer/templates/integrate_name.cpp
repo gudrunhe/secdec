@@ -67,15 +67,11 @@ void print_integral_info()
 
 int main()
 {
-    // TODO - write method to parse arguments and check validity
     // User Specified Phase-space point
-    const std::vector<%(name)s::real_t> real_parameters = { 0.9, 0.1 };
+    const std::vector<%(name)s::real_t> real_parameters = {  };
     const std::vector<%(name)s::complex_t> complex_parameters = {  };
-    if ( real_parameters.size() != %(name)s::number_of_real_parameters )
-        throw std::logic_error("Did not set the correct number of real parameters");
-    if ( complex_parameters.size() != + %(name)s::number_of_complex_parameters )
-        throw std::logic_error("Did not set the correct number of complex parameters");
 
+    // Generate the integrands (optimization of the contour if applicable)
     const std::vector<%(name)s::nested_series_t<%(name)s::integrand_t>> sector_integrands = %(name)s::make_integrands(real_parameters, complex_parameters);
 
     // Add integrands of sectors (together flag)
