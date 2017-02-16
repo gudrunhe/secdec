@@ -6,9 +6,9 @@ lib$(NAME).a lib$(NAME).so : source
 source:
 	$(MAKE) -C codegen $@
 
-test.o : source
+integrate_$(NAME).o : source
 
-test : test.o lib$(NAME).a
+integrate_$(NAME) : integrate_$(NAME).o lib$(NAME).a
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 very-clean : clean
@@ -16,4 +16,4 @@ very-clean : clean
 
 clean:
 	for dir in */; do $(MAKE) -C $$dir $@; done
-	rm -f *.o *.so *.a test
+	rm -f *.o *.so *.a integrate_$(NAME)

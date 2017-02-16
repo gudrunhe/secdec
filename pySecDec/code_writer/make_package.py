@@ -275,6 +275,7 @@ def _parse_global_templates(name, regulators, polynomial_names,
     file_renamings = {
                           # replace "name" by the name of the integral
                           'name' : name,
+                          'integrate_name.cpp' : 'integrate_' + name + '.cpp',
 
                           # the files below are specific for each sector --> do not parse globally
                           'contour_deformation.h' : None,
