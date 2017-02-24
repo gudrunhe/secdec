@@ -66,7 +66,6 @@ and programs are required:
  * SecDecUtil (part of `pySecDec`), depends on:
 
    * catch (https://github.com/philsquared/Catch)
-   * fast-cpp-csv-parser (https://github.com/ben-strasser/fast-cpp-csv-parser)
 
 These packages are redistributed with the `pySecDec` tarball; i.e. you don't have to install
 any of them yourself.
