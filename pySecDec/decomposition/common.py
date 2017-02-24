@@ -49,11 +49,8 @@ class Sector(object):
 
         initial_monomial_factor = Polynomial([ [0]*self.number_of_variables ], [1], poly.polysymbols)
 
-        if Jacobian is not None:
-            assert len(Jacobian.coeffs) == 1, "`Jacobian` must be a monomial"
-        else:
+        if Jacobian is None:
             Jacobian = initial_monomial_factor
-
 
         for item in cast + other + [Jacobian]:
             # explanation see above
@@ -68,7 +65,10 @@ class Sector(object):
             assert self.number_of_variables == poly.expolist.shape[1], "The number of variables must be equal for all input polynomials"
 
         self.Jacobian = Jacobian.copy()
+
         self.other = [poly.copy() for poly in other]
+        for poly in self.other:
+            assert isinstance(poly, Polynomial), "All elements in `other` must be of type `Polynomial`"
 
         self.cast = []
         for item in cast:

@@ -10,7 +10,7 @@ from itertools import chain, combinations, product
 import sympy as sp
 import numpy as np
 
-def powerset(iterable, exclude_empty=False, stride=1):
+def powerset(iterable, min_length=0, stride=1):
     """
     Return an iterator over the powerset of a given set.
     ``powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3)
@@ -20,10 +20,10 @@ def powerset(iterable, exclude_empty=False, stride=1):
         iterable;
         The set to generate the powerset for.
 
-    :param exclude_empty:
-        bool, optional;
-        If True, skip the empty set in the powerset.
-        Default is False.
+    :param min_length:
+        integer, optional;
+        Only generate sets with minimal given length.
+        Default: ``0``.
 
     :param stride:
         integer;
@@ -35,10 +35,7 @@ def powerset(iterable, exclude_empty=False, stride=1):
     """
     # taken from python's own documentation
     s = list(iterable)
-    powerset_iterator = iter(chain.from_iterable(combinations(s, r) for r in range(0,len(s)+1,stride)))
-    if exclude_empty:
-        # The first element of the iterator is the empty set -> discard
-        next(powerset_iterator)
+    powerset_iterator = iter(chain.from_iterable(combinations(s, r) for r in range(min_length,len(s)+1,stride)))
     return powerset_iterator
 
 def rangecomb(low, high):
@@ -137,17 +134,29 @@ def det(M):
     assert M.shape[0] == M.shape[1], "`M` must be a square matrix"
     D = M.shape[0]
 
-    # Use sympy to calculate the determinant of a generic DxD Matrix, e.g.
-    # [[M_0_0__, M_0_1__]
-    #  [M_1_0__, M_1_1__]]
-    generic_m = sp.Matrix([["M_%i_%i__" % (i,j) for j in range(D)] for i in range(D)])
-    generic_det = generic_m.det(method='berkowitz').expand()
+    # stopping criterion for recursion
+    if D == 1:
+        return M[0,0]
 
-    # convert sympy output to python executable code; i.e. M_i_j__ --> M[i,j]
-    algebraic_det = str(generic_det).replace('M_','M[').replace('__',']').replace('_',',')
+    # fast check if an integer is even
+    is_even = lambda x: x == (x >> 1 << 1)
 
-    # execute the expression and return the result
-    return eval(algebraic_det)
+    def sub_indices(i):
+        'Return ``list(range(D))`` omitting `i`'
+        sub_indices = list(range(D))
+        sub_indices.remove(i)
+        return sub_indices
+
+    # resolve the first row of the matix
+    result = 0
+    for i in range(D):
+        sub_M = M[[[k] for k in range(1,D)],sub_indices(i)]
+        term = M[0,i] * det(sub_M) # recursion
+        if is_even(i):
+            result += term
+        else:
+            result -= term
+    return result
 
 def adjugate(M):
     '''

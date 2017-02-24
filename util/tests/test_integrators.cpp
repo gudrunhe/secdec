@@ -10,7 +10,7 @@
 
 template<typename real_t>
 void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, cubareal epsrel, int dimensionality = 10){
-  
+
     const std::function<real_t(real_t const * const)> integrand =
     [dimensionality] (real_t const * const variables)
     {
@@ -28,7 +28,7 @@ void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, cub
     REQUIRE( computed_result.value > 0.9 );
     REQUIRE( computed_result.value < 1.1 );
     REQUIRE( computed_result.value == Approx( expected_result ).epsilon( epsrel ) );
-    REQUIRE( computed_result.uncertainty <= epsrel );
+    REQUIRE( computed_result.uncertainty <= epsrel * computed_result.value );
 };
 
 template<typename real_t>
@@ -52,7 +52,7 @@ void test_integrator_complex(secdecutil::Integrator<std::complex<real_t>,real_t>
     std::complex<cubareal> expected_result = {1.,1./6.};
 
     auto computed_result = integrator.integrate(integrand_container);
-    
+
     REQUIRE( computed_result.value.real() > expected_result.real() - 0.1 );
     REQUIRE( computed_result.value.real() < expected_result.real() + 0.1 );
 
@@ -91,7 +91,7 @@ TEST_CASE( "Test Vegas integrator with long double", "[Integrator][Cuba][Vegas]"
   auto integrator = secdecutil::cuba::Vegas<long double>(epsrel);
   test_integrator_real(integrator, epsrel);
 };
-	 
+
 TEST_CASE( "Test Vegas integrator with complex long double", "[Integrator][Cuba][Vegas]" ) {
   cubareal epsrel = 1e-3;
   auto integrator = secdecutil::cuba::Vegas<std::complex<long double>>(epsrel);
@@ -104,7 +104,7 @@ TEST_CASE( "Test Vegas integrator with complex long double", "[Integrator][Cuba]
     test_integrator_complex(integrator, epsrel);
   }
 };
- 
+
 TEST_CASE( "Test Suave integrator with real", "[Integrator][Cuba][Suave]" ) {
   cubareal epsrel = 1e-3;
   auto integrator = secdecutil::cuba::Suave<cubareal>(epsrel);

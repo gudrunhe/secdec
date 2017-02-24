@@ -1,8 +1,8 @@
 """
 
 Routines to split the integration between :math:`0`
-and :math:`1` at :math:`1/2`. This maps singularities
-from :math:`1` to :math:`0`.
+and :math:`1`. This maps singularities from :math:`1`
+to :math:`0`.
 
 """
 
@@ -11,8 +11,6 @@ from ..algebra import Polynomial, ExponentiatedPolynomial
 from ..misc import powerset
 import numpy as np
 import sympy as sp
-
-_sympy_one_half = sp.sympify('1/2')
 
 # ********************** helper functions **********************
 
@@ -103,13 +101,14 @@ def find_singular_sets_at_one(polynomial):
             singular_sets.append(singular_set)
     return singular_sets
 
-# ************************ split at 1/2 ************************
+# **************************** split ****************************
 
-def split(sector, *indices):
+def split(sector, seed, *indices):
     '''
     Split the integration interval :math:`[0,1]`
-    at :math:`1/2` for the parameters given by
-    `indices`.
+    for the parameters given by `indices`. The
+    splitting point is fixed using `numpy's`
+    random number generator.
 
     Return an iterator of :class:`.Sector` - the
     arising subsectors.
@@ -118,23 +117,32 @@ def split(sector, *indices):
         :class:`.Sector`;
         The sector to be split.
 
+    :param seed;
+        integer;
+        The seed for the random number generator
+        that is used to fix the splitting point.
+
     :param indices:
         arbitrarily many integers;
         The indices of the variables to be split.
 
     '''
-    # Jacobian must not depend on the variable denoted by index.
-    for index in indices:
-        assert (sector.Jacobian.expolist[:,index] == 0).all(), "``sector.Jacobian`` must not depend on the variables denoted by `indices`."
+    # get the splitting point
+    #  --> generate ``len(indices)`` random numbers between ``1`` and ``20``,
+    #      then split at ``<random>/20``
+    rng = np.random.RandomState(seed)
+    splitting_point = [   int( rng.randint(1,20) ) / sp.sympify(20)  for idx in indices   ]
 
-    def split_recursively(sector, indices):
+    def split_recursively(sector, indices, splitting_point):
         if not indices:
             yield sector.copy()
             return
 
-        # We call this function recusively and pop the first index in each iteration
+        # We call this function recusively and pop the first index/splitting_value in each iteration
         index = indices[0]
         remaining_indices = indices[1:]
+        splitting_value = splitting_point[0]
+        splitting_point = splitting_point[1:]
 
         # split the parameter with index `index`
         #  - step1: make a copy with mapping "x --> 1 - x"
@@ -154,36 +162,41 @@ def split(sector, *indices):
         for poly in sector.other:
             remapped_other.append( remap_one_to_zero(poly, index) )
 
-        subsector0 = sector.copy()
-        subsector1 = Sector(remapped_cast, remapped_other, sector.Jacobian)
+        remapped_Jacobian = remap_one_to_zero(sector.Jacobian, index)
 
-        #  - step2: remap "x --> x/2"
-        def divide_by_two(polynomial, index):
-            replaced_polynomial = polynomial.replace(index, _sympy_one_half)
+        subsector0 = sector.copy()
+        subsector1 = Sector(remapped_cast, remapped_other, remapped_Jacobian)
+
+        #  - step2: rescale the integration variable
+        def multiply_by(polynomial, number, index):
+            replaced_polynomial = polynomial.replace(index, number)
             polynomial.coeffs = replaced_polynomial.coeffs
 
-        for sector in (subsector0, subsector1):
-            sector.Jacobian *= _sympy_one_half
+        for sector,remapping_factor in zip(
+                                              [     subsector0    ,     subsector1      ],
+                                              [  splitting_value  ,  1-splitting_value  ]
+                                          ):
+            sector.Jacobian *= remapping_factor
+            multiply_by(sector.Jacobian, remapping_factor, index)
             for prod in sector.cast:
                 mono, poly = prod.factors
-                divide_by_two(mono, index)
-                divide_by_two(poly, index)
+                multiply_by(mono, remapping_factor, index)
+                multiply_by(poly, remapping_factor, index)
             for poly in sector.other:
-                divide_by_two(poly, index)
+                multiply_by(poly, remapping_factor, index)
 
         # recursively call `split` with the `remaining_indices`
         for sector in (subsector0, subsector1):
-            for subsubsector in split_recursively(sector, remaining_indices):
+            for subsubsector in split_recursively(sector, remaining_indices, splitting_point):
                 yield subsubsector
 
-    return split_recursively(sector, indices)
+    return split_recursively(sector, indices, splitting_point)
 
-def split_singular(sector, indices=[]):
+def split_singular(sector, seed, indices=[]):
     '''
     Split the integration interval :math:`[0,1]`
-    at :math:`1/2` for the parameters that can
-    lead to singularities at one for the
-    polynomials in ``sector.cast``.
+    for the parameters that can lead to singularities
+    at one for the polynomials in ``sector.cast``.
 
     Return an iterator of :class:`.Sector` - the
     arising subsectors.
@@ -191,6 +204,11 @@ def split_singular(sector, indices=[]):
     :param sector:
         :class:`.Sector`;
         The sector to be split.
+
+    :param seed:
+        integer;
+        The seed for the random number generator
+        that is used to fix the splitting point.
 
     :param indices:
         iterables of integers;
@@ -215,4 +233,4 @@ def split_singular(sector, indices=[]):
     singular_parameters.sort()
 
     # split the `sector` in the `singular_parameters`
-    return split(sector, *singular_parameters)
+    return split(sector, seed, *singular_parameters)

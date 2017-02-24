@@ -3,12 +3,6 @@
 
 #include "%(name)s.hpp"
 
-#define %(name)s_contour_deformation %(contour_deformation)i
-#if %(name)s_contour_deformation
-    #include "contour_deformation_functions.hpp"
-#endif
-#undef %(name)s_contour_deformation
-
 #include <cmath>
 #include <complex>
 #include <stdexcept>
@@ -50,9 +44,6 @@ namespace %(name)s
             return std::log(arg);
         }
     #endif
-    #undef %(name)s_contour_deformation
-    #undef %(name)s_has_complex_parameters
-    #undef %(name)s_enforce_complex_return_type
 
     /*
      * We do not want to use "std::pow(double, int)" because the g++ compiler
@@ -70,10 +61,13 @@ namespace %(name)s
      *       Playing around with "std::pow" and the aforementioned switches is nevertheless
      *       worth a try in practical applications where high performance is needed.
      */
-    template <typename T> inline T SecDecInternalIntPow(T base, int exponent)
+    template <typename Tbase> inline Tbase SecDecInternalPow(Tbase base, int exponent)
     {
-        if (exponent < 0)
-	    return 1./SecDecInternalIntPow(base, -exponent);
+        if (exponent > 1024 or exponent < -1024)
+            return std::pow(base, exponent);
+
+        else if (exponent < 0)
+	    return 1./SecDecInternalPow(base, -exponent);
 
         else if (exponent == 0)
             return 1.;
@@ -89,7 +83,7 @@ namespace %(name)s
 
         else if (exponent == 4)
         {
-            T result = base;
+            Tbase result = base;
             result *= result;
             result *= result;
             return result;
@@ -97,7 +91,7 @@ namespace %(name)s
 
         else if (exponent == 5)
         {
-            T result = base;
+            Tbase result = base;
             result *= result;
             result *= result;
             return result * base;
@@ -105,19 +99,19 @@ namespace %(name)s
 
         else if (exponent == 6)
         {
-            T result = base * base * base;
+            Tbase result = base * base * base;
             return result * result;
         }
 
         else if (exponent == 7)
         {
-            T result = base * base * base;
+            Tbase result = base * base * base;
             return result * result * base;
         }
 
         else if (exponent == 8)
         {
-            T result = base;
+            Tbase result = base;
             result *= result;
             result *= result;
             return result * result;
@@ -125,7 +119,7 @@ namespace %(name)s
 
         else if (exponent == 16)
         {
-            T tmp = base * base;
+            Tbase tmp = base * base;
             tmp *= tmp;
             tmp *= tmp;
             tmp *= tmp;
@@ -133,7 +127,7 @@ namespace %(name)s
         }
 
         unsigned half_exponent = exponent / 2;
-        T out = SecDecInternalIntPow(base, half_exponent);
+        Tbase out = SecDecInternalPow(base, half_exponent);
 
         out *= out;
         if (2 * half_exponent == exponent) // exponent is even
@@ -144,15 +138,37 @@ namespace %(name)s
 
     real_t inline pow(real_t x, int y)
     {
-        return SecDecInternalIntPow(x, y);
+        return SecDecInternalPow(x, y);
     }
-
     complex_t inline pow(complex_t x, int y)
     {
-        return SecDecInternalIntPow(x, y);
+        return SecDecInternalPow(x, y);
     }
+    #if %(name)s_has_complex_parameters || %(name)s_contour_deformation || %(name)s_enforce_complex_return_type
+        template <typename Tbase, typename Texponent> complex_t pow(Tbase base, Texponent exponent)
+        {
+            if (std::imag(base) == 0)
+                return std::pow( complex_t(std::real(base),-0.) , exponent );
+            return std::pow(base, exponent);
+        }
+    #else
+        inline real_t pow(real_t base, real_t exponent)
+        {
+            if (base < 0)
+            {
+                std::string error_message;
+                error_message += "Encountered \"pow(<negative real>, <rational>)\" in a real-valued integrand function of ";
+                error_message += "\"angularities\". Try to enforce complex return values for the generated integrands; i.e. set ";
+                error_message += "\"enforce_complex=True\" in the corresponding call to \"loop_package\" or \"make_package\".";
+                throw std::domain_error(error_message);
+            }
+            return std::pow(base, exponent);
+        }
+    #endif
 
-    using std::pow;
+    #undef %(name)s_contour_deformation
+    #undef %(name)s_has_complex_parameters
+    #undef %(name)s_enforce_complex_return_type
 
     // --}
 

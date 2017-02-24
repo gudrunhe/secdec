@@ -124,6 +124,7 @@ class TestPrimaryDecomposition(unittest.TestCase):
         np.testing.assert_array_equal(U_primary[2].expolist, np.array([(1,0,0),(0,1,0),(0,0,0),(0,0,1)]))
         np.testing.assert_array_equal(U_primary[3].expolist, np.array([(1,0,0),(0,1,0),(0,0,1),(0,0,0)]))
 
+#@attr('active')
 class TestIterativeDecomposition(unittest.TestCase):
     def setUp(self):
         # Feynman parameters are the ti
@@ -146,6 +147,19 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(self.Jacobian), " + (1)*x1")
         self.assertEqual(str(self.F), " + (-s12)*x1 + (-s23)*x0*x1*x2")
         self.assertEqual(str(self.U), " + (1) + (1)*x0 + (1)*x1 + (1)*x1*x2")
+
+    #@attr('active')
+    def test_find_singular_set(self):
+        variables = ['x%i' %i for i in range(3)]
+
+        F1 = Polynomial.from_expression('-s12*x1*x2**2 - s23*x0*x2 - s12*x0*x1',variables)
+        sector1 = Sector([F1,self.U])
+        self.assertEqual( find_singular_set(sector1),(0,1) )
+        self.assertEqual( find_singular_set(sector1,indices=[1,2]),(1,2) )
+
+        F2 = Polynomial.from_expression('-s12*x1**2*x2 - s23*x0*x2 - s12*x0*x1',variables)
+        sector2 = Sector([F2,self.U])
+        self.assertEqual( find_singular_set(sector2),(0,2) )
 
     def test_iteration_step(self):
         subsectors = list( iteration_step(self.sector) )

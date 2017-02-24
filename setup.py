@@ -15,6 +15,10 @@ for dir_name, subdir_list, file_list in os.walk(relpath_to_code_writer_module):
     for data_file in file_list:
         cpp_template_files.append( os.path.join(relpath_to_templates, data_file) )
 
+# prevent python's distutils to try (and potentially fail) hard linking
+# this is due to a bug in python's distutils, see: http://bugs.python.org/issue8876
+del os.link
+
 # get the git commit id
 from subprocess import check_output as shell_call, CalledProcessError, STDOUT
 try:

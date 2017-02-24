@@ -9,20 +9,21 @@ function :func:`.loop_package`.
 from .from_graph import LoopIntegralFromGraph
 from .draw import plot_diagram
 from ..code_writer import make_package
+from itertools import chain
 import numpy as np
 import sympy as sp
 import os
 
 def loop_package(name, loop_integral, requested_order,
                  real_parameters=[], complex_parameters=[],
-                 contour_deformation='auto', force_unsafe_deformation=False,
+                 contour_deformation=True,
                  additional_prefactor=1, form_optimization_level=2,
                  form_work_space='500M',
                  decomposition_method='iterative',
                  normaliz_executable='normaliz',
                  normaliz_workdir='normaliz_tmp',
                  enforce_complex=False,
-                 split=False):
+                 split=False, ibp_power_goal=-1):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -58,27 +59,13 @@ def loop_package(name, loop_integral, requested_order,
         as complex parameters.
 
     :param contour_deformation:
-        bool or 'auto', optional;
-        Whether or not to produce code for contour
-        deformation. If set to 'auto', produce code
-        for contour deformation only if the second
-        Symanzik polynomial "F" comes with a negative
-        exponent (ignoring the regulator).
-        Default: ``'auto'``.
-
-    :param force_unsafe_deformation:
         bool, optional;
-        If both Symanzik polynomials "U" and "F" have
-        a negative exponent (ignoring the regulator),
-        the deformation parameters cannot fully be
-        checked for consistency. `pySecDec` always checks
-        the :math:`- i\delta` prescription of "F" but it
-        cannot check if the contour deformation crosses
-        complex poles of "U".
-        Default: ``False``.
+        Whether or not to produce code for contour
+        deformation.
+        Default: ``True``.
 
     :param additional_prefactor:
-        string or sympy expression;
+        string or sympy expression, optional;
         An additional factor to be multiplied to the loop
         integral. It may depend on the regulator, the
         `real_parameters`, and the `complex_parameters`.
@@ -142,43 +129,55 @@ def loop_package(name, loop_integral, requested_order,
         are one.
         Default: ``False``
 
+    :param ibp_power_goal:
+        integer, optional;
+        The `power_goal` that is forwarded to
+        :func:`.integrate_by_parts`.
+
+        This option controls how the subtraction terms are
+        generated. Setting it to ``-numpy.inf`` disables
+        :func:`.integrate_by_parts`, while ``0`` disables
+        :func:`.integrate_pole_part`.
+
+        .. seealso::
+            To generate the subtraction terms, this function
+            first calls :func:`.integrate_by_parts` for each
+            integration variable with the give `ibp_power_goal`.
+            Then :func:`.integrate_pole_part` is called.
+
+        Default: ``-1``
+
     '''
     print('running "loop_package" for "' + name + '"')
 
-    if contour_deformation == 'auto':
-        # only need contour deformation of "F" has an overall negative exponent (and a noneuclidean point is calculated)
-        contour_deformation = loop_integral.exponent_F.subs(loop_integral.regulator,0) < 0
-        print(  'contour deformation is ' + ('required' if contour_deformation else 'not needed')  )
-    else:
-        contour_deformation = bool(contour_deformation)
-
-    if contour_deformation:
-        if loop_integral.exponent_U.subs(loop_integral.regulator,0) < 0: # if "U" in denominator
-            if force_unsafe_deformation:
-                print(   'WARNING: Contour deformation may silently lead to wrong results by crossing zeros of "U".'   )
-            else:
-                raise UserWarning('Contour deformation may silently lead to wrong results by crossing zeros of "U". Set ``force_unsafe_deformation=True`` in `loop_package` to proceed anyway.')
+    # convert `contour_deformation` to bool
+    contour_deformation = bool(contour_deformation)
 
     # convert `name` to string
     name = str(name)
 
-    names_polynomials_to_decompose = sp.symbols(['F','U'])
+    U_and_F = [loop_integral.exponentiated_U.copy(), loop_integral.exponentiated_F.copy()]
+    names_U_and_F = sp.symbols(['U','F'])
 
-    # append the regulator and the symbols `F` and `U` to the `polynomials_to_decompose` (`F` and `U`)
-    polynomials_to_decompose = [loop_integral.exponentiated_F.copy(), loop_integral.exponentiated_U.copy()]
-    for poly in polynomials_to_decompose:
-        poly.polysymbols.extend([loop_integral.regulator] + names_polynomials_to_decompose)
-        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_polynomials_to_decompose)+1], dtype=int)])
+    # check if ``U`` is in the denomitator; i.e. if an additional sign check is needed
+    U_in_denominator = loop_integral.exponent_U.subs(loop_integral.regulator,0) < 0
 
-    other_polynomials = [loop_integral.numerator]
-    if sp.sympify( loop_integral.measure ) != 1:
-        # need ``loop_integral.measure`` only if it is nontrivial
-        other_polynomials += loop_integral.measure.factors
+    # append the regulator symbol and the symbols `U` and `F` to `U` and `F`
+    for poly in U_and_F:
+        poly.polysymbols.extend([loop_integral.regulator] + names_U_and_F)
+        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_U_and_F)+1], dtype=int)])
 
-    # insert the regulator to the `other_polynomials` (`numerator` and possily `measure`)
-    for poly in other_polynomials:
+    # append the regulator symbol to the `numerator` and to `measure`
+    for poly in chain([loop_integral.numerator], loop_integral.measure.factors):
         poly.polysymbols = poly.polysymbols[:-2] + [loop_integral.regulator] + poly.polysymbols[-2:]
         poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),1], dtype=int), poly.expolist[:,-2:]])
+
+    other_polynomials = [loop_integral.numerator]
+
+    polynomials_to_decompose = list(U_and_F)
+    if sp.sympify( loop_integral.measure ) != 1:
+        # need ``loop_integral.measure`` only if it is nontrivial
+        polynomials_to_decompose += loop_integral.measure.factors
 
     make_package_return_value = make_package(
         name = name,
@@ -189,9 +188,10 @@ def loop_package(name, loop_integral, requested_order,
         requested_orders = [requested_order],
 
         polynomials_to_decompose = polynomials_to_decompose,
-        polynomial_names = names_polynomials_to_decompose,
+        polynomial_names = names_U_and_F,
         other_polynomials = other_polynomials,
         contour_deformation_polynomial = 'F' if contour_deformation else None,
+        positive_polynomials = ['U'] if U_in_denominator else [],
 
         prefactor = sp.sympify(additional_prefactor) * loop_integral.Gamma_factor * loop_integral.regulator ** loop_integral.regulator_power,
 
@@ -203,11 +203,12 @@ def loop_package(name, loop_integral, requested_order,
 
         decomposition_method = decomposition_method,
 
-        normaliz_executable=normaliz_executable,
-        normaliz_workdir=normaliz_workdir,
+        normaliz_executable = normaliz_executable,
+        normaliz_workdir = normaliz_workdir,
 
-        enforce_complex=enforce_complex,
-        split=split
+        enforce_complex = enforce_complex,
+        ibp_power_goal = ibp_power_goal,
+        split = split
     )
 
     if isinstance(loop_integral, LoopIntegralFromGraph):

@@ -2,7 +2,7 @@
 TOPDIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # common options for all packages
-CONFIGURE_COMMON = CFLAGS=-fexceptions --prefix=$(TOPDIR)/install --libdir=$(TOPDIR)/lib --includedir=$(TOPDIR)/include --bindir=$(TOPDIR)/bin
+CONFIGURE_COMMON = --prefix=$(TOPDIR)/install --libdir=$(TOPDIR)/lib --includedir=$(TOPDIR)/include --bindir=$(TOPDIR)/bin
 
 # the included packages
 CPP_PACKAGES = Cuba form gsl secdecutil
@@ -17,18 +17,18 @@ install : $(CPP_PACKAGES) pySecDec
 	echo -e $(begin_green)"Successfully built \"pySecDec\" and its dependencies."$(end_green) ; \
 	echo -e $(begin_green)"To use \"pySecDec\", add the following two commands to your \".bashrc\" or \".profile\":"$(end_green) ; \
 	echo -e $(begin_green)"export SECDEC_CONTRIB=$(TOPDIR)"$(end_green) ; \
-	echo -e $(begin_green)"export PYTHONPATH=$(TOPDIR)pySecDec-$(shell cd pySecDec-*; python -c 'import pySecDec; print(pySecDec.__version__)'):\$$PYTHONPATH"$(end_green)
+	echo -e $(begin_green)"export PYTHONPATH=$(TOPDIR)pySecDec-$(shell cd pySecDec-*/; python -c 'import pySecDec; print(pySecDec.__version__)'):\$$PYTHONPATH"$(end_green)
 
 pySecDec :
 	tar -xf $@-*.tar.gz
 
-CubaCONFIGURE = $(CONFIGURE_COMMON)
+CubaCONFIGURE = $(CONFIGURE_COMMON) CFLAGS="-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fPIC"
 formCONFIGURE = $(CONFIGURE_COMMON)
-gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static
+gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static --with-pic
 secdecutilCONFIGURE = $(CONFIGURE_COMMON)
 $(CPP_PACKAGES) :
 	tar -xf $@-*.tar.gz && \
-	cd $@-* && \
+	cd $@-*/ && \
 	./configure $($@CONFIGURE) && \
 	$(MAKE) && \
 	$(MAKE) install

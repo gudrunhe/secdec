@@ -32,11 +32,11 @@ class TestSector(unittest.TestCase):
 
         other_polynomial = Polynomial([(0,1,2),(1,0,5),(1,2,3),(9,4,2)],[1,'A','C','g'], polysymbols=['x','y','z'])
 
-        self.assertRaisesRegexp(AssertionError, 'Jacobian.*monomial', Sector, [F], Jacobian=U)
         self.assertRaisesRegexp(AssertionError, 'number of variables.*equal', Sector, [F], [self.poly])
         self.assertRaisesRegexp(AssertionError, '(f|F)irst factor.*monomial', Sector, [Product(F,U)])
         self.assertRaisesRegexp(AssertionError, 'two factors', Sector, [Product(F,U,Jacobian)])
         self.assertRaisesRegexp(AssertionError, 'at least one', Sector, [])
+        self.assertRaisesRegexp(AssertionError, 'other.*type.*Polynomial', Sector, [F], other=[Product(Jacobian,U)])
         Sector([Product(Jacobian,F)])
 
         sector = Sector([F])

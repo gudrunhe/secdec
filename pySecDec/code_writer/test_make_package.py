@@ -47,6 +47,7 @@ class TestConvertInput(TestMakePackage):
                                       form_work_space='500M',
                                       form_insertion_depth=0,
                                       contour_deformation_polynomial=None,
+                                      positive_polynomials=[],
                                       decomposition_method='iterative_no_primary'
                                  )
 
@@ -126,6 +127,16 @@ class TestConvertInput(TestMakePackage):
         keyword_arguments['polynomials_to_decompose'] = ['z0 + firstPolynomialName']
         self.assertRaisesRegexp(ValueError, r'polynomial_names.*firstPolynomialName.*not.*polynomials_to_decompose', _convert_input, **keyword_arguments)
 
+    #@attr('active')
+    def test_positive_polynomials(self):
+        keyword_arguments = self.correct_input.copy()
+        keyword_arguments['positive_polynomials'] = ['U','missingInPolynomialNames','F']
+        self.assertRaisesRegexp(AssertionError, r'missingInPolynomialNames.*positive_polynomials.*not.*polynomial_names', _convert_input, **keyword_arguments)
+
+        keyword_arguments = self.correct_input.copy()
+        keyword_arguments['positive_polynomials'] = ['U','not_a + symbol','F']
+        self.assertRaisesRegexp(AssertionError, r'All.*positive_polynomials.*symbols', _convert_input, **keyword_arguments)
+
 # --------------------------------- write FORM code ---------------------------------
 class TestMakeFORMDefinition(unittest.TestCase):
     #@attr('active')
@@ -156,8 +167,8 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         FORM_code = _make_FORM_function_definition(name, expression, None, limit)
 
         target_FORM_code  = "  Id symbol = SecDecInternalfDUMMYsymbolPart0+SecDecInternalfDUMMYsymbolPart1;\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYsymbolPart0 =  + (1)*x**2;\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYsymbolPart1 =  + (1)*y**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYsymbolPart0 =  + (1)*x^2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYsymbolPart1 =  + (1)*y^2;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 
@@ -174,8 +185,8 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
 
         target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y)+SecDecInternalfDUMMYmyNamePart1(x,y);\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)+SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y);\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?) =  + (10)*y + (1)*x**2;\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?) =  + (10)*y + (1)*x^2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) =  + (10)*y + (1)*x^2;\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart1(x?,y?) =  + (1)*x*y;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
@@ -194,7 +205,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y)+SecDecInternalfDUMMYmyNamePart1(x,y);\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y);\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?) =  + (2)*y + (1)*x;\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) =  + (10)*y + (1)*x^2;\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart1(x?,y?) =  + (1)*x*y;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
@@ -214,9 +225,9 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part2(x,y);\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?) =  + (1);\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1Part0(x,y)+SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1Part1(x,y);\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1Part0(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1Part0(x?,y?) =  + (10)*y + (1)*x^2;\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1Part1(x?,y?) =  + (1)*x*y;\n"
-        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part2(x?,y?) =  + (10)*y + (1)*x**2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part2(x?,y?) =  + (10)*y + (1)*x^2;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 
@@ -232,7 +243,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
 
         # ``expression`` has type `Polynomial` --> fall back to rescue since splitting is not implemented
-        target_FORM_code  = "  Id myName(x?,y?) =  + (100)*y**2 + (10)*x*y**2 + (20)*x**2*y + (1)*x**3*y + (1)*x**4;\n"
+        target_FORM_code  = "  Id myName(x?,y?) =  + (100)*y^2 + (10)*x*y^2 + (20)*x^2*y + (1)*x^3*y + (1)*x^4;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 
@@ -677,36 +688,6 @@ class TestWriteCppCodeFunctionDeclaration(unittest.TestCase):
         self.assertEqual(code, target_code)
 
 # --------------------------------- algebra helper ----------------------------------
-class TestNoDerivativeAtZeroFunction(unittest.TestCase):
-    def setUp(self):
-        self.number_of_polysymbols = 3
-        self.polysymbols = ['x%i' % i for i in range(self.number_of_polysymbols)]
-        self.variables = [Polynomial.from_expression('x%i' % i, self.polysymbols) for i in range(self.number_of_polysymbols)]
-
-    #@attr('active')
-    def test_base_function(self):
-        f_call = NoDerivativeAtZeroFunction('f', self.variables[0])
-        self.assertEqual( sp.sympify(f_call) , sp.sympify('f(x0)') )
-        self.assertEqual( sp.sympify(f_call.replace(0,0)) , 0 )
-
-    #@attr('active')
-    def test_first_derivative(self):
-        f_call = NoDerivativeAtZeroFunction('f', *self.variables)
-        dfd1 = f_call.derive(1)
-
-        self.assertEqual( sp.sympify(dfd1) , sp.sympify('dfd1(x0,x1,x2)') )
-        for i in range(self.number_of_polysymbols):
-            self.assertEqual( sp.sympify(dfd1.replace(i,0)) , 0 )
-
-    #@attr('active')
-    def test_second_derivative(self):
-        f_call = NoDerivativeAtZeroFunction('f', *self.variables)
-        dfd1 = f_call.derive(1).derive(0)
-
-        self.assertEqual( sp.sympify(dfd1) , sp.sympify('ddfd1d0(x0,x1,x2)') )
-        for i in range(self.number_of_polysymbols):
-            self.assertEqual( sp.sympify(dfd1.replace(i,0)) , 0 )
-
 class TestRealPartFunction(unittest.TestCase):
     def setUp(self):
         self.number_of_polysymbols = 3

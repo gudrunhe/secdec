@@ -158,11 +158,7 @@ class Polytope(object):
 
             # write additional information
             with open(os.path.join(workdir, 'run_info'),'w') as infofile:
-                infofile.write('Normaliz run card (file "%s"):\n' % run_card_filename)
-                infofile.write('-----------------------------------\n')
-                infofile.write(run_card_as_str)
-                infofile.write('\n-----------------------------------\n')
-                infofile.write('\n')
+                infofile.write('Normaliz run card: "%s"\n' % run_card_filename)
                 infofile.write('running "%s" ...\n' % ' '.join(command_line_command))
 
             # redirect normaliz stdout
@@ -318,11 +314,7 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
 
         # write additional information
         with open(os.path.join(workdir, 'run_info'),'w') as infofile:
-            infofile.write('Normaliz run card (file "%s"):\n' % run_card_filename)
-            infofile.write('-----------------------------------\n')
-            infofile.write(run_card_as_str)
-            infofile.write('\n-----------------------------------\n')
-            infofile.write('\n')
+            infofile.write('Normaliz run card: "%s"\n' % run_card_filename)
             infofile.write('running "%s" ...\n' % ' '.join(command_line_command))
 
         # redirect normaliz stdout

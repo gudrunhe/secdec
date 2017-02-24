@@ -24,5 +24,8 @@ This section describes all public functions and classes in `pySecDec`.
 .. automodule:: pySecDec.code_writer
     :members:
 
+.. automodule:: pySecDec.integral_interface
+    :members:
+
 .. automodule:: pySecDec.misc
     :members:

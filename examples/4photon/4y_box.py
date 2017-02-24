@@ -49,6 +49,4 @@ form_work_space = '100M',
 decomposition_method = 'geometric',
 normaliz_workdir = 'normaliz_tmp_box',
 
-force_unsafe_deformation=True
-
 )

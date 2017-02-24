@@ -49,8 +49,10 @@ master_doc = 'index'
 
 # General information about the project.
 from pySecDec import __authors__ as authors
+from datetime import datetime
 project = u'pySecDec'
-copyright = u'2015, the SecDec collaboration: ' + authors
+copyright_year = datetime.now().year
+copyright = str(copyright_year) + u', the SecDec collaboration: ' + authors
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

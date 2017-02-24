@@ -81,6 +81,7 @@ class LoopIntegralFromGraph(LoopIntegral):
                 self.internal_lines = self.internal_lines[:i] + self.internal_lines[i+1:]
                 self.P -= 1
                 self.powerlist = self.powerlist[:i] + self.powerlist[i+1:]
+                self.derivativelist = self.derivativelist[:i] + self.derivativelist[i+1:]
                 self.Feynman_parameters = self.Feynman_parameters[:i] + self.Feynman_parameters[i+1:]
 
                 # re-connect graph after removing line -> pinch
@@ -101,7 +102,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0
         self.preliminary_numerator = Polynomial(np.zeros([1,len(self.Feynman_parameters)+2], dtype=int), \
-                                                np.array([1]), self.Feynman_parameters+sp.sympify(['F','U']), \
+                                                np.array([1]), self.Feynman_parameters+sp.sympify(['U','F']), \
                                                 copy=False)
 
     @cached_property

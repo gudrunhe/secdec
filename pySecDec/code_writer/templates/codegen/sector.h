@@ -22,8 +22,12 @@ Symbols `integrationVariables'
 * Define the imaginary unit in sympy notation.
 Symbol I;
 
-#define functions "%(functions)s"
+#define calIDerivatives "%(cal_I_derivatives)s"
+#define functions "`calIDerivatives',%(functions)s"
 CFunctions `functions';
+
+#define decomposedPolynomialDerivatives "%(decomposed_polynomial_derivatives)s"
+CFunctions `decomposedPolynomialDerivatives';
 
 * Temporary functions and symbols for replacements in FORM
 AutoDeclare CFunctions SecDecInternalfDUMMY;
@@ -31,10 +35,10 @@ AutoDeclare Symbols SecDecInternalsDUMMY;
 
 * We generated logs in the subtraction and pack denominators
 * and powers into a functions.
-CFunctions log, SecDecInternalIntPow, SecDecInternalDenominator;
+CFunctions log, SecDecInternalPow, SecDecInternalDenominator;
 
 * We rewrite function calls as symbols
-#Do function = {`functions',log,SecDecInternalIntPow,SecDecInternalDenominator}
+#Do function = {`functions',`decomposedPolynomialDerivatives',log,SecDecInternalPow,SecDecInternalDenominator}
   AutoDeclare Symbols SecDecInternal`function'Call;
 #EndDo
 
@@ -58,9 +62,6 @@ AutoDeclare Symbols SecDecInternalLabel;
 * `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''.
 %(regulator_powers)s
 
-* The array of abbreviations
-ExtraSymbols,array,SecDecInternalAbbreviation;
-
 * Define two procedures to open and close a nested argument section
 #procedure beginArgumentDepth(depth)
   #Do recursiveDepth = 1, `depth'
@@ -82,11 +83,15 @@ ExtraSymbols,array,SecDecInternalAbbreviation;
   %(insert_other_procedure)s
 #endProcedure
 
+#procedure insertDecomposed
+  %(insert_decomposed_procedure)s
+#endProcedure
+
 * Define how deep functions to be inserted are nested.
 #define insertionDepth "%(form_insertion_depth)i"
 
-* Define the data type of the integrand container class (constructed in python).
-#define integrandContainerType "%(sector_container_type)s"
+* Define the data type of the integrand container class.
+#define integrandContainerType "nested_series_t<sector_container_t>"
 
 * Define the initializer list for the integrand container class
 * (constructed in python).

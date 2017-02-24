@@ -391,13 +391,13 @@ namespace secdecutil
             cubareal border; \
             cubareal maxchisq; \
             cubareal mindeviation; \
-            long long int ngiven; \
-            int ldxgiven; \
-            cubareal *xgiven; \
-            long long int nextra; \
+            constexpr static long long int ngiven = 0; \
+            constexpr static int ldxgiven = 0; \
+            constexpr static cubareal * xgiven = nullptr; \
+            constexpr static long long int nextra = 0; \
             constexpr static peakfinder_t peakfinder = nullptr; \
             constexpr static char * statefile = nullptr; \
-            constexpr static void* spin = nullptr; \
+            constexpr static void * spin = nullptr; \
             \
             Divonne \
             ( \
@@ -413,20 +413,15 @@ namespace secdecutil
                 int maxpass = 4, \
                 cubareal border = 0., \
                 cubareal maxchisq = 1., \
-                cubareal mindeviation = .15, \
-                int ngiven = 0, \
-                int ldxgiven = 1, \
-                int nextra = 0 \
+                cubareal mindeviation = .15 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 flags(flags),seed(seed),mineval(mineval),maxeval(maxeval), \
                 key1(key1), key2(key2), key3(key3), maxpass(maxpass), \
-                border(border), maxchisq(maxchisq), mindeviation(mindeviation), \
-                ngiven(ngiven), ldxgiven(ldxgiven), nextra(nextra) \
+                border(border), maxchisq(maxchisq), mindeviation(mindeviation) \
             {};
 
         #define DIVONNE_INTEGRATE_BODY \
-        ldxgiven = this->ndim; \
         /* Cuba output values */ \
         int nregions; \
         long long int neval; \
@@ -483,8 +478,7 @@ namespace secdecutil
                                                                        epsrel,epsabs,
                                                                        flags,seed,mineval,maxeval,
                                                                        key1, key2, key3, maxpass,
-                                                                       border, maxchisq, mindeviation,
-                                                                       ngiven, ldxgiven, nextra
+                                                                       border, maxchisq, mindeviation
                                                                    )
                                                  );
         };

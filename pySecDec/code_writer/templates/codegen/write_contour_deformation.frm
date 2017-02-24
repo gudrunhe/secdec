@@ -64,10 +64,12 @@
   #call cppDefine(`realParameters',real_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`complexParameters',complex_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`occurringDeformationParameters',deformation_parameters,contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalMu deformation_offset#@SecDecInternalNewline@#"
 
 * Since FORM does not use "abbreviation[0]", we can use it as temporary variable.
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define tmp SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
+
+* c++-define "SecDecInternalRealPart"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
 
 * Optmimize the 2nd Symnanzik polynomial "F"
 
@@ -83,7 +85,7 @@
     #EndIf
   #EndDo
 
-  L expressionF = SecDecInternalContourDeformationPolynomial(`deformedIntegrationVariables',`regulators')*replace_(`nullifyRegulators') + SecDecInternalsDUMMYdeformedVariables;
+  L expressionF = `SecDecInternalContourDeformationPolynomial'(`deformedIntegrationVariables',`regulators')*replace_(`nullifyRegulators') + SecDecInternalsDUMMYExpressionFTail;
   .sort
 
 * replace the calls to the deformed integration variables by dummy symbols
@@ -91,24 +93,68 @@
   #Do IV = {`occurringIntegrationVariables',}
     #If x`IV' != x
 
-      argument SecDecInternalContourDeformationPolynomial;
+      argument `SecDecInternalContourDeformationPolynomial';
         Id SecDecInternalDeformed`IV' = SecDecInternalSecDecInternalDeformed`IV'Call;
       endArgument;
-      Id SecDecInternalsDUMMYdeformedVariables = SecDecInternalsDUMMYdeformedVariables +
+      Id SecDecInternalsDUMMYExpressionFTail = SecDecInternalsDUMMYExpressionFTail +
         SecDecInternalLabelSecDecInternalDeformed`IV' * SecDecInternalDeformed`IV'(`integrationVariables');
 
     #EndIf
   #EndDo
-
-  Id SecDecInternalsDUMMYdeformedVariables = 0;
 * }
+
+* insert the deformation and `SecDecInternalContourDeformationPolynomial'
+  #call insertDeformedIntegrationVariables
+  argument SecDecInternalRealPart;
+    #call insertDeformedIntegrationVariables
+    #call insertDecomposed
+  endArgument;
+  #call insertDeformedIntegrationVariables
+  #call insertDecomposed
+  multiply replace_(I,i_);
+  .sort
+
+* replace the calls to "SecDecInternalRealPart" by dummy symbols
+* {
+  #If `contourDeformation'
+
+    #redefine function "SecDecInternalRealPart"
+    #$labelCounter = 0;
+
+    #Do i = 1,1
+*     set dollar variable
+      #Do depth = 0, `insertionDepth'
+        if ( match(`function'(?SecDecInternalsDUMMY$arg)) ) redefine i "0";
+      #EndDo
+      .sort
+
+*     The following "#if" evaluates to true only if there is still something to do.
+      #If `i' == 0
+
+        #$labelCounter = $labelCounter + 1;
+
+        #Do depth = 0, `insertionDepth'
+          Id `function'($arg) = SecDecInternal`function'Call`$labelCounter';
+        #EndDo
+
+        Id SecDecInternalsDUMMYExpressionFTail = SecDecInternalsDUMMYExpressionFTail +
+            SecDecInternalLabel`function'Call`$labelCounter' * (`$arg');
+
+      #EndIf
+      .sort
+    #EndDo
+
+    #redefine largestLabel`function' "`$labelCounter'"
+
+  #EndIf
+* }
+
+  Id SecDecInternalsDUMMYExpressionFTail = 0;
 
 * remove calls to the deformation of absent integration variables
   #Do IV = {`absentIntegrationVariables',}
     #If x`IV' != x
-      argument SecDecInternalContourDeformationPolynomial;
-        Id SecDecInternalDeformed`IV' = 0;
-      endArgument;
+      Id SecDecInternalDeformed`IV' = 0;
     #EndIf
   #EndDo
 
@@ -118,19 +164,11 @@
     .sort
   #EndIf
 
-* insert the deformation and SecDecInternalContourDeformationPolynomial
-  #call insertDeformedIntegrationVariables
-  argument SecDecInternalRealPart;
-    #call insertDeformedIntegrationVariables
-    #call insertOther
-  endArgument;
-  #call insertDeformedIntegrationVariables
-  #call insertOther
-  multiply replace_(I,i_);
+  Format O`optimizationLevel';
+  AntiBracket `integrationVariables', `realParameters', `complexParameters', `deformationParameters';
   .sort
+  ExtraSymbols,array,SecDecInternalAbbreviation;
 
-  AntiBracket `integrationVariables', `realParameters', `complexParameters', `deformationParameters', SecDecInternalMu;
-  .sort
   #optimize expressionF
 
   Format float 20;
@@ -142,13 +180,27 @@
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const integration_variables,#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const real_parameters,#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      complex_t const * const complex_parameters,#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const deformation_parameters,#@SecDecInternalNewline@#"
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      const real_t deformation_offset#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "      real_t const * const deformation_parameters#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  {#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+* c++ define the calls to "SecDecInternalRealPart"
+  #redefine function "SecDecInternalRealPart"
+  #Do labelID = 1, `largestLabel`function''
+    Bracket SecDecInternalLabel`function'Call`labelID';
+    .sort
+    L realPart = expressionF[SecDecInternalLabel`function'Call`labelID'];
+    .sort
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternal`function'Call`labelID' = SecDecInternalRealPart(%%E);" realPart(#@no_split_expression@#)
+    #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+    multiply replace_(SecDecInternalLabel`function'Call`labelID', 0);
+    .sort
+  #EndDo
+  #undefine largestLabel`function'
+  drop realPart;
 
 * c++ define the defomed integration variables
   #Do IV = {`occurringIntegrationVariables',}
@@ -165,9 +217,9 @@
 
     #EndIf
   #EndDo
-  drop deformedIV
+  drop deformedIV;
 
-* write SecDecInternalContourDeformationPolynomial
+* write `SecDecInternalContourDeformationPolynomial'
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e" expressionF(#@no_split_expression@#)
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "return tmp;#@SecDecInternalNewline@#"
 
@@ -176,15 +228,16 @@
   #call cppUndefine(`realParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`complexParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`occurringDeformationParameters',contour_deformation_sector_`sectorID'_`cppOrder'.cpp)
-  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalMu#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalRealPart#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
 
 * Close the function and the namespace in the c++ file
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
 
-* Delete the expression "contourdef" since it is no longer needed.
-  drop contourdef;
+* Delete "expressionF" since it is no longer needed.
+  #clearoptimize
+  drop expressionF;
   .sort
 
 
@@ -221,25 +274,22 @@
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "  {#@SecDecInternalNewline@#"
 
-* We try to maximize the contour deformation by demandaing that the ratio
-* of the second derivatives (the entries in the Hessian matrix) over the
-* first derivatives is less than one. Each entry in the Hessian divided by
-* a first derivative gives an upper bound for the corresponding deformation
-* parameter.
+* The contour deformation is defined as:
+* ``z_k({x_k}) = x_k - i * lambda_k * x_k * (1-x_k) * Re(dF_dx_k)``, where "dF_dx_k" denotes the derivative of `F` by `x_k`
+* We compute ``1 / (  x_k * (1-x_k) * Re(dF_dx_k)  )`` for multiple ``x_k`` and - in the class "SectorContainerWithoutDeformation" -
+* set `lambda_k` to the maximum in order to have the deformation smaller than one.
 
-* Construct the gradient and the Hessian
-  L derivatives = SecDecInternalsDUMMYDerivativesAppendix;
-  #Do idx1 = {`occurringIntegrationVariableIndices',}
-    #If x`idx1' != x
-      Id SecDecInternalsDUMMYDerivativesAppendix = SecDecInternalLabelGradient^(`idx1'+1) * dSecDecInternalContourDeformationPolynomiald`idx1'(`integrationVariables',`regulators') + SecDecInternalsDUMMYDerivativesAppendix;
-      #Do idx2 = {`occurringIntegrationVariableIndices',}
-        #If x`idx2' != x
-          #If `idx1' <= `idx2'
-            Id SecDecInternalsDUMMYDerivativesAppendix = SecDecInternalLabelHessianI^(`idx1'+1) * SecDecInternalLabelHessianJ^(`idx2'+1) * ddSecDecInternalContourDeformationPolynomiald`idx1'd`idx2'(`integrationVariables',`regulators') +
-                                                         SecDecInternalsDUMMYDerivativesAppendix;
-          #EndIf
-        #EndIf
-      #EndDo
+* Construct the ``  x_k * (1-x_k) * dF_dx_k  ``
+* Note: We can take the real part of the full expression since ``x_k * (1-x_k)`` is real anyway.
+  Local deformations = SecDecInternalsDUMMYDeformationsAppendix;
+  #Do idx = {`occurringIntegrationVariableIndices',}
+    #If x`idx' != x
+      Id SecDecInternalsDUMMYDeformationsAppendix = SecDecInternalsDUMMYDeformationsAppendix +
+        SecDecInternalLabelDeformation^(`idx'+1) *
+        (
+            `integrationVariable`idx'' * (1-`integrationVariable`idx'') *
+            d`SecDecInternalContourDeformationPolynomial'd`idx'(`integrationVariables',`regulators')
+        );
     #EndIf
   #EndDo
 
@@ -256,30 +306,30 @@
                    );
   .sort
 
-* Explicitly insert the derivatives of SecDecInternalContourDeformationPolynomial
-  argument SecDecInternalRealPart;
-    #call insertOther
-  endArgument;
-  #call insertOther
+* Explicitly insert the derivatives of `SecDecInternalContourDeformationPolynomial'
+  #call insertDecomposed
 
 * translate sympy's imaginary unit to FORM's imaginary unit
   multiply replace_(I,i_);
   .sort
 
 * Define the integration variables, the real parameters, the complex parameters,
-* and the deformation parameters as c preprocessor variables.
+* the deformation parameters, "SecDecInternalRealPart", and "SecDecInternalAbs" as c preprocessor variables.
 * (The c function takes them packed into an array).
 * "Format rational": Need the indices as integers.
   Format rational;
   #call cppDefine(`occurringIntegrationVariables',integration_variables,optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`realParameters',real_parameters,optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`complexParameters',complex_parameters,optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalAbs(x) std::abs(x)#@SecDecInternalNewline@#"
 
 * optimize
-  Bracket SecDecInternalLabelGradient, SecDecInternalLabelHessianI, SecDecInternalLabelHessianJ;
+  Bracket SecDecInternalLabelDeformation;
   Format O`optimizationLevel';
   .sort
-  #optimize derivatives
+  ExtraSymbols,array,SecDecInternalAbbreviation;
+  #optimize deformations
 
 * Since FORM does not use "abbreviation[0]", we can use it as temporary variable.
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#define tmp SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
@@ -291,96 +341,41 @@
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
-* define the entries of the gradient and the Hessian in c++
-  Format rational;
-  Format C;
-  #$cppIdx1 = -1;
-  #Do idx1 = {`occurringIntegrationVariableIndices',}
-    #If x`idx1' != x
-      #$cppIdx1 = $cppIdx1 + 1;
-      Bracket SecDecInternalLabelGradient, SecDecInternalLabelHessianI, SecDecInternalLabelHessianJ;
+* set the output lambdas to ``1 / Abs(    Re(  x_k * (1-x_k) * dF_dx_k  )    )``
+  #$cppidx = -1;
+  #Do idx = {`occurringIntegrationVariableIndices',}
+    #If x`idx' != x
+      #$cppidx = $cppidx + 1;
+      Bracket SecDecInternalLabelDeformation;
       .sort
-      L expr = derivatives[SecDecInternalLabelGradient^(`idx1'+1)];
+      L expr = deformations[SecDecInternalLabelDeformation^(`idx'+1)];
       .sort
-      #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-      #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_t abs_gradient_`$cppIdx1' = std::abs(tmp);#@SecDecInternalNewline@#"
-      #$cppIdx2 = -1;
-      #Do idx2 = {`occurringIntegrationVariableIndices',}
-        #If x`idx2' != x
-          #$cppIdx2 = $cppIdx2 + 1;
-          #If `idx1' <= `idx2'
-            Bracket SecDecInternalLabelGradient, SecDecInternalLabelHessianI, SecDecInternalLabelHessianJ;
-            .sort
-            L expr = derivatives[SecDecInternalLabelHessianI^(`idx1'+1)*SecDecInternalLabelHessianJ^(`idx2'+1)];
-            .sort
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_t abs_Hessian_`$cppIdx1'_`$cppIdx2' = std::abs(tmp);#@SecDecInternalNewline@#"
-          #EndIf
-        #EndIf
-      #EndDo
+      Format rational;
+      Format C;
+      #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "output_deformation_parameters[`$cppidx'] ="
+      Format float 20;
+      Format C;
+      #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "1./SecDecInternalAbs(SecDecInternalRealPart(%%E));#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
     #EndIf
   #EndDo
-
-* c++-define the smallest nonzero number and a real temporary variable
-  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_t big = std::numeric_limits<real_t>::max();#@SecDecInternalNewline@#"
-  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_t real_tmp;#@SecDecInternalNewline@#"
-
-* find the maximal lambda that forces the second order to be smaller than
-* the first order
-* {
-
-  #If `numOccurringIVOrder`shiftedOrderIndex'' != 0
-
-    #$idx1 = -1;
-    #Do IV1 = {`occurringIntegrationVariables'}
-      #$idx1 = $idx1 + 1;
-
-        #$idx2 = -1;
-        #Do IV2 = {`occurringIntegrationVariables'}
-          #$idx2 = $idx2 + 1;
-          #$idx2plus1 = $idx2 + 1;
-
-          #If `$idx1' <= `$idx2'
-            #redefine HessianIDX "`$idx1'_`$idx2'"
-          #Else
-            #redefine HessianIDX "`$idx2'_`$idx1'"
-          #EndIf
-
-          #redefine nextDeformationParameterValue "abs_Hessian_`HessianIDX' == 0. ? big : abs_gradient_`$idx2' / abs_Hessian_`HessianIDX'"
-
-          #If `$idx2' == 0
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "output_deformation_parameters[`$idx1'] = "
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "`nextDeformationParameterValue';#@SecDecInternalNewline@#"
-          #Else
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp = `nextDeformationParameterValue';#@SecDecInternalNewline@#"
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "output_deformation_parameters[`$idx1'] = "
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp < output_deformation_parameters[`$idx1'] ?"
-            #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "real_tmp : output_deformation_parameters[`$idx1'];#@SecDecInternalNewline@#"
-          #EndIf
-
-          #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-
-        #EndDo
-
-    #EndDo
-
-  #EndIf
-
-* }
+  drop expr;
+  .sort
 
 * undefine the c preprocessor macros
   #call cppUndefine(`occurringIntegrationVariables',optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`realParameters',optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
   #call cppUndefine(`complexParameters',optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalRealPart#@SecDecInternalNewline@#"
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalAbs#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
 
 * Close the function and the namespace in the c++ file
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
 
-* Delete the expression "derivatives" since it is no longer needed.
+* Delete the expression "deformations" since it is no longer needed.
   #clearoptimize
-  drop derivatives;
+  drop deformations;
   .sort
 
 * }

@@ -6,7 +6,7 @@
 
 namespace %(name)s
 {
-    %(prefactor_type)s prefactor(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
+    nested_series_t<integrand_return_t> prefactor(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
     {
         %(prefactor_function_body)s
     }

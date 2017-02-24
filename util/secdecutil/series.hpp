@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -35,13 +36,63 @@ namespace secdecutil {
          */
 
         /*
-         * Performs subtraction (``subtract=true``) or addition (``subtract=false``) of two series
+         * Performs subtraction of two series
          * \Sum_i=a1^b1 c_i * eps^i - \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i - c'_i) * eps^i
-         * or
+         */
+        template<typename T1, typename T2>
+        static auto subtract(const Series<T1>& s1, const Series<T2>& s2)
+        -> Series<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>
+        {
+            using Tout = decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()));
+
+            if (s1.expansion_parameter != s2.expansion_parameter)
+                throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
+
+            // Assume series are not truncated
+            bool truncated_above = false;
+            int order_min = std::min( s1.get_order_min(), s2.get_order_min() );
+            int order_max = std::max( s1.get_order_max(), s2.get_order_max() );
+
+            // Check if new series must be truncated from above
+            if ( s1.get_truncated_above() )
+            {
+                truncated_above = true;
+                if (s1.get_order_max() < order_max)
+                    order_max = s1.get_order_max();
+            }
+
+            if ( s2.get_truncated_above() )
+            {
+                truncated_above = true;
+                if (s2.get_order_max() < order_max)
+                    order_max = s2.get_order_max();
+            }
+
+            std::vector<Tout> content;
+            content.reserve(order_max-order_min+1);
+            // Perform subtraction
+            for ( int i = order_min; i < order_max + 1; i++)
+            {
+                if ( s1.hasTerm(i) && s2.hasTerm(i) )
+                {
+                    content.push_back(s1.at(i) - s2.at(i));
+                } else if ( s1.hasTerm(i) )
+                {
+                    content.push_back(s1.at(i));
+                } else // s2.hasTerm(i)
+                {
+                    content.push_back(-s2.at(i));
+                }
+            }
+            return Series<Tout>(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
+        }
+
+        /*
+         * Performs addition of two series
          * \Sum_i=a1^b1 c_i * eps^i + \Sum_j=a2^b2 c'_j * eps^j = \Sum_i=min(a1,a2)^max(b1,b2) (c_i + c'_i) * eps^i
          */
-        template<bool subtract, typename T1, typename T2>
-        static auto sub_or_add(const Series<T1>& s1, const Series<T2>& s2)
+        template<typename T1, typename T2>
+        static auto add(const Series<T1>& s1, const Series<T2>& s2)
         -> Series<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>
         {
             using Tout = decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()));
@@ -71,35 +122,18 @@ namespace secdecutil {
 
             std::vector<Tout> content;
             content.reserve(order_max-order_min+1);
-            if ( subtract ) {
-                // Perform subtraction
-                for ( int i = order_min; i < order_max + 1; i++)
+            // Perform addition
+            for ( int i = order_min; i < order_max + 1; i++)
+            {
+                if ( s1.hasTerm(i) && s2.hasTerm(i) )
                 {
-                    if ( s1.hasTerm(i) && s2.hasTerm(i) )
-                    {
-                        content.push_back(s1.at(i) - s2.at(i));
-                    } else if ( s1.hasTerm(i) )
-                    {
-                        content.push_back(s1.at(i));
-                    } else // s2.hasTerm(i)
-                    {
-                        content.push_back(-s2.at(i));
-                    }
-                }
-            } else {
-                // Perform addition
-                for ( int i = order_min; i < order_max + 1; i++)
+                    content.push_back(s1.at(i) + s2.at(i));
+                } else if ( s1.hasTerm(i) )
                 {
-                    if ( s1.hasTerm(i) && s2.hasTerm(i) )
-                    {
-                        content.push_back(s1.at(i) + s2.at(i));
-                    } else if ( s1.hasTerm(i) )
-                    {
-                        content.push_back(s1.at(i));
-                    } else // s2.hasTerm(i)
-                    {
-                        content.push_back(s2.at(i));
-                    }
+                    content.push_back(s1.at(i));
+                } else // s2.hasTerm(i)
+                {
+                    content.push_back(s2.at(i));
                 }
             }
             return Series<Tout>(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
@@ -529,38 +563,38 @@ namespace secdecutil {
     inline auto operator+(const Series<T1>& s1, const Series<T2>& s2)
     -> Series<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>
     {
-        return s1.template sub_or_add<false>(s1,s2);
+        return s1.template add(s1,s2);
     };
     template<typename T1, typename T2>
     inline auto operator+(const Series<T1>& series, const T2& scalar)
     -> Series<decltype(series.at(series.get_order_min()) + scalar)>
     {
-        return series.template sub_or_add<false>(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
+        return series.template add(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
     };
     template<typename T1, typename T2>
     inline auto operator+(const T1& scalar, const Series<T2>& series)
     -> Series<decltype(scalar + series.at(series.get_order_min()))>
     {
-        return series.template sub_or_add<false>(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
+        return series.template add(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
     };
 
     template<typename T1, typename T2>
     inline auto operator-(const Series<T1>& s1, const Series<T2>& s2)
     -> Series<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>
     {
-        return s1.template sub_or_add<true>(s1,s2);
+        return s1.template subtract(s1,s2);
     };
     template<typename T1, typename T2>
     inline auto operator-(const Series<T1>& series, const T2& scalar)
     -> Series<decltype(series.at(series.get_order_min()) - scalar)>
     {
-        return series.template sub_or_add<true>(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
+        return series.template subtract(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
     };
     template<typename T1, typename T2>
     inline auto operator-(const T1& scalar, const Series<T2>& series)
     -> Series<decltype(scalar - series.at(series.get_order_min()))>
     {
-        return series.template sub_or_add<true>(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
+        return series.template subtract(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
     };
 
     template<typename T1, typename T2>

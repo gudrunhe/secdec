@@ -144,7 +144,7 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
         :math:`t_{\alpha_r} \rightarrow 0`.
 
     :param Jacobian:
-        :class:`.Polynomial` with one term and no coefficients;
+        :class:`.Polynomial`;
         The Jacobian determinant is multiplied to this polynomial.
 
     :param polynomials:
@@ -160,7 +160,6 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
         remap_parameters([1,2], Jacobian, F, U)
 
     '''
-    assert len(Jacobian.coeffs) == 1, "`Jacobian` must be a monomial."
     assert polynomials, "No polynomial for modification passed"
 
     num_parameters = polynomials[0].expolist.shape[1]
@@ -174,11 +173,13 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
 
     Jacobian.expolist[:,singular_parameters[0]] += len(singular_parameters) - 1
 
-def iteration_step(sector, indices=None):
+def find_singular_set(sector, indices=None):
     '''
-    Run a single step of the iterative sector decomposition as described
-    in chapter 3.2 (part II) of arXiv:0803.4177v2 [Hei08]_.
-    Return an iterator of :class:`.Sector` - the arising subsectors.
+    Function within the iterative sector decomposition procedure
+    which heuristically chooses an optimal decomposition set.
+    The strategy was introduced in arXiv:hep-ph/0004013 [BH00]_
+    and is described in 4.2.2 of arXiv:1410.7939 [Bor14]_.
+    Return a list of indices.
 
     :param sector:
         :class:`.Sector`;
@@ -209,18 +210,76 @@ def iteration_step(sector, indices=None):
             if not polyprod.factors[1].has_constant_term(indices):
                 return polyprod
         # Control only reaches this point if the desired form is
-        # already reached.
+        # already reached for all polynomials in ``sector.cast``.
         raise EndOfDecomposition()
 
-    # find a suitable transformation for a polynomial to be cast
-    singular_set_found = False
+    # find a polynomial to cast that is not in the form ``const + ... yet``
     polyprod = get_poly_to_transform(sector, indices)
     poly = polyprod.factors[1]
-    for singular_set in powerset(indices,exclude_empty=True):
-        if poly.becomes_zero_for(singular_set):
-            singular_set_found = True
+    possible_sets = []
+
+    # find sets that nullyfy the selected polynomial
+    # only consider sets of the smallest possible size
+    for singular_set in powerset(indices,min_length=2):
+        if possible_sets and len(possible_sets[0])<len(singular_set):
             break
-    assert singular_set_found
+        if poly.becomes_zero_for(singular_set):
+            possible_sets.append(singular_set)
+    assert possible_sets
+
+    # First check how many poynomials of the sector nullify for
+    # each set of the `possible sets` of fixed length.
+    # Second only gather those sets which nullify the most polynomials
+    howmany_max = 1
+    howmany = 0
+    best_sets = []
+    for singular_set in possible_sets:
+        for polyprod in sector.cast:
+            if not polyprod.factors[1].has_constant_term(indices):
+                howmany += 1
+            if howmany > howmany_max:
+                best_sets = []
+                howmany_max = howmany
+        best_sets.append(singular_set)
+        howmany = 0
+
+    # choose the set of Feynman parameters which appears in the minimal
+    # number of maximal appearing exponents
+    exposum_max = np.inf
+    for test_set in best_sets:
+        exposum = poly.expolist[:,test_set].max(axis=0).sum()
+        if exposum < exposum_max:
+            exposum_max = exposum
+            best_set = test_set
+    assert np.isfinite(exposum_max)
+
+    # return the chosen set
+    return best_set
+
+def iteration_step(sector, indices=None):
+    '''
+    Run a single step of the iterative sector decomposition as described
+    in chapter 3.2 (part II) of arXiv:0803.4177v2 [Hei08]_.
+    Return an iterator of :class:`.Sector` - the arising subsectors.
+
+    :param sector:
+        :class:`.Sector`;
+        The sector to be decomposed.
+
+    :param indices:
+        iterable of integers or None;
+        The indices of the parameters to be considered as
+        integration variables. By default (``indices=None``),
+        all parameters are considered as integration
+        variables.
+
+    '''
+    # consider all indices if `indices` is None
+    if indices is None:
+        indices = range(sector.number_of_variables)
+
+    # find a set that describes the transformation to be performed
+    singular_set = find_singular_set(sector, indices)
 
     # We have to generate a subsector for each Feynman parameter
     # that appears in `singular_set`.
