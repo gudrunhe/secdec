@@ -1101,9 +1101,11 @@ B `regulators';
       Local expr = toOptimize[SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal ^ `signCheckId'];
       .sort
 
-      #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-      #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression > 0)"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+      #If termsin(expr) > 0
+        #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
+        #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression > 0)"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+      #EndIf
 
     #EndDo
 
@@ -1117,9 +1119,11 @@ B `regulators';
       Local expr = toOptimize[SecDecInternalLabelUCallSignCheckGlobal ^ `signCheckId'];
       .sort
 
-      #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-      #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression < 0)"
-      #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+      #If termsin(expr) > 0
+        #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
+        #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression < 0)"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+      #EndIf
 
     #EndDo
 
