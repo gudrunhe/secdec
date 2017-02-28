@@ -63,11 +63,9 @@ and programs are required:
 
  * CUBA (http://www.feynarts.de/cuba/)
  * FORM (http://www.nikhef.nl/~form/)
- * gsl (http://www.gnu.org/software/gsl/)
  * SecDecUtil (part of `pySecDec`), depends on:
 
    * catch (https://github.com/philsquared/Catch)
-   * fast-cpp-csv-parser (https://github.com/ben-strasser/fast-cpp-csv-parser)
 
 These packages are redistributed with the `pySecDec` tarball; i.e. you don't have to install
 any of them yourself.

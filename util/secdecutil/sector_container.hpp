@@ -4,9 +4,9 @@
 #include <exception>
 #include <functional>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
-#include <gsl/gsl_qrng.h>
 #include <secdecutil/integrand_container.hpp>
 
 namespace secdecutil {
@@ -21,9 +21,6 @@ namespace secdecutil {
 
     // this error is thrown if the sign check of the deformation (contour_deformation_polynomial.imag() <= 0) fails
     struct sign_check_error : public std::runtime_error { using std::runtime_error::runtime_error; };
-
-    // this error is thrown if an error with the gsl occurs
-    struct gsl_error : public std::runtime_error { using std::runtime_error::runtime_error; };
 
 
     /*
@@ -128,20 +125,23 @@ namespace secdecutil {
             real_t * temp_deformation_parameters = temp_deformation_parameter_vector.data();
             real_t * real_sample = real_sample_vector.data();
 
-            // define a Sobol sequence using the gsl
-            // Restriction to at most 40 dimensions only because of the implementation in the gsl. --> Use a different Sobol implementation if higher dimensionality is needed.
-            int Sobol_maxdim = 40;
-            if (number_of_integration_variables > Sobol_maxdim)
-                throw gsl_error("The gsl implements Sobol sequences only up to " + std::to_string(Sobol_maxdim) +" dimensions (need " +
-                                std::to_string(number_of_integration_variables) + "). Please set the \"deformation_parameters\" manually.");
-
-            // define the generator
-            gsl_qrng * Sobol_generator = gsl_qrng_alloc(gsl_qrng_sobol, number_of_integration_variables);
+            // Define a lambda function that generates 'number_of_integration_variables'-dimensional
+            // uniformly-distributed points.
+            // We use the c++11-builtin 'minstd_rand' and seed it with the 'number_of_samples'.
+            std::minstd_rand random_number_generator(/* seed  = */ number_of_samples);
+            std::uniform_real_distribution<real_t> uniform_distribution(0,1);
+            auto generate_sample =
+            [ &random_number_generator , &uniform_distribution , this ]
+            (real_t * output)
+            {
+                for (unsigned k = 0 ; k < number_of_integration_variables ; ++k)
+                    output[k] = uniform_distribution(random_number_generator);
+            };
 
             // find the minimum of the lambdas obtained for the different samples
             for (i=0; i<number_of_samples; ++i)
             {
-                gsl_qrng_get(Sobol_generator,real_sample);
+                generate_sample(real_sample);
                 maximal_allowed_deformation_parameters(temp_deformation_parameters, real_sample, real_parameters, complex_parameters);
                 for (j=0; j<number_of_integration_variables; ++j)
                     if (minimum <= temp_deformation_parameters[j] && temp_deformation_parameters[j] <= maximum)
@@ -153,24 +153,20 @@ namespace secdecutil {
                     }
             };
 
-            // reinitialize the Sobol sequence to obtain the same samples again
-            gsl_qrng_free(Sobol_generator);
-            Sobol_generator = gsl_qrng_alloc(gsl_qrng_sobol, number_of_integration_variables);
+            // reseed the random number generator to obtain the same samples again
+            random_number_generator.seed(number_of_samples);
 
             // perform the sign check for each sample; decrease the "optimized_deformation_parameters" if necessary
             integral_transformation_t<complex_t> deformation;
             for (i=0; i<number_of_samples; ++i)
             {
-                gsl_qrng_get(Sobol_generator,real_sample);
+                generate_sample(real_sample);
                 while ( !contour_deformation_polynomial_passes_sign_check(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters) )
                 {
                     for (j=0; j<number_of_integration_variables; ++j)
                         optimized_deformation_parameters[j] *= decrease_factor;
                 };
             };
-
-            // delete the quasi random number generator
-            gsl_qrng_free(Sobol_generator);
 
             return optimized_deformation_parameter_vector;
         };
