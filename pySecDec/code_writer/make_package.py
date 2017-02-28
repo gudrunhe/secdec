@@ -584,7 +584,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
-                 enforce_complex=False, split=False, ibp_power_goal=-1):
+                 enforce_complex=False, split=False, ibp_power_goal=-1, use_dreadnaut=True):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -791,6 +791,18 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
         Default: ``-1``
 
+    :param use_dreadnaut:
+        bool or string, optional;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_dreadnaut`
+        to find sector symmetries.
+        If given a string, interpret that string as the command
+        line executable `dreadnaut`. If ``True``, try
+        ``$SECDEC_CONTRIB/bin/dreadnaut`` and, if the
+        environment variable ``$SECDEC_CONTRIB`` is not set,
+        ``dreadnaut``.
+        Default: ``True``
+
     '''
     print('running "make_package" for "' + name + '"')
 
@@ -833,6 +845,18 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # get the decomposition routines
     strategy = get_decomposition_routines(decomposition_method, normaliz_executable, os.path.join(name,'normaliz_workdir'))
+
+    # get dreadnaut command if desired
+    if use_dreadnaut:
+        if isinstance(use_dreadnaut, str):
+            dreadnaut_executable = use_dreadnaut
+        else:
+            try:
+                # use "$SECDEC_CONTRIB/bin/dreadnaut" if "$SECDEC_CONTRIB" is defined
+                dreadnaut_executable = os.path.join(os.environ['SECDEC_CONTRIB'], 'bin', 'dreadnaut')
+            except KeyError:
+                # "$SECDEC_CONTRIB" is not defined --> let the system find "dreadnaut"
+                dreadnaut_executable = 'dreadnaut'
 
     # define the monomials "x0", "x1", "x2", ... to keep track of the transformations
     one = Polynomial([[0]*len(symbols_other_polynomials)], [1], symbols_other_polynomials)
@@ -959,9 +983,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
         primary_sectors = list( strategy['primary'](initial_sector, range(len(integration_variables))) )
         print('number of primary sectors before investigating symmetries:', len(primary_sectors))
+        # find symmetries
         primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, iterative_sort)
+        print('number of primary sectors after investigating symmetries (iterative):', len(primary_sectors))
         primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, Pak_sort)
-        print('number of primary sectors after investigating symmetries:', len(primary_sectors))
+        print('number of primary sectors after investigating symmetries (iterative+Pak):', len(primary_sectors))
+        if use_dreadnaut:
+            primary_sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(primary_sectors, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
+            print('number of primary sectors after investigating symmetries (iterative+Pak+dreadnaut):', len(primary_sectors))
 
         # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
         symbols_primary_sectors = primary_sectors[0].Jacobian.polysymbols
@@ -1102,13 +1131,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
             for primary_sector in primary_sectors:
                 secondary_sectors.extend( strategy['secondary'](primary_sector, range(len(integration_variables))) )
             print('total number of sectors before investigating symmetries:', len(secondary_sectors))
-            # find symmetries using both implemented strategies
+            # find symmetries
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(secondary_sectors, iterative_sort)
-            print('total number of sectors after investigating symmetries (iterative)', len(secondary_sectors))
+            print('total number of sectors after investigating symmetries (iterative):', len(secondary_sectors))
             secondary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(secondary_sectors, Pak_sort)
-            print('total number of sectors after investigating symmetries (iterative+Pak)', len(secondary_sectors))
-            secondary_sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(secondary_sectors)
-            print('total number of sectors after investigating symmetries (iterative+Pak+dreadnaut)', len(secondary_sectors))
+            print('total number of sectors after investigating symmetries (iterative+Pak):', len(secondary_sectors))
+            if use_dreadnaut:
+                secondary_sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(secondary_sectors, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
+                print('total number of sectors after investigating symmetries (iterative+Pak+dreadnaut):', len(secondary_sectors))
         else:
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 

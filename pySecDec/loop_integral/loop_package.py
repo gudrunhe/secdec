@@ -22,7 +22,8 @@ def loop_package(name, loop_integral, requested_order,
                  decomposition_method='iterative',
                  normaliz_executable='normaliz',
                  enforce_complex=False,
-                 split=False, ibp_power_goal=-1):
+                 split=False, ibp_power_goal=-1,
+                 use_dreadnaut=True):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -139,6 +140,18 @@ def loop_package(name, loop_integral, requested_order,
 
         Default: ``-1``
 
+    :param use_dreadnaut:
+        bool or string, optional;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_dreadnaut`
+        to find sector symmetries.
+        If given a string, interpret that string as the command
+        line executable `dreadnaut`. If ``True``, try
+        ``$SECDEC_CONTRIB/bin/dreadnaut`` and, if the
+        environment variable ``$SECDEC_CONTRIB`` is not set,
+        ``dreadnaut``.
+        Default: ``True``
+
     '''
     print('running "loop_package" for "' + name + '"')
 
@@ -196,6 +209,8 @@ def loop_package(name, loop_integral, requested_order,
         decomposition_method = decomposition_method,
 
         normaliz_executable = normaliz_executable,
+
+        use_dreadnaut = use_dreadnaut,
 
         enforce_complex = enforce_complex,
         ibp_power_goal = ibp_power_goal,
