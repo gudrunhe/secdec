@@ -19,6 +19,10 @@ References
               *Normaliz. Algorithms for rational cones and affine monoids*,
             | available at https://www.normaliz.uni-osnabrueck.de
 
+.. [BKAP]   | B. D. McKay and A. Piperno
+              * Practical graph isomorphism, II*, 2014, Journal of Symbolic Computation, 60, 94-112,
+            | `doi:10.1016/j.jsc.2013.09.003 <http://dx.doi.org/10.1016/j.jsc.2013.09.003>`_
+
 .. [Bor14]  | S. Borowka
               *Evaluation of multi-loop multi-scale integrals and phenomenological two-loop applications*, 2014, PhD Thesis - Technische Universität München
             | `mediaTUM:1220360 <http://nbn-resolving.de/urn/resolver.pl?urn:nbn:de:bvb:91-diss-20140709-1220360-0-4>`_,
@@ -37,7 +41,3 @@ References
               analytic and semi-analytic techniques*, 2012, J. Phys.: Conf. Ser. 368 012049,
             | `doi:10.1088/1742-6596/368/1/012049 <http://dx.doi.org/10.1088/1742-6596/368/1/012049>`_,
             | `arXiv:1111.0868 <http://arxiv.org/abs/1111.0868>`_
-
-.. [BKAP]   | B. D. McKay and A. Piperno
-              * Practical graph isomorphism, II*, 2014, Journal of Symbolic Computation, 60, 94-112, 
-            | `doi:10.1016/j.jsc.2013.09.003 <http://dx.doi.org/10.1016/j.jsc.2013.09.003>`_
