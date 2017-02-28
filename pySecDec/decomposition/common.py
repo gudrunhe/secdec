@@ -438,7 +438,7 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', 
             # Note:
             # - we can not use _collision_safe_hash as the hashes may collide between sectors
             # - we must use str as np.unique does not function correctly when array elements can not be sorted (e.g. sympy symbols)
-            this_sector_coeffs = map(str, this_sector_coeffs)
+            this_sector_coeffs = [str(coeff) for coeff in this_sector_coeffs]
 
             unique_exponents += np.unique(this_sector_expolist).tolist()
             unique_coeffs += np.unique(this_sector_coeffs).tolist()
