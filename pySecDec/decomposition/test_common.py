@@ -192,9 +192,10 @@ class TestSymmetryFinding(unittest.TestCase):
         sectors = [self.sector_p1_hard.copy(), self.sector_swapped_p1_hard.copy()]
 
         # test symmetry finding by sorting, fails
-#        reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, Pak_sort)
-#        self.assertEqual(len(reduced_sectors), 1)
-#        self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
+        for sort_function in (iterative_sort, Pak_sort):
+            reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, sort_function)
+            self.assertNotEqual(len(reduced_sectors), 1)
+            self.assertNotEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
 
         # test symmetry finding by graph (using dreadnaut)
         reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors)

@@ -322,7 +322,7 @@ def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
 
         f.write("! elements\n")
         # Iterate over elements of array row by row
-        for x in np.nditer(expolist, order='C'):                                             # sjones: vectorize rather than iterate?
+        for x in np.nditer(expolist, order='C'):
             f.write(str(offset) + ": " + str(exponent_dictionary.get(int(x))) + ";" + "\n")
             offset += 1
 
@@ -458,7 +458,7 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', 
             dreadnaut_file = sector_name
             dreadnaut_hash_file = sector_name + dreadnaut_hash_file_suffix
             dreadnaut_canonical_file = sector_name + dreadnaut_canonical_file_suffix
-            command_line_command = dreadnaut + "<" + dreadnaut_file
+            command_line_command = dreadnaut
             _array_to_dreadnaut(this_sector_expolist, this_sector_coeffs, unique_exponents, unique_coeffs,\
                                 dreadnaut_file, dreadnaut_hash_file, dreadnaut_canonical_file, workdir)
 
@@ -466,16 +466,17 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', 
             with open(os.path.join(workdir, 'stdout'), 'w') as stdout:
                 # redirect dreadnaut stderr
                 with open(os.path.join(workdir, 'stderr'), 'w') as stderr:
-                    # run dreadnaut
-                    #    subprocess.check_call --> run dreadnaut, block until it finishes and raise error on nonzero exit status
-                    try:
-                    # sjones: Ugly to use the shell but we need to redirect dreadnaut_file into dreadnaut
-                        subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir,
-                                          shell=True)
-                    except OSError as error:
-                        if dreadnaut not in str(error):
-                            error.filename = dreadnaut
-                        raise
+                    # redirect dreadnaut stdin
+                    with open(os.path.join(workdir, dreadnaut_file), 'r') as stdin:
+                        # run dreadnaut
+                        #    subprocess.check_call --> run dreadnaut, block until it finishes and raise error on nonzero exit status
+                        try:
+                            subprocess.check_call(command_line_command, stdin=stdin,
+                                                  stdout=stdout, stderr=stderr, cwd=workdir)
+                        except OSError as error:
+                            if dreadnaut not in str(error):
+                                error.filename = dreadnaut
+                            raise
 
             # collect dreadnaut canonical hash for sector
             with open(os.path.join(workdir, dreadnaut_hash_file), 'r') as f:
@@ -502,7 +503,7 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', 
             if sector_hash_array[sector_index] == previous_sector_hash:
                 # load the canonical graphs are really equal
                 with open(os.path.join(workdir, str(previous_index)+dreadnaut_canonical_file_suffix)) as f:
-                    previous_canonical_graph = f.readlines()                                                # sjones: cache this to prevent re-reading the same canonical graph?
+                    previous_canonical_graph = f.readlines()
                 with open(os.path.join(workdir, str(sector_index)+dreadnaut_canonical_file_suffix)) as f:
                     canonical_graph = f.readlines()
 
