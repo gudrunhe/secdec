@@ -1,6 +1,11 @@
 #-
 Off statistics;
 
+* Workaround:
+* Do not use gzip since it sometimes fails for large expressions
+* due to a bug in FORM.
+On compress;
+
 * Define two general procedures that write c++ code to define and undefine
 * c++ preprocessor varibables accessing a c++ array.
 #procedure cppDefine(?FORMNames,cppArrayName,filename)
