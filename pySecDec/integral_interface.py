@@ -226,7 +226,7 @@ class IntegralLibrary(object):
 
         # comtinue set c prototypes
         self.real_parameter_t = c_double * int(integral_info['number_of_real_parameters'])
-        self.complex_parameter_t = c_double * 2*int(integral_info['number_of_complex_parameters']) # flattened as: ``real(x0), imag(x0), real(x1), imag(x1), ...``
+        self.complex_parameter_t = c_double * (2*int(integral_info['number_of_complex_parameters'])) # flattened as: ``real(x0), imag(x0), real(x1), imag(x1), ...``
 
         c_lib.compute_integral.restype = None
         c_lib.compute_integral.argtypes = [
@@ -250,6 +250,12 @@ class IntegralLibrary(object):
                      deformation_parameters_minimum=1.e-5,
                      deformation_parameters_decrease_factor=0.9
                 ):
+        # Passed in correct number of parameters?
+        assert len(real_parameters) == int(self.info['number_of_real_parameters']), \
+            'Passed %i `real_parameters` but %s needs %i.' % (len(real_parameters),self.info['name'],int(self.info['number_of_real_parameters']))
+        assert len(complex_parameters) == int(self.info['number_of_complex_parameters']), \
+            'Passed %i `complex_parameters` but `%s` needs %i.' % (len(complex_parameters),self.info['name'],int(self.info['number_of_complex_parameters']))
+
         # Set sample values
         c_real_parameters = self.real_parameter_t(*real_parameters)
 
