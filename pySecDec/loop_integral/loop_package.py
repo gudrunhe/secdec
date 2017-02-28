@@ -21,7 +21,6 @@ def loop_package(name, loop_integral, requested_order,
                  form_work_space='500M',
                  decomposition_method='iterative',
                  normaliz_executable='normaliz',
-                 normaliz_workdir='normaliz_tmp',
                  enforce_complex=False,
                  split=False, ibp_power_goal=-1):
     '''
@@ -97,13 +96,6 @@ def loop_package(name, loop_integral, requested_order,
         required if `decomposition_method` is set to
         'geometric'.
         Default: 'normaliz'
-
-    :param normaliz_workdir:
-        string, optional;
-        The working directory for `normaliz`. This directory
-        is automatically created and deleted again after
-        `normaliz` finishes.
-        Default: 'normaliz_tmp'
 
     :param enforce_complex:
         bool, optional;
@@ -204,7 +196,6 @@ def loop_package(name, loop_integral, requested_order,
         decomposition_method = decomposition_method,
 
         normaliz_executable = normaliz_executable,
-        normaliz_workdir = normaliz_workdir,
 
         enforce_complex = enforce_complex,
         ibp_power_goal = ibp_power_goal,

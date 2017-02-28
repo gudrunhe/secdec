@@ -47,6 +47,5 @@ form_work_space = '100M',
 # the method to be used for the sector decomposition
 # valid values are ``iterative`` and ``geometric``
 decomposition_method = 'geometric',
-normaliz_workdir = 'normaliz_tmp_box',
 
 )

@@ -584,7 +584,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
-                 normaliz_workdir='normaliz_tmp', enforce_complex=False, split=False, ibp_power_goal=-1):
+                 enforce_complex=False, split=False, ibp_power_goal=-1):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -748,13 +748,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
         'geometric'.
         Default: 'normaliz'
 
-    :param normaliz_workdir:
-        string, optional;
-        The working directory for `normaliz`. This directory
-        is automatically created and deleted again after
-        `normaliz` finishes.
-        Default: 'normaliz_tmp'
-
     :param enforce_complex:
         bool, optional;
         Whether or not the generated integrand functions
@@ -839,7 +832,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     required_orders = requested_orders + highest_prefactor_pole_orders
 
     # get the decomposition routines
-    strategy = get_decomposition_routines(decomposition_method, normaliz_executable, normaliz_workdir)
+    strategy = get_decomposition_routines(decomposition_method, normaliz_executable, os.path.join(name,'normaliz_workdir'))
 
     # define the monomials "x0", "x1", "x2", ... to keep track of the transformations
     one = Polynomial([[0]*len(symbols_other_polynomials)], [1], symbols_other_polynomials)
