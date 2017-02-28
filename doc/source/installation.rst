@@ -67,5 +67,11 @@ and programs are required:
 
    * catch (https://github.com/philsquared/Catch)
 
+The functions :func:`pySecDec.code_writer.make_package` and :func:`pySecDec.loop_integral.loop_package`
+can use the external program `nauty` [BKAP]_ to find all sector symmetries and therefore reduce the number of
+sectors:
+
+ * NAUTY (http://pallini.di.uniroma1.it)
+
 These packages are redistributed with the `pySecDec` tarball; i.e. you don't have to install
 any of them yourself.

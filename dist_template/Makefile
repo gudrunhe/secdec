@@ -8,12 +8,12 @@ CONFIGURE_COMMON = --prefix=$(TOPDIR)/install --libdir=$(TOPDIR)/lib --includedi
 CPP_PACKAGES = Cuba form secdecutil
 
 
-.PHONY : clean $(CPP_PACKAGES) pySecDec
+.PHONY : clean $(CPP_PACKAGES) pySecDec nauty
 
 .PHONY .SILENT : install
 begin_green = '\033[0;32m'
 end_green   = '\033[0m'
-install : $(CPP_PACKAGES) pySecDec
+install : nauty $(CPP_PACKAGES) pySecDec
 	echo -e $(begin_green)"Successfully built \"pySecDec\" and its dependencies."$(end_green) ; \
 	echo -e $(begin_green)"To use \"pySecDec\", add the following two commands to your \".bashrc\" or \".profile\":"$(end_green) ; \
 	echo -e $(begin_green)"export SECDEC_CONTRIB=$(TOPDIR)"$(end_green) ; \
@@ -32,8 +32,15 @@ $(CPP_PACKAGES) :
 	$(MAKE) && \
 	$(MAKE) install
 
+nauty :
+	tar -xf $@*.tar.gz && \
+	cd $@*/ && \
+	./configure && \
+	$(MAKE) dreadnaut && \
+	mkdir -p $(TOPDIR)/bin/ && \
+	cp dreadnaut $(TOPDIR)/bin/
 clean :
-	rm -rf install lib include bin
+	rm -rf install lib include bin nauty*/
 	for PACKAGE_NAME in $(CPP_PACKAGES); do \
 		rm -rf $${PACKAGE_NAME}-*/; \
 	done
