@@ -29,7 +29,8 @@ name = 'triangle2L',
 
 loop_integral = li,
 
-real_parameters = Mandelstam_symbols + mass_symbols,
+real_parameters = Mandelstam_symbols,
+complex_parameters = mass_symbols,
 
 # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
 requested_order = 0,
