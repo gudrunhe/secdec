@@ -51,22 +51,32 @@ def generate_fan(*polynomials):
         all of these have an equal number of variables;
         The polynomials to calculate the fan for.
     '''
-    expolists = [poly.expolist.tolist() for poly in polynomials]
+    expolists = [poly.expolist for poly in polynomials]
     factors = itertools.product(*expolists)
     number_of_variables = polynomials[0].number_of_variables
-    identity_matrix = set(tuple(1 if i==j else 0 for i in range(number_of_variables)) for j in range(number_of_variables))
+    identity_polynomial = Polynomial(np.identity(number_of_variables, dtype=int), np.ones(number_of_variables, dtype=int), copy=False)
     fan = []
+
     for factor in factors:
-        cone = []
-        for i in range(len(polynomials)):
-            cone.extend([tuple(np.subtract(vector, factor[i])) for vector in expolists[i]])
-        cone = set(hyperplane for hyperplane in cone if not all(i>0 for i in hyperplane) and not all(i==0 for i in hyperplane))
-        cone = (cone | identity_matrix )
-        if (len(cone)>=number_of_variables and
-            not any(all(element<0 for element in hyperplane) for hyperplane in cone) and
-            len(cone) == len(frozenset(cone.difference(set(tuple(np.multiply(-1,hyperplane))for hyperplane in cone))))
+        factor = np.array(factor)
+
+        # reshape to use numpy's broadcasting
+        cone = np.vstack( expolists[i] - factor[i].reshape(1,number_of_variables) for i in range(len(polynomials)) )
+
+        # use `Polynomial` class to remove duplicates
+        cone_poly = Polynomial(cone, np.ones(len(cone),dtype=int), copy=False)
+        cone_poly += identity_polynomial # implicit simplify
+        for i,hyperplane in enumerate(cone_poly.expolist):
+            if (hyperplane > 0).all() or (hyperplane == 0).all():
+                cone_poly.coeffs[i] = 0
+        cone = cone_poly.simplify().expolist
+
+        if (
+                len(cone) >= number_of_variables and
+                not (cone < 0).all(axis=1).any() and # if one hyperplane has only negative entries do not append to fan
+                not any( (hyperplane==cone).all(axis=-1).any() for hyperplane in -cone ) # do not append cones that have `hyperplane` and `-hyperplane`
            ):
-            fan.append(list(cone))
+                fan.append(cone)
 
     return fan
 

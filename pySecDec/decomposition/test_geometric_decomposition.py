@@ -16,6 +16,7 @@ def sort_2D_array(array):
     'Use the .misc.argsort_2D_array function to sort an array'
     return array[argsort_2D_array(array)]
 
+#@attr('active')
 class TestGeomethod(unittest.TestCase):
     def setUp(self):
         self.p0 = Polynomial.from_expression('x0+x1+x0*x1', ['x0','x1'])
@@ -79,11 +80,12 @@ class TestGeomethod(unittest.TestCase):
 
     def test_generate_fan(self):
         fan_p01 = generate_fan(self.p0,self.p1)
+        for cone, target_cone in zip(fan_p01, self.sorted_target_fan_p01):
+            np.testing.assert_array_equal(cone, target_cone)
+
         fan_p2 = generate_fan(self.p2)
-        sorted_fan_p01 = sorted([sorted(cone) for cone in fan_p01])
-        sorted_fan_p2 = sorted([sorted(cone) for cone in fan_p2])
-        np.testing.assert_array_equal(sorted_fan_p01, self.sorted_target_fan_p01)
-        np.testing.assert_array_equal(sorted_fan_p2, self.sorted_target_fan_p2)
+        for cone, target_cone in zip(fan_p2, self.sorted_target_fan_p2):
+            np.testing.assert_array_equal(cone, target_cone)
 
     #@attr('active')
     def test_convex_hull_exponentiated_polynomial(self):
