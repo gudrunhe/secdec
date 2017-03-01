@@ -6,7 +6,7 @@ The geometric sector decomposition routines.
 
 from .common import Sector, refactorize
 from ..algebra import Polynomial, Product
-import subprocess, shutil, os, re, numpy as np
+import subprocess, shutil, os, re, itertools, numpy as np
 
 # *********************** primary decomposition ***********************
 
@@ -37,6 +37,48 @@ def Cheng_Wu(sector, index=-1):
     return Sector(cast, other, Jacobian)
 
 # ********************** geometric decomposition **********************
+def generate_fan(*polynomials):
+    '''
+    Calculate the fan of the polynomials in the input. The rays of a
+    cone are given by the exponent vectors after factoring out a monomial
+    together with the standard basis vectors. Each choice of factored out
+    monomials gives a different cone.
+    Only full (:math:`N`-) dimensional cones in :math:`R^N_{\geq 0}` need to be
+    considered.
+
+    :param polynomials:
+        abritrarily many instances of :class:`.Polynomial` where
+        all of these have an equal number of variables;
+        The polynomials to calculate the fan for.
+    '''
+    expolists = [poly.expolist for poly in polynomials]
+    factors = itertools.product(*expolists)
+    number_of_variables = polynomials[0].number_of_variables
+    identity_polynomial = Polynomial(np.identity(number_of_variables, dtype=int), np.ones(number_of_variables, dtype=int), copy=False)
+    fan = []
+
+    for factor in factors:
+        factor = np.array(factor)
+
+        # reshape to use numpy's broadcasting
+        cone = np.vstack( expolists[i] - factor[i].reshape(1,number_of_variables) for i in range(len(polynomials)) )
+
+        # use `Polynomial` class to remove duplicates
+        cone_poly = Polynomial(cone, np.ones(len(cone),dtype=int), copy=False)
+        cone_poly += identity_polynomial # implicit simplify
+        for i,hyperplane in enumerate(cone_poly.expolist):
+            if (hyperplane > 0).all() or (hyperplane == 0).all():
+                cone_poly.coeffs[i] = 0
+        cone = cone_poly.simplify().expolist
+
+        if (
+                len(cone) >= number_of_variables and
+                not (cone < 0).all(axis=1).any() and # if one hyperplane has only negative entries do not append to fan
+                not any( (hyperplane==cone).all(axis=-1).any() for hyperplane in -cone ) # do not append cones that have `hyperplane` and `-hyperplane`
+           ):
+                fan.append(cone)
+
+    return fan
 
 def convex_hull(*polynomials):
     '''
@@ -249,7 +291,7 @@ class Polytope(object):
             shape = int(f.readline()), int(f.readline())
             return np.fromfile(f, sep=' ', dtype=int).reshape(shape)
 
-def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False):
+def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False, switch_representation=False):
     '''
     Split a cone into simplicial cones; i.e.
     cones defined by exactly :math:`D` rays
@@ -285,13 +327,20 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
         bool;
         Whether or not to delete the `workdir` after execution.
 
+    :param switch_representation:
+        bool;
+        Whether or not to switch between facet and vertex/ray
+        representation.
+
     '''
     cone = np.asarray(cone)
     # basic consistency checks
     assert len(cone.shape) == 2, '`cone` must be two dimensional'
     assert cone.shape[0] >= cone.shape[1], 'Must at least have as many rays as the dimensionality'
-    if cone.shape[0] == cone.shape[1]:
+
+    if cone.shape[0] == cone.shape[1] and not switch_representation:
         raise ValueError("`cone` is simplicial already")
+
     old_np_printoptions = np.get_printoptions()
     np.set_printoptions(threshold=np.inf)
 
@@ -300,7 +349,10 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
         # generate the normaliz run card
         run_card_as_str  = str(cone.shape[0]) + ' ' + str(cone.shape[1]) + '\n'
         run_card_as_str += str(cone).replace('[','').replace(']','').replace('\n ','\n')
-        run_card_as_str += '\nintegral_closure\n'
+        if switch_representation == False:
+            run_card_as_str += '\nintegral_closure\n'
+        else:
+            run_card_as_str += '\ninequalities\n'
 
         run_card_file_prefix = 'normaliz'
         run_card_file_suffix = '.in'
@@ -521,3 +573,95 @@ def geometric_decomposition(sector, indices=None, normaliz='normaliz', workdir='
 
         else:
             yield make_sector(cone_indices, cone)
+
+def geometric_decomposition_ku(sector, indices=None, normaliz='normaliz', workdir='normaliz_tmp'):
+    '''
+    Run the sector decomposition using the original geometric
+    decomposition strategy by Kaneko and Ueda as described
+    in [KU10]_.
+
+    .. note::
+        This function calls the command line executable of
+        `normaliz` [BIR]_.
+        It has been tested with `normaliz` versions 3.0.0,
+        3.1.0, and 3.1.1.
+
+    :param sector:
+        :class:`.Sector`;
+        The sector to be decomposed.
+
+    :param indices:
+        list of integers or None;
+        The indices of the parameters to be considered as
+        integration variables. By default (``indices=None``),
+        all parameters are considered as integration
+        variables.
+
+    :param normaliz:
+        string;
+        The shell command to run `normaliz`.
+
+    :param workdir:
+        string;
+        The directory for the communication with `normaliz`.
+        A directory with the specified name will be created
+        in the current working directory. If the specified
+        directory name already exists, an :class:`OSError`
+        is raised.
+
+        .. note::
+            The communication with `normaliz` is done via
+            files.
+
+    '''
+    original_sector = sector
+    sector = original_sector.copy()
+
+    if indices is None:
+        indices = range(original_sector.number_of_variables)
+    else:
+        # remove parameters that are not in `indices`
+        indices = list(indices)
+        sector.number_of_variables = len(indices)
+        sector.Jacobian.number_of_variables = len(indices)
+        sector.Jacobian.expolist = sector.Jacobian.expolist[:,indices]
+        sector.Jacobian.polysymbols = [sector.Jacobian.polysymbols[i] for i in indices]
+        for product in sector.cast:
+            for factor in product.factors:
+                factor.number_of_variables = len(indices)
+                factor.expolist = factor.expolist[:,indices]
+                factor.polysymbols = [factor.polysymbols[i] for i in indices]
+        for poly in sector.other:
+            poly.number_of_variables = len(indices)
+            poly.expolist = poly.expolist[:,indices]
+            poly.polysymbols = [poly.polysymbols[i] for i in indices]
+
+    def make_sector_ku(cone):
+        subsector = original_sector.copy()
+        transformation = np.identity(original_sector.number_of_variables, dtype = int)
+        index_array = np.array(indices)
+        transformation[index_array.reshape(-1,1),index_array] = cone
+
+        Jacobian_coeff = abs(np.linalg.det(cone))
+        Jacobian_coeff_as_int = int(Jacobian_coeff + 0.5) # `Jacobian_coeff` is integral but numpy calculates it as float
+        assert abs(Jacobian_coeff_as_int - Jacobian_coeff) < 1.0e-5 * abs(Jacobian_coeff)
+
+        subsector.Jacobian = Jacobian_coeff_as_int*transform_variables(subsector.Jacobian, transformation, subsector.Jacobian.polysymbols)
+
+        for i,product in enumerate(subsector.cast):
+            transformed_monomial = transform_variables(product.factors[0], transformation, product.factors[0].polysymbols)
+            transformed_polynomial = transform_variables(product.factors[1], transformation, product.factors[1].polysymbols)
+            subsector.cast[i] = Product(transformed_monomial, transformed_polynomial)
+            refactorize(subsector.cast[i])
+        for i,polynomial in enumerate(subsector.other):
+            subsector.other[i] = transform_variables(polynomial, transformation, polynomial.polysymbols)
+        # this transformation produces an extra Jacobian factor
+        # can multiply part encoded in the `expolist` here but the coefficient is specific for each subsector
+        subsector.Jacobian *= Polynomial([transformation.sum(axis=0) - 1], [1])
+
+        return subsector
+
+    fan = generate_fan( *(product.factors[1] for product in sector.cast) )
+    for cone in fan:
+        for dualcone in triangulate(cone,switch_representation=True):
+            yield make_sector_ku(dualcone.T)

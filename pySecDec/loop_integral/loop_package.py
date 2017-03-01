@@ -86,16 +86,18 @@ def loop_package(name, loop_integral, requested_order,
 
         * 'iterative' (default)
         * 'geometric'
+        * 'geometric_ku'
 
         .. note::
-            For 'geometric', the third-party program "normaliz"
-            is needed. See :ref:`installation_normaliz`.
+            For 'geometric' and 'geometric_ku', the
+            third-party program "normaliz" is needed.
+            See :ref:`installation_normaliz`.
 
     :param normaliz_executable:
         string, optional;
         The command to run `normaliz`. `normaliz` is only
         required if `decomposition_method` is set to
-        'geometric'.
+        'geometric' or 'geometric_ku'.
         Default: 'normaliz'
 
     :param enforce_complex:
