@@ -65,7 +65,7 @@ if not isinstance(git_id, str):
         license='GPLv3',
         install_requires=['numpy>=1.6', 'sympy', 'setuptools>=3.3'],
         extras_require={'testing': ['nose'], 'documentation': ['sphinx']},
-        classifiers=['Development Status :: 3 - Alpha',
+        classifiers=['Development Status :: 4 - Beta',
                      'Environment :: Console',
                      'Intended Audience :: Science/Research',
                      'Natural Language :: English',
