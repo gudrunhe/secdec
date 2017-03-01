@@ -161,6 +161,9 @@ dist : clean
 	cp doc/build/latex/pySecDec.pdf pySecDec-$(PYSECDECVERSION)/doc
 	cp -r doc/build/html pySecDec-$(PYSECDECVERSION)/doc
 
+	# copy the examples
+	cp -r examples pySecDec-$(PYSECDECVERSION)/examples
+
 	# create tarball
 	tar -czf pySecDec-$(PYSECDECVERSION).tar.gz pySecDec-$(PYSECDECVERSION)/
 
