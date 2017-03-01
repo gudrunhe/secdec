@@ -13,6 +13,13 @@ import sys
 
 python_major_version = sys.version[0]
 
+try:
+    # use "$SECDEC_CONTRIB/bin/dreadnaut" if "$SECDEC_CONTRIB" is defined
+    dreadnaut_executable = os.path.join(os.environ['SECDEC_CONTRIB'], 'bin', 'dreadnaut')
+except KeyError:
+    # "$SECDEC_CONTRIB" is not defined --> let the system find "dreadnaut"
+    dreadnaut_executable = 'dreadnaut'
+
 class TestSector(unittest.TestCase):
     def setUp(self):
         self.poly = Polynomial([(1,0,0,4),(0,1,0,1),(0,0,1,0)],[1,1,1])
@@ -185,7 +192,7 @@ class TestSymmetryFinding(unittest.TestCase):
             self.assertEqual( (sp.sympify(reduced_sectors[0].cast[0]) - sp.sympify(self.p0.copy())).simplify() , 0 )
 
         # test symmetry finding by graph (using dreadnaut)
-        reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, workdir='tmpdir_test_squash_symmetry_redundant_sectors_2D_python' + python_major_version)
+        reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, workdir='tmpdir_test_squash_symmetry_redundant_sectors_2D_python' + python_major_version)
         self.assertEqual(len(reduced_sectors), 1)
         self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('a+swapped_Jacobian_coeff'))
         self.assertEqual((sp.sympify(reduced_sectors[0].cast[0]) - sp.sympify(self.p0.copy())).simplify(), 0)
@@ -201,7 +208,7 @@ class TestSymmetryFinding(unittest.TestCase):
             self.assertNotEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
 
         # test symmetry finding by graph (using dreadnaut)
-        reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, workdir='tmpdir_test_squash_symmetry_hard_python' + python_major_version)
+        reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, workdir='tmpdir_test_squash_symmetry_hard_python' + python_major_version)
         self.assertEqual(len(reduced_sectors), 1)
         self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
 
@@ -240,7 +247,7 @@ class TestSymmetryFinding(unittest.TestCase):
                               or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
 
             # test symmetry finding by graph (using dreadnaut)
-            reduced_sectors=squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, workdir='tmpdir_test_symmetry_4D_python' + python_major_version)
+            reduced_sectors=squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, dreadnaut_executable, workdir='tmpdir_test_symmetry_4D_python' + python_major_version)
 
             # should have found the symmetry and pruned `sector0` or `sector2`
             self.assertEqual(len(reduced_sectors), 2)
@@ -280,7 +287,7 @@ class TestSymmetryFinding(unittest.TestCase):
                 target_reduced_sectors[0].Jacobian.coeffs[0] = 2
                 self.assertEqual( str(reduced_sectors), str(target_reduced_sectors) )
 
-            reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, workdir='tmpdir_test_symmetry_special_sorting_python' + python_major_version)
+            reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, dreadnaut_executable, workdir='tmpdir_test_symmetry_special_sorting_python' + python_major_version)
 
             # should have found the symmetry
             self.assertEqual(len(reduced_sectors), 1)
@@ -327,7 +334,7 @@ class TestSymmetryFinding(unittest.TestCase):
                 self.assertTrue( (str(reduced_sectors[0].Jacobian) == ' + (2)' and str(reduced_sectors[1]) == str(sector1))
                               or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
 
-            reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, workdir='tmpdir_test_symmetry_same_term_in_different_polynomials_python' + python_major_version)
+            reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, dreadnaut_executable, workdir='tmpdir_test_symmetry_same_term_in_different_polynomials_python' + python_major_version)
 
             # should have found the symmetry and pruned `sector0` or `sector2`
             self.assertEqual(len(reduced_sectors), 2)
