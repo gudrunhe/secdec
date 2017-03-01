@@ -663,5 +663,5 @@ def geometric_decomposition_ku(sector, indices=None, normaliz='normaliz', workdi
 
     fan = generate_fan( *(product.factors[1] for product in sector.cast) )
     for cone in fan:
-        for dualcone in triangulate(cone,switch_representation=True):
+        for dualcone in triangulate(cone, normaliz, workdir, switch_representation=True):
             yield make_sector_ku(dualcone.T)
