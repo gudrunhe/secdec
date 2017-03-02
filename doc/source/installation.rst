@@ -1,13 +1,23 @@
 Installation
 ============
 
+Download the program and install
+--------------------------
+
 `pySecDec` should run fine with both, `python` 2.7 and `python` 3
 on unix-like systems. It has been tested and developed on
 `MacOS 10.11 (El Capitan)` and `openSUSE Tumbleweed`.
 
 Before you install `pySecDec`, make sure that you have
 recent versions of `numpy` (http://www.numpy.org/) and
-`sympy` (http://www.sympy.org) installed.
+`sympy` (http://www.sympy.org) installed. In case you 
+want to check for their availability type 
+
+.. code::
+
+   $ python -c "import numpy"
+   $ python -c "import sympy" .
+
 Then download and upack the following tarball.
 
 .. TODO: make `tarball` a download link of `complete_dist`
@@ -28,6 +38,11 @@ to be added to your ``.bashrc`` or ``.profile``.
     on some systems. If ``make`` finished without a message starting
     with `Successfully built "pySecDec" and its dependencies`, try
     again without the ``-j`` option.
+
+In case either `numpy` or `sympy` are missing on your machine, 
+it is easiest to install them from your package repository. Alternatively, 
+and in particular if you do not have administrator rights, `pip` may 
+be used to perform the installation.
 
 .. _installation_normaliz:
 
