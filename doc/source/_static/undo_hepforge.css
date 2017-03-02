@@ -1,0 +1,6 @@
+/* Undo some options introduced by hepforge (where we host the documentation) */
+
+li, p { max-width:50em; }
+
+.todo, .important, .warning, .note, .highlight { max-width:50em; padding:""; margin-left:""; margin-right:""; border:""; padding:""; }
+.todo, .todo:before, .important, .important:before,  .warning, .warning:before, .note, .note:before { content:""; }
