@@ -136,7 +136,7 @@ def integrate_pole_part(polyprod, *indices):
         \int_0^1
         {
             dt_j t_j^{(a - b \epsilon_1 - c \epsilon_2 + ...)}
-            \cal{I} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
+            \mathcal{I} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
         }
 
     into the form
@@ -145,7 +145,7 @@ def integrate_pole_part(polyprod, *indices):
         \sum_{p=0}^{|a|-1}
         {
             \frac{1}{a + p + 1 - b \epsilon_1 - c \epsilon_2 - ...}
-            \frac{\cal{I}^{(p)} (0,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)}{p!} +
+            \frac{\mathcal{I}^{(p)} (0,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)}{p!} +
             \int_0^1
             {
                 dt_j t_j^{(a - b \epsilon_1 - c \epsilon_2 + ...)}
@@ -153,8 +153,8 @@ def integrate_pole_part(polyprod, *indices):
             }
         }
 
-    , where :math:`\cal{I}^{(p)}` denotes the p-th derivative
-    of :math:`\cal{I}` with respect to :math:`t_j`. The equations
+    , where :math:`\mathcal{I}^{(p)}` denotes the p-th derivative
+    of :math:`\mathcal{I}` with respect to :math:`t_j`. The equations
     above are to be understood schematically.
 
     .. seealso::
@@ -181,7 +181,7 @@ def integrate_pole_part(polyprod, *indices):
         be the Feynman parameters and the regulators.
         The constant term of the exponent should be numerical.
         The polynomial variables of ``monomial`` and the other
-        factors (interpreted as :math:`\cal{I}`) are interpreted
+        factors (interpreted as :math:`\mathcal{I}`) are interpreted
         as the Feynman parameters and the epsilon regulators.
         Make sure that the last factor (``<cal_I>``) is defined
         and finite for :math:`\epsilon = 0`. All poles for
@@ -285,22 +285,22 @@ def integrate_by_parts(polyprod, power_goal, *indices):
         \int_0^1
         {
             dt_j t_j^{(a - b \epsilon_1 - c \epsilon_2 + ...)}
-            \cal{I} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
+            \mathcal{I} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
         }
         =
         \frac{1}{a + 1 - b \epsilon_1 - c \epsilon_2 - ...}
         \left(
-        \cal{I} (1,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
+        \mathcal{I} (1,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
         -
         \int_0^1
         {
             dt_j t_j^{(a + 1 - b \epsilon_1 - c \epsilon_2 + ...)}
-            \cal{I}^{\prime} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
+            \mathcal{I}^{\prime} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
         }
         \right)
 
-    , where :math:`\cal{I}^{\prime}` denotes the derivative
-    of :math:`\cal{I}` with respect to :math:`t_j`. The iteration
+    , where :math:`\mathcal{I}^{\prime}` denotes the derivative
+    of :math:`\mathcal{I}` with respect to :math:`t_j`. The iteration
     stops, when :math:`a>=` `power_goal`.
 
     .. seealso::
@@ -324,7 +324,7 @@ def integrate_by_parts(polyprod, power_goal, *indices):
         be the Feynman parameters and the regulators.
         The constant term of the exponent should be numerical.
         The polynomial variables of ``monomial`` and the other
-        factors (interpreted as :math:`\cal{I}`) are interpreted
+        factors (interpreted as :math:`\mathcal{I}`) are interpreted
         as the Feynman parameters and the epsilon regulators.
         Make sure that the last factor (``<cal_I>``) is defined
         and finite for :math:`\epsilon = 0`. All poles for

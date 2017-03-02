@@ -430,11 +430,11 @@ that lead to :math:`\epsilon` divergencies. The master formula
 for one integration variables is
 
 .. math::
-    \int_0^1 {x^{(a - b \epsilon)} \cal{I} (x, \epsilon) dx} =
+    \int_0^1 {x^{(a - b \epsilon)} \mathcal{I} (x, \epsilon) dx} =
     \sum_{p=0}^{|a|-1}
         {
             \frac{1}{a + p + 1 - b \epsilon}
-            \frac{\cal{I}^{(p)} (0, \epsilon)}{p!} +
+            \frac{\mathcal{I}^{(p)} (0, \epsilon)}{p!} +
             \int_0^1
             {
                 x^{(a - b \epsilon)}
@@ -442,8 +442,8 @@ for one integration variables is
             }
         }
 
-where :math:`\cal{I}^{(p)}` is denotes the p-th derivative
-of :math:`\cal{I}` with respect to :math:`x`. The equation
+where :math:`\mathcal{I}^{(p)}` is denotes the p-th derivative
+of :math:`\mathcal{I}` with respect to :math:`x`. The equation
 above effectively defines the remainder term :math:`R`.
 All terms on the right hand side of the equation above are
 constructed to be free of divergencies. For more details
@@ -454,7 +454,7 @@ In the following, we show how to use the implementation in
 
 To initialize the subtraction, we first define a factorized
 expression of the form
-:math:`x^{(-1 - b_x \epsilon)} y^{(-2 - b_y \epsilon)} \cal{I} (x, y, \epsilon)`:
+:math:`x^{(-1 - b_x \epsilon)} y^{(-2 - b_y \epsilon)} \mathcal{I} (x, y, \epsilon)`:
 
 >>> from pySecDec.algebra import Expression
 >>> symbols = ['x','y','eps']

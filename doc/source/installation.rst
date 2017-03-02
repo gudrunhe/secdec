@@ -2,27 +2,28 @@ Installation
 ============
 
 Download the program and install
---------------------------
+--------------------------------
 
 `pySecDec` should run fine with both, `python` 2.7 and `python` 3
-on unix-like systems. It has been tested and developed on
-`MacOS 10.11 (El Capitan)` and `openSUSE Tumbleweed`.
+on unix-like systems.
 
 Before you install `pySecDec`, make sure that you have
 recent versions of `numpy` (http://www.numpy.org/) and
-`sympy` (http://www.sympy.org) installed. In case you 
-want to check for their availability type 
+`sympy` (http://www.sympy.org/) installed. In case you
+want to check for their availability type
 
 .. code::
 
    $ python -c "import numpy"
    $ python -c "import sympy" .
 
-Then download and upack the following tarball.
+In case either `numpy` or `sympy` are missing on your machine,
+it is easiest to install them from your package repository. Alternatively,
+and in particular if you do not have administrator rights,
+`pip` (https://pip.pypa.io/en/stable/) may be used to perform
+the installation.
 
-.. TODO: make `tarball` a download link of `complete_dist`
-
-The tarball contains a distribution of `pySecDec` and
+Then download and upack the tarball from http://secdec.hepforge.org/. The tarball contains a distribution of `pySecDec` and
 the additional dependencies listed :ref:`below <additional_cpp_dependencies>`.
 Typing
 
@@ -38,11 +39,6 @@ to be added to your ``.bashrc`` or ``.profile``.
     on some systems. If ``make`` finished without a message starting
     with `Successfully built "pySecDec" and its dependencies`, try
     again without the ``-j`` option.
-
-In case either `numpy` or `sympy` are missing on your machine, 
-it is easiest to install them from your package repository. Alternatively, 
-and in particular if you do not have administrator rights, `pip` may 
-be used to perform the installation.
 
 .. _installation_normaliz:
 
@@ -86,7 +82,7 @@ The functions :func:`pySecDec.code_writer.make_package` and :func:`pySecDec.loop
 can use the external program `nauty` [BKAP]_ to find all sector symmetries and therefore reduce the number of
 sectors:
 
- * NAUTY (http://pallini.di.uniroma1.it)
+ * NAUTY (http://pallini.di.uniroma1.it/)
 
 These packages are redistributed with the `pySecDec` tarball; i.e. you don't have to install
 any of them yourself.
