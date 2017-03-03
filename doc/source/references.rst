@@ -20,7 +20,7 @@ References
             | available at https://www.normaliz.uni-osnabrueck.de
 
 .. [BKAP]   | B. D. McKay and A. Piperno
-              * Practical graph isomorphism, II*, 2014, Journal of Symbolic Computation, 60, 94-112,
+              *Practical graph isomorphism, II*, 2014, Journal of Symbolic Computation, 60, 94-112,
             | `doi:10.1016/j.jsc.2013.09.003 <http://dx.doi.org/10.1016/j.jsc.2013.09.003>`_
 
 .. [Bor14]  | S. Borowka
