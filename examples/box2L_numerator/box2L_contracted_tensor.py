@@ -4,33 +4,36 @@ import pySecDec as psd
 
 
 li = psd.loop_integral.LoopIntegralFromPropagators(
-propagators = ['k1**2-msq','(k1-p1)**2-msq','(k1-p1-p2)**2-msq','(k1-k2+p3)**2','k2**2-msq','(k2-p1-p2)**2-msq'],
-loop_momenta = ['k1','k2' ],
-powerlist = [1,1,1,1,1,1],
+
+loop_momenta = ['k1','k2'],
 external_momenta = ['p1','p2','p3','p4'],
-Lorentz_indices=['mu'],
-numerator = 'k1(mu)*p3(mu)',
+Lorentz_indices = ['mu'],
+
+propagators = ['k1**2','(k1+p2)**2','(k1-p1)**2','(k1-k2)**2','(k2+p2)**2','(k2-p1)**2','(k2+p2+p3)**2','(k1+p3)**2'],
+powerlist = [1,1,1,1,1,1,1,0],
+
+numerator = 'k1(mu)*k1(mu) + 2*k1(mu)*p3(mu) + p3(mu)*p3(mu)',
 
 replacement_rules = [
                         ('p1*p1', 0),
                         ('p2*p2', 0),
                         ('p3*p3', 0),
-                        ('p4*p4', 's4'),
+                        ('p4*p4', 0),
                         ('p1*p2', 's/2'),
                         ('p2*p3', 't/2'),
-                        ('p1*p3', 's4/2-s/2-t/2')
+                        ('p1*p3', '-s/2-t/2')
                     ]
 
 )
 
 
-Mandelstam_symbols = ['s', 't', 's4']
-mass_symbols = ['msq']
+Mandelstam_symbols = ['s', 't']
+mass_symbols = []
 
 
 loop_package(
 
-name = 'elliptic_I4',
+name = 'box2L_contracted_tensor',
 
 loop_integral = li,
 
@@ -54,8 +57,7 @@ decomposition_method = 'iterative',
 #normaliz_executable='/path/to/normaliz',
 
 # whether or not to produce code to perform the contour deformation
-# if ``True``, it can still be deactivated in the "config.hpp"
-# if ``False``, no code for the contour deformation is generated
-contour_deformation = True,
+# contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
+contour_deformation = False,
 
 )

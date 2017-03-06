@@ -5,7 +5,7 @@ from pySecDec import make_package
 
 make_package(
 
-name='Hypergeo5F4',
+name='H_5F4',
 integration_variables = ['z%i' % i for i in range(4)],
 
 # the order here defines the order of the expansion

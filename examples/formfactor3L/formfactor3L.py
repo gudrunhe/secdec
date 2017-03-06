@@ -11,10 +11,11 @@ powerlist=[1,1,1,1,1,1,1],
 replacement_rules = [
                         ('p1*p1',0),
                         ('p2*p2',0),
-                        ('p3*p3','-1'),
-                        ('p1*p2','-1/2'),
-                        ('p2*p3','1/2'),
-                        ('p1*p3','1/2')
+                        ('p3*p3','s'),
+                        ('p1*p2','s/2'),
+                        ('p2*p3','-s/2'),
+                        ('p1*p3','-s/2'),
+			('s',-1)
                     ]
 )
 
@@ -25,7 +26,7 @@ mass_symbols = []
 
 loop_package(
 
-name = 'formfactor3L',
+name = 'triangle3L',
 
 loop_integral = li,
 
@@ -44,9 +45,9 @@ form_optimization_level = 2,
 form_work_space = '100M',
 
 # the method to be used for the sector decomposition
-# valid values are ``iterative`` and ``geometric``
+# valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
 decomposition_method = 'iterative',
-# if you choose ``geometric`` and 'normaliz' is not in your
+# if you choose ``geometric[_ku]`` and 'normaliz' is not in your
 # $PATH, you can set the path to the 'normaliz' command-line
 # executable here
 #normaliz_executable='/path/to/normaliz',

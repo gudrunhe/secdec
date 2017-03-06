@@ -44,9 +44,9 @@ form_optimization_level = 2,
 form_work_space = '100M',
 
 # the method to be used for the sector decomposition
-# valid values are ``iterative`` and ``geometric``
-decomposition_method = 'geometric',
-# if you choose ``geometric`` and 'normaliz' is not in your
+# valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
+decomposition_method = 'iterative',
+# if you choose ``geometric[_ku]`` and 'normaliz' is not in your
 # $PATH, you can set the path to the 'normaliz' command-line
 # executable here
 #normaliz_executable='/path/to/normaliz',

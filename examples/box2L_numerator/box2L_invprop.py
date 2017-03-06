@@ -4,10 +4,12 @@ import pySecDec as psd
 
 
 li = psd.loop_integral.LoopIntegralFromPropagators(
-propagators = ['k1**2','(k1+p2)**2','(k1-p1)**2','(k1-k2)**2','(k2+p2)**2','(k2-p1)**2','(k2+p2+p3)**2','(k1+p3)**2'],
+
 loop_momenta = ['k1','k2'],
-powerlist = [1,1,1,1,1,1,1,0],
 external_momenta = ['p1','p2','p3','p4'],
+
+propagators = ['k1**2','(k1+p2)**2','(k1-p1)**2','(k1-k2)**2','(k2+p2)**2','(k2-p1)**2','(k2+p2+p3)**2','(k1+p3)**2'],
+powerlist = [1,1,1,1,1,1,1,-1],
 
 replacement_rules = [
                         ('p1*p1', 0),
@@ -28,7 +30,7 @@ mass_symbols = []
 
 loop_package(
 
-name = 'box2l',
+name = 'box2L_invprop',
 
 loop_integral = li,
 
@@ -44,9 +46,9 @@ form_optimization_level = 2,
 form_work_space = '100M',
 
 # the method to be used for the sector decomposition
-# valid values are ``iterative`` and ``geometric``
-decomposition_method = 'geometric',
-# if you choose ``geometric`` and 'normaliz' is not in your
+# valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
+decomposition_method = 'iterative',
+# if you choose ``geometric[_ku]`` and 'normaliz' is not in your
 # $PATH, you can set the path to the 'normaliz' command-line
 # executable here
 #normaliz_executable='/path/to/normaliz',
