@@ -31,7 +31,8 @@ loop_integral = li,
 
 real_parameters = Mandelstam_symbols + mass_symbols,
 
-additional_prefactor = 'gamma( (4-2*eps)/2-1 )**3',
+#additional_prefactor = 'gamma( (4-2*eps)/2-1 )**3',
+additional_prefactor = '(-eps*gamma(-eps))**3', # work around slow gamma expansion in sympy 1.0
 
 # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
 requested_order = 4,

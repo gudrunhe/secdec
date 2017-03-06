@@ -6,7 +6,7 @@ import sympy as sp
 formfactor = IntegralLibrary('formfactor3L/formfactor3L_pylink.so')
 
 # choose integrator
-formfactor.use_Vegas() # ``flags=2``: verbose --> see Cuba manual
+formfactor.use_Vegas(epsrel=1e-3)
 
 # integrate
 str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = formfactor()
@@ -35,8 +35,8 @@ print('eps^4:', integral_with_prefactor.coeff('eps',4).coeff('value'), '+/- (', 
 # 1510.06758 (von Manteuffel, Panzer, Schabinger) anc/MIexpansions.m
 # INT["B3", 7, 1722, 7, 0, {0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0}]
 print('Analytic Result')
-print('eps^0: -34.0969')
-print('eps^1: -295.87 ')
-print('eps^2: -2052.93')
-print('eps^3: -10599.6')
-print('eps^4: -49873.5')
+print('eps^0: -34.096929755001252682')
+print('eps^1: -295.87002604581508543')
+print('eps^2: -2052.9323782881109903')
+print('eps^3: -10599.637376067276383')
+print('eps^4: -49873.467692019361424')
