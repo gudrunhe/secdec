@@ -890,6 +890,19 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # initialize the decomposition
     initial_sector = decomposition.Sector(polynomials_to_decompose, other_polynomials + transformations)
 
+    # function that reduces the number of sectors by identifying symmetries
+    def reduce_sectors_by_symmetries(sectors, message):
+        print(message + ' before symmetry finding:', len(sectors))
+        # find symmetries
+        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, iterative_sort)
+        print(message + ' after symmetry finding (iterative):', len(sectors))
+        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, Pak_sort)
+        print(message + ' after symmetry finding (iterative+Pak):', len(sectors))
+        if use_dreadnaut:
+            sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
+            print(message + ' after symmetry finding (iterative+Pak+dreadnaut):', len(sectors))
+        return sectors
+
     # if splitting desired, implement it as additional primary decomposition
     if split:
         # cannot split when using the geometric decomposition method because the integration interval is [0,inf] after the primary decomposition
@@ -901,11 +914,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
         def primary_decomposition_with_splitting(sector, indices):
             # investigate symmetries before the split
             if use_symmetries:
-                primary_sectors = list(  original_decomposition_strategies['primary'](sector, indices)  )
-                print('number of primary sectors before investigating symmetries:', len(primary_sectors))
-                primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, iterative_sort)
-                primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, Pak_sort)
-                print('number of primary sectors after investigating symmetries:', len(primary_sectors))
+                primary_sectors = reduce_sectors_by_symmetries\
+                (
+                    list(  original_decomposition_strategies['primary'](sector, indices)  ),
+                    'number of primary sectors'
+                )
             else:
                 primary_sectors = original_decomposition_strategies['primary'](sector, indices)
             for output_sector in primary_sectors:
@@ -991,16 +1004,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # symmetries are applied elsewhere if we split
     if use_symmetries and not split:
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
-        primary_sectors = list( strategy['primary'](initial_sector, range(len(integration_variables))) )
-        print('number of primary sectors before investigating symmetries:', len(primary_sectors))
-        # find symmetries
-        primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, iterative_sort)
-        print('number of primary sectors after investigating symmetries (iterative):', len(primary_sectors))
-        primary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(primary_sectors, Pak_sort)
-        print('number of primary sectors after investigating symmetries (iterative+Pak):', len(primary_sectors))
-        if use_dreadnaut:
-            primary_sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(primary_sectors, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
-            print('number of primary sectors after investigating symmetries (iterative+Pak+dreadnaut):', len(primary_sectors))
+        primary_sectors = reduce_sectors_by_symmetries\
+        (
+            list(  strategy['primary'](initial_sector, range(len(integration_variables)))  ),
+            'number of primary sectors'
+        )
 
         # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
         symbols_primary_sectors = primary_sectors[0].Jacobian.polysymbols
@@ -1140,15 +1148,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             secondary_sectors = []
             for primary_sector in primary_sectors:
                 secondary_sectors.extend( strategy['secondary'](primary_sector, range(len(integration_variables))) )
-            print('total number of sectors before investigating symmetries:', len(secondary_sectors))
-            # find symmetries
-            secondary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(secondary_sectors, iterative_sort)
-            print('total number of sectors after investigating symmetries (iterative):', len(secondary_sectors))
-            secondary_sectors = decomposition.squash_symmetry_redundant_sectors_sort(secondary_sectors, Pak_sort)
-            print('total number of sectors after investigating symmetries (iterative+Pak):', len(secondary_sectors))
-            if use_dreadnaut:
-                secondary_sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(secondary_sectors, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
-                print('total number of sectors after investigating symmetries (iterative+Pak+dreadnaut):', len(secondary_sectors))
+            secondary_sectors = reduce_sectors_by_symmetries(secondary_sectors, 'total number sectors')
         else:
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
