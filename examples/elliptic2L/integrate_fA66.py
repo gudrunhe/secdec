@@ -1,5 +1,4 @@
 from __future__ import print_function
-from __future__ import division
 from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
@@ -7,10 +6,11 @@ import sympy as sp
 fA66 = IntegralLibrary('fA66/fA66_pylink.so')
 
 # choose integrator
-fA66.use_Vegas(flags=2,epsrel=1e-4) # ``flags=2``: verbose --> see Cuba manual
+fA66.use_Vegas(epsrel=1e-5,maxeval=10**7)
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = fA66(real_parameters=[-4./3.,-16./5.,-100./39.,1.])
+s, t, pp4, msq = [-4./3.,-16./5.,-100./39.,1.] # euclidean point
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = fA66([s, t, pp4, msq])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
@@ -24,7 +24,10 @@ prefactor = sp.sympify(str_prefactor)
 integral_without_prefactor = sp.sympify(str_integral_without_prefactor.replace('+/-','*value+error*'))
 integral_without_prefactor_err = sp.sympify(str_integral_without_prefactor.replace('+/-','*value+error*'))
 
-# examples how to access individual orders
+# numerical result
 print('Numerical Result')
 print('eps^0:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
 
+# Elliptic Integral f^A_66 of Eq(4.21) arXiv:1609.06685
+print('Analytic Result')
+print('eps^0: 0.2470741999')
