@@ -60,4 +60,7 @@ decomposition_method = 'iterative',
 # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
 contour_deformation = False,
 
+# no symmetries --> no need to run the full symmetry finder
+use_dreadnaut = False,
+
 )
