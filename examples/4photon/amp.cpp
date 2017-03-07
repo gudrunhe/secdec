@@ -9,8 +9,8 @@
 #include <secdecutil/uncertainties.hpp> // secdecutil::UncorrelatedDeviation
 #include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
 
-#include "yyyy_box6Dim/yyyy_box6Dim.hpp"
 #include "yyyy_bubble/yyyy_bubble.hpp"
+#include "yyyy_box6Dim/yyyy_box6Dim.hpp"
 
 
 /*
@@ -31,23 +31,21 @@ yyyy_bubble::nested_series_t<secdecutil::UncorrelatedDeviation<yyyy_bubble::inte
         // optionally set here as additional arguments.
         );
 
-    // Add integrands of sectors (together flag)
+    // add integrands of sectors (together flag)
     const yyyy_bubble::nested_series_t<yyyy_bubble::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
 
-    // Define the integrator
+    // define the integrator
     auto integrator = secdecutil::cuba::Vegas<std::complex<double>>();
     integrator.flags = 2; // verbose output
     integrator.epsrel = 1e-5;
     integrator.epsabs = 1e-7;
     integrator.maxeval = 1e7;
 
-    // Integrate bubble_t
+    // integrate
     return secdecutil::deep_apply(summed_integrands, integrator.integrate) * yyyy_bubble::prefactor(real_parameters, complex_parameters);
 }
 
-/*
- * one loop box in 6 dimensions
- */
+// one loop box in 6 dimensions
 yyyy_box6Dim::nested_series_t<secdecutil::UncorrelatedDeviation<yyyy_box6Dim::integrand_return_t>> box6Dim(yyyy_box6Dim::real_t t, yyyy_box6Dim::real_t u)
 {
     using namespace yyyy_box6Dim;
@@ -61,16 +59,16 @@ yyyy_box6Dim::nested_series_t<secdecutil::UncorrelatedDeviation<yyyy_box6Dim::in
         // optionally set here as additional arguments.
         );
 
-    // Add integrands of sectors (together flag)
+    // add integrands of sectors (together flag)
     const yyyy_box6Dim::nested_series_t<yyyy_box6Dim::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
 
-    // Define the integrator
+    // define the integrator
     auto integrator = secdecutil::cuba::Vegas<std::complex<double>>();
     integrator.flags = 2; // verbose output
     integrator.epsrel = 1e-5;
     integrator.epsabs = 1e-7;
 
-    // Integrate bubble_t
+    // integrate
     return secdecutil::deep_apply(summed_integrands, integrator.integrate) * yyyy_box6Dim::prefactor(real_parameters, complex_parameters);
 }
 
