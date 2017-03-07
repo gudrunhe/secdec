@@ -11,3 +11,6 @@ pySecDec.egg-info
 build/
 dist/
 pySecDec-*/
+
+# Ignore PyCharm Cache
+.idea

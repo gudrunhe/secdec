@@ -53,7 +53,8 @@ On compress;
         SecDecInternalPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent + 1);
       repeat Id SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent1?) * SecDecInternalPow(SecDecInternalsDUMMYbase?, SecDecInternalsDUMMYexponent2?) =
         SecDecInternalPow(SecDecInternalsDUMMYbase, SecDecInternalsDUMMYexponent1 + SecDecInternalsDUMMYexponent2);
-      repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
+      repeat Id SecDecInternalsDUMMY1? ^ (SecDecInternalsDUMMY2?!int_) = SecDecInternalPow(SecDecInternalsDUMMY1,SecDecInternalsDUMMY2);
+      repeat Id SecDecInternalsDUMMY1? ^ (SecDecInternalsDUMMY2?neg_) = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
       repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
       repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
       repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
@@ -531,6 +532,7 @@ B `regulators';
         factarg,(-1),SecDecInternalDenominator;
         chainout SecDecInternalDenominator;
         repeat Id log(1) = 0;
+        repeat Id SecDecInternalsDUMMY1? ^ (SecDecInternalsDUMMY2?!int_) = SecDecInternalPow(SecDecInternalsDUMMY1,SecDecInternalsDUMMY2);
         repeat Id SecDecInternalsDUMMY1? ^ SecDecInternalsDUMMY2?neg_ = SecDecInternalDenominator(SecDecInternalsDUMMY1) ^ (-SecDecInternalsDUMMY2);
         repeat Id 1/SecDecInternalsDUMMY? = SecDecInternalDenominator(SecDecInternalsDUMMY);
         repeat Id SecDecInternalsDUMMY? * SecDecInternalDenominator(SecDecInternalsDUMMY?) = 1;
