@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 from pySecDec.loop_integral import loop_package
 import pySecDec as psd
-from sympy import gamma
 
 li = psd.loop_integral.LoopIntegralFromGraph(
 internal_lines = [ [0,[1,2]], [0,[1,4]], [0,[1,5]], [0,[2,4]], [0,[2,5]], [0,[3,4]], [0,[3,5]] ],
