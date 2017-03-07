@@ -120,7 +120,7 @@ in the folder 'box1L', typing
     $ make
 
 will create the libraries `libbox1L.a` and `box1L_pylink.so` which can be linked to an external program calling these integrals.
-How to do this ``interactively`` or via a python script is explained in the next section.
+How to do this ``interactively`` or via a python script is explained in the section :ref:`Interactive python interface <interactive_python>`.
 In ``standalone mode``, the C++ file `integrate_box1L.cpp` can be used to produce results for a certain kinematic point. In the latter,
 kinematic points can be specified by adapting the line
 
@@ -141,6 +141,7 @@ The commands
 will then evaluate the integral and print the result to the screen.
 
 
+..  _interactive_python:
 
 Interactive python interface
 ----------------------------
@@ -155,13 +156,13 @@ We will use the 2-loop triangle example to explain how this works:
 
     $ python triangle2L.py
 
-- change to the directory triangle2L and type
+- This will produce a subdirectory `P126` (the name of the graph). Change to the directory `P126` and type
 
 .. code::
 
     $ make
 
-- this produces, among other things,  the library  `triangle2L_pylink.so`. The latter can be called from within python. In order to do so,  ipython or python can be opened and the following commands can be entered interactively:
+- this produces, among other things,  the library  `P126_pylink.so`. The latter can be called from within python. In order to do so,  ipython or python can be opened and the following commands can be entered interactively:
 
 .. code::
 
@@ -169,7 +170,7 @@ We will use the 2-loop triangle example to explain how this works:
     >>> from pySecDec.integral_interface import IntegralLibrary
     >>> import sympy as sp
     >>> # load c++ library
-    >>> triangle = IntegralLibrary('triangle2L_pylink.so')
+    >>> triangle = IntegralLibrary('P126_pylink.so')
 
 - now the user can choose an integrator and define the settings for
   the numerical integration. A list of possible settings is given in :class:`pySecDec.integral_interface<pySecDec.integral_interface>`.
@@ -221,4 +222,4 @@ We will use the 2-loop triangle example to explain how this works:
 
 - This will print the result in a format which is also easy to import into Mathematica. Examples for the above commands are also given in `integrate_triangle.py`.
 
-- How to loop over several kinematic points is shown in the example `multiple_points_example.py`.
+- How to loop over several kinematic points is shown in the example `multiple_kinematic_points.py`.

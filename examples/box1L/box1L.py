@@ -25,7 +25,7 @@ mass_symbols = ['msq']
 
 loop_package(
 
-name = 'box1L_p1offshell',
+name = 'box1L',
 
 loop_integral = li,
 

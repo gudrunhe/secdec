@@ -34,10 +34,10 @@ loop_integral = li,
 
 real_parameters = Mandelstam_symbols + mass_symbols,
 
-additional_prefactor = 'eps**4*(-s/msq)**(3/2)', 
+#additional_prefactor = '(-s/msq)**(3/2)', 
 
 # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-requested_order = 4,
+requested_order = 0,
 
 # the optimization level to use in FORM (can be 0, 1, 2, 3)
 form_optimization_level = 2,
