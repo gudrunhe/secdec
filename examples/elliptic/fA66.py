@@ -34,7 +34,7 @@ loop_integral = li,
 
 real_parameters = Mandelstam_symbols + mass_symbols,
 
-#additional_prefactor = '(-s/msq)**(3/2)', 
+additional_prefactor = '(-s/msq)**(3/2)', 
 
 # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
 requested_order = 0,

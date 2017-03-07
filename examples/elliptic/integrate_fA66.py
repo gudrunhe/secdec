@@ -10,7 +10,7 @@ fA66 = IntegralLibrary('fA66/fA66_pylink.so')
 fA66.use_Vegas(flags=2,epsrel=1e-4) # ``flags=2``: verbose --> see Cuba manual
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = fA66(real_parameters=[-4./3.,-16./3.,-100./39.,1.])
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = fA66(real_parameters=[-4./3.,-16./5.,-100./39.,1.])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
