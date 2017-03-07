@@ -535,7 +535,7 @@ def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parame
             outstr_head = '{%i,%i,{{' % (min_order,max_order)
             outstr_body_snippets = []
             for coeff in expression.coeffs:
-                outstr_body_snippets.append( str(coeff.evalf(20)) )
+                outstr_body_snippets.append( sp.printing.ccode(coeff.evalf(20)) )
             outstr_tail = '}},true' if expression.truncated else '}},false'
             outstr_tail += ',"%s"}' % regulators[regulator_index]
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
@@ -1242,7 +1242,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             monomials = Product(*monomial_factors, copy=False)
 
             # compute the pole structure
-            pole_structures.append(  compute_pole_structure(monomials, *integration_variable_indices)  )
+            pole_structures.append(  [sp.printing.ccode(ps) for ps in compute_pole_structure(monomials, *integration_variable_indices)]  )
 
             if contour_deformation_polynomial is not None:
                 # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k * (1-x_k) * Re(dF_dx_k)`` to the monomials.
@@ -1538,7 +1538,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     template_replacements['highest_prefactor_orders'] = _make_FORM_list(required_prefactor_orders)
     template_replacements['sector_includes'] = ''.join( '#include "sector_%i.hpp"\n' % i for i in range(1,sector_index+1) )
     template_replacements['sectors_initializer'] = ','.join( 'integrand_of_sector_%i' % i for i in range(1,sector_index+1) )
-    template_replacements['pole_structures_initializer'] = str(pole_structures).replace(' ','').replace('[','{').replace(']','}')
+    template_replacements['pole_structures_initializer'] = str(pole_structures).replace(' ','').replace("'","").replace('[','{').replace(']','}')
     parse_template_file(os.path.join(template_sources, 'name.hpp'), # source
                         os.path.join(name,            name + '.hpp'), # dest
                         template_replacements)
