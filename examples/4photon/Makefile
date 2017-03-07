@@ -1,30 +1,36 @@
-include Makefile.conf
+INTEGRALS = $(patsubst %.py,%,$(wildcard *.py))
 
-BUB=yyyy_bubble
-BOX=yyyy_box6Dim
+# CXXFLAGS
+ifeq (x$(SECDEC_CONTRIB), x)
+CXXFLAGS =
+else
+CXXFLAGS = -I$(SECDEC_CONTRIB)/include
+endif
+CXXFLAGS += -c -std=c++11 -O2 -I.
 
-lib$(NAME_I2).a lib$(NAME_I2).so : $(BUB)/Makefile
-	$(MAKE) -C $(BUB) $@
-	ln $(BUB)/$@
+# LDFLAGS
+ifeq (x$(SECDEC_CONTRIB), x)
+LDFLAGS =
+else
+LDFLAGS = -L$(SECDEC_CONTRIB)/lib
+endif
+LDFLAGS += $(patsubst %,-L%,$(INTEGRALS)) $(patsubst %,-l%,$(INTEGRALS)) -lcuba -lm
 
-lib$(NAME_I4).a lib$(NAME_I4).so : $(BOX)/Makefile
-	$(MAKE) -C $(BOX) $@
-	ln $(BOX)/$@
+amp : amp.o $(patsubst %,lib%.a,$(INTEGRALS))
+	$(CXX) -o $@ $< $(LDFLAGS)
 
-$(BUB)/Makefile :
-	python 4y_bubble.py
+amp.o : amp.cpp $(INTEGRALS)
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
-$(BOX)/Makefile :
-	python 4y_box.py
+$(INTEGRALS) :
+	python $@.py
 
-amp.o test.o : $(BUB)/Makefile $(BOX)/Makefile
-
-test : amp.o lib$(NAME_I2).a lib$(NAME_I4).a
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
+lib%.a : %
+	$(MAKE) -C $< $@
 
 very-clean : clean
 	for dir in */; do rm -rf $$dir $@; done
 
 clean:
 	for dir in */; do $(MAKE) -C $$dir $@; done
-	rm -f *.o *.so *.a test
+	rm -f *.o *.so *.a amp
