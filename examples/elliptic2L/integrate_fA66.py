@@ -28,6 +28,8 @@ integral_without_prefactor_err = sp.sympify(str_integral_without_prefactor.repla
 print('Numerical Result')
 print('eps^0:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
 
-# Elliptic Integral f^A_66 of Eq(4.21) arXiv:1609.06685
+# elliptic Integral f^A_66 of Eq(4.21) arXiv:1609.06685
+# analytic result kindly provided by the authors
 print('Analytic Result')
 print('eps^0: 0.2470741999')
+
