@@ -1,13 +1,13 @@
-#ifndef dummy_src_functions_hpp_included
-#define dummy_src_functions_hpp_included
+#ifndef dummyI_src_functions_hpp_included
+#define dummyI_src_functions_hpp_included
 
-#include "dummy.hpp"
+#include "dummyI.hpp"
 #include "SecDecInternalFunctions.hpp"
 
 #include <cmath>
 #include <complex>
 
-namespace dummy
+namespace dummyI
 {
 
     /*

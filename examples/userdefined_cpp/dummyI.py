@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import shutil
 from pySecDec import make_package
 
 make_package(
@@ -26,5 +27,7 @@ form_optimization_level = 2,
 # the WorkSpace parameter for FORM
 form_work_space = '500M',
 
-
 )
+
+# copy 'functions.hpp' (predefined for this example) to required directory
+shutil.copy('functions_dummy_sav.hpp','dummyI/src/functions.hpp')
