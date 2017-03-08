@@ -12,6 +12,7 @@ real_parameters = ['alf'],
 functions = ['dum1', 'dum2'],
 #
 polynomials_to_decompose = ['(z0+z1)**(-2-2*eps)', 'z2**(-1-4*eps)'],
+other_polynomials = [],
 #remainder_expression = '(dum1(z0,z1,z2,z3) + 5*eps*z0)**(1+eps) * dum2(z0,z1,alf)**(2-6*eps)',
 remainder_expression = '(z0**2+z1**3+z2**4+z3**5 + 4*z0*z1*z2*z3+2-z0**2*z1**3*z2**4*z3**5 + 5*eps*z0)**(1+eps) * (z0**2 + z1**2 +alf**2 + 4*z0*z1+3*z0**2*z1**2 - sqrt(z0*z1*alf))**(2-6*eps)',
 

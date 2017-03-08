@@ -1,6 +1,7 @@
-There are 3 examples to show how the user can define additional (finite) functions, which are not included in the decomposition. They do not need to be analytic functions, they can also be procedures like e.g. jet clustering algorithms.
+There are 3 examples to show how the user can define additional (finite) functions, which are not included in the decomposition. 
+They do not need to be analytic functions, they can also be procedures like e.g. jet clustering algorithms.
 
-The functions can be defined as in the example dummyI.py:
+Example 1) dummyI.py:
 
 functions = ['dum1', 'dum2'] declares the names of the additional functions.
 The dependence of these functions on a number of arguments is given in 
@@ -17,16 +18,24 @@ in the same order.
 They can be both integration variables and parameters. 
 Derivatives of the functions are only needed if higher than logarithmic poles are involved. 
 'ddum1d0' means the first derivative of the function with name 'dum1' with respect to its first argument.
-
 A mixture of (a) and (b) is also possible.
+
+Example 2) dummyII.py:
 
 If the extra functions are simple, they can also be defined explicitly in the python input file 
 in remainder_expression = '[define explicit function here]'
-This is done in the example dummyII.py.
+Even simpler, if the extra functions are polynomial, they can be defined as 
+other_polynomials = '[define polynmials excluded from the decomposition here]'
+The functions defined in remainder_expression and other_polynomials will be multiplied automatically to the polynomials_to_decompose.
 
-The example thetafunction.py shows how to define an extra non-analytic function like a theta-function acting on one of the integration parameters. In the python input file, it is defined as 
-remainder_expression = 'cut1(z1,delt)'. Once the process directory is created, it should be defined in 
-src/functions.hpp as exemplified in functions_theta_sav.hpp:
+Example 3) thetafunction.py:
+
+The example thetafunction.py shows how to define an extra non-analytic function like a theta-function acting on one of the integration parameters. 
+In the python input file, it is defined as 
+remainder_expression = 'cut1(z1,delt)'. 
 The first argument is z1, the second one is the cut parameter delt.
-Therefore functions.hpp should contain the definition of the function cut1 as done in  functions_theta_sav.hpp.
+Once the process directory is created, the function cut1 should be defined in src/functions.hpp.
+For the current example, the definition of cut1 is exemplified in functions_theta_sav.hpp and 
+the latter is copied automatically to the correct location (see the last line of thetafunction.py).
+
   

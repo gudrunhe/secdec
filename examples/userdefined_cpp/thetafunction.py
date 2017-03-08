@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import shutil
 from pySecDec import make_package
 
 make_package(
@@ -10,7 +11,7 @@ integration_variables = ['z%i' % i for i in range(3)],
 regulators = ['eps'],
 real_parameters = ['delt'],
 functions = ['cut1'],
-#
+
 polynomials_to_decompose = ['(z0+z1)**(-2-2*eps)', 'z2**(-1-4*eps)'],
 remainder_expression = 'cut1(z1,delt)',
 
@@ -27,3 +28,6 @@ form_work_space = '500M',
 
 
 )
+
+# copy 'functions.hpp' (predefined for this example) to required directory
+shutil.copy('functions_theta_sav.hpp','theta_function/src/functions.hpp')
