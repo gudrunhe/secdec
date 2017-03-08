@@ -3,7 +3,7 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-formfactor = IntegralLibrary('triangle3L/triangle3L_pylink.so')
+formfactor = IntegralLibrary('formfactor3L/formfactor3L_pylink.so')
 
 # choose integrator
 formfactor.use_Vegas(epsrel=1e-3)

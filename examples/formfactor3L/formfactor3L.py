@@ -25,7 +25,7 @@ mass_symbols = []
 
 loop_package(
 
-name = 'triangle3L',
+name = 'formfactor3L',
 
 loop_integral = li,
 
