@@ -31,5 +31,5 @@ print('eps^0:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', 
 # elliptic Integral f^A_66 of Eq(4.21) arXiv:1609.06685
 # analytic result kindly provided by the authors
 print('Analytic Result')
-print('eps^0: 0.2470741999')
+print('eps^0: 0.247074199140732131068066')
 
