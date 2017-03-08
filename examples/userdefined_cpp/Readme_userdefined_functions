@@ -11,7 +11,7 @@ Which shows that both is possible:
 (a) explicit definitions in the python input files
 (b) only the argument list is defined, the explicit definitions will be defined later in 
 [process_directory]/src/functions.hpp 
-A template for this file will be crated automatically together with the process_directory.
+A template for this file will be created automatically together with the process_directory.
 An example for a functions.hpp file is given by functions_dummy_sav.hpp.
 The arguments are the ones that occur in the argument list of the function in dummyI.py, 
 in the same order.

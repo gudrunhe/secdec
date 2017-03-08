@@ -29,8 +29,8 @@ print('eps^-2:', integral_with_prefactor.coeff('eps',-2).coeff('value'), '+/- ('
 print('eps^-1:', integral_with_prefactor.coeff('eps',-1).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-1).coeff('error'), ')')
 print('eps^0:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
 
-# Elliptic Integral f^A_66 of Eq(4.21) arXiv:1609.06685
-print('Analytic Result')
+# result from arXiv:1610.07059 (equation 3.2)
+print('Reference Result')
 print('eps^-2: 1.23370055013617    - 6.20475892887384  * 10^-13 * I')
 print('eps^-1: 2.8902545096591976  + 3.875784585038738          * I')
 print('eps^0: -0.7785996083247692  - 4.123512600516016          * I')
