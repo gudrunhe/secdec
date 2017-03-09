@@ -114,12 +114,12 @@ class LoopIntegral(object):
         iterable, optional;
         The powers of the propergators, possibly dependent on
         the `regulator`. In case of negative powers, the
-        derivative with respect to the corresponding Feynman
-        parameter is calculated as explained in Section 3.2.4
-        of Ref. [BHJ+15]_. If negative powers are combined with
-        a tensor numerator, the derivative acts on the
-        Feynman-parametrized tensor numerator as well, which
-        leads to a consistent result.
+        `numerator` is constructed by taking derivatives with
+        respect to the corresponding Feynman parameters as
+        explained in Section 3.2.4 of Ref. [BHJ+15]_.
+        If negative powers are combined with a tensor numerator,
+        the derivatives act on the Feynman-parametrized tensor
+        numerator as well, which leads to a consistent result.
 
     '''
 

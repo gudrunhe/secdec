@@ -57,14 +57,17 @@ class LoopIntegralFromPropagators(LoopIntegral):
         required when a `numerator` is to be
         constructed.
 
+        .. seealso::
+            parameter `numerator`
+
     :param Lorentz_indices:
         iterable of strings or sympy expressions,
         optional;
         Symbols to be used as Lorentz indices in the
         numerator.
 
-    .. seealso::
-        parameter `numerator`
+        .. seealso::
+            parameter `numerator`
 
     :param numerator:
         string or sympy expression, optional;
@@ -76,55 +79,46 @@ class LoopIntegralFromPropagators(LoopIntegral):
         * scalar products (e.g. "p1(mu)*k1(mu)*p1(nu)*k2(nu)")
         * `symbols` (e.g. "m")
 
-    Examples:
-        * 'p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)'
-        * 'p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)'
-        * 'p1(mu)*k1(mu)*my_function(eps)'
+        Examples:
+            * ``p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)``
+            * ``p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)``
+            * ``p1(mu)*k1(mu)*my_function(eps)``
 
-    .. hint::
-        It is possible to use numbers as indices, for example
-        'p1(mu)*p2(mu)*k1(nu)*k2(nu) = p1(1)*p2(1)*k1(2)*k2(2)'.
+        .. warning::
+            **All** Lorentz indices (including the contracted ones
+            and also including the numbers that have been used)
+            must be explicitly defined using the parameter
+            `Lorentz_indices`.
 
-    .. hint::
-        The numerator may have uncontracted indices, e.g.
-        'k1(mu)*k2(nu)'
+        .. warning::
+            It is assumed that the numerator is and all its
+            derivatives by the `regulator` are finite and defined
+            if :math:`\epsilon=0` is inserted explicitly.
+            In particular, if user defined functions (like in the
+            example ``p1(mu)*k1(mu)*my_function(eps)``) appear,
+            make sure that ``my_function(0)`` is finite.
 
-    .. warning::
-        **All** Lorentz indices (including the contracted ones)
-        must be explicitly defined using the parameter
-        `Lorentz_indices`.
+            .. hint::
+                In order to mimic a singular user defined function,
+                use the parameter `regulator_power`.
+                For example, instead of ``numerator = gamma(eps)`` you
+                could enter ``numerator = eps_times_gamma(eps)`` in
+                conjunction with ``regulator_power = -1``.
 
-    .. warning::
-        It is assumed that the numerator is and all its
-        derivatives by the `regulator` are finite and defined
-        if :math:`\epsilon=0` is inserted explicitly.
-        In particular, if user defined functions (like in the
-        example ``p1(mu)*k1(mu)*my_function(eps)``) appear,
-        make sure that ``my_function(0)`` is finite.
+        .. hint::
+            It is possible to use numbers as indices, for example
+            ``p1(mu)*p2(mu)*k1(nu)*k2(nu) = p1(1)*p2(1)*k1(2)*k2(2)``.
 
-    .. hint::
-        In order to mimic a singular user defined function,
-        use the parameter `regulator_power`.
-        For example, instead of ``numerator = gamma(eps)`` you
-        could enter ``numerator = eps_times_gamma(eps)`` in
-        conjunction with ``regulator_power = -1``
-
-    .. warning::
-        The `numerator` is very flexible in its input. However,
-        that flexibility comes for the price of less error
-        safety. We have no way of checking for all possible
-        mistakes in the input. If your numerator is more
-        advanced than in the examples above, you should proceed
-        with great caution.
+        .. hint::
+            The numerator may have uncontracted indices, e.g.
+            ``k1(mu)*k2(nu)``.
 
     :param metric_tensor:
         string or sympy symbol, optional;
         The symbol to be used for the (Minkowski) metric
-        tensor :math:`g^{\mu\nu}` .
+        tensor :math:`g^{\mu\nu}`.
 
     ''' + LoopIntegral.common_properties_doc
-
-    # TODO: carefully reread and check this documentation
 
     def __init__(self, propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
                  numerator=1, metric_tensor='g', replacement_rules=[], Feynman_parameters='x', regulator='eps', \
