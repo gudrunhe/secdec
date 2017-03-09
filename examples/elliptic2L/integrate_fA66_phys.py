@@ -31,5 +31,5 @@ print('does NOT contain prefactor (s/msq)^(3/2)')
 print('eps^0:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
 
 print('Result from SecDec-3 for non-Euclidean point:')
-print('eps^0: -0.04428419291+I*0.0160664847 +- (2.952007868e-05+I*3.199378448e-05)')
+print('eps^0: -0.0442887356+I*0.01606818343 +- (2.45625148e-05+I*2.662108194e-05)')
 
