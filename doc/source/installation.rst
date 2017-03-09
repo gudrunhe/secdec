@@ -75,7 +75,7 @@ and programs are required:
 
  * CUBA (http://www.feynarts.de/cuba/)
  * FORM (http://www.nikhef.nl/~form/)
- * SecDecUtil (part of `pySecDec`), depends on:
+ * SecDecUtil (part of `pySecDec`, see :ref:`SedDecUtil<chapter_secdecutil>`), depends on:
 
    * catch (https://github.com/philsquared/Catch)
 

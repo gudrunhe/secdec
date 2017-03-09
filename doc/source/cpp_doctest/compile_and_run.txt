@@ -1,0 +1,1 @@
+$ c++ -I${SECDEC_CONTRIB}/include -std=c++11 example.cpp -o example && ./example

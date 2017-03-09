@@ -1,6 +1,10 @@
 __pycache__
 *.pyc
 doc/build
+doc/source/cpp_doctest/*
+!doc/source/cpp_doctest/*.txt
+!doc/source/cpp_doctest/*.cpp
+!doc/source/cpp_doctest/Makefile
 .coverage
 coverage
 
