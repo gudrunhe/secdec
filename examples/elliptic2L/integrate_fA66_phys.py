@@ -3,13 +3,14 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-fA66 = IntegralLibrary('fA66/fA66_pylink.so')
+fA66 = IntegralLibrary('fA66_phys/fA66_phys_pylink.so')
 
 # choose integrator
-fA66.use_Vegas(epsrel=1e-5,maxeval=10**7)
+fA66.use_Vegas(flags=2,epsrel=1e-4,maxeval=10**7)
 
-# integrate
-s, t, pp4, msq = [-4./3.,-16./5.,-100./39.,1.] # Euclidean point
+ 
+# integrate non-Euclidean point;
+s, t, pp4, msq = [90.,-2.5,1.6,1.] 
 str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = fA66([s, t, pp4, msq])
 
 # convert complex numbers from c++ to sympy notation
@@ -25,10 +26,10 @@ integral_without_prefactor = sp.sympify(str_integral_without_prefactor.replace('
 integral_without_prefactor_err = sp.sympify(str_integral_without_prefactor.replace('+/-','*value+error*'))
 
 # numerical result
-print('Numerical Result for Euclidean point')
+print('Numerical Result for non-Euclidean point:')
+print('does NOT contain prefactor (s/msq)^(3/2)')
 print('eps^0:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
 
-# elliptic Integral f^A_66 of Eq(4.21) arXiv:1609.06685
-# analytic result kindly provided by the authors
-print('Analytic Result for Euclidean point')
-print('eps^0: 0.247074199140732131068066')
+print('Result from SecDec-3 for non-Euclidean point:')
+print('eps^0: -0.04428419291+I*0.0160664847 +- (2.952007868e-05+I*3.199378448e-05)')
+
