@@ -523,15 +523,18 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', 
 
                 if canonical_graph[first_line_canonical_graph:] == \
                         previous_canonical_graph[first_line_previous_canonical_graph:]:
+                    # sector is equal to the previous sector --> squash into previous sector
+                    sector_is_new = False
                     # squash this sector into the previous one
                     previous_sector.Jacobian.coeffs[0] += sectors[sector_index].Jacobian.coeffs[0]
                 else:
                     # hash collision, this sector is not equal to the previous one --> update output
-                    previous_index = sector_index
-                    previous_sector_hash = sector_hash_array[sector_index]
-                    previous_sector = sectors[sector_index].copy()
-                    output.append(previous_sector)
+                    sector_is_new = True
             else:
+                # hash does not match previous sector, sector is a new sector
+                sector_is_new = True
+
+            if sector_is_new:
                 # this sector is not equal to the previous one --> update output
                 previous_index = sector_index
                 previous_sector_hash = sector_hash_array[sector_index]
