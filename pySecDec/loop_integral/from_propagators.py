@@ -484,7 +484,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
                     # --------------------------- multiply the tensor "P" --------------------------
 
-                    # There should be eactly one external momentum in each term (summand) of `this_tensor_P_factor`
+                    # There should be exactly one external momentum in each term (summand) of `this_tensor_P_factor`
 
                     # --> contract with metric tensors
                     # we need a copy of the ``P_indices``
