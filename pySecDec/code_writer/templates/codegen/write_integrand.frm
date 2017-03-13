@@ -479,33 +479,48 @@ B `regulators';
       ModuleOption,minimum,$unmatched;
       ModuleOption,local,$function;
       ModuleOption,local,$args;
-      .sort
+      .sort:match;
 
 *     The following "#if" evaluates to true only if there is still something to do.
       #If `i' == 0
 
         skip; nskip toUnwrap;
         Local toUnwrap = $wrappedFunctionWithArgs;
-        Id,once SecDecInternalfDUMMYwrappedFunctionWithArgs(SecDecInternalfDUMMY?$function, ?args$args) = 0;
+        Id,once SecDecInternalfDUMMYwrappedFunctionWithArgs(SecDecInternalfDUMMY?$function, ?args$args) = SecDecInternalfDUMMY(?args);
+        #call `insertProcedure'
+        #call nullify
         .sort:unwrap;
         drop toUnwrap;
 
-        #$labelCounter = `largestLabel`$function'' + 1;
-        #redefine largestLabel`$function' "`$labelCounter'"
+        #If termsin(toUnwrap) <= 1
 
-        #Do replaceDepth = 0, `insertionDepth'
-          #call beginArgumentDepth(`replaceDepth')
-            Id `$function'(`$args') = SecDecInternal`$function'Call`$labelCounter';
-          #call endArgumentDepth(`replaceDepth')
-        #EndDo
+          #Do depth = 0, `insertionDepth'
+            #call beginArgumentDepth(`depth')
+              Id `$function'(`$args') = toUnwrap;
+            #call endArgumentDepth(`depth')
+          #EndDo
+          .sort
 
-        Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize +
-            SecDecInternalLabel`$function'Call`$labelCounter'Arg * SecDecInternalfDUMMYContainer(SecDecInternalsDUMMY`$function',$args);
+        #Else
 
-*       no arguments after "insertDeformedIntegrationVariables"
-        #redefine numberOfArgs`$function'Label`$labelCounter' "0"
+          #$labelCounter = `largestLabel`$function'' + 1;
+          #redefine largestLabel`$function' "`$labelCounter'"
 
-        .sort
+          #Do replaceDepth = 0, `insertionDepth'
+            #call beginArgumentDepth(`replaceDepth')
+              Id `$function'(`$args') = SecDecInternal`$function'Call`$labelCounter';
+            #call endArgumentDepth(`replaceDepth')
+          #EndDo
+
+          Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize +
+              SecDecInternalLabel`$function'Call`$labelCounter'Arg * SecDecInternalfDUMMYContainer(SecDecInternalsDUMMY`$function',$args);
+
+*         no arguments after "insertDeformedIntegrationVariables"
+          #redefine numberOfArgs`$function'Label`$labelCounter' "0"
+
+          .sort:replace;
+
+        #EndIf
 
       #EndIf
 
@@ -514,7 +529,7 @@ B `regulators';
     #Do function = {`functionsToReplace'}
       repeat Id SecDecInternalfDUMMYContainer(SecDecInternalsDUMMY`function',?arguments) = `function'(?arguments);
     #EndDo
-    .sort
+    .sort:backsubs;
 
 *   }
 
