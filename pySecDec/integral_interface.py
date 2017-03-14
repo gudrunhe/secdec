@@ -98,7 +98,7 @@ class Cuhre(CPPIntegrator):
 
     '''
     def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,mineval=0,maxeval=10**6,key=0,real_complex_together=False):
-        self.integral_library = integral_library.c_lib
+        self.c_lib = integral_library.c_lib
         self.c_lib.allocate_cuba_Vegas.restype = c_void_p
         self.c_lib.allocate_cuba_Cuhre.argtypes = [c_double, c_double, c_int, c_longlong, c_longlong, c_int, c_bool]
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Cuhre(epsrel,epsabs,flags,mineval,maxeval,key,real_complex_together)
