@@ -105,7 +105,7 @@ class Cuhre(CPPIntegrator):
 class IntegralLibrary(object):
     r'''
     Interface to a c++ library produced by
-    :func:`make_package` or :func:`loop_package`.
+    :func:`.make_package` or :func:`.loop_package`.
 
     :param shared_object_path:
         str;
