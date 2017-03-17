@@ -10,6 +10,7 @@
 #include <cmath>
 #include <complex>
 #include <cuba.h>
+#include <iostream>
 #include <secdecutil/integrand_container.hpp>
 #include <secdecutil/integrators/integrator.hpp>
 #include <secdecutil/uncertainties.hpp>
@@ -42,7 +43,14 @@ namespace secdecutil
             ndim = 1; \
         /* nasty removal of constness --> restored in cuba_integrand_prototype */ \
         userdata = const_cast<void*>( reinterpret_cast<const void*>(&integrand_container) ); \
-        call_cuba();
+        call_cuba(); \
+        if (flags & 3) \
+        { \
+              std::cout << std::endl << "Cuba chi2-probability:" << std::endl; \
+              for ( int i=0; i<ncomp; i++) \
+                std::cout << "[" << i+1 << "] " << prob[i] << std::endl; \
+              std::cout << std::endl << std::endl; \
+        }
 
       // real version for general type
       template<typename T>
@@ -78,6 +86,8 @@ namespace secdecutil
               return secdecutil::UncorrelatedDeviation<T>(integral.at(0),error.at(0));
             };
         };
+      public:
+        int flags;
       };
 
       // real version specialized for cubareal
@@ -108,6 +118,8 @@ namespace secdecutil
               return secdecutil::UncorrelatedDeviation<cubareal>(integral.at(0),error.at(0));
             };
         };
+      public:
+        int flags;
       };
 
 
@@ -148,6 +160,8 @@ namespace secdecutil
               return secdecutil::UncorrelatedDeviation<std::complex<T>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)});
             };
         };
+      public:
+        int flags;
       };
 
       // complex version specialized for cubareal
@@ -181,6 +195,8 @@ namespace secdecutil
               return secdecutil::UncorrelatedDeviation<std::complex<cubareal>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)});
             };
         };
+      public:
+        int flags;
       };
 
       #undef CUBA_STRUCT_BODY
@@ -192,7 +208,6 @@ namespace secdecutil
             constexpr static long long int nvec = 1; \
             cubareal epsrel; \
             cubareal epsabs; \
-            int flags; \
             int seed; \
             long long int mineval; \
             long long int maxeval; \
@@ -216,9 +231,11 @@ namespace secdecutil
                 long long int nbatch = 1000 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
-                flags(flags),seed(seed),mineval(mineval),maxeval(maxeval), \
+                seed(seed),mineval(mineval),maxeval(maxeval), \
                 nstart(nstart),nincrease(nincrease),nbatch(nbatch) \
-            {};
+            { \
+                this->flags = flags; \
+            };
 
         #define VEGAS_INTEGRATE_BODY \
         /* Cuba output values */ \
@@ -235,7 +252,7 @@ namespace secdecutil
             nvec, \
             epsrel, \
             epsabs, \
-            flags, \
+            this->flags, \
             seed, \
             mineval, \
             maxeval, \
@@ -266,7 +283,7 @@ namespace secdecutil
           return std::unique_ptr<Integrator<T,T>>(
                                                      new Vegas<T>(
                                                                      epsrel,epsabs,
-                                                                     flags,seed,mineval,maxeval,
+                                                                     this->flags,seed,mineval,maxeval,
                                                                      nstart,nincrease,nbatch
                                                                  )
                                                  );
@@ -287,7 +304,6 @@ namespace secdecutil
             constexpr static long long int nvec = 1; \
             cubareal epsrel; \
             cubareal epsabs; \
-            int flags; \
             int seed; \
             long long int mineval; \
             long long int maxeval; \
@@ -310,9 +326,11 @@ namespace secdecutil
                 cubareal flatness = 25. \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
-                flags(flags),seed(seed),mineval(mineval),maxeval(maxeval), \
+                seed(seed),mineval(mineval),maxeval(maxeval), \
                 nnew(nnew),nmin(nmin),flatness(flatness)        \
-            {};
+            { \
+                this->flags = flags; \
+            };
 
         #define SUAVE_INTEGRATE_BODY \
         /* Cuba output values */ \
@@ -330,7 +348,7 @@ namespace secdecutil
             nvec, \
             epsrel, \
             epsabs, \
-            flags, \
+            this->flags, \
             seed, \
             mineval, \
             maxeval, \
@@ -360,7 +378,7 @@ namespace secdecutil
           return std::unique_ptr<Integrator<T,T>>(
                                                      new Suave<T>(
                                                                      epsrel,epsabs,
-                                                                     flags,seed,mineval,maxeval,
+                                                                     this->flags,seed,mineval,maxeval,
                                                                      nnew,nmin,flatness
                                                                  )
                                                  );
@@ -380,7 +398,6 @@ namespace secdecutil
             constexpr static long long int nvec = 1; \
             cubareal epsrel; \
             cubareal epsabs; \
-            int flags; \
             int seed; \
             long long int mineval; \
             long long int maxeval; \
@@ -416,10 +433,12 @@ namespace secdecutil
                 cubareal mindeviation = .15 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
-                flags(flags),seed(seed),mineval(mineval),maxeval(maxeval), \
+                seed(seed),mineval(mineval),maxeval(maxeval), \
                 key1(key1), key2(key2), key3(key3), maxpass(maxpass), \
                 border(border), maxchisq(maxchisq), mindeviation(mindeviation) \
-            {};
+            { \
+                this->flags = flags; \
+            };
 
         #define DIVONNE_INTEGRATE_BODY \
         /* Cuba output values */ \
@@ -437,7 +456,7 @@ namespace secdecutil
             nvec, \
             epsrel, \
             epsabs, \
-            flags, \
+            this->flags, \
             seed, \
             mineval, \
             maxeval, \
@@ -476,7 +495,7 @@ namespace secdecutil
           return std::unique_ptr<Integrator<T,T>>(
                                                      new Divonne<T>(
                                                                        epsrel,epsabs,
-                                                                       flags,seed,mineval,maxeval,
+                                                                       this->flags,seed,mineval,maxeval,
                                                                        key1, key2, key3, maxpass,
                                                                        border, maxchisq, mindeviation
                                                                    )
@@ -497,7 +516,6 @@ namespace secdecutil
             constexpr static long long int nvec = 1; \
             cubareal epsrel; \
             cubareal epsabs; \
-            int flags; \
             long long int mineval; \
             long long int maxeval; \
             int key; \
@@ -514,8 +532,10 @@ namespace secdecutil
                 int key = 0 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
-                flags(flags),mineval(mineval),maxeval(maxeval),key(key) \
-            {};
+                mineval(mineval),maxeval(maxeval),key(key) \
+            { \
+                this->flags = flags; \
+            };
 
         #define CUHRE_INTEGRATE_BODY \
         /* Cuba output values */ \
@@ -533,7 +553,7 @@ namespace secdecutil
             nvec, \
             epsrel, \
             epsabs, \
-            flags, \
+            this->flags, \
             mineval, \
             maxeval, \
             key, \
@@ -561,7 +581,7 @@ namespace secdecutil
           return std::unique_ptr<Integrator<T,T>>(
                                                      new Cuhre<T>(
                                                                      epsrel,epsabs,
-                                                                     flags,mineval,maxeval,key
+                                                                     this->flags,mineval,maxeval,key
                                                                  )
                                                  );
         };
