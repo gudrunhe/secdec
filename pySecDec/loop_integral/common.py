@@ -102,8 +102,10 @@ class LoopIntegral(object):
 
     :param regulator_power:
         integer;
-        The regulator to this power will be multiplied by
-        the numerator.
+        An additional factor to the `numerator`.
+
+        .. seealso::
+            :class:`.LoopIntegral`
 
     :param dimensionality:
         string or sympy expression, optional;
