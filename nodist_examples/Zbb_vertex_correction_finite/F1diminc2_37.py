@@ -57,6 +57,8 @@ decomposition_method = 'iterative',
 
 # whether or not to produce code to perform the contour deformation
 # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
-contour_deformation = True
+contour_deformation = True,
+
+split = True
 
 )

@@ -293,7 +293,7 @@ F1diminc2_37::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_37::in
     const std::vector<real_t> real_parameters{};
     const std::vector<complex_t> complex_parameters{};
     const unsigned number_of_samples = 100000;
-    const double deformation_parameters_maximum = 0.1;
+    const double deformation_parameters_maximum = 1e2;
 
     // optimize contour
     const std::vector<nested_series_t<F1diminc2_37::integrand_t>> integrands = F1diminc2_37::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
@@ -376,9 +376,9 @@ F1diminc2_13::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_13::in
 int main()
 {
 
-    F1diminc2_37::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_37::integrand_return_t>> f1diminc2x37xRes = f1diminc2x37(); // factorizable - requires split?
-    F1_45::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45::integrand_return_t>> f1x45xRes = f1x45(); // requires split?
-    F1_45_2::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45_2::integrand_return_t>> f1x45x2xRes = f1x45x2();
+    F1diminc2_37::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_37::integrand_return_t>> f1diminc2x37xRes = f1diminc2x37(); // factorizable - requires split
+    F1_45_2::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45_2::integrand_return_t>> f1x45x2xRes = f1x45x2(); // requires split
+    F1_45::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45::integrand_return_t>> f1x45xRes = f1x45();
     F1diminc2_63::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_63::integrand_return_t>> f1diminc2x63xRes = f1diminc2x63();
     F1diminc2_62::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_62::integrand_return_t>> f1diminc2x62xRes = f1diminc2x62();
     F1diminc2_61::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_61::integrand_return_t>> f1diminc2x61xRes = f1diminc2x61();
@@ -398,6 +398,7 @@ int main()
     std::cout << "f1x45xRes " << f1x45xRes << std::endl;
     std::cout << "f1x45x2xRes " << f1x45x2xRes << std::endl;
     std::cout << "f1diminc2x37xRes " << f1diminc2x37xRes << std::endl;
+    std::cout << "f1diminc4x42xRes " << f1diminc4x42xRes << std::endl;
     std::cout << "f1diminc2x21xRes " << f1diminc2x21xRes << std::endl;
     std::cout << "f1diminc2x13xRes " << f1diminc2x13xRes << std::endl;
 

@@ -20,7 +20,7 @@ replacement_rules = [
                         ('mZ', 1)
                     ],
 dimensionality='4-2*eps',
-powerlist=[1, 0, 3, 1, 0, 1, 0]
+powerlist=[1, 0, 2, 1, 0, 1, 0]
 )
 
 
@@ -39,7 +39,7 @@ loop_integral = li,
 real_parameters = Mandelstam_symbols + mass_symbols,
 
 # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-requested_order = 2,
+requested_order = 1,
 
 # the optimization level to use in FORM (can be 0, 1, 2, 3)
 form_optimization_level = 2,
@@ -57,8 +57,6 @@ decomposition_method = 'iterative',
 
 # whether or not to produce code to perform the contour deformation
 # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
-contour_deformation = True,
-
-split = True
+contour_deformation = True
              
 )
