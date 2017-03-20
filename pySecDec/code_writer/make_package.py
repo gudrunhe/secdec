@@ -924,11 +924,19 @@ def make_package(name, integration_variables, regulators, requested_orders,
             for output_sector in primary_sectors:
                 yield output_sector
 
-        def secondary_decomposition_with_splitting(sector, indices):
-            # split and decompose the `sector`
-            for split_sector in decomposition.splitting.split_singular(sector, split, indices):
+        def secondary_decomposition_with_splitting(sector, indices, split_sectors=None):
+            if split_sectors is None:
+                # split and decompose the `sector`
+                split_sectors = decomposition.splitting.split_singular(sector, split, indices)
+            for split_sector in split_sectors:
                 for decomposed_sector in original_decomposition_strategies['secondary'](split_sector, indices):
-                    yield decomposed_sector
+                    # check if another split is necessary
+                    split_decomposed_sector = list( decomposition.splitting.split_singular(decomposed_sector, split, indices) )
+                    if len(split_decomposed_sector) == 1:
+                        yield decomposed_sector
+                    else:
+                        for deeper_sector in secondary_decomposition_with_splitting(decomposed_sector, indices, split_decomposed_sector):
+                            yield deeper_sector
 
         # apply modifications to the decomposition strategy
         strategy = dict(primary=primary_decomposition_with_splitting, secondary=secondary_decomposition_with_splitting)
