@@ -99,10 +99,11 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
         parsed.append(expression if target_type is ExponentiatedPolynomial else (expression,functions))
     return parsed
 
-def _validate(name):
+def _validate(name, allowunderscore=False):
     '''
     Check validity of `name` for usage in FORM,
-    c++, and the file system.
+    c++, and the file system. If `allowunderscore`
+    is True the underscores are allowed.
     Restrictions are as follows:
      o FORM: no underscores
      o FORM, c++: the first character must be
@@ -113,8 +114,12 @@ def _validate(name):
        prefix
 
     '''
-    if match(r'^[A-Z,a-z]+[A-Z,a-z,0-9]*$', name) is None:
-        raise NameError('"%s" cannot be used as symbol' % name)
+    if allowunderscore is True:
+        if match(r'^[A-Z,a-z]+[A-Z,a-z,0-9,_]*$', name) is None:
+            raise NameError('"%s" cannot be used as symbol' % name)
+    else:
+        if match(r'^[A-Z,a-z]+[A-Z,a-z,0-9]*$', name) is None:
+            raise NameError('"%s" cannot be used as symbol' % name)
     if name.startswith(internal_prefix):
         raise NameError('Symbol names must not start with "%s"' % internal_prefix)
 
@@ -140,7 +145,8 @@ def _convert_input(name, integration_variables, regulators,
     # check validity of symbol names and `name`
     for symbol in chain(integration_variables, regulators, polynomial_names, real_parameters, complex_parameters, functions,
                         [contour_deformation_polynomial] if contour_deformation_polynomial is not None else []):
-        _validate( str(symbol) )
+        _validate( str(symbol) , allowunderscore=False )
+    _validate( str(name) , allowunderscore=True )
 
     # check that all the `positive_polynomials` also appear in `polynomial_names`
     for polyname in positive_polynomials:
