@@ -39,7 +39,7 @@ loop_integral = li,
 real_parameters = Mandelstam_symbols + mass_symbols,
 
 # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-requested_order = 3,
+requested_order = 4,
 
 # the optimization level to use in FORM (can be 0, 1, 2, 3)
 form_optimization_level = 2,
@@ -59,6 +59,6 @@ decomposition_method = 'iterative',
 # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
 contour_deformation = True,
 
-split = True
+split = True # introduces an artificial 1/eps which integrates to 0
 
 )
