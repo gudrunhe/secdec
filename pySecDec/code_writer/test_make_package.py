@@ -102,11 +102,30 @@ class TestConvertInput(TestMakePackage):
         self.assertRaisesRegexp(sp.PolynomialError, 'polynomials.*regulators.*Error while checking: "\( \+ \(a\)\*z0\)\*\*\(DummyFunction\(eps\) \+ 5\)"', _convert_input, **args)
 
     #@attr('active')
-    def test_validate(self):
-        self.assertRaisesRegexp(NameError, 'not start with..SecDecInternal', _validate, 'SecDecInternalFunction')
+    def test_validate_basic(self):
+        self.assertRaisesRegexp(NameError, 'not begin with.*SecDecInternal', _validate, 'SecDecInternalFunction')
         self.assertRaisesRegexp(NameError, '1a.*cannot be used', _validate, '1a')
-        self.assertRaisesRegexp(NameError, 'my_symbol.*cannot be used', _validate, 'my_symbol')
+        self.assertRaisesRegexp(NameError, 'my_symbol.*cannot contain.*underscore.*_', _validate, 'my_symbol')
         _validate('symbol1') # should be ok
+
+    #@attr('active')
+    def test_validate_allow_underscore(self):
+        self.assertRaisesRegexp(NameError, '^"my_name" cannot contain an underscore character "_"$', _validate, 'my_name')
+        _validate('my_name', True) # should be ok
+        self.assertRaisesRegexp(NameError, '^"with_underscore" cannot contain an underscore character "_"$', _validate, 'with_underscore', allow_underscore=False)
+        _validate('with_underscore', allow_underscore=True) # should be ok
+
+    #@attr('active')
+    def test_validate_bans(self):
+        for allow_underscore in [True, False]:
+            self.assertRaisesRegexp(NameError, '^"double" cannot be used as symbol$', _validate, 'double', allow_underscore)
+            self.assertRaisesRegexp(NameError, '^"cubareal" cannot be used as symbol$', _validate, 'cubareal', allow_underscore)
+            self.assertRaisesRegexp(NameError, '^"float" cannot be used as symbol$', _validate, 'float', allow_underscore)
+            self.assertRaisesRegexp(NameError, '^"sqrt" cannot be used as symbol$', _validate, 'sqrt', allow_underscore)
+            self.assertRaisesRegexp(NameError, '^"AtomicThing" cannot be used as symbol \(must not begin with "atomic"\)$', _validate, 'AtomicThing', allow_underscore)
+
+        self.assertRaisesRegexp(NameError, '^"_my_name" cannot be used as symbol \(must not begin with "_"\)$', _validate, '_my_name', allow_underscore=True)
+        self.assertRaisesRegexp(NameError, '^"_my_name" cannot contain an underscore character "_"$', _validate, '_my_name', allow_underscore=False)
 
     #@attr('active')
     def test_remainder_expression_with_polynomial_reference(self):

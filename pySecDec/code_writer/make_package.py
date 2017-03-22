@@ -99,10 +99,10 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
         parsed.append(expression if target_type is ExponentiatedPolynomial else (expression,functions))
     return parsed
 
-def _validate(name, allowunderscore=False):
+def _validate(name, allow_underscore=False):
     '''
     Check validity of `name` for usage in FORM,
-    c++, and the file system. If `allowunderscore`
+    c++, and the file system. If `allow_underscore`
     is True the underscores are allowed.
     Restrictions are as follows:
      o FORM: no underscores
@@ -114,14 +114,50 @@ def _validate(name, allowunderscore=False):
        prefix
 
     '''
-    if allowunderscore is True:
-        if match(r'^[A-Z,a-z]+[A-Z,a-z,0-9,_]*$', name) is None:
+    if match(r'^[A-Z,a-z,_]+[A-Z,a-z,0-9,_]*$', name) is None:
+        raise NameError('"%s" cannot be used as symbol' % name)
+
+    if not allow_underscore and '_' in name:
+        raise NameError('"%s" cannot contain an underscore character "_"' % name)
+
+    # disallowed keywords
+    banwords = set([
+                   # c++ keywords
+                   'std','alignas','alignof','and','and_eq','asm','atomic_cancel','atomic_commit',
+                   'atomic_noexcept','auto','bitand','bitor','bool','break','case','catch','char',
+                   'char16_t','char32_t','class','compl','concept','const','constexpr','const_cast',
+                   'continue','decltype','default','delete','do','double','dynamic_cast','else',
+                   'enum','explicit','export','extern','false','float','for','friend','goto','if',
+                   'import','inline','int','long','module','mutable','namespace','new','noexcept',
+                   'not','not_eq','nullptr','operator','or','or_eq','private','protected','public',
+                   'register','reinterpret_cast','requires','return','short','signed',
+                   'sizeof','static','static_assert','static_cast','struct','switch','synchronized',
+                   'template','this','thread_local','throw','true','try','typedef','typeid','typename',
+                   'union','unsigned','using','virtual','void','volatile','wchar_t','while','xor','xor_eq',
+                   '_Pragma',
+                   # c keywords
+                   'auto','break','case','char','const','continue','default','do','double','else','enum',
+                   'extern','float','for','goto','if','inline','int','long','register','restrict','return',
+                   'short','signed','sizeof','static','struct','switch','typedef','union','unsigned','void',
+                   'volatile','while','_Alignas','_Alignof','_Atomic','_Bool','_Complex','_Generic',
+                   '_Imaginary','_Noreturn','_Static_assert','_Thread_local',
+                   'alignas','alignof','bool','complex','imaginary','noreturn','static_assert',
+                   'thread_local',
+                   # math functions
+                   'log','exp','real','imag','sqrt',
+                   # Cuba integrator library
+                   'cubareal','Vegas','llVegas','Suave','llSuave','Cuhre','llCuhre','Divonne','llDivonne',
+                   'integrand_t','peakfinder_t',
+               ])
+    for banword in banwords:
+        if name == banword:
             raise NameError('"%s" cannot be used as symbol' % name)
-    else:
-        if match(r'^[A-Z,a-z]+[A-Z,a-z,0-9]*$', name) is None:
-            raise NameError('"%s" cannot be used as symbol' % name)
-    if name.startswith(internal_prefix):
-        raise NameError('Symbol names must not start with "%s"' % internal_prefix)
+
+    # disallowed prefixes
+    banstarts = set([internal_prefix,'cuba','atomic','_'])
+    for banstart in banstarts:
+        if name.lower().startswith(banstart.lower()):
+            raise NameError( '"%s" cannot be used as symbol (must not begin with "%s")' % (name,banstart) )
 
 def _convert_input(name, integration_variables, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
@@ -145,8 +181,8 @@ def _convert_input(name, integration_variables, regulators,
     # check validity of symbol names and `name`
     for symbol in chain(integration_variables, regulators, polynomial_names, real_parameters, complex_parameters, functions,
                         [contour_deformation_polynomial] if contour_deformation_polynomial is not None else []):
-        _validate( str(symbol) , allowunderscore=False )
-    _validate( str(name) , allowunderscore=True )
+        _validate( str(symbol) , allow_underscore=False )
+    _validate( str(name) , allow_underscore=True )
 
     # check that all the `positive_polynomials` also appear in `polynomial_names`
     for polyname in positive_polynomials:
