@@ -5,7 +5,7 @@ import pySecDec as psd
 
 li = psd.loop_integral.LoopIntegralFromPropagators(
 propagators = ['k1^2', '(k1-k2)^2', '(k1-k2+p1)^2-mZ^2', '(k2)^2', '(k2+p2)^2', '(k1+p1+p2)^2', '(k2+p1)^2'],
-loop_momenta = ['k1','k2'],
+loop_momenta = ['k1'],
 
 external_momenta = ['p1','p2','p3','p4'],
 
