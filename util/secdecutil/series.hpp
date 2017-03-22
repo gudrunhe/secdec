@@ -26,6 +26,24 @@ namespace secdecutil {
 
     protected:
 
+        template<typename U>
+        struct CreateContent
+        {
+            static U create(const Series& s)
+            {
+                return U();
+            }
+        };
+
+        template<typename U>
+        struct CreateContent<Series<U>>
+        {
+            static Series<U> create(const Series& s)
+            {
+                return {0,0,{U()},false,s.content.at(0).expansion_parameter};
+            }
+        };
+
         int order_min;
         int order_max;
         std::vector<T> content;
@@ -79,9 +97,12 @@ namespace secdecutil {
                 } else if ( s1.hasTerm(i) )
                 {
                     content.push_back(s1.at(i));
-                } else // s2.hasTerm(i)
+                } else if ( s2.hasTerm(i) )
                 {
                     content.push_back(-s2.at(i));
+                } else // construct default
+                {
+                    content.push_back(CreateContent<Tout>::create(s1));
                 }
             }
             return Series<Tout>(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);
@@ -131,9 +152,12 @@ namespace secdecutil {
                 } else if ( s1.hasTerm(i) )
                 {
                     content.push_back(s1.at(i));
-                } else // s2.hasTerm(i)
+                } else if ( s2.hasTerm(i) )
                 {
                     content.push_back(s2.at(i));
+                } else // construct default
+                {
+                    content.push_back(CreateContent<Tout>::create(s1));
                 }
             }
             return Series<Tout>(order_min, order_max, content, truncated_above, s1.expansion_parameter /* equality of the expansion parameter was checked earlier */);

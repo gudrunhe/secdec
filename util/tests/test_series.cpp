@@ -615,7 +615,7 @@ TEST_CASE( "Operator /" , "[Series]" ) {
         REQUIRE(              series                        == truncated_one            ); // after application of "/="
     };
 
-    SECTION ( " series with one term in denominator gets not truncated " ) {
+    SECTION ( " series with one term in denominator does not get truncated " ) {
 
         auto one_term = secdecutil::Series<float>(3,3,{5.f},false);
         auto one_term_truncated = secdecutil::Series<float>(3,3,{5.f},true);
@@ -733,5 +733,89 @@ TEST_CASE( "Assignment with and without implicit conversion" , "[Series]" ) {
         REQUIRE( s4 == s3_long_complex );
 
     };
+
+};
+
+TEST_CASE( "Default construct template type on +/-", "[Series]" ) {
+
+    SECTION( " 1d " ) {
+
+        const secdecutil::Series<double> eps = {1,1,{1},false,"eps"};
+        const secdecutil::Series<double> eps_plus_eps_four = {-4,-1,{1,0,0,1},false,"eps"};
+        const secdecutil::Series<double> minus_eps_minus_eps_four = {-4,-1,{-1,0,0,-1},false,"eps"};
+
+        REQUIRE( +1./(eps) +1./(eps*eps*eps*eps) == eps_plus_eps_four );
+        REQUIRE( -1./(eps) -1./(eps*eps*eps*eps) == minus_eps_minus_eps_four );
+    }
+
+    SECTION( " 2d " ) {
+
+        auto multivariate_series_one =
+        secdecutil::Series<secdecutil::Series<int>>(-1,1,{
+            secdecutil::Series<int>(-1,0,{1,2},false,"inner"),
+            secdecutil::Series<int>(0,2,{3,4,5},false,"inner"),
+            secdecutil::Series<int>(2,5,{6,7,8,9},false,"inner")
+        },false,"outer");
+
+        auto multivariate_series_two =
+        secdecutil::Series<secdecutil::Series<int>>(5,6,{
+            secdecutil::Series<int>(-1,0,{1,2},false,"inner"),
+            secdecutil::Series<int>(0,2,{3,4,5},false,"inner"),
+        },false,"outer");
+
+        auto multivariate_series_one_overlapping =
+        secdecutil::Series<secdecutil::Series<int>>(1,2,{
+            secdecutil::Series<int>(-1,0,{1,2},false,"inner"),
+            secdecutil::Series<int>(0,2,{3,4,5},false,"inner"),
+        },false,"outer");
+
+        auto multivariate_series_one_plus_two =
+        secdecutil::Series<secdecutil::Series<int>>(-1,6,{
+            secdecutil::Series<int>(-1,0,{1,2},false,"inner"),
+            secdecutil::Series<int>(0,2,{3,4,5},false,"inner"),
+            secdecutil::Series<int>(2,5,{6,7,8,9},false,"inner"),
+            secdecutil::Series<int>(0,0,{0},false,"inner"),
+            secdecutil::Series<int>(0,0,{0},false,"inner"),
+            secdecutil::Series<int>(0,0,{0},false,"inner"),
+            secdecutil::Series<int>(-1,0,{1,2},false,"inner"),
+            secdecutil::Series<int>(0,2,{3,4,5},false,"inner")
+        },false,"outer");
+
+        auto multivariate_series_one_minus_two =
+        secdecutil::Series<secdecutil::Series<int>>(-1,6,{
+            secdecutil::Series<int>(-1,0,{1,2},false,"inner"),
+            secdecutil::Series<int>(0,2,{3,4,5},false,"inner"),
+            secdecutil::Series<int>(2,5,{6,7,8,9},false,"inner"),
+            secdecutil::Series<int>(0,0,{0},false,"inner"),
+            secdecutil::Series<int>(0,0,{0},false,"inner"),
+            secdecutil::Series<int>(0,0,{0},false,"inner"),
+            secdecutil::Series<int>(-1,0,{-1,-2},false,"inner"),
+            secdecutil::Series<int>(0,2,{-3,-4,-5},false,"inner")
+        },false,"outer");
+
+        auto multivariate_series_one_plus_one_overlapping =
+        secdecutil::Series<secdecutil::Series<int>>(-1,2,{
+            secdecutil::Series<int>(-1,0,{1,2},false,"inner"),
+            secdecutil::Series<int>(0,2,{3,4,5},false,"inner"),
+            secdecutil::Series<int>(-1,5,{1,2,0,6,7,8,9},false,"inner"),
+            secdecutil::Series<int>(0,2,{3,4,5},false,"inner")
+        },false,"outer");
+
+        auto multivariate_series_one_minus_one_overlapping =
+        secdecutil::Series<secdecutil::Series<int>>(-1,2,{
+            secdecutil::Series<int>(-1,0,{1,2},false,"inner"),
+            secdecutil::Series<int>(0,2,{3,4,5},false,"inner"),
+            secdecutil::Series<int>(-1,5,{-1,-2,0,6,7,8,9},false,"inner"),
+            secdecutil::Series<int>(0,2,{-3,-4,-5},false,"inner")
+        },false,"outer");
+
+        REQUIRE( multivariate_series_one + multivariate_series_two == multivariate_series_one_plus_two);
+        REQUIRE( multivariate_series_one - multivariate_series_two == multivariate_series_one_minus_two);
+
+        REQUIRE( multivariate_series_one + multivariate_series_one_overlapping == multivariate_series_one_plus_one_overlapping);
+        REQUIRE( multivariate_series_one - multivariate_series_one_overlapping == multivariate_series_one_minus_one_overlapping);
+
+    }
+
 
 };
