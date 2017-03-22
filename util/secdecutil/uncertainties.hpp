@@ -189,6 +189,11 @@ namespace secdecutil {
         value(value), uncertainty(0)
         {};
 
+        // default constructor
+        UncorrelatedDeviation():
+        value(0), uncertainty(0)
+        {};
+
     };
 
 
@@ -494,6 +499,9 @@ namespace secdecutil {
         {};
         UncorrelatedDeviation(std::complex<T> value):
         value(value), uncertainty(0)
+        {};
+        UncorrelatedDeviation():
+        value(0), uncertainty(0)
         {};
 
         // converting constructor "T -> complex<T>"
