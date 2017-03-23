@@ -158,7 +158,7 @@ namespace %(name)s
             {
                 std::string error_message;
                 error_message += "Encountered \"pow(<negative real>, <rational>)\" in a real-valued integrand function of ";
-                error_message += "\"angularities\". Try to enforce complex return values for the generated integrands; i.e. set ";
+                error_message += "\"%(name)s\". Try to enforce complex return values for the generated integrands; i.e. set ";
                 error_message += "\"enforce_complex=True\" in the corresponding call to \"loop_package\" or \"make_package\".";
                 throw std::domain_error(error_message);
             }
