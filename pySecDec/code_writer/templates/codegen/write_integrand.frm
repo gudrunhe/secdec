@@ -496,7 +496,7 @@ B `regulators';
 
           #Do depth = 0, `insertionDepth'
             #call beginArgumentDepth(`depth')
-              Id `$function'(`$args') = toUnwrap;
+              Id `$function'(`$args') = SecDecInternalfDUMMYContainer(SecDecInternalsDUMMY`$function',$args);
             #call endArgumentDepth(`depth')
           #EndDo
           .sort
@@ -527,14 +527,22 @@ B `regulators';
     #EndDo
 
     #Do function = {`functionsToReplace'}
-      repeat Id SecDecInternalfDUMMYContainer(SecDecInternalsDUMMY`function',?arguments) = `function'(?arguments);
+      #Do depth = 0, `insertionDepth'
+        #call beginArgumentDepth(`depth')
+          repeat Id SecDecInternalfDUMMYContainer(SecDecInternalsDUMMY`function',?arguments) = `function'(?arguments);
+        #call endArgumentDepth(`depth')
+      #EndDo
     #EndDo
     .sort:backsubs;
 
 *   }
 
-    #call `insertProcedure'
-    #call nullify
+    #Do depth = 0, `insertionDepth'
+      #call beginArgumentDepth(`depth')
+        #call `insertProcedure'
+        #call nullify
+      #call endArgumentDepth(`depth')
+    #EndDo
     .sort
 
 *   some simplifications
