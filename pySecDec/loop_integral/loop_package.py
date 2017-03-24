@@ -117,8 +117,8 @@ def loop_package(name, loop_integral, requested_order,
 
     :param split:
         bool, optional;
-        Whether or not to split the integration at :math:`1/2`
-        in order to map singularities from :math:`1` to
+        Whether or not to split the integration domain in
+        order to map singularities from :math:`1` to
         :math:`0`. Set this option to ``True`` if you have
         singularties when one or more integration variables
         are one.
