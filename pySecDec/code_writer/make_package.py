@@ -727,11 +727,17 @@ def make_package(name, integration_variables, regulators, requested_orders,
         e.g.``['f']``.
 
         .. note::
-            The power function `pow` and the logarithm
-            `log` are already defined by default. The
-            `log` uses the nonstandard continuation
-            from a negative imaginary part on the negative
-            real axis (e.g. ``log(-1) = -i*pi``).
+            Only user-defined functions that are provided as
+            c++-callable code should be mentioned here.
+            Listing basic mathematical functions (e.g. ``log``,
+            ``pow``, ``exp``, ``sqrt``, ...) is not required
+            and considered an error to avoid name conflicts.
+
+        .. note::
+            The power function `pow` and the logarithm `log`
+            use the nonstandard continuation with an
+            infinitesimal negative imaginary part on the
+            negative real axis (e.g. ``log(-1) = -i*pi``).
 
     :param real_parameters:
         iterable of strings or sympy symbols, optional;
