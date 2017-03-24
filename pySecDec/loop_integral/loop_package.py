@@ -52,7 +52,7 @@ def loop_package(name, loop_integral, requested_order,
         Parameters to be interpreted as real numbers,
         e.g. Mandelstam invariants and masses.
 
-    :param complex parameters:
+    :param complex_parameters:
         iterable of strings or sympy symbols, optional;
         Parameters to be interpreted as complex numbers.
         To use the complex mass scheme, define the masses
@@ -81,7 +81,7 @@ def loop_package(name, loop_integral, requested_order,
 
     :param decomposition_method:
         string, optional;
-        The strategy to decompose the polynomials. The
+        The strategy for decomposing the polynomials. The
         following strategies are available:
 
         * 'iterative' (default)
