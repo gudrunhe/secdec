@@ -27,7 +27,7 @@ with open('kinematics.input') as f:
 
             # print the result to resultsfile
             resultsfile.write('point: ' + str(point) + '\n')
-	    resultsfile.write('result: ' + str_integral_with_prefactor + '\n')
+            resultsfile.write('result: ' + str_integral_with_prefactor + '\n')
             resultsfile.write('--------\n\n\n')
 
         # alternative output format
