@@ -6,7 +6,7 @@ import sympy as sp
 H_5F4 = IntegralLibrary('H_5F4/H_5F4_pylink.so')
 
 # choose integrator
-H_5F4.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+H_5F4.use_Vegas(flags=2, epsrel=1e-4) # ``flags=2``: verbose --> see Cuba manual
 
 # integrate
 str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = H_5F4([0.5])
