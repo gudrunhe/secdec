@@ -9,7 +9,7 @@ H_5F4 = IntegralLibrary('H_5F4/H_5F4_pylink.so')
 H_5F4.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = H_5F4(real_parameters=[0.9],complex_parameters=[0.1])
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = H_5F4([0.5])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
