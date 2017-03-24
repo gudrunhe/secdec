@@ -11,8 +11,8 @@ please be referred to the :doc:`reference guide <full_reference>`.
 
 .. _algebra_intro:
 
-pySecDec.algebra
-----------------
+The Algebra Module
+------------------
 
 The  `algebra` module implements a very basic computer algebra system. `pySecDec` 
 uses both `sympy` and `numpy`. Although
