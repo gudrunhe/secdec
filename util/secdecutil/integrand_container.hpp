@@ -104,11 +104,16 @@ namespace secdecutil {
             return add_subtract_multiply_or_divide<divide>(ic1,ic2);
         };
 
+        /*
+         * Constructors
+         */
         IntegrandContainer(const int number_of_integration_variables, const std::function<T(Args...)>& integrand):
         number_of_integration_variables (number_of_integration_variables), integrand(integrand)
         {};
 
-        IntegrandContainer()
+        // default constructor (the "zero-integrand")
+        IntegrandContainer() :
+        number_of_integration_variables(0),integrand([](...){return T();})
         {};
 
     };

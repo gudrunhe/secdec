@@ -18,6 +18,16 @@ TEST_CASE( "Check Access", "[IntegrandContainer]" ) {
 
 };
 
+TEST_CASE( "Default Constructor", "[IntegrandContainer]" ) {
+
+    auto ic = secdecutil::IntegrandContainer<int, int, bool>();
+
+    REQUIRE( ic.number_of_integration_variables == 0 );
+    for (int i = 0 ; i < 10 ; ++i)
+        REQUIRE( ic.integrand(i, i) == 0 );
+
+};
+
 TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
 
     std::function<int(int)> func1 = [] (int i) { return i+2; };
