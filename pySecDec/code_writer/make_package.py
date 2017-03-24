@@ -1600,7 +1600,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
     print('"' + name + '" done')
 
     # print message how to implement the dummy functions if applicable
-    have_dummy_functions = True if functions else False
     if have_dummy_functions:
         print(
                  "Declarations of the `functions` and their required derivatives are provided\n" + \
