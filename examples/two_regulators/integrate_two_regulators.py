@@ -10,7 +10,7 @@ alpha_epsilon = IntegralLibrary('alpha_epsilon/alpha_epsilon_pylink.so')
 alpha_epsilon.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = alpha_epsilon(real_parameters=[0.9],complex_parameters=[0.1])
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = alpha_epsilon()
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
@@ -26,9 +26,9 @@ integral_without_prefactor_err = sp.sympify(str_integral_without_prefactor.repla
 
 # numerical result
 print('Numerical Result')
-print('eps^-1 * alpha^-1:', integral_with_prefactor.coeff('eps',-1).coeff('alpha',-1).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-1).coeff('alpha',-1).coeff('error'), ')')
-print('eps^-2 * alpha^0:', integral_with_prefactor.coeff('eps',-2).coeff('alpha',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-2).coeff('alpha',0).coeff('error'), ')')
-print('eps^0 * alpha^0:', integral_with_prefactor.coeff('eps',0).coeff('alpha',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('alpha',0).coeff('error'), ')')
+print('eps^-1 * alpha^-1:', integral_with_prefactor.coeff('alpha',-1).coeff('eps',-1).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('alpha',-1).coeff('eps',-1).coeff('error'), ')')
+print('eps^-2 * alpha^0:', integral_with_prefactor.coeff('alpha',0).coeff('eps',-2).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('alpha',-2).coeff('eps',0).coeff('error'), ')')
+print('eps^0 * alpha^0:', integral_with_prefactor.coeff('alpha',0).coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('alpha',0).coeff('eps',0).coeff('error'), ')')
 
 # analytic result
 print('Analytic Result')
