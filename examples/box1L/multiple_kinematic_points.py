@@ -3,7 +3,7 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-box = IntegralLibrary('box1L_p1offshell/box1L_p1offshell_pylink.so')
+box = IntegralLibrary('box1L/box1L_pylink.so')
 
 # choose integrator
 box.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
@@ -12,7 +12,7 @@ number_of_real_parameters = int(box.info['number_of_real_parameters'])
 number_of_complex_parameters = int(box.info['number_of_complex_parameters'])
 
 with open('kinematics.input') as f:
-    with open('results_box1L_p1offshell.txt', 'w') as resultsfile:
+    with open('results_box1L.txt', 'w') as resultsfile:
         for line in f:
             point = line.split()
             assert len(point) == 1+number_of_real_parameters+number_of_complex_parameters, "Invalid point: " + str(point)
