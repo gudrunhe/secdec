@@ -71,7 +71,6 @@ namespace secdecutil {
             return *this;
         };
 
-        // TODO - bof add tests
         IntegrandContainer& operator*=(const IntegrandContainer& ic1)
         {
             *this = *this * ic1;
@@ -82,7 +81,6 @@ namespace secdecutil {
             *this = *this / ic1;
             return *this;
         };
-        // TODO - eof add tests
 
         /*
          *  Binary operators
@@ -97,7 +95,6 @@ namespace secdecutil {
             return add_subtract_multiply_or_divide<add>(ic1,ic2);
         };
 
-        // TODO - bof add tests
         friend IntegrandContainer operator*(const IntegrandContainer& ic1, const IntegrandContainer& ic2)
         {
             return add_subtract_multiply_or_divide<multiply>(ic1,ic2);
@@ -106,7 +103,6 @@ namespace secdecutil {
         {
             return add_subtract_multiply_or_divide<divide>(ic1,ic2);
         };
-        // TODO - eof add tests
 
         IntegrandContainer(const int number_of_integration_variables, const std::function<T(Args...)>& integrand):
         number_of_integration_variables (number_of_integration_variables), integrand(integrand)

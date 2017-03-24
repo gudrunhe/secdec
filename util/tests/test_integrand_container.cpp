@@ -18,17 +18,17 @@ TEST_CASE( "Check Access", "[IntegrandContainer]" ) {
 
 };
 
-TEST_CASE( "Binary operators + and -", "[IntegrandContainer]" ) {
+TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
 
     std::function<int(int)> func1 = [] (int i) { return i+2; };
     std::function<int(int)> func2 = [] (int i) { return i+5; };
 
     auto ic1 = secdecutil::IntegrandContainer<int, int>(3,func1);
     auto ic2 = secdecutil::IntegrandContainer<int, int>(4,func2);
-    auto ic3 = ic1 + ic2;
-    auto ic4 = ic1 - ic2;
 
     SECTION ( " + " ) {
+
+        auto ic3 = ic1 + ic2;
 
         REQUIRE( ic3.number_of_integration_variables == 4);
         REQUIRE( ic3.integrand(10) == 10+2+10+5);
@@ -46,6 +46,8 @@ TEST_CASE( "Binary operators + and -", "[IntegrandContainer]" ) {
 
     SECTION ( " - " ) {
 
+        auto ic4 = ic1 - ic2;
+
         REQUIRE( ic4.number_of_integration_variables == 4);
         REQUIRE( ic4.integrand(10) == 10+2-10-5);
     };
@@ -56,6 +58,43 @@ TEST_CASE( "Binary operators + and -", "[IntegrandContainer]" ) {
 
         REQUIRE( ic1.number_of_integration_variables == 4);
         REQUIRE( ic1.integrand(10) == 10+2-10-5);
+
+    };
+
+    SECTION ( " * " ) {
+
+        auto ic_mul = ic1 * ic2;
+
+        REQUIRE( ic_mul.number_of_integration_variables == 4);
+        REQUIRE( ic_mul.integrand(10) == (10+2)*(10+5) );
+
+    };
+
+    SECTION ( " *= " ) {
+
+        ic1 *= ic2;
+
+        REQUIRE( ic1.number_of_integration_variables == 4);
+        REQUIRE( ic1.integrand(10) == (10+2)*(10+5) );
+
+    };
+
+    SECTION ( " / " ) {
+
+        auto ic_div = ic2 / ic1;
+
+        REQUIRE( ic_div.number_of_integration_variables == 4);
+        REQUIRE( ic_div.integrand( 1) == 2);
+        REQUIRE( ic_div.integrand(10) == 1);
+    };
+
+    SECTION ( " /= " ) {
+
+        ic2 /= ic1;
+
+        REQUIRE( ic2.number_of_integration_variables == 4);
+        REQUIRE( ic2.integrand( 1) == 2);
+        REQUIRE( ic2.integrand(10) == 1);
 
     };
 
