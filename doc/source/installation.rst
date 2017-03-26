@@ -57,10 +57,10 @@ The Geomethod and Normaliz
 If you want to use the :mod:`geometric decomposition <pySecDec.decomposition.geometric>`
 module, you need the `normaliz` [BIR]_ command line executable.
 The :mod:`geometric decomposition <pySecDec.decomposition.geometric>` module is
-designed for `normaliz` versions ``3.0.0``, ``3.1.0``, and ``3.1.1``. We recommend
-to set your ``$PATH`` such that the `normaliz` executable is found. Alternatively,
-you can pass the path to the `normaliz` executable directly to the functions that
-need it.
+designed for `normaliz` version 3 - currently versions ``3.0.0``, ``3.1.0``, and
+``3.1.1`` are known to work. We recommend to set your ``$PATH`` such that the `normaliz`
+executable is found. Alternatively, you can pass the path to the `normaliz` executable
+directly to the functions that need it.
 
 .. _additional_cpp_dependencies:
 
