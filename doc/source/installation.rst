@@ -9,13 +9,14 @@ on unix-like systems.
 
 Before you install `pySecDec`, make sure that you have
 recent versions of `numpy` (http://www.numpy.org/) and
-`sympy` (http://www.sympy.org/) installed. In case you
-want to check for their availability type
+`sympy` (http://www.sympy.org/) installed. Type
 
 .. code::
 
    $ python -c "import numpy"
-   $ python -c "import sympy" .
+   $ python -c "import sympy"
+
+to check for their availability.
 
 In case either `numpy` or `sympy` are missing on your machine,
 it is easiest to install them from your package repository. Alternatively,
