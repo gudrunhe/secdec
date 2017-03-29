@@ -14,7 +14,7 @@ namespace %(name)s
      * Declarations of the `functions` and their required
      * derivatives are declared here. The derivative of a function
      * 'f' by its i-th argument is denoted as 'dfdi'. To implement
-     * the function listed below, you can either add "inline"
+     * the functions listed below, you can either add "inline"
      * keywords and define these functions here, or you define the
      * functions in a separate '.cpp' file. If you decide for a
      * separate file, the file name can be arbitrary up to the
@@ -26,8 +26,8 @@ namespace %(name)s
      *
      * Note: Not all functions listed here may actually be needed.
      *       This file lists all derivatives that occurred in the
-     *       calculation. It is possible that some dropped out in
-     *       due to algebraic simplifications after this list is
+     *       calculation. It is possible that some dropped out due
+     *       to algebraic simplifications after this list was
      *       generated.
      */
 
