@@ -8,7 +8,7 @@ sector%%-stamp : sector%%.h
 	$(FORM) -D sectorID=$(patsubst sector%%.h,%%,$<) write_integrand.frm
 
 	@ # move source code to appropriate directory
-	$(PYTHON) mv.py sector_$(patsubst sector%%.h,%%,$<).hpp ../src
+	$(PYTHON) mv.py sector_$(patsubst sector%%.h,%%,$<).cpp ../src
 	$(PYTHON) mv.py *sector_$(patsubst sector%%.h,%%,$<)_*.hpp ../src
 	$(PYTHON) mv.py *sector_$(patsubst sector%%.h,%%,$<)_*.cpp ../src
 

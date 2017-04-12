@@ -1236,7 +1236,7 @@ B `regulators';
 
 
 * Here, all integrand functions are written to the hard disc.
-* We still need a header file that collects the whole sector.
+* We still need a file that collects the whole sector.
 
 * clear last step
 .store
@@ -1244,14 +1244,10 @@ B `regulators';
 * "Format rational": Need the indices as integers.
 Format rational;
 
-* open the c++ include guard
-#write <sector_`sectorID'.hpp> "#ifndef `name'_codegen_sector_`sectorID'_hpp_included#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "#define `name'_codegen_sector_`sectorID'_hpp_included#@SecDecInternalNewline@#"
-
 * include series class
-#write <sector_`sectorID'.hpp> "#include <secdecutil/series.hpp>#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "#include <secdecutil/series.hpp>#@SecDecInternalNewline@#"
 
-#write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
 
 #Do shiftedOrderIndex = 1, `numOrders'
 * Construct `cppOrder' for use in the function and file names.
@@ -1277,38 +1273,37 @@ Format rational;
 * }
 
 * define c++ preprocessor macros for the number of integration variables in each integrand
-  #write <sector_`sectorID'.hpp> "#define sector_`sectorID'_order_`cppOrder'_numIV `numOccurringIVOrder`shiftedOrderIndex''#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'.cpp> "#define sector_`sectorID'_order_`cppOrder'_numIV `numOccurringIVOrder`shiftedOrderIndex''#@SecDecInternalNewline@#"
 
 * include the headers for all orders in this sector
-  #write <sector_`sectorID'.hpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
 
 * include contour deformation and optimize deformation_parameter headers (if needed)
   #If `contourDeformation'
-    #write <sector_`sectorID'.hpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
-    #write <sector_`sectorID'.hpp> "#include \"optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'.cpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'.cpp> "#include \"optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
   #EndIf
 
-  #write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
 
 #EndDo
 
 * open c++ namespace
-#write <sector_`sectorID'.hpp> "namespace `name'#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.hpp> "{#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "namespace `name'#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "{#@SecDecInternalNewline@#"
 
-* define the data type of the container
-#write <sector_`sectorID'.hpp> "`integrandContainerType'#@SecDecInternalNewline@#"
-
-* write the c++ name of the conatainer instance
-#write <sector_`sectorID'.hpp> "integrand_of_sector_`sectorID'#@SecDecInternalNewline@#"
-
-* write constructor of the integrand container class
-#write <sector_`sectorID'.hpp> "`integrandContainerInitializer';#@SecDecInternalNewline@#"
+* write the getter function of the container
+#write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "`integrandContainerType' get_integrand_of_sector_`sectorID'()#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "{#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "return `integrandContainerInitializer';#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "};#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
 
 * close c++ namespace
-#write <sector_`sectorID'.hpp> "};#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "};#@SecDecInternalNewline@#"
 
-#write <sector_`sectorID'.hpp> "#@SecDecInternalNewline@#"
+#write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
 
 * undefine the c++ preprocessor macros for the number of integration variables
 *{
@@ -1336,11 +1331,8 @@ Format rational;
 * }
 
 * undefine the c++ preprocessor macros
-  #write <sector_`sectorID'.hpp> "#undef sector_`sectorID'_order_`cppOrder'_numIV#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'.cpp> "#undef sector_`sectorID'_order_`cppOrder'_numIV#@SecDecInternalNewline@#"
 #EndDo
 *}
-
-* finalize include guard
-#write <sector_`sectorID'.hpp> "#endif#@SecDecInternalNewline@#"
 
 .end

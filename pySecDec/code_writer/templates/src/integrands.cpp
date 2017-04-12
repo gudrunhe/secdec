@@ -5,10 +5,11 @@
 #include <vector>
 
 #include "%(name)s.hpp"
-%(sector_includes)s
 
 namespace %(name)s
 {
+    %(integrand_getters)s
+
     const std::vector<nested_series_t<sector_container_t>> sectors = {%(sectors_initializer)s};
 
     #define %(name)s_contour_deformation %(contour_deformation)i
