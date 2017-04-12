@@ -30,6 +30,9 @@ print('eps^-1:', integral_with_prefactor.coeff('eps',-1).coeff('value'), '+/- ('
 print('eps^0:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
 
 # result from arXiv:1610.07059 (equation 3.2)
+# Note: The result given in the reference above has a sign error in the finite part.
+#       The result given below has been confirmed by the authors of arXiv:1610.07059
+#       in a private communication.
 print('Reference Result')
 print('eps^-2: 1.23370055013617    - 6.20475892887384  * 10^-13 * I')
 print('eps^-1: 2.8902545096591976  + 3.875784585038738          * I')
