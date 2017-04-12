@@ -91,13 +91,13 @@ namespace secdecutil {
             // Perform subtraction
             for ( int i = order_min; i < order_max + 1; i++)
             {
-                if ( s1.hasTerm(i) && s2.hasTerm(i) )
+                if ( s1.has_term(i) && s2.has_term(i) )
                 {
                     content.push_back(s1.at(i) - s2.at(i));
-                } else if ( s1.hasTerm(i) )
+                } else if ( s1.has_term(i) )
                 {
                     content.push_back(s1.at(i));
-                } else if ( s2.hasTerm(i) )
+                } else if ( s2.has_term(i) )
                 {
                     content.push_back(-s2.at(i));
                 } else // construct default
@@ -146,13 +146,13 @@ namespace secdecutil {
             // Perform addition
             for ( int i = order_min; i < order_max + 1; i++)
             {
-                if ( s1.hasTerm(i) && s2.hasTerm(i) )
+                if ( s1.has_term(i) && s2.has_term(i) )
                 {
                     content.push_back(s1.at(i) + s2.at(i));
-                } else if ( s1.hasTerm(i) )
+                } else if ( s1.has_term(i) )
                 {
                     content.push_back(s1.at(i));
-                } else if ( s2.hasTerm(i) )
+                } else if ( s2.has_term(i) )
                 {
                     content.push_back(s2.at(i));
                 } else // construct default
@@ -198,7 +198,7 @@ namespace secdecutil {
                 for ( int j = s2.get_order_min(); j < s2.get_order_max() + 1; j++ )
                 {
                     current_index = i+j-order_min;
-                    if ( ( (i+j) >= order_min ) && ( (i+j) <= order_max ) && s1.hasTerm(i) && s2.hasTerm(j) )
+                    if ( ( (i+j) >= order_min ) && ( (i+j) <= order_max ) && s1.has_term(i) && s2.has_term(j) )
                     {
                         if ( current_index < content.size() ) // term exists
                             content.at(current_index) += ( s1.at(i) * s2.at(j) );
@@ -385,7 +385,7 @@ namespace secdecutil {
          *  Helper functions
          */
         // Checks if series has a term at order order
-        bool hasTerm(int order) const
+        bool has_term(int order) const
         {
             if ( (order >= order_min) && (order <= order_max) )
                 return true;
