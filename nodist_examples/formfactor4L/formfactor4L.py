@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 from pySecDec.loop_integral import loop_package
+import sympy as sp
 import pySecDec as psd
 
 li = psd.loop_integral.LoopIntegralFromGraph(
@@ -28,10 +29,13 @@ name = 'formfactor4L',
 
 loop_integral = li,
 
+# normalization as defined in equation (2.4) of arXiv:1510.06758
+additional_prefactor = sp.gamma(li.dimensionality/2 - 1) ** li.L,
+
 real_parameters = Mandelstam_symbols + mass_symbols,
 
 # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-requested_order = 0,
+requested_order = 1,
 
 # the optimization level to use in FORM (can be 0, 1, 2, 3)
 form_optimization_level = 2,
@@ -41,10 +45,17 @@ form_work_space = '100M',
 
 # the method to be used for the sector decomposition
 # valid values are ``iterative`` and ``geometric``
-decomposition_method = 'iterative',
+decomposition_method = 'geometric',
 # if you choose ``geometric`` and 'normaliz' is not in your
 # $PATH, you can set the path to the 'normaliz' command-line
 # executable here
 #normaliz_executable='/path/to/normaliz',
 
+contour_deformation = False,
+
+# there are no symmetries to be found by dreadnaut
+use_dreadnaut = False,
+
 )
+
+# analytic result available from arXiv:1510.06758, equation (7.1)
