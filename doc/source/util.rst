@@ -11,37 +11,6 @@ functions needed by the c++ code generated using :func:`loop_package <pySecDec.l
 or :func:`make_package <pySecDec.code_writer.make_package>`. Everything defined by the `SecDecUtil`
 is put into the c++ namepace `secdecutil`.
 
-
-
-Deep_Apply
-----------
-
-Test
-
-
-Integrators
------------
-
-Integrand_Container
-~~~~~~~~~~~~~~~~~~~
-
-A helper class for containing integrands.
-
-.. cpp:class:: template <typename T, typename ...Args> IntegrandContainer
-
-Integrators/Cuba
-~~~~~~~~~~~~~~~~
-
-Integrators/Integrator
-~~~~~~~~~~~~~~~~~~~~~~
-
-
-Pylink
-------
-
-Sector_Container
-----------------
-
 Series
 ------
 
@@ -51,30 +20,29 @@ This class overloads the arithmetic operators (``+``, ``-``, ``*``, ``/``) and t
 A string representation can be obtained using the ``<<`` operator.
 The ``at(i)`` and ``[i]`` operators return the coefficient of the ``i``:sup:`th` power of the expansion parameter. Otherwise elements can be accessed identically to :cpp:class:`std::vector`.
 
-.. cpp:class:: template <typename T> Series
+    .. cpp:class:: template <typename T> Series
 
-    .. cpp:var:: std::string expansion_parameter
+        .. cpp:var:: std::string expansion_parameter
 
-        A string representing the expansion parameter of the series (default ``x``)
+            A string representing the expansion parameter of the series (default ``x``)
 
-    .. cpp:function:: int get_order_min() const
+        .. cpp:function:: int get_order_min() const
 
-        Returns the lowest order in the series.
+            Returns the lowest order in the series.
 
-    .. cpp:function:: int get_order_max() const
+        .. cpp:function:: int get_order_max() const
 
-        Returns the highest order in the series.
+            Returns the highest order in the series.
 
-    .. cpp:function:: bool get_truncated_above() const
+        .. cpp:function:: bool get_truncated_above() const
 
-        Checks whether the series is truncated from above.
+            Checks whether the series is truncated from above.
 
-    .. cpp:function:: bool has_term(int order) const
+        .. cpp:function:: bool has_term(int order) const
 
-        Checks whether the series has a term at order ``order``.
+            Checks whether the series has a term at order ``order``.
 
-    .. cpp:function:: Series(int order_min, int order_max, std::vector<T> content, bool truncated_above = true, const std::string expansion_parameter = "x")
-
+        .. cpp:function:: Series(int order_min, int order_max, std::vector<T> content, bool truncated_above = true, const std::string expansion_parameter = "x")
 
 
 Example:
@@ -90,22 +58,102 @@ Output:
 
 .. literalinclude:: cpp_doctest/series_doctest_basic_usage.txt
    :language: sh
-    
+
+Deep_Apply
+----------
+
+General concept to apply a :cpp:class:`std::function` to a nested data structure. If the applied :cpp:class:`std::function` is not void then :cpp:func:`deep_apply` returns a nested data structure of the return values. Currently `secdecutil` implements this for :cpp:class:`std::vector` and :cpp:class:`Series`.
+
+This concept allows, for example, the elements of a nested series to be edited without knowing the depth of the nested structure.
+
+    .. cpp:function:: template<typename Tout, typename Tin, template<typename...> class Tnest> Tnest<Tout> deep_apply(Tnest<Tin>& nest, std::function<Tout(Tin)>& func)
+
+Example (complex conjugate a :cpp:class:`Series`):
+
+.. literalinclude:: cpp_doctest/deep_apply_doctest_basic_usage.cpp
+   :language: cpp
+
+Compile/Run: 
+
+.. literalinclude:: cpp_doctest/compile_and_run.txt
+   
+Output:
+
+.. literalinclude:: cpp_doctest/deep_apply_doctest_basic_usage.txt
+   :language: sh
+
 
 Uncertainties
 -------------
 
-    .. cpp:class:: template <typename T> UncorrelatedDeviation
+This class implements uncertainty propagation for uncorrelated random variables by overloads of the ``+``, ``-``, ``*`` and partially ``/``. 
+Division by :cpp:class:`UncorrelatedDeviation` is not implemented as it is not always defined. It has special overloads for :cpp:class:`std::complex\<T\>`.
 
+.. note::
+    Division by :cpp:class:`UncorrelatedDeviation` is not implemented as this operation is not always well defined. 
+    Specifically, it is ill defined in the case that the errors are Gaussian distributed as the expectation value,
+
+    .. math:: 
+        \mathrm{E}\left[\frac{1}{X}\right] = \int_{-\infty}^{\infty} \frac{1}{X} p(X)\ \mathrm{d}X,
+
+    where 
+
+    .. math:: 
+        p(X) = \frac{1}{\sqrt{2 \pi \sigma^2 }} \exp\left( -\frac{(x-\mu)^2}{2\sigma^2} \right),
+
+    is undefined in the Riemann or Lebesgue sense. The rule :math:`\delta(a/b) = |a/b| \sqrt{ (\delta a/a)^2 + (\delta b/b)^2 }`            
+    can not be derived from the first principles of probability theory.
+
+ 
+The rules implemented for real valued error propagation are:
+
+.. math::
+   \delta(a+b) = \sqrt{(\delta a)^2 + (\delta b)^2},
+
+.. math::
+   \delta(a-b) = \sqrt{(\delta a)^2 + (\delta b)^2},
+
+.. math::
+   \delta(ab) = \sqrt{ (\delta a)^2 b^2 + (\delta b)^2 a^2 + (\delta a)^2 (\delta b)^2 }.
+
+For complex numbers the above rules are implemented for the real and imaginary parts individually.
+
+    .. cpp:class:: template <typename T> UncorrelatedDeviation
+    
         .. cpp:var:: T value
+
+            The expectation value.
 
         .. cpp:var:: T uncertainty
 
-This class implements Gaussian uncertainty propagation by overloads of the ``+``, ``-``, ``*``, and ``/`` operators.
-It has special overloads for :cpp:class:`std::complex\<T\>`.
+            The standard deviation.
 
-.. TODO: Should we add the errors linearly to invalidate the statement below?
+Example:
 
-Although implemented for completeness, note that division by an :cpp:class:`UncorrelatedDeviation\<std::complex\<T\>\>`
-is conceptually wrong, since the denominator is multiplied by its complex conjugate; i.e. two most likely correlated
-numbers are multiplied assuming no correlation.
+.. literalinclude:: cpp_doctest/uncertainties_doctest_basic_usage.cpp
+   :language: cpp
+
+Compile/Run: 
+
+.. literalinclude:: cpp_doctest/compile_and_run.txt
+   
+Output:
+
+.. literalinclude:: cpp_doctest/uncertainties_doctest_basic_usage.txt
+   :language: sh
+
+Sector_Container
+----------------
+
+Integrand_Container
+-------------------
+
+A helper class for containing integrands.
+
+.. cpp:class:: template <typename T, typename ...Args> IntegrandContainer
+
+Integrator
+----------
+
+Cuba
+~~~~
