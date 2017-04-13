@@ -106,16 +106,7 @@ TEST_CASE( "Compound Assignment Operators real", "[UncorrelatedDeviation]" ) {
 
         gu1 *= gu2;
         REQUIRE( gu1.value == Approx(-3.) );
-        REQUIRE( gu1.uncertainty == Approx( 3. * std::sqrt(61./9.) ) );
-
-    };
-
-    SECTION( "/=" )
-    {
-
-        gu1 /= gu2;
-        REQUIRE( gu1.value == Approx( -1./3.) );
-        REQUIRE( gu1.uncertainty == Approx( 1./3. * std::sqrt(61./9.) ) );
+        REQUIRE( gu1.uncertainty == Approx( std::sqrt(161.) ) );
 
     };
 
@@ -132,15 +123,6 @@ TEST_CASE( "Compound Assignment Operators real zero uncertainty", "[Uncorrelated
         gu1 *= gu2;
         REQUIRE( gu1.value == Approx(-3.) );
         REQUIRE( gu1.uncertainty == Approx( 6. ) );
-
-    };
-
-    SECTION( "/=" )
-    {
-
-        gu1 /= gu2;
-        REQUIRE( gu1.value == Approx( -1./3.) );
-        REQUIRE( gu1.uncertainty == Approx( 2./3. ) );
 
     };
 
@@ -210,8 +192,8 @@ TEST_CASE( "Compound Assignment Operators complex", "[UncorrelatedDeviation]" ) 
         gu1 -= gu2;
         REQUIRE( gu1.value.real() == Approx(-4.) );
         REQUIRE( gu1.value.imag() == Approx( 4.) );
-        REQUIRE( gu1.uncertainty.real() == Approx(5.));
-        REQUIRE( gu1.uncertainty.imag() == Approx(5.));
+        REQUIRE( gu1.uncertainty.real() == Approx(5.) );
+        REQUIRE( gu1.uncertainty.imag() == Approx(5.) );
 
     };
 
@@ -221,19 +203,8 @@ TEST_CASE( "Compound Assignment Operators complex", "[UncorrelatedDeviation]" ) 
         gu1 *= gu2;
         REQUIRE( gu1.value.real() == Approx(1.) );
         REQUIRE( gu1.value.imag() == Approx(8.) );
-        REQUIRE( gu1.uncertainty.real() == Approx( std::sqrt( (16. + 1.) * 9.  +  (4. + 9./4.) * 16.) ) );
-        REQUIRE( gu1.uncertainty.imag() == Approx( std::sqrt( (16. + 9./4.) * 4.  +  (4. + 1.) * 36.) ) );
-
-    };
-
-    SECTION( "/=" )
-    {
-
-        gu1 /= gu2;
-        REQUIRE( gu1.value.real() == Approx(-7./13.) );
-        REQUIRE( gu1.value.imag() == Approx( 4./13.) );
-        REQUIRE( gu1.uncertainty.real() == Approx(   7./13. * std::sqrt( ((16. + 1.) * 9.  +  (4. + 9./4.) * 16.) / 49. + (9.*9.*2. + 9.*4.*2.) / 169.) )   );
-        REQUIRE( gu1.uncertainty.imag() == Approx(   4./13. * std::sqrt( ((16. + 9./4.) * 4.  +  (4. + 1.) * 36.) / 16. + (9.*9.*2. + 9.*4.*2.) / 169.) )   );
+        REQUIRE( gu1.uncertainty.real() == Approx( std::sqrt(541.) ) );
+        REQUIRE( gu1.uncertainty.imag() == Approx( std::sqrt(541.) ) );
 
     };
 
@@ -317,17 +288,10 @@ TEST_CASE( "Binary Operators real", "[UncorrelatedDeviation]" ) {
 
         auto gu3 = gu1 * gu2;
         REQUIRE( gu3.value == Approx(-24.) );
-        REQUIRE( gu3.uncertainty == Approx( 24. * std::sqrt(265./144.) ) );
+        REQUIRE( gu3.uncertainty == Approx( 2. * std::sqrt(281.) ) );
 
     };
 
-    SECTION( "/" )
-    {
-        auto gu3 = gu1 / gu2;
-        REQUIRE( gu3.value == Approx(-6./4.) );
-        REQUIRE( gu3.uncertainty == Approx( 6./4. * std::sqrt(265./144.) ) );
-
-    };
 };
 
 TEST_CASE( "Binary Operators real plain number", "[UncorrelatedDeviation]" ) {
@@ -375,9 +339,8 @@ TEST_CASE( "Binary Operators real plain number", "[UncorrelatedDeviation]" ) {
 
     SECTION( "/" )
     {
-        auto gu2 = 4. / gu1;
-        REQUIRE( gu2.value == Approx(-4./6.) );
-        REQUIRE( gu2.uncertainty == Approx( 4./6. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
+
+        // division by UncorrelatedDeviation is not defined
 
         auto gu3 = gu1 / 4.;
         REQUIRE( gu3.value == Approx(-6./4.) );
@@ -442,21 +405,6 @@ TEST_CASE( "Implicit conversion", "[UncorrelatedDeviation]" ) {
 
     };
 
-    SECTION( "/" )
-    {
-        auto gu3 = gu1 / gu2;
-        REQUIRE( gu3.value.real() == Approx(-6./4.) );
-        REQUIRE( gu3.value.imag() == Approx(  0.) );
-        REQUIRE( gu3.uncertainty.real() == Approx( 6./4. * std::sqrt( (8.*8.) / (6.*6.) ) ) );
-        REQUIRE( gu3.uncertainty.imag() == Approx( 0. ) );
-
-        auto gu4 = gu2 / gu1;
-        REQUIRE( gu4.value.real() == Approx(-4./6.) );
-        REQUIRE( gu4.value.imag() == Approx(  0.) );
-        REQUIRE( gu4.uncertainty.real() == Approx( 4./6. * std::sqrt( 3. * (8.*8.) / (6.*6.) ) ) );
-        REQUIRE( gu4.uncertainty.imag() == Approx( 0. ) );
-
-    };
 };
 
 TEST_CASE( "Explicit conversion", "[UncorrelatedDeviation]" ) {
@@ -533,18 +481,8 @@ TEST_CASE( "Binary Operators complex", "[UncorrelatedDeviation]" ) {
         auto gu3 = gu1 * gu2;
         REQUIRE( gu3.value.real() == Approx(1.) );
         REQUIRE( gu3.value.imag() == Approx(8.) );
-        REQUIRE( gu3.uncertainty.real() == Approx( std::sqrt( (16. + 1.) * 9.  +  (9. + 16.) * 16.) ) );
-        REQUIRE( gu3.uncertainty.imag() == Approx( std::sqrt( (16. + 16.) * 4.  +  (9. + 1.) * 36.) ) );
-
-    };
-
-    SECTION( "/" )
-    {
-        auto gu3 = gu1 / gu2;
-        REQUIRE( gu3.value.real() == Approx(-7./13.) );
-        REQUIRE( gu3.value.imag() == Approx( 4./13.) );
-        REQUIRE(   gu3.uncertainty.real() == Approx( 7./13. * std::sqrt( ((16. + 1.) * 9.  +  (9. + 16.) * 16.) / 49. + (9.*9.*2. + 4.*4.*4.*4.*2.) / 169.) )   );
-        REQUIRE(   gu3.uncertainty.imag() == Approx( 4./13. * std::sqrt( ((16. + 16.) * 4.  +  (9. + 1.) * 36.) / 16. + (9.*9.*2. + 4.*4.*4.*4.*2.) / 169.) )   );
+        REQUIRE( gu3.uncertainty.real() == Approx( std::sqrt(3001.) ) );
+        REQUIRE( gu3.uncertainty.imag() == Approx( 6. * std::sqrt(51.) ) );
 
     };
 
