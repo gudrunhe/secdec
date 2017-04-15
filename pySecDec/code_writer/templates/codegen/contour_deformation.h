@@ -44,3 +44,9 @@ AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;
 #procedure insertContourdefJacobianDerivatives
   %(insert_contourdef_Jacobian_derivatives_procedure)s
 #endProcedure
+
+* Procedure that removes vanishing derivatives of the deformed
+* integration variables. This procedure is written by python.
+#procedure removeVanishingDeformedIntegrationVariableDerivatives
+  %(nullify_vanishing_deformed_integration_variable_calls_procedure)s
+#endProcedure

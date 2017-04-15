@@ -1504,6 +1504,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # generate the function definitions for the insertion in FORM
             if contour_deformation_polynomial is not None:
+                FORM_vanishing_deformed_integration_variable_calls = ''.join(
+                            '  Id %s(' % _derivative_muliindex_to_name(FORM_names['deformed_variable'] + str(outer_var), multiindex) + \
+                            ','.join(str(inner_var) + ('?{0,1}' if i == j else '?') for j,inner_var in enumerate(integration_variables)) + \
+                            ') = %s;\n' % ('0' if np.any(multiindex) else str(outer_var))
+                            if multiindex[i] == 0 else ''
+                        for i,outer_var in enumerate(integration_variables)
+                    for multiindex in chain([[0]*len(integration_variables)], symbolic_deformed_variables[i].derivative_tracks.keys())
+                )
                 FORM_deformed_integration_variable_definitions = ''.join(
                     _make_FORM_function_definition(
                         name, deformed_integration_variable_derivatives[name], integration_variables, limit=10**6
@@ -1560,6 +1568,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 template_replacements['deformed_integration_variable_derivative_functions'] = _make_FORM_list(deformed_integration_variable_derivative_functions)
                 template_replacements['contour_deformation_polynomial'] = contour_deformation_polynomial
                 template_replacements['positive_polynomials'] = _make_FORM_list(positive_polynomials)
+                template_replacements['nullify_vanishing_deformed_integration_variable_calls_procedure'] = FORM_vanishing_deformed_integration_variable_calls
                 template_replacements['insert_deformed_integration_variables_procedure'] = FORM_deformed_integration_variable_definitions
                 template_replacements['insert_contourdef_Jacobian_derivatives_procedure'] = FORM_contourdef_Jacobian_derivative_definitions
                 template_replacements['deformation_parameters'] = _make_FORM_list(deformation_parameters)

@@ -432,6 +432,11 @@ B `regulators';
         repeat Id SecDecInternalDenominator(SecDecInternalsDUMMY?number_) = 1/SecDecInternalsDUMMY;
         repeat Id SecDecInternalfDUMMY?(?SecDecInternalsDUMMY) * SecDecInternalDenominator(SecDecInternalfDUMMY?(?SecDecInternalsDUMMY)) = 1;
 
+*       Remove vanishing deformed variables
+        #If `contourDeformation'
+          #call removeVanishingDeformedIntegrationVariableDerivatives
+        #EndIf
+
       #call endArgumentDepth(`depth')
       .sort
 
