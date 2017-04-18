@@ -1,0 +1,5 @@
+c1.number_of_integration_variables: 1
+c2.number_of_integration_variables: 2
+
+c3.number_of_integration_variables: 2
+c3.integrand(point):                4
