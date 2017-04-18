@@ -59,10 +59,10 @@ Output:
 .. literalinclude:: cpp_doctest/series_doctest_basic_usage.txt
    :language: sh
 
-Deep_Apply
+Deep Apply
 ----------
 
-General concept to apply a :cpp:class:`std::function` to a nested data structure. If the applied :cpp:class:`std::function` is not void then :cpp:func:`deep_apply` returns a nested data structure of the return values. Currently `secdecutil` implements this for :cpp:class:`std::vector` and :cpp:class:`Series`.
+A general concept to apply a :cpp:class:`std::function` to a nested data structure. If the applied :cpp:class:`std::function` is not void then :cpp:func:`deep_apply` returns a nested data structure of the return values. Currently `secdecutil` implements this for :cpp:class:`std::vector` and :cpp:class:`Series`.
 
 This concept allows, for example, the elements of a nested series to be edited without knowing the depth of the nested structure.
 
@@ -86,7 +86,7 @@ Output:
 Uncertainties
 -------------
 
-This class implements uncertainty propagation for uncorrelated random variables by overloads of the ``+``, ``-``, ``*`` and partially ``/``. 
+A class template which implements uncertainty propagation for uncorrelated random variables by overloads of the ``+``, ``-``, ``*`` and partially ``/``. 
 Division by :cpp:class:`UncorrelatedDeviation` is not implemented as it is not always defined. It has special overloads for :cpp:class:`std::complex\<T\>`.
 
 .. note::
@@ -142,10 +142,7 @@ Output:
 .. literalinclude:: cpp_doctest/uncertainties_doctest_basic_usage.txt
    :language: sh
 
-Sector_Container
-----------------
-
-Integrand_Container
+Integrand Container
 -------------------
 
 A helper class for containing integrands.
