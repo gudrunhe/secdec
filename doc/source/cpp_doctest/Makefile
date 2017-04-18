@@ -29,7 +29,7 @@ LDFLAGS += -L$(TOPDIR) -lcuba -lm
 doctest: $(TESTS)
 
 $(TESTS):
-	$(CXX) $(CXXFLAGS) -fPIC $@.cpp -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -fPIC $@.cpp -o $@
 	./$@ > $@.tmp
 	diff $@.tmp $@.txt | tee $@.log
 	test ! -s $@.log 
