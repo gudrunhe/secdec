@@ -1,23 +1,46 @@
-Getting started
+Getting Started
 ===============
 
-After installation, you should have a folder `examples` in your main pySecDec directory.
-It contains various examples, the easiest one being a one-loop box,
-`box1L.py`. It also contains some two-loop examples: `triangle2L.py`,
-`box2L.py`, `elliptic_I1.py`, and examples for parametric functions
-not related to loop integrals: `Hypergeo5F4.py`
-calculates Hypergeomatric functions, which can have (regulated) poles at both zero
-and one, `two_regulators.py` contains an example involving poles in two
-different regulators. More complex examples are the calcuation of the
-4-photon amplitude, which shows how to use pySecDec as an integral
-library in a larger context, and the `userdefined_cpp` example which
-shows how the user can combine functions to be decomposed with other, user-defined functions.
+A Simple Example
+----------------
 
+.. TODO
 
-User input
-----------
+Evaluating a Loop Integral
+--------------------------
 
-To explain the input format, let us look at the one-loop box example. The first two lines read
+After installation, you should have a folder `examples` in your main `pySecDec` directory.
+It contains various examples, the easiest one being `box1L`. 
+This example computes a one-loop box with one off-shell leg (with off-shellness ``s1``) and one internal massive line (with mass squared ``msq``), it is shown in :numref:`box1L_diagram`.
+
+.. _box1L_diagram:
+
+.. figure:: box1L.*
+    :align: center
+    :alt: Diagrammatic representation of `box1L`
+    
+    Diagrammatic representation of `box1L`
+
+To run the example change to the `box1L` directory and run the commands::
+
+    $ python box1L.py
+    $ make -C box1L
+    $ python integrate_box1L.py
+
+This will print the result of the integral evaluated with Mandelstam invariants ``s=4.0``, ``t=-0.75`` and ``s1=1.25``, ``msq=1.0``::
+
+    leading pole: -0.142868356275422825 - 1.63596224151119965e-6*I +/- ( 0.00118022544307414272 + 0.000210769456586696187*I )
+    subleading pole: 0.639405625715768089 + 1.34277036689902802e-6*I +/- ( 0.00650722394065588166 + 0.000971496627153705891*I )
+    finite part: -0.425514350373418893 + 1.86892487760861536*I +/- ( 0.00706834403694714484 + 0.0186497890361357298*I )
+
+The file ``box1L.py`` defines the loop integral and calls `pySecDec` to perform the sector decomposition. When run it produces the directory `box1L` which contains the code required to numerically evaluate the integral. The make command builds this code and produces a library. The file ``integrate_box1L.py`` loads the integral library and evalutes the integral for a specified numerical point.
+
+The content of the python files is described in detail in the following sections. The user is encouraged to copy and adapt these files to evaluate their own loop integrals.
+
+Defining a Loop Integral
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+To explain the input format, let us look at ``box1L.py`` from the one-loop box example. The first two lines read
 
 .. code::
 
@@ -25,10 +48,10 @@ To explain the input format, let us look at the one-loop box example. The first 
     from pySecDec.loop_integral import loop_package
 
 They say that the module `pySecDec` should be imported with the alias `psd`, and that the
-function :func:`loop_package <pySecDec.loop_integral.loop_package>` from the class :class:`LoopIntegral <pySecDec.loop_integral.LoopIntegral>` is needed.
+function :func:`loop_package <pySecDec.loop_integral.loop_package>` from the module :mod:`loop_integral <pySecDec.loop_integral>` is needed.
 
 
-The following part contains the definition of the loop integral li:
+The following part contains the definition of the loop integral ``li``:
 
 .. code::
 
@@ -53,6 +76,8 @@ The following part contains the definition of the loop integral li:
                        ]
     )
 
+Here the class :class:`LoopIntegralFromGraph <pySecDec.loop_integral.LoopIntegralFromGraph>` is used to Feynman parametrize the loop integral given the adjacency list. Alternatively, the class :class:`LoopIntegralFromPropagators <pySecDec.loop_integral.LoopIntegralFromPropagators>` can be used to construct the Feynman integral given the momentum representation.
+
 The symbols for the kinematic invariants and the masses also need to be given as an ordered list.
 The ordering is important as the numerical values assigned to these list elements at the numerical evaluation stage should have the same order.
 
@@ -62,9 +87,10 @@ The ordering is important as the numerical values assigned to these list element
     mass_symbols = ['msq']
 
 
-Then the function :func:`loop_package <pySecDec.loop_integral.loop_package>` is called. It will perform the algebraic sector decomposition steps and create a package containing the C++ code
-for the numerical evaluation. It will create a folder called box1L and allows to define parameters controlling the numerical part
-(for a complete list of possible options see  :func:`loop_package <pySecDec.loop_integral.loop_package>`).
+Next, the function :func:`loop_package <pySecDec.loop_integral.loop_package>` is called. It will create a folder called ``box1L``.
+It performs the algebraic sector decomposition steps and writes a package containing the C++ code for the numerical evaluation. 
+The argument `requested_order` specifies the order in the regulator to which the integral should be expanded.
+For a complete list of possible options see  :func:`loop_package <pySecDec.loop_integral.loop_package>`.
 
 .. code::
 
@@ -76,9 +102,7 @@ for the numerical evaluation. It will create a folder called box1L and allows to
 
     real_parameters = Mandelstam_symbols + mass_symbols,
 
-    # complex_parameters are also possible
-
-    # the highest order of the final epsilon expansion
+    # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
     requested_order = 0,
 
     # the optimization level to use in FORM (can be 0, 1, 2, 3)
@@ -88,138 +112,177 @@ for the numerical evaluation. It will create a folder called box1L and allows to
     form_work_space = '100M',
 
     # the method to be used for the sector decomposition
-    # valid values are ``iterative`` and ``geometric``
-    decomposition_method = 'geometric',
-
-    # whether or not to produce code to perform the contour deformation
-    # if ``True``, it can still be deactivated later in the "config.hpp"
-    # if ``False``, no code for the contour deformation is generated
-    contour_deformation = True,
+    # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
+    decomposition_method = 'iterative',
+    # if you choose ``geometric[_ku]`` and 'normaliz' is not in your
+    # $PATH, you can set the path to the 'normaliz' command-line
+    # executable here
+    #normaliz_executable='/path/to/normaliz',
 
     )
 
-Algebraic part and creation of the C++ library
-----------------------------------------------
+Building the C++ library
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-Running the python script  `box1L.py`
-
-.. code::
-
-    $ python box1L.py
-
-will create a folder with the name given in  `box1L.py`  ('box1L'),  which should contain the following files and subdirectories
+After running the python script `box1L.py`  the folder ``box1L`` is created and should contain the following files and subdirectories
 
 .. code::
 
-    box1L.hpp  integrate_box1L.cpp  box1L.pdf codegen  Makefile  Makefile.conf pylink README  src
+    Makefile    Makefile.conf    README    box1L.hpp    codegen    integrate_box1L.cpp    pylink    src
 
-in the folder 'box1L', typing
+in the folder ``box1L``, typing
 
 .. code::
 
     $ make
 
-will create the libraries `libbox1L.a` and `box1L_pylink.so` which can be linked to an external program calling these integrals.
-How to do this ``interactively`` or via a python script is explained in the section :ref:`Interactive python interface <interactive_python>`.
-In ``standalone mode``, the C++ file `integrate_box1L.cpp` can be used to produce results for a certain kinematic point. In the latter,
-kinematic points can be specified by adapting the line
+will create the libraries ``libbox1L.a`` and ``box1L_pylink.so`` which can be linked to an external program calling these integrals.
+The ``make`` command can also be run in parallel by using the ``-j`` option.
+
+To evaluate the integral numerically a program can call one of these libraries.
+How to do this interactively or via a python script is explained in the section :ref:`Python Interface <python_interface>`.
+Alternatively, a C++ program can be produced as explained in the section :ref:`C++ Interface <cpp_interface>`.
+
+..  _python_interface:
+
+Python Interface
+^^^^^^^^^^^^^^^^
+
+To evaluate the integral for a given numerical point we can use ``integrate_box1L.py``. 
+First it imports the necessary python packages and loads the C++ library. 
 
 .. code::
 
-    const std::vector<box1L::real_t> real_parameters = {9.,-0.1,0.3, 1.};
+    from __future__ import print_function
+    from pySecDec.integral_interface import IntegralLibrary
+    import sympy as sp
+
+    # load c++ library
+    box = IntegralLibrary('box1L/box1L_pylink.so')
+
+Next, an integrator is configured for the numerical integration. The full list of available integrators and their options is given in :mod:`integral_interface <pySecDec.integral_interface>`.
+
+.. code::
+
+    # choose integrator
+    box.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+
+Calling the ``box`` library numerically evaluates the integral. 
+Note that the order of the real parameters must match that specified in ``box1L.py``. 
+A list of possible settings for the library, in particular details of how to set the contour deformation parameters, is given in :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
+
+.. code::
+
+    # integrate
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box(real_parameters=[4.0, -0.75, 1.25, 1.0])
+
+At this point the string ``str_integral_with_prefactor`` contains the full result of the integral and can be manipulated as required.
+In the ``integrate_box1L.py`` an example is shown how to parse the expression with `sympy` and access individual orders of the regulator.
+
+.. note::
+   
+   Instead of parsing the result, it can simply be printed with the line ``print(str_integral_with_prefactor)``.
+
+.. code::
+
+    # convert complex numbers from c++ to sympy notation
+    str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
+    str_prefactor = str_prefactor.replace(',','+I*')
+    str_integral_without_prefactor = str_integral_without_prefactor.replace(',','+I*')
+
+    # convert result to sympy expressions
+    integral_with_prefactor = sp.sympify(str_integral_with_prefactor.replace('+/-','*value+error*'))
+    integral_with_prefactor_err = sp.sympify(str_integral_with_prefactor.replace('+/-','*value+error*'))
+    prefactor = sp.sympify(str_prefactor)
+    integral_without_prefactor = sp.sympify(str_integral_without_prefactor.replace('+/-','*value+error*'))
+    integral_without_prefactor_err = sp.sympify(str_integral_without_prefactor.replace('+/-','*value+error*'))
+
+    # examples how to access individual orders
+    print('leading pole:', integral_with_prefactor.coeff('eps',-2).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-2).coeff('error'), ')')
+    print('subleading pole:', integral_with_prefactor.coeff('eps',-1).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-1).coeff('error'), ')')
+    print('finite part:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
+
+An example of how to loop over several kinematic points is shown in the example `multiple_kinematic_points.py`.
+
+..  _cpp_interface:
+
+C++ Interface (Advanced)
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Usually it is easier to obtain a numerical result using the :ref:`Python Interface <python_interface>`. 
+However, the library can also be used directly from C++.
+Inside the generated ``box1L`` folder the file ``integrate_box1L.cpp`` demonstrates this.
+
+The function ``print_integral_info`` shows how to access the important variables of the integral library. 
+
+In the ``main`` function a kinematic point must be specified by setting the ``real_parameters`` variable, for example::
+
+    int main()
+    {
+    //  User Specified Phase-space point
+        const std::vector<box1L::real_t> real_parameters = {4.0, -0.75, 1.25, 1.0}; // EDIT: kinematic point specified here
+        const std::vector<box1L::complex_t> complex_parameters = {  };
+
+The ``make_integrands`` function returns an :cpp:class:`secdecutil::IntegrandContainer` for each sector and regulator order::
+
+    //  Generate the integrands (optimization of the contour if applicable)
+        const std::vector<box1L::nested_series_t<box1L::integrand_t>> sector_integrands = box1L::make_integrands(real_parameters, complex_parameters);
+
+The sectors can be added before integration::
+
+    //  Add integrands of sectors (together flag)
+        const box1L::nested_series_t<box1L::integrand_t> all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
+
+An :cpp:class:`secdecutil::Integrator` is constructed and its parameters are set::
+
+    //  Integrate
+        secdecutil::cuba::Vegas<box1L::integrand_return_t> integrator;
+        integrator.flags = 2; // verbose output --> see cuba manual
+
+To numerically integrate the functions the :cpp:func:`secdecutil::Integrator::integrate` function is applied to each :cpp:class:`secdecutil::IntegrandContainer` using :cpp:func:`secdecutil::deep_apply`::
+
+    const box1L::nested_series_t<secdecutil::UncorrelatedDeviation<box1L::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors, integrator.integrate );
 
 
-for the desired kinematics. In the above example, the values correspond to  `s=9,t=-0.1,s1=0.3, msq=1`, i.e. the same ordering is kept as in the lists Mandelstam_symbols = ['s','t','s1'],  mass_symbols = ['msq'] in the python input.
+The remaining lines print the result::
 
-The commands
+        std::cout << "------------" << std::endl << std::endl;
+
+        std::cout << "-- integral info -- " << std::endl;
+        print_integral_info();
+        std::cout << std::endl;
+
+        std::cout << "-- integral without prefactor -- " << std::endl;
+        std::cout << result_all << std::endl << std::endl;
+
+        std::cout << "-- prefactor -- " << std::endl;
+        const box1L::nested_series_t<box1L::integrand_return_t> prefactor = box1L::prefactor(real_parameters, complex_parameters);
+        std::cout << prefactor << std::endl << std::endl;
+
+        std::cout << "-- full result (prefactor*integral) -- " << std::endl;
+        std::cout << prefactor*result_all << std::endl;
+        return 0;
+    }
+
+After editing the ``real_parameters`` as described above the C++ program can be build and executed with the commands
 
 .. code::
 
     $ make integrate_box1L
     $ ./integrate_box1L
 
-will then evaluate the integral and print the result to the screen.
+List of Examples
+----------------
 
+.. TODO
 
-..  _interactive_python:
-
-Interactive python interface
-----------------------------
-
-There is also a python interface which allows for an interactive
-evaluation of the integrals.
-We will use the 2-loop triangle example to explain how this works:
-
-- first produce the code for the triangle by
-
-.. code::
-
-    $ python triangle2L.py
-
-- This will produce a subdirectory `P126` (the name of the graph). Change to the directory `P126` and type
-
-.. code::
-
-    $ make
-
-- this produces, among other things,  the library  `P126_pylink.so`. The latter can be called from within python. In order to do so,  ipython or python can be opened and the following commands can be entered interactively:
-
-.. code::
-
-    >>> from __future__ import print_function
-    >>> from pySecDec.integral_interface import IntegralLibrary
-    >>> import sympy as sp
-    >>> # load c++ library
-    >>> triangle = IntegralLibrary('P126_pylink.so')
-
-- now the user can choose an integrator and define the settings for
-  the numerical integration. A list of possible settings is given in :class:`pySecDec.integral_interface<pySecDec.integral_interface>`.
-
-.. code::
-
-    >>> # choose integrator
-    >>> triangle.use_Vegas(flags=2,epsrel=1e-3,epsabs=1e-10) # ``flags=2`` means verbose --> see Cuba manual
-
-
-- the numerical point at which the integral should be evaluated can be
-  given as follows
-
-.. code::
-
-    >>> # perform the integration for the numerical point s=0.9, msq=0.1
-    >>> str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle(real_parameters=[.9,.1])
-
-- the class *triangle* can take more parameters, for example
-
-.. code::
-
-    >>> str_integral_with_prefactor = triangle(real_parameters=[.9,.1],number_of_presamples=1e+6,deformation_parameters_maximum = 0.5)
-    >>> #  (defaults: number_of_presamples = 100000, deformation_parameters_maximum = 1)
-
-- further options for the contour deformation etc are listed under  :class:`pySecDec.integral_interface<pySecDec.integral_interface>`
-
-- in addition, the output format can be specified:
-
-.. code::
-
-    >>> # convert complex numbers from c++ to sympy notation
-    >>>  str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
-    >>>  str_prefactor = str_prefactor.replace(',','+I*')
-    >>>  str_integral_without_prefactor = str_integral_without_prefactor.replace(',','+I*')
-
-    >>> # convert result to sympy expressions
-    >>>  integral_with_prefactor = sp.sympify(str_integral_with_prefactor.replace('+/-','*value+error*'))
-    >>>  integral_with_prefactor_err = sp.sympify(str_integral_with_prefactor.replace('+/-','*value+error*'))
-    >>>  prefactor = sp.sympify(str_prefactor)
-    >>>  integral_without_prefactor = sp.sympify(str_integral_without_prefactor.replace('+/-','*value+error*'))
-    >>>  integral_without_prefactor_err = sp.sympify(str_integral_without_prefactor.replace('+/-','*value+error*'))
-
-    >>> # examples how to access individual orders
-    >>>  print('leading pole:', integral_with_prefactor.coeff('eps',-2).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-2).coeff('error'), ')')
-    >>>  print('subleading pole:', integral_with_prefactor.coeff('eps',-1).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-1).coeff('error'), ')')
-    >>>  print('finite part:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
-
-
-- This will print the result in a format which is also easy to import into Mathematica. Examples for the above commands are also given in `integrate_triangle.py`.
-
-- How to loop over several kinematic points is shown in the example `multiple_kinematic_points.py`.
+    Further examples include:
+    It also contains some two-loop examples: `triangle2L.py`,
+    `box2L.py`, `elliptic_I1.py`, and examples for parametric functions
+    not related to loop integrals: `Hypergeo5F4.py`
+    calculates Hypergeomatric functions, which can have (regulated) poles at both zero
+    and one, `two_regulators.py` contains an example involving poles in two
+    different regulators. More complex examples are the calcuation of the
+    4-photon amplitude, which shows how to use `pySecDec` as an integral
+    library in a larger context, and the `userdefined_cpp` example which
+    shows how the user can combine functions to be decomposed with other, user-defined functions.
