@@ -10,6 +10,7 @@ using the sector decomposition approach [BH00]_; see also [Hei08]_, [BHJ+15]_.
     installation.rst
     gettingstarted.rst
     overview.rst
+    util.rst
     full_reference.rst
     references.rst
 

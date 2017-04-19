@@ -333,7 +333,7 @@ def integrate_by_parts(polyprod, power_goal, *indices):
         as :class:`pySecDec.algebra.Pow` with ``exponent = -1``
         and the ``base`` of type :class:`pySecDec.algebra.Polynomial`.
 
-    :power_goal:
+    :param power_goal:
         number, e.g. float, integer, ...;
         The stopping criterion for the iteration.
 

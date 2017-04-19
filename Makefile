@@ -41,6 +41,9 @@ clean:
 	# remove build doc
 	$(MAKE) -C ./doc clean
 
+	# remove cpp doctests
+	$(MAKE) -C ./doc/source/cpp_doctest clean
+
 	# clean util
 	if [ -f util/Makefile ] ; then $(MAKE) -C ./util clean ; fi
 
