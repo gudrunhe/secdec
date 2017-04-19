@@ -244,7 +244,7 @@ Example:
 
 Compile/Run: 
 
-.. literalinclude:: cpp_doctest/compile_and_run_Cuba.txt
+.. literalinclude:: cpp_doctest/compile_and_run_cuba.txt
    
 Output:
 
@@ -261,7 +261,7 @@ Example:
 
 Compile/Run: 
 
-.. literalinclude:: cpp_doctest/compile_and_run_Cuba.txt
+.. literalinclude:: cpp_doctest/compile_and_run_cuba.txt
    
 Output:
 
