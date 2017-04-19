@@ -80,7 +80,7 @@ int main()
     // Integrate
     secdecutil::cuba::Vegas<%(name)s::integrand_return_t> integrator;
     integrator.flags = 2; // verbose output --> see cuba manual
-    const %(name)s::nested_series_t<secdecutil::UncorrelatedDeviation<%(name)s::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors,  integrator.integrate );
+    const %(name)s::nested_series_t<secdecutil::UncorrelatedDeviation<%(name)s::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors, integrator.integrate );
 
     std::cout << "------------" << std::endl << std::endl;
 
