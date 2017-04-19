@@ -24,7 +24,7 @@ and in particular if you do not have administrator rights,
 `pip` (https://pip.pypa.io/en/stable/) may be used to perform
 the installation.
 
-Then download and upack the tarball from http://secdec.hepforge.org/. The tarball contains a distribution of `pySecDec` and
+To install `pySecDec` download and upack the tarball from http://secdec.hepforge.org/. The tarball contains a distribution of `pySecDec` and
 the additional dependencies listed :ref:`below <additional_cpp_dependencies>`.
 Typing
 
