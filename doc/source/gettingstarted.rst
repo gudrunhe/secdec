@@ -1,21 +1,72 @@
 Getting Started
 ===============
 
+After installation, you should have a folder `examples` in your main `pySecDec` directory.
+Here we describe a few of the examples available in the `examples` directory. 
+A full list of examples is given in :ref:`list_of_examples`.
+
+.. _a_simple_example:
+
 A Simple Example
 ----------------
 
-.. TODO
+We first show how to compute a simple dimensionally regulated integral:
+
+.. math::
+
+    \int_0^1 \mathrm{d} x \int_0^1 \mathrm{d} y \ (x+y)^{-2+\epsilon}.
+
+
+To run the example change to the ``easy`` directory and run the commands::
+
+    $ python generate_easy.py
+    $ make -C easy
+    $ python integrate_easy.py
+
+This will evaluate and print the result of the integral::
+
+    Numerical Result: + (1.00015897181235158e+00 +/- 4.03392522752491021e-03)*eps^-1 + (3.06903035514056399e-01 +/- 2.82319349818329918e-03) + O(eps)
+    Analytic Result: + (1.000000)*eps^-1 + (0.306853) + O(eps)
+
+The file ``generate_easy.py`` defines the integral and calls `pySecDec` to perform the sector decomposition. 
+When run it produces the directory ``easy`` which contains the code required to numerically evaluate the integral. 
+The make command builds this code and produces a library. 
+The file ``integrate_easy.py`` loads the integral library and evaluates the integral.
+The user is encouraged to copy and adapt these files to evaluate their own integrals.
+
+.. note::
+
+    If the user is interested in evaluating a loop integral there are many convenience functions that make this much easier. Please see :ref:`evaluating_a_loop_integral` for more details.
+
+
+In ``generate_easy.py`` we first import :func:`make_package <pySecDec.code_writer.make_package>`, a function which can decompose, subtract and expand regulated integrals and write a C++ package to evaluate them.
+To define our integral we give it a `name` which will be used as the name of the output directory and C++ namespace.
+The `integration_variables` are declared along with a list of the name of the `regulators`. 
+We must specify a list of the `requested_orders` to which `pySecDec` should expand our integral in each regulator. 
+Here we specify ``requested_orders = [0]`` which instructs :func:`make_package <pySecDec.code_writer.make_package>` to expand the integral up to and including :math:`\mathcal{O}(\epsilon)`.
+Next, we declare the `polynomials_to_decompose`, here `sympy` syntax should be used.
+
+.. literalinclude:: ../../examples/easy/generate_easy.py
+   :language: python
+
+Once the C++ library has been written and built we run ``integrate_easy.py``. 
+Here the library is loaded using :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
+Calling the instance of :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>` with ``easy_integral()`` numerically evaluates the integral and returns the result. 
+
+.. literalinclude:: ../../examples/easy/integrate_easy.py
+   :language: python
+
+.. _evaluating_a_loop_integral:
 
 Evaluating a Loop Integral
 --------------------------
 
-After installation, you should have a folder `examples` in your main `pySecDec` directory.
-It contains various examples, the easiest one being `box1L`. 
+A simple example of the evaluation of a loop integral with `pySecDec` is `box1L`. 
 This example computes a one-loop box with one off-shell leg (with off-shellness ``s1``) and one internal massive line (with mass squared ``msq``), it is shown in :numref:`box1L_diagram`.
 
 .. _box1L_diagram:
 
-.. figure:: box1L.*
+.. figure:: _static/box1L.*
     :align: center
     :alt: Diagrammatic representation of `box1L`
     
@@ -33,7 +84,7 @@ This will print the result of the integral evaluated with Mandelstam invariants 
     subleading pole: 0.639405625715768089 + 1.34277036689902802e-6*I +/- ( 0.00650722394065588166 + 0.000971496627153705891*I )
     finite part: -0.425514350373418893 + 1.86892487760861536*I +/- ( 0.00706834403694714484 + 0.0186497890361357298*I )
 
-The file ``box1L.py`` defines the loop integral and calls `pySecDec` to perform the sector decomposition. When run it produces the directory `box1L` which contains the code required to numerically evaluate the integral. The make command builds this code and produces a library. The file ``integrate_box1L.py`` loads the integral library and evalutes the integral for a specified numerical point.
+The file ``box1L.py`` defines the loop integral and calls `pySecDec` to perform the sector decomposition. When run it produces the directory `box1L` which contains the code required to numerically evaluate the integral. The make command builds this code and produces a library. The file ``integrate_box1L.py`` loads the integral library and evaluates the integral for a specified numerical point.
 
 The content of the python files is described in detail in the following sections. The user is encouraged to copy and adapt these files to evaluate their own loop integrals.
 
@@ -271,18 +322,31 @@ After editing the ``real_parameters`` as described above the C++ program can be 
     $ make integrate_box1L
     $ ./integrate_box1L
 
+.. _list_of_examples:
+
 List of Examples
 ----------------
 
-.. TODO
+Here we list the available examples. For more details regarding each example see [PSD17]_.
 
-    Further examples include:
-    It also contains some two-loop examples: `triangle2L.py`,
-    `box2L.py`, `elliptic_I1.py`, and examples for parametric functions
-    not related to loop integrals: `Hypergeo5F4.py`
-    calculates Hypergeomatric functions, which can have (regulated) poles at both zero
-    and one, `two_regulators.py` contains an example involving poles in two
-    different regulators. More complex examples are the calcuation of the
-    4-photon amplitude, which shows how to use `pySecDec` as an integral
-    library in a larger context, and the `userdefined_cpp` example which
-    shows how the user can combine functions to be decomposed with other, user-defined functions.
+* **easy**: a simple parametric integral, described in :numref:`a_simple_example`
+
+* **box1L**: a simple 1-loop, 4-point, 4-propagator integral, described in :numref:`evaluating_a_loop_integral` 
+
+* **triangle2L**: a 2-loop, 3-point, 6-propagator diagram, also known as `P126`
+
+* **box2L_numerator**:  a massless planar on-shell 2-loop, 4-point, 7-propagator box with a numerator, either defined as an inverse propagator ``box2L_invprop.py`` or in terms of contracted Lorentz vectors ``box2L_contracted_tensor.py``
+
+* **formfactor3L**: a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors
+
+* **elliptic2L**: an integral known to contain elliptic functions
+
+* **Zbb_vertex_correction**: a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics
+
+* **Hypergeo5F4**: a general dimensionally regulated parameter integral
+
+* **4photon1L**: calcuation of the 4-photon amplitude, showing how to use `pySecDec` as an integral library in a larger context
+
+* **two_regulators**: an integral involving poles in two different regulators.
+
+* **userdefined_cpp**: a collection of examples demonstrating how to combine polynomials to be decomposed with other user-defined functions
