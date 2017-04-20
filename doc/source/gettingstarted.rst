@@ -2,7 +2,7 @@ Getting Started
 ===============
 
 After installation, you should have a folder `examples` in your main `pySecDec` directory.
-Here we describe a few of the examples available in the `examples` directory. 
+Here we describe a few of the examples available in the `examples` directory.
 A full list of examples is given in :ref:`list_of_examples`.
 
 .. _a_simple_example:
@@ -28,9 +28,9 @@ This will evaluate and print the result of the integral::
     Numerical Result: + (1.00015897181235158e+00 +/- 4.03392522752491021e-03)*eps^-1 + (3.06903035514056399e-01 +/- 2.82319349818329918e-03) + O(eps)
     Analytic Result: + (1.000000)*eps^-1 + (0.306853) + O(eps)
 
-The file ``generate_easy.py`` defines the integral and calls `pySecDec` to perform the sector decomposition. 
-When run it produces the directory ``easy`` which contains the code required to numerically evaluate the integral. 
-The make command builds this code and produces a library. 
+The file ``generate_easy.py`` defines the integral and calls `pySecDec` to perform the sector decomposition.
+When run it produces the directory ``easy`` which contains the code required to numerically evaluate the integral.
+The make command builds this code and produces a library.
 The file ``integrate_easy.py`` loads the integral library and evaluates the integral.
 The user is encouraged to copy and adapt these files to evaluate their own integrals.
 
@@ -41,17 +41,17 @@ The user is encouraged to copy and adapt these files to evaluate their own integ
 
 In ``generate_easy.py`` we first import :func:`make_package <pySecDec.code_writer.make_package>`, a function which can decompose, subtract and expand regulated integrals and write a C++ package to evaluate them.
 To define our integral we give it a `name` which will be used as the name of the output directory and C++ namespace.
-The `integration_variables` are declared along with a list of the name of the `regulators`. 
-We must specify a list of the `requested_orders` to which `pySecDec` should expand our integral in each regulator. 
+The `integration_variables` are declared along with a list of the name of the `regulators`.
+We must specify a list of the `requested_orders` to which `pySecDec` should expand our integral in each regulator.
 Here we specify ``requested_orders = [0]`` which instructs :func:`make_package <pySecDec.code_writer.make_package>` to expand the integral up to and including :math:`\mathcal{O}(\epsilon)`.
 Next, we declare the `polynomials_to_decompose`, here `sympy` syntax should be used.
 
 .. literalinclude:: ../../examples/easy/generate_easy.py
    :language: python
 
-Once the C++ library has been written and built we run ``integrate_easy.py``. 
+Once the C++ library has been written and built we run ``integrate_easy.py``.
 Here the library is loaded using :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
-Calling the instance of :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>` with ``easy_integral()`` numerically evaluates the integral and returns the result. 
+Calling the instance of :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>` with ``easy_integral()`` numerically evaluates the integral and returns the result.
 
 .. literalinclude:: ../../examples/easy/integrate_easy.py
    :language: python
@@ -61,7 +61,7 @@ Calling the instance of :class:`IntegralLibrary <pySecDec.integral_interface.Int
 Evaluating a Loop Integral
 --------------------------
 
-A simple example of the evaluation of a loop integral with `pySecDec` is `box1L`. 
+A simple example of the evaluation of a loop integral with `pySecDec` is `box1L`.
 This example computes a one-loop box with one off-shell leg (with off-shellness ``s1``) and one internal massive line (with mass squared ``msq``), it is shown in :numref:`box1L_diagram`.
 
 .. _box1L_diagram:
@@ -69,7 +69,7 @@ This example computes a one-loop box with one off-shell leg (with off-shellness 
 .. figure:: _static/box1L.*
     :align: center
     :alt: Diagrammatic representation of `box1L`
-    
+
     Diagrammatic representation of `box1L`
 
 To run the example change to the `box1L` directory and run the commands::
@@ -139,7 +139,7 @@ The ordering is important as the numerical values assigned to these list element
 
 
 Next, the function :func:`loop_package <pySecDec.loop_integral.loop_package>` is called. It will create a folder called ``box1L``.
-It performs the algebraic sector decomposition steps and writes a package containing the C++ code for the numerical evaluation. 
+It performs the algebraic sector decomposition steps and writes a package containing the C++ code for the numerical evaluation.
 The argument `requested_order` specifies the order in the regulator to which the integral should be expanded.
 For a complete list of possible options see  :func:`loop_package <pySecDec.loop_integral.loop_package>`.
 
@@ -199,8 +199,8 @@ Alternatively, a C++ program can be produced as explained in the section :ref:`C
 Python Interface (basic)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-To evaluate the integral for a given numerical point we can use ``integrate_box1L.py``. 
-First it imports the necessary python packages and loads the C++ library. 
+To evaluate the integral for a given numerical point we can use ``integrate_box1L.py``.
+First it imports the necessary python packages and loads the C++ library.
 
 .. code::
 
@@ -218,8 +218,8 @@ Next, an integrator is configured for the numerical integration. The full list o
     # choose integrator
     box.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
 
-Calling the ``box`` library numerically evaluates the integral. 
-Note that the order of the real parameters must match that specified in ``box1L.py``. 
+Calling the ``box`` library numerically evaluates the integral.
+Note that the order of the real parameters must match that specified in ``box1L.py``.
 A list of possible settings for the library, in particular details of how to set the contour deformation parameters, is given in :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
 
 .. code::
@@ -231,7 +231,7 @@ At this point the string ``str_integral_with_prefactor`` contains the full resul
 In the ``integrate_box1L.py`` an example is shown how to parse the expression with `sympy` and access individual orders of the regulator.
 
 .. note::
-   
+
    Instead of parsing the result, it can simply be printed with the line ``print(str_integral_with_prefactor)``.
 
 .. code::
@@ -260,11 +260,11 @@ An example of how to loop over several kinematic points is shown in the example 
 C++ Interface (advanced)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Usually it is easier to obtain a numerical result using the :ref:`Python Interface <python_interface>`. 
+Usually it is easier to obtain a numerical result using the :ref:`Python Interface <python_interface>`.
 However, the library can also be used directly from C++.
 Inside the generated ``box1L`` folder the file ``integrate_box1L.cpp`` demonstrates this.
 
-The function ``print_integral_info`` shows how to access the important variables of the integral library. 
+The function ``print_integral_info`` shows how to access the important variables of the integral library.
 
 In the ``main`` function a kinematic point must be specified by setting the ``real_parameters`` variable, for example::
 
