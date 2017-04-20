@@ -17,7 +17,7 @@ We first show how to compute a simple dimensionally regulated integral:
     \int_0^1 \mathrm{d} x \int_0^1 \mathrm{d} y \ (x+y)^{-2+\epsilon}.
 
 
-To run the example change to the ``easy`` directory and run the commands::
+To run the example change to the `easy` directory and run the commands::
 
     $ python generate_easy.py
     $ make -C easy
@@ -29,7 +29,7 @@ This will evaluate and print the result of the integral::
     Analytic Result: + (1.000000)*eps^-1 + (0.306853) + O(eps)
 
 The file ``generate_easy.py`` defines the integral and calls `pySecDec` to perform the sector decomposition.
-When run it produces the directory ``easy`` which contains the code required to numerically evaluate the integral.
+When run it produces the directory `easy` which contains the code required to numerically evaluate the integral.
 The make command builds this code and produces a library.
 The file ``integrate_easy.py`` loads the integral library and evaluates the integral.
 The user is encouraged to copy and adapt these files to evaluate their own integrals.
@@ -138,7 +138,7 @@ The ordering is important as the numerical values assigned to these list element
     mass_symbols = ['msq']
 
 
-Next, the function :func:`loop_package <pySecDec.loop_integral.loop_package>` is called. It will create a folder called ``box1L``.
+Next, the function :func:`loop_package <pySecDec.loop_integral.loop_package>` is called. It will create a folder called `box1L`.
 It performs the algebraic sector decomposition steps and writes a package containing the C++ code for the numerical evaluation.
 The argument `requested_order` specifies the order in the regulator to which the integral should be expanded.
 For a complete list of possible options see  :func:`loop_package <pySecDec.loop_integral.loop_package>`.
@@ -175,13 +175,13 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 Building the C++ Library
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-After running the python script `box1L.py`  the folder ``box1L`` is created and should contain the following files and subdirectories
+After running the python script `box1L.py` the folder `box1L` is created and should contain the following files and subdirectories
 
 .. code::
 
     Makefile    Makefile.conf    README    box1L.hpp    codegen    integrate_box1L.cpp    pylink    src
 
-in the folder ``box1L``, typing
+in the folder `box1L`, typing
 
 .. code::
 
@@ -262,7 +262,7 @@ C++ Interface (advanced)
 
 Usually it is easier to obtain a numerical result using the :ref:`Python Interface <python_interface>`.
 However, the library can also be used directly from C++.
-Inside the generated ``box1L`` folder the file ``integrate_box1L.cpp`` demonstrates this.
+Inside the generated `box1L` folder the file ``integrate_box1L.cpp`` demonstrates this.
 
 The function ``print_integral_info`` shows how to access the important variables of the integral library.
 
@@ -274,7 +274,7 @@ In the ``main`` function a kinematic point must be specified by setting the ``re
         const std::vector<box1L::real_t> real_parameters = {4.0, -0.75, 1.25, 1.0}; // EDIT: kinematic point specified here
         const std::vector<box1L::complex_t> complex_parameters = {  };
 
-The ``make_integrands`` function returns an :cpp:class:`secdecutil::IntegrandContainer` for each sector and regulator order::
+The :cpp:func:`name::make_integrands` function returns an :cpp:class:`secdecutil::IntegrandContainer` for each sector and regulator order::
 
     //  Generate the integrands (optimization of the contour if applicable)
         const std::vector<box1L::nested_series_t<box1L::integrand_t>> sector_integrands = box1L::make_integrands(real_parameters, complex_parameters);

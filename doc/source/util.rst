@@ -231,6 +231,8 @@ The available integrator specific parameters and their default values are:
 
 For the description of these more specific parameters we refer to the Cuba manual.
 
+.. _integrator_examples:
+
 Examples
 ~~~~~~~~
 
