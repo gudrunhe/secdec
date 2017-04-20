@@ -187,15 +187,11 @@ Feynman Parametrization of Loop Integrals
 
 The primary purpose of `pySecDec` is the numerical calculation of loop integrals as they arise in fixed
 order calculations in quantum field theories. In the first step of our approach, the loop integral is 
-converted from the momentum representation to the Feynman parameter representation.
-
-.. TODO: give a reference
+converted from the momentum representation to the Feynman parameter representation, see for example [Hei08]_ (Chapter 3).
 
 The module :mod:`pySecDec.loop_integral` implements exactly that conversion.
 The most basic use is to calculate the first and the second 
 Symanzik polynomial ``U`` and ``F``, respectively, from the propagators of a loop integral.
-
-.. TODO: include Feynman diagrams?
 
 .. _one-loop-bubble:
 
