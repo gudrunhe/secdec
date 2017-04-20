@@ -18,7 +18,7 @@ namespace %(name)s
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters
         #if %(name)s_contour_deformation
-            ,unsigned number_of_samples,
+            ,unsigned number_of_presamples,
             real_t deformation_parameters_maximum,
             real_t deformation_parameters_minimum,
             real_t deformation_parameters_decrease_factor
@@ -47,7 +47,7 @@ namespace %(name)s
                     (
                         real_parameters,
                         complex_parameters,
-                        number_of_samples,
+                        number_of_presamples,
                         deformation_parameters_maximum,
                         deformation_parameters_minimum,
                         deformation_parameters_decrease_factor

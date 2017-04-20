@@ -104,7 +104,7 @@ namespace secdecutil {
         std::vector<real_t> optimize_deformation_parameters (
                                                                 real_t const * const real_parameters,
                                                                 complex_t const * const complex_parameters,
-                                                                const unsigned number_of_samples = 100000,
+                                                                const unsigned number_of_presamples = 100000,
                                                                 const real_t maximum = 1.,
                                                                 const real_t minimum = 1.e-5,
                                                                 const real_t decrease_factor = 0.9
@@ -113,8 +113,8 @@ namespace secdecutil {
             // define indices for the loops
             unsigned i,j;
 
-            // if no sampling desired (number_of_samples == 0) set the deformation parameters to the maximum
-            if (number_of_samples == 0)
+            // if no sampling desired (number_of_presamples == 0) set the deformation parameters to the maximum
+            if (number_of_presamples == 0)
                 return std::vector<real_t>(number_of_integration_variables,maximum);
 
             // initialize the output, and temporary vectors
@@ -127,8 +127,8 @@ namespace secdecutil {
 
             // Define a lambda function that generates 'number_of_integration_variables'-dimensional
             // uniformly-distributed points.
-            // We use the c++11-builtin 'minstd_rand' and seed it with the 'number_of_samples'.
-            std::minstd_rand random_number_generator(/* seed  = */ number_of_samples);
+            // We use the c++11-builtin 'minstd_rand' and seed it with the 'number_of_presamples'.
+            std::minstd_rand random_number_generator(/* seed  = */ number_of_presamples);
             std::uniform_real_distribution<real_t> uniform_distribution(0,1);
             auto generate_sample =
             [ &random_number_generator , &uniform_distribution , this ]
@@ -139,7 +139,7 @@ namespace secdecutil {
             };
 
             // find the minimum of the lambdas obtained for the different samples
-            for (i=0; i<number_of_samples; ++i)
+            for (i=0; i<number_of_presamples; ++i)
             {
                 generate_sample(real_sample);
                 maximal_allowed_deformation_parameters(temp_deformation_parameters, real_sample, real_parameters, complex_parameters);
@@ -154,11 +154,11 @@ namespace secdecutil {
             };
 
             // reseed the random number generator to obtain the same samples again
-            random_number_generator.seed(number_of_samples);
+            random_number_generator.seed(number_of_presamples);
 
             // perform the sign check for each sample; decrease the "optimized_deformation_parameters" if necessary
             integral_transformation_t<complex_t> deformation;
-            for (i=0; i<number_of_samples; ++i)
+            for (i=0; i<number_of_presamples; ++i)
             {
                 generate_sample(real_sample);
                 while ( !contour_deformation_polynomial_passes_sign_check(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters) )
@@ -209,7 +209,7 @@ namespace secdecutil {
                 for (auto order : orders)
                     error_message += std::to_string(order) + " ";
                 error_message += "} yields the wrong sign of \"contour_deformation_polynomial.imag\" or";
-                error_message += " \"positive_polynomial.real\". Choose a larger \"number_of_samples\" in";
+                error_message += " \"positive_polynomial.real\". Choose a larger \"number_of_presamples\" in";
                 error_message += " \"optimize_deformation_parameters\" or decrease the \"deformation_parameters\".";
                 throw sign_check_error(error_message);
             }
@@ -246,7 +246,7 @@ namespace secdecutil {
     template<typename real_t, typename complex_t>
     std::function<secdecutil::IntegrandContainer<complex_t, real_t const * const>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
     SectorContainerWithDeformation_to_IntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters,
-                                                         unsigned number_of_samples = 100000, real_t deformation_parameters_maximum = 1.,
+                                                         unsigned number_of_presamples = 100000, real_t deformation_parameters_maximum = 1.,
                                                          real_t deformation_parameters_minimum = 1.e-5, real_t deformation_parameters_decrease_factor = 0.9)
     {
         auto shared_real_parameters = std::make_shared<std::vector<real_t>>(real_parameters);
@@ -266,7 +266,7 @@ namespace secdecutil {
                     (
                         sector_container.real_parameters->data(),
                         sector_container.complex_parameters->data(),
-                        number_of_samples,
+                        number_of_presamples,
                         deformation_parameters_maximum,
                         deformation_parameters_minimum,
                         deformation_parameters_decrease_factor
