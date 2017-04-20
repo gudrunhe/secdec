@@ -33,6 +33,10 @@ def loop_package(name, loop_integral, requested_order,
         This function is a wrapper around
         :func:`pySecDec.code_writer.make_package`.
 
+    .. seealso::
+        The generated library is described in
+        :ref:`generated_cpp_libs`.
+
     :param name:
         string;
         The name of the c++ namespace and the output

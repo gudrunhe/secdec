@@ -644,6 +644,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
         use the function
         :func:`pySecDec.loop_integral.loop_package`.
 
+    .. seealso::
+        The generated library is described in
+        :ref:`generated_cpp_libs`.
+
     :param name:
         string;
         The name of the c++ namepace and the output

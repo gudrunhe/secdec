@@ -1,3 +1,5 @@
+.. _generated_cpp_libs:
+
 Generated C++ Libraries
 -----------------------
 

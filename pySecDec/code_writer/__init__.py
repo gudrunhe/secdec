@@ -17,7 +17,7 @@ Template Parser
 .. automodule:: pySecDec.code_writer.template_parser
     :members:
 
-.. include:: generated_cpp.rst
+.. include:: generated_cpp.txt
 
 
 """
