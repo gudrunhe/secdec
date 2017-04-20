@@ -553,7 +553,7 @@ functions supporting singularities in the expansion variable
 
 .. _Taylor_intro:
 
-Taylor expansion
+Taylor Expansion
 ~~~~~~~~~~~~~~~~
 
 The function :func:`pySecDec.expansion.expand_Taylor` implements the ordinary

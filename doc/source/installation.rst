@@ -1,7 +1,7 @@
 Installation
 ============
 
-Download the program and install
+Download the Program and Install
 --------------------------------
 
 `pySecDec` should run fine with both, `python` 2.7 and `python` 3

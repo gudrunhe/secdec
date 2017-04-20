@@ -172,7 +172,7 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 
     )
 
-Building the C++ library
+Building the C++ Library
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 After running the python script `box1L.py`  the folder ``box1L`` is created and should contain the following files and subdirectories
@@ -196,8 +196,8 @@ Alternatively, a C++ program can be produced as explained in the section :ref:`C
 
 ..  _python_interface:
 
-Python Interface
-^^^^^^^^^^^^^^^^
+Python Interface (basic)
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 To evaluate the integral for a given numerical point we can use ``integrate_box1L.py``. 
 First it imports the necessary python packages and loads the C++ library. 
@@ -257,7 +257,7 @@ An example of how to loop over several kinematic points is shown in the example 
 
 ..  _cpp_interface:
 
-C++ Interface (Advanced)
+C++ Interface (advanced)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Usually it is easier to obtain a numerical result using the :ref:`Python Interface <python_interface>`. 
