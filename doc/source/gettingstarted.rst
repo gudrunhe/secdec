@@ -329,24 +329,27 @@ List of Examples
 
 Here we list the available examples. For more details regarding each example see [PSD17]_.
 
-* **easy**: a simple parametric integral, described in :numref:`a_simple_example`
-
-* **box1L**: a simple 1-loop, 4-point, 4-propagator integral, described in :numref:`evaluating_a_loop_integral` 
-
-* **triangle2L**: a 2-loop, 3-point, 6-propagator diagram, also known as `P126`
-
-* **box2L_numerator**:  a massless planar on-shell 2-loop, 4-point, 7-propagator box with a numerator, either defined as an inverse propagator ``box2L_invprop.py`` or in terms of contracted Lorentz vectors ``box2L_contracted_tensor.py``
-
-* **formfactor3L**: a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors
-
-* **elliptic2L**: an integral known to contain elliptic functions
-
-* **Zbb_vertex_correction**: a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics
-
-* **Hypergeo5F4**: a general dimensionally regulated parameter integral
-
-* **4photon1L**: calcuation of the 4-photon amplitude, showing how to use `pySecDec` as an integral library in a larger context
-
-* **two_regulators**: an integral involving poles in two different regulators.
-
-* **userdefined_cpp**: a collection of examples demonstrating how to combine polynomials to be decomposed with other user-defined functions
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **easy**:                  | a simple parametric integral, described in :numref:`a_simple_example`                                                          |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **box1L**:                 | a simple 1-loop, 4-point, 4-propagator integral, described in :numref:`evaluating_a_loop_integral`                             |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **triangle2L**:            | a 2-loop, 3-point, 6-propagator diagram, also known as `P126`                                                                  |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **box2L_numerator**:       | a massless planar on-shell 2-loop, 4-point, 7-propagator box with a numerator, either defined as an inverse propagator         |
+|                            | ``box2L_invprop.py`` or in terms of contracted Lorentz vectors ``box2L_contracted_tensor.py``                                  |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **formfactor3L**:          | a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **elliptic2L**:            | an integral known to contain elliptic functions                                                                                |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **Zbb_vertex_correction**: | a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics                                  |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **Hypergeo5F4**:           | a general dimensionally regulated parameter integral                                                                           |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **4photon1L**:             | calcuation of the 4-photon amplitude, showing how to use `pySecDec` as an integral library in a larger context                 |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **two_regulators**:        | an integral involving poles in two different regulators.                                                                       |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **userdefined_cpp**:       | a collection of examples demonstrating how to combine polynomials to be decomposed with other user-defined functions           |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
