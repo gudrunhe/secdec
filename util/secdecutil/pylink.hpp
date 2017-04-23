@@ -11,6 +11,7 @@
 
 #include <secdecutil/deep_apply.hpp> // deep_apply
 #include <secdecutil/integrators/cquad.hpp> // CQuad
+#include <secdecutil/integrators/qmc.hpp> // Qmc
 #include <secdecutil/integrators/cuba.hpp> // Vegas, Suave, Divonne, Cuhre
 #include <secdecutil/series.hpp> // Series
 #include <secdecutil/uncertainties.hpp> // UncorrelatedDeviation
@@ -230,6 +231,19 @@ extern "C"
     {
         auto integrator = new secdecutil::cuba::Cuhre<integrand_return_t>
             (epsrel,epsabs,flags,mineval,maxeval,zero_border,key);
+        SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX();
+        return integrator;
+    }
+    secdecutil::Integrator<integrand_return_t,real_t> *
+    allocate_integrators_Qmc(
+                            unsigned long long int minN,
+                            unsigned long long int m,
+                            bool real_complex_together
+                        )
+    {
+        auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,real_t>;
+        integrator->integrator.minN = minN;
+        integrator->integrator.m = m;
         SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX();
         return integrator;
     }
