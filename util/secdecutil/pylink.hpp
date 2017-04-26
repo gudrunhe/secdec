@@ -245,13 +245,13 @@ extern "C"
         auto integrator = new secdecutil::integrators::Qmc<integrand_return_t>;
         // If an argument is set to 0 then use the default of the Qmc library
         if ( minN != 0 )
-            integrator->integrator.minN = minN;
+            integrator->minN = minN;
         if ( m != 0 )
-            integrator->integrator.m = m;
+            integrator->m = m;
         if ( blockSize != 0 )
-            integrator->integrator.blockSize = blockSize;
+            integrator->blockSize = blockSize;
         if ( seed != 0 )
-            integrator->integrator.randomGenerator.seed(seed);
+            integrator->randomGenerator.seed(seed);
         return integrator;
     }
     void free_integrator (secdecutil::Integrator<integrand_return_t,real_t> * integrator)
