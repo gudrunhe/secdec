@@ -13,11 +13,12 @@ namespace secdecutil
 {
     namespace integrators {
 
-        template<typename return_t, typename input_t>
-        struct Qmc : Integrator<return_t,input_t>
+        template<typename return_t>
+        struct Qmc : Integrator<return_t,return_t>
         {
         protected:
 
+            using input_t = return_t;
             std::function<secdecutil::UncorrelatedDeviation<return_t>(const secdecutil::IntegrandContainer<return_t, input_t const * const>&)>
             get_integrate()
             {
@@ -35,11 +36,12 @@ namespace secdecutil
 
         };
 
-        template<typename return_t, typename input_t>
-        struct Qmc<std::complex<return_t>, input_t> : Integrator<std::complex<return_t>, input_t>
+        template<typename return_t>
+        struct Qmc<std::complex<return_t>> : Integrator<std::complex<return_t>, return_t>
         {
         protected:
 
+            using input_t = return_t;
             std::unique_ptr<Integrator<return_t, input_t>> get_real_integrator()
             {
                 throw std::runtime_error("Separate integration of real and imaginary part has no advantage for this non-adaptive integrator. Please use \"together = true\".");

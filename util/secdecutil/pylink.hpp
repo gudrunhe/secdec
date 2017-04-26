@@ -242,7 +242,7 @@ extern "C"
                             long long int seed
                         )
     {
-        auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,real_t>;
+        auto integrator = new secdecutil::integrators::Qmc<integrand_return_t>;
         // If an argument is set to 0 then use the default of the Qmc library
         if ( minN != 0 )
             integrator->integrator.minN = minN;
