@@ -238,13 +238,20 @@ extern "C"
     allocate_integrators_Qmc(
                             unsigned long long int minN,
                             unsigned long long int m,
-                            bool real_complex_together
+                            unsigned long long int blockSize,
+                            long long int seed
                         )
     {
         auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,real_t>;
-        integrator->integrator.minN = minN;
-        integrator->integrator.m = m;
-        SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX();
+        // If an argument is set to 0 then use the default of the Qmc library
+        if ( minN != 0 )
+            integrator->integrator.minN = minN;
+        if ( m != 0 )
+            integrator->integrator.m = m;
+        if ( blockSize != 0 )
+            integrator->integrator.blockSize = blockSize;
+        if ( seed != 0 )
+            integrator->integrator.randomGenerator.seed(seed);
         return integrator;
     }
     void free_integrator (secdecutil::Integrator<integrand_return_t,real_t> * integrator)

@@ -191,14 +191,16 @@ class Qmc(CPPIntegrator):
         :class:`IntegralLibrary`;
         The integral to be computed with this integrator.
 
-    The other options are defined in the Qmc docs.
+    The other options are defined in the Qmc docs. If
+    an argument is set to 0 then the default of the
+    Qmc library is used.
 
     '''
-    def __init__(self,integral_library,minN=8191,m=32,real_complex_together=True):
+    def __init__(self,integral_library,minN=0,m=0,blockSize=0,seed=0):
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_integrators_Qmc.restype = c_void_p
-        self.c_lib.allocate_integrators_Qmc.argtypes = [c_ulonglong, c_ulonglong, c_bool]
-        self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(minN,m,real_complex_together)
+        self.c_lib.allocate_integrators_Qmc.argtypes = [c_ulonglong, c_ulonglong, c_ulonglong, c_longlong]
+        self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(minN,m,blockSize,seed)
 
 
 class IntegralLibrary(object):
