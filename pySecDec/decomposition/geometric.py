@@ -664,4 +664,6 @@ def geometric_decomposition_ku(sector, indices=None, normaliz='normaliz', workdi
     fan = generate_fan( *(product.factors[1] for product in sector.cast) )
     for cone in fan:
         for dualcone in triangulate(cone, normaliz, workdir, switch_representation=True):
-            yield make_sector_ku(dualcone.T)
+            # exclude lower dimensional cones
+            if dualcone.shape[0] == cone.shape[1]:
+                yield make_sector_ku(dualcone.T)
