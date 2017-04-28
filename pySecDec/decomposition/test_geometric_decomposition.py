@@ -264,6 +264,31 @@ class TestGeomethod(unittest.TestCase):
                     self.assertEqual( (sp.sympify(subsector.cast[0])-target_poly.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
                     self.assertEqual( (sp.sympify(subsector.Jacobian)-target_Jacobian.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
 
+    #@attr('active')
+    def test_geometric_ku_lower_dimensional_cones(self):
+        polysymbols = ['x0','x1','x3','x4','x5']
+        poly1 = Polynomial.from_expression(
+                                               '''
+                                                   + (4) + (2)*x5 + (9/5)*x4 + (-7/10)*x3 + (-7/40)*x3*x5 + (-63/400)*x3*x4 + (-4/5)*x1
+                                                   + (-1/5)*x1*x5 + (-9/50)*x1*x4 + (7/50)*x1*x3 + (-7/5)*x0 + (-7/20)*x0*x5
+                                                   + (-63/200)*x0*x4 + (49/200)*x0*x3
+                                               ''',
+                                               polysymbols
+                                          )
+        poly2 = Polynomial.from_expression(
+                                              '''
+                                                   + (2) + (1)*x5 + (9/10)*x4 + (-7/4)*x3 + (-7/10)*x3*x5 + (-63/80)*x3*x4
+                                                   + (49/200)*x3**2 + (49/800)*x3**2*x5 + (441/8000)*x3**2*x4 + (9/50)*x1*x4
+                                                   + (7/25)*x1*x3 + (7/100)*x1*x3*x5 + (63/1000)*x1*x3*x4 + (-49/1000)*x1*x3**2
+                                                   + (7/20)*x0*x5 + (49/100)*x0*x3 + (441/4000)*x0*x3*x4 + (-343/4000)*x0*x3**2
+                                                   + (-14/25)*x0*x1 + (-7/50)*x0*x1*x5 + (-63/500)*x0*x1*x4 + (49/500)*x0*x1*x3
+                                              ''',
+                                              polysymbols
+                                         )
+        sector = Sector([poly1,poly2])
+
+        # should not error
+        subsectors = list( geometric_decomposition_ku(sector, workdir='tmpdir_test_geometric_ku_lower_dimensional_cones_python' + python_major_version) )
 
     #@attr('active')
     def test_3D_geometric_decomposition(self):
