@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.5'
+needs_sphinx = '1.5.5'
 
 # Figures, tables and code-blocks are automatically numbered if they have a caption
 numfig = True
