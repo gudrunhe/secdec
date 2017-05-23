@@ -306,16 +306,24 @@ class LoopIntegral(object):
                                                                      polysymbols=Feynman_parameters_U_F, copy=False
                                                                  )
                                       )
+
         if measure_factors:
-            return Product(*measure_factors, copy=False)
+            measure = Product(*measure_factors, copy=False)
         else:
-            return Product(
+            measure = Product(
                               ExponentiatedPolynomial(
                                                          np.zeros([1,len(Feynman_parameters_U_F)], dtype=int),
                                                          np.array([1]), exponent=eff_power-1,
                                                          polysymbols=Feynman_parameters_U_F, copy=False
                                                      )
-                          )
+                             )
+
+        for i in range(self.P):
+            eff_power = self.powerlist[i] + self.derivativelist[i]
+            if eff_power.is_integer and eff_power.is_zero:
+                measure = measure.replace(i,0,remove=True)
+
+        return measure
 
     @cached_property
     def Gamma_argument(self):

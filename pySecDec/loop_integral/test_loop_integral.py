@@ -1517,17 +1517,25 @@ class TestPowerlist(unittest.TestCase):
 
             target_Nu = '''z1**2*(s*z1*z2 - 2*eps*s*z1*z2)'''
 
+            target_measure = '''z1**2'''
+
             target_gamma = sp.gamma('1 + eps')/2
 
             result_U = sp.sympify(li.U)
             result_F = sp.sympify(li.F)
             result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
             result_gamma = li.Gamma_factor
+            result_measure = sp.sympify(li.measure)
+            result_measure_symbols = li.measure.symbols
+            target_measure_symbols = [ 'z1', 'z2', 'U', 'F' ]
 
             self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
             self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
             self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
             self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
+            self.assertEqual( (result_measure - sp.sympify(target_measure)).simplify() , 0 )
+            for symbol, target_symbol in zip(result_measure_symbols, target_measure_symbols):
+                self.assertEqual( symbol , sp.sympify(target_symbol) )
 
     @attr('slow')
     #@attr('active')
