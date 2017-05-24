@@ -1448,7 +1448,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
 
-
+    #@attr('active')
     def test_multiple_negative_powers(self):
         internal_lines = [[0,[1,2]], [0,[2,3]], [0,[3,4]], [0,[4,1]]]
         external_lines = [['p1',1], ['p2',2], ['p3',3], ['-p1-p2-p3',4]]
@@ -1476,15 +1476,23 @@ class TestPowerlist(unittest.TestCase):
 
         target_gamma = sp.gamma('eps - 2')
 
+        target_measure = 1
+
+        target_measure_symbols = sp.sympify([ 'z1', 'z2', 'U', 'F' ])
+
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
         result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
         result_gamma = li.Gamma_factor
+        result_measure = sp.sympify(li.measure)
+        result_measure_symbols = li.measure.symbols
 
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
+        self.assertEqual( (result_measure - sp.sympify(target_measure)).simplify() , 0 )
+        self.assertEqual( result_measure_symbols, target_measure_symbols)
 
     #@attr('active')
     def test_one_zero_and_one_negative_power(self):
@@ -1527,15 +1535,14 @@ class TestPowerlist(unittest.TestCase):
             result_gamma = li.Gamma_factor
             result_measure = sp.sympify(li.measure)
             result_measure_symbols = li.measure.symbols
-            target_measure_symbols = [ 'z1', 'z2', 'U', 'F' ]
+            target_measure_symbols = sp.sympify([ 'z1', 'z2', 'U', 'F' ])
 
             self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
             self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
             self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
             self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
             self.assertEqual( (result_measure - sp.sympify(target_measure)).simplify() , 0 )
-            for symbol, target_symbol in zip(result_measure_symbols, target_measure_symbols):
-                self.assertEqual( symbol , sp.sympify(target_symbol) )
+            self.assertEqual( result_measure_symbols, target_measure_symbols)
 
     @attr('slow')
     #@attr('active')

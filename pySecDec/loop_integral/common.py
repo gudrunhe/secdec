@@ -318,7 +318,7 @@ class LoopIntegral(object):
                                                      )
                              )
 
-        for i in range(self.P):
+        for i in range(self.P-1,-1,-1):
             eff_power = self.powerlist[i] + self.derivativelist[i]
             if eff_power.is_integer and eff_power.is_zero:
                 measure = measure.replace(i,0,remove=True)
