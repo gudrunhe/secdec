@@ -14,6 +14,15 @@ import sympy as sp
 
 _sympy_zero = sp.sympify(0)
 
+class OrderError(ValueError):
+    '''
+    This exception is raised if an expansion
+    to a lower than the lowest order of an
+    expression is requested.
+
+    '''
+    pass
+
 # ------------------------ private functions ------------------------
 
 def _expand_Taylor_step(expression, index, order):
@@ -115,7 +124,7 @@ def _expand_singular_step(product, index, order):
         numerator.expolist[:,index] -= 1
 
     if order < -highest_pole:
-        raise ValueError('The lowest order (%i) is higher than the requested order (%i)' %(-highest_pole,order))
+        raise OrderError('The lowest order (%i) is higher than the requested order (%i)' %(-highest_pole,order))
 
     def derive_polyrational(numerator, denominator, index):
         '''
@@ -343,7 +352,7 @@ def expand_sympy(expression, variables, orders):
 
         # if `number_of_remaining_orders` is negative, the requested order is lower than the lowest order
         if number_of_remaining_orders < 0:
-            raise ValueError( 'The lowest order in `%s` (%i) is higher than the requested order (%i)' % (variable,lowest_order,order) )
+            raise OrderError( 'The lowest order in `%s` (%i) is higher than the requested order (%i)' % (variable,lowest_order,order) )
 
         # compute the remaining terms
         coeffs = []

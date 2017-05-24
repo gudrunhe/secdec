@@ -53,7 +53,9 @@ class TestSingularExpansion(unittest.TestCase):
 
     #@attr('active')
     def test_two_regulators_step(self):
-        self.assertRaisesRegexp(ValueError, 'lowest order.*higher than the requested order', _expand_singular_step, self.rational_polynomial, index=1, order=-2)
+        for error_t in (ValueError, OrderError):
+            self.assertRaisesRegexp(error_t, 'lowest order.*higher than the requested order', _expand_singular_step, self.rational_polynomial, index=1, order=-2)
+
         expansion = _expand_singular_step(self.rational_polynomial, index=1, order=1)
 
         self.assertTrue(type(expansion) is Polynomial)
@@ -97,7 +99,9 @@ class TestSingularExpansion(unittest.TestCase):
 
     #@attr('active')
     def test_high_level_function_one_regulator(self):
-        self.assertRaisesRegexp(ValueError, 'lowest order.*higher than the requested order', expand_singular, self.rational_polynomial, indices=1, orders=-2)
+        for error_t in (ValueError, OrderError):
+            self.assertRaisesRegexp(error_t, 'lowest order.*higher than the requested order', expand_singular, self.rational_polynomial, indices=1, orders=-2)
+
         expansion = expand_singular(self.rational_polynomial, indices=1, orders=1)
 
         self.assertTrue(type(expansion) is Polynomial)
@@ -192,7 +196,8 @@ class TestExpandSympy(unittest.TestCase):
         expression = 'x**3'
         variables = ['x']
         orders = [1]
-        self.assertRaisesRegexp(ValueError, 'lowest order.*x.*\(3\).*higher than.*requested.*\(1\)', expand_sympy, expression, variables, orders)
+        for error_t in (ValueError, OrderError):
+            self.assertRaisesRegexp(error_t, 'lowest order.*x.*\(3\).*higher than.*requested.*\(1\)', expand_sympy, expression, variables, orders)
 
     #@attr('active')
     def test_1d(self):

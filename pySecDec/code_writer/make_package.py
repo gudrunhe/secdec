@@ -13,7 +13,7 @@ from ..algebra import _Expression, Expression, Polynomial, \
 from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort
 from ..subtraction import integrate_pole_part, integrate_by_parts, pole_structure as compute_pole_structure
-from ..expansion import expand_singular, expand_Taylor, expand_sympy
+from ..expansion import expand_singular, expand_Taylor, expand_sympy, OrderError
 from ..misc import lowest_order, det
 from .template_parser import parse_template_file, parse_template_tree
 from itertools import chain
@@ -29,6 +29,7 @@ import sys, os
 # To find the main function `make_package`, it is easiest to full-text search
 # for "def make_package(".
 
+_sympy_zero = sp.sympify(0)
 _sympy_one = sp.sympify(1)
 
 # define the internal names to be used in FORM
@@ -1359,11 +1360,25 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 # must expand every term to the requested order plus the highest pole it multiplies
                 # We calculated the highest pole order of the prefactor (variable ``highest_prefactor_pole_orders``) above.
                 # In addition, we have to take the poles of the current term into account.
-                singular_expanded = expand_singular(Product(singular, copy=False), regulator_indices, required_orders)
+
+                try:
+                    singular_expanded = expand_singular(Product(singular, copy=False), regulator_indices, required_orders)
+                except OrderError:
+                    coeffs = np.array([_sympy_zero])
+                    expolist = np.zeros((1, len(singular.symbols)), dtype=int)
+                    expolist[:,regulator_indices] = required_orders
+                    singular_expanded = Polynomial(expolist, coeffs, singular.symbols, copy=False)
 
                 highest_poles_current_term = - singular_expanded.expolist[:,regulator_indices].min(axis=0)
                 expansion_orders = required_orders + highest_poles_current_term
-                regular_expanded = expand_Taylor(regular, regulator_indices, expansion_orders)
+
+                try:
+                    regular_expanded = expand_Taylor(regular, regulator_indices, expansion_orders)
+                except OrderError:
+                    coeffs = np.array([_sympy_zero])
+                    expolist = np.zeros((1, len(singular.symbols)), dtype=int)
+                    expolist[:,regulator_indices] = expansion_orders
+                    regular_expanded = Polynomial(expolist, coeffs, singular.symbols, copy=False)
 
                 if i == 0: # first iteration; ``highest_poles_current_sector`` not yet set
                     highest_poles_current_sector = highest_poles_current_term
