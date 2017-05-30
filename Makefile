@@ -167,6 +167,9 @@ dist : clean
 	# copy the examples
 	cp -r examples pySecDec-$(PYSECDECVERSION)/examples
 
+	# copy the changelog
+	cp ChangeLog pySecDec-$(PYSECDECVERSION)
+
 	# create tarball
 	tar -czf pySecDec-$(PYSECDECVERSION).tar.gz pySecDec-$(PYSECDECVERSION)/
 
