@@ -48,7 +48,9 @@ A distributable tarball can be created by the command
     $ make dist
 
 When publishing a new release, make sure that you increase the Version number of `pySecDec`
-and/or `SecDecUtil`.
+and/or `SecDecUtil`. You should also describe the main changes compared to the previous release
+in the `ChangeLog`. Further, make sure that you do not have any generated code in your
+`examples` directory: It will go into the tarball if present!
 
 "make dist" first runs "make clean" to make sure that no temporary or outdated files go into
 the distribution. Then it runs builds the source distribution of the python package as with
