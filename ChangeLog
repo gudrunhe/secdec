@@ -1,0 +1,13 @@
+30.05.2017 release of pySecDec-1.1.1
+
+    [make_package]: drop lower bound on 'requested_order'
+    [loop_integral]: fixed parameters of loop integral measure for integrals with both doubled and inverse propagators
+    fix geometric_ku decomposition method
+
+20.04.2017 release of pySecDec-1.1
+
+    update documentation
+    added example 'easy'
+    update error propagation
+
+29.03.2017 release of pySecDec-1.0
