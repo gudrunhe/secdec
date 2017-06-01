@@ -63,6 +63,20 @@ designed for `normaliz` version 3 - currently versions ``3.0.0``, ``3.1.0``, and
 executable is found. Alternatively, you can pass the path to the `normaliz` executable
 directly to the functions that need it.
 
+.. _installation_neato:
+
+Drawing Feynman Diagrams with `neato`
+-------------------------------------
+
+In order to use :func:`~pySecDec.loop_integral.draw.plot_diagram`, the command line tool
+`neato` must be available. The function :func:`~pySecDec.loop_integral.loop_package` tries
+to call :func:`~pySecDec.loop_integral.draw.plot_diagram` if given a
+:class:`~pySecDec.loop_integral.LoopIntegralFromGraph` and issues a warning on failure. That
+warning can be safely ignored if you are not interested in the drawing.
+
+`neato` is part of the `graphviz` package. It is available in many package repositories and at
+http://www.graphviz.org.
+
 .. _additional_cpp_dependencies:
 
 Additional Dependencies for Generated c++ Packages

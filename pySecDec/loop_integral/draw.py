@@ -9,6 +9,11 @@ def plot_diagram(internal_lines, external_lines, filename, powerlist=None, neato
     Thanks to Viktor Papara <papara@mpp.mpg.de> for
     his major contributions to this function.
 
+    .. note::
+        This function requires the command line
+        tool `neato`. See also
+        :ref:`installation_neato`.
+
     .. warning::
         The target is overwritten without prompt if
         it exists already.
