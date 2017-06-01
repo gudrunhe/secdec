@@ -92,8 +92,7 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                                                          _sympy_one, # exponent
                                                          polysymbols, copy=False)
         elif target_type is _Expression:
-            if not isinstance(expression, _Expression):
-                expression, functions = Expression(expression, polysymbols, follow_functions=True)
+            expression, functions = Expression(expression, polysymbols, follow_functions=True)
         else:
             raise RuntimeError('`_parse_expressions` is only implemented for `target_type`s in %s, not for %s. (raised while parsing `%s`)' \
                                 % (set([_Expression, ExponentiatedPolynomial]), target_type, name_of_make_argument_being_parsed))
