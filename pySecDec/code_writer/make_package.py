@@ -627,6 +627,54 @@ class RealPartFunction(Function):
     def derive(self, index):
         return RealPartFunction(self.symbol, self.arguments[0].derive(index), copy=False)
 
+class MaxDegreeFunction(Function):
+    '''
+    Symbolic function where derivatives
+    higher than `maxdegrees` are assumed to
+    be zero.
+
+    '''
+    @staticmethod
+    def get_maxdegrees(expression, ignore_subclass, indices=None):
+        if indices is None:
+            indices = range(expression.number_of_variables)
+        condition = isinstance(expression, Polynomial) if ignore_subclass else type(expression) is Polynomial
+        if condition:
+            maxdegrees = np.zeros_like(expression.expolist[0]) + np.inf
+            maxdegrees[indices] = expression.expolist.max(axis=0)[indices]
+            maxdegrees[maxdegrees < 0] = np.inf # Taylor series of ``1/x^n`` with ``n > 0`` never truncates
+        else:
+            maxdegrees = np.array( [np.inf] * expression.number_of_variables )
+        return maxdegrees
+
+    def __init__(self, symbol, *arguments, **kwargs):
+        maxdegrees = kwargs.pop('maxdegrees', np.array( [np.inf] * arguments[0].number_of_variables ))
+        super(MaxDegreeFunction, self).__init__(symbol, *arguments, **kwargs)
+        self.maxdegrees = list(maxdegrees)
+
+    def derive(self, index):
+        new_maxdegrees = list(self.maxdegrees)
+        new_maxdegrees[index] -= 1
+        if new_maxdegrees[index] < 0:
+            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
+        derivative = super(MaxDegreeFunction, self).derive(index)
+        derivative.maxdegrees = new_maxdegrees
+        return derivative
+
+    def copy(self):
+        copy = super(MaxDegreeFunction, self).copy()
+        copy.maxdegrees = list(self.maxdegrees)
+        return copy
+
+    def replace(self, index, value, remove=False):
+        replacement = super(MaxDegreeFunction, self).replace(index, value, remove)
+        if index == -1:
+            replacement.maxdegrees = list(self.maxdegrees)
+            replacement.maxdegrees.pop()
+        else:
+            replacement.maxdegrees = self.maxdegrees[:index] + self.maxdegrees[index+1:]
+        return replacement
+
 
 # ---------------------------------- main function ----------------------------------
 def make_package(name, integration_variables, regulators, requested_orders,
@@ -1121,7 +1169,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
-            symbolic_contour_deformation_polynomial = Function(str(contour_deformation_polynomial), *elementary_monomials)
+            # the maximal degrees in the regulators are unchanged by the decomposition
+            maxdegrees_contour_deformation_polynomial = np.sum(
+                [  MaxDegreeFunction.get_maxdegrees(primary_sector.cast[contour_deformation_polynomial_index].factors[i], indices=regulator_indices, ignore_subclass=True) for i in range(2)  ],
+                axis=0
+            )
+            symbolic_contour_deformation_polynomial = MaxDegreeFunction(str(contour_deformation_polynomial), *elementary_monomials, maxdegrees=maxdegrees_contour_deformation_polynomial)
 
             # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
             # ``z_k({x_k}) = x_k * (1 - i * lambda_k * (1-x_k) * Re(dF_dx_k))``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
@@ -1153,9 +1206,19 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                   ]
 
             # define the `symbolic_deformed_variables` and the `symbolic_deformation_factors` to be inserted FORM
-            symbolic_deformed_variables = [ Function(deformed_name, *elementary_monomials[:len(integration_variables)]) for deformed_name in symbolic_deformed_variable_names ]
+            symbolic_deformed_variables = [
+                                                MaxDegreeFunction(deformed_name,
+                                                                  *elementary_monomials[:len(integration_variables)],
+                                                                  maxdegrees=maxdegrees_contour_deformation_polynomial)
+                                                for deformed_name in symbolic_deformed_variable_names
+                                          ]
             symbolic_deformed_variables.extend( (regulator for regulator in elementary_monomials[len(integration_variables):]) )
-            symbolic_deformation_factors = [ Function(deformed_name, *elementary_monomials[:len(integration_variables)]) for deformed_name in symbolic_deformation_factor_names ]
+            symbolic_deformation_factors = [
+                                                MaxDegreeFunction(deformed_name,
+                                                                  *elementary_monomials[:len(integration_variables)],
+                                                                  maxdegrees=maxdegrees_contour_deformation_polynomial)
+                                                for deformed_name in symbolic_deformation_factor_names
+                                           ]
 
             # generate the Jacobian determinant
             print('computing Jacobian determinant for primary sector', primary_sector_index)
@@ -1175,34 +1238,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
             if var not in integration_variables:
                 this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(i,1,remove=True)
                 break
-
-        # define symbols for the `polynomials_to_decompose` and the `other_polynomials --> shorter expressions and faster in python
-        symbolic_other_polynomials = [
-                                         Pow(
-                                             Function(
-                                                         FORM_names['other_polynomial'] + str(i),
-                                                         *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables)
-                                             ),
-                                             Expression(primary_sector.other[i].exponent, symbols_polynomials_to_decompose),
-                                             copy = False
-                                         )
-                                         for i in range(len(other_polynomials))
-                                     ]
-        symbolic_polynomials_to_decompose = []
-        names_polynomials_to_decompose = []
-        for i in range(len(polynomials_to_decompose)):
-            try:
-                poly_name = str(polynomial_names[i])
-            except IndexError:
-                poly_name = FORM_names['cast_polynomial'] + str(i)
-            symbolic_polynomials_to_decompose.append(
-                Pow(
-                    Function(poly_name, *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables)),
-                    Expression(primary_sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose),
-                    copy = False
-                )
-            )
-            names_polynomials_to_decompose.append(poly_name)
 
         if use_symmetries and not split:
             # search for symmetries throughout the secondary decomposition
@@ -1265,6 +1300,48 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # convert all exponents and coefficients to pySecDec expressions
             parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials)
 
+            # define symbols for the `polynomials_to_decompose` and the `other_polynomials --> shorter expressions and faster in python
+            symbolic_other_polynomials = [
+                                             Pow(
+                                                 MaxDegreeFunction(
+                                                             FORM_names['other_polynomial'] + str(i),
+                                                             *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
+                                                             maxdegrees=MaxDegreeFunction.get_maxdegrees(sector.other[i], ignore_subclass=True)
+                                                 ),
+                                                 Expression(primary_sector.other[i].exponent, symbols_polynomials_to_decompose),
+                                                 copy = False
+                                             )
+                                             for i in range(len(other_polynomials))
+                                         ]
+            symbolic_polynomials_to_decompose = []
+            names_polynomials_to_decompose = []
+            for i in range(len(polynomials_to_decompose)):
+                try:
+                    poly_name = str(polynomial_names[i])
+                except IndexError:
+                    poly_name = FORM_names['cast_polynomial'] + str(i)
+                symbolic_polynomials_to_decompose.append(
+                    Pow(
+                        MaxDegreeFunction(
+                                          poly_name,
+                                          *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
+                                          maxdegrees=np.sum(
+                                                                [
+                                                                 MaxDegreeFunction.get_maxdegrees(
+                                                                                                  sector.cast[i].factors[j],
+                                                                                                  ignore_subclass=True
+                                                                                                 )
+                                                                   for j in range(2)
+                                                                ],
+                                                                axis=0
+                                                               )
+                                          ),
+                        Expression(primary_sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose),
+                        copy = False
+                    )
+                )
+                names_polynomials_to_decompose.append(poly_name)
+
             # factorize
             #  - the polynomials in ``sector.other``
             for i,to_factorize in enumerate(sector.other):
@@ -1291,12 +1368,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # the `remainder_expression` BEFORE taking derivatives.
             # Introduce a symbol for the `remainder_expression` and insert in FORM.
             # Note: ``elementary_monomials[len(integration_variables):]`` are the regulators
+            maxdegrees_remainder_expression = MaxDegreeFunction.get_maxdegrees(this_primary_sector_remainder_expression, indices=regulator_indices, ignore_subclass=False)
             if remainder_expression_is_trivial:
                 # `remainder_expression` does not depend on the integration variables in that case
+                maxdegrees_remainder_expression[:len(integration_variables)] = 0
                 symbolic_remainder_expression_arguments = [polynomial_zero] * len(integration_variables) + elementary_monomials[len(integration_variables):]
             else:
                 symbolic_remainder_expression_arguments = this_transformations + elementary_monomials[len(integration_variables):]
-            symbolic_remainder_expression = Function(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments)
+            symbolic_remainder_expression = MaxDegreeFunction(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments, maxdegrees=maxdegrees_remainder_expression)
 
             # initialize the product of monomials for the subtraction
             monomial_factors = list(chain([Jacobian.factors[0]], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
