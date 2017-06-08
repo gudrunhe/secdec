@@ -102,25 +102,21 @@ On compress;
 
   #$counter = 0;
   #Do function = {``functionsToConsider''}
-    Local zeroCheck = `function'(`integrationVariables'`zeros') * SecDecInternalsDUMMYZeroCheck;
+    Local zeroCheck = `function'(`integrationVariables'`zeros');
 
     #call `insertProcedure'
     multiply replace_(I,i_);
     .sort
 
-    #redefine callIsZero "1"
-    if ( occurs(SecDecInternalsDUMMYZeroCheck) ) redefine callIsZero "0";
-    .sort
-
-    #If `callIsZero'
-      #redefine knownZeroFunctions "`knownZeroFunctions',`function'"
-    #Else
+    #If termsin(zeroCheck)
       #$counter = $counter + 1;
       #If `$counter' == 1
         #redefine knownNonzeroFunctionsThisGroup "`function'"
       #Else
         #redefine knownNonzeroFunctionsThisGroup "`knownNonzeroFunctionsThisGroup',`function'"
       #EndIf
+    #Else
+      #redefine knownZeroFunctions "`knownZeroFunctions',`function'"
     #EndIf
   #EndDo
 * ensure at least two functions (nasty edge cases for #Do loops otherwise)
@@ -133,10 +129,8 @@ On compress;
   #EndIf
 #EndDo
 drop zeroCheck;
-.sort
 
 #call defineExpansion
-.sort
 
 * Enumerate the regulators
 #$counter = 1;
@@ -158,7 +152,7 @@ drop zeroCheck;
 #EndDo
 
 * Bracket according to the regulators to separate the orders.
-B `regulators';
+Bracket `regulators';
 
 * Optimize each order in epsilon separately.
 * The orders to be processed are enumerated in python. The shifted power
@@ -213,7 +207,6 @@ B `regulators';
     #$currentOrder = $currentOrder * `regulator`regulatorIndex''^`shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex'';
   #EndDo
   Local expression = expansion[$currentOrder];
-  .sort
 
 * Find the calls to the contour deformation polynomials that need a sign check.
 * The calls differ only in which Feynman paramters are set to zero or one. We
@@ -224,29 +217,20 @@ B `regulators';
     #$labelCounterF = 0;
     #$labelCounterU = 0;
     Local tmp = expression;
-    Local signCheck = SecDecInternalsDUMMYsignCheck;
+    Local signCheck = 0;
     .sort
     hide; nhide tmp, signCheck;
-    .sort
 
     #Do function = {`calIDerivatives'}
 
       #Do i = 1,1
 *       set dollar variable
-        .sort
-        hide signCheck;
-        .sort
+        skip signCheck;
         if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-        .sort
-        unhide signCheck;
         .sort
 
 *       The following "#if" evaluates to true only if there is still something to do.
         #If `i' == 0
-
-          #Do innerFunction = {`calIDerivatives'}
-            Id `innerFunction'(`$args') = 0;
-          #EndDo
 
 *         If all args are zero or one, the expression to be sign checked evaluates to zero
 *         --> can omit that check because it always passes.
@@ -265,7 +249,7 @@ B `regulators';
 
 *           The sign check to be performed for the contour deformation polynomial (F) is:
 *           "SecDecInternalImagPart( SecDecInternalContourDeformationPolynomial(<deformed integration variables>) - SecDecInternalContourDeformationPolynomial(<undeformed integration variables>) ) <= 0"
-            Id SecDecInternalsDUMMYsignCheck = SecDecInternalsDUMMYsignCheck +
+            Local signCheck = signCheck +
                 SecDecInternalLabelContourDeformationPolynomialCallSignCheck`$labelCounterF' *
                 (
                   SecDecInternalfDUMMYdeformedContourDeformationPolynomial($args) - `SecDecInternalContourDeformationPolynomial'($args)
@@ -276,7 +260,7 @@ B `regulators';
             #Do positivePolynomial = {`positivePolynomials',}
               #If x`positivePolynomial' != x
                 #$labelCounterU = $labelCounterU + 1;
-                Id SecDecInternalsDUMMYsignCheck = SecDecInternalsDUMMYsignCheck +
+                Local signCheck = signCheck +
                     SecDecInternalLabelUCallSignCheck`$labelCounterU' * SecDecInternalfDUMMY`positivePolynomial'($args);
               #EndIf
             #EndDo
@@ -308,6 +292,10 @@ B `regulators';
               #EndDo
             #EndDo
 
+            #Do innerFunction = {`calIDerivatives'}
+              Id `innerFunction'(`$args') = 0;
+            #EndDo
+
             Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?args) = `SecDecInternalContourDeformationPolynomial'(?args);
 
             #Do positivePolynomial = {`positivePolynomials',}
@@ -329,67 +317,60 @@ B `regulators';
 
     unhide;
     drop tmp;
-    multiply replace_(SecDecInternalsDUMMYsignCheck,0);
-    .sort
 
   #EndIf
 * }
+
+  Local toOptimize = 0;
 
 * insert calI
   #call insertCalI
   #call nullify
   .sort
 
-  Local toOptimize = SecDecInternalsDUMMYtoOptimize;
-
 * Replace calls to the deformation's Jacobian determinant "SecDecInternalContourdefJacobian" by symbols.
 * {
 
   #If `contourDeformation'
 
-    #Do function = {`contourdefJacobianFunctions'}
-      #$labelCounter = 0;
+    #$labelCounter = 0;
 
-*     No need for "#Do depth = 0, `insertionDepth'" because the Jacobian determinant should only occur at top level.
+*   No need for "#Do depth = 0, `insertionDepth'" because the Jacobian determinant should only occur at top level.
 
-*     Since we need intermediate ".sort" instructions, we cannot use the
-*     "repeat" environment.
-*     The following construction is suggested in the FORM documentation.
+*   Since we need intermediate ".sort" instructions, we cannot use the
+*   "repeat" environment.
+*   The following construction is suggested in the FORM documentation.
 
-      #Do i = 1,1
-*       set dollar variable
-        .sort
-        hide toOptimize;
-        .sort
-        if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-        .sort
-        unhide toOptimize;
-        .sort
-
-*       The following "#if" evaluates to true only if there is still something to do.
-        #If `i' == 0
-
-          #$labelCounter = $labelCounter + 1;
-
-          Id `function'(`$args') = SecDecInternal`function'Call`$labelCounter';
-
-          Id SecDecInternalsDUMMYtoOptimize = SecDecInternalsDUMMYtoOptimize +
-              SecDecInternalLabel`function'Call`$labelCounter'Arg * `function'($args);
-
-*           no arguments after "insertContourdefJacobianDerivatives"
-            #redefine numberOfArgs`function'Label`$labelCounter' "0"
-
-        #EndIf
-        .sort
-      #EndDo
-
-      #redefine largestLabel`function' "`$labelCounter'"
-
-*     insert the contour deformation Jacobian and its derivatives
-      #call insertContourdefJacobianDerivatives
+    skip toOptimize;
+    #Do i = 1,1
+*     set dollar variable
+      if ( match(SecDecInternalfDUMMY?{`contourdefJacobianFunctions'}$function(?SecDecInternalsDUMMY$args)) ) redefine i "0";
       .sort
 
+*     The following "#if" evaluates to true only if there is still something to do.
+      #If `i' == 0
+
+        #$labelCounter = $labelCounter + 1;
+
+        skip;
+        Local toOptimize = toOptimize +
+            SecDecInternalLabel`$function'Call`$labelCounter'Arg * `$function'($args);
+        .sort
+        skip toOptimize;
+
+        Id `$function'(`$args') = SecDecInternal`$function'Call`$labelCounter';
+
+*       no arguments after "insertContourdefJacobianDerivatives"
+        #redefine numberOfArgs`$function'Label`$labelCounter' "0"
+
+        #redefine largestLabel`$function' "`$labelCounter'"
+
+      #EndIf
     #EndDo
+
+*   insert the contour deformation Jacobian and its derivatives
+    #call insertContourdefJacobianDerivatives
+
 
   #EndIf
 
@@ -438,7 +419,6 @@ B `regulators';
         #EndIf
 
       #call endArgumentDepth(`depth')
-      .sort
 
     #EndDo
 
@@ -582,7 +562,6 @@ B `regulators';
           repeat Id SecDecInternalRealPart(SecDecInternalsDUMMY?number_) = SecDecInternalsDUMMY;
         #EndIf
       #call endArgumentDepth(`depth')
-      .sort
     #EndDo
 
   #EndDo
@@ -593,15 +572,12 @@ B `regulators';
   multiply replace_(I,i_);
   .sort
 
-  #call simplify
-  .sort
-
 * Find and count the occurring integration variables.
 * {
 * "Format rational" because we need the dollar variables as integers
   Format rational;
   hide; nhide toOptimize, expression;
-  .sort
+  #call simplify
 
   #redefine occurringIntegrationVariables ""
   #redefine occurringIntegrationVariableIndices ""
@@ -612,14 +588,16 @@ B `regulators';
   #$currentIVIndex = -1;
 
   #Do IV = {`integrationVariables'}
+    #redefine `IV'Occurs "0"
+    if ( occurs(`IV') ) redefine `IV'Occurs "1";
+  #EndDo
+  .sort
+
+  #Do IV = {`integrationVariables'}
 
     #$currentIVIndex = $currentIVIndex + 1;
 
-    #redefine IVOccurs "0"
-    if ( occurs(`IV') ) redefine IVOccurs "1";
-    .sort
-
-    #If `IVOccurs'
+    #If ``IV'Occurs'
       #$counterOccur = $counterOccur + 1;
       #If `$counterOccur' == 1
         #redefine occurringIntegrationVariables "`IV'"
@@ -647,7 +625,6 @@ B `regulators';
   #redefine integrationVariable "SecDecInternalError"
 
   unhide;
-  .sort
 * }
 
 * Specify the occurring/absent deformation parameters.
@@ -715,9 +692,10 @@ B `regulators';
   #Do function = {`functionsToReplace'}
     #Do callIndex = 1, `largestLabel`function''
 
-      B SecDecInternalLabel`function'Call`callIndex'Arg;
+      Bracket SecDecInternalLabel`function'Call`callIndex'Arg;
       .sort
 
+      skip; nskip thisCall;
       L thisCall = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg];
       #call simplify
       .sort
@@ -725,11 +703,11 @@ B `regulators';
 
       #If termsin(thisCall) <= 1
         multiply replace_(SecDecInternal`function'Call`callIndex',thisCall);
-        .sort
       #EndIf
 
     #EndDo
   #EndDo
+  .sort
 
 * }
 
@@ -781,6 +759,7 @@ B `regulators';
           #EndDo
           .sort
 
+          skip; nskip arguments;
           L arguments = SecDecInternalfDUMMYarguments($args);
 
           repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) =
@@ -790,11 +769,11 @@ B `regulators';
           Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
 
           .sort
+          drop arguments;
 
 *         Add all arguments to top level polynomial for simultaneous optimization.
           Local toOptimize = toOptimize + arguments;
 
-          .sort
           #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
 
         #EndIf
@@ -806,18 +785,16 @@ B `regulators';
 
   #EndDo
 
-  #If `contourDeformation'
-    Id SecDecInternalsDUMMYtoOptimize = expression + signCheck;
-  #Else
-    Id SecDecInternalsDUMMYtoOptimize = expression;
-  #EndIf
-  .sort
-
-  drop expression, arguments;
+  drop expression;
   #If `contourDeformation'
     drop signCheck;
   #EndIf
-  .sort
+
+  Local toOptimize = toOptimize + expression
+  #If `contourDeformation'
+     + signCheck
+  #EndIf
+  ;
 * }
 
 * Simultaneously optimize the integrand and all occurring function arguments.
@@ -874,16 +851,13 @@ B `regulators';
 * Reload "toOptmize" such that the optimization symbols of the first
 * optimization are promoted to regular FORM variables.
   .sort
+  AutoDeclare CFunctions SecDecInternalAbbreviations`shiftedOrderIndex';
   ExtraSymbols,array,SecDecInternalAbbreviations`shiftedOrderIndex';
   #$toOptimize = toOptimize;
   #clearoptimize
-  drop toOptimize;
-  .sort
-  AutoDeclare CFunctions SecDecInternalAbbreviations`shiftedOrderIndex';
   Format O0;
   Format normal;
   Local toOptimize = `$toOptimize';
-  .sort
 
 * Define the function calls replaced by symbols.
 * The difficulty here is that the function arguments may
@@ -894,18 +868,27 @@ B `regulators';
 * Keep track of function calls that are not written to
 * the c++ file yet.
 
-  L unparsed = SecDecInternalsDUMMYUnparsedAppendix;
   #redefine functionsToReplace "`functions',`decomposedPolynomialDerivatives',log,SecDecInternalPow,SecDecInternalDenominator"
   #If `contourDeformation'
     #redefine functionsToReplace "SecDecInternalRealPart,`contourdefJacobianFunctions',`deformedIntegrationVariableDerivativeFunctions',`functionsToReplace'"
   #EndIf
 
+  L unparsed = 0;
   #Do function = {`functionsToReplace'}
     #Do callIndex = 1, `largestLabel`function''
-      Id SecDecInternalsDUMMYUnparsedAppendix = SecDecInternalsDUMMYUnparsedAppendix + SecDecInternal`function'Call`callIndex'Unparsed;
+      .sort
+      skip;
+      L unparsed = unparsed + SecDecInternal`function'Call`callIndex'Unparsed;
+    #EndDo
+  #EndDo
+  .sort
+  skip unparsed;
+  #Do function = {`functionsToReplace'}
+    #Do callIndex = 1, `largestLabel`function''
       Id SecDecInternal`function'Call`callIndex' = SecDecInternal`function'Call`callIndex' * SecDecInternalsDUMMYhaveUnparsedDependencies;
     #EndDo
   #EndDo
+  .sort
 
   #$globalLabelCounter = 1;
   #$globalIDCounter = 1;
@@ -913,22 +896,27 @@ B `regulators';
 
   #Do i = 1,1
     Format normal;
+    skip;
     .sort
+    skip;
     #redefine parseNextGlobalIDMin "`$globalIDCounter'"
     #redefine parseNextGlobalIDMax "0"
-    Local parseNext = SecDecInternalsDUMMYparseNext;
+    Local parseNext = 0;
+    .sort
     #Do function = {`functionsToReplace'}
       #Do callIndex = 1, `largestLabel`function''
-        B SecDecInternalLabel`function'Call`callIndex'Arg;
+        skip; nskip toOptimize;
+        Bracket SecDecInternalLabel`function'Call`callIndex'Arg;
         .sort
+
+        skip; nskip unparsed;
         #If `numberOfArgs`function'Label`callIndex'' == 0
-          L expr = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg];
+          Local expr = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg];
         #Else
           #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-            L arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
+            Local arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
           #EndDo
         #EndIf
-        .sort
 
 *       We do not want to define any call more than once.
         #redefine alreadyParsed "1"
@@ -938,28 +926,26 @@ B `regulators';
 
 *         We can write the call under consideration to the c++ file only
 *         if all dependent calls are already written.
-          hide; nhide unparsed;
+          skip; nskip unparsed;
           #If `numberOfArgs`function'Label`callIndex'' == 0
-            nhide expr;
+            nskip expr;
           #Else
             #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-              nhide arg`argIndex';
+              nskip arg`argIndex';
             #EndDo
           #EndIf
-          .sort
           #redefine dependenciesDone "1"
           if ( occurs(SecDecInternalsDUMMYhaveUnparsedDependencies) );
             redefine dependenciesDone "0";
             redefine i "0";
           endif;
           .sort
-          unhide;
-          .sort
 
           #If `dependenciesDone'
 
 *           Define the variable only if it is used.
             #redefine needThisCall "0"
+            skip unparsed;
             if ( occurs(SecDecInternal`function'Call`callIndex') ) redefine needThisCall "1";
             .sort
 
@@ -975,21 +961,21 @@ B `regulators';
               Format normal;
 
               #If `numberOfArgs`function'Label`callIndex'' == 0
-                Id SecDecInternalsDUMMYparseNext = SecDecInternalsDUMMYparseNext +
-                  expr * SecDecInternalLabelSecDecInternalGeneral ^ `$globalLabelCounter';
+                Local parseNext = parseNext
+                  + expr * SecDecInternalLabelSecDecInternalGeneral ^ `$globalLabelCounter';
                 #$globalLabelCounter = $globalLabelCounter + 1;
               #Else
+                Local parseNext = parseNext
                 #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-                  Id SecDecInternalsDUMMYparseNext = SecDecInternalsDUMMYparseNext +
-                    arg`argIndex' * SecDecInternalLabelSecDecInternalGeneral ^ `$globalLabelCounter';
-                  #$globalLabelCounter = $globalLabelCounter + 1;
+                  + arg`argIndex' * SecDecInternalLabelSecDecInternalGeneral ^ (`$globalLabelCounter' + `argIndex' - 1)
                 #EndDo
-
+                ;
+                #$globalLabelCounter = $globalLabelCounter + `numberOfArgs`function'Label`callIndex'';
               #EndIf
 
             #Else
 
-              multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
+              multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0);
 
             #EndIf
 *           }
@@ -1014,11 +1000,13 @@ B `regulators';
     Format float 20;
     Format C;
     Format O`optimizationLevel';
-    multiply replace_(SecDecInternalsDUMMYparseNext,0);
     Bracket SecDecInternalLabelSecDecInternalGeneral;
     .sort
     ExtraSymbols,array,SecDecInternalSecondAbbreviation;
     #optimize parseNext
+    intohide parseNext;
+    Bracket SecDecInternalLabelSecDecInternalGeneral;
+    .sort
 
     #If `optimmaxvar_' > `numberOfSecondAbbreviations'
       #redefine numberOfSecondAbbreviations "`optimmaxvar_'"
@@ -1035,20 +1023,16 @@ B `regulators';
       #If x`function' != x
         #write <sector_`sectorID'_`cppOrder'.cpp> "auto SecDecInternal`function'Call`callIndex' = "
         #If `numberOfArgs`function'Label`callIndex'' == 0
-          Bracket SecDecInternalLabelSecDecInternalGeneral;
-          .sort
           Local expr = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ `SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'];
           .sort
           #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#"  expr(#@no_split_expression@#)
           drop expr;
         #ElseIf `function' == SecDecInternalPow
-          Bracket SecDecInternalLabelSecDecInternalGeneral;
-          .sort
-          hide; nhide exponent;
           Local base = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin')];
           Local exponent = SecDecInternalfDUMMY(parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+1)]);
           .sort
           #write <sector_`sectorID'_`cppOrder'.cpp> "pow(%%E," base(#@no_split_expression@#)
+          drop base;
           #redefine exponentIsInteger "0"
           if ( match(SecDecInternalfDUMMY(SecDecInternalsDUMMY?int_)) ) redefine exponentIsInteger "1";
           Id SecDecInternalfDUMMY(SecDecInternalsDUMMY?) = SecDecInternalsDUMMY;
@@ -1059,13 +1043,10 @@ B `regulators';
           #write <sector_`sectorID'_`cppOrder'.cpp> "%%E);#@SecDecInternalNewline@#" exponent(#@no_split_expression@#)
           Format C;
           Format float 20;
-          unhide;
-          drop base,exponent;
+          drop exponent;
         #Else
           #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
           #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-            Bracket SecDecInternalLabelSecDecInternalGeneral;
-            .sort
             Local arg`argIndex' = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+`argIndex'-1)];
             .sort
             #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'(#@no_split_expression@#)
@@ -1087,7 +1068,7 @@ B `regulators';
     #clearoptimize
 *   }
 
-    drop parseNext;
+    unhide parseNext;
   #EndDo
 
   .sort
@@ -1139,12 +1120,13 @@ B `regulators';
     #write <sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternalSignCheckExpression;#@SecDecInternalNewline@#"
 
     hide; nhide toOptimize, expr;
+    Bracket SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal;
     .sort
 
     #Do signCheckId = 1, `numberOfRequiredFSignChecks'
 
-      Bracket SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal;
-      .sort
+      keep brackets;
+      skip; nskip expr;
       Local expr = toOptimize[SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal ^ `signCheckId'];
       .sort
 
@@ -1157,12 +1139,13 @@ B `regulators';
     #EndDo
 
     multiply replace_(SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal,0);
+    Bracket SecDecInternalLabelUCallSignCheckGlobal;
     .sort
 
     #Do signCheckId = 1, `numberOfRequiredUSignChecks'
 
-      Bracket SecDecInternalLabelUCallSignCheckGlobal;
-      .sort
+      keep brackets;
+      skip; nskip expr;
       Local expr = toOptimize[SecDecInternalLabelUCallSignCheckGlobal ^ `signCheckId'];
       .sort
 
