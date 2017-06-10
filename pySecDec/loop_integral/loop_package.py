@@ -8,7 +8,9 @@ function :func:`.loop_package`.
 
 from .from_graph import LoopIntegralFromGraph
 from .draw import plot_diagram
+from ..algebra import Polynomial
 from ..code_writer import make_package
+from ..expansion import _flatten # TODO: make `_flatten` a public function in `misc`
 from itertools import chain
 import numpy as np
 import sympy as sp
@@ -183,7 +185,12 @@ def loop_package(name, loop_integral, requested_order,
         poly.polysymbols = poly.polysymbols[:-2] + [loop_integral.regulator] + poly.polysymbols[-2:]
         poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),1], dtype=int), poly.expolist[:,-2:]])
 
-    other_polynomials = [loop_integral.numerator]
+    if np.issubdtype(loop_integral.numerator.coeffs.dtype, np.number):
+        other_polynomials = [loop_integral.numerator]
+    else:
+        symbols = loop_integral.numerator.polysymbols
+        loop_integral.numerator.coeffs = np.array( [Polynomial.from_expression(coeff, symbols) for coeff in loop_integral.numerator.coeffs] )
+        other_polynomials = [_flatten(loop_integral.numerator, 1)]
 
     polynomials_to_decompose = list(U_and_F)
     if sp.sympify( loop_integral.measure ) != 1:

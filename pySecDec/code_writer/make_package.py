@@ -626,6 +626,7 @@ class RealPartFunction(Function):
     def derive(self, index):
         return RealPartFunction(self.symbol, self.arguments[0].derive(index), copy=False)
 
+# TODO: merge `MaxDegreeFunction` with `Function`
 class MaxDegreeFunction(Function):
     '''
     Symbolic function where derivatives
@@ -652,12 +653,68 @@ class MaxDegreeFunction(Function):
         self.maxdegrees = list(maxdegrees)
 
     def derive(self, index):
+        # modified `derive` of the base class
+        def super_derive(self, index, new_maxdegrees): #modification: additional argument `new_maxdegrees`
+            '''
+            Generate the derivative by the parameter indexed `index`.
+            The derivative of a function with `symbol` ``f`` by
+            some `index` is denoted as ``dfd<index>``.
+
+            :param index:
+                integer;
+                The index of the paramater to derive by.
+
+            '''
+            derivative = self.derivatives[index]
+            if derivative is not None:
+                return derivative.copy()
+
+            summands = []
+            for argindex, arg in enumerate(self.arguments):
+                if self.differentiated_args[argindex, index] is None:
+                    differentiated_arg = arg.derive(index)
+                    self.differentiated_args[argindex, index] = differentiated_arg
+                else:
+                    differentiated_arg = self.differentiated_args[argindex, index]
+
+                # catch ``differentiated_arg == 0``
+                if type(differentiated_arg) is Polynomial and (differentiated_arg.coeffs == 0).all():
+                    continue
+
+                # generate the multiindex of the requested derivative
+                old_multiindex = self.derivative_multiindex
+                new_multiindex = list(old_multiindex)
+                new_multiindex[argindex] += 1
+                new_multiindex = tuple(new_multiindex)
+                self.derivative_tracks[new_multiindex] = [argindex, old_multiindex]
+
+                derivative_symbol = 'd' * np.sum(new_multiindex) + self.basename + \
+                    ''.join( ('d%i' %argindex) * howmany for argindex,howmany in enumerate(new_multiindex) )
+
+                self.derivative_symbols.add(derivative_symbol)
+                summands.append(
+                                ProductRule(    # chain rule
+                                                differentiated_arg,
+                                                type(self)(derivative_symbol, *(arg.copy() for arg in self.arguments),
+                                                           differentiated_args=self.differentiated_args, copy=False,
+                                                           derivative_symbols=self.derivative_symbols, basename=self.basename,
+                                                           derivative_multiindex=new_multiindex, derivative_tracks=self.derivative_tracks,
+                                                           maxdegrees=new_maxdegrees), #modification: additional argument `new_maxdegrees`
+                                                copy=False
+                                           )
+                               )
+            if summands:
+                derivative = self.derivatives[index] = Sum(*summands, copy=False)
+            else: # return zero packed into a `Polynomial`
+                derivative = self.derivatives[index] = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
+
+            return derivative
+
         new_maxdegrees = list(self.maxdegrees)
         new_maxdegrees[index] -= 1
         if new_maxdegrees[index] < 0:
             return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
-        derivative = super(MaxDegreeFunction, self).derive(index)
-        derivative.maxdegrees = new_maxdegrees
+        derivative = super_derive(self,index, new_maxdegrees)
         return derivative
 
     def copy(self):
@@ -1069,14 +1126,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
             if len(polynomial_names) <= contour_deformation_polynomial_index:
                 raise IndexError('Could not find the `contour_deformation_polynomial` "%s" in `polynomial_names`.' % str_contour_deformation_polynomial)
 
-    def parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials):
+    def parse_exponents(sector, symbols_polynomials_to_decompose, symbols_other_polynomials):
         #  - in ``sector.cast``
         for product in sector.cast:
             mono, poly = product.factors
             mono.exponent = Polynomial.from_expression(mono.exponent, symbols_polynomials_to_decompose)
             poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
-            mono.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in mono.coeffs])
-            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
 
         #  - in ``sector.other``
         for poly in sector.other:
@@ -1084,6 +1139,16 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
             except AttributeError:
                 pass # not an exponentiated polynomial --> nothing to do
+
+    def parse_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials):
+        #  - in ``sector.cast``
+        for product in sector.cast:
+            mono, poly = product.factors
+            mono.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in mono.coeffs])
+            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
+
+        #  - in ``sector.other``
+        for poly in sector.other:
             poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
 
     # investigate if we can take advantage of sector symmetries
@@ -1156,6 +1221,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
             expolist = np.zeros([1,len(symbols_polynomials_to_decompose)], dtype=int)
             expolist[:,i] = 1
             elementary_monomials.append( Polynomial(expolist, np.array([1]), symbols_polynomials_to_decompose, copy=False) )
+        elementary_monomials_all_symbols = []
+        for i, symbol in enumerate(symbols_polynomials_to_decompose):
+            expolist = np.zeros([1,len(all_symbols)], dtype=int)
+            expolist[:,i] = 1
+            elementary_monomials_all_symbols.append( Polynomial(expolist, np.array([1]), all_symbols, copy=False) )
 
         # we later need ``0`` and ``1`` packed into specific types
         polynomial_zero = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([0]), symbols_other_polynomials, copy=False)
@@ -1169,10 +1239,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             # Need all first and second derivatives of the `contour_deformation_polynomial`.
             # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
             # the maximal degrees in the regulators are unchanged by the decomposition
-            maxdegrees_contour_deformation_polynomial = np.sum(
-                [  MaxDegreeFunction.get_maxdegrees(primary_sector.cast[contour_deformation_polynomial_index].factors[i], indices=regulator_indices, ignore_subclass=True) for i in range(2)  ],
-                axis=0
-            )
+            maxdegrees_contour_deformation_polynomial = MaxDegreeFunction.get_maxdegrees(primary_sector.cast[contour_deformation_polynomial_index].factors[1], indices=regulator_indices, ignore_subclass=True)
             symbolic_contour_deformation_polynomial = MaxDegreeFunction(str(contour_deformation_polynomial), *elementary_monomials, maxdegrees=maxdegrees_contour_deformation_polynomial)
 
             # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
@@ -1212,6 +1279,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                 for deformed_name in symbolic_deformed_variable_names
                                           ]
             symbolic_deformed_variables.extend( (regulator for regulator in elementary_monomials[len(integration_variables):]) )
+            symbolic_deformed_variables_all_symbols = [
+                                                           MaxDegreeFunction(deformed_name,
+                                                                             *elementary_monomials_all_symbols[:len(integration_variables)],
+                                                                             maxdegrees=maxdegrees_contour_deformation_polynomial)
+                                                           for deformed_name in symbolic_deformed_variable_names
+                                                      ]
+            symbolic_deformed_variables_all_symbols.extend( (regulator for regulator in elementary_monomials_all_symbols) )
             symbolic_deformation_factors = [
                                                 MaxDegreeFunction(deformed_name,
                                                                   *elementary_monomials[:len(integration_variables)],
@@ -1269,77 +1343,77 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     poly.expolist[:,:-len(regulators)-len(polynomial_names)] += \
                         np.einsum('i,k->ik', poly.expolist[:,-len(polynomial_names):][:,i], mono.expolist[0,:-len(regulators)-len(polynomial_names)])
 
-            # remove `polynomial_names` - keep polynomial part symbolic as dummy function:
-            #  - from `other_polynomials`
-            for i in range(len(other_polynomials)):
-                poly = sector.other[i]
-                for poly_name in reversed_polynomial_names:
-                    poly = poly.replace(-1, poly_name(*symbols_other_polynomials), remove=True)
-                sector.other[i] = poly
-
-            #  - from `polynomials_to_decompose`
-            for i in range(len(polynomials_to_decompose)):
-                # no dependence here, just remove the symbols
-                prod = sector.cast[i]
-                for poly_name in reversed_polynomial_names:
-                    prod = prod.replace(-1, poly_name(*symbols_polynomials_to_decompose), remove=True)
-                sector.cast[i] = prod
-
-            #  - from `Jacobian`
-            Jacobian = sector.Jacobian
-            for poly_name in reversed_polynomial_names:
-                Jacobian = Jacobian.replace(-1, poly_name(*symbols_other_polynomials), remove=True)
-
-            #  - from `this_transformations`
-            if not use_symmetries:
-                for i in range(len(all_integration_variables)):
-                    for poly_name in reversed_polynomial_names:
-                        this_transformations[i] = this_transformations[i].replace(-1, poly_name(*symbols_other_polynomials), remove=True)
-
-            # convert all exponents and coefficients to pySecDec expressions
-            parse_exponents_and_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials)
-
-            # define symbols for the `polynomials_to_decompose` and the `other_polynomials --> shorter expressions and faster in python
-            symbolic_other_polynomials = [
-                                             Pow(
-                                                 MaxDegreeFunction(
-                                                             FORM_names['other_polynomial'] + str(i),
-                                                             *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
-                                                             maxdegrees=MaxDegreeFunction.get_maxdegrees(sector.other[i], ignore_subclass=True)
-                                                 ),
-                                                 Expression(primary_sector.other[i].exponent, symbols_polynomials_to_decompose),
-                                                 copy = False
-                                             )
-                                             for i in range(len(other_polynomials))
-                                         ]
+            # define symbols for the `polynomials_to_decompose` --> shorter expressions and faster in python
             symbolic_polynomials_to_decompose = []
+            symbolic_polynomials_to_decompose_all_symbols_base = []
             names_polynomials_to_decompose = []
             for i in range(len(polynomials_to_decompose)):
                 try:
                     poly_name = str(polynomial_names[i])
                 except IndexError:
                     poly_name = FORM_names['cast_polynomial'] + str(i)
+                symbolic_polynomials_to_decompose_all_symbols_base.append(
+                        MaxDegreeFunction(
+                                          poly_name,
+                                          *(elementary_monomials_all_symbols if contour_deformation_polynomial is None else symbolic_deformed_variables_all_symbols),
+                                          maxdegrees=MaxDegreeFunction.get_maxdegrees(
+                                                                                          sector.cast[i].factors[1],
+                                                                                          ignore_subclass=True
+                                                                                     )
+                                          )
+                )
                 symbolic_polynomials_to_decompose.append(
                     Pow(
                         MaxDegreeFunction(
                                           poly_name,
                                           *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
-                                          maxdegrees=np.sum(
-                                                                [
-                                                                 MaxDegreeFunction.get_maxdegrees(
-                                                                                                  sector.cast[i].factors[j],
-                                                                                                  ignore_subclass=True
-                                                                                                 )
-                                                                   for j in range(2)
-                                                                ],
-                                                                axis=0
-                                                               )
+                                          maxdegrees=MaxDegreeFunction.get_maxdegrees(
+                                                                                          sector.cast[i].factors[1],
+                                                                                          ignore_subclass=True
+                                                                                     )
                                           ),
-                        Expression(primary_sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose),
+                        Expression(sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose),
                         copy = False
                     )
                 )
                 names_polynomials_to_decompose.append(poly_name)
+
+            # convert all coefficients to pySecDec expressions
+            parse_coeffs(sector, symbols_polynomials_to_decompose+polynomial_names, symbols_other_polynomials+polynomial_names)
+
+            # remove `polynomial_names` - keep polynomial part symbolic as dummy function:
+            #  - from `other_polynomials`
+            for k, poly_name in enumerate(reversed_polynomial_names):
+                replacement = symbolic_polynomials_to_decompose_all_symbols_base[len(polynomials_to_decompose)-k-1]
+                for i in range(k+1):
+                    replacement = replacement.replace(-1, error_token, remove=True)
+                for i, poly in enumerate(sector.other):
+                    poly = poly.replace(-1, replacement, remove=True)
+                    for j, coeff in enumerate(poly.coeffs):
+                        poly.coeffs[j] = coeff.simplify()
+                    sector.other[i] = poly
+
+            #  - from `polynomials_to_decompose`
+            for i in range(len(polynomials_to_decompose)):
+                # no dependence here, just remove the symbols
+                prod = sector.cast[i]
+                for poly_name in reversed_polynomial_names:
+                    prod = prod.replace(-1, error_token, remove=True)
+                sector.cast[i] = prod
+
+            #  - from `Jacobian`
+            Jacobian = sector.Jacobian
+            for poly_name in reversed_polynomial_names:
+                Jacobian = Jacobian.replace(-1, error_token, remove=True)
+
+            #  - from `this_transformations`
+            if not use_symmetries:
+                for i in range(len(all_integration_variables)):
+                    for poly_name in reversed_polynomial_names:
+                        this_transformations[i] = this_transformations[i].replace(-1, error_token, remove=True)
+
+            # convert all exponents to pySecDec expressions
+            parse_exponents(sector, symbols_polynomials_to_decompose, symbols_other_polynomials)
 
             # factorize
             #  - the polynomials in ``sector.other``
@@ -1362,6 +1436,20 @@ def make_package(name, integration_variables, regulators, requested_orders,
                         ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
                     )
             decomposition.refactorize(Jacobian)
+
+            # define symbols for the `other_polynomials --> shorter expressions and faster in python
+            symbolic_other_polynomials = [
+                                             Pow(
+                                                 MaxDegreeFunction(
+                                                             FORM_names['other_polynomial'] + str(i),
+                                                             *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
+                                                             maxdegrees=MaxDegreeFunction.get_maxdegrees(sector.other[i].factors[1], ignore_subclass=True)
+                                                 ),
+                                                 Expression(sector.other[i].factors[1].exponent, symbols_polynomials_to_decompose),
+                                                 copy = False
+                                             )
+                                             for i in range(len(other_polynomials))
+                                         ]
 
             # Apply ``this_transformation`` and the contour deformaion (if applicable) to
             # the `remainder_expression` BEFORE taking derivatives.
