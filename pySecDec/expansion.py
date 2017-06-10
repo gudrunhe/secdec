@@ -173,7 +173,7 @@ def _expand_singular_step(product, index, order):
 def _flatten(polynomial, depth):
     '''
     Convert the output of :func:`_expand_singular_step`
-    to a polynomial in the exapnsion variables.
+    to a polynomial in the expansion variables.
 
     :param polynomial:
         :class:`pySecDec.algebra.Polynomial`;
