@@ -65,7 +65,7 @@ class TestConvertInput(TestMakePackage):
 
         polynomials_to_decompose_unrelated_polysymbols = self.correct_input.copy()
         polynomials_to_decompose_unrelated_polysymbols['polynomials_to_decompose'] = ['1', Polynomial([[0,0,0],[1,1,1]],['-s','-t'],['x0','x1','x2'])]
-        self.assertRaisesRegexp(ValueError, r"\(\-s\) \+ \(\-t\)\*x0\*x1\*x2.*polynomials_to_decompose.*symbols.*\(is.*x0, x1, x2.*should.*\z0, z1, z2, eps, alpha", _convert_input, **polynomials_to_decompose_unrelated_polysymbols)
+        self.assertRaisesRegexp(ValueError, r"\(\-s\) \+ \(\-t\)\*x0\*x1\*x2.*polynomials_to_decompose.*symbols.*\(is.*x0, x1, x2.*should.*z0, z1, z2, eps, alpha", _convert_input, **polynomials_to_decompose_unrelated_polysymbols)
 
         polynomials_to_decompose_wrong_polysymbols_in_exponent = self.correct_input.copy()
         polynomials_to_decompose_wrong_polysymbols_in_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0,0,0],[1,1,1,0,0,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha','U','F'],exponent=Polynomial([[0,0,1]],[1],['x0','x1','x2']))]
