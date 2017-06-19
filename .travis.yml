@@ -1,0 +1,19 @@
+language: python
+python:
+  - "2.7"
+  - "3.6"
+env:
+  - "export PATH=${TRAVIS_BUILD_DIR}/dist_template/bin:$PATH"
+install:
+  - "sudo apt-get install graphviz"
+  - "pip install --upgrade pip setuptools wheel"
+  - "pip install -r requirements.txt --only-binary=numpy"
+  - "cd dist_template"
+  - "make nauty"
+  - "wget https://www.normaliz.uni-osnabrueck.de/wp-content/uploads/2016/04/Normaliz3.1.1Linux64.zip --no-check-certificate"
+  - "unzip Normaliz3.1.1Linux64.zip"
+  - "mv Normaliz3.1/normaliz bin/normaliz"
+  - "mv Normaliz3.1/nmzIntegrate bin/nmzIntegrate"
+  - "cd .."
+script: 
+  - "nosetests"
