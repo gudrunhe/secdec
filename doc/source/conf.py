@@ -23,9 +23,6 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 # -- General configuration ------------------------------------------------
 
-def setup(app):
-    add_undo_hepforge_css(app)
-
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = '1.5.5'
 
@@ -115,10 +112,7 @@ modindex_common_prefix = ['pySecDec.']
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'bizstyle'
-# Include an additional css file that removes format breaking options
-# introduced by hepforge.
-add_undo_hepforge_css = lambda app: app.add_stylesheet('undo_hepforge.css')
+html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

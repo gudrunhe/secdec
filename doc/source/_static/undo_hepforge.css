@@ -1,7 +1,0 @@
-/* Undo some options introduced by hepforge (where we host the documentation) */
-
-li, p { max-width:initial; }
-
-.seealso, .todo, .important, .warning, .note, .highlight { max-width:initial; padding:""; margin-left:""; margin-right:""; border:""; padding:""; }
-.seealso, .seealso:before, .todo, .todo:before, .important, .important:before,  .warning, .warning:before, .note, .note:before { content:""; }
-
