@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/spj101/secdec.svg?branch=master)](https://travis-ci.org/spj101/secdec)
+[![Build Status](https://travis-ci.org/spj101/secdec.svg?branch=public)](https://travis-ci.org/spj101/secdec)
 [![Documentation Status](https://readthedocs.org/projects/secdec/badge/?version=latest)](http://secdec.readthedocs.io/en/latest/?badge=latest)
 
 Development
