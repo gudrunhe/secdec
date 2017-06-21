@@ -67,7 +67,7 @@ Installation for developers
 This section describes how to install pySecDec and easily update to the commit that is currently
 checked out in the git repository. The following steps should be seen as a guideline to achieve this:
 
-1) Clone the git repository from hepforge (ask another developer for details about that)
+1) Clone the git repository.
 
 2) Create the tarball by running "make dist". If that does not work out of the box, make sure that you
    have recent versions of the following packages installed:
