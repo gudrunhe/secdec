@@ -1,3 +1,5 @@
-numpy==1.13.0
-Sphinx==1.5.5
-sympy==1.0
+numpy>=1.6
+# Sphinx introduces a bug that makes doctest fail in version 1.6 (https://github.com/sphinx-doc/sphinx/pull/3825)
+# TODO: switch to Sphinx>=1.6.3 once that version (with the bugfix) is released
+Sphinx>=1.5.5,<1.6
+sympy
