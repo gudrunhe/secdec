@@ -26,6 +26,8 @@ help :
 	echo "    util-check   run the tests of the SecDecUtil package"
 	echo "    doctest      run doctest using Sphinx"
 	echo "    dist         create a tarball to be distributed"
+	echo "    thin-dist    create a tarball excluding the documentation"
+	echo "                 and the examples"
 	echo "    clean        delete compiled and temporary files"
 	echo "    coverage     produce and show a code coverage report"
 	echo "    doc          run \"doc-html\" and \"doc-pdf\""
@@ -136,6 +138,34 @@ run-examples :
 	done
 
 .PHONY : dist
+# clean first to avoid having `.pyc` files in the dist
+thin-dist : clean
+	# create pySecDec dist
+	python setup.py sdist
+
+	# create SecDecUtil dist
+	cd util && \
+	if [ -f Makefile ] ; \
+	then \
+		$(MAKE) dist ; \
+	else \
+		autoreconf -i && \
+		./configure --prefix=`pwd` && \
+		$(MAKE) dist ; \
+	fi
+
+	# create dist directory tree
+	mkdir pySecDec-$(PYSECDECVERSION)/
+	cp dist_template/* pySecDec-$(PYSECDECVERSION)/
+	cp dist/*.tar.gz pySecDec-$(PYSECDECVERSION)/
+	cp util/*.tar.gz pySecDec-$(PYSECDECVERSION)/
+
+	# copy the changelog
+	cp ChangeLog pySecDec-$(PYSECDECVERSION)
+
+	# create tarball
+	tar -czf pySecDec-$(PYSECDECVERSION).tar.gz pySecDec-$(PYSECDECVERSION)/
+
 # clean first to avoid having `.pyc` files in the dist
 dist : clean
 	# create pySecDec dist

@@ -12,8 +12,9 @@ matrix:
       env:
         - MATRIX_EVAL="export CC=gcc-6 && export CXX=g++-6"
       before_install:
-      - eval ${MATRIX_EVAL}
+        - eval ${MATRIX_EVAL}
       python: 2.7
+      language: python
 
     - os: linux
       addons:
@@ -27,8 +28,9 @@ matrix:
       env:
         - MATRIX_EVAL="export CC=gcc-6 && export CXX=g++-6"
       before_install:
-      - eval ${MATRIX_EVAL}
+        - eval ${MATRIX_EVAL}
       python: 3.5
+      language: python
 
     - os: linux
       addons:
@@ -43,28 +45,37 @@ matrix:
         - MATRIX_EVAL="export CC=gcc-6 && export CXX=g++-6"
       python: 3.6
       before_install:
-      - eval ${MATRIX_EVAL}
+        - eval ${MATRIX_EVAL}
+      language: python
 
     - os: osx
       osx_image: xcode8
-
-language: python
+      language: c++
+      compiler: clang
+      before_install:
+        - brew install graphviz
+        - pip install nose
 
 install:
+  - export NORMALIZ_VERSION=3.1
+  - export FULL_NORMALIZ_VERSION=3.1.1
   - export PATH=${TRAVIS_BUILD_DIR}/dist_install/bin:$PATH
   - export SECDEC_CONTRIB=${TRAVIS_BUILD_DIR}/dist_install/
   - export PYTHONPATH=${TRAVIS_BUILD_DIR}/dist_install/pySecDec_install:$PYTHONPATH
+  - echo running on $TRAVIS_OS_NAME
+  - echo using CXX=$CXX
+  - python --version
   - pip install --upgrade pip setuptools wheel
   - pip install -r requirements.txt --only-binary=numpy
-  - make dist
+  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then make thin-dist; else make dist; fi
   - mv pySecDec-*/ dist_install
   - cd dist_install
   - make
   - mv pySecDec-*/ pySecDec_install/
-  - wget https://www.normaliz.uni-osnabrueck.de/wp-content/uploads/2016/04/Normaliz3.1.1Linux64.zip --no-check-certificate
-  - unzip Normaliz3.1.1Linux64.zip
-  - mv Normaliz3.1/normaliz bin/normaliz
-  - mv Normaliz3.1/nmzIntegrate bin/nmzIntegrate
+  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then curl https://www.normaliz.uni-osnabrueck.de/wp-content/uploads/2016/04/Normaliz${FULL_NORMALIZ_VERSION}MacOs.zip -o normaliz.zip; else curl https://www.normaliz.uni-osnabrueck.de/wp-content/uploads/2016/04/Normaliz${FULL_NORMALIZ_VERSION}Linux64.zip -o normaliz.zip; fi
+  - unzip normaliz.zip
+  - mv Normaliz${NORMALIZ_VERSION}/normaliz bin/normaliz
+  - mv Normaliz${NORMALIZ_VERSION}/nmzIntegrate bin/nmzIntegrate
   - cd ..
 
 script: 
