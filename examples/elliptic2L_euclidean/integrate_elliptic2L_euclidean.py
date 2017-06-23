@@ -3,14 +3,14 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-fA66 = IntegralLibrary('fA66/fA66_pylink.so')
+elliptic2L_euclidean = IntegralLibrary('elliptic2L_euclidean/elliptic2L_euclidean_pylink.so')
 
 # choose integrator
-fA66.use_Vegas(epsrel=1e-5,maxeval=10**7)
+elliptic2L_euclidean.use_Vegas(epsrel=1e-5,maxeval=10**7)
 
 # integrate
 s, t, pp4, msq = [-4./3.,-16./5.,-100./39.,1.] # Euclidean point
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = fA66([s, t, pp4, msq])
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = elliptic2L_euclidean([s, t, pp4, msq])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

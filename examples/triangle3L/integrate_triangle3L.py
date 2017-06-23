@@ -3,13 +3,13 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-formfactor = IntegralLibrary('formfactor3L/formfactor3L_pylink.so')
+triangle3L = IntegralLibrary('triangle3L/triangle3L_pylink.so')
 
 # choose integrator
-formfactor.use_Vegas(epsrel=1e-3)
+triangle3L.use_Vegas(epsrel=1e-3)
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = formfactor()
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle3L()
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

@@ -3,13 +3,13 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-box = IntegralLibrary('box1L/box1L_pylink.so')
+box1L = IntegralLibrary('box1L/box1L_pylink.so')
 
 # choose integrator
-box.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+box1L.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
 
-number_of_real_parameters = int(box.info['number_of_real_parameters'])
-number_of_complex_parameters = int(box.info['number_of_complex_parameters'])
+number_of_real_parameters = int(box1L.info['number_of_real_parameters'])
+number_of_complex_parameters = int(box1L.info['number_of_complex_parameters'])
 
 with open('kinematics.input') as f:
     with open('results_box1L.txt', 'w') as resultsfile:
@@ -23,7 +23,7 @@ with open('kinematics.input') as f:
             vals_complex_parameters = [complex(point[1+number_of_real_parameters+i]) for i in range(number_of_complex_parameters)]
 
             # compute the integral
-            str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box(vals_real_parameters,vals_complex_parameters)
+            str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box1L(vals_real_parameters,vals_complex_parameters)
 
             # print the result to resultsfile
             resultsfile.write('point: ' + str(point) + '\n')

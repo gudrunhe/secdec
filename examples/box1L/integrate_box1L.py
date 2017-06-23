@@ -3,13 +3,13 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-box = IntegralLibrary('box1L/box1L_pylink.so')
+box1L = IntegralLibrary('box1L/box1L_pylink.so')
 
 # choose integrator
-box.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+box1L.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box(real_parameters=[4.0, -0.75, 1.25, 1.0])
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box1L(real_parameters=[4.0, -0.75, 1.25, 1.0])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

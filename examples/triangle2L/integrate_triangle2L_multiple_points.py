@@ -3,13 +3,13 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-triangle = IntegralLibrary('P126/P126_pylink.so')
+triangle2L = IntegralLibrary('triangle2L/triangle2L_pylink.so')
 
 # choose integrator
-triangle.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+triangle2L.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
 
-number_of_real_parameters = int(triangle.info['number_of_real_parameters'])
-number_of_complex_parameters = int(triangle.info['number_of_complex_parameters'])
+number_of_real_parameters = int(triangle2L.info['number_of_real_parameters'])
+number_of_complex_parameters = int(triangle2L.info['number_of_complex_parameters'])
 
 with open('kinematics.input') as f:
   with open('results_P126.txt', 'w') as resultsfile:
@@ -23,7 +23,7 @@ with open('kinematics.input') as f:
         vals_complex_parameters = [complex(point[1+number_of_real_parameters+i]) for i in range(number_of_complex_parameters)]
 
         # compute the integral
-        str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle(vals_real_parameters,vals_complex_parameters)
+        str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle2L(vals_real_parameters,vals_complex_parameters)
 
 
         # print the result to resultsfile

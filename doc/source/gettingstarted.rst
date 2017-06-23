@@ -74,7 +74,7 @@ This example computes a one-loop box with one off-shell leg (with off-shellness 
 
 To run the example change to the `box1L` directory and run the commands::
 
-    $ python box1L.py
+    $ python generate_box1L.py
     $ make -C box1L
     $ python integrate_box1L.py
 
@@ -84,14 +84,14 @@ This will print the result of the integral evaluated with Mandelstam invariants 
     subleading pole: 0.639405625715768089 + 1.34277036689902802e-6*I +/- ( 0.00650722394065588166 + 0.000971496627153705891*I )
     finite part: -0.425514350373418893 + 1.86892487760861536*I +/- ( 0.00706834403694714484 + 0.0186497890361357298*I )
 
-The file ``box1L.py`` defines the loop integral and calls `pySecDec` to perform the sector decomposition. When run it produces the directory `box1L` which contains the code required to numerically evaluate the integral. The make command builds this code and produces a library. The file ``integrate_box1L.py`` loads the integral library and evaluates the integral for a specified numerical point.
+The file ``generate_box1L.py`` defines the loop integral and calls `pySecDec` to perform the sector decomposition. When run it produces the directory `box1L` which contains the code required to numerically evaluate the integral. The make command builds this code and produces a library. The file ``integrate_box1L.py`` loads the integral library and evaluates the integral for a specified numerical point.
 
 The content of the python files is described in detail in the following sections. The user is encouraged to copy and adapt these files to evaluate their own loop integrals.
 
 Defining a Loop Integral
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-To explain the input format, let us look at ``box1L.py`` from the one-loop box example. The first two lines read
+To explain the input format, let us look at ``generate_box1L.py`` from the one-loop box example. The first two lines read
 
 .. code::
 
@@ -175,7 +175,7 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 Building the C++ Library
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-After running the python script `box1L.py` the folder `box1L` is created and should contain the following files and subdirectories
+After running the python script `generate_box1L.py` the folder `box1L` is created and should contain the following files and subdirectories
 
 .. code::
 
@@ -209,7 +209,7 @@ First it imports the necessary python packages and loads the C++ library.
     import sympy as sp
 
     # load c++ library
-    box = IntegralLibrary('box1L/box1L_pylink.so')
+    box1L = IntegralLibrary('box1L/box1L_pylink.so')
 
 Next, an integrator is configured for the numerical integration. The full list of available integrators and their options is given in :mod:`integral_interface <pySecDec.integral_interface>`.
 
@@ -219,13 +219,13 @@ Next, an integrator is configured for the numerical integration. The full list o
     box.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
 
 Calling the ``box`` library numerically evaluates the integral.
-Note that the order of the real parameters must match that specified in ``box1L.py``.
+Note that the order of the real parameters must match that specified in ``generate_box1L.py``.
 A list of possible settings for the library, in particular details of how to set the contour deformation parameters, is given in :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
 
 .. code::
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box(real_parameters=[4.0, -0.75, 1.25, 1.0])
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box1L(real_parameters=[4.0, -0.75, 1.25, 1.0])
 
 At this point the string ``str_integral_with_prefactor`` contains the full result of the integral and can be manipulated as required.
 In the ``integrate_box1L.py`` an example is shown how to parse the expression with `sympy` and access individual orders of the regulator.
@@ -315,7 +315,7 @@ The remaining lines print the result::
         return 0;
     }
 
-After editing the ``real_parameters`` as described above the C++ program can be build and executed with the commands
+After editing the ``real_parameters`` as described above the C++ program can be built and executed with the commands
 
 .. code::
 
@@ -339,15 +339,17 @@ Here we list the available examples. For more details regarding each example see
 | **box2L_numerator**:       | a massless planar on-shell 2-loop, 4-point, 7-propagator box with a numerator, either defined as an inverse propagator         |
 |                            | ``box2L_invprop.py`` or in terms of contracted Lorentz vectors ``box2L_contracted_tensor.py``                                  |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **formfactor3L**:          | a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors |
+| **triangle3L**:            | a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **elliptic2L**:            | an integral known to contain elliptic functions                                                                                |
+| **elliptic2L_euclidean**:  | an integral known to contain elliptic functions, evaluated at a Euclidean phase-space point                                    |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **Zbb_vertex_correction**: | a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics                                  |
+| **elliptic2L_physical**:   | an integral known to contain elliptic functions, evaluated at a physical phase-space point                                     |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **Hypergeo5F4**:           | a general dimensionally regulated parameter integral                                                                           |
+| **triangle2L_split**:      | a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics                                  |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **4photon1L**:             | calcuation of the 4-photon amplitude, showing how to use `pySecDec` as an integral library in a larger context                 |
+| **hypergeo5F4**:           | a general dimensionally regulated parameter integral                                                                           |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **4photon1L_amplitude**:   | calculation of the 4-photon amplitude, showing how to use `pySecDec` as an integral library in a larger context                |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **two_regulators**:        | an integral involving poles in two different regulators.                                                                       |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+

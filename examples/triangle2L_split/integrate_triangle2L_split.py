@@ -3,13 +3,13 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-H_5F4 = IntegralLibrary('H_5F4/H_5F4_pylink.so')
+triangle2L_split = IntegralLibrary('triangle2L_split/triangle2L_split_pylink.so')
 
 # choose integrator
-H_5F4.use_Vegas(flags=2, epsrel=1e-4) # ``flags=2``: verbose --> see Cuba manual
+triangle2L_split.use_Divonne(epsrel=1e-5,epsabs=1e-5,maxeval=10**7,border=1e-8,flags=3)
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = H_5F4([0.5])
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle2L_split(together=False)
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
@@ -25,16 +25,15 @@ integral_without_prefactor_err = sp.sympify(str_integral_without_prefactor.repla
 
 # numerical result
 print('Numerical Result')
+print('eps^-2:', integral_with_prefactor.coeff('eps',-2).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-2).coeff('error'), ')')
+print('eps^-1:', integral_with_prefactor.coeff('eps',-1).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-1).coeff('error'), ')')
 print('eps^0:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
-print('eps^1:', integral_with_prefactor.coeff('eps',1).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',1).coeff('error'), ')')
-print('eps^2:', integral_with_prefactor.coeff('eps',2).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',2).coeff('error'), ')')
-print('eps^3:', integral_with_prefactor.coeff('eps',3).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',3).coeff('error'), ')')
-print('eps^4:', integral_with_prefactor.coeff('eps',4).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',4).coeff('error'), ')')
 
-# analytic result from HypExp (D.Maitre, T.Huber, hep-ph/0507094)
-print('Analytic Result')
-print('eps^0: 1')
-print('eps^1: 0.1895324')
-print('eps^2: -2.2990427')
-print('eps^3: 55.469019')
-print('eps^4: -1014.3924')
+# result from arXiv:1610.07059 (equation 3.2)
+# Note: The result given in the reference above has a sign error in the finite part.
+#       The result given below has been confirmed by the authors of arXiv:1610.07059
+#       in a private communication.
+print('Reference Result')
+print('eps^-2: 1.23370055013617    - 6.20475892887384  * 10^-13 * I')
+print('eps^-1: 2.8902545096591976  + 3.875784585038738          * I')
+print('eps^0:  0.7785996083247692  + 4.123512600516016          * I')

@@ -29,7 +29,7 @@ mass_symbols = []
 
 loop_package(
 
-name = 'N3',
+name = 'triangle2L_split',
 
 additional_prefactor = '-exp(2*EulerGamma*eps)',
 

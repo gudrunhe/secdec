@@ -3,7 +3,7 @@ from pySecDec import make_package
 
 make_package(
 
-name='alpha_epsilon',
+name='two_regulators',
 integration_variables = ['z%i' % i for i in range(2)],
 
 # the order here defines the order of the expansion

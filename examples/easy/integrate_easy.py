@@ -2,10 +2,10 @@ from pySecDec.integral_interface import IntegralLibrary
 from math import log
 
 # load c++ library
-easy_integral = IntegralLibrary('easy/easy_pylink.so')
+easy = IntegralLibrary('easy/easy_pylink.so')
 
 # integrate
-_, _, result = easy_integral()
+_, _, result = easy()
 
 # print result
 print('Numerical Result:' + result)
