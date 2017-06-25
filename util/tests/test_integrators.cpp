@@ -208,3 +208,39 @@ TEST_CASE( "Test Cuhre integrator with complex", "[Integrator][Cuba][Cuhre]" ) {
   }
 
 };
+
+TEST_CASE( "Test integrators one dimensional ", "[Integrator][Cuba][Vegas][Suave][Divonne][Cuhre]" ) {
+
+    // some CUBA integrators fail in 1D without an internal workaround
+    int dimensionality = 1;
+    cubareal epsrel = 1e-3;
+
+    SECTION( "Vegas" ) {
+
+        auto integrator = secdecutil::cuba::Vegas<cubareal>(epsrel);
+        test_integrator_real(integrator, epsrel, dimensionality);
+
+    }
+
+    SECTION( "Suave" ) {
+
+        auto integrator = secdecutil::cuba::Suave<cubareal>(epsrel);
+        test_integrator_real(integrator, epsrel, dimensionality);
+
+    }
+
+    SECTION( "Divonne" ) {
+
+        auto integrator = secdecutil::cuba::Divonne<cubareal>(epsrel);
+        test_integrator_real(integrator, epsrel, dimensionality);
+
+    }
+
+    SECTION( "Cuhre" ) {
+
+        auto integrator = secdecutil::cuba::Cuhre<cubareal>(epsrel);
+        test_integrator_real(integrator, epsrel, dimensionality);
+
+    }
+
+};
