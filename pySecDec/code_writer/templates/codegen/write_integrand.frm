@@ -333,8 +333,6 @@ Bracket `regulators';
 
   #If `contourDeformation'
 
-    #$labelCounter = 0;
-
 *   No need for "#Do depth = 0, `insertionDepth'" because the Jacobian determinant should only occur at top level.
 
 *   Since we need intermediate ".sort" instructions, we cannot use the
@@ -350,7 +348,11 @@ Bracket `regulators';
 *     The following "#if" evaluates to true only if there is still something to do.
       #If `i' == 0
 
-        #$labelCounter = $labelCounter + 1;
+        #IfDef `largestLabel`$function''
+          #$labelCounter = `largestLabel`$function'' + 1;
+        #Else
+          #$labelCounter = 1;
+        #EndIf
 
         skip;
         Local toOptimize = toOptimize +

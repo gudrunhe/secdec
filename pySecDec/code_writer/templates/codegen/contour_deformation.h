@@ -10,17 +10,13 @@ CFunctions `deformedIntegrationVariableDerivativeFunctions';
 #define contourdefJacobianFunctions "%(contourdef_Jacobian_derivative_functions)s"
 CFunctions `contourdefJacobianFunctions';
 
-* Define the function that takes the real part
-CFunction SecDecInternalRealPart;
-
-* Define the function call to the Jacobian determinant
-CFunction SecDecInternalContourdefJacobian;
-
 * Define the calls to the contour deformation.
-#Do function = {`deformedIntegrationVariableDerivativeFunctions'}
+#Do function = {`deformedIntegrationVariableDerivativeFunctions',`contourdefJacobianFunctions'}
   AutoDeclare Symbols SecDecInternal`function'Call;
 #EndDo
-AutoDeclare Symbols SecDecInternalSecDecInternalContourdefJacobianCall;
+
+* Define the function that takes the real part
+CFunction SecDecInternalRealPart;
 
 * Define the call replacement symbols for the real part
 AutoDeclare Symbols SecDecInternalSecDecInternalRealPartCall;

@@ -1285,7 +1285,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                                              maxdegrees=maxdegrees_contour_deformation_polynomial)
                                                            for deformed_name in symbolic_deformed_variable_names
                                                       ]
-            symbolic_deformed_variables_all_symbols.extend( (regulator for regulator in elementary_monomials_all_symbols) )
+            symbolic_deformed_variables_all_symbols.extend( (regulator for regulator in elementary_monomials_all_symbols[len(integration_variables):]) )
             symbolic_deformation_factors = [
                                                 MaxDegreeFunction(deformed_name,
                                                                   *elementary_monomials[:len(integration_variables)],
