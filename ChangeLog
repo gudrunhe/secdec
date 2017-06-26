@@ -1,3 +1,9 @@
+26.06.2017 release of pySecDec-1.1.2
+
+    [make_package] fix unittest failing with python 3.6.1
+    [util/integrator] fix one dimensional integration
+    [util/integrand_container] fix memory access error in "complex_to_real"
+
 30.05.2017 release of pySecDec-1.1.1
 
     [make_package]: drop lower bound on 'requested_order'
