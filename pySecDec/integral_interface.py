@@ -130,7 +130,7 @@ class IntegralLibrary(object):
         The complex parameters of the library.
 
     :param together:
-        bool;
+        bool, optional;
         Whether to integrate the sum of all sectors
         or to integrate the sectors separately.
         Default: ``True``.
@@ -138,7 +138,7 @@ class IntegralLibrary(object):
     :param number_of_presamples:
         unsigned int, optional;
         The number of samples used for the
-        comtour optimization.
+        contour optimization.
         This option is ignored if the integral
         library was created without deformation.
         Default: ``100000``.
@@ -155,6 +155,10 @@ class IntegralLibrary(object):
 
     :param deformation_parameters_minimum:
         float, optional;
+        The minimal value the deformation parameters
+        :math:`\lambda_i` can obtain.
+        If ``number_of_presamples=0``, all
+        :math:`\lambda_i` are set to this value.
         This option is ignored if the integral
         library was created without deformation.
         Default: ``1e-5``.
