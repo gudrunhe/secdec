@@ -1,0 +1,25 @@
+include ./Makefile.conf
+include ../test_suite/Makefile.conf
+
+$(INTEGRAL_NAME) : $(INTEGRAL_NAME).py
+	$(PYTHON) $<
+
+.PHONY : static-library
+static-library : $(INTEGRAL_NAME)
+	$(MAKE) -C $(INTEGRAL_NAME) static
+
+.PHONY : test
+test : static-library
+	echo $(EXAMPLES_DIR)
+	$(MAKE) -C test INTEGRAL_NAME=$(INTEGRAL_NAME) $@
+
+.PHONY : clean
+clean :
+	$(MAKE) -C $(INTEGRAL_NAME) $@
+	$(MAKE) -C test INTEGRAL_NAME=$(INTEGRAL_NAME) $@
+
+.PHONY : very-clean
+very-clean :
+	rm -rf $(INTEGRAL_NAME)
+	$(MAKE) -C test INTEGRAL_NAME=$(INTEGRAL_NAME) $@
+
