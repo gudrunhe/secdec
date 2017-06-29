@@ -1,0 +1,39 @@
+HOW TO RUN THE TESTS
+====================
+
+After pySecDec has been successfully installed, each test can be run by
+executing 'make <dirname>'. 'make runtests' can be invoked to run all tests.
+'make runselected' runs a selection of tests.
+'make summarize' gives a one-line summary for each example:
+
+make runtests:
+   This command runs 'make test' for all subdirectories.
+
+make summarize:
+   By running "make summarize" the user obtains a printout of the status
+   of all integrals for which 'make test' has been run earlier.
+   Note that this command does not run any test.
+
+make clean, make very-clean:
+   Delete all generated files; i.e. run 'make very-clean'
+   in every test directory.
+
+make <dirname>:
+   Run 'make test' in the directory <dirname>.
+
+
+FUTHER OPTIONS
+==============
+
+You can set the environemnt variable CUBACORES to the number of cores to be
+used for the numerical integrations. Make's "-j<jmake>" option controls how
+many recipies make executes in parallel. To run up to four instances of make
+and use two cores for each numerical integration run 'CUBACORES=4 make -j2'.
+Note that make may start up to <jmake> integrations in parallel such that
+you will have up to "<jmake> * CUBACORES" threads running in parallel.
+
+In order to change the c++ compiler or the python executable, you can set the
+environment variables CXX and PYTHON, respectively. For example, to run the
+example difference with python3 and the clang++ compiler type
+'CXX=clang++ PYTHON=python3 make difference'. The form executable can be set
+by the environment variable FORMCMD.

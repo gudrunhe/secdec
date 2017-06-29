@@ -15,8 +15,9 @@ help :
 	echo "    Implemented targets:"
 	echo
 	echo "    check        use nosetests to test with python 2.7 and 3,"
-	echo "                 run doctest using Sphinx, and run the tests"
-	echo "                 of the SecDecUtil package"
+	echo "                 run doctest using Sphinx, run the tests of the"
+	echo "                 SecDecUtil package, and run all examples with"
+	echo "                 python 2 and 3"
 	echo "    checkX       use nosetests to test with python 2.7 or 3,"
 	echo "                 where X is one of {2,3}"
 	echo "    active-check use nosetests to run only tests marked as"
@@ -34,7 +35,7 @@ help :
 	echo "    doc-html     build the html documentation using sphinx"
 	echo "    doc-pdf      build the pdf documentation using sphinx"
 	echo "    help         show this message"
-	echo "    run-examples run all examples using python 2 and 3"
+	echo "    high-level   run the high level tests"
 	echo "    show-todos   show todo marks in the source code"
 	echo
 
@@ -42,6 +43,9 @@ help :
 clean:
 	# remove build doc
 	$(MAKE) -C ./doc clean
+
+	# clean high level tests
+	$(MAKE) -C ./high_level_tests clean
 
 	# remove cpp doctests
 	$(MAKE) -C ./doc/source/cpp_doctest clean
@@ -126,14 +130,13 @@ doc-pdf :
 doctest :
 	$(MAKE) -C doc doctest
 
-.PHONY : run-examples
-run-examples :
-	cd examples ; \
-	for file in $$(ls) ; do \
-	    echo running $${file} with python2 && \
-	    python2 $${file} || exit 1 && \
-	    echo running $${file} with python3 && \
-	    python3 $${file} || exit 1 && \
+.PHONY : high-level
+high-level :
+	# '$(MAKE) -C high_level_tests summarize' forwards the error if an example fails
+	# 'exit 1' forwards the error out of the shell's for loop
+	export DIRNAME=high_level_tests ; \
+	for PYTHON in {python2,python3} ; do \
+		PYTHON=$$PYTHON $(MAKE) -C $$DIRNAME && $(MAKE) -C $$DIRNAME summarize || exit 1 \
 	; \
 	done
 

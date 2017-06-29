@@ -18,3 +18,10 @@ pySecDec-*/
 
 # Ignore PyCharm Cache
 .idea
+
+# built high level tests
+*.o
+*.exe
+*.log
+high_level_tests/*/*/
+!high_level_tests/*/test
