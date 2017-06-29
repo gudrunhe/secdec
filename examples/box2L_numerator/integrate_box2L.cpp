@@ -16,6 +16,23 @@
  * the integral from pySecDec using two different input forms
  */
 
+// reference result from pySecDec paper Table 2 arXiv:1703.09692v2
+secdecutil::Series<secdecutil::UncorrelatedDeviation<std::complex<double>>> box2L_reference
+{
+    -4, // order min
+     0, // order max
+    {
+        // {<value>, <uncertainty>}
+        {-0.2916, 0.0022}, // eps^-4
+        { 0.7410, 0.0076}, // eps^-3
+        {-0.3056, 0.0095}, // eps^-2
+        {-2.2966, 0.0313}, // eps^-1
+        { 1.1460, 0.0504}  // eps^0
+    },
+    true, // series is truncated
+    "eps" // expansion parameter
+};
+
 // 'box2L_invprop' - input numerator as inverse propagator
 box2L_invprop::nested_series_t<secdecutil::UncorrelatedDeviation<box2L_invprop::integrand_return_t>> compute_box2L_invprop(box2L_invprop::real_t s, box2L_invprop::real_t t)
 {
@@ -84,6 +101,9 @@ int main()
      */
     std::cout << "------------" << std::endl << std::endl;
     std::cout << "box2L" << std::endl << std::endl;
+
+    std::cout << "result from pySecDec paper" << std::endl;
+    std::cout << box2L_reference << std::endl << std::endl;
 
     std::cout << "result inverse propagator" << std::endl;
     std::cout << box2L_invprop << std::endl << std::endl;
