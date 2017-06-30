@@ -1165,8 +1165,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # Check that either the primary decomposition or the `remainder_expression` is trivial.
     # Note that the primary decomposition is specialized for loop integrals.
-    if not remainder_expression_is_trivial and decomposition_method != 'iterative_no_primary':
-        raise NotImplementedError('The primary decomposition is only implemented for loop integrals. Please perform the primary decomposition yourself and choose ``decomposition_method="iterative_no_primary"``.')
+    if not remainder_expression_is_trivial and decomposition_method not in ('iterative_no_primary', 'geometric_no_primary'):
+        raise NotImplementedError('The primary decomposition is only implemented for loop integrals. Please perform the primary decomposition yourself and choose ``decomposition_method="iterative_no_primary"`` or ``decomposition_method="geometric_no_primary"``.')
 
     if use_symmetries:
         # can investigate sector symmetries
