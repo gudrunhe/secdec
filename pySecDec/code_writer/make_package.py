@@ -1157,8 +1157,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # we do not split the integration region.
     remainder_expression_is_trivial = True
     for i,_ in enumerate(integration_variables):
-        derivative = remainder_expression.derive(i).simplify()
-        if not ( type(derivative) is Polynomial and np.array_equal(derivative.coeffs, [0]) and (derivative.expolist == 0).all() ):
+        difference = (  remainder_expression - remainder_expression.replace(i, error_token)  ).simplify()
+        if not ( type(difference) is Polynomial and np.array_equal(difference.coeffs, [0]) and (difference.expolist == 0).all() ):
             remainder_expression_is_trivial = False
             break
     use_symmetries = remainder_expression_is_trivial
