@@ -1,41 +1,41 @@
 There are 3 examples to show how the user can define additional (finite) functions, which are not included in the decomposition. 
 They do not need to be analytic functions, they can also be procedures like e.g. jet clustering algorithms.
 
-Example 1) dummyI.py:
+Example 1) dummyI:
 
 functions = ['dum1', 'dum2'] declares the names of the additional functions.
 The dependence of these functions on a number of arguments is given in 
-remainder_expression = '(dum1(z0,z1,z2,z3) + 5*eps*z0)**(1+eps) * dum2(z0,z1,alf)**(2-6*eps)'
+remainder_expression = '(dum1(z0,z1,z2,z3) + 5*eps*z0)**(1+eps) * dum2(z0,z1,alpha)**(2-6*eps)'
 
 Which shows that both is possible: 
 (a) explicit definitions in the python input files
 (b) only the argument list is defined, the explicit definitions will be defined later in 
 [process_directory]/src/functions.hpp 
 A template for this file will be created automatically together with the process_directory.
-An example for a functions.hpp file is given by functions_dummy_sav.hpp.
-The arguments are the ones that occur in the argument list of the function in dummyI.py, 
+An example for a functions.hpp file is given by functions_dummyI.hpp.
+The arguments are the ones that occur in the argument list of the function in generate_dummyI.py, 
 in the same order.
 They can be both integration variables and parameters. 
 Derivatives of the functions are only needed if higher than logarithmic poles are involved. 
 'ddum1d0' means the first derivative of the function with name 'dum1' with respect to its first argument.
 A mixture of (a) and (b) is also possible.
 
-Example 2) dummyII.py:
+Example 2) dummyII:
 
 If the extra functions are simple, they can also be defined explicitly in the python input file 
 in remainder_expression = '[define explicit function here]'
 Even simpler, if the extra functions are polynomial, they can be defined as 
-other_polynomials = '[define polynmials excluded from the decomposition here]'
+other_polynomials = '[define polynomials excluded from the decomposition here]'
 The functions defined in remainder_expression and other_polynomials will be multiplied automatically to the polynomials_to_decompose.
 
-Example 3) thetafunction.py:
+Example 3) thetafunction:
 
-The example thetafunction.py shows how to define an extra non-analytic function like a theta-function acting on one of the integration parameters. 
+The example thetafunction shows how to define an extra non-analytic function like a theta-function acting on one of the integration parameters. 
 In the python input file, it is defined as 
-remainder_expression = 'cut1(z1,delt)'. 
-The first argument is z1, the second one is the cut parameter delt.
+remainder_expression = 'cut1(z1,delta)'. 
+The first argument is z1, the second one is the cut parameter delta.
 Once the process directory is created, the function cut1 should be defined in src/functions.hpp.
-For the current example, the definition of cut1 is exemplified in functions_theta_sav.hpp and 
-the latter is copied automatically to the correct location (see the last line of thetafunction.py).
+For the current example, the definition of cut1 is exemplified in functions_thetafunction.hpp and 
+the latter is copied automatically to the correct location (see the last line of generate_thetafunction.py).
 
   

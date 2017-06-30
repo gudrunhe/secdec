@@ -9,8 +9,8 @@ integral = IntegralLibrary('dummyII/dummyII_pylink.so')
 integral.use_Vegas(epsrel=5e-4)
 
 # integrate for a certain value of delta
-alf = 0.77
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = integral([alf])
+alpha = 0.77
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = integral([alpha])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

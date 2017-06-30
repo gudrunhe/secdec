@@ -3,7 +3,7 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-integral = IntegralLibrary('theta_function/theta_function_pylink.so')
+integral = IntegralLibrary('thetafunction/thetafunction_pylink.so')
 
 # choose integrator
 integral.use_Vegas(epsrel=1e-4, maxeval=10**7)

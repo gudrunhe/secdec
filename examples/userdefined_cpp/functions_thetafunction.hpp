@@ -1,13 +1,13 @@
-#ifndef theta_function_src_functions_hpp_included
-#define theta_function_src_functions_hpp_included
+#ifndef thetafunction_src_functions_hpp_included
+#define thetafunction_src_functions_hpp_included
 
-#include "theta_function.hpp"
+#include "thetafunction.hpp"
 #include "SecDecInternalFunctions.hpp"
 
 #include <cmath>
 #include <complex>
 
-namespace theta_function
+namespace thetafunction
 {
 
     /*

@@ -4,17 +4,16 @@ from pySecDec import make_package
 
 make_package(
 
-name='dummyI',
-integration_variables = ['z%i' % i for i in range(4)],
+name='thetafunction',
+integration_variables = ['z%i' % i for i in range(3)],
 
 # the order here defines the order of the expansion
 regulators = ['eps'],
-real_parameters = ['alf'],
-functions = ['dum1', 'dum2'],
-#
+real_parameters = ['delta'],
+functions = ['cut1'],
+
 polynomials_to_decompose = ['(z0+z1)**(-2-2*eps)', 'z2**(-1-4*eps)'],
-remainder_expression = '(dum1(z0,z1,z2,z3) + 5*eps*z0)**(1+eps) * dum2(z0,z1,alf)**(2-6*eps)',
-#remainder_expression = '(z0**2+z1**3+z2**4+z3**5 + 4*z0*z1*z2*z3+2-z0**2*z1**3*z2**4*z3**5 + 5*eps*z0)**(1+eps) * (z0**2 + z1**2 +alf**2 + 4*z0*z1+3*z0**2*z1**2 - sqrt(z0*z1*alf))**(2-6*eps)',
+remainder_expression = 'cut1(z1,delta)',
 
 
 # the highest orders of the final regulator expansion
@@ -27,7 +26,8 @@ form_optimization_level = 2,
 # the WorkSpace parameter for FORM
 form_work_space = '500M',
 
+
 )
 
 # copy 'functions.hpp' (predefined for this example) to required directory
-shutil.copy('functions_dummy_sav.hpp','dummyI/src/functions.hpp')
+shutil.copy('functions_thetafunction.hpp','thetafunction/src/functions.hpp')
