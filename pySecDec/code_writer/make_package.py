@@ -1279,13 +1279,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                 for deformed_name in symbolic_deformed_variable_names
                                           ]
             symbolic_deformed_variables.extend( (regulator for regulator in elementary_monomials[len(integration_variables):]) )
-            symbolic_deformed_variables_all_symbols = [
-                                                           MaxDegreeFunction(deformed_name,
-                                                                             *elementary_monomials_all_symbols[:len(integration_variables)],
-                                                                             maxdegrees=maxdegrees_contour_deformation_polynomial)
-                                                           for deformed_name in symbolic_deformed_variable_names
-                                                      ]
-            symbolic_deformed_variables_all_symbols.extend( (regulator for regulator in elementary_monomials_all_symbols[len(integration_variables):]) )
             symbolic_deformation_factors = [
                                                 MaxDegreeFunction(deformed_name,
                                                                   *elementary_monomials[:len(integration_variables)],
@@ -1345,17 +1338,17 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # define symbols for the `polynomials_to_decompose` --> shorter expressions and faster in python
             symbolic_polynomials_to_decompose = []
-            symbolic_polynomials_to_decompose_all_symbols_base = []
+            symbolic_polynomials_to_decompose_all_symbols_undeformed = []
             names_polynomials_to_decompose = []
             for i in range(len(polynomials_to_decompose)):
                 try:
                     poly_name = str(polynomial_names[i])
                 except IndexError:
                     poly_name = FORM_names['cast_polynomial'] + str(i)
-                symbolic_polynomials_to_decompose_all_symbols_base.append(
+                symbolic_polynomials_to_decompose_all_symbols_undeformed.append(
                         MaxDegreeFunction(
                                           poly_name,
-                                          *(elementary_monomials_all_symbols if contour_deformation_polynomial is None else symbolic_deformed_variables_all_symbols),
+                                          *elementary_monomials_all_symbols,
                                           maxdegrees=MaxDegreeFunction.get_maxdegrees(
                                                                                           sector.cast[i].factors[1],
                                                                                           ignore_subclass=True
@@ -1383,10 +1376,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # remove `polynomial_names` - keep polynomial part symbolic as dummy function:
             #  - from `other_polynomials`
-            for k, poly_name in enumerate(reversed_polynomial_names):
-                replacement = symbolic_polynomials_to_decompose_all_symbols_base[len(polynomials_to_decompose)-k-1]
-                for i in range(k+1):
+            replacements = []
+            for k in range(1, len(reversed_polynomial_names) + 1):
+                replacement = symbolic_polynomials_to_decompose_all_symbols_undeformed[len(polynomials_to_decompose)-k]
+                for i in range(k):
                     replacement = replacement.replace(-1, error_token, remove=True)
+                replacements.append(replacement)
+            for replacement in replacements:
                 for i, poly in enumerate(sector.other):
                     poly = poly.replace(-1, replacement, remove=True)
                     for j, coeff in enumerate(poly.coeffs):
