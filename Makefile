@@ -135,7 +135,7 @@ high-level :
 	# '$(MAKE) -C high_level_tests summarize' forwards the error if an example fails
 	# 'exit 1' forwards the error out of the shell's for loop
 	export DIRNAME=high_level_tests ; \
-	for PYTHON in {python2,python3} ; do \
+	for PYTHON in python2 python3 ; do \
 		PYTHON=$$PYTHON $(MAKE) -C $$DIRNAME && $(MAKE) -C $$DIRNAME summarize || exit 1 \
 	; \
 	done
