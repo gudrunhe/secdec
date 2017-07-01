@@ -1034,7 +1034,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
         transformations.append(to_append)
 
     # define an error token that is multiplied to expressions that should evaluate to zero
-    error_token = sp.symbols(FORM_names['error_token'])
+    str_error_token = FORM_names['error_token']
+    error_token = sp.symbols(str_error_token)
 
     # make a copy of the `integration_variables` for later reference
     all_integration_variables = list(integration_variables)
@@ -1156,9 +1157,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # does explicitly not depend on any integration variable and if
     # we do not split the integration region.
     remainder_expression_is_trivial = True
-    for i,_ in enumerate(integration_variables):
-        difference = (  remainder_expression - remainder_expression.replace(i, error_token)  ).simplify()
-        if not ( type(difference) is Polynomial and np.array_equal(difference.coeffs, [0]) and (difference.expolist == 0).all() ):
+    for i in range(len(integration_variables)):
+        str_replaced_remainder_expression = str(  remainder_expression.replace(i, error_token)  )
+        if str_error_token in str_replaced_remainder_expression:
             remainder_expression_is_trivial = False
             break
     use_symmetries = remainder_expression_is_trivial
