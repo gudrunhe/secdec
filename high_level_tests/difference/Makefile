@@ -9,7 +9,7 @@ static-library : $(INTEGRAL_NAME)
 	$(MAKE) -C $(INTEGRAL_NAME) static
 
 .PHONY : pylink-library
-static-library : $(INTEGRAL_NAME)
+pylink-library : $(INTEGRAL_NAME) static-library
 	$(MAKE) -C $(INTEGRAL_NAME) pylink
 
 .PHONY : test
