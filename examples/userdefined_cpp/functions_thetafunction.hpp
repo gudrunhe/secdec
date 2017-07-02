@@ -23,16 +23,17 @@ namespace thetafunction
      * in the top level directory.
      */
 
-/*
+    /*
 
-*/
-  template<typename T0, typename T1>
- integrand_return_t cut1(T0 arg0, T1 arg1)
+     */
+    template<typename T0, typename T1>
+    integrand_return_t cut1(T0 arg0, T1 arg1)
     {
-      if (arg0 < arg1)
-        return 0.;
-      else
-	return 1.; 
+        if (arg0 < arg1) {
+            return 0.;
+        } else {
+            return 1.;
+        }
     };
 
 };
