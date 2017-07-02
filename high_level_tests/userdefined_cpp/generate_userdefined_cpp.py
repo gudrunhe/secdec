@@ -32,9 +32,11 @@ form_work_space = '500M',
 )
 
 # check the generated "functions.hpp"
-with open(name + '/src/functions.hpp') as generated_header:
-    with open('functions_template.hpp') as target_header:
-        assert generated_header.read() == target_header.read(), 'mismatch between generated and expected "functions.hpp"'
+with open(name + '/src/functions.hpp') as generated_header_file:
+    generated_header = generated_header_file.read()
+with open('functions_template_ordering_1.hpp') as target_header_1:
+    with open('functions_template_ordering_2.hpp') as target_header_2:
+        assert generated_header == target_header_1.read() or generated_header == target_header_2.read(), 'mismatch between generated and expected "functions.hpp"'
 
 # copy 'functions.hpp' (predefined for this example) to required directory
 shutil.copy('functions_implementation.hpp',name+'/src/functions.hpp')
