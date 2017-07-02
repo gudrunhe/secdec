@@ -9,7 +9,7 @@ integration_variables = ['z%i' % i for i in range(4)],
 # the order here defines the order of the expansion
 regulators = ['eps'],
 real_parameters = ['alpha'],
-functions = ['dum1', 'dum2'],
+#functions = ['dum1', 'dum2'],
 #
 polynomials_to_decompose = ['(z0+z1)**(-2-2*eps)', 'z2**(-1-4*eps)'],
 other_polynomials = [],
