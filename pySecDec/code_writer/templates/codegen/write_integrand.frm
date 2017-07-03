@@ -333,6 +333,13 @@ Bracket `regulators';
 
   #If `contourDeformation'
 
+*   Make sure all labels exist.
+    #Do function = {`contourdefJacobianFunctions',}
+      #If x`function' != x
+        #redefine largestLabel`function' "0"
+      #EndIf
+    #EndDo
+
 *   No need for "#Do depth = 0, `insertionDepth'" because the Jacobian determinant should only occur at top level.
 
 *   Since we need intermediate ".sort" instructions, we cannot use the
