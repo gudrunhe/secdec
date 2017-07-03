@@ -78,7 +78,8 @@ install:
   - mv Normaliz${NORMALIZ_VERSION}/nmzIntegrate bin/nmzIntegrate
   - cd ..
 
-script: 
+script:
   - nosetests
   - make util-check
   - make doctest
+  - make -C high_level_tests runselected && make -C high_level_tests summarize-selected
