@@ -64,7 +64,7 @@ if not isinstance(git_id, str):
         description='An implementation of "Sector Decomposition" (see arXiv:1703.09692, arXiv:hep-ph/0004013, arXiv:0803.4177).',
         license='GPLv3',
         install_requires=['numpy>=1.6', 'sympy', 'setuptools>=3.3'],
-        extras_require={'testing': ['nose'], 'documentation': ['sphinx>=1.5']},
+        extras_require={'testing': ['nose'], 'documentation': ['sphinx>=1.6.3']},
         classifiers=['Development Status :: 5 - Production/Stable',
                      'Environment :: Console',
                      'Intended Audience :: Science/Research',
