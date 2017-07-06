@@ -249,19 +249,23 @@ Bracket `regulators';
 
 *           The sign check to be performed for the contour deformation polynomial (F) is:
 *           "SecDecInternalImagPart( SecDecInternalContourDeformationPolynomial(<deformed integration variables>) - SecDecInternalContourDeformationPolynomial(<undeformed integration variables>) ) <= 0"
+            skip;
             Local signCheck = signCheck +
                 SecDecInternalLabelContourDeformationPolynomialCallSignCheck`$labelCounterF' *
                 (
                   SecDecInternalfDUMMYdeformedContourDeformationPolynomial($args) - `SecDecInternalContourDeformationPolynomial'($args)
                 );
+            .sort
 
 *           The sign check to be performed for the positive polynomials (e.g. U) is:
 *           "SecDecInternalRealPart( SecDecInternalPositivePolynomial(<deformed integration variables>) ) >= 0"
             #Do positivePolynomial = {`positivePolynomials',}
               #If x`positivePolynomial' != x
                 #$labelCounterU = $labelCounterU + 1;
+                skip;
                 Local signCheck = signCheck +
                     SecDecInternalLabelUCallSignCheck`$labelCounterU' * SecDecInternalfDUMMY`positivePolynomial'($args);
+                .sort
               #EndIf
             #EndDo
 
