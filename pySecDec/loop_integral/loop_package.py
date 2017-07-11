@@ -172,9 +172,6 @@ def loop_package(name, loop_integral, requested_order,
     U_and_F = [loop_integral.exponentiated_U.copy(), loop_integral.exponentiated_F.copy()]
     names_U_and_F = sp.symbols(['U','F'])
 
-    # check if ``U`` is in the denomitator; i.e. if an additional sign check is needed
-    U_in_denominator = loop_integral.exponent_U.subs(loop_integral.regulator,0) < 0
-
     # append the regulator symbol and the symbols `U` and `F` to `U` and `F`
     for poly in U_and_F:
         poly.polysymbols.extend([loop_integral.regulator] + names_U_and_F)
@@ -209,7 +206,7 @@ def loop_package(name, loop_integral, requested_order,
         polynomial_names = names_U_and_F,
         other_polynomials = other_polynomials,
         contour_deformation_polynomial = 'F' if contour_deformation else None,
-        positive_polynomials = ['U'] if U_in_denominator else [],
+        positive_polynomials = ['U'],
 
         prefactor = sp.sympify(additional_prefactor) * loop_integral.Gamma_factor * loop_integral.regulator ** loop_integral.regulator_power,
 
