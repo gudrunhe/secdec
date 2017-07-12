@@ -14,7 +14,7 @@ LDFLAGS =
 else
 LDFLAGS = -L$(SECDEC_CONTRIB)/lib
 endif
-LDFLAGS += $(patsubst %,-L%,$(INTEGRALS)) $(patsubst %,-l%,$(INTEGRALS)) -lcuba -lm
+LDFLAGS += $(patsubst %,-L%,$(INTEGRALS)) $(patsubst %,-l%,$(INTEGRALS)) -lgsl -lgslcblas -lcuba -lm
 
 amp : amp.o $(patsubst %,lib%.a,$(INTEGRALS))
 	$(CXX) -o $@ $< $(LDFLAGS)
