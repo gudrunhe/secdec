@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <secdecutil/integrand_container.hpp>
