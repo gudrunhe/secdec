@@ -243,12 +243,12 @@ def find_singular_set(sector, indices=None):
         best_sets.append(singular_set)
         howmany = 0
 
-    # choose the set of Feynman parameters which appears in the minimal
-    # number of maximal appearing exponents
-    exposum_max = np.inf
+    # Choose the set of Feynman parameters with the
+    # highest powers for remapping.
+    exposum_max = -np.inf
     for test_set in best_sets:
         exposum = poly.expolist[:,test_set].max(axis=0).sum()
-        if exposum < exposum_max:
+        if exposum > exposum_max:
             exposum_max = exposum
             best_set = test_set
     assert np.isfinite(exposum_max)
