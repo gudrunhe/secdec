@@ -462,9 +462,9 @@ class TestNumerator(unittest.TestCase):
         contracted_numerator = sp.sympify(li_contracted.numerator) * li.Gamma_factor
         partially_contracted_numerator = sp.sympify(li_partially_contracted.numerator) * li.Gamma_factor
         scalar_factor_insertation = { # N_nu = 2, L = 1 in this example
-                                          'scalar_factor(0)': '1/(-2)**(0/2)*(2 - D*1/2 - 2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(0/2)',
-                                          'scalar_factor(2)': '1/(-2)**(2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(2/2)',
-                                          'scalar_factor(4)': '1/(-2)**(4/2)*gamma(2 - D*1/2 - 4/2)*F**(4/2)'
+                                          sp.sympify('scalar_factor(0)'): sp.sympify('1/(-2)**(0/2)*(2 - D*1/2 - 2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(0/2)'),
+                                          sp.sympify('scalar_factor(2)'): sp.sympify('1/(-2)**(2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(2/2)'),
+                                          sp.sympify('scalar_factor(4)'): sp.sympify('1/(-2)**(4/2)*gamma(2 - D*1/2 - 4/2)*F**(4/2)')
                                     }
         target_numerator = sp.sympify('''
                                              scalar_factor(0)*p(1)*x2*p(2)*x2*p(3)*x2*p(4)*x2 +
@@ -529,9 +529,9 @@ class TestNumerator(unittest.TestCase):
                                              m**2 * m**2 * scalar_factor(4) +
                                              m**2 * m**2 * scalar_factor(4)
                                       ''').subs({ # N_nu = 2, L = 1, D=4-2*eps in this example
-                                                      'scalar_factor(0)': '1/(-2)**(0/2)*(2 - (4-2*eps)*1/2 - 2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(0/2)',
-                                                      'scalar_factor(2)': '1/(-2)**(2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(2/2)',
-                                                      'scalar_factor(4)': '1/(-2)**(4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(4/2)'
+                                                      sp.sympify('scalar_factor(0)'): sp.sympify('1/(-2)**(0/2)*(2 - (4-2*eps)*1/2 - 2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(0/2)'),
+                                                      sp.sympify('scalar_factor(2)'): sp.sympify('1/(-2)**(2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(2/2)'),
+                                                      sp.sympify('scalar_factor(4)'): sp.sympify('1/(-2)**(4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(4/2)')
                                                 })
 
         self.assertEqual( (sp.sympify(li.numerator)*li.Gamma_factor - target_numerator).simplify() , 0 )
