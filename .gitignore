@@ -11,6 +11,7 @@ coverage
 pySecDec.egg-info
 
 *.tar.gz
+!dist_template/*.tar.gz
 
 build/
 dist/
