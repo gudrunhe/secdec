@@ -2,10 +2,18 @@ include ../Makefile.conf
 
 OBJECTS = $(patsubst %%.cpp,%%.o,$(wildcard *.cpp))
 
-../lib$(NAME).a : $(OBJECTS)
+../lib$(NAME).a : lib$(NAME).a
+	mv $< $@
+
+.INTERMEDIATE : lib$(NAME).a
+lib$(NAME).a : $(OBJECTS)
 	ar rs $@ $+
 
-../lib$(NAME).so : $(OBJECTS)
+../lib$(NAME).so : lib$(NAME).so
+	mv $< $@
+
+.INTERMEDIATE : lib$(NAME).so
+lib$(NAME).so : $(OBJECTS)
 	$(CXX) -o $@ -shared $+ $(LDFLAGS)
 
 clean:
