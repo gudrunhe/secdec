@@ -1,7 +1,8 @@
-check_PROGRAMS = test_cuba_integrators test_cquad test_series test_integrand_container test_deep_apply test_uncertainties
+check_PROGRAMS = test_integrator test_cuba_integrators test_cquad test_series test_integrand_container test_deep_apply test_uncertainties
 
 AM_CPPFLAGS = -I$(top_srcdir)
 
+test_integrator_SOURCES = main.cpp test_integrator.cpp catch.hpp
 test_cuba_integrators_SOURCES = main.cpp test_cuba_integrators.cpp catch.hpp
 test_cquad_SOURCES = main.cpp test_cquad.cpp catch.hpp
 test_series_SOURCES = main.cpp test_series.cpp catch.hpp
