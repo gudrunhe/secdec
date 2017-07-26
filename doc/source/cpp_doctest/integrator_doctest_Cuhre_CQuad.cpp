@@ -15,7 +15,7 @@ int main()
     cuhre.epsrel = 1e-4;
     cuhre.maxeval = 1e7;
 
-    secdecutil::CQuad<return_t> cquad;
+    secdecutil::gsl::CQuad<return_t> cquad;
     cquad.epsrel = 1e-10;
     cquad.epsabs = 1e-13;
 
