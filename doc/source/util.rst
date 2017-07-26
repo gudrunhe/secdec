@@ -297,12 +297,12 @@ Output:
 .. literalinclude:: cpp_doctest/integrator_doctest_complex.txt
    :language: sh
 
-Integrate Real Function with Cuba Cuhre or CQuad
+Integrate Real Function with Cuba Vegas or CQuad
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Example:
 
-.. literalinclude:: cpp_doctest/integrator_doctest_Cuhre_CQuad.cpp
+.. literalinclude:: cpp_doctest/integrator_doctest_Vegas_CQuad.cpp
    :language: cpp
 
 Compile/Run:
@@ -311,5 +311,5 @@ Compile/Run:
 
 Output:
 
-.. literalinclude:: cpp_doctest/integrator_doctest_Cuhre_CQuad.txt
+.. literalinclude:: cpp_doctest/integrator_doctest_Vegas_CQuad.txt
    :language: sh
