@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <secdecutil/deep_apply.hpp> // deep_apply
+#include <secdecutil/integrators/cquad.hpp> // CQuad
 #include <secdecutil/integrators/cuba.hpp> // Vegas, Suave, Divonne, Cuhre
 #include <secdecutil/series.hpp> // Series
 #include <secdecutil/uncertainties.hpp> // UncorrelatedDeviation
@@ -124,6 +125,31 @@ extern "C"
     /*
      * integrator (de)allocation
      */
+    secdecutil::Integrator<integrand_return_t,real_t> *
+    allocate_MultiIntegrator(
+                                 secdecutil::Integrator<integrand_return_t,real_t>* low_dim_integrator,
+                                 secdecutil::Integrator<integrand_return_t,real_t>* high_dim_integrator,
+                                 int critical_dim
+                            )
+    {
+        auto integrator = new secdecutil::MultiIntegrator<integrand_return_t,real_t>
+            (*low_dim_integrator,*high_dim_integrator,critical_dim);
+        return integrator;
+    }
+
+    secdecutil::Integrator<integrand_return_t,real_t> *
+    allocate_gsl_cquad(
+                            double epsrel,
+                            double epsabs,
+                            unsigned int n,
+                            bool verbose
+                       )
+    {
+        auto integrator = new secdecutil::gsl::CQuad<integrand_return_t>
+            (epsrel,epsabs,n,verbose);
+        return integrator;
+    }
+
     secdecutil::Integrator<integrand_return_t,real_t> *
     allocate_cuba_Vegas(
                             double epsrel,

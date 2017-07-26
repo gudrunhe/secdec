@@ -92,6 +92,7 @@ and programs are required:
  * SecDecUtil (part of `pySecDec`, see :ref:`SedDecUtil<chapter_secdecutil>`), depends on:
 
    * catch (https://github.com/philsquared/Catch)
+   * gsl (http://www.gnu.org/software/gsl/)
 
 The functions :func:`pySecDec.code_writer.make_package` and :func:`pySecDec.loop_integral.loop_package`
 can use the external program `nauty` [BKAP]_ to find all sector symmetries and therefore reduce the number of

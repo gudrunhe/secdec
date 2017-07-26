@@ -192,6 +192,33 @@ A base class template from which integrator implementations inherit. It defines 
 
             Integrates the :cpp:class:`IntegrandContainer` and returns the value and uncertainty as an :cpp:class:`UncorrelatedDeviation`.
 
+An integrator that chooses another integrator based on the dimension of the integrand.
+
+    .. cpp:class:: template<typename return_t, typename input_t> MultiIntegrator
+
+        .. cpp:var:: Integrator<return_t,input_t>& low_dimensional_integrator
+
+            Reference to the integrator to be used if the integrand has a lower dimension than :cpp:var:`critical_dim`.
+
+        .. cpp:var:: Integrator<return_t,input_t>& high_dimensional_integrator
+
+            Reference to the integrator to be used if the integrand has dimension :cpp:var:`critical_dim` or higher.
+
+        .. cpp:var:: int critical_dim
+
+            The dimension below which the :cpp:var:`low_dimensional_integrator` is used.
+
+CQuad
+~~~~~
+
+For one dimensional integrals, we wrap the cquad integrator form the GNU scientifc library (gsl).
+
+CQuad takes the following options:
+ * ``epsrel`` -  The desired relative accuracy for the numerical evaluation. Default: ``0.01``.
+ * ``epsabs`` - The desired absolute accuracy for the numerical evaluation. Default: ``1e-7``.
+ * ``n`` -  The size of the workspace. This value can only be set in the constructor. Changing this attribute of an instance is not possible. Default: ``100``.
+ * ``verbose`` -  Whether or not to print status information. Default: ``false``.
+
 Cuba
 ~~~~
 
@@ -268,4 +295,21 @@ Compile/Run:
 Output:
 
 .. literalinclude:: cpp_doctest/integrator_doctest_complex.txt
+   :language: sh
+
+Integrate Real Function with Cuba Cuhre or CQuad
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Example:
+
+.. literalinclude:: cpp_doctest/integrator_doctest_Cuhre_CQuad.cpp
+   :language: cpp
+
+Compile/Run:
+
+.. literalinclude:: cpp_doctest/compile_and_run_cuba_gsl.txt
+
+Output:
+
+.. literalinclude:: cpp_doctest/integrator_doctest_Cuhre_CQuad.txt
    :language: sh
