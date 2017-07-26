@@ -1,0 +1,1 @@
+$ c++ -I${SECDEC_CONTRIB}/include -L${SECDEC_CONTRIB}/lib -std=c++11 example.cpp -o example -lcuba -lgsl -lgslcblas -lm && ./example

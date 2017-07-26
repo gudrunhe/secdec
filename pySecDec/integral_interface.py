@@ -24,6 +24,41 @@ class CPPIntegrator(object):
         self.c_lib.free_integrator.argtypes = [c_void_p]
         self.c_lib.free_integrator(self.c_integrator_ptr)
 
+class MultiIntegrator(CPPIntegrator):
+    '''
+    Wrapper for the :cpp:class:`secdecutil::MultiIntegrator`.
+
+    :param integral_library:
+        :class:`IntegralLibrary`;
+        The integral to be computed with this integrator.
+
+    The other options are defined in the gsl manual.
+
+    '''
+    def __init__(self,integral_library,low_dim_integrator,high_dim_integrator,critical_dim):
+        self.c_lib = integral_library.c_lib
+        self.c_lib.allocate_MultiIntegrator.restype = c_void_p
+        self.c_lib.allocate_MultiIntegrator.argtypes = [c_void_p, c_void_p, c_int]
+        self.c_integrator_ptr = self.c_lib.allocate_MultiIntegrator(low_dim_integrator,high_dim_integrator,critical_dim)
+
+class CQuad(CPPIntegrator):
+    '''
+    Wrapper for the cquad integrator defined in the gsl
+    library.
+
+    :param integral_library:
+        :class:`IntegralLibrary`;
+        The integral to be computed with this integrator.
+
+    The other options are defined in the gsl manual.
+
+    '''
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,n=100,verbose=False):
+        self.c_lib = integral_library.c_lib
+        self.c_lib.allocate_gsl_cquad.restype = c_void_p
+        self.c_lib.allocate_gsl_cquad.argtypes = [c_double, c_double, c_uint, c_bool]
+        self.c_integrator_ptr = self.c_lib.allocate_gsl_cquad(epsrel,epsabs,n,verbose)
+
 class Vegas(CPPIntegrator):
     '''
     Wrapper for the Vegas integrator defined in the cuba
@@ -178,15 +213,21 @@ class IntegralLibrary(object):
     * The prefactor
     * The integral multiplied by the prefactor
 
-    The integrator cen be configured by calling the
+    The integrator can be configured by calling the
     member methods :meth:`.use_Vegas`, :meth:`.use_Suave`,
-    :meth:`.use_Divonne`, and :meth:`.use_Cuhre`.
+    :meth:`.use_Divonne`, :meth:`.use_Cuhre` and
+    :meth:`use_CQuad`.
     The available options are listed in the documentation of
-    :class:`.Vegas`, :class:`.Suave`, :class:`.Divonne`, and
-    :class:`.Cuhre`, respectively.
-    If not specified otherwise, :class:`.Vegas` is used with
-    its default arguments. For details about the options,
-    refer to the cuba manual.
+    :class:`.Vegas`, :class:`.Suave`, :class:`.Divonne`,
+    :class:`.Cuhre`, and :class:`CQuad`, respectively.
+    :class:`CQuad` can only be used for one dimensional
+    integrals. A call to :meth:`use_CQuad` configures the
+    integrator to use :class:`CQuad` if possible (1D) and the
+    previously defined integrator otherwise.
+    By default, :class:`CQuad` (1D only) and :class:`Vegas`
+    are used with their default arguments.
+    For details about the options, refer to the cuba and the
+    gsl manual.
 
     Further information about the library is stored in
     the member variable `info` of type :class:`dict`.
@@ -244,8 +285,9 @@ class IntegralLibrary(object):
                                                c_double # deformation_parameters_decrease_factor
                                           ]
 
-        # set the default integrator
-        self.integrator = Vegas(self)
+        # set the default integrator (CQuad for 1D, Vegas otherwise)
+        self.use_Vegas()
+        self.use_CQuad()
 
     def __call__(
                      self, real_parameters=[], complex_parameters=[], together=True,
@@ -306,13 +348,17 @@ class IntegralLibrary(object):
         return str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor
 
     def use_Vegas(self, *args, **kwargs):
-        self.integrator = Vegas(self,*args,**kwargs)
+        self.high_dimensional_integrator = self.integrator = Vegas(self,*args,**kwargs)
 
     def use_Suave(self, *args, **kwargs):
-        self.integrator = Suave(self,*args,**kwargs)
+        self.high_dimensional_integrator = self.integrator = Suave(self,*args,**kwargs)
 
     def use_Divonne(self, *args, **kwargs):
-        self.integrator = Divonne(self,*args,**kwargs)
+        self.high_dimensional_integrator = self.integrator = Divonne(self,*args,**kwargs)
 
     def use_Cuhre(self, *args, **kwargs):
-        self.integrator = Cuhre(self,*args,**kwargs)
+        self.high_dimensional_integrator = self.integrator = Cuhre(self,*args,**kwargs)
+
+    def use_CQuad(self, *args, **kwargs):
+        self.cquad = CQuad(self, *args, **kwargs)
+        self.integrator = MultiIntegrator(self,self.cquad.c_integrator_ptr,self.high_dimensional_integrator.c_integrator_ptr,2)
