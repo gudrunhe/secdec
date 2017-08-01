@@ -221,6 +221,13 @@ Next, an integrator is configured for the numerical integration. The full list o
 Calling the ``box`` library numerically evaluates the integral.
 Note that the order of the real parameters must match that specified in ``generate_box1L.py``.
 A list of possible settings for the library, in particular details of how to set the contour deformation parameters, is given in :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
+To change the accuracy settings of the integration, the most important parameters are ``epsrel``, ``epsabs`` and ``maxeval``, which
+can be added to the integrator argument list:
+
+.. code::
+
+    # choose integrator
+    box.use_Vegas(flags=2,epsrel=0.01, epsabs=1e-07, maxeval=1000000)
 
 .. code::
 
