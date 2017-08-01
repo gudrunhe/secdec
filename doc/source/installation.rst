@@ -9,7 +9,9 @@ on unix-like systems.
 
 Before you install `pySecDec`, make sure that you have
 recent versions of `numpy` (http://www.numpy.org/) and
-`sympy` (http://www.sympy.org/) installed. Type
+`sympy` (http://www.sympy.org/) installed. The version of `sympy`
+should be 0.7.6 or higher, the version of `numpy` should be 1.6 or higher.
+Type
 
 .. code::
 
@@ -24,9 +26,9 @@ and in particular if you do not have administrator rights,
 `pip` (https://pip.pypa.io/en/stable/) may be used to perform
 the installation.
 
-To install `pySecDec` download and upack the tarball from http://secdec.hepforge.org/. The tarball contains a distribution of `pySecDec` and
-the additional dependencies listed :ref:`below <additional_cpp_dependencies>`.
-Typing
+To install `pySecDec` download and upack the tarball from http://secdec.hepforge.org/.
+The tarball contains a distribution of `pySecDec` and the additional dependencies
+listed :ref:`below <additional_cpp_dependencies>`. Typing
 
 .. code::
 

@@ -1,4 +1,4 @@
 numpy>=1.6
 # Note: Sphinx introduces a bug that makes doctest fail in versions >=1.6 and <1.6.3 (https://github.com/sphinx-doc/sphinx/pull/3825)
 Sphinx>=1.6.3
-sympy
+sympy>=0.7.6
