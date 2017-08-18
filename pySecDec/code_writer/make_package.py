@@ -1379,7 +1379,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             #  - from `other_polynomials`
             replacements = []
             for k in range(1, len(reversed_polynomial_names) + 1):
-                replacement = symbolic_polynomials_to_decompose_all_symbols_undeformed[len(polynomials_to_decompose)-k]
+                replacement = symbolic_polynomials_to_decompose_all_symbols_undeformed[len(polynomial_names)-k]
                 for i in range(k):
                     replacement = replacement.replace(-1, error_token, remove=True)
                 replacements.append(replacement)

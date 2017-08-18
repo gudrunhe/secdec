@@ -13,7 +13,7 @@ runtests : $(ALL_EXAMPLES)
 
 # Runing selection
 # ----------------
-SELECTED_TESTS = difference box1L_rank4 userdefined_cpp
+SELECTED_TESTS = difference bubble1L_dot_rank4 userdefined_cpp
 .PHONY : runselected
 runselected : $(SELECTED_TESTS)
 
