@@ -64,6 +64,9 @@ clean:
 	# remove backup files
 	find -P . -name '*~' -delete
 
+	# remove Mac .DS_store files
+	find -P . -name '.DS_Store' -delete
+
 	# remove files created by coverage
 	rm -f .coverage
 	rm -rf coverage
