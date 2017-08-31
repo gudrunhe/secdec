@@ -142,12 +142,13 @@ class LoopIntegral(object):
         if not isinstance(replacement_rules, list):
             replacement_rules = list(replacement_rules)
         if replacement_rules:
-            self.replacement_rules = np.array(replacement_rules)
-            assert len(self.replacement_rules.shape) == 2, "The `replacement_rules` should be a list of tuples"
-            assert self.replacement_rules.shape[1] == 2 , "The `replacement_rules` should be a list of tuples"
-            for rule in self.replacement_rules:
+            replacement_rules = np.array(replacement_rules)
+            assert len(replacement_rules.shape) == 2, "The `replacement_rules` should be a list of pairs."
+            assert replacement_rules.shape[1] == 2 , "The `replacement_rules` should be a list of pairs."
+            for rule in replacement_rules:
                 for expression in rule:
                     assert_degree_at_most_max_degree(expression, self.all_momenta, 2, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
+            self.replacement_rules = [(sp.sympify(rule[0]),sp.sympify(rule[1])) for rule in replacement_rules]
         else:
             self.replacement_rules = []
 
@@ -158,7 +159,7 @@ class LoopIntegral(object):
         else:
             self.Feynman_parameters = sp.sympify(list(Feynman_parameters))
             assert len(self.Feynman_parameters) == self.P, \
-                'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i)' % \
+                'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i).' % \
                 ( len(self.propagators) , len(self.Feynman_parameters) )
 
         # check and store `powerlist`

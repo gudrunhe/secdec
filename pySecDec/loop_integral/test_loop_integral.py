@@ -285,9 +285,9 @@ class TestUF_FromPropagators(unittest.TestCase):
                                 LoopIntegralFromPropagators, ['k1**2'], ['k1', 'k2'], metric_tensor='4')
         self.assertRaisesRegexp(AssertionError, '.*propagators.*at most quadratic', \
                                 LoopIntegralFromPropagators, ['k1**2', 'p1*(k1+k2)**2'], ['k1','k2'], ['p1','p2'])
-        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of tuples', \
+        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of pairs', \
                                 LoopIntegralFromPropagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=['z0','z1'])
-        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of tuples', \
+        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of pairs', \
                                 LoopIntegralFromPropagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1', 0,'z1')])
         self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*at most quadratic', \
                                 LoopIntegralFromPropagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1*k2', 0)])
@@ -298,13 +298,13 @@ class TestUF_FromPropagators(unittest.TestCase):
 
         loop_momenta = [k1, k2]
         propagators = [k1**2,(k1+p2)**2,(k1-p1)**2,(k1-k2)**2,(k2+p2)**2,(k2-p1)**2,(k2+p2+p3)**2]
-        replacement_rules = [(p1*p1, 0),
-                             (p2*p2, 0),
-                             (p3*p3, 0),
-                             (p4*p4, 0),
-                             (p1*p2, s/2),
-                             (p2*p3, t/2),
-                             (p1*p3, -s/2-t/2)]
+        replacement_rules = [( p1*p1 , 0),
+                             ('p2*p2', 0),
+                             ( p3*p3 , 0),
+                             ('p4*p4', 0),
+                             ( p1*p2 , s/2),
+                             ('p2*p3', 't/2'),
+                             ( p1*p3 , -s/2-t/2)]
         loop_integral = LoopIntegralFromPropagators(propagators, loop_momenta, replacement_rules=replacement_rules, Feynman_parameters='z')
         U = sp.sympify(loop_integral.U)
         F = sp.sympify(loop_integral.F)
