@@ -154,9 +154,8 @@ class Polytope(object):
 
         .. note::
             This function calls the command line executable of
-            `normaliz` [BIR]_.
-            It has been tested with `normaliz` versions 3.0.0,
-            3.1.0, and 3.1.1.
+            `normaliz` [BIR]_. See :ref:`installation_normaliz`
+            for installation and a list of tested versions.
 
         :param normaliz:
             string;
@@ -299,9 +298,9 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
 
     .. note::
         This function calls the command line executable of
-        `normaliz` [BIR]_.
-        It has been tested with `normaliz` versions 3.0.0,
-        3.1.0, and 3.1.1.
+        `normaliz` [BIR]_. See :ref:`installation_normaliz`
+        for installation and a list of tested versions.
+
 
     :param cone:
         two dimensional array;
@@ -459,9 +458,8 @@ def geometric_decomposition(sector, indices=None, normaliz='normaliz', workdir='
 
     .. note::
         This function calls the command line executable of
-        `normaliz` [BIR]_.
-        It has been tested with `normaliz` versions 3.0.0,
-        3.1.0, and 3.1.1.
+        `normaliz` [BIR]_. See :ref:`installation_normaliz`
+        for installation and a list of tested versions.
 
     :param sector:
         :class:`.Sector`;
@@ -582,9 +580,8 @@ def geometric_decomposition_ku(sector, indices=None, normaliz='normaliz', workdi
 
     .. note::
         This function calls the command line executable of
-        `normaliz` [BIR]_.
-        It has been tested with `normaliz` versions 3.0.0,
-        3.1.0, and 3.1.1.
+        `normaliz` [BIR]_. See :ref:`installation_normaliz`
+        for installation and a list of tested versions.
 
     :param sector:
         :class:`.Sector`;
