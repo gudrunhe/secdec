@@ -11,7 +11,7 @@ from ..algebra import _Expression, Expression, Polynomial, \
                       ExponentiatedPolynomial, Pow, Product, \
                       ProductRule, Function, Sum
 from .. import decomposition
-from ..matrix_sort import iterative_sort, Pak_sort
+from ..matrix_sort import iterative_sort, Pak_sort, light_Pak_sort
 from ..subtraction import integrate_pole_part, integrate_by_parts, pole_structure as compute_pole_structure
 from ..expansion import expand_singular, expand_Taylor, expand_sympy, OrderError
 from ..misc import lowest_order, det
@@ -739,7 +739,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
-                 enforce_complex=False, split=False, ibp_power_goal=-1, use_dreadnaut=True):
+                 enforce_complex=False, split=False, ibp_power_goal=-1, use_dreadnaut=False,
+                 use_Pak=True):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -968,6 +969,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
         ``$SECDEC_CONTRIB/bin/dreadnaut`` and, if the
         environment variable ``$SECDEC_CONTRIB`` is not set,
         ``dreadnaut``.
+        Default: ``False``
+
+    :param use_Pak:
+        bool;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_sort`
+        with :func:`.Pak_sort` to find sector symmetries.
         Default: ``True``
 
     '''
@@ -1054,11 +1062,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
         # find symmetries
         sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, iterative_sort)
         print(message + ' after symmetry finding (iterative):', len(sectors))
-        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, Pak_sort)
-        print(message + ' after symmetry finding (iterative+Pak):', len(sectors))
+        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort)
+        print(message + ' after symmetry finding (light Pak):', len(sectors))
+        if use_Pak:
+            sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, Pak_sort)
+            print(message + ' after symmetry finding (full Pak):', len(sectors))
         if use_dreadnaut:
             sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
-            print(message + ' after symmetry finding (iterative+Pak+dreadnaut):', len(sectors))
+            print(message + ' after symmetry finding (dreadnaut):', len(sectors))
         return sectors
 
     # if splitting desired, implement it as additional primary decomposition

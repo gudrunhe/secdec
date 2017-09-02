@@ -51,12 +51,21 @@ class TestMatrixSorting(unittest.TestCase):
         self.check_algorithm(iterative_sort, self.matrix_3_by_4, expected_solutions)
 
     #@attr('active')
-    def test_Pak_algorithm(self):
+    def test_light_Pak_algorithm(self):
         expected_solutions = [
                                  [[2, 0, 2, 0],
                                   [2, 1, 2, 1],
                                   [2, 2, 0, 1]],
 
+                                 [[2, 0, 2, 1],
+                                  [2, 2, 0, 0],
+                                  [2, 2, 1, 1]]
+                             ]
+        self.check_algorithm(Pak_sort, self.matrix_3_by_4, expected_solutions)
+
+    #@attr('active')
+    def test_Pak_algorithm(self):
+        expected_solutions = [
                                  [[2, 0, 2, 1],
                                   [2, 2, 0, 0],
                                   [2, 2, 1, 1]]
