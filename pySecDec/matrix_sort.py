@@ -119,7 +119,7 @@ def light_Pak_sort(matrix):
     '''
     for i in range(1,matrix.shape[1]):
         # sort all permutations of columns `i` and `j` (where `i`<=`j`) --> pick largest
-        permutaions = []
+        permutations = []
         for j in range(i,matrix.shape[1]):
             permuted_matrix = matrix.copy()
 
@@ -128,11 +128,11 @@ def light_Pak_sort(matrix):
             permuted_matrix[:,j] = matrix[:,i]
 
             # sort by rows
-            permuted_matrix[:] = permuted_matrix[argsort_2D_array(matrix)]
+            permuted_matrix[:] = permuted_matrix[argsort_2D_array(permuted_matrix)]
 
             # transpose since we need column-wise ordering in the next step
-            permutaions.append(permuted_matrix.T)
+            permutations.append(permuted_matrix.T)
 
-        # find the largest `i`th column in `permutaions` and keep that
-        index_of_largest = argsort_ND_array(permutaions)[-1]
-        matrix[:] = permutaions[index_of_largest].T # transpose back
+        # find the largest `i`th column in `permutations` and keep that
+        index_of_largest = argsort_ND_array(permutations)[-1]
+        matrix[:] = permutations[index_of_largest].T # transpose back

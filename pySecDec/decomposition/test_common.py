@@ -201,11 +201,16 @@ class TestSymmetryFinding(unittest.TestCase):
     def test_squash_symmetry_hard(self):
         sectors = [self.sector_p1_hard.copy(), self.sector_swapped_p1_hard.copy()]
 
-        # test symmetry finding by light sorting, fails
-        for sort_function in (iterative_sort, light_Pak_sort):
-            reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, sort_function)
-            self.assertNotEqual(len(reduced_sectors), 1)
-            self.assertNotEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
+        # test symmetry finding by iterative sorting, fails
+        reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, iterative_sort)
+        self.assertNotEqual(len(reduced_sectors), 1)
+        self.assertNotEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
+
+        # TODO: construct "very hard" example where light Pak sort fails
+        # test symmetry finding using light sorting
+        reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort)
+        self.assertEqual(len(reduced_sectors), 1)
+        self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
 
         # test symmetry finding by graph (using dreadnaut)
         reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, workdir='tmpdir_test_squash_symmetry_hard_python' + python_major_version)
