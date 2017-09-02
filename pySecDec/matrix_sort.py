@@ -49,7 +49,7 @@ def Pak_sort(matrix):
     Inplace modify the `matrix` to some ordering,
     when permutations of rows and columns (excluding
     the first) are allowed. The implementation of
-    this function is describedin chapter 2 of
+    this function is described in chapter 2 of
     [Pak11]_.
 
     .. note::
@@ -64,22 +64,33 @@ def Pak_sort(matrix):
         The matrix to be canonicalized.
 
     '''
-    for i in range(1,matrix.shape[1]):
-        # sort all permutations of columns `i` and `j` (where `i`<=`j`) --> pick largest
-        permutaions = []
-        for j in range(i,matrix.shape[1]):
-            permuted_matrix = matrix.copy()
+    options = [matrix]
+    for i in range(1, matrix.shape[1]):
+        permutations = []
+        for m in options:
+            for j in range(i, m.shape[1]):
+                permuted_matrix = m.copy()
 
-            # permute integration variables `i` and `j`
-            permuted_matrix[:,i] = matrix[:,j]
-            permuted_matrix[:,j] = matrix[:,i]
+                # permute integration variables `column_to_swap` and `j`
+                permuted_matrix[:, i] = m[:, j]
+                permuted_matrix[:, j] = m[:, i]
 
-            # sort by rows
-            permuted_matrix[:] = permuted_matrix[argsort_2D_array(matrix)]
+                # sort by rows
+                permuted_matrix[:] = permuted_matrix[argsort_2D_array(permuted_matrix)]
 
-            # transpose since we need column-wise ordering in the next step
-            permutaions.append(permuted_matrix.T)
+                # transpose since we need column-wise ordering in the next step
+                permutations.append(permuted_matrix.T)
 
-        # find the largest `i`th column in `permutaions` and keep that
-        index_of_largest = argsort_ND_array(permutaions)[-1]
-        matrix[:] = permutaions[index_of_largest].T # transpose back
+        # sort the matrices from smallest to largest
+        sorted_matrix = argsort_ND_array(permutations)
+
+        # add all matrices that have the largest possible value for `i' to list of options to check
+        options = []
+        for k in range(len(sorted_matrix)-1,-1,-1):
+            if np.array_equal(permutations[sorted_matrix[k]][i], permutations[sorted_matrix[-1]][i]):
+                options.append(permutations[sorted_matrix[k]].T)
+            else:
+                break
+
+    # resulting options are all equivalent, take first
+    matrix[:] = options[0]
