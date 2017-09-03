@@ -99,18 +99,33 @@ class TestSymmetryFinding(unittest.TestCase):
         self.sector_p0 = Sector([self.p0], Jacobian=self.Jacobian)
         self.sector_swapped_p0 = Sector([self.swapped_p0], Jacobian=self.swapped_Jacobian)
 
-        np.random.seed(0)
-        # Aside: Pak_sort passes with seed(10),low=0,high=3, size=(101,7)
-        self.p1_hard_expolist = np.random.randint(low=0,high=4, size=(501,7))
-        self.p1_hard_expolist_permuted=np.random.permutation(
-            np.transpose(np.random.permutation(np.transpose(self.p1_hard_expolist))))
+        # hard example: from "examples/triangle"
+        self.symbols_hard = ['x%i'%i for i in range(6)]
+        self.Jacobian_hard = Polynomial([[1]*len(self.symbols_hard)], ['a'])
+        self.hard_p1 = (Polynomial.from_expression(''' + (1)*x1*x2 + (1)*x1*x3 + (1)*x1*x4 + (1)*x1*x5 + (1)*x1 + (1)*x2*x3 + (1)*x2*x4
+                                                       + (1)*x2*x5 + (1)*x3 + (1)*x4 + (1)*x5 ''', self.symbols_hard) ** sp.sympify('3*eps')
+                       ).simplify()
+        self.hard_p2 = (Polynomial.from_expression(''' + (s)*x1**2*x2 + (s)*x1**2*x3 + (s)*x1**2*x4 + (s)*x1**2*x5 + (s)*x1**2
+                                                       + (s)*x1*x2**2 + (2*s)*x1*x2*x3 + (s)*x1*x2*x4 + (2*s)*x1*x2*x5 + (s)*x1*x2
+                                                       + (2*s)*x1*x3 + (-s)*x1*x4*x5 + (2*s)*x1*x4 + (s)*x1*x5 + (s)*x1
+                                                       + (s)*x2**2*x3 + (s)*x2**2*x4 + (s)*x2**2*x5 + (s)*x2*x3
+                                                       + (-s)*x2*x4*x5 + (s)*x2*x4 + (s)*x2*x5 + (s)*x3 + (-s)*x4*x5
+                                                       + (s)*x4 + (s)*x5 ''', self.symbols_hard) ** sp.sympify('-2*eps - 2')
+                       ).simplify()
+        self.hard_p1_permuted = (Polynomial.from_expression(''' + (1)*x0*x1 + (1)*x0*x3 + (1)*x0*x4
+                                                                + (1)*x0*x5 + (1)*x1*x3 + (1)*x1*x4 + (1)*x1*x5 + (1)*x1
+                                                                + (1)*x3 + (1)*x4 + (1)*x5''', self.symbols_hard) ** sp.sympify('3*eps')
+                                ).simplify()
+        self.hard_p2_permuted = (Polynomial.from_expression(''' + (s)*x0**2*x1 + (s)*x0**2*x3 + (s)*x0**2*x4 + (s)*x0**2*x5 + (s)*x0*x1**2
+                                                                + (2*s)*x0*x1*x3 + (2*s)*x0*x1*x4 + (s)*x0*x1*x5 + (s)*x0*x1 + (s)*x0*x3
+                                                                + (-s)*x0*x4*x5 + (s)*x0*x4 + (s)*x0*x5 + (s)*x1**2*x3 + (s)*x1**2*x4
+                                                                + (s)*x1**2*x5 + (s)*x1**2 + (2*s)*x1*x3 + (-s)*x1*x4*x5 + (s)*x1*x4
+                                                                + (2*s)*x1*x5 + (s)*x1 + (s)*x3 + (-s)*x4*x5 + (s)*x4
+                                                                + (s)*x5''', self.symbols_hard) ** sp.sympify('-2*eps - 2')
+                                ).simplify()
 
-        self.Jacobian_hard = Polynomial([(1,1,1,1,1,1,1)], ['a'])
-        self.p1_hard = Polynomial(self.p1_hard_expolist, [1]*501)
-        self.sector_p1_hard = Sector([self.p1_hard],[], self.Jacobian_hard)
-
-        self.swapped_p1_hard = Polynomial(self.p1_hard_expolist_permuted, [1]*501)
-        self.sector_swapped_p1_hard = Sector([self.swapped_p1_hard],[], self.Jacobian_hard)
+        self.sector_hard = Sector([self.hard_p1,self.hard_p2], [], self.Jacobian_hard)
+        self.sector_swapped_hard = Sector([self.hard_p1_permuted,self.hard_p2_permuted], [], self.Jacobian_hard)
 
         self.a, self.b, self.c, self.d, self.e, self.f, self.g = sp.symbols('a b c d e f g')
 
@@ -199,18 +214,17 @@ class TestSymmetryFinding(unittest.TestCase):
 
     #@attr('active')
     def test_squash_symmetry_hard(self):
-        sectors = [self.sector_p1_hard.copy(), self.sector_swapped_p1_hard.copy()]
+        sectors = [self.sector_hard.copy(), self.sector_swapped_hard.copy()]
 
         # test symmetry finding by iterative sorting, fails
         reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, iterative_sort)
         self.assertNotEqual(len(reduced_sectors), 1)
         self.assertNotEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
 
-        # TODO: construct "very hard" example where light Pak sort fails
-        # test symmetry finding using light sorting
+        # test symmetry finding using light sorting, fails
         reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort)
-        self.assertEqual(len(reduced_sectors), 1)
-        self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
+        self.assertNotEqual(len(reduced_sectors), 1)
+        self.assertNotEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
 
         # test symmetry finding by graph (using dreadnaut)
         reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, workdir='tmpdir_test_squash_symmetry_hard_python' + python_major_version)
