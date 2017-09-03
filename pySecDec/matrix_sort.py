@@ -88,7 +88,11 @@ def Pak_sort(matrix):
         options = []
         for k in range(len(sorted_matrix)-1,-1,-1):
             if np.array_equal(permutations[sorted_matrix[k]][i], permutations[sorted_matrix[-1]][i]):
-                options.append(permutations[sorted_matrix[k]].T)
+                for mat in options:
+                    if np.array_equal(mat, permutations[sorted_matrix[k]].T):
+                        break
+                else:
+                    options.append(permutations[sorted_matrix[k]].T)
             else:
                 break
 
