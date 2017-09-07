@@ -57,8 +57,7 @@ matrix:
         - pip install nose
 
 install:
-  - export NORMALIZ_VERSION=3.1
-  - export FULL_NORMALIZ_VERSION=3.1.1
+  - export NORMALIZ_VERSION=3.3.0
   - export PATH=${TRAVIS_BUILD_DIR}/dist_install/bin:$PATH
   - export SECDEC_CONTRIB=${TRAVIS_BUILD_DIR}/dist_install/
   - export PYTHONPATH=${TRAVIS_BUILD_DIR}/dist_install/pySecDec_install:$PYTHONPATH
@@ -72,10 +71,9 @@ install:
   - cd dist_install
   - make
   - mv pySecDec-*/ pySecDec_install/
-  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then curl https://www.normaliz.uni-osnabrueck.de/wp-content/uploads/2016/04/Normaliz${FULL_NORMALIZ_VERSION}MacOs.zip -o normaliz.zip; else curl https://www.normaliz.uni-osnabrueck.de/wp-content/uploads/2016/04/Normaliz${FULL_NORMALIZ_VERSION}Linux64.zip -o normaliz.zip; fi
+  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/normaliz-${NORMALIZ_VERSION}MacOs.zip -o normaliz.zip; else curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/normaliz-${NORMALIZ_VERSION}Linux64.zip -o normaliz.zip; fi
   - unzip normaliz.zip
-  - mv Normaliz${NORMALIZ_VERSION}/normaliz bin/normaliz
-  - mv Normaliz${NORMALIZ_VERSION}/nmzIntegrate bin/nmzIntegrate
+  - mv normaliz-${NORMALIZ_VERSION}/normaliz bin/normaliz
   - cd ..
 
 script:
