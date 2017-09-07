@@ -22,6 +22,22 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
+            - g++-7
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+      before_install:
+        - eval ${MATRIX_EVAL}
+      python: 2.7
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
             - g++-6
             - texlive-full
             - graphviz
@@ -38,11 +54,43 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
+            - g++-7
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+      before_install:
+        - eval ${MATRIX_EVAL}
+      python: 3.5
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
             - g++-6
             - texlive-full
             - graphviz
       env:
         - MATRIX_EVAL="export CC=gcc-6 && export CXX=g++-6"
+      python: 3.6
+      before_install:
+        - eval ${MATRIX_EVAL}
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
       python: 3.6
       before_install:
         - eval ${MATRIX_EVAL}
