@@ -21,7 +21,7 @@ def iterative_sort(matrix):
         orderings depending on the initial ordering.
 
     .. seealso::
-        :func:`.Pak_sort`
+        :func:`.Pak_sort`, :func:`.light_Pak_sort`
 
     :param matrix:
         2D array-like;
@@ -49,7 +49,7 @@ def Pak_sort(matrix):
     Inplace modify the `matrix` to some ordering,
     when permutations of rows and columns (excluding
     the first) are allowed. The implementation of
-    this function is describedin chapter 2 of
+    this function is described in chapter 2 of
     [Pak11]_.
 
     .. note::
@@ -57,7 +57,64 @@ def Pak_sort(matrix):
         orderings depending on the initial ordering.
 
     .. seealso::
-        :func:`.iterative_sort`
+        :func:`.iterative_sort`, :func:`.light_Pak_sort`
+
+    :param matrix:
+        2D array-like;
+        The matrix to be canonicalized.
+
+    '''
+    options = [matrix]
+    for i in range(1, matrix.shape[1]):
+        permutations = []
+        for m in options:
+            for j in range(i, m.shape[1]):
+                permuted_matrix = m.copy()
+
+                # permute integration variables `column_to_swap` and `j`
+                permuted_matrix[:, i] = m[:, j]
+                permuted_matrix[:, j] = m[:, i]
+
+                # sort by rows
+                permuted_matrix[:] = permuted_matrix[argsort_2D_array(permuted_matrix)]
+
+                # transpose since we need column-wise ordering in the next step
+                permutations.append(permuted_matrix.T)
+
+        # sort the matrices from smallest to largest
+        sorted_matrix = argsort_ND_array(permutations)
+
+        # add all matrices that have the largest possible value for `i' to list of options to check
+        options = []
+        for k in range(len(sorted_matrix)-1,-1,-1):
+            if np.array_equal(permutations[sorted_matrix[k]][i], permutations[sorted_matrix[-1]][i]):
+                for mat in options:
+                    if np.array_equal(mat, permutations[sorted_matrix[k]].T):
+                        break
+                else:
+                    options.append(permutations[sorted_matrix[k]].T)
+            else:
+                break
+
+    # resulting options are all equivalent, take first
+    matrix[:] = options[0]
+
+def light_Pak_sort(matrix):
+    '''
+    Inplace modify the `matrix` to some ordering,
+    when permutations of rows and columns (excluding
+    the first) are allowed. The implementation of
+    this function is described in chapter 2 of
+    [Pak11]_. This function implements a lightweight
+    version: In step (v), we only consider one, not
+    all table copies with the maximized second column.
+
+    .. note::
+        This function may result in different
+        orderings depending on the initial ordering.
+
+    .. seealso::
+        :func:`.iterative_sort`, :func:`.Pak_sort`
 
     :param matrix:
         2D array-like;
@@ -66,7 +123,7 @@ def Pak_sort(matrix):
     '''
     for i in range(1,matrix.shape[1]):
         # sort all permutations of columns `i` and `j` (where `i`<=`j`) --> pick largest
-        permutaions = []
+        permutations = []
         for j in range(i,matrix.shape[1]):
             permuted_matrix = matrix.copy()
 
@@ -75,11 +132,11 @@ def Pak_sort(matrix):
             permuted_matrix[:,j] = matrix[:,i]
 
             # sort by rows
-            permuted_matrix[:] = permuted_matrix[argsort_2D_array(matrix)]
+            permuted_matrix[:] = permuted_matrix[argsort_2D_array(permuted_matrix)]
 
             # transpose since we need column-wise ordering in the next step
-            permutaions.append(permuted_matrix.T)
+            permutations.append(permuted_matrix.T)
 
-        # find the largest `i`th column in `permutaions` and keep that
-        index_of_largest = argsort_ND_array(permutaions)[-1]
-        matrix[:] = permutaions[index_of_largest].T # transpose back
+        # find the largest `i`th column in `permutations` and keep that
+        index_of_largest = argsort_ND_array(permutations)[-1]
+        matrix[:] = permutations[index_of_largest].T # transpose back

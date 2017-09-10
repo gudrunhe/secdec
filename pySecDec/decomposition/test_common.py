@@ -3,7 +3,7 @@
 from .common import *
 from .common import _sector2array, _collision_safe_hash
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
-from ..matrix_sort import iterative_sort, Pak_sort
+from ..matrix_sort import iterative_sort, Pak_sort, light_Pak_sort
 import unittest
 import sympy as sp
 import numpy as np
@@ -99,19 +99,6 @@ class TestSymmetryFinding(unittest.TestCase):
         self.sector_p0 = Sector([self.p0], Jacobian=self.Jacobian)
         self.sector_swapped_p0 = Sector([self.swapped_p0], Jacobian=self.swapped_Jacobian)
 
-        np.random.seed(0)
-        # Aside: Pak_sort passes with seed(10),low=0,high=3, size=(101,7)
-        self.p1_hard_expolist = np.random.randint(low=0,high=4, size=(501,7))
-        self.p1_hard_expolist_permuted=np.random.permutation(
-            np.transpose(np.random.permutation(np.transpose(self.p1_hard_expolist))))
-
-        self.Jacobian_hard = Polynomial([(1,1,1,1,1,1,1)], ['a'])
-        self.p1_hard = Polynomial(self.p1_hard_expolist, [1]*501)
-        self.sector_p1_hard = Sector([self.p1_hard],[], self.Jacobian_hard)
-
-        self.swapped_p1_hard = Polynomial(self.p1_hard_expolist_permuted, [1]*501)
-        self.sector_swapped_p1_hard = Sector([self.swapped_p1_hard],[], self.Jacobian_hard)
-
         self.a, self.b, self.c, self.d, self.e, self.f, self.g = sp.symbols('a b c d e f g')
 
     #@attr('active')
@@ -198,17 +185,66 @@ class TestSymmetryFinding(unittest.TestCase):
         self.assertEqual((sp.sympify(reduced_sectors[0].cast[0]) - sp.sympify(self.p0.copy())).simplify(), 0)
 
     #@attr('active')
+    @attr('slow')
     def test_squash_symmetry_hard(self):
-        sectors = [self.sector_p1_hard.copy(), self.sector_swapped_p1_hard.copy()]
 
-        # test symmetry finding by sorting, fails
-        for sort_function in (iterative_sort, Pak_sort):
-            reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, sort_function)
-            self.assertNotEqual(len(reduced_sectors), 1)
-            self.assertNotEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
+        # In python3, the hashes of symbols are random.
+        #     --> Select a random ``s`` until the fast
+        #         and incomplete algorithms miss symmetries.
+        too_easy = True
+        while too_easy:
+            # hard example: from "examples/triangle"
+            s = np.random.randint(2**63-1)
+            x0,x1,x2,x3,x4,x5 = symbols_hard = sp.sympify(['x%i'%i for i in range(6)])
+            Jacobian_hard = Polynomial([[1]*len(symbols_hard)], ['a'])
+            hard_p1 = (Polynomial.from_expression( + (1)*x1*x2 + (1)*x3 + (1)*x1*x3 + (1)*x1*x4 + (1)*x1*x5 + (1)*x1 + (1)*x4 + (1)*x2*x3 + (1)*x2*x4
+                                                   + (1)*x2*x5 + (1)*x5, symbols_hard) ** sp.sympify('3*eps')
+                      ).simplify()
+            hard_p2 = (Polynomial.from_expression( + (2*s)*x1*x2*x3 + (s)*x1*x2*x4 + (2*s)*x1*x2*x5 + (s)*x1*x2
+                                                   + (s)*x5 + (-s)*x2*x4*x5 + (s)*x2*x4 + (s)*x2*x5 + (s)*x3 + (-s)*x4*x5
+                                                   + (2*s)*x1*x3 + (s)*x1 + (-s)*x1*x4*x5 + (2*s)*x1*x4 + (s)*x1*x5
+                                                   + (s)*x2**2*x3 + (s)*x2**2*x4 + (s)*x2**2*x5 + (s)*x2*x3
+                                                   + (s)*x1**2*x2 + (s)*x1**2*x3 + (s)*x1**2*x4 + (s)*x1**2*x5 + (s)*x1**2
+                                                   + (s)*x1*x2**2 + (s)*x4, symbols_hard) ** sp.sympify('-2*eps - 2')
+                      ).simplify()
+            hard_p1_permuted = (Polynomial.from_expression( + (1)*x0*x1 + (1)*x4 + (1)*x0*x3 + (1)*x0*x4 + (1)*x5
+                                                            + (1)*x0*x5 + (1)*x1 + (1)*x1*x3 + (1)*x1*x4 + (1)*x1*x5
+                                                            + (1)*x3, symbols_hard) ** sp.sympify('3*eps')
+                               ).simplify()
+            hard_p2_permuted = (Polynomial.from_expression( + (s)*x0**2*x1 + (s)*x0**2*x3 + (s)*x0**2*x4 + (s)*x0**2*x5
+                                                            + (2*s)*x0*x1*x3 + (2*s)*x0*x1*x4 + (s)*x0*x1*x5 + (s)*x0*x1 + (s)*x0*x3
+                                                            + (-s)*x0*x4*x5 + (s)*x0*x4 + (s)*x0*x5 + (s)*x1**2*x3 + (s)*x1**2*x4
+                                                            + (s)*x1**2*x5 + (s)*x1**2 + (2*s)*x1*x3 + (-s)*x1*x4*x5 + (s)*x1*x4
+                                                            + (s)*x5 + (2*s)*x1*x5 + (s)*x1 + (s)*x3 + (-s)*x4*x5 + (s)*x4
+                                                            + (s)*x0*x1**2, symbols_hard) ** sp.sympify('-2*eps - 2')
+                               ).simplify()
+            sector_hard = Sector([hard_p1,hard_p2], [], Jacobian_hard)
+            sector_swapped_hard = Sector([hard_p1_permuted,hard_p2_permuted], [], Jacobian_hard)
+            sectors = [sector_hard.copy(), sector_swapped_hard.copy()]
+
+            try:
+                # test symmetry finding by iterative sorting, fails
+                reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, iterative_sort)
+                self.assertNotEqual(len(reduced_sectors), 1)
+                self.assertNotEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
+
+                # test symmetry finding using light sorting, fails
+                reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort)
+                self.assertNotEqual(len(reduced_sectors), 1)
+                self.assertNotEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
+
+                too_easy = False
+
+            except AssertionError:
+                pass
 
         # test symmetry finding by graph (using dreadnaut)
         reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, workdir='tmpdir_test_squash_symmetry_hard_python' + python_major_version)
+        self.assertEqual(len(reduced_sectors), 1)
+        self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
+
+        # test symmetry finding using Pak's full algorithm
+        reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, Pak_sort)
         self.assertEqual(len(reduced_sectors), 1)
         self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
 

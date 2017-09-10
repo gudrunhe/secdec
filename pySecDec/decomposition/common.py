@@ -5,7 +5,6 @@ multiple decompition modules.
 '''
 
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
-from ..matrix_sort import iterative_sort, Pak_sort
 from ..misc import argsort_ND_array
 import numpy as np
 import sympy as sp
@@ -606,7 +605,8 @@ def squash_symmetry_redundant_sectors_sort(sectors, sort_function):
         reduced.
 
     :param sort_function:
-        :func:`pySecDec.matrix_sort.iterative_sort` or
+        :func:`pySecDec.matrix_sort.iterative_sort`,
+        :func:`pySecDec.matrix_sort.light_Pak_sort`, or
         :func:`pySecDec.matrix_sort.Pak_sort`;
         The function to be used for finding a canonical
         form of the sectors.
