@@ -305,6 +305,7 @@ class TestGeomethod(unittest.TestCase):
         indices = [0,2,3]
         subsectors = list( geometric_decomposition(sector, indices, workdir='tmpdir_test_3D_geometric_decomposition_selected_indices_python' + python_major_version) )
 
+#@attr('active')
 class TestPolytope(unittest.TestCase):
     def setUp(self):
         self.vertices = [[2,1],
@@ -574,6 +575,7 @@ class TestPolytope(unittest.TestCase):
                 # The ordering is not important but must be fixed to compare the arrays
                 np.testing.assert_array_equal(sort_2D_array(polytope.facets[value]), sort_2D_array(target_incidence_lists[key]))
 
+    #@attr('active')
     def test_vertex2facet(self):
         polytope1 = Polytope(vertices=self.vertices)
         polytope2 = Polytope(vertices=self.vertices_with_inside)

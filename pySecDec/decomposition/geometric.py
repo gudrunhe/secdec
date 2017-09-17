@@ -272,23 +272,34 @@ class Polytope(object):
 
     def _read_cst_file(self, filepath):
         with open(filepath, 'r') as f:
-            # the first two lines contain the array dimensions
-            shape = int(f.readline()), int(f.readline())
+            # the first two lines may contain the array dimensions
+            try:
+                shape = int(f.readline()), int(f.readline())
+            except ValueError:
+                # more than a single number in first two lines
+                # --> file does not contain dimensions
+                f.seek(0)
 
             # the reduced input comes next (space and newline separated) and is terminated by a line containing letters
-            array_as_str = ''
+            array_lines = []
             current_str = f.readline()
             while re.match(r'^[\-0-9 ]+$', current_str) is not None:
-                array_as_str += current_str
+                array_lines.append(current_str)
                 current_str = f.readline()
+            array_as_str = ''.join(array_lines)
 
-        return np.fromstring(array_as_str, sep=' ', dtype=int).reshape(shape)
+        return np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)
 
     def _read_ext_file(self, filepath):
         with open(filepath, 'r') as f:
-            # the first two lines contain the array dimensions
-            shape = int(f.readline()), int(f.readline())
-            return np.fromfile(f, sep=' ', dtype=int).reshape(shape)
+            # the first two lines may contain the array dimensions
+            try:
+                shape = int(f.readline()), int(f.readline())
+            except ValueError:
+                # more than a single number in first two lines
+                # --> file does not contain dimensions
+                f.seek(0)
+            return np.loadtxt(f, dtype=int)
 
 def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False, switch_representation=False):
     '''
@@ -384,25 +395,36 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
         # read normaliz output
         # normaliz reorders the rays and defines its ordering in "normaliz.tgn"
         with open(os.path.join(workdir, 'normaliz.tgn'),'r') as f:
-            # the first two lines contain the array dimensions
-            shape = int(f.readline()), int(f.readline())
-            original_cone = np.fromfile(f, sep=' ', dtype=int).reshape(shape)
+            # the first two lines may contain the array dimensions
+            try:
+                shape = int(f.readline()), int(f.readline())
+            except ValueError:
+                # more than a single number in first two lines
+                # --> file does not contain dimensions
+                f.seek(0)
+            original_cone = np.loadtxt(f, dtype=int)
 
         # the triangulation is given as indices of `original_cone`
         with open(os.path.join(workdir, 'normaliz.tri'),'r') as f:
-            # the first two lines contain the array dimensions
-            shape = int(f.readline()), int(f.readline())
+            # the first two lines may contain the array dimensions
+            try:
+                shape = int(f.readline()), int(f.readline())
+            except ValueError:
+                # more than a single number in first two lines
+                # --> file does not contain dimensions
+                f.seek(0)
 
             # it is terminated by a line containing letters
-            array_as_str = ''
+            array_lines = []
             current_str = f.readline()
             while re.match(r'^[\-0-9 ]+$', current_str) is not None:
-                array_as_str += current_str
+                array_lines.append(current_str)
                 current_str = f.readline()
+            array_as_str = ''.join(array_lines)
 
         # `[:,:-1]` to delete the last column (last column are the determiants)
         # `-1` normaliz starts counting at `1` while python starts at `0`
-        simplicial_cones_indices = np.fromstring(array_as_str, sep=' ', dtype=int).reshape(shape)[:,:-1] - 1
+        simplicial_cones_indices = np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)[:,:-1] - 1
 
         return original_cone[simplicial_cones_indices]
 

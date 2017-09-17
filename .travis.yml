@@ -11,6 +11,7 @@ matrix:
             - graphviz
       env:
         - MATRIX_EVAL="export CC=gcc-6 && export CXX=g++-6"
+        - NORMALIZ_VERSION=3.3.0
       before_install:
         - eval ${MATRIX_EVAL}
       python: 2.7
@@ -27,6 +28,7 @@ matrix:
             - graphviz
       env:
         - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+        - NORMALIZ_VERSION=3.4.0
       before_install:
         - eval ${MATRIX_EVAL}
       python: 2.7
@@ -43,6 +45,7 @@ matrix:
             - graphviz
       env:
         - MATRIX_EVAL="export CC=gcc-6 && export CXX=g++-6"
+        - NORMALIZ_VERSION=3.4.0
       before_install:
         - eval ${MATRIX_EVAL}
       python: 3.5
@@ -59,6 +62,7 @@ matrix:
             - graphviz
       env:
         - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+        - NORMALIZ_VERSION=3.3.0
       before_install:
         - eval ${MATRIX_EVAL}
       python: 3.5
@@ -75,6 +79,7 @@ matrix:
             - graphviz
       env:
         - MATRIX_EVAL="export CC=gcc-6 && export CXX=g++-6"
+        - NORMALIZ_VERSION=3.3.0
       python: 3.6
       before_install:
         - eval ${MATRIX_EVAL}
@@ -91,6 +96,7 @@ matrix:
             - graphviz
       env:
         - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+        - NORMALIZ_VERSION=3.4.0
       python: 3.6
       before_install:
         - eval ${MATRIX_EVAL}
@@ -100,6 +106,8 @@ matrix:
       osx_image: xcode8
       language: c++
       compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.3.0
       before_install:
         - brew install graphviz
         - pip install nose
@@ -108,6 +116,8 @@ matrix:
       osx_image: xcode9
       language: c++
       compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.4.0
       before_install:
         - brew install graphviz
         - sudo mkdir /usr/local/man
@@ -115,7 +125,6 @@ matrix:
         - pip install nose
 
 install:
-  - export NORMALIZ_VERSION=3.3.0
   - export PATH=${TRAVIS_BUILD_DIR}/dist_install/bin:$PATH
   - export SECDEC_CONTRIB=${TRAVIS_BUILD_DIR}/dist_install/
   - export PYTHONPATH=${TRAVIS_BUILD_DIR}/dist_install/pySecDec_install:$PYTHONPATH
