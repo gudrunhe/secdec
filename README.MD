@@ -26,7 +26,7 @@ The geometric method and Normaliz
 
 If you want to use the geometric decomposition methods
 (decomposition_method='geometric or 'geometric_ku'),
-you need the `normaliz`  executable, 
+you need the `normaliz`  executable,
 which can be downloaded from https://www.normaliz.uni-osnabrueck.de
 [W. Bruns and B. Ichim and T. Römer and R. Sieg and C. Söger].
 The geometric decomposition module is
@@ -51,7 +51,7 @@ and programs are required:
    * gsl (http://www.gnu.org/software/gsl/)
 
 The functions `pySecDec.code_writer.make_package` and `pySecDec.loop_integral.loop_package`
-can use the external program `nauty` 
+can use the external program `nauty`
  to find all sector symmetries and therefore reduce the number of sectors:
 
  * NAUTY (http://pallini.di.uniroma1.it/)
@@ -90,17 +90,17 @@ This will print the result of the integral evaluated with Mandelstam invariants 
 List of examples
 ================
 
- * easy: 	         a simple parametric integral, described in the manual in Section 2.1.
- * box1L: 	         a simple 1-loop, 4-point, 4-propagator integral, described in the manual Section 2.2.
- * triangle2L: 	 a 2-loop, 3-point, 6-propagator diagram, also containing massive propagators.
+ * easy:             a simple parametric integral, described in the manual in Section 2.1.
+ * box1L:            a simple 1-loop, 4-point, 4-propagator integral, described in the manual Section 2.2.
+ * triangle2L:   a 2-loop, 3-point, 6-propagator diagram, also containing massive propagators.
  * box2L_numerator: a massless planar on-shell 2-loop, 4-point, 7-propagator box with a numerator, either defined as an inverse propagator box2L_invprop.py or in terms of contracted Lorentz vectors box2L_contracted_tensor.py.
- * triangle3L: 	 a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors.
- * elliptic2L_euclidean: 	an integral known to contain elliptic functions, evaluated at a Euclidean phase-space point.
- * elliptic2L_physical: 	an integral known to contain elliptic functions, evaluated at a physical phase-space point.
- * triangle2L_split: 	a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics.
- * hypergeo5F4: 	        a general dimensionally regulated parameter integral, corresponding to a Hypergeometric function 5F4.
- * 4photon1L_amplitude: 	calculation of the 4-photon amplitude, showing how to use pySecDec as an integral library in a larger context.
- * two_regulators: 	an integral involving poles in two different regulators.
+ * triangle3L:   a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors.
+ * elliptic2L_euclidean:    an integral known to contain elliptic functions, evaluated at a Euclidean phase-space point.
+ * elliptic2L_physical:     an integral known to contain elliptic functions, evaluated at a physical phase-space point.
+ * triangle2L_split:    a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics.
+ * hypergeo5F4:             a general dimensionally regulated parameter integral, corresponding to a Hypergeometric function 5F4.
+ * 4photon1L_amplitude:     calculation of the 4-photon amplitude, showing how to use pySecDec as an integral library in a larger context.
+ * two_regulators:  an integral involving poles in two different regulators.
  * userdefined_cpp:        a collection of examples demonstrating how to combine polynomials to be decomposed with other user-defined functions
 
 Development
@@ -177,7 +177,7 @@ checked out in the git repository. The following steps should be seen as a guide
    * Sphinx (http://www.sphinx-doc.org/)
    * The full TeX Live distribution (http://tug.org/texlive/)
      Note that there are slimmed distributions of TeXLive that typically result in errors about missing files.
-     Follow the instructions in the section "Documentation" in that case.
+     Follow the instructions in the section "Building the Documentation" in that case.
    * The GNU autotools:
      * Autoconf(https://www.gnu.org/software/autoconf/autoconf.html)
      * Automake(https://www.gnu.org/software/automake/)
