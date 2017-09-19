@@ -58,6 +58,6 @@ decomposition_method = 'iterative',
 contour_deformation = False,
 
 # no symmetries --> no need to run the full symmetry finder
-use_dreadnaut = False,
+use_Pak = False,
 
 )
