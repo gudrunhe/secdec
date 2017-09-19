@@ -229,6 +229,7 @@ def loop_package(name, loop_integral, requested_order,
         normaliz_executable = normaliz_executable,
 
         use_dreadnaut = use_dreadnaut,
+        use_Pak = use_Pak,
 
         enforce_complex = enforce_complex,
         ibp_power_goal = ibp_power_goal,
