@@ -582,7 +582,7 @@ class TestNumerator(unittest.TestCase):
                                              + p1(mu)* p3(mu)*(z4*z6 + z3*(z4 + z5 + z6 + z7)))
                                              + eps * U
                                       ''') * sp.sympify('gamma(7 - (4-2*eps)*2/2)')
-        # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the numerator.
+        # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the `Gamma_factor`.
         target_numerator = - target_numerator
 
         self.assertEqual( (sp.sympify(li.U) - target_U).simplify() , 0 )
@@ -608,7 +608,7 @@ class TestNumerator(unittest.TestCase):
                                                                     + (-s/2-t/2)*(z4*z6 + z3*(z4 + z5 + z6 + z7))
                                                                ) + eps * U
                                                         ''') * sp.sympify('gamma(7 - (4-2*eps)*2/2)')
-        # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the numerator.
+        # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the `Gamma_factor`.
         target_numerator_with_replacements = - target_numerator_with_replacements
 
         self.assertEqual( (sp.sympify(li_with_replacement_rules.numerator) * li.Gamma_factor - target_numerator_with_replacements).simplify() , 0 )
@@ -876,7 +876,7 @@ class TestNumerator(unittest.TestCase):
             Feynman_parametrized_numerator *= li1.Gamma_factor / sp.sympify('gamma(7 - D)')
             Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs('gamma(7 - D)', '(6 - D)*gamma(6 - D)')
 
-            # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the numerator.
+            # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the `Gamma_factor`.
             Feynman_parametrized_numerator = - Feynman_parametrized_numerator
 
             # only one scalar product per term --> can safely remove dummy index
@@ -1088,6 +1088,7 @@ def compare_two_loop_integrals(testcase, li1, li2):
     testcase.assertEqual( (result_expoF_1 - result_expoF_2).simplify() , 0 )
 
 
+#@attr('active')
 class TestPowerlist(unittest.TestCase):
 
     def tri1L_powers(self, power):
@@ -1117,7 +1118,7 @@ class TestPowerlist(unittest.TestCase):
 
         symbols_U_F = sp.sympify(['U', 'F'])
 
-        target_Nu = {  '1': '-1'
+        target_Nu = {  '1': '1'
                      , '0': '1'
                      , '-1':
                      '''3*ssp1*z1*z2 - 2*eps*ssp1*z1*z2 +
@@ -1155,11 +1156,11 @@ class TestPowerlist(unittest.TestCase):
                      eps**3*(z1 + z2)**3*(-(ssp1*z2) - 2*ssp3*z2 -
                      ssp2*(z1 + z2))**3'''
                      , '1+eps':
-                     '(-1)**(3+eps)*z3**eps'
+                     'z3**eps'
                      , 'eps':
-                     '(-1)**(2+eps)*z3**(-1 + eps)'
+                     'z3**(-1 + eps)'
                      , '-1+eps':
-                     '''(-1)**(2+eps)*z3**(-1 + eps)*((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
+                     '''z3**(-1 + eps)*((-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*
                      (z1 + z2 + z3) - 2*eps*(-(ssp2*z1) -
                      (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3) -
                      3*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
@@ -1167,7 +1168,7 @@ class TestPowerlist(unittest.TestCase):
                      3*eps*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
                      z1*(ssp1*z2 + ssp2*z3)))'''
                      , '-2+eps':
-                     '''(-1)**(2+eps)*z3**(-1 + eps)*(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
+                     '''z3**(-1 + eps)*(2*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
                      (z1 + z2 + z3)**2 -
                      6*eps*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)**2*
                      (z1 + z2 + z3)**2 +
@@ -1189,12 +1190,12 @@ class TestPowerlist(unittest.TestCase):
                      9*eps**2*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) -
                      z1*(ssp1*z2 + ssp2*z3))**2)'''
                      , '1/2+eps':
-                     '''(-1)**(2+3/2+eps)*z3**(1/2 + eps)
+                     '''z3**(1/2 + eps)
                      *1/2*((-1 - 4*eps)*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3) +
                      3*(-1 + 2*eps)*(-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)))'''
 
                      , '-1/2+eps':
-                     '''(-1)**(2+3/2+eps)*z3**(1/2 + eps)
+                     '''z3**(1/2 + eps)
                      *(((-1 + 4*eps)*(1 + 4*eps)*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)^2*
                      (z1 + z2 + z3)^2 - 2*(-1 + 4*eps)*(-5 + 6*eps)*
                      (-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)*(z1 + z2 + z3)*
@@ -1203,7 +1204,7 @@ class TestPowerlist(unittest.TestCase):
                      z1*(ssp1*z2 + ssp2*z3))^2)/4)
                      '''
                      ,'-3/2':
-                       '''(-1)**(2+3/2)*z3**(1/2)
+                       '''z3**(1/2)
                        *((-((-3 + 2*eps)*(-1 + 4*eps^2)*(-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)^3*
                        (z1 + z2 + z3)^3) + 3*(-7 + 4*eps)*(3 - 8*eps + 4*eps^2)*
                        (-(ssp2*z1) - (ssp1 + ssp2 + 2*ssp3)*z2)^2*(z1 + z2 + z3)^2*
@@ -1234,7 +1235,7 @@ class TestPowerlist(unittest.TestCase):
         # The powers *cannot* be compared against SecDec3 because the implementation is different!
         target_exponent_U = sum(powerlist) - number_of_derivatives[power] - (li.L + 1)*li.dimensionality/2
         target_exponent_F = - (sum(powerlist) + number_of_derivatives[power] - li.L*li.dimensionality/2)
-        target_gamma = sp.gamma((sum(powerlist) - li.L*li.dimensionality/2))
+        target_gamma = sp.gamma((sum(powerlist) - li.L*li.dimensionality/2)) * sp.exp(-sp.I*sp.pi * (sum(powerlist) - number_of_derivatives[power]))
         if (powerlist[2] + number_of_derivatives[power]) !=0:
             target_gamma /= sp.gamma(powerlist[2] + number_of_derivatives[power])
 
@@ -1266,6 +1267,7 @@ class TestPowerlist(unittest.TestCase):
     def test_zero_power(self):
         self.tri1L_powers('0')
 
+    #@attr('active')
     def test_negative_powers1(self):
         self.tri1L_powers('-1')
 
@@ -1296,6 +1298,7 @@ class TestPowerlist(unittest.TestCase):
     #@attr('active')
     def test_eps_power5(self):
         self.tri1L_powers('1/2+eps')
+
     #@attr('active')
     def test_eps_power6(self):
         self.tri1L_powers('-1/2+eps')
@@ -1326,7 +1329,7 @@ class TestPowerlist(unittest.TestCase):
         z1*(s*z5*z6 + t*z4*z7) -
         s*z2*((z4 + z5)*z6 + z3*(z4 + z5 + z6 + z7))'''
 
-        target_Nu = '''(-1)**7*(-2*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) +
+        target_Nu = '''(-2*(z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) +
         z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7))*
         (-(s*z5*z6) + z4*(s*z6 + t*(z5 + z6)) +
         t*z2*(z4 + z5 + z6 + z7) +
@@ -1342,6 +1345,8 @@ class TestPowerlist(unittest.TestCase):
         z1*(s*z5*z6 + t*z4*z7) -
         s*z2*((z4 + z5)*z6 + z3*(z4 + z5 + z6 + z7))))'''
 
+        target_gamma_factor = '-gamma(2+2*eps)'
+
 
         li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist,
                                          replacement_rules=rules, Feynman_parameters=Feynman_parameters)
@@ -1349,12 +1354,15 @@ class TestPowerlist(unittest.TestCase):
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
         result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+        result_gamma_factor = sp.sympify(li.Gamma_factor)
 
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+        self.assertEqual( (result_gamma_factor - sp.sympify(target_gamma_factor)).simplify() , 0 )
 
     @attr('slow')
+    #@attr('active')
     def test_powerlist_with_mass(self):
         loop_momenta = ['k']
         propagators = ['k**2', '(k-p1)**2', '(k+p2)**2 - m**2']
@@ -1375,7 +1383,7 @@ class TestPowerlist(unittest.TestCase):
         target_F = '''-(ssp1*z2*(z1 + z3)) + z3*(-2*ssp3*z2 - ssp2*(z1 + z2) +
         m**2*(z1 + z2 + z3))'''
 
-        target_Nu = '''(-1)**eps*z3**(-1 + eps)*(2*(z1 + z2 + z3)**2*
+        target_Nu = '''z3**(-1 + eps)*(2*(z1 + z2 + z3)**2*
         (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 +
         m**2*(z1 + z2 + z3))**2 - 6*eps*(z1 + z2 + z3)**2*
         (-(ssp1*z2) - 2*ssp3*z2 - ssp2*(z1 + z2) + m**2*z3 +
@@ -1408,13 +1416,17 @@ class TestPowerlist(unittest.TestCase):
         z3*(-2*ssp3*z2 - ssp2*(z1 + z2) +
         m**2*(z1 + z2 + z3)))**2)'''
 
+        target_gamma_factor = 'gamma(-2+2*eps)/gamma(eps) * exp(-I*pi * (eps+2))'
+
         result_U = sp.sympify(li.U)
         result_F = sp.sympify(li.F)
         result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+        result_gamma_factor = sp.sympify(li.Gamma_factor)
 
         self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
         self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+        self.assertEqual( (result_gamma_factor - sp.sympify(target_gamma_factor)).simplify() , 0 )
 
 
     def test_powerlist_cutconstruct(self):

@@ -45,8 +45,11 @@ class LoopIntegral(object):
     of propagator powers :math:`\neq 1`. The Gamma functions
     in the denominator belonging to the measure, however,
     are multiplied to the overall Gamma factor given by
-    ``self.Gamma_factor``. The overall sign
-    :math:`(-1)^{N_\nu}` is included in ``self.numerator``.
+    ``self.Gamma_factor``.
+
+    .. versionchanged:: 1.2.2
+        The overall sign :math:`(-1)^{N_\nu}` is included
+        in ``self.Gamma_factor``.
 
     .. seealso::
         * input as graph: :class:`.LoopIntegralFromGraph`
@@ -285,7 +288,7 @@ class LoopIntegral(object):
                 U = U.replace(i,0,remove=True).simplify()
                 Nu = Nu.replace(i,0,remove=True).simplify()
 
-        return Nu * (-1)**( self.N_nu + self.number_of_derivatives )
+        return Nu
 
     @cached_property
     def measure(self):
@@ -345,6 +348,11 @@ class LoopIntegral(object):
             eff_power = self.powerlist[i] + self.derivativelist[i]
             if eff_power != 0 :
                 gamma_fac *= 1/sp.gamma(eff_power)
+
+        # Multiply the global factor of `(-1)**N_nu` in equation (2.15) of arXiv:1010.1667v1.
+        # Since we need the (nonstandard) negative prescription, we must rewrite:
+        #   ``(-1-I*delta)**N_nu = exp(Log(-1-I*delta) * N_nu) = exp(-I*pi * N_nu)``
+        gamma_fac *= sp.exp( - sp.I * sp.pi * (self.N_nu + self.number_of_derivatives) )
 
         return gamma_fac
 

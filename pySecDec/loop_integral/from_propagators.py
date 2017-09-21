@@ -553,10 +553,6 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
                     numerator += this_numerator_summand
 
-        # The global factor of `(-1)**N_nu` in equation (2.15) of arXiv:1010.1667v1 must appear somewhere.
-        # The numerator seems a good choice since this has a nonsingular but nontrivial expansion in the
-        # regulator for noninteger propagator powers.
-        # TZ: moved this factor to numerator method of base class
         return numerator
 
     @cached_property
