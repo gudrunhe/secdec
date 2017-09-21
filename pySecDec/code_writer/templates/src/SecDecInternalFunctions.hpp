@@ -67,10 +67,10 @@ namespace %(name)s
             return std::pow(base, exponent);
 
         else if (exponent < 0)
-	    return 1./SecDecInternalPow(base, -exponent);
+	    return Tbase(1)/SecDecInternalPow(base, -exponent);
 
         else if (exponent == 0)
-            return 1.;
+            return Tbase(1);
 
         else if (exponent == 1)
             return base;
