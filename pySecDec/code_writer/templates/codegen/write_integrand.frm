@@ -296,10 +296,6 @@ Bracket `regulators';
               #EndDo
             #EndDo
 
-            #Do innerFunction = {`calIDerivatives'}
-              Id `innerFunction'(`$args') = 0;
-            #EndDo
-
             Id SecDecInternalfDUMMYdeformedContourDeformationPolynomial(?args) = `SecDecInternalContourDeformationPolynomial'(?args);
 
             #Do positivePolynomial = {`positivePolynomials',}
@@ -309,6 +305,9 @@ Bracket `regulators';
             #EndDo
           #EndIf
 
+          #Do innerFunction = {`calIDerivatives'}
+            Id `innerFunction'(`$args') = 0;
+          #EndDo
           .sort
 
         #EndIf
