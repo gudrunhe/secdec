@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "%(name)s.hpp"
+#include "functions.hpp"
 
 namespace %(name)s
 {

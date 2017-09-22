@@ -143,8 +143,8 @@ def _validate(name, allow_underscore=False):
                    '_Imaginary','_Noreturn','_Static_assert','_Thread_local',
                    'alignas','alignof','bool','complex','imaginary','noreturn','static_assert',
                    'thread_local',
-                   # math functions
-                   'log','exp','real','imag','sqrt',
+                   # math functions and symbols
+                   'log','exp','real','imag','sqrt','I','i_',
                    # Cuba integrator library
                    'cubareal','Vegas','llVegas','Suave','llSuave','Cuhre','llCuhre','Divonne','llDivonne',
                    'integrand_t','peakfinder_t',

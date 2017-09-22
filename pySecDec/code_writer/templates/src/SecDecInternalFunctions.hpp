@@ -10,7 +10,10 @@
 
 namespace %(name)s
 {
-    constexpr complex_t i_{0,1}; // the imaginary unit
+    // imaginary unit
+    constexpr complex_t i_{0,1}; // FORM notation
+    constexpr complex_t I = i_; // sympy notation
+
 
     // required functions
     // --{
