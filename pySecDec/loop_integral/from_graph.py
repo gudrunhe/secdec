@@ -63,7 +63,7 @@ class LoopIntegralFromGraph(LoopIntegral):
             vertex = sympify_symbols([line[1]], "Names of vertices must be symbols or numbers.", \
                                      allow_number=True)[0]
             self.external_lines.append([extmom,vertex])
-            if extmom.is_Symbol:
+            if extmom.is_Symbol and extmom not in self.external_momenta:
                 self.external_momenta.append(extmom)
 
         for line in self.external_lines:

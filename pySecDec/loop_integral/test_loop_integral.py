@@ -933,6 +933,15 @@ class TestUF_FromGraph(unittest.TestCase):
                               result_u = "x0",
                               result_f = "m**2*x0**2")
 
+    #@attr('active')
+    def test_bubble_1l(self):
+        uf_from_graph_generic(self,
+                              int_lines = [['m',(1,2)], [0,(1,2)]],
+                              ext_lines = [('p',1),('p',2)],
+                              result_L = 1,
+                              result_u = "x0 + x1",
+                              result_f = "(m**2 - p**2)*x0*x1 + (m**2)*x0**2")
+
     def test_triangle_1l(self):
         uf_from_graph_generic(self,
                               int_lines = [[0,['vertex1','vertex2']], [0,['vertex2','vertex3']],
