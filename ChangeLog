@@ -1,8 +1,14 @@
-18.08.2017 release of pySecDec-1.2.1
+25.08.2017 pySecDec-1.2.2
+
+    [loop_integral] fix issues with sympy-1.1.1
+    [symmetry_finder] fix Pak's sorting algorithm
+    [loop_package] fix error with regulator in 'powerlist'
+
+18.08.2017 pySecDec-1.2.1
 
     fix release 1.2
 
-09.08.2017 release of pySecDec-1.2
+09.08.2017 pySecDec-1.2
 
     +-----------------------------------------------------------------------+
     | Version 1.2 has a bug that can lead to wrong results without warning. |
@@ -13,22 +19,22 @@
     [util/integrator] add dedicated 1D integrator 'cquad'
     [util/integrator] implement 'MultiIntegrator' to choose an integrator depending on the dimension of the integrand
 
-26.06.2017 release of pySecDec-1.1.2
+26.06.2017 pySecDec-1.1.2
 
     [make_package] fix unittest failing with python 3.6.1
     [util/integrator] fix one dimensional integration
     [util/integrand_container] fix memory access error in "complex_to_real"
 
-30.05.2017 release of pySecDec-1.1.1
+30.05.2017 pySecDec-1.1.1
 
     [make_package]: drop lower bound on 'requested_order'
     [loop_integral]: fixed parameters of loop integral measure for integrals with both doubled and inverse propagators
     fix geometric_ku decomposition method
 
-20.04.2017 release of pySecDec-1.1
+20.04.2017 pySecDec-1.1
 
     update documentation
     added example 'easy'
     update error propagation
 
-29.03.2017 release of pySecDec-1.0
+29.03.2017 pySecDec-1.0
