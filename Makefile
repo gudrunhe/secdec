@@ -210,7 +210,7 @@ dist : clean
 	tar -czf pySecDec-$(PYSECDECVERSION).tar.gz pySecDec-$(PYSECDECVERSION)/
 
 .SILENT .PHONY : show-todos
-grep_cmd  = grep -riG [^"au""sphinx.ext."]todo --color=auto --exclude=Makefile --exclude-dir=.git
+grep_cmd  = grep -riG [^"au""sphinx.ext."]todo --color=auto --exclude=Makefile --exclude-dir=.git --exclude=catch.hpp
 begin_red = "\033[0;31m"
 end_red   = "\033[0m"
 show-todos :
@@ -221,6 +221,7 @@ show-todos :
 	echo -e $(begin_red)"*******************************************************************"$(end_red) ; \
 	echo -e $(begin_red)"* The following files and directories are NOT searched for TODOs: *"$(end_red) ; \
 	echo -e $(begin_red)"* o makefiles                                                     *"$(end_red) ; \
+	echo -e $(begin_red)"* o files named 'catch.hpp'                                       *"$(end_red) ; \
 	echo -e $(begin_red)"* o .git directories                                              *"$(end_red) ; \
 	echo -e $(begin_red)"*******************************************************************"$(end_red) ; \
 	echo
