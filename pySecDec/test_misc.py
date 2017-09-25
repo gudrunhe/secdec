@@ -1,6 +1,7 @@
 """Unit tests for the miscellaneous routines"""
 
 from .misc import *
+from .algebra import Polynomial
 import numpy as np
 import unittest
 from nose.plugins.attrib import attr
@@ -246,6 +247,67 @@ class TestCachedProperty(unittest.TestCase):
             # the method should be called only once
             self.assertEqual(instance.prop, 10)
             self.assertEqual(instance.counter, 1)
+
+class TestFlatten(unittest.TestCase):
+    def setUp(self):
+        self.p0 = Polynomial([[-1,0], [0,0]], ['A', 'B'])
+        self.p1 = Polynomial([[0,-2], [0,-1], [0,0]], [self.p0, self.p0, self.p0])
+        self.p2 = Polynomial([[0,-2], [0,-1], [0,0]], [self.p0, self.p0, 'B'])
+
+        self.target_flattened_polynomial_1 = Polynomial([[-1,-2], [0,-2],
+                                                         [-1,-1], [0,-1],
+                                                         [-1, 0], [0, 0]],
+
+                                                         ['A','B']*3)
+
+
+        self.target_flattened_polynomial_2 = Polynomial([[-1,-2], [0,-2],
+                                                         [-1,-1], [0,-1],
+                                                                  [0, 0]],
+
+                                                         ['A','B']*2+['B'])
+
+
+        self.pmix_0 = Polynomial([[ 1,2], [ 0,0]], ['A', 'B'])
+        self.pmix   = Polynomial([[-1,0], [-1,0]], [self.pmix_0, 'B'])
+
+        self.target_flattened_pmix =  Polynomial([[0,2], [-1,0], [-1,0]], ['A','B','B'])
+
+    #@attr('active')
+    def test_plain_with_depth(self):
+        flattened_p1 = flatten(self.p1, 1)
+        np.testing.assert_array_equal(flattened_p1.expolist, self.target_flattened_polynomial_1.expolist)
+        np.testing.assert_array_equal(flattened_p1.coeffs, self.target_flattened_polynomial_1.coeffs)
+
+    #@attr('active')
+    def test_plain_without_depth(self):
+        flattened_p1 = flatten(self.p1)
+        np.testing.assert_array_equal(flattened_p1.expolist, self.target_flattened_polynomial_1.expolist)
+        np.testing.assert_array_equal(flattened_p1.coeffs, self.target_flattened_polynomial_1.coeffs)
+
+    #@attr('active')
+    def test_mixed_with_depth(self):
+        flattened_p2 = flatten(self.p2, 1)
+        np.testing.assert_array_equal(flattened_p2.expolist, self.target_flattened_polynomial_2.expolist)
+        np.testing.assert_array_equal(flattened_p2.coeffs, self.target_flattened_polynomial_2.coeffs)
+
+    #@attr('active')
+    def test_mixed_without_depth(self):
+        flattened_p2 = flatten(self.p2)
+        np.testing.assert_array_equal(flattened_p2.expolist, self.target_flattened_polynomial_2.expolist)
+        np.testing.assert_array_equal(flattened_p2.coeffs, self.target_flattened_polynomial_2.coeffs)
+
+    #@attr('active')
+    def test_multi_mixed_with_depth(self):
+        flattened_pmix = flatten(self.pmix, 1)
+        np.testing.assert_array_equal(flattened_pmix.expolist, self.target_flattened_pmix.expolist)
+        np.testing.assert_array_equal(flattened_pmix.coeffs, self.target_flattened_pmix.coeffs)
+
+    #@attr('active')
+    def test_multi_mixed_without_depth(self):
+        flattened_pmix = flatten(self.pmix)
+        np.testing.assert_array_equal(flattened_pmix.expolist, self.target_flattened_pmix.expolist)
+        np.testing.assert_array_equal(flattened_pmix.coeffs, self.target_flattened_pmix.coeffs)
 
 class TestPrefactorExpansion(unittest.TestCase):
     #@attr('active')

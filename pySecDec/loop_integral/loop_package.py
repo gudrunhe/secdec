@@ -10,7 +10,7 @@ from .from_graph import LoopIntegralFromGraph
 from .draw import plot_diagram
 from ..algebra import Polynomial
 from ..code_writer import make_package
-from ..expansion import _flatten # TODO: make `_flatten` a public function in `misc`
+from ..misc import flatten
 from itertools import chain
 import numpy as np
 import sympy as sp
@@ -195,7 +195,7 @@ def loop_package(name, loop_integral, requested_order,
     else:
         symbols = loop_integral.numerator.polysymbols
         loop_integral.numerator.coeffs = np.array( [Polynomial.from_expression(coeff, symbols) for coeff in loop_integral.numerator.coeffs] )
-        other_polynomials = [_flatten(loop_integral.numerator, 1)]
+        other_polynomials = [flatten(loop_integral.numerator, 1)]
 
     polynomials_to_decompose = list(U_and_F)
     if sp.sympify( loop_integral.measure ) != 1:

@@ -7,7 +7,7 @@ Routines to series expand singular and nonsingular expressions.
 """
 
 from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial
-from .misc import sympify_symbols
+from .misc import sympify_symbols, flatten
 from numpy import iterable
 import numpy as np
 import sympy as sp
@@ -170,36 +170,12 @@ def _expand_singular_step(product, index, order):
 
     return Polynomial(nonsingular_series_expolist, nonsingular_series_coeffs, numerator.polysymbols)
 
-def _flatten(polynomial, depth):
-    '''
-    Convert the output of :func:`_expand_singular_step`
-    to a polynomial in the expansion variables.
-
-    :param polynomial:
-        :class:`pySecDec.algebra.Polynomial`;
-        The polynomial to "flatten".
-
-    :param depth:
-        integer;
-        The number of recursion steps.
-
-    '''
-    assert isinstance(polynomial, Polynomial)
-    all_exponents = []
-    all_coeffs = []
-    for i,(exponents,coeff) in enumerate(zip(polynomial.expolist,polynomial.coeffs)):
-        if depth > 1: # stopping criterion for recursion
-            coeff = _flatten(coeff, depth-1)
-        all_coeffs.extend(coeff.coeffs)
-        all_exponents.append(exponents + coeff.expolist)
-    return Polynomial(np.vstack(all_exponents), np.array(all_coeffs), polynomial.polysymbols, copy=False)
-
 def _expand_and_flatten(expression, indices, orders, expansion_one_variable):
     '''
     Expand `expression` in each variable passed via
     `indices` using the function `expansion_one_variable`.
     Flatten the resulting polynomial using the function
-    :func:`_flatten`.
+    :func:`pySecDec.misc.flatten`.
 
     '''
     # basic consistency check
@@ -233,7 +209,7 @@ def _expand_and_flatten(expression, indices, orders, expansion_one_variable):
     if len(indices) == 1:
         return expansion
     else:
-        return _flatten(expansion, len(indices) - 1)
+        return flatten(expansion, len(indices) - 1)
 
 # -------------------- end of private functions --------------------
 

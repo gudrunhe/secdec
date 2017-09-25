@@ -313,6 +313,38 @@ def doc(docstring):
         return function
     return add_doc
 
+def flatten(polynomial, depth=np.inf):
+    '''
+    Convert nested polynomials; i.e. polynomials
+    that have polynomials in their coefficients
+    to one single polynomial.
+
+    :param polynomial:
+        :class:`pySecDec.algebra.Polynomial`;
+        The polynomial to "flatten".
+
+    :param depth:
+        integer;
+        The maximum number of recursion steps.
+        If not provided, stop if the coefficient
+        is not a :class:`pySecDec.algebra.Polynomial`.
+
+    '''
+    from .algebra import Polynomial
+    assert isinstance(polynomial, Polynomial)
+    all_exponents = []
+    all_coeffs = []
+    for i,(exponents,coeff) in enumerate(zip(polynomial.expolist,polynomial.coeffs)):
+        if type(coeff) is Polynomial: # stopping criterion for recursion
+            if depth > 1: # stopping criterion for recursion
+                coeff = flatten(coeff, depth-1)
+            all_coeffs.extend(coeff.coeffs)
+            all_exponents.append(exponents + coeff.expolist)
+        else:
+            all_coeffs.append(coeff)
+            all_exponents.append(exponents)
+    return Polynomial(np.vstack(all_exponents), np.array(all_coeffs), polynomial.polysymbols, copy=False)
+
 def sympify_symbols(iterable, error_message, allow_number=False):
     '''
     `sympify` each item in `iterable` and assert

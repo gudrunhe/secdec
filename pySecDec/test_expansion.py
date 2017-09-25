@@ -1,8 +1,9 @@
 """Unit tests for the expansion routines"""
 
 from .expansion import *
-from .expansion import _expand_singular_step, _expand_Taylor_step, _flatten
+from .expansion import _expand_singular_step, _expand_Taylor_step
 from .algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial, Product, Sum, _Expression
+from .misc import flatten
 from nose.plugins.attrib import attr
 import sympy as sp
 import unittest
@@ -83,21 +84,6 @@ class TestSingularExpansion(unittest.TestCase):
         self.assertEqual( (target_expansion - sp.sympify(second_expansion)).simplify() , 0)
 
     #@attr('active')
-    def test_flatten(self):
-        p0 = Polynomial([[-1,0], [0,0]], ['A', 'B'])
-        p1 = Polynomial([[0,-2], [0,-1], [0,0]], [p0, p0, p0])
-
-        target_flattened_polynomial = Polynomial([[-1,-2], [0,-2],
-                                                  [-1,-1], [0,-1],
-                                                  [-1, 0], [0, 0]],
-
-                                                  ['A','B']*3)
-
-        flattened_p1 = _flatten(p1, 1)
-
-        np.testing.assert_array_equal(flattened_p1.expolist, target_flattened_polynomial.expolist)
-
-    #@attr('active')
     def test_high_level_function_one_regulator(self):
         for error_t in (ValueError, OrderError):
             self.assertRaisesRegexp(error_t, 'lowest order.*higher than the requested order', expand_singular, self.rational_polynomial, indices=1, orders=-2)
@@ -126,7 +112,7 @@ class TestSingularExpansion(unittest.TestCase):
         expansion_1_0 = expansion_1.copy()
         for i, coeff in enumerate(expansion_1.coeffs):
             expansion_1_0.coeffs[i] = _expand_singular_step(coeff, index=0, order=0)
-        flattened_expansion_1_0 = _flatten(expansion_1_0, 1)
+        flattened_expansion_1_0 = flatten(expansion_1_0, 1)
 
         # the high-level function should run exactly the commands above
         high_level_output = expand_singular(self.rational_polynomial, indices=[1,0], orders=[1,0])
