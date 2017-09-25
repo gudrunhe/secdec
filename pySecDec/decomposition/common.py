@@ -566,11 +566,13 @@ def squash_symmetry_redundant_sectors_sort(sectors, sort_function):
     by a permutation.
 
     Note: whether all symmetries are found depends on
-    the choice of `sort_function`. Neither
+    the choice of `sort_function`. The sort function
+    :func:`pySecDec.matrix_sort.Pak_sort` should find
+    all symmetries whilst the sort functions
     :func:`pySecDec.matrix_sort.iterative_sort`
-    nor
-    :func:`pySecDec.matrix_sort.Pak_sort` find all
-    symmetries.
+    and
+    :func:`pySecDec.matrix_sort.light_Pak_sort` are
+    faster but do not identify all symmetries.
 
     See also:
     :func:`squash_symmetry_redundant_sectors_dreadnaut`
