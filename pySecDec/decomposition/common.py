@@ -174,7 +174,7 @@ def _sector2array(sector):
 
 def _collision_safe_hash(iterable):
     '''
-    Return an array containingh the hashes of
+    Return an array containing the hashes of
     an `iterable`. If there is a hash collision
     (if the hashes of two objects that do not
     compare equal are equal), alter the hashes
