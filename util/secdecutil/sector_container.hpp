@@ -213,7 +213,9 @@ namespace secdecutil {
                 error_message += "\", order { ";
                 for (auto order : orders)
                     error_message += std::to_string(order) + " ";
-                error_message += "} yields the wrong sign of \"contour_deformation_polynomial.imag\" or";
+                error_message += "}";
+                error_message += error.what();
+                error_message += " yields the wrong sign of \"contour_deformation_polynomial.imag\" or";
                 error_message += " \"positive_polynomial.real\". Choose a larger \"number_of_presamples\" in";
                 error_message += " \"optimize_deformation_parameters\" or decrease the \"deformation_parameters\".";
                 throw sign_check_error(error_message);

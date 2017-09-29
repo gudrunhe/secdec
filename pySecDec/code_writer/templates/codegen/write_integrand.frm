@@ -1145,7 +1145,12 @@ Bracket `regulators';
       #If termsin(expr) > 0
         #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
         #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression > 0)"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> ", #@SecDecInternalEscapedDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "contour deformation polynomial"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalEscapedDblquote@#, check id #@SecDecInternalEscapedDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "`signCheckId'"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalEscapedDblquote@#,#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
       #EndIf
 
     #EndDo
@@ -1164,7 +1169,12 @@ Bracket `regulators';
       #If termsin(expr) > 0
         #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
         #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression < 0)"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> ", #@SecDecInternalEscapedDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "positive polynomial"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalEscapedDblquote@#, check id #@SecDecInternalEscapedDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "`signCheckId'"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalEscapedDblquote@#,#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
       #EndIf
 
     #EndDo
