@@ -164,8 +164,8 @@ def _sector2array(sector):
     for index,poly in enumerate(sector.other):
         combined_expolists.append(poly.expolist)
         # must distinguish between `Polynomial` and `ExponentiatedPolynomial`
-        if type(prod.factors[0]) is ExponentiatedPolynomial:
-            combined_coeffs.extend(poly.coeffs * sp.sympify('SecDecInternalExponent(%s)*SecDecInternalOther(%i)'%(prod.factors[0].exponent,index)))
+        if type(poly) is ExponentiatedPolynomial:
+            combined_coeffs.extend(poly.coeffs * sp.sympify('SecDecInternalExponent(%s)*SecDecInternalOther(%i)'%(poly.exponent,index)))
         else:
             combined_coeffs.extend(poly.coeffs * sp.sympify('SecDecInternalOther(%i)'%index))
 

@@ -81,6 +81,8 @@ class TestSector(unittest.TestCase):
 #@attr('active')
 class TestSymmetryFinding(unittest.TestCase):
     def setUp(self):
+        eps = sp.symbols('eps')
+
         self.Jacobian = Polynomial([(1,0)], ['a'])
 
         self.p0 = Polynomial([(0,1),(1,3)], ['a','b'])
@@ -93,6 +95,11 @@ class TestSymmetryFinding(unittest.TestCase):
 
         self.sector = Sector([self.p0,self.p1], [self.p2], self.Jacobian)
 
+        self.p1_other_exponent = ExponentiatedPolynomial([(1,2),(3,4)], ['5','6'], exponent='1+eps')
+        self.p2_other_exponent = ExponentiatedPolynomial([(1,2),(3,4)], ['5','6'], exponent='2+eps')
+        self.sector_other_exponent = Sector([self.p1_other_exponent],
+                                            [self.p1_other_exponent,self.p2_other_exponent],
+                                            self.Jacobian)
 
         self.swapped_p0 = Polynomial([(1,0),(3,1)], ['a','b'])
         self.swapped_Jacobian = Polynomial([(0,1)], ['swapped_Jacobian_coeff'])
@@ -126,6 +133,40 @@ class TestSymmetryFinding(unittest.TestCase):
 
                                                # p2
                                                self.e*SecDecInternalOther(0),self.f*SecDecInternalOther(0),self.g*SecDecInternalOther(0)
+                                         ])
+
+        np.testing.assert_array_equal(combined_expolists, target_combined_expolists)
+        np.testing.assert_array_equal(combined_coeffs, target_combined_coeffs)
+
+    #@attr('active')
+    def test_sector2array_other_exponent(self):
+
+        SecDecInternalCast, SecDecInternalOther = sp.symbols('SecDecInternalCast SecDecInternalOther')
+        SecDecInternalExponent = sp.symbols('SecDecInternalExponent')
+
+        combined_expolists, combined_coeffs = _sector2array(self.sector_other_exponent)
+
+        target_combined_expolists = np.array([
+                                                (1,0),       # Jacobian
+                                                (1,2),(3,4), # p1
+                                                (1,2),(3,4), # p1
+                                                (1,2),(3,4)  # p2
+                                            ])
+        target_combined_coeffs = np.array([
+                                               # Jacobian coefficient is ignored (replaced by a dummy)
+                                               1,
+
+                                               # p1
+                                               5 * SecDecInternalCast(0) * SecDecInternalExponent('1+eps'),
+                                               6 * SecDecInternalCast(0) * SecDecInternalExponent('1+eps'),
+
+                                               # p1
+                                               5 * SecDecInternalOther(0)*SecDecInternalExponent('1+eps'),
+                                               6 * SecDecInternalOther(0)*SecDecInternalExponent('1+eps'),
+
+                                               # p2
+                                               5 * SecDecInternalOther(1)*SecDecInternalExponent('2+eps'),
+                                               6 * SecDecInternalOther(1)*SecDecInternalExponent('2+eps')
                                          ])
 
         np.testing.assert_array_equal(combined_expolists, target_combined_expolists)
