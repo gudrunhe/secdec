@@ -887,6 +887,29 @@ class TestNumerator(unittest.TestCase):
 
             self.assertEqual( (sp.sympify(Feynman_parametrized_numerator) - target_numerators[i]).simplify() , 0 )
 
+    #@attr('active')
+    def test_numerator_without_external_momenta(self):
+        double_tadpole = LoopIntegralFromPropagators(
+            loop_momenta = ['k1','k2'],
+            Lorentz_indices = ['mu'],
+            propagators = ['(k1)**2-msq','k2**2'],
+            numerator = 'k1(mu)*k1(mu)',
+        )
+
+        D,eps = sp.symbols('D eps')
+
+        target_F = sp.sympify('msq * x0**2*x1')
+        target_exponent_F = sp.sympify('-(Nnu-L*D/2)').subs(D,4-2*eps).subs('R',2).subs('L',2).subs('Nnu',2)
+        target_U = sp.sympify('x0*x1')
+        target_exponent_U = sp.sympify('Nnu-(L+1)*D/2-R').subs(D,4-2*eps).subs('R',2).subs('L',2).subs('Nnu',2)
+        target_numerator = sp.sympify('-D/2 * x1 * F').subs(D,4-2*eps)
+
+        self.assertEqual( (sp.sympify(double_tadpole.F) - target_F).simplify() , 0 )
+        self.assertEqual( (sp.sympify(double_tadpole.exponent_F) - target_exponent_F).simplify() , 0 )
+        self.assertEqual( (sp.sympify(double_tadpole.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sp.sympify(double_tadpole.exponent_U) - target_exponent_U).simplify() , 0 )
+        self.assertEqual( (sp.sympify(double_tadpole.numerator) - target_numerator).simplify() , 0 )
+
 # TODO: uncomment when implemented
 #    def test_error_if_index_too_often(self):
 #        mu, nu = sp.symbols('mu nu')

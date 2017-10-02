@@ -505,7 +505,8 @@ class LoopIntegralFromPropagators(LoopIntegral):
                     for k, (external_momentum_index, Lorentz_index_P) in enumerate(contracted_P_indices):
                         this_tensor_P_factor = aM[external_momentum_index].dot(Q)
                         for j, coeff in enumerate(this_tensor_P_factor.coeffs):
-                            this_tensor_P_factor.coeffs[j] = coeff.subs((p, p(Lorentz_index_P)) for p in self.external_momenta)
+                            if isinstance(coeff, sp.Expr):
+                                this_tensor_P_factor.coeffs[j] = coeff.subs((p, p(Lorentz_index_P)) for p in self.external_momenta)
 
                         # must append ``F`` and ``U`` to the parameters of ``this_tensor_P_factor``
                         this_tensor_P_factor.expolist = np.hstack([this_tensor_P_factor.expolist, np.zeros((len(this_tensor_P_factor.expolist), 2), dtype=int)])
