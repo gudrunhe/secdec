@@ -68,10 +68,10 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                 raise ValueError('"%s" (in `%s`) depends on the wrong `symbols` (is: %s, should be: %s). Try passing it as string or sympy expression.' \
                                  % (expression, name_of_make_argument_being_parsed, expression.symbols, polysymbols))
         if target_type is ExponentiatedPolynomial:
-            if type(expression) == ExponentiatedPolynomial:
+            if type(expression) is ExponentiatedPolynomial:
                 expression.exponent = sp.sympify(str(expression.exponent))
                 expression.coeffs = np.array([ sp.sympify(str(coeff)) for coeff in expression.coeffs ])
-            elif type(expression) == Polynomial:
+            elif type(expression) is Polynomial:
                 expression = ExponentiatedPolynomial(expression.expolist,
                                                      np.array([ sp.sympify(str(coeff)) for coeff in expression.coeffs ]),
                                                      _sympy_one, # exponent
@@ -424,10 +424,10 @@ def _make_FORM_function_definition(name, expression, args, limit):
             codelines.append( "  Id %s = %s;" % (name+FORM_args_left_hand_side,str_expression) )
             return
 
-        if type(expression) == ProductRule:
+        if type(expression) is ProductRule:
             expression = expression.to_sum()
 
-        if type(expression) == Sum:
+        if type(expression) is Sum:
             name_next_level = internal_prefix+'fDUMMY'+name+'Part'
             codelines.append(
                 "  Id %s = %s;" % (
@@ -439,7 +439,7 @@ def _make_FORM_function_definition(name, expression, args, limit):
                 recursion(name_next_level+str(i), summand)
             return
 
-        if type(expression) == Product:
+        if type(expression) is Product:
             name_next_level = internal_prefix+'fDUMMY'+name+'Part'
             codelines.append(
                 "  Id %s = %s;" % (
