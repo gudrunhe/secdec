@@ -705,9 +705,11 @@ class TestProductRule(unittest.TestCase):
         prod_rule = ProductRule(p0,p1).derive(-1)
         prod_rule_simplify_returned = prod_rule.simplify()
 
-        self.assertTrue(prod_rule is prod_rule_simplify_returned)
+        self.assertFalse(prod_rule is prod_rule_simplify_returned)
         self.assertTrue(type(prod_rule) is ProductRule)
+        self.assertTrue(type(prod_rule_simplify_returned) is Polynomial)
         self.assertEqual( sp.sympify(prod_rule).simplify(), 0 )
+        self.assertEqual( sp.sympify(prod_rule_simplify_returned).simplify(), 0 )
 
     #@attr('active')
     def test_to_sum(self):

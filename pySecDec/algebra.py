@@ -1282,10 +1282,11 @@ class ProductRule(_Expression):
     def __repr__(self):
         outstr = ''
         for i,(coeff,n_jk) in enumerate(zip(self.coeffs,self.factorlist)):
-            outstr += (" + (%i)" % coeff)
-            for j,n_k in enumerate(n_jk):
-                outstr += ' * (%s)' % str(self.expressions[j][tuple(n_k)])
-        return outstr
+            if coeff != 0:
+                outstr += (" + (%i)" % coeff)
+                for j,n_k in enumerate(n_jk):
+                    outstr += ' * (%s)' % str(self.expressions[j][tuple(n_k)])
+        return outstr if outstr else ' + (0)'
 
     __str__ = __repr__
 
@@ -1382,6 +1383,8 @@ class ProductRule(_Expression):
         if len(self.coeffs) == 0:
             self.coeffs = np.array([0])
             self.factorlist = np.zeros((1,self.factorlist.shape[1],self.number_of_variables), dtype=int)
+            # simplify to zero if change of type possible
+            return Polynomial(np.zeros([1,len(self.symbols)], dtype=int), np.array([0]), self.symbols, copy=False)
 
         return self
 
