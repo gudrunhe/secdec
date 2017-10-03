@@ -28,9 +28,11 @@ $(INTEGRALS) :
 lib%.a : %
 	$(MAKE) -C $< $@
 
-very-clean : clean
-	for dir in */; do rm -rf $$dir $@; done
-
-clean:
-	for dir in */; do $(MAKE) -C $$dir $@; done
+.PHONY : clean
+clean :
 	rm -f *.o *.so *.a integrate_box2L
+	for dir in *; do if [ -d $$dir ]; then $(MAKE) -C $$dir $@; fi; done
+
+.PHONY : very-clean
+very-clean :
+	rm -rf */ *.o *.so *.a integrate_box2L
