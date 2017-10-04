@@ -56,8 +56,14 @@ TEST_CASE( "Test cquad member access", "[Integrator][CQuad]" ) {
 TEST_CASE( "Test cquad copy constructor", "[Integrator][CQuad]" ) {
     int dimensionality = 1;
 
-    secdecutil::gsl::CQuad<double> original;
+    secdecutil::gsl::CQuad<double> original(1e-3,1e-4,10,true);
     secdecutil::gsl::CQuad<double> copy = original;
+
+    // properties should be taken over
+    REQUIRE(  copy.epsrel == original.epsrel  );
+    REQUIRE(  copy.epsabs == original.epsabs  );
+    REQUIRE(       copy.n == original.n       );
+    REQUIRE( copy.verbose == original.verbose );
 
     // new workspace should have been allocated
     REQUIRE( copy.get_workspace() != original.get_workspace() );

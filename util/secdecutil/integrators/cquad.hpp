@@ -111,7 +111,7 @@ namespace secdecutil
         (
             const CQuad& original
         ) :
-            CQuad(original.epsrel,original.epsabs,original.n)
+            CQuad(original.epsrel,original.epsabs,original.n,original.verbose)
         {};
 
 
