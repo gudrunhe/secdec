@@ -5,11 +5,12 @@
 #include "../secdecutil/uncertainties.hpp"
 
 #include <complex>
+#include <cmath>
 #include <cuba.h>
 #include <string>
 
 template<typename real_t>
-void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, cubareal epsrel, int dimensionality = 10){
+void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, cubareal epsrel, int dimensionality = 10, bool test_zero_border = false){
 
     const std::function<real_t(real_t const * const)> integrand =
     [dimensionality] (real_t const * const variables)
@@ -21,14 +22,25 @@ void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, cub
     };
 
     const auto integrand_container = secdecutil::IntegrandContainer<real_t, real_t const * const>(dimensionality,integrand);
-    cubareal expected_result = 1.;
+    cubareal expected_result;
+    if (test_zero_border)
+        expected_result = std::pow(0.5 + 3./4., dimensionality);
+    else
+        expected_result = 1.;
 
     auto computed_result = integrator.integrate(integrand_container);
 
-    REQUIRE( computed_result.value > 0.9 );
-    REQUIRE( computed_result.value < 1.1 );
-    REQUIRE( computed_result.value == Approx( expected_result ).epsilon( epsrel ) );
-    REQUIRE( computed_result.uncertainty <= epsrel * computed_result.value );
+    if (test_zero_border) {
+        REQUIRE( computed_result.value > expected_result - 0.1 );
+        REQUIRE( computed_result.value < expected_result + 0.1 );
+        REQUIRE( computed_result.value == Approx( expected_result ).epsilon( epsrel ) );
+        REQUIRE( computed_result.uncertainty <= epsrel * computed_result.value );
+    } else {
+        REQUIRE( computed_result.value > 0.9 );
+        REQUIRE( computed_result.value < 1.1 );
+        REQUIRE( computed_result.value == Approx( expected_result ).epsilon( epsrel ) );
+        REQUIRE( computed_result.uncertainty <= epsrel * computed_result.value );
+    }
 };
 
 template<typename real_t>
@@ -209,7 +221,7 @@ TEST_CASE( "Test Cuhre integrator with complex", "[Integrator][Cuba][Cuhre]" ) {
 
 };
 
-TEST_CASE( "Test integrators one dimensional ", "[Integrator][Cuba][Vegas][Suave][Divonne][Cuhre]" ) {
+TEST_CASE( "Test integrators one dimensional", "[Integrator][Cuba][Vegas][Suave][Divonne][Cuhre]" ) {
 
     // some CUBA integrators fail in 1D without an internal workaround
     int dimensionality = 1;
@@ -240,6 +252,46 @@ TEST_CASE( "Test integrators one dimensional ", "[Integrator][Cuba][Vegas][Suave
 
         auto integrator = secdecutil::cuba::Cuhre<cubareal>(epsrel);
         test_integrator_real(integrator, epsrel, dimensionality);
+
+    }
+
+};
+
+TEST_CASE( "Test integrators zero_border", "[Integrator][Cuba][Vegas][Suave][Divonne][Cuhre]" ) {
+
+    // some CUBA integrators fail in 1D without an internal workaround
+    int dimensionality = 3;
+    cubareal epsrel = 1e-4;
+
+    SECTION( "Vegas" ) {
+
+        auto integrator = secdecutil::cuba::Vegas<cubareal>(epsrel);
+        integrator.zero_border = 0.5;
+        test_integrator_real(integrator, epsrel, dimensionality, /* test_zero_border */ true);
+
+    }
+
+    SECTION( "Suave" ) {
+
+        auto integrator = secdecutil::cuba::Suave<cubareal>(epsrel);
+        integrator.zero_border = 0.5; integrator.nnew = 1e4;
+        test_integrator_real(integrator, epsrel, dimensionality, /* test_zero_border */ true);
+
+    }
+
+    SECTION( "Divonne" ) {
+
+        auto integrator = secdecutil::cuba::Divonne<cubareal>(epsrel);
+        integrator.zero_border = 0.5;
+        test_integrator_real(integrator, epsrel, dimensionality, /* test_zero_border */ true);
+
+    }
+
+    SECTION( "Cuhre" ) {
+
+        auto integrator = secdecutil::cuba::Cuhre<cubareal>(epsrel);
+        integrator.zero_border = 0.5;
+        test_integrator_real(integrator, epsrel, dimensionality, /* test_zero_border */ true);
 
     }
 

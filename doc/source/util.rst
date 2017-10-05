@@ -208,6 +208,8 @@ An integrator that chooses another integrator based on the dimension of the inte
 
             The dimension below which the :cpp:var:`low_dimensional_integrator` is used.
 
+.. _chapter_cpp_cquad:
+
 CQuad
 ~~~~~
 
@@ -218,6 +220,9 @@ CQuad takes the following options:
  * ``epsabs`` - The desired absolute accuracy for the numerical evaluation. Default: ``1e-7``.
  * ``n`` -  The size of the workspace. This value can only be set in the constructor. Changing this attribute of an instance is not possible. Default: ``100``.
  * ``verbose`` -  Whether or not to print status information. Default: ``false``.
+ * ``zero_border`` - The minimal value an integration variable can take. Default: ``0.0``. (`new in version 1.3`)
+
+.. _chapter_cpp_cuba:
 
 Cuba
 ~~~~
@@ -235,6 +240,7 @@ The Cuba integrators all implement:
  * ``seed`` - The seed used to generate random numbers for the numerical integration with Cuba. Default: ``0``.
  * ``mineval`` -  The number of evaluations which should at least be done before the numerical integrator returns a result. Default: ``0``.
  * ``maxeval`` -  The maximal number of evaluations to be performed by the numerical integrator. Default: ``1000000``.
+ * ``zero_border`` - The minimal value an integration variable can take. Default: ``0.0``. (`new in version 1.3`)
 
 The available integrator specific parameters and their default values are:
 

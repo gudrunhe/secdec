@@ -50,14 +50,15 @@ class CQuad(CPPIntegrator):
         :class:`IntegralLibrary`;
         The integral to be computed with this integrator.
 
-    The other options are defined in the gsl manual.
+    The other options are defined in :numref:`chapter_cpp_cquad`
+    and in the gsl manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,n=100,verbose=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,n=100,verbose=False,zero_border=0.0):
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_gsl_cquad.restype = c_void_p
-        self.c_lib.allocate_gsl_cquad.argtypes = [c_double, c_double, c_uint, c_bool]
-        self.c_integrator_ptr = self.c_lib.allocate_gsl_cquad(epsrel,epsabs,n,verbose)
+        self.c_lib.allocate_gsl_cquad.argtypes = [c_double, c_double, c_uint, c_bool, c_double]
+        self.c_integrator_ptr = self.c_lib.allocate_gsl_cquad(epsrel,epsabs,n,verbose,zero_border)
 
 class Vegas(CPPIntegrator):
     '''
@@ -68,14 +69,15 @@ class Vegas(CPPIntegrator):
         :class:`IntegralLibrary`;
         The integral to be computed with this integrator.
 
-    The other options are defined in the cuba manual.
+    The other options are defined in :numref:`chapter_cpp_cuba`
+    and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,nstart=1000,nincrease=500,nbatch=1000,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,zero_border=0.0,nstart=1000,nincrease=500,nbatch=1000,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_cuba_Vegas.restype = c_void_p
-        self.c_lib.allocate_cuba_Vegas.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong, c_longlong, c_longlong, c_longlong, c_bool]
-        self.c_integrator_ptr = self.c_lib.allocate_cuba_Vegas(epsrel,epsabs,flags,seed,mineval,maxeval,nstart,nincrease,nbatch,real_complex_together)
+        self.c_lib.allocate_cuba_Vegas.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong, c_double, c_longlong, c_longlong, c_longlong, c_bool]
+        self.c_integrator_ptr = self.c_lib.allocate_cuba_Vegas(epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nstart,nincrease,nbatch,real_complex_together)
 
 class Suave(CPPIntegrator):
     '''
@@ -86,14 +88,15 @@ class Suave(CPPIntegrator):
         :class:`IntegralLibrary`;
         The integral to be computed with this integrator.
 
-    The other options are defined in the cuba manual.
+    The other options are defined in :numref:`chapter_cpp_cuba`
+    and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,nnew=1000,nmin=10,flatness=25.,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,zero_border=0.0,nnew=1000,nmin=10,flatness=25.,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_cuba_Suave.restype = c_void_p
-        self.c_lib.allocate_cuba_Suave.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong, c_longlong, c_longlong, c_double, c_bool]
-        self.c_integrator_ptr = self.c_lib.allocate_cuba_Suave(epsrel,epsabs,flags,seed,mineval,maxeval,nnew,nmin,flatness,real_complex_together)
+        self.c_lib.allocate_cuba_Suave.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong, c_double, c_longlong, c_longlong, c_double, c_bool]
+        self.c_integrator_ptr = self.c_lib.allocate_cuba_Suave(epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nnew,nmin,flatness,real_complex_together)
 
 class Divonne(CPPIntegrator):
     '''
@@ -104,20 +107,21 @@ class Divonne(CPPIntegrator):
         :class:`IntegralLibrary`;
         The integral to be computed with this integrator.
 
-    The other options are defined in the cuba manual.
+    The other options are defined in :numref:`chapter_cpp_cuba`
+    and in the cuba manual.
 
     '''
-    def __init__(self, integral_library, epsrel=1e-2, epsabs=1e-7, flags=0, seed=0, mineval=0, maxeval=10**6,
+    def __init__(self, integral_library, epsrel=1e-2, epsabs=1e-7, flags=0, seed=0, mineval=0, maxeval=10**6,zero_border=0.0,
                                          key1=2000, key2=1, key3=1, maxpass=4, border=0., maxchisq=1.,
                                          mindeviation=.15, real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_cuba_Divonne.restype = c_void_p
         self.c_lib.allocate_cuba_Divonne.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong,
-                                                     c_int, c_int, c_int, c_int, c_double, c_double, c_double,
-                                                     c_bool]
+                                                     c_double, c_int, c_int, c_int, c_int, c_double, c_double,
+                                                     c_double, c_bool]
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Divonne(epsrel, epsabs, flags, seed, mineval,maxeval,
-                                                                 key1, key2, key3, maxpass, border, maxchisq,
-                                                                 mindeviation, real_complex_together)
+                                                                 zero_border, key1, key2, key3, maxpass, border,
+                                                                 maxchisq, mindeviation, real_complex_together)
 
 class Cuhre(CPPIntegrator):
     '''
@@ -128,14 +132,15 @@ class Cuhre(CPPIntegrator):
         :class:`IntegralLibrary`;
         The integral to be computed with this integrator.
 
-    The other options are defined in the cuba manual.
+    The other options are defined in :numref:`chapter_cpp_cuba`
+    and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,mineval=0,maxeval=10**6,key=0,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,mineval=0,maxeval=10**6,zero_border=0.0,key=0,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_cuba_Cuhre.restype = c_void_p
-        self.c_lib.allocate_cuba_Cuhre.argtypes = [c_double, c_double, c_int, c_longlong, c_longlong, c_int, c_bool]
-        self.c_integrator_ptr = self.c_lib.allocate_cuba_Cuhre(epsrel,epsabs,flags,mineval,maxeval,key,real_complex_together)
+        self.c_lib.allocate_cuba_Cuhre.argtypes = [c_double, c_double, c_int, c_longlong, c_longlong, c_double, c_int, c_bool]
+        self.c_integrator_ptr = self.c_lib.allocate_cuba_Cuhre(epsrel,epsabs,flags,mineval,maxeval,zero_border,key,real_complex_together)
 
 class IntegralLibrary(object):
     r'''

@@ -54,24 +54,21 @@ TEST_CASE( "Test cquad member access", "[Integrator][CQuad]" ) {
 
 
 TEST_CASE( "Test cquad copy constructor", "[Integrator][CQuad]" ) {
-    int dimensionality = 1;
-
-    secdecutil::gsl::CQuad<double> original(1e-3,1e-4,10,true);
-    secdecutil::gsl::CQuad<double> copy = original;
+    const secdecutil::gsl::CQuad<double> original(1e-3,1e-4,10,true,1e-8);
+    const secdecutil::gsl::CQuad<double> copy = original;
 
     // properties should be taken over
-    REQUIRE(  copy.epsrel == original.epsrel  );
-    REQUIRE(  copy.epsabs == original.epsabs  );
-    REQUIRE(       copy.n == original.n       );
-    REQUIRE( copy.verbose == original.verbose );
+    REQUIRE(      copy.epsrel == original.epsrel      );
+    REQUIRE(      copy.epsabs == original.epsabs      );
+    REQUIRE(           copy.n == original.n           );
+    REQUIRE(     copy.verbose == original.verbose     );
+    REQUIRE( copy.zero_border == original.zero_border );
 
     // new workspace should have been allocated
     REQUIRE( copy.get_workspace() != original.get_workspace() );
 };
 
 TEST_CASE( "Test cquad complex to real constructor", "[Integrator][CQuad]" ) {
-    int dimensionality = 1;
-
     secdecutil::gsl::CQuad<std::complex<double>> complex_integrator;
     std::unique_ptr<secdecutil::Integrator<double,double>> generated_real_integrator_ptr = complex_integrator.get_real_integrator();
     secdecutil::gsl::CQuad<double>& generated_real_integrator = *dynamic_cast<secdecutil::gsl::CQuad<double>*>( generated_real_integrator_ptr.get() );
@@ -165,7 +162,7 @@ TEST_CASE( "Test cquad integrator with long double", "[Integrator][CQuad]" ) {
   test_integrator_real(integrator, epsrel);
 };
 
-TEST_CASE( "Test Vegas integrator with complex long double", "[Integrator][CQuad]" ) {
+TEST_CASE( "Test cquad integrator with complex long double", "[Integrator][CQuad]" ) {
   double epsrel = 1e-10;
   double epsabs = 0.0;
   auto integrator = secdecutil::gsl::CQuad<std::complex<long double>>(epsrel);
@@ -174,4 +171,33 @@ TEST_CASE( "Test Vegas integrator with complex long double", "[Integrator][CQuad
     integrator.together = false; // together = true not implemented for cquad
     test_integrator_complex(integrator, epsrel);
   }
+};
+
+TEST_CASE( "Test zero_border of cquad", "[Integrator][CQuad]" ) {
+    using real_t = double;
+
+    const std::function<std::complex<real_t>(real_t const * const)> integrand =
+    [] (real_t const * const variables)
+    {
+        real_t out_real = 6. * variables[0] * (1. - variables[0]);
+
+        real_t out_imag = variables[0] * (1. - variables[0]);
+
+        return std::complex<real_t>{out_real,out_imag};
+    };
+
+    const secdecutil::IntegrandContainer<std::complex<real_t>, real_t const * const> integrand_container(1,integrand);
+    const std::complex<real_t> expected_result = std::complex<real_t>{1.,1./6.} / 2.0 + std::complex<real_t>{3./4.,1./12.};
+
+    const secdecutil::gsl::CQuad<std::complex<real_t>> integrator(1e-15, 1e-10, 100, false, /* zero_border */ 0.5);
+    const secdecutil::UncorrelatedDeviation<std::complex<real_t>> computed_result = integrator.integrate(integrand_container);
+
+    REQUIRE( computed_result.uncertainty.real() <= 1e-10 );
+    REQUIRE( computed_result.uncertainty.imag() <= 1e-10 );
+
+    REQUIRE( computed_result.value.real() >= expected_result.real() - 1e-10 );
+    REQUIRE( computed_result.value.real() <= expected_result.real() + 1e-10 );
+
+    REQUIRE( computed_result.value.imag() >= expected_result.imag() - 1e-10 );
+    REQUIRE( computed_result.value.imag() <= expected_result.real() + 1e-10 );
 };

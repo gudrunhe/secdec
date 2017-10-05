@@ -142,11 +142,12 @@ extern "C"
                             double epsrel,
                             double epsabs,
                             unsigned int n,
-                            bool verbose
+                            bool verbose,
+                            double zero_border
                        )
     {
         auto integrator = new secdecutil::gsl::CQuad<integrand_return_t>
-            (epsrel,epsabs,n,verbose);
+            (epsrel,epsabs,n,verbose,zero_border);
         return integrator;
     }
 
@@ -158,6 +159,7 @@ extern "C"
                             int seed,
                             long long int mineval,
                             long long int maxeval,
+                            double zero_border,
                             long long int nstart,
                             long long int nincrease,
                             long long int nbatch,
@@ -165,7 +167,7 @@ extern "C"
                        )
     {
         auto integrator = new secdecutil::cuba::Vegas<integrand_return_t>
-            (epsrel,epsabs,flags,seed,mineval,maxeval,nstart,nincrease,nbatch);
+            (epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nstart,nincrease,nbatch);
         SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX();
         return integrator;
     }
@@ -177,6 +179,7 @@ extern "C"
                             int seed,
                             long long int mineval,
                             long long int maxeval,
+                            double zero_border,
                             long long int nnew,
                             long long int nmin,
                             double flatness,
@@ -184,7 +187,7 @@ extern "C"
                        )
     {
         auto integrator = new secdecutil::cuba::Suave<integrand_return_t>
-            (epsrel,epsabs,flags,seed,mineval,maxeval,nnew,nmin,flatness);
+            (epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nnew,nmin,flatness);
         SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX();
         return integrator;
     }
@@ -196,6 +199,7 @@ extern "C"
                             int seed,
                             long long int mineval,
                             long long int maxeval,
+                            double zero_border,
                             int key1,
                             int key2,
                             int key3,
@@ -207,7 +211,7 @@ extern "C"
                          )
     {
         auto integrator = new secdecutil::cuba::Divonne<integrand_return_t>
-            (epsrel,epsabs,flags,seed,mineval,maxeval,key1,key2,key3,maxpass,
+            (epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,key1,key2,key3,maxpass,
              border,maxchisq,mindeviation);
         SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX();
         return integrator;
@@ -219,12 +223,13 @@ extern "C"
                             int flags,
                             long long int mineval,
                             long long int maxeval,
+                            double zero_border,
                             int key,
                             bool real_complex_together
                        )
     {
         auto integrator = new secdecutil::cuba::Cuhre<integrand_return_t>
-            (epsrel,epsabs,flags,mineval,maxeval,key);
+            (epsrel,epsabs,flags,mineval,maxeval,zero_border,key);
         SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX();
         return integrator;
     }

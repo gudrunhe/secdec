@@ -44,21 +44,27 @@ namespace secdecutil
       struct CQuad : Integrator<T,T>
       {
       protected:
+        struct params_t
+        {
+            const secdecutil::IntegrandContainer<T, T const * const> * integrand_container;
+            const double& zero_border;
+        };
+
         static double integrand_prototype_for_gsl(double x, void * params)
         {
-          auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<T, T const * const> *>(params) );
+          auto& typed_params = *( reinterpret_cast<params_t const * const>(params) );
 
           // "x" has type double, but the integrand expects type T --> cast to type T
-          T integration_variable = x;
+          T integration_variable = x < typed_params.zero_border ? typed_params.zero_border : x;
 
           // initialize result with NaN --> result will be NaN if integrand throws an error
           double evaluated_integrand = std::nan("");
 
-          evaluated_integrand = integrand_container.integrand(&integration_variable);
+          evaluated_integrand = typed_params.integrand_container->integrand(&integration_variable);
 
           return evaluated_integrand;
         };
-        gsl_function integrand_for_gsl{/* function */ integrand_prototype_for_gsl, /* params --> set in "get_integrate" */ nullptr};
+        gsl_function integrand_for_gsl{/* function */ integrand_prototype_for_gsl, /* params */ reinterpret_cast<void*>(&typed_params)};
         int ndim;
         const double a = 0.0;
         const double b = 1.0;
@@ -72,6 +78,7 @@ namespace secdecutil
         double epsabs;
         const size_t n;
         bool verbose;
+        double zero_border;
 
         const std::shared_ptr<gsl_integration_cquad_workspace>& get_workspace() const
         {
@@ -84,9 +91,10 @@ namespace secdecutil
             double epsrel = 1e-2,
             double epsabs = 1e-7,
             size_t n = 100, // number of intervals to be kept simultaneously
-            bool verbose = false
+            bool verbose = false,
+            double zero_border = 0.0
         ) :
-            epsrel(epsrel),epsabs(epsabs),n(n),verbose(verbose)
+            epsrel(epsrel),epsabs(epsabs),n(n),verbose(verbose),zero_border(zero_border)
         {
             gsl_error_handler_t * original_error_handler = gsl_set_error_handler_off();
             gsl_set_error_handler(custom_gsl_error_handler);
@@ -101,9 +109,10 @@ namespace secdecutil
             double epsabs,
             size_t n, // number of intervals to be kept simultaneously
             bool verbose,
+            double zero_border,
             const std::shared_ptr<gsl_integration_cquad_workspace>& workspace
         ) :
-            epsrel(epsrel),epsabs(epsabs),n(n),verbose(verbose),workspace(workspace)
+            epsrel(epsrel),epsabs(epsabs),n(n),verbose(verbose),zero_border(zero_border),workspace(workspace)
         {};
 
         // copy Constructor
@@ -111,11 +120,13 @@ namespace secdecutil
         (
             const CQuad& original
         ) :
-            CQuad(original.epsrel,original.epsabs,original.n,original.verbose)
+            CQuad(original.epsrel,original.epsabs,original.n,original.verbose,original.zero_border)
         {};
 
 
       protected:
+        params_t typed_params{nullptr,zero_border};
+
         std::function<secdecutil::UncorrelatedDeviation<T>
           (const secdecutil::IntegrandContainer<T, T const * const>&)> get_integrate()
         {
@@ -133,11 +144,11 @@ namespace secdecutil
                   std::cout << "  epsrel " << epsrel << std::endl;
                   std::cout << "  epsabs " << epsabs << std::endl;
                   std::cout << "  n " << n << std::endl;
+                  std::cout << "  zero_border " << zero_border << std::endl;
                   std::cout << std::endl;
               }
 
-              // nasty removal of constness --> restored in gsl_integrand_prototype
-              integrand_for_gsl.params = const_cast<void*>( reinterpret_cast<const void*>(&integrand_container) );
+              typed_params.integrand_container = &integrand_container;
 
               // call the cquad routine from the gsl
               gsl_error_handler_t * original_error_handler = gsl_set_error_handler_off();
@@ -165,9 +176,10 @@ namespace secdecutil
       struct CQuad<std::complex<T>> : Integrator<std::complex<T>,T>, CQuad<T>
       {
         public:
+          using Integrator<std::complex<T>,T>::integrate;
           std::unique_ptr<Integrator<T,T>> get_real_integrator()
           {
-              return std::unique_ptr<Integrator<T,T>>( new CQuad<T>(this->epsrel,this->epsabs,this->n,this->verbose,this->workspace) );
+              return std::unique_ptr<Integrator<T,T>>( new CQuad<T>(this->epsrel,this->epsabs,this->n,this->verbose,this->zero_border,this->workspace) );
           };
 
           // Constructor
@@ -176,9 +188,10 @@ namespace secdecutil
               double epsrel = 1e-2,
               double epsabs = 1e-7,
               size_t n = 100, // number of intervals to be kept simultaneously
-              bool verbose = false
+              bool verbose = false,
+              double zero_border = 0.0
           ) :
-              CQuad<T>(epsrel,epsabs,n,verbose)
+              CQuad<T>(epsrel,epsabs,n,verbose,zero_border)
           {};
 
       };

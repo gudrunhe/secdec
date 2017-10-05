@@ -30,7 +30,7 @@ namespace secdecutil
 
       #define CUBA_STRUCT_BODY \
         int ndim; \
-        void * userdata; \
+        void * userdata = reinterpret_cast<void*>( &typed_userdata ); \
         virtual void call_cuba() = 0; \
         std::array<cubareal,ncomp> integral; \
         std::array<cubareal,ncomp> error; \
@@ -41,8 +41,11 @@ namespace secdecutil
         /* must have at least two integration variables, otherwise Cuhre and Divonne do not work */ \
         if (ndim <= 1) \
             ndim = 2; \
-        /* nasty removal of constness --> restored in cuba_integrand_prototype */ \
-        userdata = const_cast<void*>( reinterpret_cast<const void*>(&integrand_container) ); \
+        typed_userdata.integrand_container = &integrand_container; \
+        if (flags & 3 and zero_border != 0) \
+        { \
+              std::cout << "integrating with zero_border = " << zero_border << std::endl; \
+        } \
         call_cuba(); \
         if (flags & 3) \
         { \
@@ -57,24 +60,39 @@ namespace secdecutil
       struct CubaIntegrator : Integrator<T,T>
       {
       protected:
+        template<bool have_zero_border>
         static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
         {
-          auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<T, T const * const> *>(userdata) );
+          auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) );
 
           /* "integration_variables" is an array of "cubareal", but the integrand expects type T
            * --> copy them into a vector of type T using the iterator contructor.
            * During the copy operation the type is converted implicitly.
+           * Implement "zero_border".
            */
-          const std::vector<T> converted_integration_variables(integration_variables, integration_variables + (*ndim)*sizeof(cubareal));
+          T bordered_integration_variables[*ndim];
+          for (int i = 0 ; i < *ndim ; ++i)
+          {
+              if (have_zero_border)
+                  bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i];
+              else
+                  bordered_integration_variables[i] = integration_variables[i];
+          }
 
           // initialize result with NaN --> result will be NaN if integrand throws an error
           result[0] = std::nan("");
 
-          result[0] = integrand_container.integrand(converted_integration_variables.data()); // implicit conversion of result from type T to cubareal
+          // implicit conversion of result from type T to cubareal
+          result[0] = typed_userdata.integrand_container->integrand(bordered_integration_variables);
 
           return 0;
         };
         static const int ncomp = 1;
+        struct userdata_t
+        {
+            const secdecutil::IntegrandContainer<T, T const * const> * integrand_container;
+            const cubareal& zero_border;
+        } typed_userdata{nullptr,zero_border};
         CUBA_STRUCT_BODY
 
         std::function<secdecutil::UncorrelatedDeviation<T>
@@ -88,6 +106,7 @@ namespace secdecutil
         };
       public:
         int flags;
+        cubareal zero_border;
       };
 
       // real version specialized for cubareal
@@ -95,18 +114,33 @@ namespace secdecutil
       struct CubaIntegrator<cubareal> : Integrator<cubareal,cubareal>
       {
       protected:
+        template<bool have_zero_border>
         static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
         {
-          auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<cubareal, cubareal const * const> *>(userdata) );
+          auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) );
 
           // initialize result with NaN --> result will be NaN if integrand throws an error
           result[0] = std::nan("");
 
-          result[0] = integrand_container.integrand(integration_variables); // pass array "integration_variables" directly
-
-          return 0;
+          // Implement "zero_border".
+          if (have_zero_border)
+          {
+              cubareal bordered_integration_variables[*ndim];
+              for (int i = 0 ; i < *ndim ; ++i)
+                  bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i];
+              result[0] = typed_userdata.integrand_container->integrand(bordered_integration_variables);
+              return 0;
+          } else {
+              result[0] = typed_userdata.integrand_container->integrand(integration_variables); // pass array "integration_variables" directly
+              return 0;
+          }
         };
         static const int ncomp = 1;
+        struct userdata_t
+        {
+            const secdecutil::IntegrandContainer<cubareal, cubareal const * const> * integrand_container;
+            const cubareal& zero_border;
+        } typed_userdata{nullptr,zero_border};
         CUBA_STRUCT_BODY
 
         std::function<secdecutil::UncorrelatedDeviation<cubareal>
@@ -120,6 +154,7 @@ namespace secdecutil
         };
       public:
         int flags;
+        cubareal zero_border;
       };
 
 
@@ -128,27 +163,42 @@ namespace secdecutil
       struct CubaIntegrator<std::complex<T>> : Integrator<std::complex<T>,T>
       {
       protected:
+        template<bool have_zero_border>
         static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
         {
-          auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<std::complex<T>, T const * const> *>(userdata) );
+          auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) );
 
           /* "integration_variables" is an array of "cubareal", but the integrand expects type T
            * --> copy them into a vector of type T using the iterator contructor.
            * During the copy operation the type is converted implicitly.
+           * Implement "zero_border".
            */
-          const std::vector<T> converted_integration_variables(integration_variables, integration_variables + (*ndim)*sizeof(cubareal));
+          T bordered_integration_variables[*ndim];
+          for (int i = 0 ; i < *ndim ; ++i)
+          {
+              if (have_zero_border)
+                  bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i];
+              else
+                  bordered_integration_variables[i] = integration_variables[i];
+          }
 
           // initialize result with NaN --> result will be NaN if integrand throws an error
           result[0] = result[1] = std::nan("");
 
-          std::complex<T> evaluated_integrand = integrand_container.integrand(converted_integration_variables.data());
+          std::complex<T> evaluated_integrand = typed_userdata.integrand_container->integrand(bordered_integration_variables);
 
-          result[0] = evaluated_integrand.real(); // implicit conversion of result from type T to cubareal
-          result[1] = evaluated_integrand.imag(); // implicit conversion of result from type T to cubareal
+          // implicit conversion of result from type T to cubareal
+          result[0] = evaluated_integrand.real();
+          result[1] = evaluated_integrand.imag();
 
           return 0;
         };
         static const int ncomp = 2;
+        struct userdata_t
+        {
+            const secdecutil::IntegrandContainer<std::complex<T>, T const * const> * integrand_container;
+            const cubareal& zero_border;
+        } typed_userdata{nullptr,zero_border};
         CUBA_STRUCT_BODY
 
         std::function<secdecutil::UncorrelatedDeviation<std::complex<T>>
@@ -162,6 +212,7 @@ namespace secdecutil
         };
       public:
         int flags;
+        cubareal zero_border;
       };
 
       // complex version specialized for cubareal
@@ -169,21 +220,38 @@ namespace secdecutil
       struct CubaIntegrator<std::complex<cubareal>> : Integrator<std::complex<cubareal>,cubareal>
       {
       protected:
+        template<bool have_zero_border>
         static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
         {
-          auto& integrand_container = *( reinterpret_cast<const secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const> *>(userdata) );
+          auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) );
 
           // initialize result with NaN --> result will be NaN if integrand throws an error
           result[0] = result[1] = std::nan("");
 
-          std::complex<cubareal> evaluated_integrand = integrand_container.integrand(integration_variables); // pass array "integration_variables" directly
-
-          result[0] = evaluated_integrand.real();
-          result[1] = evaluated_integrand.imag();
-
-          return 0;
+          // Implement "zero_border".
+          if (have_zero_border)
+          {
+              cubareal bordered_integration_variables[*ndim];
+              for (int i = 0 ; i < *ndim ; ++i)
+                  bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i];
+              std::complex<cubareal> evaluated_integrand = typed_userdata.integrand_container->integrand(bordered_integration_variables);
+              result[0] = evaluated_integrand.real();
+              result[1] = evaluated_integrand.imag();
+              return 0;
+          } else {
+              // pass array "integration_variables" directly
+              std::complex<cubareal> evaluated_integrand = typed_userdata.integrand_container->integrand(integration_variables);
+              result[0] = evaluated_integrand.real();
+              result[1] = evaluated_integrand.imag();
+              return 0;
+          }
         };
         static const int ncomp = 2;
+        struct userdata_t
+        {
+            const secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const> * integrand_container;
+            const cubareal& zero_border;
+        } typed_userdata{nullptr,zero_border};
         CUBA_STRUCT_BODY
 
         std::function<secdecutil::UncorrelatedDeviation<std::complex<cubareal>>
@@ -197,6 +265,7 @@ namespace secdecutil
         };
       public:
         int flags;
+        cubareal zero_border;
       };
 
       #undef CUBA_STRUCT_BODY
@@ -226,6 +295,7 @@ namespace secdecutil
                 int seed = 0, \
                 long long int mineval = 0, \
                 long long int maxeval = 1e6, \
+                cubareal zero_border = 0., \
                 long long int nstart = 1000, \
                 long long int nincrease = 500, \
                 long long int nbatch = 1000 \
@@ -235,19 +305,15 @@ namespace secdecutil
                 nstart(nstart),nincrease(nincrease),nbatch(nbatch) \
             { \
                 this->flags = flags; \
+                this->zero_border = zero_border; \
             };
 
-        #define VEGAS_INTEGRATE_BODY \
-        /* Cuba output values */ \
-        int fail; \
-        long long int neval; \
-        \
-        /* Cuba call */ \
+        #define VEGAS_CALL(HAVE_ZERO_BORDER) \
         ::llVegas \
         ( \
             this->ndim, \
             this->ncomp, \
-            this->cuba_integrand_prototype, \
+            this->template cuba_integrand_prototype<HAVE_ZERO_BORDER>, \
             this->userdata, \
             nvec, \
             epsrel, \
@@ -267,7 +333,18 @@ namespace secdecutil
             this->integral.data(), \
             this->error.data(), \
             this->prob.data() \
-        );
+        )
+
+        #define VEGAS_INTEGRATE_BODY \
+        /* Cuba output values */ \
+        int fail; \
+        long long int neval; \
+        \
+        /* Cuba call */ \
+        if (this->zero_border == 0) /* no zero_border */ \
+            VEGAS_CALL(false); \
+        else \
+            VEGAS_CALL(true);
 
       template <typename T>
       struct Vegas : CubaIntegrator<T> {
@@ -282,8 +359,8 @@ namespace secdecutil
         std::unique_ptr<Integrator<T,T>> get_real_integrator(){
           return std::unique_ptr<Integrator<T,T>>(
                                                      new Vegas<T>(
-                                                                     epsrel,epsabs,
-                                                                     this->flags,seed,mineval,maxeval,
+                                                                     epsrel,epsabs,this->flags,
+                                                                     seed,mineval,maxeval,this->zero_border,
                                                                      nstart,nincrease,nbatch
                                                                  )
                                                  );
@@ -294,6 +371,7 @@ namespace secdecutil
         };
       };
 
+      #undef VEGAS_CALL
       #undef VEGAS_STRUCT_BODY
       #undef VEGAS_INTEGRATE_BODY
 
@@ -321,29 +399,25 @@ namespace secdecutil
                 int seed = 0, \
                 long long int mineval = 0, \
                 long long int maxeval = 1e6, \
+                cubareal zero_border = 0., \
                 long long int nnew = 1000, \
                 long long int nmin = 10, \
                 cubareal flatness = 25. \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 seed(seed),mineval(mineval),maxeval(maxeval), \
-                nnew(nnew),nmin(nmin),flatness(flatness)        \
+                nnew(nnew),nmin(nmin),flatness(flatness) \
             { \
                 this->flags = flags; \
+                this->zero_border = zero_border; \
             };
 
-        #define SUAVE_INTEGRATE_BODY \
-        /* Cuba output values */ \
-        int fail; \
-        long long int neval; \
-        int nregions; \
-        \
-        /* Cuba call */ \
+        #define SUAVE_CALL(HAVE_ZERO_BORDER) \
         ::llSuave \
         ( \
             this->ndim, \
             this->ncomp, \
-            this->cuba_integrand_prototype, \
+            this->template cuba_integrand_prototype<HAVE_ZERO_BORDER>, \
             this->userdata, \
             nvec, \
             epsrel, \
@@ -363,7 +437,19 @@ namespace secdecutil
             this->integral.data(), \
             this->error.data(), \
             this->prob.data() \
-        );
+        )
+
+        #define SUAVE_INTEGRATE_BODY \
+        /* Cuba output values */ \
+        int fail; \
+        long long int neval; \
+        int nregions; \
+        \
+        /* Cuba call */ \
+        if (this->zero_border == 0) /* no zero_border */ \
+            SUAVE_CALL(false); \
+        else \
+            SUAVE_CALL(true);
 
       template <typename T>
       struct Suave : CubaIntegrator<T> {
@@ -377,8 +463,8 @@ namespace secdecutil
         std::unique_ptr<Integrator<T,T>> get_real_integrator(){
           return std::unique_ptr<Integrator<T,T>>(
                                                      new Suave<T>(
-                                                                     epsrel,epsabs,
-                                                                     this->flags,seed,mineval,maxeval,
+                                                                     epsrel,epsabs,this->flags,
+                                                                     seed,mineval,maxeval,this->zero_border,
                                                                      nnew,nmin,flatness
                                                                  )
                                                  );
@@ -389,6 +475,7 @@ namespace secdecutil
         }
       };
 
+      #undef SUAVE_CALL
       #undef SUAVE_STRUCT_BODY
       #undef SUAVE_INTEGRATE_BODY
 
@@ -424,6 +511,7 @@ namespace secdecutil
                 int seed = 0, \
                 long long int mineval = 0, \
                 long long int maxeval = 1e6, \
+                cubareal zero_border = 0., \
                 int key1 = 2000, \
                 int key2 = 1, \
                 int key3 = 1, \
@@ -438,20 +526,15 @@ namespace secdecutil
                 border(border), maxchisq(maxchisq), mindeviation(mindeviation) \
             { \
                 this->flags = flags; \
+                this->zero_border = zero_border; \
             };
 
-        #define DIVONNE_INTEGRATE_BODY \
-        /* Cuba output values */ \
-        int nregions; \
-        long long int neval; \
-        int fail; \
-        \
-        /* Cuba call */ \
+        #define DIVNONNE_CALL(HAVE_ZERO_BORDER) \
         ::llDivonne \
         ( \
             this->ndim, \
             this->ncomp, \
-            this->cuba_integrand_prototype, \
+            this->template cuba_integrand_prototype<HAVE_ZERO_BORDER>, \
             this->userdata, \
             nvec, \
             epsrel, \
@@ -480,7 +563,19 @@ namespace secdecutil
             this->integral.data(), \
             this->error.data(), \
             this->prob.data() \
-        );
+        )
+
+        #define DIVONNE_INTEGRATE_BODY \
+        /* Cuba output values */ \
+        int nregions; \
+        long long int neval; \
+        int fail; \
+        \
+        /* Cuba call */ \
+        if (this->zero_border == 0) /* no zero_border */ \
+            DIVNONNE_CALL(false); \
+        else \
+            DIVNONNE_CALL(true);
 
       template <typename T>
       struct Divonne : CubaIntegrator<T> {
@@ -494,8 +589,8 @@ namespace secdecutil
         std::unique_ptr<Integrator<T,T>> get_real_integrator(){
           return std::unique_ptr<Integrator<T,T>>(
                                                      new Divonne<T>(
-                                                                       epsrel,epsabs,
-                                                                       this->flags,seed,mineval,maxeval,
+                                                                       epsrel,epsabs,this->flags,
+                                                                       seed,mineval,maxeval,this->zero_border,
                                                                        key1, key2, key3, maxpass,
                                                                        border, maxchisq, mindeviation
                                                                    )
@@ -507,6 +602,7 @@ namespace secdecutil
         }
       };
 
+      #undef DIVONNE_CALL
       #undef DIVONNE_STRUCT_BODY
       #undef DIVONNE_INTEGRATE_BODY
 
@@ -529,26 +625,22 @@ namespace secdecutil
                 int flags = 0, \
                 long long int mineval = 0, \
                 long long int maxeval = 1e6, \
+                cubareal zero_border = 0., \
                 int key = 0 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 mineval(mineval),maxeval(maxeval),key(key) \
             { \
                 this->flags = flags; \
+                this->zero_border = zero_border; \
             };
 
-        #define CUHRE_INTEGRATE_BODY \
-        /* Cuba output values */ \
-        int nregions; \
-        long long int neval; \
-        int fail; \
-        \
-        /* Cuba call */ \
+        #define CUHRE_CALL(HAVE_ZERO_BORDER) \
         ::llCuhre \
         ( \
             this->ndim, \
             this->ncomp, \
-            this->cuba_integrand_prototype, \
+            this->template cuba_integrand_prototype<HAVE_ZERO_BORDER>, \
             this->userdata, \
             nvec, \
             epsrel, \
@@ -565,8 +657,19 @@ namespace secdecutil
             this->integral.data(), \
             this->error.data(), \
             this->prob.data() \
-        );
+        )
 
+        #define CUHRE_INTEGRATE_BODY \
+        /* Cuba output values */ \
+        int nregions; \
+        long long int neval; \
+        int fail; \
+        \
+        /* Cuba call */ \
+        if (this->zero_border == 0) /* no zero_border */ \
+            CUHRE_CALL(false); \
+        else \
+            CUHRE_CALL(true);
 
       template <typename T>
       struct Cuhre : CubaIntegrator<T> {
@@ -580,8 +683,9 @@ namespace secdecutil
         std::unique_ptr<Integrator<T,T>> get_real_integrator(){
           return std::unique_ptr<Integrator<T,T>>(
                                                      new Cuhre<T>(
-                                                                     epsrel,epsabs,
-                                                                     this->flags,mineval,maxeval,key
+                                                                     epsrel,epsabs,this->flags,
+                                                                     mineval,maxeval,this->zero_border,
+                                                                     key
                                                                  )
                                                  );
         };
@@ -591,6 +695,7 @@ namespace secdecutil
         }
       };
 
+      #undef CUHRE_CALL
       #undef CUHRE_STRUCT_BODY
       #undef CUHRE_INTEGRATE_BODY
     }
