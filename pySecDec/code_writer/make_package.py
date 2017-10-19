@@ -1068,7 +1068,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, Pak_sort)
             print(message + ' after symmetry finding (full Pak):', len(sectors))
         if use_dreadnaut:
-            sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
+            sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut=dreadnaut_executable, workdir=os.path.join(name,'dreadnaut_workdir'))
             print(message + ' after symmetry finding (dreadnaut):', len(sectors))
         return sectors
 
