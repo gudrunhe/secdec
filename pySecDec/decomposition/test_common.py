@@ -334,7 +334,7 @@ class TestSymmetryFinding(unittest.TestCase):
             sectors_with_redundancy = [sector0.copy(), sector1.copy()]
 
             # test symmetry finding by graph (using dreadnaut)
-            reduced_sectors=squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, indices, dreadnaut_executable, workdir='tmpdir_test_symmetry_4D_python' + python_major_version)
+            reduced_sectors=squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, indices, dreadnaut=dreadnaut_executable, workdir='tmpdir_test_symmetry_4D_python' + python_major_version)
 
             if i == 0:
                 # should have found the symmetry and pruned `sector0` or `sector1`

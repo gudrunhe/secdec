@@ -434,7 +434,7 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, indices=None, dreadnaut
         replaced_sectors = sectors
     else:
         # must move the indices to ignore to the coefficients
-        replaced_sectors = _remove_veriables(sectors, indices)
+        replaced_sectors = _remove_variables(sectors, indices)
 
     os.mkdir(workdir)
     try:
@@ -557,7 +557,7 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, indices=None, dreadnaut
 
     return output
 
-def _remove_veriables(sectors, indices_to_keep):
+def _remove_variables(sectors, indices_to_keep):
     '''
     Remove the indices of the variables absent in
     `indices_to_keep` from `sectors`.
@@ -664,7 +664,7 @@ def squash_symmetry_redundant_sectors_sort(sectors, sort_function, indices=None)
         replaced_sectors = sectors
     else:
         # must move the indices to ignore to the coefficients
-        replaced_sectors = _remove_veriables(sectors, indices)
+        replaced_sectors = _remove_variables(sectors, indices)
 
     # combine all expolists and coeffs into one large array
     # use the collision free hash for the coefficients
