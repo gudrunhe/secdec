@@ -363,7 +363,7 @@ def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
         f.write("->" + "\n") # set output standard out
         f.write("q" + "\n")  # q = quit dreadnaut
 
-def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', workdir='dreadnaut_tmp', keep_workdir=False):
+def squash_symmetry_redundant_sectors_dreadnaut(sectors, indices=None, dreadnaut='dreadnaut', workdir='dreadnaut_tmp', keep_workdir=False):
     '''
     Reduce a list of sectors by squashing duplicates
     with equal integral.
@@ -401,6 +401,11 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', 
         iterable of :class:`.Sector`; the sectors to be
         reduced.
 
+    :param indices:
+        iterable of integers, optional;
+        The indices of the variables to consider. If not
+        provided, all indices are taken into account.
+
     :param dreadnaut:
         string;
         The shell command to run `dreadnaut`.
@@ -425,13 +430,19 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', 
     if not isinstance(sectors, list):
         sectors = list(sectors)
 
+    if indices is None:
+        replaced_sectors = sectors
+    else:
+        # must move the indices to ignore to the coefficients
+        replaced_sectors = _remove_variables(sectors, indices)
+
     os.mkdir(workdir)
     try:
         # create list of all exponents that appear in any polynomial in any sector
         # create list of all coefficients that appear in any polynomial in any sector
         unique_exponents = []
         unique_coeffs = []
-        for sector in sectors:
+        for sector in replaced_sectors:
             this_sector_expolist, this_sector_coeffs = _sector2array(sector)
 
             # Note:
@@ -450,7 +461,7 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', 
 
         sector_number = 0
         sector_hash_array = []
-        for sector in sectors:
+        for sector in replaced_sectors:
             this_sector_expolist, this_sector_coeffs = _sector2array(sector)
 
             sector_name = str(sector_number)
@@ -546,7 +557,34 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut='dreadnaut', 
 
     return output
 
-def squash_symmetry_redundant_sectors_sort(sectors, sort_function):
+def _remove_variables(sectors, indices_to_keep):
+    '''
+    Remove the indices of the variables absent in
+    `indices_to_keep` from `sectors`.
+
+    '''
+    first_sector = sectors[0]
+    all_indices = set(range(first_sector.number_of_variables))
+    indices_to_remove = sorted(all_indices - set(indices_to_keep), reverse=True)
+    symbols = first_sector.Jacobian.symbols
+
+    def remove_indices(expression):
+        new_expression = expression
+        for index in indices_to_remove:
+            new_expression = new_expression.replace(index, symbols[index], True) # last argument is `remove`
+        return new_expression
+
+    output = []
+    for sector in sectors:
+        new_Jacobian = remove_indices(sector.Jacobian)
+        new_cast = [remove_indices(prod) for prod in sector.cast]
+        new_other = [remove_indices(poly) for poly in sector.other]
+
+        output.append( Sector(new_cast, new_other, new_Jacobian) )
+
+    return output
+
+def squash_symmetry_redundant_sectors_sort(sectors, sort_function, indices=None):
     '''
     Reduce a list of sectors by squashing duplicates
     with equal integral.
@@ -613,14 +651,25 @@ def squash_symmetry_redundant_sectors_sort(sectors, sort_function):
         The function to be used for finding a canonical
         form of the sectors.
 
+    :param indices:
+        iterable of integers, optional;
+        The indices of the variables to consider. If not
+        provided, all indices are taken into account.
+
     '''
     if not isinstance(sectors, list):
         sectors = list(sectors)
 
+    if indices is None:
+        replaced_sectors = sectors
+    else:
+        # must move the indices to ignore to the coefficients
+        replaced_sectors = _remove_variables(sectors, indices)
+
     # combine all expolists and coeffs into one large array
     # use the collision free hash for the coefficients
     all_sectors_array = []
-    for sector in sectors:
+    for sector in replaced_sectors:
         this_sector_expolist, this_sector_coeffs = _sector2array(sector)
         this_sector_coeffs = _collision_safe_hash(this_sector_coeffs)
 

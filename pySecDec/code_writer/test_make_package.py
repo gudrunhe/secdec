@@ -26,6 +26,55 @@ class TestMakePackage(unittest.TestCase):
             else: # reraise error otherwise
                 raise
 
+# --------------------------------- mid-level tests ---------------------------------
+class TestMidLevel(TestMakePackage):
+    def check_no_polynomial_names_symmetry(self, split=False, primary_decomposition=False):
+        self.tmpdir = 'tmpdir_test_no_polynomial_names_symmetry_python' + python_major_version + '_split_' + str(split) + '_primary_' + str(primary_decomposition)
+
+        # The following input generates a fake-symmetry between ``x``, ``y`` and ``p1``, ``p2``.
+        # However, the `polynomial_names` ``p1`` and ``p2`` should be excluded from all symmetry
+        # finders.
+        template_replacements = \
+        make_package(
+                        name=self.tmpdir,
+                        integration_variables = ['x','y','a','b'],
+                        regulators = ['eps','alpha'],
+
+                        requested_orders = [0,0],
+                        polynomials_to_decompose = ['(x+y)^(-2+alpha)','x^2+y^2'],
+                        polynomial_names=['p1','p2'],
+                        other_polynomials=['x*p1+y*p2+a+eps'],
+
+                        decomposition_method='iterative' if primary_decomposition else 'iterative_no_primary',
+
+                        use_Pak=True,
+                        use_dreadnaut=True,
+
+                        split=split
+                    )
+
+        self.assertEqual(template_replacements['number_of_sectors'],6 if primary_decomposition else 2) # should ignore the symmetry involving `polynomial_names`
+
+    #@attr('active')
+    @attr('slow')
+    def test_no_polynomial_names_symmetry(self):
+        self.check_no_polynomial_names_symmetry()
+
+    #@attr('active')
+    @attr('slow')
+    def test_no_polynomial_names_symmetry_split(self):
+        self.check_no_polynomial_names_symmetry(split=True)
+
+    #@attr('active')
+    @attr('slow')
+    def test_no_polynomial_names_symmetry_primary(self):
+        self.check_no_polynomial_names_symmetry(primary_decomposition=True)
+
+    #@attr('active')
+    @attr('slow')
+    def test_no_polynomial_names_symmetry_split_primary(self):
+        self.check_no_polynomial_names_symmetry(split=True, primary_decomposition=True)
+
 # ----------------------------------- parse input -----------------------------------
 class TestConvertInput(TestMakePackage):
     def setUp(self):

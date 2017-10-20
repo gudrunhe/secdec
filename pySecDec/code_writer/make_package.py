@@ -1057,18 +1057,18 @@ def make_package(name, integration_variables, regulators, requested_orders,
     initial_sector = decomposition.Sector(polynomials_to_decompose, other_polynomials + transformations)
 
     # function that reduces the number of sectors by identifying symmetries
-    def reduce_sectors_by_symmetries(sectors, message):
+    def reduce_sectors_by_symmetries(sectors, message, indices):
         print(message + ' before symmetry finding:', len(sectors))
         # find symmetries
-        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, iterative_sort)
+        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, iterative_sort, indices)
         print(message + ' after symmetry finding (iterative):', len(sectors))
-        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort)
+        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort, indices)
         print(message + ' after symmetry finding (light Pak):', len(sectors))
         if use_Pak:
-            sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, Pak_sort)
+            sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, Pak_sort, indices)
             print(message + ' after symmetry finding (full Pak):', len(sectors))
         if use_dreadnaut:
-            sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
+            sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(sectors, indices, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
             print(message + ' after symmetry finding (dreadnaut):', len(sectors))
         return sectors
 
@@ -1086,7 +1086,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 primary_sectors = reduce_sectors_by_symmetries\
                 (
                     list(  original_decomposition_strategies['primary'](sector, indices)  ),
-                    'number of primary sectors'
+                    'number of primary sectors',
+                    indices[:-1] # primary decomposition removes one integration variable
                 )
             else:
                 primary_sectors = original_decomposition_strategies['primary'](sector, indices)
@@ -1189,10 +1190,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # symmetries are applied elsewhere if we split
     if use_symmetries and not split:
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
+        indices = range(len(integration_variables))
         primary_sectors = reduce_sectors_by_symmetries\
         (
-            list(  strategy['primary'](initial_sector, range(len(integration_variables)))  ),
-            'number of primary sectors'
+            list(  strategy['primary'](initial_sector, indices)  ),
+            'number of primary sectors',
+            indices[:-1] # primary decomposition removes one integration variable
         )
 
         # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
@@ -1319,10 +1322,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
         if use_symmetries and not split:
             # search for symmetries throughout the secondary decomposition
+            indices = range(len(integration_variables))
             secondary_sectors = []
             for primary_sector in primary_sectors:
-                secondary_sectors.extend( strategy['secondary'](primary_sector, range(len(integration_variables))) )
-            secondary_sectors = reduce_sectors_by_symmetries(secondary_sectors, 'total number sectors')
+                secondary_sectors.extend( strategy['secondary'](primary_sector, indices) )
+            secondary_sectors = reduce_sectors_by_symmetries(secondary_sectors, 'total number sectors', indices)
         else:
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 

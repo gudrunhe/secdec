@@ -220,7 +220,7 @@ class TestSymmetryFinding(unittest.TestCase):
             self.assertEqual( (sp.sympify(reduced_sectors[0].cast[0]) - sp.sympify(self.p0.copy())).simplify() , 0 )
 
         # test symmetry finding by graph (using dreadnaut)
-        reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, workdir='tmpdir_test_squash_symmetry_redundant_sectors_2D_python' + python_major_version)
+        reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut=dreadnaut_executable, workdir='tmpdir_test_squash_symmetry_redundant_sectors_2D_python' + python_major_version)
         self.assertEqual(len(reduced_sectors), 1)
         self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('a+swapped_Jacobian_coeff'))
         self.assertEqual((sp.sympify(reduced_sectors[0].cast[0]) - sp.sympify(self.p0.copy())).simplify(), 0)
@@ -280,7 +280,7 @@ class TestSymmetryFinding(unittest.TestCase):
                 pass
 
         # test symmetry finding by graph (using dreadnaut)
-        reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut_executable, workdir='tmpdir_test_squash_symmetry_hard_python' + python_major_version)
+        reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors, dreadnaut=dreadnaut_executable, workdir='tmpdir_test_squash_symmetry_hard_python' + python_major_version)
         self.assertEqual(len(reduced_sectors), 1)
         self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
 
@@ -288,6 +288,74 @@ class TestSymmetryFinding(unittest.TestCase):
         reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors, Pak_sort)
         self.assertEqual(len(reduced_sectors), 1)
         self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sp.sympify('2*a'))
+
+    #@attr('active')
+    def test_indices(self):
+        # sectors are related by permutation of x0 <--> x1
+        sector0_p0 = Polynomial([(1,0,1,3),(2,2,4,3)], ['a','b'])
+        sector0_p1 = Polynomial([(1,2,1,2),(1,2,3,1)], ['1','1'])
+        sector0 = Sector([sector0_p0, sector0_p1])
+
+        sector1_p0 = Polynomial([(2,2,4,3),(0,1,1,3)], ['b','a'])
+        sector1_p1 = Polynomial([(2,1,1,2),(2,1,3,1)], ['1','1'])
+        sector1 = Sector([sector1_p0, sector1_p1])
+
+        for i,indices in enumerate([(0,1),(2,3)]):
+            # test symmetry finding by sorting
+            for sort_function in (iterative_sort, Pak_sort):
+                # make a copy to be sure that the original sectors are untouched
+                sectors_with_redundancy = [sector0.copy(), sector1.copy()]
+
+                # call symmetry finder with `indices`
+                reduced_sectors = squash_symmetry_redundant_sectors_sort(sectors_with_redundancy, sort_function, indices)
+
+                if i == 0:
+                    # should have found the symmetry and pruned `sector0` or `sector1`
+                    self.assertEqual(len(reduced_sectors), 1)
+
+                    # should have either `sector0` or `sector1` in `reduced_sectors`
+                    have_sector_0 = str(reduced_sectors[0].cast) == str(sector0.cast)
+                    have_sector_1 = str(reduced_sectors[0].cast) == str(sector1.cast)
+                    self.assertTrue( (have_sector_0 and not have_sector_1) or (have_sector_1 and not have_sector_0) )
+
+                    # the Jacobian coefficient should have been increased by one
+                    self.assertTrue( str(reduced_sectors[0].Jacobian) == ' + (2)' )
+
+                else:
+                    # should not have considered the symmetry x0 <--> x1
+                    self.assertEqual(len(reduced_sectors), 2)
+
+                    # should get the input back (possibly reordered)
+                    sectors_with_redundancy_reversed = [sector1.copy(), sector0.copy()]
+                    self.assertTrue( (repr(reduced_sectors) == repr(sectors_with_redundancy)) or
+                                     (repr(reduced_sectors) == repr(sectors_with_redundancy_reversed)) )
+
+            # make a copy to be sure that the original sectors are untouched
+            sectors_with_redundancy = [sector0.copy(), sector1.copy()]
+
+            # test symmetry finding by graph (using dreadnaut)
+            reduced_sectors=squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, indices, dreadnaut=dreadnaut_executable, workdir='tmpdir_test_symmetry_4D_python' + python_major_version)
+
+            if i == 0:
+                # should have found the symmetry and pruned `sector0` or `sector1`
+                self.assertEqual(len(reduced_sectors), 1)
+
+                # should have either `sector0` or `sector1` in `reduced_sectors`
+                have_sector_0 = str(reduced_sectors[0].cast) == str(sector0.cast)
+                have_sector_1 = str(reduced_sectors[0].cast) == str(sector1.cast)
+                self.assertTrue( (have_sector_0 and not have_sector_1) or (have_sector_1 and not have_sector_0) )
+
+                # the Jacobian coefficient should have been increased by one
+                self.assertTrue( str(reduced_sectors[0].Jacobian) == ' + (2)' )
+
+            else:
+                # should not have considered the symmetry x0 <--> x1
+                self.assertEqual(len(reduced_sectors), 2)
+
+                # should get the input back (possibly reordered)
+                sectors_with_redundancy_reversed = [sector1.copy(), sector0.copy()]
+                self.assertTrue( (repr(reduced_sectors) == repr(sectors_with_redundancy)) or
+                                 (repr(reduced_sectors) == repr(sectors_with_redundancy_reversed)) )
 
     #@attr('active')
     def test_symmetry_4D(self):
@@ -324,7 +392,7 @@ class TestSymmetryFinding(unittest.TestCase):
                               or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
 
             # test symmetry finding by graph (using dreadnaut)
-            reduced_sectors=squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, dreadnaut_executable, workdir='tmpdir_test_symmetry_4D_python' + python_major_version)
+            reduced_sectors=squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, dreadnaut=dreadnaut_executable, workdir='tmpdir_test_symmetry_4D_python' + python_major_version)
 
             # should have found the symmetry and pruned `sector0` or `sector2`
             self.assertEqual(len(reduced_sectors), 2)
@@ -364,7 +432,7 @@ class TestSymmetryFinding(unittest.TestCase):
                 target_reduced_sectors[0].Jacobian.coeffs[0] = 2
                 self.assertEqual( str(reduced_sectors), str(target_reduced_sectors) )
 
-            reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, dreadnaut_executable, workdir='tmpdir_test_symmetry_special_sorting_python' + python_major_version)
+            reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, dreadnaut=dreadnaut_executable, workdir='tmpdir_test_symmetry_special_sorting_python' + python_major_version)
 
             # should have found the symmetry
             self.assertEqual(len(reduced_sectors), 1)
@@ -411,7 +479,7 @@ class TestSymmetryFinding(unittest.TestCase):
                 self.assertTrue( (str(reduced_sectors[0].Jacobian) == ' + (2)' and str(reduced_sectors[1]) == str(sector1))
                               or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)) )
 
-            reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, dreadnaut_executable, workdir='tmpdir_test_symmetry_same_term_in_different_polynomials_python' + python_major_version)
+            reduced_sectors = squash_symmetry_redundant_sectors_dreadnaut(sectors_with_redundancy, dreadnaut=dreadnaut_executable, workdir='tmpdir_test_symmetry_same_term_in_different_polynomials_python' + python_major_version)
 
             # should have found the symmetry and pruned `sector0` or `sector2`
             self.assertEqual(len(reduced_sectors), 2)
