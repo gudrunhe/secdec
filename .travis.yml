@@ -109,6 +109,8 @@ matrix:
       env:
         - NORMALIZ_VERSION=3.3.0
       before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
         - brew install graphviz
         - pip install nose
 
@@ -121,6 +123,8 @@ matrix:
       before_install:
         - export PYTHON_INSTALL='sudo easy_install'
         - $PYTHON_INSTALL nose
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
         - brew install graphviz
 
 install:
