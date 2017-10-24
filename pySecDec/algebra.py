@@ -6,7 +6,8 @@ Implementation of a simple computer algebra system.
 
 """
 
-from .misc import argsort_2D_array, argsort_ND_array, doc
+from .misc import argsort_2D_array, argsort_ND_array, doc, \
+                  cached_property
 import numpy as np
 import sympy as sp
 
@@ -16,6 +17,9 @@ class _Expression(object):
     computer algebra system.
 
     '''
+    # keep track if immutable expression types are simplified
+    simplified = False
+
     # delete default hash function
     __hash__ = None
 
@@ -50,6 +54,13 @@ class _Expression(object):
         if not isinstance(other, _Expression):
             other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
         return Pow(other, self)
+
+    def clear_cache(self):
+        'Clear cached `str`.'
+        try:
+            del self.__dict__['str']
+        except KeyError:
+            pass
 
     docstring_of_replace = \
         '''
@@ -167,10 +178,14 @@ class Function(_Expression):
         self.derivative_symbols = kwargs.pop('derivative_symbols', set())
         self.derivative_symbols.add(self.symbol)
 
-    def __str__(self):
+    @cached_property
+    def str(self):
         outstr_template = self.symbol + '(%s)'
         str_args = ','.join(str(arg) for arg in self.arguments)
         return outstr_template % str_args
+
+    def __str__(self):
+        return self.str
 
     def __repr__(self):
         out = 'Function('
@@ -234,7 +249,11 @@ class Function(_Expression):
 
     def simplify(self):
         'Simplify the arguments.'
+        if self.simplified:
+            return self
+        self.clear_cache()
         self.arguments = [arg.simplify() for arg in self.arguments]
+        self.simplified = True
         return self
 
     @property
@@ -1014,11 +1033,15 @@ class Sum(_Expression):
             if summand.number_of_variables != self.number_of_variables:
                 raise TypeError('Must have the same number of variables for all summands.')
 
-    def __repr__(self):
+    @cached_property
+    def str(self):
         stringified_summands = []
         for summand in self.summands:
             stringified_summands.append( '(' + str(summand) + ')' )
         return ' + '.join(stringified_summands)
+
+    def __repr__(self):
+        return self.str
 
     __str__ = __repr__
 
@@ -1030,6 +1053,11 @@ class Sum(_Expression):
         Remove zero from sums.
 
         '''
+        if self.simplified:
+            return self
+
+        self.clear_cache()
+
         changed = True
         while changed:
             changed = False
@@ -1054,6 +1082,7 @@ class Sum(_Expression):
             self.summands = [zero]
             return zero
         else:
+            self.simplified = True
             return self
 
     @property
@@ -1121,11 +1150,15 @@ class Product(_Expression):
             if factor.number_of_variables != self.number_of_variables:
                 raise TypeError('Must have the same number of variables for all factors.')
 
-    def __repr__(self):
+    @cached_property
+    def str(self):
         stringified_factors = []
         for factor in self.factors:
             stringified_factors.append( '(' + str(factor) + ')' )
         return ' * '.join(stringified_factors)
+
+    def __repr__(self):
+        return self.str
 
     __str__ = __repr__
 
@@ -1141,6 +1174,11 @@ class Product(_Expression):
         Remove factors of one and zero.
 
         '''
+        if self.simplified:
+            return self
+
+        self.clear_cache()
+
         changed = True
         while changed:
             changed = False
@@ -1169,6 +1207,7 @@ class Product(_Expression):
             self.factors = [one]
             return one
         else:
+            self.simplified = True
             return self
 
     @property
@@ -1279,7 +1318,8 @@ class ProductRule(_Expression):
 
             self.symbols = list(expressions[0].symbols)
 
-    def __repr__(self):
+    @cached_property
+    def str(self):
         outstr = ''
         for i,(coeff,n_jk) in enumerate(zip(self.coeffs,self.factorlist)):
             if coeff != 0:
@@ -1287,6 +1327,9 @@ class ProductRule(_Expression):
                 for j,n_k in enumerate(n_jk):
                     outstr += ' * (%s)' % str(self.expressions[j][tuple(n_k)])
         return outstr if outstr else ' + (0)'
+
+    def __repr__(self):
+        return self.str
 
     __str__ = __repr__
 
@@ -1343,6 +1386,11 @@ class ProductRule(_Expression):
         of the `expressions`.
 
         '''
+        if self.simplified:
+            return self
+
+        self.clear_cache()
+
         # Sort the factorlist first, such that identical entries are
         # grouped together
         sort_key = argsort_ND_array(self.factorlist)
@@ -1386,6 +1434,7 @@ class ProductRule(_Expression):
             # simplify to zero if change of type possible
             return Polynomial(np.zeros([1,len(self.symbols)], dtype=int), np.array([0]), self.symbols, copy=False)
 
+        self.simplified = True
         return self
 
     def to_sum(self):
@@ -1436,8 +1485,12 @@ class Pow(_Expression):
         self.base = base.copy() if copy else base
         self.exponent = exponent.copy() if copy else exponent
 
-    def __repr__(self):
+    @cached_property
+    def str(self):
         return '(' + str(self.base) + ') ** (' + str(self.exponent) + ')'
+
+    def __repr__(self):
+        return self.str
 
     __str__ = __repr__
 
@@ -1458,6 +1511,11 @@ class Pow(_Expression):
         :class:`.Polynomial` if possible.
 
         '''
+        if self.simplified:
+            return self
+
+        self.clear_cache()
+
         self.base = self.base.simplify()
 
         if type(self.base) is Polynomial: # need exact type `Polynomial` for this, not subtype
@@ -1472,6 +1530,7 @@ class Pow(_Expression):
             elif len(self.exponent.coeffs)==1 and (self.exponent.coeffs==1).all() and (self.exponent.expolist==0).all():
                 return self.base
 
+        self.simplified = True
         return self
 
     def derive(self, index):
@@ -1534,8 +1593,12 @@ class Log(_Expression):
         self.number_of_variables = arg.number_of_variables
         self.arg = arg.copy() if copy else arg
 
-    def __repr__(self):
+    @cached_property
+    def str(self):
         return 'log(' + str(self.arg) + ')'
+
+    def __repr__(self):
+        return self.str
 
     __str__ = __repr__
 
@@ -1545,10 +1608,16 @@ class Log(_Expression):
 
     def simplify(self):
         'Apply ``log(1) = 0``.'
+        if self.simplified:
+            return self
+
+        self.clear_cache()
+
         self.arg = self.arg.simplify()
         if type(self.arg) is Polynomial and len(self.arg.coeffs) == 1 and self.arg.coeffs[0] == 1 and (self.arg.expolist == 0).all():
             return Polynomial(np.zeros([1,len(self.arg.polysymbols)], dtype=int), np.array([0]), self.arg.polysymbols, copy=False)
         else:
+            self.simplified = True
             return self
 
     @property
