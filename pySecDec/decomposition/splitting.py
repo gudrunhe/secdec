@@ -130,7 +130,7 @@ def split(sector, seed, *indices):
     # get the splitting point
     #  --> generate ``len(indices)`` random numbers between ``1`` and ``20``,
     #      then split at ``<random>/20``
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState( int(seed) )
     splitting_point = [   int( rng.randint(1,20) ) / sp.sympify(20)  for idx in indices   ]
 
     def split_recursively(sector, indices, splitting_point):
