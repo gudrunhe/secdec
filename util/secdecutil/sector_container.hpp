@@ -12,14 +12,6 @@
 
 namespace secdecutil {
 
-    // the return type of the integral transformation (contour deformation)
-    template<typename complex_t>
-    struct integral_transformation_t
-    {
-        std::vector<complex_t> transformed_variables;
-        complex_t Jacobian_determinant;
-    };
-
     // this error is thrown if the sign check of the deformation (contour_deformation_polynomial.imag() <= 0) fails
     struct sign_check_error : public std::runtime_error { using std::runtime_error::runtime_error; };
 
@@ -159,7 +151,6 @@ namespace secdecutil {
             Sobol_generator = gsl_qrng_alloc(gsl_qrng_sobol, number_of_integration_variables);
 
             // perform the sign check for each sample; decrease the "optimized_deformation_parameters" if necessary
-            integral_transformation_t<complex_t> deformation;
             for (i=0; i<number_of_presamples; ++i)
             {
                 gsl_qrng_get(Sobol_generator,real_sample);
