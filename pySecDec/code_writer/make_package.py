@@ -626,7 +626,6 @@ class RealPartFunction(Function):
     def derive(self, index):
         return RealPartFunction(self.symbol, self.arguments[0].derive(index), copy=False)
 
-# TODO: merge `MaxDegreeFunction` with `Function`
 class MaxDegreeFunction(Function):
     '''
     Symbolic function where derivatives
