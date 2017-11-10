@@ -17,6 +17,7 @@ from ..expansion import expand_singular, expand_Taylor, expand_sympy, OrderError
 from ..misc import lowest_order, det
 from .template_parser import parse_template_file, parse_template_tree
 from itertools import chain
+from multiprocessing import Pool
 from time import strftime
 from re import match
 import numpy as np
@@ -730,6 +731,601 @@ class MaxDegreeFunction(Function):
             replacement.maxdegrees = self.maxdegrees[:index] + self.maxdegrees[index+1:]
         return replacement
 
+def _make_environment(original_environment):
+    'Prepare the environment for :func:`._process_secondary_sector`.'
+
+    original_environment = original_environment.copy()
+    sector_index = original_environment.pop('sector_index')
+    secondary_sectors = original_environment.pop('secondary_sectors')
+
+    # remove items that are not needed or cannot be pickled
+    original_environment.pop('pool', None)
+    original_environment.pop('strategy', None)
+    original_environment.pop('original_decomposition_strategies', None)
+    original_environment.pop('primary_sectors', None)
+    original_environment.pop('primary_sectors_to_consider', None)
+    original_environment.pop('primary_decomposition_with_splitting', None)
+    original_environment.pop('secondary_decomposition_with_splitting', None)
+
+    for sector in secondary_sectors:
+        sector_index += 1
+        environment = original_environment.copy()
+        environment['sector'] = sector
+        environment['sector_index'] = sector_index
+        yield environment
+
+def _process_secondary_sector(environment):
+    'Function to process the `secondary_sectors` in parallel.'
+
+    # read environment
+    sector_index = environment['sector_index']
+    sector = environment['sector']
+    symbols_other_polynomials = environment['symbols_other_polynomials']
+    all_symbols = environment['all_symbols']
+    form_work_space = environment['form_work_space']
+    contour_deformation_polynomial = environment['contour_deformation_polynomial']
+    str_error_token = environment['str_error_token']
+    template_sources = environment['template_sources']
+    symbols_polynomials_to_decompose = environment['symbols_polynomials_to_decompose']
+    regulator_indices = environment['regulator_indices']
+    function_calls = environment['function_calls']
+    real_parameters = environment['real_parameters']
+    pole_part_initializer = environment['pole_part_initializer']
+    positive_polynomials = environment['positive_polynomials']
+    elementary_monomials_all_symbols = environment['elementary_monomials_all_symbols']
+    integration_variable_indices = environment['integration_variable_indices']
+    polynomial_names = environment['polynomial_names']
+    name = environment['name']
+    lowest_orders = environment['lowest_orders']
+    imaginary_unit = environment['imaginary_unit']
+    have_dummy_functions = environment['have_dummy_functions']
+    decomposition_method = environment['decomposition_method']
+    normaliz_executable = environment['normaliz_executable']
+    use_Pak = environment['use_Pak']
+    complex_parameters = environment['complex_parameters']
+    expolist = environment['expolist']
+    use_symmetries = environment['use_symmetries']
+    sector_index = environment['sector_index']
+    integration_variables = environment['integration_variables']
+    required_orders = environment['required_orders']
+    file_renamings = environment['file_renamings']
+    regulators = environment['regulators']
+    all_integration_variables = environment['all_integration_variables']
+    pole_structures = environment['pole_structures']
+    ibp_power_goal = environment['ibp_power_goal']
+    nested_series_type = environment['nested_series_type']
+    form_insertion_depth = environment['form_insertion_depth']
+    reversed_polynomial_names = environment['reversed_polynomial_names']
+    one = environment['one']
+    use_dreadnaut = environment['use_dreadnaut']
+    this_primary_sector_remainder_expression = environment['this_primary_sector_remainder_expression']
+    transformations = environment['transformations']
+    primary_sector = environment['primary_sector']
+    remainder_expression_is_trivial = environment['remainder_expression_is_trivial']
+    highest_prefactor_pole_orders = environment['highest_prefactor_pole_orders']
+    remainder_expression = environment['remainder_expression']
+    other_polynomials = environment['other_polynomials']
+    polynomial_zero = environment['polynomial_zero']
+    function_declarations = environment['function_declarations']
+    names_other_polynomials = environment['names_other_polynomials']
+    primary_sector_index = environment['primary_sector_index']
+    form_optimization_level = environment['form_optimization_level']
+    initial_sector = environment['initial_sector']
+    polynomial_one = environment['polynomial_one']
+    functions = environment['functions']
+    requested_orders = environment['requested_orders']
+    str_replaced_remainder_expression = environment['str_replaced_remainder_expression']
+    split = environment['split']
+    elementary_monomials = environment['elementary_monomials']
+    symbols_remainder_expression = environment['symbols_remainder_expression']
+    symbol = environment['symbol']
+    enforce_complex = environment['enforce_complex']
+    polynomials_to_decompose = environment['polynomials_to_decompose']
+    error_token = environment['error_token']
+    template_replacements = environment['template_replacements']
+    prefactor = environment['prefactor']
+    if contour_deformation_polynomial is not None:
+        contourdef_Jacobian_determinant = environment['contourdef_Jacobian_determinant']
+        contourdef_Jacobian = environment['contourdef_Jacobian']
+        symbolic_deformed_variables = environment['symbolic_deformed_variables']
+        symbolic_deformation_factors = environment['symbolic_deformation_factors']
+        symbolic_deformation_factor_names = environment['symbolic_deformation_factor_names']
+        contour_deformation_polynomial_index = environment['contour_deformation_polynomial_index']
+        maxdegrees_contour_deformation_polynomial = environment['maxdegrees_contour_deformation_polynomial']
+        symbolic_deformed_variable_names = environment['symbolic_deformed_variable_names']
+        symbolic_contour_deformation_polynomial = environment['symbolic_contour_deformation_polynomial']
+        str_contour_deformation_polynomial = environment['str_contour_deformation_polynomial']
+        deformation_parameters = environment['deformation_parameters']
+        deformed_integration_parameters = environment['deformed_integration_parameters']
+        deformation_factors = environment['deformation_factors']
+
+    print('writing FORM files for sector', sector_index)
+
+    def parse_exponents(sector, symbols_polynomials_to_decompose, symbols_other_polynomials):
+        #  - in ``sector.cast``
+        for product in sector.cast:
+            mono, poly = product.factors
+            mono.exponent = Polynomial.from_expression(mono.exponent, symbols_polynomials_to_decompose)
+            poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
+
+        #  - in ``sector.other``
+        for poly in sector.other:
+            try:
+                poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
+            except AttributeError:
+                pass # not an exponentiated polynomial --> nothing to do
+
+    def parse_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials):
+        #  - in ``sector.cast``
+        for product in sector.cast:
+            mono, poly = product.factors
+            mono.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in mono.coeffs])
+            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
+
+        #  - in ``sector.other``
+        for poly in sector.other:
+            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
+
+    if not use_symmetries:
+        # If we do not use symmetries, we have to take care of `transformations`
+        # extract ``this_transformations``
+        this_transformations = sector.other[-len(all_integration_variables):]
+        # remove transformation from ``sector.other``
+        sector.other = sector.other[:-len(all_integration_variables)]
+
+    # insert the `polynomials_to_decompose`:
+    # explicitly insert monomial part as ``<symbol> --> xi**pow_i * <symbol>``
+    # ``[:,:-len(regulators)-len(polynomial_names)]`` is the part of the expolist that contains only the powers of the `integration_variables`;
+    #     i.e. it excludes the powers of the `regulators` and the `polynomial_names` from the modification
+    for poly in sector.other:
+        for i,(polyname,prod) in enumerate(zip(polynomial_names,sector.cast)):
+            mono,_ = prod.factors
+            poly.expolist[:,:-len(regulators)-len(polynomial_names)] += \
+                np.einsum('i,k->ik', poly.expolist[:,-len(polynomial_names):][:,i], mono.expolist[0,:-len(regulators)-len(polynomial_names)])
+
+    # define symbols for the `polynomials_to_decompose` --> shorter expressions and faster in python
+    symbolic_polynomials_to_decompose = []
+    symbolic_polynomials_to_decompose_all_symbols_undeformed = []
+    names_polynomials_to_decompose = []
+    for i in range(len(polynomials_to_decompose)):
+        try:
+            poly_name = str(polynomial_names[i])
+        except IndexError:
+            poly_name = FORM_names['cast_polynomial'] + str(i)
+        symbolic_polynomials_to_decompose_all_symbols_undeformed.append(
+                MaxDegreeFunction(
+                                  poly_name,
+                                  *elementary_monomials_all_symbols,
+                                  maxdegrees=MaxDegreeFunction.get_maxdegrees(
+                                                                                  sector.cast[i].factors[1],
+                                                                                  ignore_subclass=True
+                                                                             )
+                                  )
+        )
+        symbolic_polynomials_to_decompose.append(
+            Pow(
+                MaxDegreeFunction(
+                                  poly_name,
+                                  *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
+                                  maxdegrees=MaxDegreeFunction.get_maxdegrees(
+                                                                                  sector.cast[i].factors[1],
+                                                                                  ignore_subclass=True
+                                                                             )
+                                  ),
+                Expression(sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose),
+                copy = False
+            )
+        )
+        names_polynomials_to_decompose.append(poly_name)
+
+    # convert all coefficients to pySecDec expressions
+    parse_coeffs(sector, symbols_polynomials_to_decompose+polynomial_names, symbols_other_polynomials+polynomial_names)
+
+    # remove `polynomial_names` - keep polynomial part symbolic as dummy function:
+    #  - from `other_polynomials`
+    replacements = []
+    for k in range(1, len(reversed_polynomial_names) + 1):
+        replacement = symbolic_polynomials_to_decompose_all_symbols_undeformed[len(polynomial_names)-k]
+        for i in range(k):
+            replacement = replacement.replace(-1, error_token, remove=True)
+        replacements.append(replacement)
+    for replacement in replacements:
+        for i, poly in enumerate(sector.other):
+            poly = poly.replace(-1, replacement, remove=True)
+            for j, coeff in enumerate(poly.coeffs):
+                poly.coeffs[j] = coeff.simplify()
+            sector.other[i] = poly
+
+    #  - from `polynomials_to_decompose`
+    for i in range(len(polynomials_to_decompose)):
+        # no dependence here, just remove the symbols
+        prod = sector.cast[i]
+        for poly_name in reversed_polynomial_names:
+            prod = prod.replace(-1, error_token, remove=True)
+        sector.cast[i] = prod
+
+    #  - from `Jacobian`
+    Jacobian = sector.Jacobian
+    for poly_name in reversed_polynomial_names:
+        Jacobian = Jacobian.replace(-1, error_token, remove=True)
+
+    #  - from `this_transformations`
+    if not use_symmetries:
+        for i in range(len(all_integration_variables)):
+            for poly_name in reversed_polynomial_names:
+                this_transformations[i] = this_transformations[i].replace(-1, error_token, remove=True)
+
+    # convert all exponents to pySecDec expressions
+    parse_exponents(sector, symbols_polynomials_to_decompose, symbols_other_polynomials)
+
+    # factorize
+    #  - the polynomials in ``sector.other``
+    for i,to_factorize in enumerate(sector.other):
+        to_factorize = sector.other[i] = \
+            Product(
+                ExponentiatedPolynomial(
+                    np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([1]), to_factorize.exponent.copy(), symbols_other_polynomials, copy=False
+                ),
+                to_factorize
+            )
+        decomposition.refactorize(to_factorize)
+
+    #  - the Jacobian
+    Jacobian = \
+            Product(
+                ExponentiatedPolynomial(
+                    np.zeros([1,len(Jacobian.polysymbols)], dtype=int), np.array([1]), exponent=polynomial_one, polysymbols=Jacobian.polysymbols, copy=False
+                ),
+                ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
+            )
+    decomposition.refactorize(Jacobian)
+
+    # define symbols for the `other_polynomials --> shorter expressions and faster in python
+    symbolic_other_polynomials = [
+                                     Pow(
+                                         MaxDegreeFunction(
+                                                     FORM_names['other_polynomial'] + str(i),
+                                                     *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
+                                                     maxdegrees=MaxDegreeFunction.get_maxdegrees(sector.other[i].factors[1], ignore_subclass=True)
+                                         ),
+                                         Expression(sector.other[i].factors[1].exponent, symbols_polynomials_to_decompose),
+                                         copy = False
+                                     )
+                                     for i in range(len(other_polynomials))
+                                 ]
+
+    # Apply ``this_transformation`` and the contour deformaion (if applicable) to
+    # the `remainder_expression` BEFORE taking derivatives.
+    # Introduce a symbol for the `remainder_expression` and insert in FORM.
+    # Note: ``elementary_monomials[len(integration_variables):]`` are the regulators
+    maxdegrees_remainder_expression = MaxDegreeFunction.get_maxdegrees(this_primary_sector_remainder_expression, indices=regulator_indices, ignore_subclass=False)
+    if remainder_expression_is_trivial:
+        # `remainder_expression` does not depend on the integration variables in that case
+        maxdegrees_remainder_expression[:len(integration_variables)] = 0
+        symbolic_remainder_expression_arguments = [polynomial_zero] * len(integration_variables) + elementary_monomials[len(integration_variables):]
+    else:
+        symbolic_remainder_expression_arguments = this_transformations + elementary_monomials[len(integration_variables):]
+    symbolic_remainder_expression = MaxDegreeFunction(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments, maxdegrees=maxdegrees_remainder_expression)
+
+    # initialize the product of monomials for the subtraction
+    monomial_factors = list(chain([Jacobian.factors[0]], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
+    monomials = Product(*monomial_factors, copy=False)
+
+    # compute the pole structure
+    pole_structures.append(  [sp.printing.ccode(ps) for ps in compute_pole_structure(monomials, *integration_variable_indices)]  )
+
+    if contour_deformation_polynomial is not None:
+        # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k * (1-x_k) * Re(dF_dx_k)`` to the monomials.
+        # Split as ``z_k({x_k}) = monomials[k] * <something in remainder_expression>``
+        # where ``monomials[k] = x_k``; i.e. unchanged
+        # and where ``<something in remainder_expression> z_k({x_k}) / x_k = 1 - i * lambda_k * (1-x_k) * Re(dF_dx_k)``.
+        # That amounts to multiplying ``<something in remainder_expression> ** <exponent_of_monomial>`` to `remainder_expression`
+        additional_deformation_factors = []
+        monomial_powers = np.zeros(len(integration_variables), dtype=object)
+        for factor in monomial_factors:
+            for k,exponent in enumerate(factor.expolist[0,:len(integration_variables)]):
+                monomial_powers[k] += factor.exponent*exponent
+        for k,(deformation_factor,power) in enumerate(zip(symbolic_deformation_factors,monomial_powers)):
+            additional_deformation_factors.append \
+            (
+                Pow(
+                       deformation_factor,
+                       power
+                   )
+            )
+        additional_deformation_factor = Product(*additional_deformation_factors, copy=False)
+
+    # define ``cal_I``, the part of the integrand that does not lead to poles
+    # use the derivative tracking dummy functions for the polynomials --> faster
+    cal_I = Product(symbolic_remainder_expression, *chain([Jacobian.factors[1]], symbolic_polynomials_to_decompose, symbolic_other_polynomials), copy=False)
+
+    # multiply Jacobian determinant to `cal_I`
+    if contour_deformation_polynomial is not None:
+        symbolic_contourdef_Jacobian = Function(FORM_names['contourdef_Jacobian'], *elementary_monomials[:len(integration_variables)])
+        symbolic_additional_deformation_factor = Function(FORM_names['additional_deformation_factor'], *elementary_monomials)
+        cal_I = Product(symbolic_contourdef_Jacobian, symbolic_additional_deformation_factor, cal_I)
+
+    # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
+    symbolic_cal_I = Function(FORM_names['cal_I'], *elementary_monomials)
+
+    # initialize the Product to be passed to the subtraction
+    subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
+
+    # call the subtraction routines
+    # Integrate by parts until the `ibp_power_goal` is reached,
+    # then do the original subtraction (`integrate_pole_part`).
+    at_most_log_poles = integrate_by_parts(subtraction_initializer, ibp_power_goal, *integration_variable_indices)
+    subtracted = []
+    for item in at_most_log_poles:
+        subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
+
+    # intialize expansion
+    pole_parts = [s.factors[1].simplify() for s in subtracted]
+    regular_parts = [Product( *([s.factors[0]] + s.factors[2:]), copy=False ) for s in subtracted]
+
+    # expand poles
+    integrand_summands = []
+    for i,(regular,singular) in enumerate(zip(regular_parts, pole_parts)):
+        # must expand every term to the requested order plus the highest pole it multiplies
+        # We calculated the highest pole order of the prefactor (variable ``highest_prefactor_pole_orders``) above.
+        # In addition, we have to take the poles of the current term into account.
+
+        try:
+            singular_expanded = expand_singular(Product(singular, copy=False), regulator_indices, required_orders)
+        except OrderError:
+            coeffs = np.array([_sympy_zero])
+            expolist = np.zeros((1, len(singular.symbols)), dtype=int)
+            expolist[:,regulator_indices] = required_orders
+            singular_expanded = Polynomial(expolist, coeffs, singular.symbols, copy=False)
+
+        highest_poles_current_term = - singular_expanded.expolist[:,regulator_indices].min(axis=0)
+        expansion_orders = required_orders + highest_poles_current_term
+
+        try:
+            regular_expanded = expand_Taylor(regular, regulator_indices, expansion_orders)
+        except OrderError:
+            coeffs = np.array([_sympy_zero])
+            expolist = np.zeros((1, len(singular.symbols)), dtype=int)
+            expolist[:,regulator_indices] = expansion_orders
+            regular_expanded = Polynomial(expolist, coeffs, singular.symbols, copy=False)
+
+        if i == 0: # first iteration; ``highest_poles_current_sector`` not yet set
+            highest_poles_current_sector = highest_poles_current_term
+        else:
+            highest_poles_current_sector = np.maximum(highest_poles_current_sector, highest_poles_current_term)
+
+        integrand_summands.append( Product(singular_expanded,regular_expanded,copy=False) )
+
+    integrand = Sum(*integrand_summands, copy=False)
+
+    # update the `lowest_orders`
+    lowest_orders = np.minimum(lowest_orders, -highest_poles_current_sector)
+
+    # initialize the CFunctions for FORM
+    cal_I_derivative_functions = []
+    contourdef_Jacobian_derivative_functions = []
+    deformed_integration_variable_derivative_functions = []
+    decomposed_polynomial_derivatives = []
+    other_functions = []
+
+    # compute the required derivatives
+    cal_I_derivatives = {}
+    other_derivatives = {}
+    decomposed_derivatives = {}
+    contourdef_Jacobian_derivatives = {}
+    deformed_integration_variable_derivatives = {}
+
+    # python dictionaries are unordered but some insertions depend on others --> need an ordering
+    ordered_cal_I_derivative_names = []
+    ordered_other_derivative_names = []
+    ordered_decomposed_derivative_names = []
+    ordered_contourdef_Jacobian_derivative_names = []
+    ordered_deformed_integration_variable_derivative_names = []
+
+    def update_derivatives(basename, derivative_tracker, full_expression, derivatives=other_derivatives, ordered_derivative_names=ordered_other_derivative_names, functions=other_functions):
+        derivatives[basename] = full_expression # include undifferentiated expression
+        ordered_derivative_names.append(basename)
+        functions.append(basename) # define the symbol as CFunction in FORM
+        for multiindex,expression in derivative_tracker.compute_derivatives(full_expression).items():
+            name = _derivative_muliindex_to_name(basename, multiindex)
+            derivatives[name] = expression
+            ordered_derivative_names.append(name)
+            functions.append(name) # define the symbol as CFunction in FORM
+
+    #  - for cal_I
+    update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I,
+                       derivatives=cal_I_derivatives, ordered_derivative_names=ordered_cal_I_derivative_names,
+                       functions=cal_I_derivative_functions)
+
+    #  - for the `remainder_expression`
+    update_derivatives(basename=FORM_names['remainder_expression'],
+                       derivative_tracker=symbolic_remainder_expression,
+                       full_expression=this_primary_sector_remainder_expression)
+
+    #  - for the additional factors
+    if contour_deformation_polynomial is not None:
+        update_derivatives(
+            FORM_names['additional_deformation_factor'], # basename
+            symbolic_additional_deformation_factor, # derivative tracker
+            additional_deformation_factor # full_expression
+        )
+        for k,(symbolic_factor,factor) in \
+        enumerate(zip(symbolic_deformation_factors,deformation_factors)):
+            update_derivatives(
+                FORM_names['additional_deformation_factor'] + str(integration_variables[k]), # basename
+                symbolic_factor, # derivative tracker
+                factor, # full_expression
+                deformed_integration_variable_derivatives, # derivatives
+                ordered_deformed_integration_variable_derivative_names, # ordered_derivative_names
+                deformed_integration_variable_derivative_functions # functions
+            )
+
+    #  - for the `other_polynomials`
+    for prod, exponentiated_function, basename in zip(sector.other, symbolic_other_polynomials, names_other_polynomials):
+        _, expression = prod.factors
+        expression.exponent = 1 # exponent is already part of the `tracker`
+        update_derivatives(
+            basename=basename, # name as defined in `polynomial_names` or dummy name
+            derivative_tracker=exponentiated_function.base,
+            full_expression=expression
+        )
+
+    #  - for the `polynomials_to_decompose`
+    for prod, exponentiated_function, basename in zip(sector.cast , symbolic_polynomials_to_decompose, names_polynomials_to_decompose):
+        _, expression = prod.factors
+        expression.exponent = 1 # exponent is already part of the `tracker`
+        update_derivatives(
+            basename=basename, # name as defined in `polynomial_names` or dummy name
+            derivative_tracker=exponentiated_function.base,
+            full_expression=expression,
+            derivatives=decomposed_derivatives,
+            ordered_derivative_names=ordered_decomposed_derivative_names,
+            functions=decomposed_polynomial_derivatives
+        )
+
+    if contour_deformation_polynomial is not None:
+    #  - for the contour deformation Jacobian
+        update_derivatives(
+            FORM_names['contourdef_Jacobian'], # basename
+            symbolic_contourdef_Jacobian, # derivative tracker
+            contourdef_Jacobian_determinant, # full_expression
+            contourdef_Jacobian_derivatives, # derivatives
+            ordered_contourdef_Jacobian_derivative_names, # ordered_derivative_names
+            contourdef_Jacobian_derivative_functions # functions
+        )
+
+    #  - for the deformed integration variables
+        for undeformed_name,deformed_variable,derivative_tracker in zip(integration_variables,deformed_integration_parameters,symbolic_deformed_variables):
+            update_derivatives(
+                FORM_names['deformed_variable'] + str(undeformed_name), # basename
+                derivative_tracker,
+                deformed_variable, # full_expression
+                deformed_integration_variable_derivatives, # derivatives
+                ordered_deformed_integration_variable_derivative_names, # ordered_derivative_names
+                deformed_integration_variable_derivative_functions # functions
+            )
+
+    #  - for the contour deformation polynomial
+        full_expression = sector.cast[contour_deformation_polynomial_index].factors[1]
+        full_expression.exponent = 1 # exponent is already part of the `tracker`
+        update_derivatives(
+            str(contour_deformation_polynomial), # basename
+            symbolic_contour_deformation_polynomial, # derivative tracker
+            full_expression, # full_expression
+            decomposed_derivatives, # derivatives
+            ordered_decomposed_derivative_names, # ordered_derivative_names
+            decomposed_polynomial_derivatives # functions
+        )
+
+    # determine which derivatives of the user input ``functions`` are needed and
+    # generate the corresponding c++ "function_declarations"
+    for call in function_calls:
+        number_of_arguments = call.number_of_arguments
+        derivative_symbols = call.derivative_symbols
+        functions.update(derivative_symbols)
+        for derivative_symbol in derivative_symbols:
+            function_declarations.add( _make_CXX_function_declaration(derivative_symbol, number_of_arguments) )
+    other_functions.extend(functions)
+
+    # remove repetitions in `decomposed_polynomial_derivatives`
+    decomposed_polynomial_derivatives = set(decomposed_polynomial_derivatives)
+
+    # generate the function definitions for the insertion in FORM
+    if contour_deformation_polynomial is not None:
+        FORM_vanishing_deformed_integration_variable_calls = ''.join(
+                    '  Id %s(' % _derivative_muliindex_to_name(FORM_names['deformed_variable'] + str(outer_var), multiindex) + \
+                    ','.join(str(inner_var) + ('?{0,1}' if i == j else '?') for j,inner_var in enumerate(integration_variables)) + \
+                    ') = %s;\n' % ('0' if np.any(multiindex) else str(outer_var))
+                    if multiindex[i] == 0 else ''
+                for i,outer_var in enumerate(integration_variables)
+            for multiindex in chain([[0]*len(integration_variables)], symbolic_deformed_variables[i].derivative_tracks.keys())
+        )
+        FORM_deformed_integration_variable_definitions = ''.join(
+            _make_FORM_function_definition(
+                name, deformed_integration_variable_derivatives[name], integration_variables, limit=10**6
+            )
+            for name in ordered_deformed_integration_variable_derivative_names
+        )
+        FORM_contourdef_Jacobian_derivative_definitions = ''.join(
+            _make_FORM_function_definition(
+                name, contourdef_Jacobian_derivatives[name], integration_variables, limit=10**6
+            )
+            for name in ordered_contourdef_Jacobian_derivative_names
+        )
+    FORM_cal_I_definitions = ''.join(
+        _make_FORM_function_definition(name, cal_I_derivatives[name], symbols_other_polynomials, limit=10**6)
+        for name in ordered_cal_I_derivative_names
+    )
+    FORM_other_definitions = ''.join(
+        _make_FORM_function_definition(name, other_derivatives[name], symbols_remainder_expression, limit=10**6)
+        for name in ordered_other_derivative_names
+    )
+    FORM_decomposed_definitions = ''.join(
+        _make_FORM_function_definition(name, decomposed_derivatives[name], symbols_remainder_expression, limit=10**6)
+        for name in ordered_decomposed_derivative_names
+    )
+
+    # generate list over all occuring orders in the regulators
+    regulator_powers = list( rangecomb(np.zeros_like(required_orders), required_orders + highest_poles_current_sector) )
+    number_of_orders = len(regulator_powers)
+
+    # generate the definitions of the FORM preprocessor variables "shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex'"
+    regulator_powers = _make_FORM_shifted_orders(regulator_powers)
+
+    # parse template file "sector.h"
+    template_replacements['functions'] = _make_FORM_list(other_functions)
+    template_replacements['cal_I_derivatives'] = _make_FORM_list(cal_I_derivative_functions)
+    template_replacements['decomposed_polynomial_derivatives'] = _make_FORM_list(decomposed_polynomial_derivatives)
+    template_replacements['insert_cal_I_procedure'] = FORM_cal_I_definitions
+    template_replacements['insert_other_procedure'] = FORM_other_definitions
+    template_replacements['insert_decomposed_procedure'] = FORM_decomposed_definitions
+    template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition(internal_prefix+'sDUMMYIntegrand', integrand, args=None, limit=10**6)
+    template_replacements['sector_container_initializer'] = _make_CXX_Series_initialization(regulators, -highest_poles_current_sector,
+                                                                                            required_orders, sector_index,
+                                                                                            contour_deformation_polynomial is not None)
+    template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
+    template_replacements['regulator_powers'] = regulator_powers
+    template_replacements['number_of_orders'] = number_of_orders
+    parse_template_file(os.path.join(template_sources, 'codegen', 'sector.h'), # source
+                        os.path.join(name,             'codegen', 'sector%i.h' % sector_index), # dest
+                        template_replacements)
+
+    if contour_deformation_polynomial is not None:
+        # parse template file "contour_deformation.h"
+        template_replacements['contourdef_Jacobian_derivative_functions'] = _make_FORM_list(contourdef_Jacobian_derivative_functions)
+        template_replacements['deformed_integration_variable_derivative_functions'] = _make_FORM_list(deformed_integration_variable_derivative_functions)
+        template_replacements['contour_deformation_polynomial'] = contour_deformation_polynomial
+        template_replacements['positive_polynomials'] = _make_FORM_list(positive_polynomials)
+        template_replacements['nullify_vanishing_deformed_integration_variable_calls_procedure'] = FORM_vanishing_deformed_integration_variable_calls
+        template_replacements['insert_deformed_integration_variables_procedure'] = FORM_deformed_integration_variable_definitions
+        template_replacements['insert_contourdef_Jacobian_derivatives_procedure'] = FORM_contourdef_Jacobian_derivative_definitions
+        template_replacements['deformation_parameters'] = _make_FORM_list(deformation_parameters)
+        parse_template_file(os.path.join(template_sources, 'codegen', 'contour_deformation.h'), # source
+                            os.path.join(name,             'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest
+                            template_replacements)
+
+    return lowest_orders, function_declarations
+
+def _reduce_sectors_by_symmetries(sectors, message, indices, use_Pak, use_dreadnaut, name):
+    '''
+    Function that reduces the number of sectors by
+    identifying symmetries.
+
+    '''
+    print(message + ' before symmetry finding:', len(sectors))
+    # find symmetries
+    sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, iterative_sort, indices)
+    print(message + ' after symmetry finding (iterative):', len(sectors))
+    sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort, indices)
+    print(message + ' after symmetry finding (light Pak):', len(sectors))
+    if use_Pak:
+        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, Pak_sort, indices)
+        print(message + ' after symmetry finding (full Pak):', len(sectors))
+    if use_dreadnaut:
+        sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(sectors, indices, use_dreadnaut, os.path.join(name,'dreadnaut_workdir'))
+        print(message + ' after symmetry finding (dreadnaut):', len(sectors))
+    return sectors
+
 
 # ---------------------------------- main function ----------------------------------
 def make_package(name, integration_variables, regulators, requested_orders,
@@ -739,7 +1335,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
                  enforce_complex=False, split=False, ibp_power_goal=-1, use_dreadnaut=False,
-                 use_Pak=True):
+                 use_Pak=True, processes=None):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -977,6 +1573,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
         with :func:`.Pak_sort` to find sector symmetries.
         Default: ``True``
 
+    :param processes:
+        integer or None, optional;
+        The maximal number of processes to be used. If ``None``,
+        the number of CPUs :func:`multiprocessing.cpu_count()` is
+        used.
+        `New in version 1.3`.
+        Default: ``None``
+
     '''
     print('running "make_package" for "' + name + '"')
 
@@ -1055,22 +1659,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # initialize the decomposition
     initial_sector = decomposition.Sector(polynomials_to_decompose, other_polynomials + transformations)
 
-    # function that reduces the number of sectors by identifying symmetries
-    def reduce_sectors_by_symmetries(sectors, message, indices):
-        print(message + ' before symmetry finding:', len(sectors))
-        # find symmetries
-        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, iterative_sort, indices)
-        print(message + ' after symmetry finding (iterative):', len(sectors))
-        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort, indices)
-        print(message + ' after symmetry finding (light Pak):', len(sectors))
-        if use_Pak:
-            sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, Pak_sort, indices)
-            print(message + ' after symmetry finding (full Pak):', len(sectors))
-        if use_dreadnaut:
-            sectors = decomposition.squash_symmetry_redundant_sectors_dreadnaut(sectors, indices, dreadnaut_executable, os.path.join(name,'dreadnaut_workdir'))
-            print(message + ' after symmetry finding (dreadnaut):', len(sectors))
-        return sectors
-
     # if splitting desired, implement it as additional primary decomposition
     if split:
         # cannot split when using the geometric decomposition method because the integration interval is [0,inf] after the primary decomposition
@@ -1082,11 +1670,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
         def primary_decomposition_with_splitting(sector, indices):
             # investigate symmetries before the split
             if use_symmetries:
-                primary_sectors = reduce_sectors_by_symmetries\
+                primary_sectors = _reduce_sectors_by_symmetries\
                 (
                     list(  original_decomposition_strategies['primary'](sector, indices)  ),
                     'number of primary sectors',
-                    indices[:-1] # primary decomposition removes one integration variable
+                    indices[:-1], # primary decomposition removes one integration variable
+                    use_Pak,
+                    dreadnaut_executable if use_dreadnaut else False,
+                    name
                 )
             else:
                 primary_sectors = original_decomposition_strategies['primary'](sector, indices)
@@ -1138,31 +1729,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
             if len(polynomial_names) <= contour_deformation_polynomial_index:
                 raise IndexError('Could not find the `contour_deformation_polynomial` "%s" in `polynomial_names`.' % str_contour_deformation_polynomial)
 
-    def parse_exponents(sector, symbols_polynomials_to_decompose, symbols_other_polynomials):
-        #  - in ``sector.cast``
-        for product in sector.cast:
-            mono, poly = product.factors
-            mono.exponent = Polynomial.from_expression(mono.exponent, symbols_polynomials_to_decompose)
-            poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
-
-        #  - in ``sector.other``
-        for poly in sector.other:
-            try:
-                poly.exponent = Polynomial.from_expression(poly.exponent, symbols_other_polynomials)
-            except AttributeError:
-                pass # not an exponentiated polynomial --> nothing to do
-
-    def parse_coeffs(sector, symbols_polynomials_to_decompose, symbols_other_polynomials):
-        #  - in ``sector.cast``
-        for product in sector.cast:
-            mono, poly = product.factors
-            mono.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in mono.coeffs])
-            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
-
-        #  - in ``sector.other``
-        for poly in sector.other:
-            poly.coeffs = np.array([Expression(coeff, symbols_polynomials_to_decompose) for coeff in poly.coeffs])
-
     # investigate if we can take advantage of sector symmetries
     # We can simplify due to symmetries if the `remainder_expression`
     # does explicitly not depend on any integration variable and if
@@ -1190,11 +1756,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
     if use_symmetries and not split:
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
         indices = range(len(integration_variables))
-        primary_sectors = reduce_sectors_by_symmetries\
+        primary_sectors = _reduce_sectors_by_symmetries\
         (
             list(  strategy['primary'](initial_sector, indices)  ),
             'number of primary sectors',
-            indices[:-1] # primary decomposition removes one integration variable
+            indices[:-1], # primary decomposition removes one integration variable
+            use_Pak,
+            dreadnaut_executable if use_dreadnaut else False,
+            name
         )
 
         # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
@@ -1212,6 +1781,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     else: # if we cannot take advantage of symmetries
         primary_sectors_to_consider = strategy['primary'](initial_sector, range(len(integration_variables)))
+
+    # initialize the multiprocessing pool to process the `secondary_sectors` in parallel
+    pool = Pool(processes)
 
     for primary_sector_index, primary_sector in enumerate(primary_sectors_to_consider):
 
@@ -1325,452 +1897,34 @@ def make_package(name, integration_variables, regulators, requested_orders,
             secondary_sectors = []
             for primary_sector in primary_sectors:
                 secondary_sectors.extend( strategy['secondary'](primary_sector, indices) )
-            secondary_sectors = reduce_sectors_by_symmetries(secondary_sectors, 'total number sectors', indices)
+            secondary_sectors = _reduce_sectors_by_symmetries\
+            (
+                secondary_sectors,
+                'total number sectors',
+                indices,
+                use_Pak,
+                dreadnaut_executable if use_dreadnaut else False,
+                name
+            )
         else:
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
-        for sector in secondary_sectors:
-            sector_index += 1
-
-            print('writing FORM files for sector', sector_index)
-
-            if not use_symmetries:
-                # If we do not use symmetries, we have to take care of `transformations`
-                # extract ``this_transformations``
-                this_transformations = sector.other[-len(all_integration_variables):]
-                # remove transformation from ``sector.other``
-                sector.other = sector.other[:-len(all_integration_variables)]
-
-            # insert the `polynomials_to_decompose`:
-            # explicitly insert monomial part as ``<symbol> --> xi**pow_i * <symbol>``
-            # ``[:,:-len(regulators)-len(polynomial_names)]`` is the part of the expolist that contains only the powers of the `integration_variables`;
-            #     i.e. it excludes the powers of the `regulators` and the `polynomial_names` from the modification
-            for poly in sector.other:
-                for i,(polyname,prod) in enumerate(zip(polynomial_names,sector.cast)):
-                    mono,_ = prod.factors
-                    poly.expolist[:,:-len(regulators)-len(polynomial_names)] += \
-                        np.einsum('i,k->ik', poly.expolist[:,-len(polynomial_names):][:,i], mono.expolist[0,:-len(regulators)-len(polynomial_names)])
-
-            # define symbols for the `polynomials_to_decompose` --> shorter expressions and faster in python
-            symbolic_polynomials_to_decompose = []
-            symbolic_polynomials_to_decompose_all_symbols_undeformed = []
-            names_polynomials_to_decompose = []
-            for i in range(len(polynomials_to_decompose)):
-                try:
-                    poly_name = str(polynomial_names[i])
-                except IndexError:
-                    poly_name = FORM_names['cast_polynomial'] + str(i)
-                symbolic_polynomials_to_decompose_all_symbols_undeformed.append(
-                        MaxDegreeFunction(
-                                          poly_name,
-                                          *elementary_monomials_all_symbols,
-                                          maxdegrees=MaxDegreeFunction.get_maxdegrees(
-                                                                                          sector.cast[i].factors[1],
-                                                                                          ignore_subclass=True
-                                                                                     )
-                                          )
-                )
-                symbolic_polynomials_to_decompose.append(
-                    Pow(
-                        MaxDegreeFunction(
-                                          poly_name,
-                                          *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
-                                          maxdegrees=MaxDegreeFunction.get_maxdegrees(
-                                                                                          sector.cast[i].factors[1],
-                                                                                          ignore_subclass=True
-                                                                                     )
-                                          ),
-                        Expression(sector.cast[i].factors[1].exponent, symbols_polynomials_to_decompose),
-                        copy = False
-                    )
-                )
-                names_polynomials_to_decompose.append(poly_name)
-
-            # convert all coefficients to pySecDec expressions
-            parse_coeffs(sector, symbols_polynomials_to_decompose+polynomial_names, symbols_other_polynomials+polynomial_names)
-
-            # remove `polynomial_names` - keep polynomial part symbolic as dummy function:
-            #  - from `other_polynomials`
-            replacements = []
-            for k in range(1, len(reversed_polynomial_names) + 1):
-                replacement = symbolic_polynomials_to_decompose_all_symbols_undeformed[len(polynomial_names)-k]
-                for i in range(k):
-                    replacement = replacement.replace(-1, error_token, remove=True)
-                replacements.append(replacement)
-            for replacement in replacements:
-                for i, poly in enumerate(sector.other):
-                    poly = poly.replace(-1, replacement, remove=True)
-                    for j, coeff in enumerate(poly.coeffs):
-                        poly.coeffs[j] = coeff.simplify()
-                    sector.other[i] = poly
-
-            #  - from `polynomials_to_decompose`
-            for i in range(len(polynomials_to_decompose)):
-                # no dependence here, just remove the symbols
-                prod = sector.cast[i]
-                for poly_name in reversed_polynomial_names:
-                    prod = prod.replace(-1, error_token, remove=True)
-                sector.cast[i] = prod
-
-            #  - from `Jacobian`
-            Jacobian = sector.Jacobian
-            for poly_name in reversed_polynomial_names:
-                Jacobian = Jacobian.replace(-1, error_token, remove=True)
-
-            #  - from `this_transformations`
-            if not use_symmetries:
-                for i in range(len(all_integration_variables)):
-                    for poly_name in reversed_polynomial_names:
-                        this_transformations[i] = this_transformations[i].replace(-1, error_token, remove=True)
-
-            # convert all exponents to pySecDec expressions
-            parse_exponents(sector, symbols_polynomials_to_decompose, symbols_other_polynomials)
-
-            # factorize
-            #  - the polynomials in ``sector.other``
-            for i,to_factorize in enumerate(sector.other):
-                to_factorize = sector.other[i] = \
-                    Product(
-                        ExponentiatedPolynomial(
-                            np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([1]), to_factorize.exponent.copy(), symbols_other_polynomials, copy=False
-                        ),
-                        to_factorize
-                    )
-                decomposition.refactorize(to_factorize)
-
-            #  - the Jacobian
-            Jacobian = \
-                    Product(
-                        ExponentiatedPolynomial(
-                            np.zeros([1,len(Jacobian.polysymbols)], dtype=int), np.array([1]), exponent=polynomial_one, polysymbols=Jacobian.polysymbols, copy=False
-                        ),
-                        ExponentiatedPolynomial(Jacobian.expolist, Jacobian.coeffs, polysymbols=Jacobian.polysymbols, exponent=polynomial_one, copy=False)
-                    )
-            decomposition.refactorize(Jacobian)
-
-            # define symbols for the `other_polynomials --> shorter expressions and faster in python
-            symbolic_other_polynomials = [
-                                             Pow(
-                                                 MaxDegreeFunction(
-                                                             FORM_names['other_polynomial'] + str(i),
-                                                             *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
-                                                             maxdegrees=MaxDegreeFunction.get_maxdegrees(sector.other[i].factors[1], ignore_subclass=True)
-                                                 ),
-                                                 Expression(sector.other[i].factors[1].exponent, symbols_polynomials_to_decompose),
-                                                 copy = False
-                                             )
-                                             for i in range(len(other_polynomials))
-                                         ]
-
-            # Apply ``this_transformation`` and the contour deformaion (if applicable) to
-            # the `remainder_expression` BEFORE taking derivatives.
-            # Introduce a symbol for the `remainder_expression` and insert in FORM.
-            # Note: ``elementary_monomials[len(integration_variables):]`` are the regulators
-            maxdegrees_remainder_expression = MaxDegreeFunction.get_maxdegrees(this_primary_sector_remainder_expression, indices=regulator_indices, ignore_subclass=False)
-            if remainder_expression_is_trivial:
-                # `remainder_expression` does not depend on the integration variables in that case
-                maxdegrees_remainder_expression[:len(integration_variables)] = 0
-                symbolic_remainder_expression_arguments = [polynomial_zero] * len(integration_variables) + elementary_monomials[len(integration_variables):]
-            else:
-                symbolic_remainder_expression_arguments = this_transformations + elementary_monomials[len(integration_variables):]
-            symbolic_remainder_expression = MaxDegreeFunction(FORM_names['remainder_expression'], *symbolic_remainder_expression_arguments, maxdegrees=maxdegrees_remainder_expression)
-
-            # initialize the product of monomials for the subtraction
-            monomial_factors = list(chain([Jacobian.factors[0]], (prod.factors[0] for prod in sector.cast), (prod.factors[0] for prod in sector.other)))
-            monomials = Product(*monomial_factors, copy=False)
-
-            # compute the pole structure
-            pole_structures.append(  [sp.printing.ccode(ps) for ps in compute_pole_structure(monomials, *integration_variable_indices)]  )
-
-            if contour_deformation_polynomial is not None:
-                # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k * (1-x_k) * Re(dF_dx_k)`` to the monomials.
-                # Split as ``z_k({x_k}) = monomials[k] * <something in remainder_expression>``
-                # where ``monomials[k] = x_k``; i.e. unchanged
-                # and where ``<something in remainder_expression> z_k({x_k}) / x_k = 1 - i * lambda_k * (1-x_k) * Re(dF_dx_k)``.
-                # That amounts to multiplying ``<something in remainder_expression> ** <exponent_of_monomial>`` to `remainder_expression`
-                additional_deformation_factors = []
-                monomial_powers = np.zeros(len(integration_variables), dtype=object)
-                for factor in monomial_factors:
-                    for k,exponent in enumerate(factor.expolist[0,:len(integration_variables)]):
-                        monomial_powers[k] += factor.exponent*exponent
-                for k,(deformation_factor,power) in enumerate(zip(symbolic_deformation_factors,monomial_powers)):
-                    additional_deformation_factors.append \
-                    (
-                        Pow(
-                               deformation_factor,
-                               power
-                           )
-                    )
-                additional_deformation_factor = Product(*additional_deformation_factors, copy=False)
-
-            # define ``cal_I``, the part of the integrand that does not lead to poles
-            # use the derivative tracking dummy functions for the polynomials --> faster
-            cal_I = Product(symbolic_remainder_expression, *chain([Jacobian.factors[1]], symbolic_polynomials_to_decompose, symbolic_other_polynomials), copy=False)
-
-            # multiply Jacobian determinant to `cal_I`
-            if contour_deformation_polynomial is not None:
-                symbolic_contourdef_Jacobian = Function(FORM_names['contourdef_Jacobian'], *elementary_monomials[:len(integration_variables)])
-                symbolic_additional_deformation_factor = Function(FORM_names['additional_deformation_factor'], *elementary_monomials)
-                cal_I = Product(symbolic_contourdef_Jacobian, symbolic_additional_deformation_factor, cal_I)
-
-            # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
-            symbolic_cal_I = Function(FORM_names['cal_I'], *elementary_monomials)
-
-            # initialize the Product to be passed to the subtraction
-            subtraction_initializer = Product(monomials, pole_part_initializer, symbolic_cal_I, copy=False)
-
-            # call the subtraction routines
-            # Integrate by parts until the `ibp_power_goal` is reached,
-            # then do the original subtraction (`integrate_pole_part`).
-            at_most_log_poles = integrate_by_parts(subtraction_initializer, ibp_power_goal, *integration_variable_indices)
-            subtracted = []
-            for item in at_most_log_poles:
-                subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
-
-            # intialize expansion
-            pole_parts = [s.factors[1].simplify() for s in subtracted]
-            regular_parts = [Product( *([s.factors[0]] + s.factors[2:]), copy=False ) for s in subtracted]
-
-            # expand poles
-            integrand_summands = []
-            for i,(regular,singular) in enumerate(zip(regular_parts, pole_parts)):
-                # must expand every term to the requested order plus the highest pole it multiplies
-                # We calculated the highest pole order of the prefactor (variable ``highest_prefactor_pole_orders``) above.
-                # In addition, we have to take the poles of the current term into account.
-
-                try:
-                    singular_expanded = expand_singular(Product(singular, copy=False), regulator_indices, required_orders)
-                except OrderError:
-                    coeffs = np.array([_sympy_zero])
-                    expolist = np.zeros((1, len(singular.symbols)), dtype=int)
-                    expolist[:,regulator_indices] = required_orders
-                    singular_expanded = Polynomial(expolist, coeffs, singular.symbols, copy=False)
-
-                highest_poles_current_term = - singular_expanded.expolist[:,regulator_indices].min(axis=0)
-                expansion_orders = required_orders + highest_poles_current_term
-
-                try:
-                    regular_expanded = expand_Taylor(regular, regulator_indices, expansion_orders)
-                except OrderError:
-                    coeffs = np.array([_sympy_zero])
-                    expolist = np.zeros((1, len(singular.symbols)), dtype=int)
-                    expolist[:,regulator_indices] = expansion_orders
-                    regular_expanded = Polynomial(expolist, coeffs, singular.symbols, copy=False)
-
-                if i == 0: # first iteration; ``highest_poles_current_sector`` not yet set
-                    highest_poles_current_sector = highest_poles_current_term
-                else:
-                    highest_poles_current_sector = np.maximum(highest_poles_current_sector, highest_poles_current_term)
-
-                integrand_summands.append( Product(singular_expanded,regular_expanded,copy=False) )
-
-            integrand = Sum(*integrand_summands, copy=False)
-
-            # update the global lowest
-            lowest_orders = np.minimum(lowest_orders, -highest_poles_current_sector)
-
-            # initialize the CFunctions for FORM
-            cal_I_derivative_functions = []
-            contourdef_Jacobian_derivative_functions = []
-            deformed_integration_variable_derivative_functions = []
-            decomposed_polynomial_derivatives = []
-            other_functions = []
-
-            # compute the required derivatives
-            cal_I_derivatives = {}
-            other_derivatives = {}
-            decomposed_derivatives = {}
-            contourdef_Jacobian_derivatives = {}
-            deformed_integration_variable_derivatives = {}
-
-            # python dictionaries are unordered but some insertions depend on others --> need an ordering
-            ordered_cal_I_derivative_names = []
-            ordered_other_derivative_names = []
-            ordered_decomposed_derivative_names = []
-            ordered_contourdef_Jacobian_derivative_names = []
-            ordered_deformed_integration_variable_derivative_names = []
-
-            def update_derivatives(basename, derivative_tracker, full_expression, derivatives=other_derivatives, ordered_derivative_names=ordered_other_derivative_names, functions=other_functions):
-                derivatives[basename] = full_expression # include undifferentiated expression
-                ordered_derivative_names.append(basename)
-                functions.append(basename) # define the symbol as CFunction in FORM
-                for multiindex,expression in derivative_tracker.compute_derivatives(full_expression).items():
-                    name = _derivative_muliindex_to_name(basename, multiindex)
-                    derivatives[name] = expression
-                    ordered_derivative_names.append(name)
-                    functions.append(name) # define the symbol as CFunction in FORM
-
-            #  - for cal_I
-            update_derivatives(basename=FORM_names['cal_I'], derivative_tracker=symbolic_cal_I, full_expression=cal_I,
-                               derivatives=cal_I_derivatives, ordered_derivative_names=ordered_cal_I_derivative_names,
-                               functions=cal_I_derivative_functions)
-
-            #  - for the `remainder_expression`
-            update_derivatives(basename=FORM_names['remainder_expression'],
-                               derivative_tracker=symbolic_remainder_expression,
-                               full_expression=this_primary_sector_remainder_expression)
-
-            #  - for the additional factors
-            if contour_deformation_polynomial is not None:
-                update_derivatives(
-                    FORM_names['additional_deformation_factor'], # basename
-                    symbolic_additional_deformation_factor, # derivative tracker
-                    additional_deformation_factor # full_expression
-                )
-                for k,(symbolic_factor,factor) in \
-                enumerate(zip(symbolic_deformation_factors,deformation_factors)):
-                    update_derivatives(
-                        FORM_names['additional_deformation_factor'] + str(integration_variables[k]), # basename
-                        symbolic_factor, # derivative tracker
-                        factor, # full_expression
-                        deformed_integration_variable_derivatives, # derivatives
-                        ordered_deformed_integration_variable_derivative_names, # ordered_derivative_names
-                        deformed_integration_variable_derivative_functions # functions
+        # process the `secondary_sectors` in parallel
+        lowest_orders_and_function_declarations = \
+            pool.map(
+                        _process_secondary_sector,
+                        _make_environment( locals() )
                     )
 
-            #  - for the `other_polynomials`
-            for prod, exponentiated_function, basename in zip(sector.other, symbolic_other_polynomials, names_other_polynomials):
-                _, expression = prod.factors
-                expression.exponent = 1 # exponent is already part of the `tracker`
-                update_derivatives(
-                    basename=basename, # name as defined in `polynomial_names` or dummy name
-                    derivative_tracker=exponentiated_function.base,
-                    full_expression=expression
-                )
+        # get the `sector_index` after processing the secondary sectors
+        sector_index = sector_index + len(lowest_orders_and_function_declarations)
 
-            #  - for the `polynomials_to_decompose`
-            for prod, exponentiated_function, basename in zip(sector.cast , symbolic_polynomials_to_decompose, names_polynomials_to_decompose):
-                _, expression = prod.factors
-                expression.exponent = 1 # exponent is already part of the `tracker`
-                update_derivatives(
-                    basename=basename, # name as defined in `polynomial_names` or dummy name
-                    derivative_tracker=exponentiated_function.base,
-                    full_expression=expression,
-                    derivatives=decomposed_derivatives,
-                    ordered_derivative_names=ordered_decomposed_derivative_names,
-                    functions=decomposed_polynomial_derivatives
-                )
+        # update the global `lowest_orders`
+        lowest_orders = np.min([item[0] for item in lowest_orders_and_function_declarations],axis=0)
 
-            if contour_deformation_polynomial is not None:
-            #  - for the contour deformation Jacobian
-                update_derivatives(
-                    FORM_names['contourdef_Jacobian'], # basename
-                    symbolic_contourdef_Jacobian, # derivative tracker
-                    contourdef_Jacobian_determinant, # full_expression
-                    contourdef_Jacobian_derivatives, # derivatives
-                    ordered_contourdef_Jacobian_derivative_names, # ordered_derivative_names
-                    contourdef_Jacobian_derivative_functions # functions
-                )
-
-            #  - for the deformed integration variables
-                for undeformed_name,deformed_variable,derivative_tracker in zip(integration_variables,deformed_integration_parameters,symbolic_deformed_variables):
-                    update_derivatives(
-                        FORM_names['deformed_variable'] + str(undeformed_name), # basename
-                        derivative_tracker,
-                        deformed_variable, # full_expression
-                        deformed_integration_variable_derivatives, # derivatives
-                        ordered_deformed_integration_variable_derivative_names, # ordered_derivative_names
-                        deformed_integration_variable_derivative_functions # functions
-                    )
-
-            #  - for the contour deformation polynomial
-                full_expression = sector.cast[contour_deformation_polynomial_index].factors[1]
-                full_expression.exponent = 1 # exponent is already part of the `tracker`
-                update_derivatives(
-                    str(contour_deformation_polynomial), # basename
-                    symbolic_contour_deformation_polynomial, # derivative tracker
-                    full_expression, # full_expression
-                    decomposed_derivatives, # derivatives
-                    ordered_decomposed_derivative_names, # ordered_derivative_names
-                    decomposed_polynomial_derivatives # functions
-                )
-
-            # determine which derivatives of the user input ``functions`` are needed and
-            # generate the corresponding c++ "function_declarations"
-            for call in function_calls:
-                number_of_arguments = call.number_of_arguments
-                derivative_symbols = call.derivative_symbols
-                functions.update(derivative_symbols)
-                for derivative_symbol in derivative_symbols:
-                    function_declarations.add( _make_CXX_function_declaration(derivative_symbol, number_of_arguments) )
-            other_functions.extend(functions)
-
-            # remove repetitions in `decomposed_polynomial_derivatives`
-            decomposed_polynomial_derivatives = set(decomposed_polynomial_derivatives)
-
-            # generate the function definitions for the insertion in FORM
-            if contour_deformation_polynomial is not None:
-                FORM_vanishing_deformed_integration_variable_calls = ''.join(
-                            '  Id %s(' % _derivative_muliindex_to_name(FORM_names['deformed_variable'] + str(outer_var), multiindex) + \
-                            ','.join(str(inner_var) + ('?{0,1}' if i == j else '?') for j,inner_var in enumerate(integration_variables)) + \
-                            ') = %s;\n' % ('0' if np.any(multiindex) else str(outer_var))
-                            if multiindex[i] == 0 else ''
-                        for i,outer_var in enumerate(integration_variables)
-                    for multiindex in chain([[0]*len(integration_variables)], symbolic_deformed_variables[i].derivative_tracks.keys())
-                )
-                FORM_deformed_integration_variable_definitions = ''.join(
-                    _make_FORM_function_definition(
-                        name, deformed_integration_variable_derivatives[name], integration_variables, limit=10**6
-                    )
-                    for name in ordered_deformed_integration_variable_derivative_names
-                )
-                FORM_contourdef_Jacobian_derivative_definitions = ''.join(
-                    _make_FORM_function_definition(
-                        name, contourdef_Jacobian_derivatives[name], integration_variables, limit=10**6
-                    )
-                    for name in ordered_contourdef_Jacobian_derivative_names
-                )
-            FORM_cal_I_definitions = ''.join(
-                _make_FORM_function_definition(name, cal_I_derivatives[name], symbols_other_polynomials, limit=10**6)
-                for name in ordered_cal_I_derivative_names
-            )
-            FORM_other_definitions = ''.join(
-                _make_FORM_function_definition(name, other_derivatives[name], symbols_remainder_expression, limit=10**6)
-                for name in ordered_other_derivative_names
-            )
-            FORM_decomposed_definitions = ''.join(
-                _make_FORM_function_definition(name, decomposed_derivatives[name], symbols_remainder_expression, limit=10**6)
-                for name in ordered_decomposed_derivative_names
-            )
-
-            # generate list over all occuring orders in the regulators
-            regulator_powers = list( rangecomb(np.zeros_like(required_orders), required_orders + highest_poles_current_sector) )
-            number_of_orders = len(regulator_powers)
-
-            # generate the definitions of the FORM preprocessor variables "shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex'"
-            regulator_powers = _make_FORM_shifted_orders(regulator_powers)
-
-            # parse template file "sector.h"
-            template_replacements['functions'] = _make_FORM_list(other_functions)
-            template_replacements['cal_I_derivatives'] = _make_FORM_list(cal_I_derivative_functions)
-            template_replacements['decomposed_polynomial_derivatives'] = _make_FORM_list(decomposed_polynomial_derivatives)
-            template_replacements['insert_cal_I_procedure'] = FORM_cal_I_definitions
-            template_replacements['insert_other_procedure'] = FORM_other_definitions
-            template_replacements['insert_decomposed_procedure'] = FORM_decomposed_definitions
-            template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition(internal_prefix+'sDUMMYIntegrand', integrand, args=None, limit=10**6)
-            template_replacements['sector_container_initializer'] = _make_CXX_Series_initialization(regulators, -highest_poles_current_sector,
-                                                                                                    required_orders, sector_index,
-                                                                                                    contour_deformation_polynomial is not None)
-            template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
-            template_replacements['regulator_powers'] = regulator_powers
-            template_replacements['number_of_orders'] = number_of_orders
-            parse_template_file(os.path.join(template_sources, 'codegen', 'sector.h'), # source
-                                os.path.join(name,             'codegen', 'sector%i.h' % sector_index), # dest
-                                template_replacements)
-
-            if contour_deformation_polynomial is not None:
-                # parse template file "contour_deformation.h"
-                template_replacements['contourdef_Jacobian_derivative_functions'] = _make_FORM_list(contourdef_Jacobian_derivative_functions)
-                template_replacements['deformed_integration_variable_derivative_functions'] = _make_FORM_list(deformed_integration_variable_derivative_functions)
-                template_replacements['contour_deformation_polynomial'] = contour_deformation_polynomial
-                template_replacements['positive_polynomials'] = _make_FORM_list(positive_polynomials)
-                template_replacements['nullify_vanishing_deformed_integration_variable_calls_procedure'] = FORM_vanishing_deformed_integration_variable_calls
-                template_replacements['insert_deformed_integration_variables_procedure'] = FORM_deformed_integration_variable_definitions
-                template_replacements['insert_contourdef_Jacobian_derivatives_procedure'] = FORM_contourdef_Jacobian_derivative_definitions
-                template_replacements['deformation_parameters'] = _make_FORM_list(deformation_parameters)
-                parse_template_file(os.path.join(template_sources, 'codegen', 'contour_deformation.h'), # source
-                                    os.path.join(name,             'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest
-                                    template_replacements)
+        # update the global `function_declarations`
+        for item in lowest_orders_and_function_declarations:
+            function_declarations.update(item[1])
 
     # expand the `prefactor` to the required orders
     print('expanding the prefactor')

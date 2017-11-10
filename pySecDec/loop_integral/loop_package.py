@@ -25,8 +25,8 @@ def loop_package(name, loop_integral, requested_order,
                  normaliz_executable='normaliz',
                  enforce_complex=False,
                  split=False, ibp_power_goal=-1,
-                 use_dreadnaut=False,
-                 use_Pak=True):
+                 use_dreadnaut=False, use_Pak=True,
+                 processes=None):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -168,6 +168,14 @@ def loop_package(name, loop_integral, requested_order,
         with :func:`.Pak_sort` to find sector symmetries.
         Default: ``True``
 
+    :param processes:
+        integer or None, optional;
+        The maximal number of processes to be used. If ``None``,
+        the number of CPUs :func:`multiprocessing.cpu_count()` is
+        used.
+        `New in version 1.3`.
+        Default: ``None``
+
     '''
     print('running "loop_package" for "' + name + '"')
 
@@ -233,7 +241,8 @@ def loop_package(name, loop_integral, requested_order,
 
         enforce_complex = enforce_complex,
         ibp_power_goal = ibp_power_goal,
-        split = split
+        split = split,
+        processes = processes
     )
 
     if isinstance(loop_integral, LoopIntegralFromGraph):
