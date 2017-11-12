@@ -83,23 +83,30 @@
     #EndIf
   #EndDo
 
-  L expressionF = `SecDecInternalContourDeformationPolynomial'(`deformedIntegrationVariables',`regulators')*replace_(`nullifyRegulators') + SecDecInternalsDUMMYExpressionFTail;
-  .sort
+  Local expressionF = `SecDecInternalContourDeformationPolynomial'(`deformedIntegrationVariables',`regulators')*replace_(`nullifyRegulators')
 
 * replace the calls to the deformed integration variables by dummy symbols
 * {
   #Do IV = {`occurringIntegrationVariables',}
     #If x`IV' != x
-
-      argument `SecDecInternalContourDeformationPolynomial';
-        Id SecDecInternalDeformed`IV' = SecDecInternalSecDecInternalDeformed`IV'Call;
-      endArgument;
-      Id SecDecInternalsDUMMYExpressionFTail = SecDecInternalsDUMMYExpressionFTail +
-        SecDecInternalLabelSecDecInternalDeformed`IV' * SecDecInternalDeformed`IV'(`integrationVariables');
-
+      + SecDecInternalLabelSecDecInternalDeformed`IV' * SecDecInternalDeformed`IV'(`integrationVariables')
     #EndIf
   #EndDo
+  ;
+  argument `SecDecInternalContourDeformationPolynomial';
+    #Do IV = {`occurringIntegrationVariables',}
+      #If x`IV' != x
+        Id SecDecInternalDeformed`IV' = SecDecInternalSecDecInternalDeformed`IV'Call;
+      #EndIf
+    #EndDo
 * }
+* remove calls to the deformation of absent integration variables
+    #Do IV = {`absentIntegrationVariables',}
+      #If x`IV' != x
+        Id SecDecInternalDeformed`IV' = 0;
+      #EndIf
+    #EndDo
+  endArgument;
 
 * insert the deformation and `SecDecInternalContourDeformationPolynomial'
   #call insertDeformedIntegrationVariables
@@ -109,7 +116,12 @@
   endArgument;
   #call insertDeformedIntegrationVariables
   #call insertDecomposed
-  multiply replace_(I,i_);
+  multiply replace_(
+                        I,i_
+                        #If `numIV' != `numOccurringIVOrder`shiftedOrderIndex''
+                          ,`nullifyAbsentIVs'
+                        #EndIf
+                   );
   .sort
 
 * replace the calls to "SecDecInternalRealPart" by dummy symbols
@@ -120,11 +132,26 @@
     #$labelCounter = 0;
 
     #Do i = 1,1
+
 *     set dollar variable
-      #Do depth = 0, `insertionDepth'
-        if ( match(`function'(?SecDecInternalsDUMMY$arg)) ) redefine i "0";
-      #EndDo
-      .sort
+      #$unmatched = 1;
+      if ( $unmatched );
+        #Do depth = 0, `insertionDepth'
+          #call beginArgumentDepth(`depth')
+            if ( $unmatched );
+              if ( match(once `function'(SecDecInternalsDUMMY?$argLocal)) );
+                $unmatched = 0;
+                $arg = $argLocal;
+                redefine i "0";
+              endif;
+            endif;
+          #call endArgumentDepth(`depth')
+        #EndDo
+      endif;
+      ModuleOption,sum,$arg;
+      ModuleOption,minimum,$unmatched;
+      ModuleOption,local,$argLocal;
+      .sort:match;
 
 *     The following "#if" evaluates to true only if there is still something to do.
       #If `i' == 0
@@ -135,32 +162,18 @@
           Id `function'($arg) = SecDecInternal`function'Call`$labelCounter';
         #EndDo
 
-        Id SecDecInternalsDUMMYExpressionFTail = SecDecInternalsDUMMYExpressionFTail +
-            SecDecInternalLabel`function'Call`$labelCounter' * (`$arg');
+        .sort
+
+        Local expressionF = expressionF + SecDecInternalLabel`function'Call`$labelCounter' * (`$arg');
 
       #EndIf
-      .sort
+
     #EndDo
 
     #redefine largestLabel`function' "`$labelCounter'"
 
   #EndIf
 * }
-
-  Id SecDecInternalsDUMMYExpressionFTail = 0;
-
-* remove calls to the deformation of absent integration variables
-  #Do IV = {`absentIntegrationVariables',}
-    #If x`IV' != x
-      Id SecDecInternalDeformed`IV' = 0;
-    #EndIf
-  #EndDo
-
-
-  #If `numIV' != `numOccurringIVOrder`shiftedOrderIndex''
-    multiply replace_(`nullifyAbsentIVs');
-    .sort
-  #EndIf
 
   Format O`optimizationLevel';
   AntiBracket `integrationVariables', `realParameters', `complexParameters', `deformationParameters';
@@ -279,37 +292,32 @@
 
 * Construct the ``  x_k * (1-x_k) * dF_dx_k  ``
 * Note: We can take the real part of the full expression since ``x_k * (1-x_k)`` is real anyway.
-  Local deformations = SecDecInternalsDUMMYDeformationsAppendix;
+  Local deformations =
   #Do idx = {`occurringIntegrationVariableIndices',}
     #If x`idx' != x
-      Id SecDecInternalsDUMMYDeformationsAppendix = SecDecInternalsDUMMYDeformationsAppendix +
-        SecDecInternalLabelDeformation^(`idx'+1) *
+      + SecDecInternalLabelDeformation^(`idx'+1) *
         (
             `integrationVariable`idx'' * (1-`integrationVariable`idx'') *
             d`SecDecInternalContourDeformationPolynomial'd`idx'(`integrationVariables',`regulators')
-        );
+        )
     #EndIf
   #EndDo
-
-* Set the following variables to zero:
-*   - SecDecInternalsDUMMYDerivativesAppendix
-*   - all regulators
-*   - absent integration variables (if any)
-  multiply replace_(
-                       SecDecInternalsDUMMYDerivativesAppendix,0,
-                       `nullifyRegulators'
-                       #If `numIV' != `numOccurringIVOrder`shiftedOrderIndex''
-                         ,`nullifyAbsentIVs'
-                       #EndIf
-                   );
-  .sort
+  ;
 
 * Explicitly insert the derivatives of `SecDecInternalContourDeformationPolynomial'
   #call insertDecomposed
 
+* Set the following variables to zero:
+*   - all regulators
+*   - absent integration variables (if any)
 * translate sympy's imaginary unit to FORM's imaginary unit
-  multiply replace_(I,i_);
-  .sort
+  multiply replace_(
+                       `nullifyRegulators'
+                       #If `numIV' != `numOccurringIVOrder`shiftedOrderIndex''
+                         ,`nullifyAbsentIVs'
+                       #EndIf
+                       ,I,i_
+                   );
 
 * Define the integration variables, the real parameters, the complex parameters,
 * the deformation parameters, "SecDecInternalRealPart", and "SecDecInternalAbs" as c preprocessor variables.
@@ -328,6 +336,9 @@
   .sort
   ExtraSymbols,array,SecDecInternalAbbreviation;
   #optimize deformations
+  intohide deformations;
+  Bracket SecDecInternalLabelDeformation;
+  .sort
 
 * Since FORM does not use "abbreviation[0]", we can use it as temporary variable.
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#define tmp SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
@@ -344,8 +355,6 @@
   #Do idx = {`occurringIntegrationVariableIndices',}
     #If x`idx' != x
       #$cppidx = $cppidx + 1;
-      Bracket SecDecInternalLabelDeformation;
-      .sort
       L expr = deformations[SecDecInternalLabelDeformation^(`idx'+1)];
       .sort
       Format rational;
@@ -356,8 +365,6 @@
       #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "1./SecDecInternalAbs(SecDecInternalRealPart(%%E));#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
     #EndIf
   #EndDo
-  drop expr;
-  .sort
 
 * undefine the c preprocessor macros
   #call cppUndefine(`occurringIntegrationVariables',optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
@@ -371,8 +378,10 @@
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
 
-* Delete the expression "deformations" since it is no longer needed.
+* Delete the expressions "expr" and "deformations" since they are no longer needed.
   #clearoptimize
+  unhide deformations;
+  drop expr;
   drop deformations;
   .sort
 

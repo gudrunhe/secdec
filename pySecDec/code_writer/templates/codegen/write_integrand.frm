@@ -226,11 +226,28 @@ Bracket `regulators';
       #Do i = 1,1
 *       set dollar variable
         skip signCheck;
-        if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-        .sort
+        #$unmatched = 1;
+        if ( $unmatched );
+          if ( occurs(`function') );
+            if ( match(`function'(?SecDecInternalsDUMMY$args)) );
+              redefine i "0";
+              $wrappedArgs = SecDecInternalfDUMMYArgContainer($args);
+            endif;
+          endif;
+        endif;
+        ModuleOption,sum,$wrappedArgs;
+        ModuleOption,local,$args;
+        ModuleOption,local,$unmatched;
+        .sort:match1;
 
 *       The following "#if" evaluates to true only if there is still something to do.
         #If `i' == 0
+
+          skip; nskip matcher;
+          Local matcher = $wrappedArgs;
+          Id once SecDecInternalfDUMMYArgContainer(?arguments$args) = 0;
+          .sort:match2;
+          drop matcher;
 
 *         If all args are zero or one, the expression to be sign checked evaluates to zero
 *         --> can omit that check because it always passes.
@@ -351,12 +368,38 @@ Bracket `regulators';
 
     skip toOptimize;
     #Do i = 1,1
+
 *     set dollar variable
-      if ( match(SecDecInternalfDUMMY?{`contourdefJacobianFunctions'}$function(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-      .sort
+      #$unmatched = 1;
+      if ( $unmatched );
+        #Do depth = 0, `insertionDepth'
+          #call beginArgumentDepth(`depth')
+            if ( $unmatched );
+              if ( match(once SecDecInternalfDUMMY?{`contourdefJacobianFunctions'}$functionLocal(?SecDecInternalsDUMMY$args)) );
+                $unmatched = 0;
+                $function = $functionLocal;
+                $wrappedArgs = SecDecInternalfDUMMYArgContainer($args);
+                redefine i "0";
+              endif;
+            endif;
+          #call endArgumentDepth(`depth')
+        #EndDo
+      endif;
+      ModuleOption,sum,$wrappedArgs;
+      ModuleOption,sum,$function;
+      ModuleOption,minimum,$unmatched;
+      ModuleOption,local,$functionLocal;
+      ModuleOption,local,$args;
+      .sort:match1;
 
 *     The following "#if" evaluates to true only if there is still something to do.
       #If `i' == 0
+
+        skip; nskip matcher;
+        Local matcher = $wrappedArgs;
+        Id once SecDecInternalfDUMMYArgContainer(?arguments$args) = 0;
+        .sort:match2;
+        drop matcher;
 
         #IfDef `largestLabel`$function''
           #$labelCounter = `largestLabel`$function'' + 1;
@@ -740,60 +783,74 @@ Bracket `regulators';
     #EndIf
   #EndDo
 
-  #Do j = 1,1
+* Since we need intermediate ".sort" instructions, we cannot use the
+* "repeat" environment.
+* The following construction is suggested in the FORM documentation.
 
-    #Do function = {`functionsToReplace'}
-      #$labelCounter = `largestLabel`function'';
+  #Do i = 1,1
 
-*     Since we need intermediate ".sort" instructions, we cannot use the
-*     "repeat" environment.
-*     The following construction is suggested in the FORM documentation.
-
-      #Do i = 1,1
-*       set dollar variable
-        #Do depth = 0, `insertionDepth'
-          #call beginArgumentDepth(`depth')
-            if ( match(`function'(?SecDecInternalsDUMMY$args)) ) redefine i "0";
-          #call endArgumentDepth(`depth')
-        #EndDo
-        .sort
-
-*       The following "#if" evaluates to true only if there is still something to do.
-        #If `i' == 0
-
-          #redefine j "0"
-          #$labelCounter = $labelCounter + 1;
-
-          #Do replaceDepth = 0, `insertionDepth'
-            #call beginArgumentDepth(`replaceDepth')
-              Id `function'($args) = SecDecInternal`function'Call`$labelCounter';
-            #call endArgumentDepth(`replaceDepth')
-          #EndDo
-          .sort
-
-          skip; nskip arguments;
-          L arguments = SecDecInternalfDUMMYarguments($args);
-
-          repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) =
-              SecDecInternalLabel`function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
-
-*         Define `$argCounter' by loking at the term with the empty function "SecDecInternalfDUMMYarguments"
-          Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
-
-          .sort
-          drop arguments;
-
-*         Add all arguments to top level polynomial for simultaneous optimization.
-          Local toOptimize = toOptimize + arguments;
-
-          #redefine numberOfArgs`function'Label`$labelCounter' "`$argCounter'"
-
-        #EndIf
-
+*   set dollar variables
+    #$unmatched = 1;
+    if ( $unmatched );
+      #Do depth = 0, `insertionDepth'
+        #call beginArgumentDepth(`depth')
+          if ( $unmatched );
+            if ( match(once SecDecInternalfDUMMY?{`functionsToReplace'}$functionLocal(?SecDecInternalsDUMMY$argsLocal)) );
+              $unmatched = 0;
+              $function = $functionLocal;
+              $wrappedArgs = SecDecInternalfDUMMYArgContainer($argsLocal);
+              redefine i "0";
+            endif;
+          endif;
+        #call endArgumentDepth(`depth')
       #EndDo
+    endif;
+    ModuleOption,minimum,$unmatched;
+    ModuleOption,local,$functionLocal;
+    ModuleOption,local,$argsLocal;
+    ModuleOption,sum,$function;
+    ModuleOption,sum,$wrappedArgs;
+    .sort:match1;
 
-      #redefine largestLabel`function' "`$labelCounter'"
-    #EndDo
+*   The following "#if" evaluates to true only if there is still something to do.
+    #If `i' == 0
+
+      skip; nskip matcher;
+      Local matcher = $wrappedArgs;
+      Id once SecDecInternalfDUMMYArgContainer(?arguments$args) = 0;
+      .sort:match2;
+      drop matcher;
+
+      #$labelCounter = `largestLabel`$function'' + 1;
+
+      if ( occurs(`$function') );
+        #Do replaceDepth = 0, `insertionDepth'
+          #call beginArgumentDepth(`replaceDepth')
+            Id `$function'($args) = SecDecInternal`$function'Call`$labelCounter';
+          #call endArgumentDepth(`replaceDepth')
+        #EndDo
+      endif;
+      .sort
+
+      skip; nskip arguments;
+      L arguments = SecDecInternalfDUMMYarguments($args);
+
+      repeat Id SecDecInternalfDUMMYarguments(SecDecInternalsDUMMY?, ?otherArgs) =
+          SecDecInternalLabel`$function'Call`$labelCounter'Arg * (SecDecInternalsDUMMY + SecDecInternalfDUMMYarguments(?otherArgs));
+
+*     Define `$argCounter' by loking at the term with the empty function "SecDecInternalfDUMMYarguments"
+      Id SecDecInternalfDUMMYarguments * SecDecInternalLabel`$function'Call`$labelCounter'Arg ^ SecDecInternalsDUMMYexponent?$argCounter = 0;
+
+      .sort
+      drop arguments;
+
+*     Add all arguments to top level polynomial for simultaneous optimization.
+      Local toOptimize = toOptimize + arguments;
+
+      #redefine numberOfArgs`$function'Label`$labelCounter' "`$argCounter'"
+      #redefine largestLabel`$function' "`$labelCounter'"
+
+    #EndIf
 
   #EndDo
 
@@ -890,7 +947,7 @@ Bracket `regulators';
     #Do callIndex = 1, `largestLabel`function''
       .sort
       skip;
-      L unparsed = unparsed + SecDecInternal`function'Call`callIndex'Unparsed;
+      L unparsed = unparsed + SecDecInternal`function'Call`callIndex'Unparsed * `function'(`callIndex');
     #EndDo
   #EndDo
   .sort
@@ -915,106 +972,93 @@ Bracket `regulators';
     #redefine parseNextGlobalIDMax "0"
     Local parseNext = 0;
     .sort
-    #Do function = {`functionsToReplace'}
-      #Do callIndex = 1, `largestLabel`function''
-        skip; nskip toOptimize;
-        Bracket SecDecInternalLabel`function'Call`callIndex'Arg;
+
+    #Do unparsedTerm = unparsed
+
+      skip; nskip thisTerm;
+      Local thisTerm = `unparsedTerm';
+      Id SecDecInternalfDUMMY?$function(SecDecInternalsDUMMY?$callIndex) = 0;
+      .sort:getTerm;
+      drop thisTerm;
+
+      skip; nskip toOptimize;
+      Bracket SecDecInternalLabel`$function'Call`$callIndex'Arg;
+      .sort
+
+*     We can write the call under consideration to the c++ file only
+*     if all dependent calls are already written.
+      skip; nskip unparsed, expr, arg1,...,arg`numberOfArgs`$function'Label`$callIndex'';
+      #If `numberOfArgs`$function'Label`$callIndex'' == 0
+        Local expr = toOptimize[SecDecInternalLabel`$function'Call`$callIndex'Arg];
+      #Else
+        #Do argIndex = 1, `numberOfArgs`$function'Label`$callIndex''
+           Local arg`argIndex' = toOptimize[SecDecInternalLabel`$function'Call`$callIndex'Arg ^ `argIndex'];
+        #EndDo
+      #EndIf
+      #redefine dependenciesDone "1"
+      if ( occurs(SecDecInternalsDUMMYhaveUnparsedDependencies) );
+        redefine dependenciesDone "0";
+        redefine i "0";
+      endif;
+      .sort
+
+      #If `dependenciesDone'
+
+*       Define the variable only if it is used.
+        #redefine needThisCall "0"
+        skip unparsed;
+        if ( occurs(SecDecInternal`$function'Call`$callIndex') ) redefine needThisCall "1";
         .sort
 
-        skip; nskip unparsed;
-        #If `numberOfArgs`function'Label`callIndex'' == 0
-          Local expr = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg];
+*       Prepare for another optimization
+*       {
+        #If `needThisCall'
+
+          #redefine parseNextGlobalIDMax "`$globalIDCounter'"
+          #redefine parseNextFunction`$globalIDCounter' "`$function'"
+          #redefine parseNextCallIndex`$globalIDCounter' "`$callIndex'"
+          #$globalIDCounter = $globalIDCounter + 1;
+          #redefine SecDecInternalLabel`$function'Call`$callIndex'GlobalIDMin "`$globalLabelCounter'"
+          Format normal;
+          skip; nskip parseNext;
+
+          #If `numberOfArgs`$function'Label`$callIndex'' == 0
+            Local parseNext = parseNext
+              + expr * SecDecInternalLabelSecDecInternalGeneral ^ `$globalLabelCounter';
+            #$globalLabelCounter = $globalLabelCounter + 1;
+          #Else
+            Local parseNext = parseNext
+            #Do argIndex = 1, `numberOfArgs`$function'Label`$callIndex''
+              + arg`argIndex' * SecDecInternalLabelSecDecInternalGeneral ^ (`$globalLabelCounter' + `argIndex' - 1)
+            #EndDo
+            ;
+            #$globalLabelCounter = $globalLabelCounter + `numberOfArgs`$function'Label`$callIndex'';
+          #EndIf
+
         #Else
-          #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-            Local arg`argIndex' = toOptimize[SecDecInternalLabel`function'Call`callIndex'Arg ^ `argIndex'];
-          #EndDo
-        #EndIf
 
-*       We do not want to define any call more than once.
-        #redefine alreadyParsed "1"
-        if ( occurs(SecDecInternal`function'Call`callIndex'Unparsed) ) redefine alreadyParsed "0";
-        .sort
-        #If `alreadyParsed' == 0
-
-*         We can write the call under consideration to the c++ file only
-*         if all dependent calls are already written.
-          skip; nskip unparsed;
-          #If `numberOfArgs`function'Label`callIndex'' == 0
-            nskip expr;
-          #Else
-            #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-              nskip arg`argIndex';
-            #EndDo
-          #EndIf
-          #redefine dependenciesDone "1"
-          if ( occurs(SecDecInternalsDUMMYhaveUnparsedDependencies) );
-            redefine dependenciesDone "0";
-            redefine i "0";
-          endif;
-          .sort
-
-          #If `dependenciesDone'
-
-*           Define the variable only if it is used.
-            #redefine needThisCall "0"
-            skip unparsed;
-            if ( occurs(SecDecInternal`function'Call`callIndex') ) redefine needThisCall "1";
-            .sort
-
-*           Prepare for another optimization
-*           {
-            #If `needThisCall'
-
-              #redefine parseNextGlobalIDMax "`$globalIDCounter'"
-              #redefine parseNextFunction`$globalIDCounter' "`function'"
-              #redefine parseNextCallIndex`$globalIDCounter' "`callIndex'"
-              #$globalIDCounter = $globalIDCounter + 1;
-              #redefine SecDecInternalLabel`function'Call`callIndex'GlobalIDMin "`$globalLabelCounter'"
-              Format normal;
-
-              #If `numberOfArgs`function'Label`callIndex'' == 0
-                Local parseNext = parseNext
-                  + expr * SecDecInternalLabelSecDecInternalGeneral ^ `$globalLabelCounter';
-                #$globalLabelCounter = $globalLabelCounter + 1;
-              #Else
-                Local parseNext = parseNext
-                #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-                  + arg`argIndex' * SecDecInternalLabelSecDecInternalGeneral ^ (`$globalLabelCounter' + `argIndex' - 1)
-                #EndDo
-                ;
-                #$globalLabelCounter = $globalLabelCounter + `numberOfArgs`function'Label`callIndex'';
-              #EndIf
-
-            #Else
-
-              multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0);
-
-            #EndIf
-*           }
-
-          #EndIf
-
-          .sort
-          #If `numberOfArgs`function'Label`callIndex'' == 0
-            drop expr;
-          #Else
-            #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
-              drop arg`argIndex';
-            #EndDo
-          #EndIf
+          multiply replace_(SecDecInternal`$function'Call`$callIndex'Unparsed,0 , SecDecInternalLabel`$function'Call`$callIndex'Arg,0);
 
         #EndIf
-      #EndDo
+*       }
+
+      #EndIf
+
+      .sort
+      drop expr, arg1,...,arg`numberOfArgs`$function'Label`$callIndex'';
+
     #EndDo
 
 *   optimize and write to c file
 *   {
+    skip unparsed;
     Format float 20;
     Format C;
     Format O`optimizationLevel';
     Bracket SecDecInternalLabelSecDecInternalGeneral;
     .sort
     ExtraSymbols,array,SecDecInternalSecondAbbreviation;
+    skip unparsed;
     #optimize parseNext
     intohide parseNext;
     Bracket SecDecInternalLabelSecDecInternalGeneral;
@@ -1033,6 +1077,7 @@ Bracket `regulators';
       #redefine callIndex "`parseNextCallIndex`globalID''"
 
       #If x`function' != x
+        skip unparsed;
         #write <sector_`sectorID'_`cppOrder'.cpp> "auto SecDecInternal`function'Call`callIndex' = "
         #If `numberOfArgs`function'Label`callIndex'' == 0
           Local expr = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ `SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'];
@@ -1045,6 +1090,7 @@ Bracket `regulators';
           .sort
           #write <sector_`sectorID'_`cppOrder'.cpp> "pow(%%E," base(#@no_split_expression@#)
           drop base;
+          skip unparsed;
           #redefine exponentIsInteger "0"
           if ( match(SecDecInternalfDUMMY(SecDecInternalsDUMMY?int_)) ) redefine exponentIsInteger "1";
           Id SecDecInternalfDUMMY(SecDecInternalsDUMMY?) = SecDecInternalsDUMMY;
@@ -1069,11 +1115,12 @@ Bracket `regulators';
           #EndDo
           #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
         #EndIf
-      #EndIf
 
-      Id SecDecInternal`function'Call`callIndex' = SecDecInternal`function'Call`callIndex' / SecDecInternalsDUMMYhaveUnparsedDependencies;
-      multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
-      .sort
+        Id SecDecInternal`function'Call`callIndex' = SecDecInternal`function'Call`callIndex' / SecDecInternalsDUMMYhaveUnparsedDependencies;
+        multiply replace_(SecDecInternal`function'Call`callIndex'Unparsed,0 , SecDecInternalLabel`function'Call`callIndex'Arg,0 );
+        .sort
+
+      #EndIf
 
     #EndDo
 
