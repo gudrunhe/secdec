@@ -229,7 +229,7 @@ Bracket `regulators';
         #$unmatched = 1;
         if ( $unmatched );
           if ( occurs(`function') );
-            if ( match(`function'(?SecDecInternalsDUMMY$args)) );
+            if ( match(once `function'(?SecDecInternalsDUMMY$args)) );
               redefine i "0";
               $wrappedArgs = SecDecInternalfDUMMYArgContainer($args);
             endif;
@@ -375,20 +375,18 @@ Bracket `regulators';
         #Do depth = 0, `insertionDepth'
           #call beginArgumentDepth(`depth')
             if ( $unmatched );
-              if ( match(once SecDecInternalfDUMMY?{`contourdefJacobianFunctions'}$functionLocal(?SecDecInternalsDUMMY$args)) );
+              if ( match(once SecDecInternalfDUMMY?{`contourdefJacobianFunctions'}$function(?SecDecInternalsDUMMY$args)) );
                 $unmatched = 0;
-                $function = $functionLocal;
-                $wrappedArgs = SecDecInternalfDUMMYArgContainer($args);
+                $wrappedFunctionWithArgs = SecDecInternalfDUMMYwrappedFunctionWithArgs($function, $args);
                 redefine i "0";
               endif;
             endif;
           #call endArgumentDepth(`depth')
         #EndDo
       endif;
-      ModuleOption,sum,$wrappedArgs;
-      ModuleOption,sum,$function;
+      ModuleOption,sum,$wrappedFunctionWithArgs;
       ModuleOption,minimum,$unmatched;
-      ModuleOption,local,$functionLocal;
+      ModuleOption,local,$function;
       ModuleOption,local,$args;
       .sort:match1;
 
@@ -396,8 +394,8 @@ Bracket `regulators';
       #If `i' == 0
 
         skip; nskip matcher;
-        Local matcher = $wrappedArgs;
-        Id once SecDecInternalfDUMMYArgContainer(?arguments$args) = 0;
+        Local matcher = $wrappedFunctionWithArgs;
+        Id once SecDecInternalfDUMMYwrappedFunctionWithArgs(SecDecInternalfDUMMY?$function, ?arguments$args) = 0;
         .sort:match2;
         drop matcher;
 
@@ -795,29 +793,27 @@ Bracket `regulators';
       #Do depth = 0, `insertionDepth'
         #call beginArgumentDepth(`depth')
           if ( $unmatched );
-            if ( match(once SecDecInternalfDUMMY?{`functionsToReplace'}$functionLocal(?SecDecInternalsDUMMY$argsLocal)) );
+            if ( match(once SecDecInternalfDUMMY?{`functionsToReplace'}$function(?SecDecInternalsDUMMY$args)) );
               $unmatched = 0;
-              $function = $functionLocal;
-              $wrappedArgs = SecDecInternalfDUMMYArgContainer($argsLocal);
+              $wrappedfunctionWithArgs = SecDecInternalfDUMMYwrappedFunctionWithArgs($function, $args);
               redefine i "0";
             endif;
           endif;
         #call endArgumentDepth(`depth')
       #EndDo
     endif;
+    ModuleOption,sum,$wrappedfunctionWithArgs;
     ModuleOption,minimum,$unmatched;
-    ModuleOption,local,$functionLocal;
-    ModuleOption,local,$argsLocal;
-    ModuleOption,sum,$function;
-    ModuleOption,sum,$wrappedArgs;
+    ModuleOption,local,$function;
+    ModuleOption,local,$args;
     .sort:match1;
 
 *   The following "#if" evaluates to true only if there is still something to do.
     #If `i' == 0
 
       skip; nskip matcher;
-      Local matcher = $wrappedArgs;
-      Id once SecDecInternalfDUMMYArgContainer(?arguments$args) = 0;
+      Local matcher = $wrappedfunctionWithArgs;
+      Id once SecDecInternalfDUMMYwrappedFunctionWithArgs(SecDecInternalfDUMMY?$function, ?arguments$args) = 0;
       .sort:match2;
       drop matcher;
 
@@ -1090,9 +1086,9 @@ Bracket `regulators';
           .sort
           #write <sector_`sectorID'_`cppOrder'.cpp> "pow(%%E," base(#@no_split_expression@#)
           drop base;
-          skip unparsed;
+          skip; nskip exponent;
           #redefine exponentIsInteger "0"
-          if ( match(SecDecInternalfDUMMY(SecDecInternalsDUMMY?int_)) ) redefine exponentIsInteger "1";
+          if ( match(once SecDecInternalfDUMMY(SecDecInternalsDUMMY?int_)) ) redefine exponentIsInteger "1";
           Id SecDecInternalfDUMMY(SecDecInternalsDUMMY?) = SecDecInternalsDUMMY;
           .sort
           #If `exponentIsInteger'
