@@ -38,15 +38,15 @@ internal_prefix = 'SecDecInternal'
 FORM_names = dict(
     cal_I=internal_prefix+'CalI',
     real_part=internal_prefix+'RealPart',
-    cast_polynomial=internal_prefix+'PolynomialToDecompose',
-    other_polynomial=internal_prefix+'OtherPolynomial',
-    remainder_expression=internal_prefix+'RemainderExpression',
+    cast_polynomial=internal_prefix+'DecoPoly',
+    other_polynomial=internal_prefix+'OtherPoly',
+    remainder_expression=internal_prefix+'Remainder',
     error_token=internal_prefix+'ErrorToken',
-    contourdef_transform=internal_prefix+'ContourdefDeformation',
-    contourdef_Jacobian=internal_prefix+'ContourdefJacobian',
+    contourdef_transform=internal_prefix+'Deformation',
+    contourdef_Jacobian=internal_prefix+'CondefJac',
     deformed_variable=internal_prefix+'Deformed',
     deformation_parameter_i=internal_prefix+'Lambda%i',
-    additional_deformation_factor=internal_prefix+'AdditionalDeformationFactor'
+    additional_deformation_factor=internal_prefix+'CondefFac'
 )
 
 # ----------------------------------- parse input -----------------------------------
