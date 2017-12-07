@@ -50,5 +50,6 @@ References
             | `arXiv:1111.0868 <http://arxiv.org/abs/1111.0868>`_
 
 .. [PSD17]  | S. Borowka, G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, J. Schlenk, T. Zirke, 
-              *pySecDec: a toolbox for the numerical evaluation of multi-scale integrals*, 2017,
+              *pySecDec: A toolbox for the numerical evaluation of multi-scale integrals*, 2018, Comput.Phys.Comm.222,
+            | `doi:10.1016/j.cpc.2017.09.015 <http://dx.doi.org/10.1016/j.cpc.2017.09.015>`_,
             | `arXiv:1703.09692 <http://arxiv.org/abs/1703.09692>`_
