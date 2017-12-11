@@ -118,7 +118,7 @@ class TestSymmetryFinding(unittest.TestCase):
         target_combined_expolists = np.array([
                                                 (1,0),            # Jacobian
                                                 (0,1),(1,3),      # p0
-                                                (3,1),(3,2),      # p1 --> note the reordering
+                                                (3,2),(3,1),      # p1
                                                 (2,0),(0,1),(1,1) # p2
                                             ])
         target_combined_coeffs = np.array([
@@ -129,10 +129,37 @@ class TestSymmetryFinding(unittest.TestCase):
                                                self.a*SecDecInternalCast(0),self.b*SecDecInternalCast(0),
 
                                                # p1
-                                               self.d*SecDecInternalCast(1),self.c*SecDecInternalCast(1),
+                                               self.c*SecDecInternalCast(1),self.d*SecDecInternalCast(1),
 
                                                # p2
                                                self.e*SecDecInternalOther(0),self.f*SecDecInternalOther(0),self.g*SecDecInternalOther(0)
+                                         ])
+
+        np.testing.assert_array_equal(combined_expolists, target_combined_expolists)
+        np.testing.assert_array_equal(combined_coeffs, target_combined_coeffs)
+
+    #@attr('active')
+    def test_sector2array_cancelling(self):
+        SecDecInternalCast = sp.symbols('SecDecInternalCast')
+        a = sp.symbols('a')
+
+        mono = Polynomial([(0,1)],[1])
+        poly = Polynomial([(1,0),(1,0)],[a,-a])
+        sector = Sector([ Product(mono,poly) ])
+
+        combined_expolists, combined_coeffs = _sector2array(sector)
+
+        target_combined_expolists = np.array([
+                                                (0,0),      # Jacobian
+                                                (1,1),(1,1) # poly
+                                            ])
+        target_combined_coeffs = np.array([
+                                               # Jacobian coefficient is ignored (replaced by a dummy)
+                                               1,
+
+                                               # poly
+                                                a * SecDecInternalCast(0),
+                                               -a * SecDecInternalCast(0)
                                          ])
 
         np.testing.assert_array_equal(combined_expolists, target_combined_expolists)

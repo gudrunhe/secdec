@@ -151,8 +151,9 @@ def _sector2array(sector):
     # process `cast`
     for index,prod in enumerate(sector.cast):
         # symmetries may be hidden by the factorization --> undo it
-        factors_as_polynomials = [Polynomial(factor.expolist, factor.coeffs, factor.polysymbols, copy=False) for factor in prod.factors]
-        multiplied_prod = factors_as_polynomials[0] * factors_as_polynomials[1]
+        multiplied_prod = prod.factors[1].copy()
+        multiplied_prod.expolist += prod.factors[0].expolist[0]
+        multiplied_prod.coeffs *= prod.factors[0].coeffs[0]
         combined_expolists.extend(multiplied_prod.expolist)
         # must distinguish between the individual polynomials and between `Polynomial` and `ExponentiatedPolynomial`
         if type(prod.factors[0]) is ExponentiatedPolynomial:
