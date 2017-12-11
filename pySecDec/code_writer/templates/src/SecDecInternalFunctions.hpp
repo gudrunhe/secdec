@@ -70,7 +70,7 @@ namespace %(name)s
             return std::pow(base, exponent);
 
         else if (exponent < 0)
-	    return Tbase(1)/SecDecInternalPow(base, -exponent);
+        return Tbase(1)/SecDecInternalPow(base, -exponent);
 
         else if (exponent == 0)
             return Tbase(1);
@@ -168,6 +168,25 @@ namespace %(name)s
             return std::pow(base, exponent);
         }
     #endif
+
+    /*
+     * Overload binary arithmetic operators between "int" and "complex_t"
+     * by converting "int" to "real_t".
+     */
+    #define INT_COMPLEX(OPERATOR) \
+        inline complex_t operator OPERATOR (const int x, const complex_t y) \
+        { \
+            return static_cast<real_t>(x) OPERATOR y; \
+        } \
+        inline complex_t operator OPERATOR (const complex_t x, const int y) \
+        { \
+            return x OPERATOR static_cast<real_t>(y); \
+        }
+    INT_COMPLEX(+)
+    INT_COMPLEX(-)
+    INT_COMPLEX(*)
+    INT_COMPLEX(/)
+    #undef INT_COMPLEX
 
     #undef %(name)s_contour_deformation
     #undef %(name)s_has_complex_parameters
