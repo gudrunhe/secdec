@@ -44,17 +44,21 @@ def iterative_sort(matrix):
             sort_key_axis_1 = argsort_2D_array(matrix.T[1:])
             matrix[:,1:] = matrix[:,1:][:,sort_key_axis_1]
 
-def Pak_sort(matrix):
+def Pak_sort(matrix, *indices):
     '''
-    Inplace modify the `matrix` to some ordering,
-    when permutations of rows and columns (excluding
-    the first) are allowed. The implementation of
-    this function is described in chapter 2 of
-    [Pak11]_.
+    Inplace modify the `matrix` to some canonical ordering,
+    when permutations of rows and columns are allowed.
+
+    The `indices` parameter can contain a list of lists
+    of column indices. Only the columns present in the
+    same list are swapped with each other.
+
+    The implementation of this function is described
+    in chapter 2 of [Pak11]_.
 
     .. note::
-        This function may result in different
-        orderings depending on the initial ordering.
+        If not all indices are considered the resulting
+        matrix may not be canonical.
 
     .. seealso::
         :func:`.iterative_sort`, :func:`.light_Pak_sort`
@@ -63,40 +67,53 @@ def Pak_sort(matrix):
         2D array-like;
         The matrix to be canonicalized.
 
+    :param indices:
+        arbitrarily many iterables of non-negative integers;
+        The groups of columns to permute.
+        Default: ``range(1,matrix.shape[1])``
+
     '''
+    if indices:
+        # Always consider the smallest indices first
+        indices = map(sorted,indices)
+    else:
+        indices = [range(1,matrix.shape[1])]
+
     options = [matrix]
-    for i in range(1, matrix.shape[1]):
-        permutations = []
-        for m in options:
-            for j in range(i, m.shape[1]):
-                permuted_matrix = m.copy()
+    for set_of_indices in indices:
+        for idx, i in enumerate(set_of_indices):
+            remaining_indices = set_of_indices[idx:]
+            permutations = []
+            for m in options:
+                for j in remaining_indices:
+                    permuted_matrix = m.copy()
 
-                # permute integration variables `column_to_swap` and `j`
-                permuted_matrix[:, i] = m[:, j]
-                permuted_matrix[:, j] = m[:, i]
+                    # permute integration variables `column_to_swap` and `j`
+                    permuted_matrix[:, i] = m[:, j]
+                    permuted_matrix[:, j] = m[:, i]
 
-                # sort by rows
-                permuted_matrix[:] = permuted_matrix[argsort_2D_array(permuted_matrix)]
+                    # sort by rows
+                    permuted_matrix = permuted_matrix[argsort_2D_array(permuted_matrix)]
 
-                # transpose since we need column-wise ordering in the next step
-                permutations.append(permuted_matrix.T)
+                    # transpose since we need column-wise ordering in the next step
+                    permutations.append(permuted_matrix.T)
 
-        # sort the matrices from smallest to largest
-        sorted_matrix = argsort_ND_array(permutations)
+            # sort the matrices from smallest to largest
+            sorted_matrix = argsort_ND_array(permutations)
 
-        # add all matrices that have the largest possible value for `i' to list of options to check
-        options = []
-        for k in range(len(sorted_matrix)-1,-1,-1):
-            if np.array_equal(permutations[sorted_matrix[k]][i], permutations[sorted_matrix[-1]][i]):
-                for mat in options:
-                    if np.array_equal(mat, permutations[sorted_matrix[k]].T):
-                        break
+            # add all matrices that have the smallest possible value for `i' to list of options to check
+            options = []
+            for k in range(len(sorted_matrix)):
+                if np.array_equal(permutations[sorted_matrix[k]][i], permutations[sorted_matrix[0]][i]):
+                    for mat in options:
+                        if np.array_equal(mat, permutations[sorted_matrix[k]].T):
+                            break
+                    else:
+                        options.append(permutations[sorted_matrix[k]].T)
                 else:
-                    options.append(permutations[sorted_matrix[k]].T)
-            else:
-                break
+                    break
 
-    # resulting options are all equivalent, take first
+    # Pick one possible option
     matrix[:] = options[0]
 
 def light_Pak_sort(matrix):
@@ -107,7 +124,7 @@ def light_Pak_sort(matrix):
     this function is described in chapter 2 of
     [Pak11]_. This function implements a lightweight
     version: In step (v), we only consider one, not
-    all table copies with the maximized second column.
+    all table copies with the minimized second column.
 
     .. note::
         This function may result in different
@@ -137,6 +154,6 @@ def light_Pak_sort(matrix):
             # transpose since we need column-wise ordering in the next step
             permutations.append(permuted_matrix.T)
 
-        # find the largest `i`th column in `permutations` and keep that
-        index_of_largest = argsort_ND_array(permutations)[-1]
-        matrix[:] = permutations[index_of_largest].T # transpose back
+        # find the smallest `i`th column in `permutations` and keep that
+        index_of_smallest = argsort_ND_array(permutations)[0]
+        matrix[:] = permutations[index_of_smallest].T # transpose back
