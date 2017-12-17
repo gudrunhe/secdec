@@ -24,10 +24,6 @@ References
             | `doi:10.1016/j.jsc.2015.09.003 <http://doi.org/10.1016/j.jsc.2015.09.003>`_,
             | `arXiv:1206.1916 <http://arxiv.org/abs/1206.1916>`_
 
-.. [BKAP]   | B. D. McKay and A. Piperno,
-              *Practical graph isomorphism, II*, 2014, Journal of Symbolic Computation, 60, 94-112,
-            | `doi:10.1016/j.jsc.2013.09.003 <http://dx.doi.org/10.1016/j.jsc.2013.09.003>`_
-
 .. [Bor14]  | S. Borowka,
               *Evaluation of multi-loop multi-scale integrals and phenomenological two-loop applications*, 2014, PhD Thesis - Technische Universität München
             | `mediaTUM:1220360 <http://nbn-resolving.de/urn/resolver.pl?urn:nbn:de:bvb:91-diss-20140709-1220360-0-4>`_,
@@ -38,7 +34,7 @@ References
             | `doi:10.1140/epjc/s10052-010-1516-y <http://dx.doi.org/10.1140/epjc/s10052-010-1516-y>`_,
             | `arXiv:1010.1667 <http://arxiv.org/abs/1010.1667>`_
 
-.. [GSL]    | M. Galassi, J. Davies, J. Theiler, B. Gough, G. Jungman, P. Alken, M. Booth, F. Rossi, 
+.. [GSL]    | M. Galassi, J. Davies, J. Theiler, B. Gough, G. Jungman, P. Alken, M. Booth, F. Rossi,
               *GNU Scientific Library Reference Manual - Third Edition*, 2009, Network Theory Ltd.,
             | ISBN: 0-9546120-7-8 (ISBN-13: 978-0-9546120-7-8),
             | available at http://www.gnu.org/software/gsl/
@@ -68,13 +64,18 @@ References
             | `doi:10.1016/j.cpc.2014.08.008 <http://dx.doi.org/10.1016/j.cpc.2014.08.008>`_,
             | `arXiv:1310.7007 <http://arxiv.org/abs/1310.7007>`_
 
+.. [MP+14]  | B. D. McKay and A. Piperno,
+              *Practical graph isomorphism, II*, 2014, Journal of Symbolic Computation, 60, 94-112,
+            | `doi:10.1016/j.jsc.2013.09.003 <http://dx.doi.org/10.1016/j.jsc.2013.09.003>`_
+            | `arXiv:1301.1493 <http://arxiv.org/abs/1301.1493>`_
+
 .. [Pak11]  | A. Pak,
               *The toolbox of modern multi-loop calculations: novel
               analytic and semi-analytic techniques*, 2012, J. Phys.: Conf. Ser. 368 012049,
             | `doi:10.1088/1742-6596/368/1/012049 <http://dx.doi.org/10.1088/1742-6596/368/1/012049>`_,
             | `arXiv:1111.0868 <http://arxiv.org/abs/1111.0868>`_
 
-.. [PSD17]  | S. Borowka, G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, J. Schlenk, T. Zirke, 
+.. [PSD17]  | S. Borowka, G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, J. Schlenk, T. Zirke,
               *pySecDec: A toolbox for the numerical evaluation of multi-scale integrals*, 2018, Comput.Phys.Comm.222,
             | `doi:10.1016/j.cpc.2017.09.015 <http://dx.doi.org/10.1016/j.cpc.2017.09.015>`_,
             | `arXiv:1703.09692 <http://arxiv.org/abs/1703.09692>`_

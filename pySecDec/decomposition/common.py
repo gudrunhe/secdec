@@ -371,7 +371,7 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, indices=None, dreadnaut
 
     Each :class:`.Sector` is converted to a :class:`.Polynomial`
     which is represented as a graph following
-    the example of [BKAP]_
+    the example of [MP+14]_
     (v2.6 Figure 7, Isotopy of matrices).
 
     We first multiply each polynomial in the sector by a unique tag
@@ -392,7 +392,7 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, indices=None, dreadnaut
 
     .. note::
         This function calls the command line executable of
-        `dreadnaut` [BKAP]_.
+        `dreadnaut` [MP+14]_.
         It has been tested with `dreadnaut` version nauty26r7.
 
     See also:

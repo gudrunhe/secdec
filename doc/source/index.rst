@@ -9,7 +9,7 @@ Please cite the following references if you use `pySecDec` for a scientific publ
  * CUBA [Hah05]_, [Hah16]_
  * FORM [Ver00]_, [KUV13]_, [RUV17]_
  * GSL [GSL]_
- * nauty [BKAP]_ (if you use `dreadnaut`) 
+ * nauty [MP+14]_ (if you use `dreadnaut`)
  * normaliz [BIR]_, [BIS16]_ (if you use a geometric decomposition strategy)
 
 .. toctree::
