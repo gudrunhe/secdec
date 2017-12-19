@@ -242,23 +242,6 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
 
     return representation
 
-def dump_dict(dictionary, file):
-    '''
-    Write a dictionary to a file, sorting by keys.
-
-    :param representation:
-        dict;
-        The dictionary to write to a file.
-
-    :param file:
-        str;
-        The name of the file to write to.
-
-    '''
-    with open(file, 'w') as f:
-        for key in sorted(dictionary.keys()):
-            f.write(str(key) + ': ' + str(dictionary[key]) + '\n')
-
 if __name__ == '__main__':
 
     # Matroid 1a
@@ -335,21 +318,6 @@ if __name__ == '__main__':
 
     call5a = canonicalize(internal_lines5a, external_lines5a, onshell_conditions5a, masses5a)
     call5b = canonicalize(internal_lines5b, external_lines5b, onshell_conditions5b, masses5b)
-
-    dump_dict(call1a,'call1a.txt')
-    dump_dict(call1b,'call1b.txt')
-
-    dump_dict(call2a,'call2a.txt')
-    dump_dict(call2b,'call2b.txt')
-
-    dump_dict(call3a,'call3a.txt')
-    dump_dict(call3b,'call3b.txt')
-
-    dump_dict(call4a,'call4a.txt')
-    dump_dict(call4b,'call4b.txt')
-
-    dump_dict(call5a,'call5a.txt')
-    dump_dict(call5b,'call5b.txt')
 
     print(call1a == call1b)
     print(call2a == call2b)
