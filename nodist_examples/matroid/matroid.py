@@ -5,7 +5,6 @@ from pySecDec.matrix_sort import Pak_sort
 from pySecDec.algebra import Polynomial
 from pySecDec.misc import flatten, argsort_ND_array
 
-
 def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
     '''
     Compute a canonical representation of the loop integral
@@ -28,7 +27,7 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
 
     :param masses:
         list of strings;
-        The names of of the masses.
+        The names of the masses.
 
     :return:
         dict;
@@ -245,11 +244,11 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
 
 def dump_dict(dictionary, file):
     '''
-    Write a canonical representation to a file.
+    Write a dictionary to a file, sorting by keys.
 
     :param representation:
         dict;
-        The canonical representation.
+        The dictionary to write to a file.
 
     :param file:
         str;
