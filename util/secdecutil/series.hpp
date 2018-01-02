@@ -5,6 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace secdecutil {
@@ -380,6 +381,10 @@ namespace secdecutil {
         reference back() { return content.back(); }
         const_reference back() const { return content.back(); }
         value_type* data() noexcept { return content.data(); }
+
+        void push_back(const_reference val) { content.push_back(val); ++order_max; };
+        void push_back(T&& val) { content.push_back(std::forward<T>(val)); ++order_max; };
+        void pop_back() { content.pop_back(); --order_max; };
 
         /*
          *  Helper functions

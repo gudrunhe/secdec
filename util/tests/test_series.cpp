@@ -177,6 +177,40 @@ TEST_CASE( "Check Access", "[Series]" ) {
 
 };
 
+TEST_CASE( "Operators push_back and pop_back", "[Series]" ) {
+
+    auto series = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1});
+
+    SECTION( "push_back rvalue" ){
+
+        series.push_back(10);
+        REQUIRE( series.get_order_max() == 5 );
+        REQUIRE( series.at(5) == 10 );
+
+    }
+
+    SECTION( "push_back lvalue" ){
+
+        int new_last = 8;
+        series.push_back(new_last);
+        REQUIRE( series.get_order_max() == 5 );
+        REQUIRE( series.at(5) == 8 );
+
+    }
+
+    SECTION( "pop_back" ){
+
+        int last_initial = series.back();
+        series.pop_back();
+        int last_final = series.back();
+        REQUIRE( series.get_order_max() == 3 );
+        REQUIRE( last_initial == -1 );
+        REQUIRE( last_final == 4 );
+
+    }
+
+};
+
 TEST_CASE( "Operators == and !=", "[Series]") {
 
     auto series_1 = secdecutil::Series<int>(-3,4,{-5,-6,-7,0,2,3,4,-1});
