@@ -1757,15 +1757,17 @@ def make_package(name, integration_variables, regulators, requested_orders,
     if use_symmetries and not split:
         # run primary decomposition and squash symmetry-equal sectors (using both implemented strategies)
         indices = range(len(integration_variables))
-        primary_sectors = _reduce_sectors_by_symmetries\
-        (
-            list(  strategy['primary'](initial_sector, indices)  ),
-            'number of primary sectors',
-            indices[:-1], # primary decomposition removes one integration variable
-            use_Pak,
-            dreadnaut_executable if use_dreadnaut else False,
-            name
-        )
+        primary_sectors = list(  strategy['primary'](initial_sector, indices)  )
+        if len(primary_sectors) > 1: # no need to look for symmetries if only one sector
+            primary_sectors = _reduce_sectors_by_symmetries\
+            (
+                primary_sectors,
+                'number of primary sectors',
+                indices[:-1], # primary decomposition removes one integration variable
+                use_Pak,
+                dreadnaut_executable if use_dreadnaut else False,
+                name
+            )
 
         # rename the `integration_variables` in all `primary_sectors` --> must have the same names in all primary sectors
         symbols_primary_sectors = primary_sectors[0].Jacobian.polysymbols
