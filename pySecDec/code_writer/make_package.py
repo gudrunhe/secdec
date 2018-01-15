@@ -1229,6 +1229,7 @@ def _process_secondary_sector(environment):
 
     # remove repetitions in `decomposed_polynomial_derivatives`
     decomposed_polynomial_derivatives = set(decomposed_polynomial_derivatives)
+    ordered_decomposed_derivative_names = set(ordered_decomposed_derivative_names)
 
     # generate the function definitions for the insertion in FORM
     if contour_deformation_polynomial is not None:
