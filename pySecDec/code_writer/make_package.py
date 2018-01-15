@@ -1171,17 +1171,18 @@ def _process_secondary_sector(environment):
         )
 
     #  - for the `polynomials_to_decompose`
-    for prod, exponentiated_function, basename in zip(sector.cast , symbolic_polynomials_to_decompose, names_polynomials_to_decompose):
-        _, expression = prod.factors
-        expression.exponent = 1 # exponent is already part of the `tracker`
-        update_derivatives(
-            basename=basename, # name as defined in `polynomial_names` or dummy name
-            derivative_tracker=exponentiated_function.base,
-            full_expression=expression,
-            derivatives=decomposed_derivatives,
-            ordered_derivative_names=ordered_decomposed_derivative_names,
-            functions=decomposed_polynomial_derivatives
-        )
+    for i,symbolic_polynomials in enumerate((symbolic_polynomials_to_decompose,symbolic_polynomials_to_decompose_all_symbols_undeformed)):
+        for prod, exponentiated_function, basename in zip(sector.cast , symbolic_polynomials, names_polynomials_to_decompose):
+            _, expression = prod.factors
+            expression.exponent = 1 # exponent is already part of the `tracker`
+            update_derivatives(
+                basename=basename, # name as defined in `polynomial_names` or dummy name
+                derivative_tracker=exponentiated_function.base if i == 0 else exponentiated_function,
+                full_expression=expression,
+                derivatives=decomposed_derivatives,
+                ordered_derivative_names=ordered_decomposed_derivative_names,
+                functions=decomposed_polynomial_derivatives
+            )
 
     if contour_deformation_polynomial is not None:
     #  - for the contour deformation Jacobian
