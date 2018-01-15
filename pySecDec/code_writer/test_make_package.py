@@ -75,6 +75,22 @@ class TestMidLevel(TestMakePackage):
     def test_no_polynomial_names_symmetry_split_primary(self):
         self.check_no_polynomial_names_symmetry(split=True, primary_decomposition=True)
 
+    #@attr('active')
+    def test_pole_structures(self):
+        self.tmpdir = 'tmpdir_test_pole_structures_python' + python_major_version
+
+        template_replacements = \
+        make_package(
+                        name=self.tmpdir,
+                        integration_variables = ['x','y'],
+                        regulators = ['eps'],
+
+                        requested_orders = [0],
+                        polynomials_to_decompose = ['(x+y)^(-2+eps)']
+                    )
+
+        self.assertEqual(template_replacements['pole_structures_initializer'], '{{-1,0}}')
+
 # ----------------------------------- parse input -----------------------------------
 class TestConvertInput(TestMakePackage):
     def setUp(self):

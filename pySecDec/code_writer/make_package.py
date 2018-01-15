@@ -1012,7 +1012,7 @@ def _process_secondary_sector(environment):
     monomials = Product(*monomial_factors, copy=False)
 
     # compute the pole structure
-    pole_structures.append(  [sp.printing.ccode(ps) for ps in compute_pole_structure(monomials, *integration_variable_indices)]  )
+    this_pole_structures = [sp.printing.ccode(ps) for ps in compute_pole_structure(monomials, *integration_variable_indices)]
 
     if contour_deformation_polynomial is not None:
         # Apply the deformation ``z_k({x_k}) = x_k - i * lambda_k * x_k * (1-x_k) * Re(dF_dx_k)`` to the monomials.
@@ -1304,7 +1304,7 @@ def _process_secondary_sector(environment):
                             os.path.join(name,             'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest
                             template_replacements)
 
-    return lowest_orders, function_declarations
+    return lowest_orders, function_declarations, this_pole_structures
 
 def _reduce_sectors_by_symmetries(sectors, message, indices, use_Pak, use_dreadnaut, name):
     '''
@@ -1910,21 +1910,23 @@ def make_package(name, integration_variables, regulators, requested_orders,
             secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
         # process the `secondary_sectors` in parallel
-        lowest_orders_and_function_declarations = \
+        lowest_orders_and_function_declarations_and_pole_structures = \
             pool.map(
                         _process_secondary_sector,
                         _make_environment( locals() )
                     )
 
         # get the `sector_index` after processing the secondary sectors
-        sector_index = sector_index + len(lowest_orders_and_function_declarations)
+        sector_index = sector_index + len(lowest_orders_and_function_declarations_and_pole_structures)
 
         # update the global `lowest_orders`
-        lowest_orders = np.min([item[0] for item in lowest_orders_and_function_declarations],axis=0)
+        lowest_orders = np.min([item[0] for item in lowest_orders_and_function_declarations_and_pole_structures],axis=0)
 
-        # update the global `function_declarations`
-        for item in lowest_orders_and_function_declarations:
-            function_declarations.update(item[1])
+        # update the global `function_declarations` and `pole_structures`
+        for item in lowest_orders_and_function_declarations_and_pole_structures:
+            _,f,p = item
+            function_declarations.update(f)
+            pole_structures.append(p)
 
     # expand the `prefactor` to the required orders
     print('expanding the prefactor')
