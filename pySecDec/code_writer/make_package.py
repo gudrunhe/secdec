@@ -204,7 +204,7 @@ def _convert_input(name, integration_variables, regulators,
     other_polynomials = _parse_expressions(other_polynomials, symbols_other_polynomials, ExponentiatedPolynomial, 'other_polynomials')
     remainder_expression, function_calls = _parse_expressions([remainder_expression], symbols_remainder_expression, _Expression, 'remainder_expression')[0]
 
-    # the exponents be polynomials in the regulators
+    # the exponents must be polynomials in the regulators
     for poly in polynomials_to_decompose + other_polynomials:
         try:
             Polynomial.from_expression(poly.exponent, regulators)
@@ -213,6 +213,11 @@ def _convert_input(name, integration_variables, regulators,
             raise
         exponent = Polynomial.from_expression(poly.exponent, integration_variables)
         assert (exponent.expolist == 0).all(), 'The exponents of the `polynomials_to_decompose` and the `other_polynomials` must not depend on the `integration_variables`. Error while checking: "%s"' % poly
+
+    # the `polynomials_to_decompose` must not depend on the `regulators`
+    regulator_indices = [i + len(integration_variables) for i in range(len(regulators))]
+    for poly in polynomials_to_decompose:
+        assert (poly.expolist[:,regulator_indices] == 0).all(), 'The `polynomials_to_decompose` must not depend on the `regulators`. Error while checking: "%s"' % poly
 
     # convert ``prefactor`` to sympy expression
     prefactor = sp.sympify(prefactor)

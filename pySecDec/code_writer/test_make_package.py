@@ -100,7 +100,7 @@ class TestConvertInput(TestMakePackage):
                                       integration_variables=['z0','z1','z2'],
                                       regulators=['eps','alpha'],
                                       requested_orders=[1,2],
-                                      polynomials_to_decompose=[1,Polynomial([[0,0,0,0,0,0,0],[1,1,1,0,1,0,0]],['-s','-t'],['z0','z1','z2','eps','alpha','U','F'])],
+                                      polynomials_to_decompose=[1,Polynomial([[0,0,0,0,0,0,0],[1,1,1,0,0,0,0]],['-s','-t'],['z0','z1','z2','eps','alpha','U','F'])],
                                       polynomial_names=['U','F'],
                                       other_polynomials=['U*z1 + F'],
                                       prefactor=1,
@@ -137,7 +137,7 @@ class TestConvertInput(TestMakePackage):
         _convert_input(**polynomials_to_decompose_wrong_polysymbols_in_exponent) # should be ok
 
         polynomials_to_decompose_polynomial_in_coeff = self.correct_input.copy()
-        polynomials_to_decompose_polynomial_in_coeff['polynomials_to_decompose'] = [1,Polynomial([[0,0,0,0,0,0,0],[1,1,1,2,3,0,0]],[Polynomial([[0,0,0,1,3,0,0]], ['-s'], ['z0','z1','z2','eps','alpha','U','F']),'-t'],['z0','z1','z2','eps','alpha','U','F'])]
+        polynomials_to_decompose_polynomial_in_coeff['polynomials_to_decompose'] = [1,Polynomial([[0,0,0,0,0,0,0],[1,1,1,0,0,0,0]],[Polynomial([[3,2,0,0,0,0,0]], ['-s'], ['z0','z1','z2','eps','alpha','U','F']),'-t'],['z0','z1','z2','eps','alpha','U','F'])]
         _convert_input(**polynomials_to_decompose_polynomial_in_coeff) # should be ok
 
         polynomials_to_decompose_sympy_exponent = self.correct_input.copy()
@@ -220,6 +220,12 @@ class TestConvertInput(TestMakePackage):
         keyword_arguments = self.correct_input.copy()
         keyword_arguments['positive_polynomials'] = ['U','not_a + symbol','F']
         self.assertRaisesRegexp(AssertionError, r'All.*positive_polynomials.*symbols', _convert_input, **keyword_arguments)
+
+    #@attr('active')
+    def test_regulator_in_polynomial_to_decompose(self):
+        keyword_arguments = self.correct_input.copy()
+        keyword_arguments['polynomials_to_decompose'] = ['z0 + firstPolynomialName', 'z0*z1 + (eps+1)*z1*z2']
+        self.assertRaisesRegexp(AssertionError, r'polynomials_to_decompose.*not depend.*regulators', _convert_input, **keyword_arguments)
 
 # --------------------------------- write FORM code ---------------------------------
 class TestMakeFORMDefinition(unittest.TestCase):
