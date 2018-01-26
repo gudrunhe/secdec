@@ -986,7 +986,7 @@ def _process_secondary_sector(environment):
                                          MaxDegreeFunction(
                                                      FORM_names['other_polynomial'] + str(i),
                                                      *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
-                                                     maxdegrees=MaxDegreeFunction.get_maxdegrees(sector.other[i].factors[1], ignore_subclass=True)
+                                                     maxdegrees=MaxDegreeFunction.get_maxdegrees(sector.other[i].factors[1], indices=regulator_indices, ignore_subclass=True)
                                          ),
                                          Expression(sector.other[i].factors[1].exponent, symbols_polynomials_to_decompose),
                                          copy = False
