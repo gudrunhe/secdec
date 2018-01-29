@@ -1,3 +1,10 @@
+30.01.2018 pySecDec-1.3
+
+    [make_package] bugfixes
+    [make_package] speed up algebraic part
+    [util/integrator] implement "zero_border"
+    [doc] list external dependencies and papers to cite
+
 25.08.2017 pySecDec-1.2.2
 
     [loop_integral] fix issues with sympy-1.1.1
