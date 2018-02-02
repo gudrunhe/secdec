@@ -30,20 +30,56 @@ class CPPIntegrator(object):
 
 class MultiIntegrator(CPPIntegrator):
     '''
+    .. versionadded:: 1.3.1
+
     Wrapper for the :cpp:class:`secdecutil::MultiIntegrator`.
 
     :param integral_library:
         :class:`IntegralLibrary`;
         The integral to be computed with this integrator.
 
-    The other options are defined in the gsl manual.
+    :param low_dim_integrator:
+        :class:`CPPIntegrator`;
+        The integrator to be used if the integrand is lower
+        dimensional than `critical_dim`.
+
+    :param high_dim_integrator:
+        :class:`CPPIntegrator`;
+        The integrator to be used if the integrand has dimension
+        `critical_dim` or higher.
+
+    :param critical_dim:
+        integer;
+        The dimension below which the `low_dimensional_integrator`
+        is used.
+
+    Use this class to switch between integrators based on the
+    dimension of the integrand when integrating the `integral_ibrary`.
+    For example, ":class:`CQuad` for 1D and :class:`Vegas` otherwise"
+    is implemented as::
+
+        integral_library.integrator = MultiIntegrator(integral_library,CQuad(integral_library),Vegas(integral_library),2)
+
+    :class:`MultiIntegrator` can be nested to implement multiple
+    critical dimensions. To use e.g. :class:`CQuad` for 1D,
+    :class:`Cuhre` for 2D and 3D, and :class:`Vegas` otherwise, do::
+
+        integral_library.integrator = MultiIntegrator(integral_library,CQuad(integral_library),MultiIntegrator(integral_library,Cuhre(integral_library),Vegas(integral_library),4),2)
+
+    .. warning::
+        The `integral_library` passed to the integrators must be the
+        same for all of them. Furthermore, an integrator can only be
+        used to integrate the `integral_library` it has beeen
+        constructed with.
 
     '''
     def __init__(self,integral_library,low_dim_integrator,high_dim_integrator,critical_dim):
+        self.low_dim_integrator = low_dim_integrator # keep reference to avoid deallocation
+        self.high_dim_integrator = high_dim_integrator # keep reference to avoid deallocation
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_MultiIntegrator.restype = c_void_p
         self.c_lib.allocate_MultiIntegrator.argtypes = [c_void_p, c_void_p, c_int]
-        self.c_integrator_ptr = self.c_lib.allocate_MultiIntegrator(low_dim_integrator,high_dim_integrator,critical_dim)
+        self.c_integrator_ptr = self.c_lib.allocate_MultiIntegrator(low_dim_integrator.c_integrator_ptr,high_dim_integrator.c_integrator_ptr,critical_dim)
 
 class CQuad(CPPIntegrator):
     '''
@@ -402,4 +438,4 @@ class IntegralLibrary(object):
 
     def use_CQuad(self, *args, **kwargs):
         self.cquad = CQuad(self, *args, **kwargs)
-        self.integrator = MultiIntegrator(self,self.cquad.c_integrator_ptr,self.high_dimensional_integrator.c_integrator_ptr,2)
+        self.integrator = MultiIntegrator(self,self.cquad,self.high_dimensional_integrator,2)
