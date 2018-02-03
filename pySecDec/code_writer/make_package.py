@@ -14,7 +14,7 @@ from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort, light_Pak_sort
 from ..subtraction import integrate_pole_part, integrate_by_parts, pole_structure as compute_pole_structure
 from ..expansion import expand_singular, expand_Taylor, expand_sympy, OrderError
-from ..misc import lowest_order, det
+from ..misc import lowest_order, parallel_det
 from .template_parser import parse_template_file, parse_template_tree
 from itertools import chain
 from multiprocessing import Pool
@@ -1839,7 +1839,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
             # ``z_k({x_k}) = x_k * (1 - i * lambda_k * (1-x_k) * Re(dF_dx_k))``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
-            # Remark: The determinant of the Jacobian matrix is calculated numerically.
             deformation_parameters = [sp.symbols(FORM_names['deformation_parameter_i'] % i) for i in range(len(integration_variables))]
             deformed_integration_parameters = [
                                                      Sum(
@@ -1887,7 +1886,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             for i in range(len(integration_variables)):
                 for j in range(len(integration_variables)):
                     contourdef_Jacobian[i,j] = symbolic_deformed_variables[i].simplify().derive(j)
-            contourdef_Jacobian_determinant = det(contourdef_Jacobian)
+            contourdef_Jacobian_determinant = parallel_det(contourdef_Jacobian, pool)
 
         # remove `polynomial_names` from the `remainder_expression`
         this_primary_sector_remainder_expression = remainder_expression
