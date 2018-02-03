@@ -2,6 +2,7 @@
 
 from .misc import *
 from .algebra import Polynomial
+from multiprocessing import Pool
 import numpy as np
 import unittest
 from nose.plugins.attrib import attr
@@ -149,18 +150,30 @@ class TestAllPairs(unittest.TestCase):
         generator = (i for i in lst)
         self.assertEqual(list(all_pairs(generator)), [[(1,2),(3,4)], [(1,3),(2,4)], [(1,4),(2,3)]])
 
+#@attr('active')
 class TestDet(unittest.TestCase):
-    def test_calculation(self):
+    def check_calculation(self, parallel):
+        if parallel:
+            f = lambda M: parallel_det(M, Pool())
+        else:
+            f = det
+
         M1 = [[1,1],
               [2,2]]
         target_det_M1 = 0
-        self.assertEqual(det(M1), target_det_M1)
+        self.assertEqual(f(M1), target_det_M1)
 
         M2 = [[1,2,3],
               [0,2,2],
               [0,0,2]]
         target_det_M2 = 4
-        self.assertEqual(det(M2), target_det_M2)
+        self.assertEqual(f(M2), target_det_M2)
+
+    def test_sequential(self):
+        self.check_calculation(parallel=False)
+
+    def test_parallel(self):
+        self.check_calculation(parallel=True)
 
     def test_error_messages(self):
         # wrong shape

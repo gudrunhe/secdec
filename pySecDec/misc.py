@@ -121,6 +121,61 @@ def all_pairs(iterable):
     assert len(lst) % 2 == 0, '`iterable` must have even length'
     return all_pairs_recursion(lst)
 
+def parallel_det(M, pool):
+    '''
+    Calculate the determinant of a matrix in parallel.
+
+    :param M:
+        a square-matrix-like array;
+
+    :param pool:
+        :class:`multiprocessing.Pool`;
+        The pool to be used.
+
+    Example:
+
+    >>> from pySecDec.misc import parallel_det
+    >>> from multiprocessing import Pool
+    >>> from sympy import sympify
+    >>> M = [['m11','m12','m13','m14'],
+    ...      ['m21','m22','m23','m24'],
+    ...      ['m31','m32','m33','m34'],
+    ...      ['m41','m42','m43','m44']]
+    >>> M = sympify(M)
+    >>> parallel_det(M, Pool(2)) # 2 processes
+    m11*(m22*(m33*m44 - m34*m43) - m23*(m32*m44 - m34*m42) + m24*(m32*m43 - m33*m42)) - m12*(m21*(m33*m44 - m34*m43) - m23*(m31*m44 - m34*m41) + m24*(m31*m43 - m33*m41)) + m13*(m21*(m32*m44 - m34*m42) - m22*(m31*m44 - m34*m41) + m24*(m31*m42 - m32*m41)) - m14*(m21*(m32*m43 - m33*m42) - m22*(m31*m43 - m33*m41) + m23*(m31*m42 - m32*m41))
+
+    '''
+    M = np.asarray(M)
+    assert len(M.shape) == 2, "`M` must be two dimensional"
+    assert M.shape[0] == M.shape[1], "`M` must be a square matrix"
+    D = M.shape[0]
+
+    # stopping criterion for recursion
+    if D == 1:
+        return M[0,0]
+
+    # fast check if an integer is even
+    is_even = lambda x: x == (x >> 1 << 1)
+
+    def sub_indices(i):
+        'Return ``list(range(D))`` omitting `i`'
+        sub_indices = list(range(D))
+        sub_indices.remove(i)
+        return sub_indices
+
+    # resolve the first row of the matix
+    sub_Ms = (M[[[k] for k in range(1,D)],sub_indices(i)] for i in range(D))
+    sub_dets = pool.imap(det, sub_Ms)
+    result = 0
+    for i,subdet in enumerate(sub_dets):
+        term = M[0,i] * subdet
+        if is_even(i):
+            result += term
+        else:
+            result -= term
+    return result
+
 def det(M):
     '''
     Calculate the determinant of a matrix.
