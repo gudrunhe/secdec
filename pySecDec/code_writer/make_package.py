@@ -1890,7 +1890,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
             contourdef_Jacobian = np.empty((len(integration_variables), len(integration_variables)), dtype=object)
             for i in range(len(integration_variables)):
                 for j in range(len(integration_variables)):
-                    contourdef_Jacobian[i,j] = symbolic_deformed_variables[i].simplify().derive(j)
+                    contourdef_Jacobian[i,j] = symbolic_deformed_variables[i].derive(j).simplify()
             contourdef_Jacobian_determinant = parallel_det(contourdef_Jacobian, pool)
 
         # remove `polynomial_names` from the `remainder_expression`
