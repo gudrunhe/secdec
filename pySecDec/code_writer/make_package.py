@@ -1199,6 +1199,11 @@ def _process_secondary_sector(environment):
             ordered_contourdef_Jacobian_derivative_names, # ordered_derivative_names
             contourdef_Jacobian_derivative_functions # functions
         )
+        # deformed variable derivative tracker is copied in ``parallel_det(contourdef_Jacobian, pool)``
+        #   --> make sure all required derivatives are generated anyway
+        for undeformed_name,deformed_variable in zip(integration_variables,symbolic_deformed_variables):
+            for j in range(len(integration_variables)):
+                symbolic_contourdef_Jacobian.compute_derivatives(deformed_variable.derive(j))
 
     #  - for the deformed integration variables
         for undeformed_name,deformed_variable,derivative_tracker in zip(integration_variables,deformed_integration_parameters,symbolic_deformed_variables):
