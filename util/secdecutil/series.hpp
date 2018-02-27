@@ -273,7 +273,7 @@ namespace secdecutil {
             // nested if statements drop terms that have a multiplicative
             // zero.
             std::vector<Tout> content;
-            Tout denominator( s2_content.at(0) );
+            T2 denominator( s2_content.at(0) );
             content.reserve(order_max-order_min+1);
             Tout tmp( s1_content.at(0)/ s2_content.at(0) );
             bool tmp_initialized;
