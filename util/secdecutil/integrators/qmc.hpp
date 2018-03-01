@@ -25,7 +25,10 @@ namespace secdecutil
                 std::function<secdecutil::UncorrelatedDeviation<return_t>(const secdecutil::IntegrandContainer<return_t, input_t const * const>&)> integrate_function = [this] (const secdecutil::IntegrandContainer<return_t, input_t const * const>& integrand_container)
                 {
                     ::integrators::result<return_t> result;
-                    result = ::integrators::Qmc<return_t,input_t>::integrate(integrand_container.integrand,integrand_container.number_of_integration_variables);
+                    result = ::integrators::Qmc<return_t,input_t>::integrate(
+                        integrand_container.integrand,
+                        integrand_container.number_of_integration_variables>0 ? integrand_container.number_of_integration_variables : 1 // ensure dim > 0
+                    );
                     return secdecutil::UncorrelatedDeviation<return_t> { result.integral, result.error };
                 };
                 return integrate_function;
@@ -54,7 +57,10 @@ namespace secdecutil
                 std::function<secdecutil::UncorrelatedDeviation<std::complex<return_t>>(const secdecutil::IntegrandContainer<std::complex<return_t>, input_t const * const>&)> integrate_function = [this] (const secdecutil::IntegrandContainer<std::complex<return_t>, input_t const * const>& integrand_container)
                 {
                     ::integrators::result<std::complex<return_t>> result;
-                    result = ::integrators::Qmc<std::complex<return_t>,input_t>::integrate(integrand_container.integrand,integrand_container.number_of_integration_variables);
+                    result = ::integrators::Qmc<std::complex<return_t>,input_t>::integrate(
+                        integrand_container.integrand,
+                        integrand_container.number_of_integration_variables>0 ? integrand_container.number_of_integration_variables : 1 // ensure dim > 0
+                    );
                     return secdecutil::UncorrelatedDeviation<std::complex<return_t>> { result.integral, result.error };
                 };
                 return integrate_function;
