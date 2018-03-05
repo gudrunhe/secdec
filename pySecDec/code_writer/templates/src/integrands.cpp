@@ -10,7 +10,13 @@ namespace %(name)s
 {
     %(integrand_getters)s
 
-    const std::vector<nested_series_t<sector_container_t>> sectors = {%(sectors_initializer)s};
+    static std::unique_ptr<std::vector<nested_series_t<sector_container_t>>> sectors;
+    const std::vector<nested_series_t<sector_container_t>>& get_sectors()
+    {
+        if (!sectors)
+            sectors.reset( new std::vector<nested_series_t<sector_container_t>>{%(sectors_initializer)s} );
+        return *sectors;
+    };
 
     void check_parameter_sizes(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
     {
@@ -48,7 +54,7 @@ namespace %(name)s
         #if %(name)s_contour_deformation
             return secdecutil::deep_apply
             (
-                sectors,
+                get_sectors(),
                 secdecutil::SectorContainerWithDeformation_to_IntegrandContainer
                     (
                         real_parameters,
@@ -60,7 +66,7 @@ namespace %(name)s
                     )
             );
         #else
-            return secdecutil::deep_apply( sectors, secdecutil::SectorContainerWithoutDeformation_to_IntegrandContainer<integrand_return_t>(real_parameters, complex_parameters) );
+            return secdecutil::deep_apply( get_sectors(), secdecutil::SectorContainerWithoutDeformation_to_IntegrandContainer<integrand_return_t>(real_parameters, complex_parameters) );
         #endif
     };
 

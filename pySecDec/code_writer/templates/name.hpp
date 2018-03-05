@@ -63,7 +63,7 @@ namespace %(name)s
     const std::vector<int> highest_prefactor_orders = {%(highest_prefactor_orders)s};
     const std::vector<int> requested_orders = {%(requested_orders)s};
 
-    extern const std::vector<nested_series_t<sector_container_t>> sectors;
+    const std::vector<nested_series_t<sector_container_t>>& get_sectors();
     nested_series_t<integrand_return_t> prefactor(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters);
 
     extern const std::vector<std::vector<real_t>> pole_structures;

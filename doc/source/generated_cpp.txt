@@ -91,13 +91,16 @@ A program demonstrating the use of the C++ library is generated for each integra
 
     A vector of the requested orders of each regulator used to generate the C++ library, i.e. the `requested_orders` parameter passed to :func:`~pySecDec.code_writer.make_package` or :func:`~pySecDec.loop_integral.loop_package`.
 
-.. cpp:var:: const std::vector<nested_series_t<sector_container_t>> sectors
+.. cpp:function:: const std::vector<nested_series_t<sector_container_t>>& get_sectors()
+
+    .. versionchanged:: 1.3.1
+        The variable :cpp:var:`sectors` has been replaced by this function.
 
     A low level interface for obtaining the underlying integrand C++ functions.
 
     .. warning::
 
-        The precise definition and usage of :cpp:var:`sectors` is likely to change in future versions of `pySecDec`.
+        The precise definition and usage of :cpp:func:`get_sectors` is likely to change in future versions of `pySecDec`.
 
 .. cpp:function:: nested_series_t<integrand_return_t> prefactor(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
 
