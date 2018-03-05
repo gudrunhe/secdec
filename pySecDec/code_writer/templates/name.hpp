@@ -48,6 +48,8 @@ namespace %(name)s
 
     const unsigned int number_of_sectors = %(number_of_sectors)i;
 
+    const unsigned int maximal_number_of_integration_variables = %(number_of_integration_variables)i;
+
     const unsigned int number_of_regulators = %(number_of_regulators)i;
     const std::vector<std::string> names_of_regulators = {%(names_of_regulators)s};
 
