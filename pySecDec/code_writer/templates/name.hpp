@@ -46,7 +46,7 @@ namespace %(name)s
     typedef secdecutil::IntegrandContainer<integrand_return_t, real_t const * const> integrand_t;
     // --}
 
-    const unsigned int number_of_sectors = %(number_of_sectors)i;
+    const unsigned long long number_of_sectors = %(number_of_sectors)i;
 
     const unsigned int maximal_number_of_integration_variables = %(number_of_integration_variables)i;
 
