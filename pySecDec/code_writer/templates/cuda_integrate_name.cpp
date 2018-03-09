@@ -7,7 +7,7 @@
 #include <type_traits> // std::remove_const
 #include <typeinfo>
 
-#include <secdecutil/integrators/cuba.hpp> // Vegas
+#include <secdecutil/integrators/qmc.hpp> // Qmc
 #include <secdecutil/series.hpp> // Series
 #include <secdecutil/uncertainties.hpp> // UncorrelatedDeviation
 #include <secdecutil/sector_container.hpp> // SectorContainer to IntegrandContainer
@@ -72,14 +72,15 @@ int main()
     const std::vector<%(name)s::complex_t> complex_parameters = {  };
 
     // Generate the integrands (optimization of the contour if applicable)
-    const std::vector<%(name)s::nested_series_t<%(name)s::integrand_t>> sector_integrands = %(name)s::make_integrands(real_parameters, complex_parameters);
+    const std::vector<%(name)s::nested_series_t<%(name)s::cuda_integrand_t>> sector_integrands = %(name)s::make_cuda_integrands(real_parameters, complex_parameters);
 
     // Add integrands of sectors (together flag)
-    const %(name)s::nested_series_t<%(name)s::integrand_t> all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin());
+    const %(name)s::nested_series_t<%(name)s::cuda_together_integrand_t> all_sectors =
+        std::accumulate(++sector_integrands.begin(), sector_integrands.end(), %(name)s::cuda_together_integrand_t()+*sector_integrands.begin());
 
     // Integrate
-    secdecutil::cuba::Vegas<%(name)s::integrand_return_t> integrator;
-    integrator.flags = 2; // verbose output --> see cuba manual
+    secdecutil::integrators::Qmc<%(name)s::integrand_return_t,%(name)s::cuda_together_integrand_t> integrator;
+    integrator.verbosity = 1;
     const %(name)s::nested_series_t<secdecutil::UncorrelatedDeviation<%(name)s::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors, integrator.integrate );
 
     std::cout << "------------" << std::endl << std::endl;
