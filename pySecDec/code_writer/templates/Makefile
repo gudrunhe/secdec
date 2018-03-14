@@ -24,4 +24,4 @@ very-clean : clean
 
 clean:
 	for dir in */; do $(MAKE) -C $$dir $@; done
-	rm -f *.o *.so *.a integrate_$(NAME)
+	rm -f *.o *.so *.a integrate_$(NAME) cuda_integrate_$(NAME)
