@@ -91,6 +91,13 @@ namespace %(name)s
                         number_of_real_parameters,number_of_complex_parameters
                     >
                     cuda_integrand_t;
+            typedef secdecutil::CudaIntegrandContainerWithDeformation
+                    <
+                        real_t,complex_t,number_of_sectors/*maximal_number_of_functions*/,
+                        maximal_number_of_integration_variables,
+                        number_of_real_parameters,number_of_complex_parameters
+                    >
+                    cuda_together_integrand_t;
             std::vector<nested_series_t<cuda_integrand_t>> make_cuda_integrands
             (
                 const std::vector<real_t>& real_parameters,
@@ -108,6 +115,13 @@ namespace %(name)s
                         number_of_real_parameters,number_of_complex_parameters
                     >
                     cuda_integrand_t;
+            typedef secdecutil::CudaIntegrandContainerWithoutDeformation
+                    <
+                        real_t,complex_t,integrand_return_t,
+                        number_of_sectors/*maximal_number_of_functions*/,
+                        number_of_real_parameters,number_of_complex_parameters
+                    >
+                    cuda_together_integrand_t;
             std::vector<nested_series_t<cuda_integrand_t>> make_cuda_integrands
             (
                 const std::vector<real_t>& real_parameters,
