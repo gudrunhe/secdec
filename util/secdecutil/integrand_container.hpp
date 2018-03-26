@@ -1,7 +1,7 @@
 #ifndef SecDecUtil_integrand_container_hpp_included
 #define SecDecUtil_integrand_container_hpp_included
 
-#include <complex>
+#include <complex> // TODO: specializations for thrust::complex
 #include <functional>
 
 namespace secdecutil {
@@ -16,6 +16,14 @@ namespace secdecutil {
 
         int number_of_integration_variables;
         std::function<T(Args...)> integrand;
+
+        /*
+         *  Call operator
+         */
+        T operator()(Args... x) const
+        {
+            return integrand(x...);
+        }
 
         /*
          *  Helper functions

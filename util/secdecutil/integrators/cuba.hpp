@@ -8,7 +8,7 @@
 
 #include <array>
 #include <cmath>
-#include <complex>
+#include <complex> // TODO: specializations for thrust::complex
 #include <cuba.h>
 #include <iostream>
 #include <secdecutil/integrand_container.hpp>

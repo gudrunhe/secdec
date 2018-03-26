@@ -16,6 +16,12 @@ TEST_CASE( "Check Access", "[IntegrandContainer]" ) {
 
     };
 
+    SECTION( "Call operator" ) {
+
+        REQUIRE( ic(10) == 10+2 );
+
+    };
+
 };
 
 TEST_CASE( "Default Constructor", "[IntegrandContainer]" ) {

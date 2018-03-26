@@ -6,7 +6,7 @@
  * cquad integrator form the gnu scientific library (gsl).
  */
 
-#include <complex>
+#include <complex> // TODO: specializations for thrust::complex
 #include <gsl/gsl_integration.h> // gsl_integration_cquad
 #include <gsl/gsl_errno.h> // gsl_strerror, GSL_SUCCESS
 #include <iostream>

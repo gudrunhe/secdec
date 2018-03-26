@@ -1,6 +1,9 @@
 #ifndef SecDecUtil_qmc_hpp_included
 #define SecDecUtil_qmc_hpp_included
 
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+#endif
 #include <complex>
 #include <memory>
 #include <stdexcept>
@@ -13,20 +16,19 @@ namespace secdecutil
 {
     namespace integrators {
 
-        template<typename return_t>
-        struct Qmc : Integrator<return_t,return_t>, public ::integrators::Qmc<return_t,return_t>
+        template<typename return_t, typename container_t = secdecutil::IntegrandContainer<return_t, return_t const * const>>
+        struct Qmc : Integrator<return_t,return_t,container_t>, public ::integrators::Qmc<return_t,return_t>
         {
         protected:
 
-            using input_t = return_t;
-            std::function<secdecutil::UncorrelatedDeviation<return_t>(const secdecutil::IntegrandContainer<return_t, input_t const * const>&)>
+            std::function<secdecutil::UncorrelatedDeviation<return_t>(const container_t&)>
             get_integrate()
             {
-                std::function<secdecutil::UncorrelatedDeviation<return_t>(const secdecutil::IntegrandContainer<return_t, input_t const * const>&)> integrate_function = [this] (const secdecutil::IntegrandContainer<return_t, input_t const * const>& integrand_container)
+                std::function<secdecutil::UncorrelatedDeviation<return_t>(const container_t&)> integrate_function = [this] (const container_t& integrand_container)
                 {
                     ::integrators::result<return_t> result;
-                    result = ::integrators::Qmc<return_t,input_t>::integrate(
-                        integrand_container.integrand,
+                    result = ::integrators::Qmc<return_t,return_t>::integrate(
+                        integrand_container,
                         integrand_container.number_of_integration_variables>0 ? integrand_container.number_of_integration_variables : 1 // ensure dim > 0
                     );
                     return secdecutil::UncorrelatedDeviation<return_t> { result.integral, result.error };
@@ -35,46 +37,64 @@ namespace secdecutil
             };
         public:
 
-            using Integrator<return_t,return_t>::integrate;
+            using Integrator<return_t,return_t,container_t>::integrate;
 
+        };
+
+        #define COMPLEX_QMC_BODY(complex_template) \
+        protected: \
+ \
+            std::unique_ptr<Integrator<return_t, return_t>> get_real_integrator() \
+            { \
+                throw std::runtime_error("Separate integration of real and imaginary part has no advantage for this non-adaptive integrator. Please use \"together = true\"."); \
+            }; \
+ \
+            std::function<secdecutil::UncorrelatedDeviation<complex_template<return_t>> \
+            (const container_t&)> \
+            get_together_integrate() \
+            {\
+                std::function<secdecutil::UncorrelatedDeviation<complex_template<return_t>>(const container_t&)> integrate_function = [this] (const container_t& integrand_container) \
+                { \
+                    ::integrators::result<complex_template<return_t>> result; \
+                    result = ::integrators::Qmc<complex_template<return_t>,return_t>::integrate( \
+                        integrand_container, \
+                        integrand_container.number_of_integration_variables>0 ? integrand_container.number_of_integration_variables : 1 /* ensure dim > 0 */ \
+                    ); \
+                    return secdecutil::UncorrelatedDeviation<complex_template<return_t>> { result.integral, result.error }; \
+                }; \
+                return integrate_function; \
+            }; \
+ \
+        public: \
+ \
+            using Integrator<complex_template<return_t>, return_t, container_t>::integrate; \
+ \
+            Qmc() { this->together = true;  };
+
+        template<typename return_t, typename container_t>
+        struct Qmc<std::complex<return_t>, container_t> : Integrator<std::complex<return_t>, return_t, container_t>, public ::integrators::Qmc<std::complex<return_t>,return_t>
+        {
+            COMPLEX_QMC_BODY(std::complex)
         };
 
         template<typename return_t>
         struct Qmc<std::complex<return_t>> : Integrator<std::complex<return_t>, return_t>, public ::integrators::Qmc<std::complex<return_t>,return_t>
         {
-        protected:
-
-            using input_t = return_t;
-            std::unique_ptr<Integrator<return_t, input_t>> get_real_integrator()
-            {
-                throw std::runtime_error("Separate integration of real and imaginary part has no advantage for this non-adaptive integrator. Please use \"together = true\".");
-            };
-
-            std::function<secdecutil::UncorrelatedDeviation<std::complex<return_t>>
-            (const secdecutil::IntegrandContainer<std::complex<return_t>, input_t const * const>&)>
-            get_together_integrate()
-            {
-                std::function<secdecutil::UncorrelatedDeviation<std::complex<return_t>>(const secdecutil::IntegrandContainer<std::complex<return_t>, input_t const * const>&)> integrate_function = [this] (const secdecutil::IntegrandContainer<std::complex<return_t>, input_t const * const>& integrand_container)
-                {
-                    ::integrators::result<std::complex<return_t>> result;
-                    result = ::integrators::Qmc<std::complex<return_t>,input_t>::integrate(
-                        integrand_container.integrand,
-                        integrand_container.number_of_integration_variables>0 ? integrand_container.number_of_integration_variables : 1 // ensure dim > 0
-                    );
-                    return secdecutil::UncorrelatedDeviation<std::complex<return_t>> { result.integral, result.error };
-                };
-                return integrate_function;
-            };
-            
-        public:
-
-            using Integrator<std::complex<return_t>, return_t>::integrate;
-
-            Qmc() { this->together = true;  };
-            
+            using container_t = secdecutil::IntegrandContainer<std::complex<return_t>, return_t const * const>;
+            COMPLEX_QMC_BODY(std::complex)
         };
 
-    }
+        #ifdef SECDEC_WITH_CUDA
+            template<typename return_t, typename container_t>
+            struct Qmc<thrust::complex<return_t>,container_t> : Integrator<thrust::complex<return_t>, return_t, container_t>, public ::integrators::Qmc<thrust::complex<return_t>,return_t>
+            {
+                COMPLEX_QMC_BODY(thrust::complex)
+            };
+        #endif
+
+        #undef COMPLEX_QMC_BODY
+
+    };
 
 }
 
