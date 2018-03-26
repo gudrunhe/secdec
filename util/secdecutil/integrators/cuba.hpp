@@ -86,7 +86,7 @@ namespace secdecutil
           result[0] = typed_userdata.integrand_container->integrand(bordered_integration_variables);
 
           return 0;
-        };
+        }
         static const int ncomp = 1;
         struct userdata_t
         {
@@ -134,7 +134,7 @@ namespace secdecutil
               result[0] = typed_userdata.integrand_container->integrand(integration_variables); // pass array "integration_variables" directly
               return 0;
           }
-        };
+        }
         static const int ncomp = 1;
         struct userdata_t
         {
@@ -192,7 +192,7 @@ namespace secdecutil
           result[1] = evaluated_integrand.imag();
 
           return 0;
-        };
+        }
         static const int ncomp = 2;
         struct userdata_t
         {
@@ -245,7 +245,7 @@ namespace secdecutil
               result[1] = evaluated_integrand.imag();
               return 0;
           }
-        };
+        }
         static const int ncomp = 2;
         struct userdata_t
         {

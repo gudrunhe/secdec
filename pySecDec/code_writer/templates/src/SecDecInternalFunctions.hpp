@@ -4,15 +4,32 @@
 #include "%(name)s.hpp"
 
 #include <cmath>
-#include <complex>
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+#else
+    #include <complex>
+#endif
 #include <stdexcept>
 #include <string>
+
+#ifdef SECDEC_WITH_CUDA
+    #define STD thrust
+#else
+    #define STD std
+#endif
 
 namespace %(name)s
 {
     // imaginary unit
-    constexpr complex_t i_{0,1}; // FORM notation
-    constexpr complex_t I = i_; // sympy notation
+    #ifdef SECDEC_WITH_CUDA
+        // FORM notation
+        #define i_ complex_t{0,1}
+        // sympy notation
+        #define I complex_t{0,1}
+    #else
+        constexpr complex_t i_{0,1}; // FORM notation
+        constexpr complex_t I = i_; // sympy notation
+    #endif
 
 
     // required functions
@@ -27,22 +44,32 @@ namespace %(name)s
     #define %(name)s_has_complex_parameters %(have_complex_parameters)i
     #define %(name)s_enforce_complex_return_type %(enforce_complex_return_type)i
     #if %(name)s_has_complex_parameters || %(name)s_contour_deformation || %(name)s_enforce_complex_return_type
+      #ifdef SECDEC_WITH_CUDA
+        __host__ __device__
+      #endif
         inline complex_t log(complex_t arg)
         {
             if (arg.imag() == 0)
                 arg = complex_t(arg.real(),-0.);
-            return std::log(arg);
+            return STD::log(arg);
         }
     #else
+      #ifdef SECDEC_WITH_CUDA
+        __host__ __device__
+      #endif
         inline real_t log(real_t arg)
         {
             if (arg < 0)
             {
-                std::string error_message;
-                error_message += "Encountered \"log(<negative real>)\" in a real-valued integrand function of \"%(name)s\". ";
-                error_message += "Try to enforce complex return values for the generated integrands; i.e. set ";
-                error_message += "\"enforce_complex=True\" in the corresponding call to \"loop_package\" or \"make_package\".";
-                throw std::domain_error(error_message);
+                #ifdef SECDEC_WITH_CUDA
+                    return std::nan("");
+                #else
+                    std::string error_message;
+                    error_message += "Encountered \"log(<negative real>)\" in a real-valued integrand function of \"%(name)s\". ";
+                    error_message += "Try to enforce complex return values for the generated integrands; i.e. set ";
+                    error_message += "\"enforce_complex=True\" in the corresponding call to \"loop_package\" or \"make_package\".";
+                    throw std::domain_error(error_message);
+                #endif
             }
             return std::log(arg);
         }
@@ -64,12 +91,19 @@ namespace %(name)s
      *       Playing around with "std::pow" and the aforementioned switches is nevertheless
      *       worth a try in practical applications where high performance is needed.
      */
-    template <typename Tbase> inline Tbase SecDecInternalPow(Tbase base, int exponent)
+    template <typename Tbase> inline
+    #ifdef SECDEC_WITH_CUDA
+      __host__ __device__
+    #endif
+    Tbase SecDecInternalPow(Tbase base, int exponent)
     {
-        if (exponent > 1024 or exponent < -1024)
-            return std::pow(base, exponent);
 
-        else if (exponent < 0)
+        #ifndef SECDEC_WITH_CUDA
+            if (exponent > 1024 or exponent < -1024)
+                return std::pow(base, exponent);
+        #endif
+
+        if (exponent < 0)
             return Tbase(1)/SecDecInternalPow(base, -exponent);
 
         else if (exponent == 0)
@@ -139,10 +173,16 @@ namespace %(name)s
             return out * base;
     }
 
+    #ifdef SECDEC_WITH_CUDA
+      __host__ __device__
+    #endif
     real_t inline pow(real_t x, int y)
     {
         return SecDecInternalPow(x, y);
     }
+    #ifdef SECDEC_WITH_CUDA
+      __host__ __device__
+    #endif
     complex_t inline pow(complex_t x, int y)
     {
         return SecDecInternalPow(x, y);
@@ -150,20 +190,34 @@ namespace %(name)s
     #if %(name)s_has_complex_parameters || %(name)s_contour_deformation || %(name)s_enforce_complex_return_type
         template <typename Tbase, typename Texponent> complex_t pow(Tbase base, Texponent exponent)
         {
-            if (std::imag(base) == 0)
-                return std::pow( complex_t(std::real(base),-0.) , exponent );
-            return std::pow(base, exponent);
+            #ifdef SECDEC_WITH_CUDA
+                complex_t cbase = base;
+                if (cbase.imag() == 0)
+                    return thrust::pow( complex_t(cbase.real(),-0.) , exponent );
+                return thrust::pow(cbase, exponent);
+            #else
+                if (std::imag(base) == 0)
+                    return std::pow( complex_t(STD::real(base),-0.) , exponent );
+                return std::pow(base, exponent);
+            #endif
         }
     #else
+      #ifdef SECDEC_WITH_CUDA
+        __host__ __device__
+      #endif
         inline real_t pow(real_t base, real_t exponent)
         {
             if (base < 0)
             {
-                std::string error_message;
-                error_message += "Encountered \"pow(<negative real>, <rational>)\" in a real-valued integrand function of ";
-                error_message += "\"%(name)s\". Try to enforce complex return values for the generated integrands; i.e. set ";
-                error_message += "\"enforce_complex=True\" in the corresponding call to \"loop_package\" or \"make_package\".";
-                throw std::domain_error(error_message);
+                #ifdef SECDEC_WITH_CUDA
+                    return std::nan("");
+                #else
+                    std::string error_message;
+                    error_message += "Encountered \"pow(<negative real>, <rational>)\" in a real-valued integrand function of ";
+                    error_message += "\"%(name)s\". Try to enforce complex return values for the generated integrands; i.e. set ";
+                    error_message += "\"enforce_complex=True\" in the corresponding call to \"loop_package\" or \"make_package\".";
+                    throw std::domain_error(error_message);
+                #endif
             }
             return std::pow(base, exponent);
         }
@@ -173,15 +227,27 @@ namespace %(name)s
      * Overload binary arithmetic operators between "int" and "complex_t"
      * by converting "int" to "real_t".
      */
-    #define INT_COMPLEX(OPERATOR) \
-        inline complex_t operator OPERATOR (const int x, const complex_t y) \
-        { \
-            return static_cast<real_t>(x) OPERATOR y; \
-        } \
-        inline complex_t operator OPERATOR (const complex_t x, const int y) \
-        { \
-            return x OPERATOR static_cast<real_t>(y); \
-        }
+    #ifdef SECDEC_WITH_CUDA
+      #define INT_COMPLEX(OPERATOR) \
+          inline __host__ __device__ complex_t operator OPERATOR (const int x, const complex_t y) \
+          { \
+              return static_cast<real_t>(x) OPERATOR y; \
+          } \
+          inline __host__ __device__ complex_t operator OPERATOR (const complex_t x, const int y) \
+          { \
+              return x OPERATOR static_cast<real_t>(y); \
+          }
+    #else
+      #define INT_COMPLEX(OPERATOR) \
+          inline complex_t operator OPERATOR (const int x, const complex_t y) \
+          { \
+              return static_cast<real_t>(x) OPERATOR y; \
+          } \
+          inline complex_t operator OPERATOR (const complex_t x, const int y) \
+          { \
+              return x OPERATOR static_cast<real_t>(y); \
+          }
+    #endif
     INT_COMPLEX(+)
     INT_COMPLEX(-)
     INT_COMPLEX(*)
@@ -195,4 +261,7 @@ namespace %(name)s
     // --}
 
 };
+
+#undef STD
+
 #endif

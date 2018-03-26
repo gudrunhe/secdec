@@ -37,7 +37,7 @@ namespace secdecutil {
             }
 
             return IntegrandContainer(number_of_integration_variables, integrand);
-        };
+        }
 
         /*
          * unary operators

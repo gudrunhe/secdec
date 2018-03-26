@@ -1,7 +1,11 @@
 #ifndef %(name)s_hpp_included
 #define %(name)s_hpp_included
 
-#include <complex>
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+#else
+    #include <complex>
+#endif
 #include <string>
 #include <vector>
 #include <secdecutil/integrand_container.hpp>
@@ -23,7 +27,11 @@ namespace %(name)s
     // basic data types
     // --{
     typedef double real_t;
-    typedef std::complex<real_t> complex_t;
+    #ifdef SECDEC_WITH_CUDA
+        typedef thrust::complex<real_t> complex_t;
+    #else
+        typedef std::complex<real_t> complex_t;
+    #endif
     #if %(name)s_has_complex_parameters || %(name)s_contour_deformation || %(name)s_enforce_complex_return_type
         typedef complex_t integrand_return_t;
     #else

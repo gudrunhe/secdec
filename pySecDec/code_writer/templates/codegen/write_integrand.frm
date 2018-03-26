@@ -891,8 +891,13 @@ Bracket `regulators';
 * Processing denominators in FORM is easiest if packed into a function.
 * Define that function as c preprocessor macro.
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalDenominator(x) 1./(x)#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) (complex_t{x}).real()#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalImagPart(x) (complex_t{x}).imag()#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#else#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalImagPart(x) std::imag(x)#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
 
 * Define "SecDecInternalAbbreviation[0]" as c preprocessor variable "tmp".
 * Since FORM does not use "SecDecInternalAbbreviation[0]", we can use it.
