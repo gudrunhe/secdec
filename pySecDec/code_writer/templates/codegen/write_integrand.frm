@@ -190,6 +190,9 @@ Bracket `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  #ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  __host__ __device__#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  #endif#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'_order_`cppOrder'_integrand#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const integration_variables,#@SecDecInternalNewline@#"
@@ -1274,8 +1277,37 @@ Bracket `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalAbbreviations`shiftedOrderIndex'#@SecDecInternalNewline@#"
 
-* Close the c++ function and namespaces
+* Close the c++ function
   #write <sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
+
+* Get the __device__ function pointer to the host
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.cpp> "  __device__ secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.cpp> "  __device__ secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  * const device_sector_`sectorID'_order_`cppOrder'_integrand = sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.cpp> "   * get_device_sector_`sectorID'_order_`cppOrder'_integrand()#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "   {#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.cpp> "     using IntegrandFunction = secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction;#@SecDecInternalNewline@#"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.cpp> "     using IntegrandFunction = secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction;#@SecDecInternalNewline@#"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.cpp> "     IntegrandFunction* device_address_on_host;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "     auto errcode = cudaMemcpyFromSymbol(&device_address_on_host,device_sector_`sectorID'_order_`cppOrder'_integrand, sizeof(IntegrandFunction*));#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "     if (errcode != cudaSuccess) throw secdecutil::cuda_error( cudaGetErrorString(errcode) );#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "     return device_address_on_host;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "   };#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
+
+* Close the namespace
   #write <sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
 
 * Write the corresponding header "sector_`sectorID'_`cppOrder'.hpp".
@@ -1289,12 +1321,23 @@ Bracket `regulators';
   #write <sector_`sectorID'_`cppOrder'.hpp> "#define sector_`sectorID'_order_`cppOrder'_optimmaxvar_second `numberOfSecondAbbreviations'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  #ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  __host__ __device__#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  #endif#@SecDecInternalNewline@#"
   #If `contourDeformation'
     #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction#@SecDecInternalNewline@#"
   #Else
     #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction#@SecDecInternalNewline@#"
   #EndIf
   #write <sector_`sectorID'_`cppOrder'.hpp> "  sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  #ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.hpp> "    * get_device_sector_`sectorID'_order_`cppOrder'_integrand();#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  #endif#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "}#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
 

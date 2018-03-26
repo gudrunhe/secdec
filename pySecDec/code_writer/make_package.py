@@ -534,15 +534,21 @@ def _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sec
                 current_orders[regulator_index] = this_regulator_order
                 if contour_deformation:
                     outstr_body_snippets.append(
-                        '''%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,
-                           sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial,
-                           sector_%(sector_ID)i_order_%(cpp_order)s_maximal_allowed_deformation_parameters''' \
-                        % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
+                        (
+                            '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,' +
+                            '#@SecDecInternalNewline@##ifdef#@SecDecInternalSpace@#SECDEC_WITH_CUDA#@SecDecInternalNewline@#get_device_sector_%(sector_ID)i_order_%(cpp_order)s_integrand,' +
+                            '#@SecDecInternalNewline@##endif#@SecDecInternalNewline@#' +
+                            'sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial,' +
+                            'sector_%(sector_ID)i_order_%(cpp_order)s_maximal_allowed_deformation_parameters'
+                        ) % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
                     )
                 else:
                     outstr_body_snippets.append(
-                        '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' \
-                        % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
+                        (
+                            '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' +
+                            '#@SecDecInternalNewline@##ifdef#@SecDecInternalSpace@#SECDEC_WITH_CUDA#@SecDecInternalNewline@#,get_device_sector_%(sector_ID)i_order_%(cpp_order)s_integrand' +
+                            '#@SecDecInternalNewline@##endif#@SecDecInternalNewline@#'
+                        ) % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
                     )
             outstr_tail = '}},true,#@%sDblquote@#%s#@%sDblquote@#}' % (internal_prefix,regulator_names[regulator_index],internal_prefix)
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )

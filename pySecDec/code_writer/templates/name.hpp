@@ -80,6 +80,33 @@ namespace %(name)s
         #endif
     );
 
+    #ifdef SECDEC_WITH_CUDA
+        #if %(name)s_contour_deformation
+            std::vector<nested_series_t
+            <
+                secdecutil::CudaIntegrandContainerWithDeformation<real_t,complex_t,1/*maximal_number_of_functions*/,
+                maximal_number_of_integration_variables,number_of_real_parameters,number_of_complex_parameters>
+            >> make_cuda_integrands
+            (
+                const std::vector<real_t>& real_parameters,
+                const std::vector<complex_t>& complex_parameters,
+                unsigned number_of_presamples,
+                real_t deformation_parameters_maximum,
+                real_t deformation_parameters_minimum,
+                real_t deformation_parameters_decrease_factor
+            );
+        #else
+            std::vector<nested_series_t
+            <
+                secdecutil::CudaIntegrandContainerWithoutDeformation<real_t,complex_t,integrand_return_t,1/*maximal_number_of_functions*/,number_of_real_parameters,number_of_complex_parameters>
+            >> make_cuda_integrands
+            (
+                const std::vector<real_t>& real_parameters,
+                const std::vector<complex_t>& complex_parameters
+            );
+        #endif
+    #endif
+
     #undef %(name)s_contour_deformation
     #undef %(name)s_has_complex_parameters
     #undef %(name)s_enforce_complex_return_type
