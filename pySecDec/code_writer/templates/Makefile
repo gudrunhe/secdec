@@ -12,7 +12,7 @@ source:
 integrate_$(NAME).o : source
 
 integrate_$(NAME) : integrate_$(NAME).o lib$(NAME).a
-	$(CXX) $(CXXFLAGS) -o $@ $< -l$(NAME) $(LDFLAGS)
+	$(CXX) -O2 $< -o $@ -l$(NAME) $(LDFLAGS)
 
 very-clean : clean
 	for dir in */; do $(MAKE) -C $$dir $@; done
