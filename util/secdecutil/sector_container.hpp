@@ -33,12 +33,15 @@ namespace secdecutil {
          real_t const * const integration_variables,
          real_t const * const real_parameters,
          complex_t const * const complex_parameters
-         );
+        );
 
         const unsigned sector_id;
         const std::vector<int> orders;
         const unsigned number_of_integration_variables;
         IntegrandFunction * const undeformed_integrand;
+        #ifdef SECDEC_WITH_CUDA
+            IntegrandFunction * device_undeformed_integrand;
+        #endif
 
         std::shared_ptr<std::vector<real_t>> real_parameters;
         std::shared_ptr<std::vector<complex_t>> complex_parameters;
@@ -65,7 +68,14 @@ namespace secdecutil {
         orders(orders),
         number_of_integration_variables(number_of_integration_variables),
         undeformed_integrand(undeformed_integrand)
-        {};
+        #ifdef SECDEC_WITH_CUDA
+            ,device_undeformed_integrand()
+        #endif
+        {
+        #ifdef SECDEC_WITH_CUDA
+            cudaMemcpyFromSymbol(&device_undeformed_integrand, undeformed_integrand, sizeof(IntegrandFunction*));
+        #endif
+        };
     };
 
     template<typename real_t, typename complex_t>
@@ -78,7 +88,7 @@ namespace secdecutil {
          real_t const * const real_parameters,
          complex_t const * const complex_parameters,
          real_t const * const deformation_parameters
-         );
+        );
 
         // the call signature of the function that computes the maximal deformation parameters
         typedef void MaximalDeformationFunction
@@ -87,12 +97,15 @@ namespace secdecutil {
          real_t const * const integration_variables,
          real_t const * const real_parameters,
          complex_t const * const complex_parameters
-         );
+        );
 
         const unsigned sector_id;
         const std::vector<int> orders;
         const unsigned number_of_integration_variables;
         DeformedIntegrandFunction * const deformed_integrand;
+        #ifdef SECDEC_WITH_CUDA
+            DeformedIntegrandFunction * device_deformed_integrand;
+        #endif
         DeformedIntegrandFunction * const contour_deformation_polynomial;
         MaximalDeformationFunction * const maximal_allowed_deformation_parameters;
 
@@ -227,10 +240,17 @@ namespace secdecutil {
         orders(orders),
         number_of_integration_variables(number_of_integration_variables),
         deformed_integrand(deformed_integrand),
+        #ifdef SECDEC_WITH_CUDA
+            device_deformed_integrand(),
+        #endif
         contour_deformation_polynomial(contour_deformation_polynomial),
         maximal_allowed_deformation_parameters(maximal_allowed_deformation_parameters),
         zeros(number_of_integration_variables,0)
-        {};
+        {
+        #ifdef SECDEC_WITH_CUDA
+            cudaMemcpyFromSymbol(&device_deformed_integrand, deformed_integrand, sizeof(DeformedIntegrandFunction*));
+        #endif
+        };
     };
 
     /*
