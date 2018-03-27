@@ -72,6 +72,9 @@ class MultiIntegrator(CPPIntegrator):
         used to integrate the `integral_library` it has beeen
         constructed with.
 
+    .. warning::
+        The :class:`MultiIntegrator` cannot be used with :class:`.CudaQmc`.
+
     '''
     def __init__(self,integral_library,low_dim_integrator,high_dim_integrator,critical_dim):
         self.low_dim_integrator = low_dim_integrator # keep reference to avoid deallocation
@@ -196,12 +199,80 @@ class Qmc(CPPIntegrator):
     Qmc library is used.
 
     '''
-    def __init__(self,integral_library,minN=0,m=0,blockSize=0,seed=0):
+    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,border=0.0,maxeval=0,minn=0,minm=0,maxworkpackages=0,
+                      cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+        devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_integrators_Qmc.restype = c_void_p
-        self.c_lib.allocate_integrators_Qmc.argtypes = [c_ulonglong, c_ulonglong, c_ulonglong, c_longlong]
-        self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(minN,m,blockSize,seed)
+        self.c_lib.allocate_integrators_Qmc.argtypes = [
+                                                            c_double, # epsrel
+                                                            c_double, # epsabs
+                                                            c_double, # border
+                                                            c_ulonglong, # maxeval
+                                                            c_ulonglong, # minn
+                                                            c_ulonglong, # minm
+                                                            c_ulonglong, # maxworkpackages
+                                                            c_ulonglong, # cputhreads
+                                                            c_ulonglong, # cudablocks
+                                                            c_ulonglong, # cudathreadsperblock
+                                                            c_ulonglong, # verbosity
+                                                            c_longlong # seed
+                                                       ]
 
+        self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(epsrel,epsabs,border,maxeval,minn,minm,maxworkpackages,
+                                                                    cputhreads,cudablocks,cudathreadsperblock,verbosity,seed)
+
+class CudaQmc(object): # TODO: high-level test for python interface
+    '''
+    Wrapper for the Qmc integrator defined in the integrators
+    library for GPU use.
+
+    :param integral_library:
+        :class:`IntegralLibrary`;
+        The integral to be computed with this integrator.
+
+    The other options are defined in the Qmc docs. If
+    an argument is set to 0 then the default of the
+    Qmc library is used.
+
+    '''
+    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,border=0.0,maxeval=0,minn=0,minm=0,maxworkpackages=0,
+                      cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+        devices_t = c_int * len(devices)
+        argtypes = [
+                        c_double, # epsrel,
+                        c_double, # epsabs,
+                        c_double, # border,
+                        c_ulonglong, # maxeval,
+                        c_ulonglong, # minn,
+                        c_ulonglong, # minm,
+                        c_ulonglong, # maxworkpackages,
+                        c_ulonglong, # cputhreads,
+                        c_ulonglong, # cudablocks,
+                        c_ulonglong, # cudathreadsperblock,
+                        c_ulonglong, # verbosity,
+                        c_longlong, # seed,
+                        c_ulonglong, # number_of_devices
+                        devices_t # devices[]
+                   ]
+        self.c_lib = integral_library.c_lib
+        self.c_lib.allocate_cuda_integrators_Qmc_together.restype = self.c_lib.allocate_cuda_integrators_Qmc_separate.restype = c_void_p
+        self.c_lib.allocate_cuda_integrators_Qmc_together.argtypes = self.c_lib.allocate_cuda_integrators_Qmc_separate.argtypes = argtypes
+
+        self.c_integrator_ptr_together = self.c_lib.allocate_cuda_integrators_Qmc_together(epsrel,epsabs,border,maxeval,minn,minm,maxworkpackages,cputhreads,
+                                                                                           cudablocks,cudathreadsperblock,verbosity,seed,len(devices),devices_t(*devices))
+
+        self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(epsrel,epsabs,border,maxeval,minn,minm,maxworkpackages,cputhreads,
+                                                                                           cudablocks,cudathreadsperblock,verbosity,seed,len(devices),devices_t(*devices))
+
+    def __del__(self):
+        self.c_lib.free_cuda_together_integrator.restype = None
+        self.c_lib.free_cuda_together_integrator.argtypes = [c_void_p]
+        self.c_lib.free_cuda_together_integrator(self.c_integrator_ptr_together)
+
+        self.c_lib.free_cuda_separate_integrator.restype = None
+        self.c_lib.free_cuda_separate_integrator.argtypes = [c_void_p]
+        self.c_lib.free_cuda_separate_integrator(self.c_integrator_ptr_separate)
 
 class IntegralLibrary(object):
     r'''
@@ -282,11 +353,11 @@ class IntegralLibrary(object):
     The integrator can be configured by calling the
     member methods :meth:`.use_Vegas`, :meth:`.use_Suave`,
     :meth:`.use_Divonne`, :meth:`.use_Cuhre`,
-    :meth:`.use_CQuad` and :meth:`.use_Qmc`.
+    :meth:`.use_CQuad`, and :meth:`.use_Qmc`.
     The available options are listed in the documentation of
     :class:`.Vegas`, :class:`.Suave`, :class:`.Divonne`,
-    :class:`.Cuhre`, :class:`.CQuad` and :class:`.Qmc` 
-    respectively.
+    :class:`.Cuhre`, :class:`.CQuad`, :class:`.Qmc`
+    (:class:`.CudaQmc` for GPU version), respectively.
     :class:`CQuad` can only be used for one dimensional
     integrals. A call to :meth:`use_CQuad` configures the
     integrator to use :class:`CQuad` if possible (1D) and the
@@ -301,6 +372,8 @@ class IntegralLibrary(object):
 
     '''
     def __init__(self, shared_object_path):
+        self._cuda = False
+
         # import c++ library
         c_lib = self.c_lib = CDLL(shared_object_path)
 
@@ -335,7 +408,7 @@ class IntegralLibrary(object):
             integral_info[key.strip()] = value.strip(' ,')
 
 
-        # comtinue set c prototypes
+        # continue set c prototypes
         self.real_parameter_t = c_double * int(integral_info['number_of_real_parameters'])
         self.complex_parameter_t = c_double * (2*int(integral_info['number_of_complex_parameters'])) # flattened as: ``real(x0), imag(x0), real(x1), imag(x1), ...``
 
@@ -351,6 +424,25 @@ class IntegralLibrary(object):
                                                c_double, # deformation_parameters_minimum
                                                c_double # deformation_parameters_decrease_factor
                                           ]
+
+        # set cuda integrate types if applicable
+        try:
+            c_lib.cuda_compute_integral.restype = None
+            c_lib.cuda_compute_integral.argtypes = [
+                                                        c_void_p, c_void_p, c_void_p, # output strings
+                                                        c_void_p, # together integrator
+                                                        c_void_p, # separate integrator
+                                                        self.real_parameter_t, # double array
+                                                        self.complex_parameter_t, # double array as real(x0), imag(x0), real(x1), imag(x1), ...
+                                                        c_bool, # together
+                                                        c_uint, # number_of_presamples
+                                                        c_double, # deformation_parameters_maximum
+                                                        c_double, # deformation_parameters_minimum
+                                                        c_double # deformation_parameters_decrease_factor
+                                                   ]
+        except AttributeError:
+            # c_lib has been compiled without cuda
+            pass
 
         # set the default integrator (CQuad for 1D, Vegas otherwise)
         self.use_Vegas()
@@ -416,15 +508,27 @@ class IntegralLibrary(object):
         cpp_str_integral_with_prefactor = self.c_lib.allocate_string()
 
         # call the underlying c routine
-        self.c_lib.compute_integral(
-                                        cpp_str_integral_without_prefactor,
-                                        cpp_str_prefactor, cpp_str_integral_with_prefactor,
-                                        self.integrator.c_integrator_ptr, c_real_parameters,
-                                        c_complex_parameters, together,
-                                        number_of_presamples, deformation_parameters_maximum,
-                                        deformation_parameters_minimum,
-                                        deformation_parameters_decrease_factor
-                                   )
+        if self._cuda:
+            self.c_lib.cuda_compute_integral(
+                                                 cpp_str_integral_without_prefactor,
+                                                 cpp_str_prefactor, cpp_str_integral_with_prefactor,
+                                                 self.integrator.c_integrator_ptr_together,
+                                                 self.integrator.c_integrator_ptr_separate, c_real_parameters,
+                                                 c_complex_parameters, together,
+                                                 number_of_presamples, deformation_parameters_maximum,
+                                                 deformation_parameters_minimum,
+                                                 deformation_parameters_decrease_factor
+                                            )
+        else:
+            self.c_lib.compute_integral(
+                                            cpp_str_integral_without_prefactor,
+                                            cpp_str_prefactor, cpp_str_integral_with_prefactor,
+                                            self.integrator.c_integrator_ptr, c_real_parameters,
+                                            c_complex_parameters, together,
+                                            number_of_presamples, deformation_parameters_maximum,
+                                            deformation_parameters_minimum,
+                                            deformation_parameters_decrease_factor
+                                       )
 
         # convert c++ stings to python strings or bytes (depending on whether we use python2 or python3)
         str_integral_without_prefactor = self.c_lib.string2charptr(cpp_str_integral_without_prefactor)
@@ -447,20 +551,30 @@ class IntegralLibrary(object):
         queue.put( (str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor) )
 
     def use_Vegas(self, *args, **kwargs):
+        self._cuda = False
         self.high_dimensional_integrator = self.integrator = Vegas(self,*args,**kwargs)
 
     def use_Suave(self, *args, **kwargs):
+        self._cuda = False
         self.high_dimensional_integrator = self.integrator = Suave(self,*args,**kwargs)
 
     def use_Divonne(self, *args, **kwargs):
+        self._cuda = False
         self.high_dimensional_integrator = self.integrator = Divonne(self,*args,**kwargs)
 
     def use_Cuhre(self, *args, **kwargs):
         self.high_dimensional_integrator = self.integrator = Cuhre(self,*args,**kwargs)
 
     def use_CQuad(self, *args, **kwargs):
+        if self._cuda:
+            raise RuntimeError('Cannot use `CQuad` together with `CudaQmc`.')
         self.cquad = CQuad(self, *args, **kwargs)
         self.integrator = MultiIntegrator(self,self.cquad,self.high_dimensional_integrator,2)
 
     def use_Qmc(self, *args, **kwargs):
-        self.integrator = Qmc(self,*args,**kwargs)
+        if hasattr(self.c_lib,'allocate_integrators_Qmc'):
+            self._cuda = False
+            self.integrator = Qmc(self,*args,**kwargs)
+        else:
+            self._cuda = True
+            self.integrator = CudaQmc(self,*args,**kwargs)

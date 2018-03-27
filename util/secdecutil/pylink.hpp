@@ -36,6 +36,10 @@ extern "C"
 
     using namespace INTEGRAL_NAME;
     using secdec_integrand_t = INTEGRAL_NAME::integrand_t; // avoid name conflict with cuba
+    #ifdef SECDEC_WITH_CUDA
+        using INTEGRAL_NAME::cuda_integrand_t;
+        using INTEGRAL_NAME::cuda_together_integrand_t;
+    #endif
 
     /*
      * string (de)allocation
@@ -234,30 +238,175 @@ extern "C"
         SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX();
         return integrator;
     }
-    secdecutil::Integrator<integrand_return_t,real_t> *
-    allocate_integrators_Qmc(
-                            unsigned long long int minN,
-                            unsigned long long int m,
-                            unsigned long long int blockSize,
-                            long long int seed
-                        )
-    {
-        auto integrator = new secdecutil::integrators::Qmc<integrand_return_t>;
-        // If an argument is set to 0 then use the default of the Qmc library
-        if ( minN != 0 )
-            integrator->minN = minN;
-        if ( m != 0 )
-            integrator->m = m;
-        if ( blockSize != 0 )
-            integrator->blockSize = blockSize;
-        if ( seed != 0 )
-            integrator->randomGenerator.seed(seed);
-        return integrator;
-    }
+    #ifdef SECDEC_WITH_CUDA
+        secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> *
+        allocate_cuda_integrators_Qmc_together(
+                                double epsrel,
+                                double epsabs,
+                                double border,
+                                unsigned long long int maxeval,
+                                unsigned long long int minn,
+                                unsigned long long int minm,
+                                unsigned long long int maxworkpackages,
+                                unsigned long long int cputhreads,
+                                unsigned long long int cudablocks,
+                                unsigned long long int cudathreadsperblock,
+                                unsigned long long int verbosity,
+                                long long int seed,
+                                unsigned long long int number_of_devices,
+                                int devices[]
+                            )
+        {
+            auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t>;
+            // If an argument is set to 0 then use the default of the Qmc library
+            if ( epsrel != 0 )
+                integrator->epsrel = epsrel;
+            if ( epsabs != 0 )
+                integrator->epsabs = epsabs;
+            if ( border != 0 )
+                integrator->border = border;
+            if ( maxeval != 0 )
+                integrator->maxeval = maxeval;
+            if ( maxworkpackages != 0 )
+                integrator->maxworkpackages = maxworkpackages;
+            if ( cputhreads != 0 )
+                integrator->cputhreads = cputhreads;
+            if ( cudablocks != 0 )
+                integrator->cudablocks = cudablocks;
+            if ( cudathreadsperblock != 0 )
+                integrator->cudathreadsperblock = cudathreadsperblock;
+            if ( minn != 0 )
+                integrator->minn = minn;
+            if ( minm != 0 )
+                integrator->minm = minm;
+            if ( verbosity != 0 )
+                integrator->verbosity = verbosity;
+            if ( seed != 0 )
+                integrator->randomGenerator.seed(seed);
+
+            if (number_of_devices > 0)
+            {
+                integrator->devices.clear();
+                for (int i = 0; i < number_of_devices; ++i)
+                    integrator->devices.insert( devices[i] );
+            }
+
+            return integrator;
+        }
+        secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> *
+        allocate_cuda_integrators_Qmc_separate(
+                                double epsrel,
+                                double epsabs,
+                                double border,
+                                unsigned long long int maxeval,
+                                unsigned long long int minn,
+                                unsigned long long int minm,
+                                unsigned long long int maxworkpackages,
+                                unsigned long long int cputhreads,
+                                unsigned long long int cudablocks,
+                                unsigned long long int cudathreadsperblock,
+                                unsigned long long int verbosity,
+                                long long int seed,
+                                unsigned long long int number_of_devices,
+                                int devices[]
+                            )
+        {
+            auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t>;
+            // If an argument is set to 0 then use the default of the Qmc library
+            if ( epsrel != 0 )
+                integrator->epsrel = epsrel;
+            if ( epsabs != 0 )
+                integrator->epsabs = epsabs;
+            if ( border != 0 )
+                integrator->border = border;
+            if ( maxeval != 0 )
+                integrator->maxeval = maxeval;
+            if ( maxworkpackages != 0 )
+                integrator->maxworkpackages = maxworkpackages;
+            if ( cputhreads != 0 )
+                integrator->cputhreads = cputhreads;
+            if ( cudablocks != 0 )
+                integrator->cudablocks = cudablocks;
+            if ( cudathreadsperblock != 0 )
+                integrator->cudathreadsperblock = cudathreadsperblock;
+            if ( minn != 0 )
+                integrator->minn = minn;
+            if ( minm != 0 )
+                integrator->minm = minm;
+            if ( verbosity != 0 )
+                integrator->verbosity = verbosity;
+            if ( seed != 0 )
+                integrator->randomGenerator.seed(seed);
+
+            if (number_of_devices > 0)
+            {
+                integrator->devices.clear();
+                for (int i = 0; i < number_of_devices; ++i)
+                    integrator->devices.insert( devices[i] );
+            }
+
+            return integrator;
+        }
+    #else
+        secdecutil::Integrator<integrand_return_t,real_t> *
+        allocate_integrators_Qmc(
+                                double epsrel,
+                                double epsabs,
+                                double border,
+                                unsigned long long int maxeval,
+                                unsigned long long int minn,
+                                unsigned long long int minm,
+                                unsigned long long int maxworkpackages,
+                                unsigned long long int cputhreads,
+                                unsigned long long int cudablocks,
+                                unsigned long long int cudathreadsperblock,
+                                unsigned long long int verbosity,
+                                long long int seed
+                            )
+        {
+            auto integrator = new secdecutil::integrators::Qmc<integrand_return_t>;
+            // If an argument is set to 0 then use the default of the Qmc library
+            if ( epsrel != 0 )
+                integrator->epsrel = epsrel;
+            if ( epsabs != 0 )
+                integrator->epsabs = epsabs;
+            if ( border != 0 )
+                integrator->border = border;
+            if ( maxeval != 0 )
+                integrator->maxeval = maxeval;
+            if ( maxworkpackages != 0 )
+                integrator->maxworkpackages = maxworkpackages;
+            if ( cputhreads != 0 )
+                integrator->cputhreads = cputhreads;
+            if ( cudablocks != 0 )
+                integrator->cudablocks = cudablocks;
+            if ( cudathreadsperblock != 0 )
+                integrator->cudathreadsperblock = cudathreadsperblock;
+            if ( minn != 0 )
+                integrator->minn = minn;
+            if ( minm != 0 )
+                integrator->minm = minm;
+            if ( verbosity != 0 )
+                integrator->verbosity = verbosity;
+            if ( seed != 0 )
+                integrator->randomGenerator.seed(seed);
+            return integrator;
+        }
+    #endif
     void free_integrator (secdecutil::Integrator<integrand_return_t,real_t> * integrator)
     {
         delete integrator;
     }
+    #ifdef SECDEC_WITH_CUDA
+        void free_cuda_together_integrator (secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> * integrator)
+        {
+            delete integrator;
+        }
+        void free_cuda_separate_integrator (secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> * integrator)
+        {
+            delete integrator;
+        }
+    #endif
 
     /*
      * function to compute the integral
@@ -349,6 +498,101 @@ extern "C"
         sstream << evaluated_prefactor * (*result_all);
         *integral_with_prefactor_strptr = sstream.str();
     }
+
+    /*
+     * function to compute the integral using cuda
+     */
+    #ifdef SECDEC_WITH_CUDA
+        void cuda_compute_integral
+        (
+            std::string * integral_without_prefactor_strptr, std::string * prefactor_strptr, std::string * integral_with_prefactor_strptr, // output
+            const secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> * together_integrator, // pointer to the integrator if together=true
+            const secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> * separate_integrator, // pointer to the integrator if togethre=false
+            const double real_parameters_input[], // real parameters
+            const double complex_parameters_input[], // complex parameters serialized as real(x0), imag(x0), real(x1), imag(x1), ...
+            const bool together, // integrate sectors together
+            const unsigned number_of_presamples,
+            const real_t deformation_parameters_maximum,
+            const real_t deformation_parameters_minimum,
+            const real_t deformation_parameters_decrease_factor
+        )
+        {
+            size_t i;
+            std::stringstream sstream;
+
+            // fix output formatting
+            sstream.precision(std::numeric_limits<real_t>::max_digits10); // force enough digits to ensure unique recreation
+            sstream << std::scientific; // stringify floats as #.#e#
+
+            // read real parameters
+            std::vector<real_t> real_parameters(number_of_real_parameters);
+            for (i=0 ; i<number_of_real_parameters ; ++i)
+                real_parameters[i] = real_parameters_input[i];
+
+            // read complex parameters
+            std::vector<complex_t> complex_parameters(number_of_complex_parameters);
+            for (i=0 ; i<number_of_complex_parameters ; ++i)
+                complex_parameters[i] = {complex_parameters_input[2*i],complex_parameters_input[2*i + 1]};
+
+            // optimize the deformation (if any)
+            const std::vector<nested_series_t<cuda_integrand_t>> sector_integrands =
+            make_cuda_integrands
+            (
+                real_parameters, complex_parameters
+                #if integral_contour_deformation
+                    ,number_of_presamples,
+                    deformation_parameters_maximum,
+                    deformation_parameters_minimum,
+                    deformation_parameters_decrease_factor
+                #endif
+            );
+
+            std::unique_ptr<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> result_all;
+            if (together) {
+                // add integrands of sectors (together flag)
+                const nested_series_t<cuda_together_integrand_t> all_sectors =
+                    std::accumulate( ++sector_integrands.begin(), sector_integrands.end(), cuda_together_integrand_t()+*sector_integrands.begin() );
+
+                // perform the integration
+                result_all.reset
+                (
+                    new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                    (
+                        secdecutil::deep_apply( all_sectors, together_integrator->integrate )
+                    )
+                );
+            } else {
+                // perform the integration
+                const std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> integrated_sectors = secdecutil::deep_apply( sector_integrands, separate_integrator->integrate );
+
+                // add integrated sectors
+                result_all.reset
+                (
+                    new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                    (
+                        std::accumulate( ++integrated_sectors.begin(), integrated_sectors.end(), *integrated_sectors.begin() )
+                    )
+                );
+            }
+
+            // populate output strings:
+            //   - integral without prefactor
+            sstream.str("");
+            sstream << *result_all;
+            *integral_without_prefactor_strptr = sstream.str();
+
+            //   - prefactor
+            const nested_series_t<integrand_return_t> evaluated_prefactor = prefactor(real_parameters, complex_parameters);
+            sstream.str("");
+            sstream << evaluated_prefactor;
+            *prefactor_strptr = sstream.str();
+
+            //   - full result (prefactor*integral)
+            sstream.str("");
+            sstream << evaluated_prefactor * (*result_all);
+            *integral_with_prefactor_strptr = sstream.str();
+        }
+    #endif
 
     #undef SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX
     #undef EXPAND_STRINGIFY
