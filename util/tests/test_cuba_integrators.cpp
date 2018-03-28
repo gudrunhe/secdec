@@ -5,6 +5,12 @@
 #include "../secdecutil/uncertainties.hpp"
 
 #include <complex>
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+    template <typename ...T> using complex_template = thrust::complex<T...>;
+#else
+    template <typename ...T> using complex_template = std::complex<T...>;
+#endif
 #include <cmath>
 #include <cuba.h>
 #include <string>
@@ -44,11 +50,11 @@ void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, cub
 };
 
 template<typename real_t>
-void test_integrator_complex(secdecutil::Integrator<std::complex<real_t>,real_t>& integrator, cubareal epsrel){
+void test_integrator_complex(secdecutil::Integrator<complex_template<real_t>,real_t>& integrator, cubareal epsrel){
 
     constexpr int dimensionality = 4;
 
-    const std::function<std::complex<real_t>(real_t const * const)> integrand =
+    const std::function<complex_template<real_t>(real_t const * const)> integrand =
     [] (real_t const * const variables)
     {
         real_t out_real = 1.;
@@ -57,11 +63,11 @@ void test_integrator_complex(secdecutil::Integrator<std::complex<real_t>,real_t>
 
         real_t out_imag = variables[0] * (1. - variables[0]);
 
-        return std::complex<real_t>{out_real,out_imag};
+        return complex_template<real_t>{out_real,out_imag};
     };
 
-    const auto integrand_container = secdecutil::IntegrandContainer<std::complex<real_t>, real_t const * const>(dimensionality,integrand);
-    std::complex<cubareal> expected_result = {1.,1./6.};
+    const auto integrand_container = secdecutil::IntegrandContainer<complex_template<real_t>, real_t const * const>(dimensionality,integrand);
+    complex_template<cubareal> expected_result = {1.,1./6.};
 
     auto computed_result = integrator.integrate(integrand_container);
 
@@ -87,7 +93,7 @@ TEST_CASE( "Test Vegas integrator with real", "[Integrator][Cuba][Vegas]" ) {
 
 TEST_CASE( "Test Vegas integrator with complex", "[Integrator][Cuba][Vegas]" ) {
   cubareal epsrel = 1e-3;
-  auto integrator = secdecutil::cuba::Vegas<std::complex<cubareal>>(epsrel);
+  auto integrator = secdecutil::cuba::Vegas<complex_template<cubareal>>(epsrel);
   SECTION( "Integrate real and imag together" ) {
     integrator.together = true;
     test_integrator_complex(integrator, epsrel);
@@ -106,7 +112,7 @@ TEST_CASE( "Test Vegas integrator with long double", "[Integrator][Cuba][Vegas]"
 
 TEST_CASE( "Test Vegas integrator with complex long double", "[Integrator][Cuba][Vegas]" ) {
   cubareal epsrel = 1e-3;
-  auto integrator = secdecutil::cuba::Vegas<std::complex<long double>>(epsrel);
+  auto integrator = secdecutil::cuba::Vegas<complex_template<long double>>(epsrel);
   SECTION( "Integrate real and imag together" ) {
     integrator.together = true;
     test_integrator_complex(integrator, epsrel);
@@ -125,7 +131,7 @@ TEST_CASE( "Test Suave integrator with real", "[Integrator][Cuba][Suave]" ) {
 
 TEST_CASE( "Test Suave integrator with complex", "[Integrator][Cuba][Suave]" ) {
   cubareal epsrel = 1e-3;
-  auto integrator = secdecutil::cuba::Suave<std::complex<cubareal>>(epsrel);
+  auto integrator = secdecutil::cuba::Suave<complex_template<cubareal>>(epsrel);
   SECTION( "Integrate real and imag together" ) {
     integrator.together = true;
     test_integrator_complex(integrator, epsrel);
@@ -147,7 +153,7 @@ TEST_CASE( "Test Divonne integrator with real", "[Integrator][Cuba][Divonne]" ) 
 
 TEST_CASE( "Test Divonne integrator with complex", "[Integrator][Cuba][Divonne]" ) {
   cubareal epsrel = 1e-3;
-  auto integrator = secdecutil::cuba::Divonne<std::complex<cubareal>>(epsrel);
+  auto integrator = secdecutil::cuba::Divonne<complex_template<cubareal>>(epsrel);
   SECTION( "Integrate real and imag together" ) {
     integrator.together = true;
     test_integrator_complex(integrator, epsrel);
@@ -169,7 +175,7 @@ TEST_CASE( "Test Divonne integrator with complex", "[Integrator][Cuba][Divonne]"
 
 TEST_CASE( "Test Cuhre integrator with complex", "[Integrator][Cuba][Cuhre]" ) {
   cubareal epsrel = 1e-3;
-  auto integrator = secdecutil::cuba::Cuhre<std::complex<cubareal>>(epsrel);
+  auto integrator = secdecutil::cuba::Cuhre<complex_template<cubareal>>(epsrel);
   SECTION( "Integrate real and imag together" ) {
     integrator.together = true;
     test_integrator_complex(integrator, epsrel);
@@ -182,7 +188,7 @@ TEST_CASE( "Test Cuhre integrator with complex", "[Integrator][Cuba][Cuhre]" ) {
 
  TEST_CASE( "Test exceptions in complex base class", "[Integrator]" ) {
 
-  secdecutil::Integrator<std::complex<cubareal>,cubareal> empty_integrator;
+  secdecutil::Integrator<complex_template<cubareal>,cubareal> empty_integrator;
   cubareal epsrel = 1e-4;
 
   SECTION( "together = true" ) {

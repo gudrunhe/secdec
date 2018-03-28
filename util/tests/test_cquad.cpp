@@ -5,6 +5,12 @@
 #include "../secdecutil/uncertainties.hpp"
 
 #include <complex>
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+    template <typename ...T> using complex_template = thrust::complex<T...>;
+#else
+    template <typename ...T> using complex_template = std::complex<T...>;
+#endif
 
 using Catch::Matchers::Contains;
 
@@ -43,7 +49,7 @@ TEST_CASE( "Test cquad member access", "[Integrator][CQuad]" ) {
     }
 
     SECTION( "complex" ) {
-        secdecutil::gsl::CQuad<std::complex<double>> complex_integrator{1.0,1e-3,8};
+        secdecutil::gsl::CQuad<complex_template<double>> complex_integrator{1.0,1e-3,8};
 
         REQUIRE( complex_integrator.epsrel == 1.0   );
         REQUIRE( complex_integrator.epsabs == 0.001 );
@@ -69,7 +75,7 @@ TEST_CASE( "Test cquad copy constructor", "[Integrator][CQuad]" ) {
 };
 
 TEST_CASE( "Test cquad complex to real constructor", "[Integrator][CQuad]" ) {
-    secdecutil::gsl::CQuad<std::complex<double>> complex_integrator;
+    secdecutil::gsl::CQuad<complex_template<double>> complex_integrator;
     std::unique_ptr<secdecutil::Integrator<double,double>> generated_real_integrator_ptr = complex_integrator.get_real_integrator();
     secdecutil::gsl::CQuad<double>& generated_real_integrator = *dynamic_cast<secdecutil::gsl::CQuad<double>*>( generated_real_integrator_ptr.get() );
 
@@ -102,11 +108,11 @@ void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, dou
 };
 
 template<typename real_t>
-void test_integrator_complex(secdecutil::Integrator<std::complex<real_t>,real_t>& integrator, double epsrel){
+void test_integrator_complex(secdecutil::Integrator<complex_template<real_t>,real_t>& integrator, double epsrel){
 
     constexpr int dimensionality = 1;
 
-    const std::function<std::complex<real_t>(real_t const * const)> integrand =
+    const std::function<complex_template<real_t>(real_t const * const)> integrand =
     [] (real_t const * const variables)
     {
         real_t out_real = 1.;
@@ -115,11 +121,11 @@ void test_integrator_complex(secdecutil::Integrator<std::complex<real_t>,real_t>
 
         real_t out_imag = variables[0] * (1. - variables[0]);
 
-        return std::complex<real_t>{out_real,out_imag};
+        return complex_template<real_t>{out_real,out_imag};
     };
 
-    const auto integrand_container = secdecutil::IntegrandContainer<std::complex<real_t>, real_t const * const>(dimensionality,integrand);
-    std::complex<double> expected_result = {1.,1./6.};
+    const auto integrand_container = secdecutil::IntegrandContainer<complex_template<real_t>, real_t const * const>(dimensionality,integrand);
+    complex_template<double> expected_result = {1.,1./6.};
 
     auto computed_result = integrator.integrate(integrand_container);
 
@@ -146,7 +152,7 @@ TEST_CASE( "Test cquad integrator with real", "[Integrator][CQuad]" ) {
 TEST_CASE( "Test cquad integrator with complex", "[Integrator][CQuad]" ) {
   double epsrel = 1e-10;
   double epsabs = 0.0;
-  auto integrator = secdecutil::gsl::CQuad<std::complex<double>>(epsrel,epsabs);
+  auto integrator = secdecutil::gsl::CQuad<complex_template<double>>(epsrel,epsabs);
   SECTION( "Integrate real and imag separately" ) {
     integrator.together = false; // together = true not implemented for cquad
     test_integrator_complex(integrator, epsrel);
@@ -165,7 +171,7 @@ TEST_CASE( "Test cquad integrator with long double", "[Integrator][CQuad]" ) {
 TEST_CASE( "Test cquad integrator with complex long double", "[Integrator][CQuad]" ) {
   double epsrel = 1e-10;
   double epsabs = 0.0;
-  auto integrator = secdecutil::gsl::CQuad<std::complex<long double>>(epsrel);
+  auto integrator = secdecutil::gsl::CQuad<complex_template<long double>>(epsrel);
   integrator.epsabs = epsabs;
   SECTION( "Integrate real and imag separately" ) {
     integrator.together = false; // together = true not implemented for cquad
@@ -176,21 +182,21 @@ TEST_CASE( "Test cquad integrator with complex long double", "[Integrator][CQuad
 TEST_CASE( "Test zero_border of cquad", "[Integrator][CQuad]" ) {
     using real_t = double;
 
-    const std::function<std::complex<real_t>(real_t const * const)> integrand =
+    const std::function<complex_template<real_t>(real_t const * const)> integrand =
     [] (real_t const * const variables)
     {
         real_t out_real = 6. * variables[0] * (1. - variables[0]);
 
         real_t out_imag = variables[0] * (1. - variables[0]);
 
-        return std::complex<real_t>{out_real,out_imag};
+        return complex_template<real_t>{out_real,out_imag};
     };
 
-    const secdecutil::IntegrandContainer<std::complex<real_t>, real_t const * const> integrand_container(1,integrand);
-    const std::complex<real_t> expected_result = std::complex<real_t>{1.,1./6.} / 2.0 + std::complex<real_t>{3./4.,1./12.};
+    const secdecutil::IntegrandContainer<complex_template<real_t>, real_t const * const> integrand_container(1,integrand);
+    const complex_template<real_t> expected_result = complex_template<real_t>{1.,1./6.} / 2.0 + complex_template<real_t>{3./4.,1./12.};
 
-    const secdecutil::gsl::CQuad<std::complex<real_t>> integrator(1e-15, 1e-10, 100, false, /* zero_border */ 0.5);
-    const secdecutil::UncorrelatedDeviation<std::complex<real_t>> computed_result = integrator.integrate(integrand_container);
+    const secdecutil::gsl::CQuad<complex_template<real_t>> integrator(1e-15, 1e-10, 100, false, /* zero_border */ 0.5);
+    const secdecutil::UncorrelatedDeviation<complex_template<real_t>> computed_result = integrator.integrate(integrand_container);
 
     REQUIRE( computed_result.uncertainty.real() <= 1e-10 );
     REQUIRE( computed_result.uncertainty.imag() <= 1e-10 );

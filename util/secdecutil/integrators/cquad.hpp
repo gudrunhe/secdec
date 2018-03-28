@@ -6,7 +6,10 @@
  * cquad integrator form the gnu scientific library (gsl).
  */
 
-#include <complex> // TODO: specializations for thrust::complex
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+#endif
+#include <complex>
 #include <gsl/gsl_integration.h> // gsl_integration_cquad
 #include <gsl/gsl_errno.h> // gsl_strerror, GSL_SUCCESS
 #include <iostream>
@@ -172,29 +175,35 @@ namespace secdecutil
       };
 
       // complex version
-      template<typename T>
-      struct CQuad<std::complex<T>> : Integrator<std::complex<T>,T>, CQuad<T>
-      {
-        public:
-          using Integrator<std::complex<T>,T>::integrate;
-          std::unique_ptr<Integrator<T,T>> get_real_integrator()
-          {
-              return std::unique_ptr<Integrator<T,T>>( new CQuad<T>(this->epsrel,this->epsabs,this->n,this->verbose,this->zero_border,this->workspace) );
-          };
-
-          // Constructor
-          CQuad
-          (
-              double epsrel = 1e-2,
-              double epsabs = 1e-7,
-              size_t n = 100, // number of intervals to be kept simultaneously
-              bool verbose = false,
-              double zero_border = 0.0
-          ) :
-              CQuad<T>(epsrel,epsabs,n,verbose,zero_border)
-          {};
-
+      #define COMPLEX_CQUAD(complex_template) \
+      template<typename T> \
+      struct CQuad<complex_template<T>> : Integrator<complex_template<T>,T>, CQuad<T> \
+      { \
+        public: \
+          using Integrator<complex_template<T>,T>::integrate; \
+          std::unique_ptr<Integrator<T,T>> get_real_integrator() \
+          { \
+              return std::unique_ptr<Integrator<T,T>>( new CQuad<T>(this->epsrel,this->epsabs,this->n,this->verbose,this->zero_border,this->workspace) ); \
+          }; \
+ \
+          /* Constructor */ \
+          CQuad \
+          ( \
+              double epsrel = 1e-2, \
+              double epsabs = 1e-7, \
+              size_t n = 100, /* number of intervals to be kept simultaneously */ \
+              bool verbose = false, \
+              double zero_border = 0.0 \
+          ) : \
+              CQuad<T>(epsrel,epsabs,n,verbose,zero_border) \
+          {}; \
       };
+
+      COMPLEX_CQUAD(std::complex)
+      #ifdef SECDEC_WITH_CUDA
+          COMPLEX_CQUAD(thrust::complex)
+      #endif
+      #undef COMPLEX_CQUAD
 
    }
 

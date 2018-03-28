@@ -92,8 +92,8 @@ namespace secdecutil
         } else { \
  \
           auto real_integrator = this->get_real_integrator(); \
-          auto real_part = real_integrator->integrate(complex_to_real(integrand_container,std::real)); \
-          auto imag_part = real_integrator->integrate(complex_to_real(integrand_container,std::imag)); \
+          auto real_part = real_integrator->integrate(complex_to_real::real(integrand_container)); \
+          auto imag_part = real_integrator->integrate(complex_to_real::imag(integrand_container)); \
           return secdecutil::UncorrelatedDeviation<complex_template<return_t>>({real_part.value,imag_part.value},{real_part.uncertainty,imag_part.uncertainty}); \
  \
         } \
