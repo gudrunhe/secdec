@@ -1,5 +1,9 @@
-#include <numeric>
 #include <array>
+#include <numeric>
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+#endif
+#include<complex>
 
 #include "catch.hpp"
 #include "../secdecutil/integrand_container.hpp"
@@ -218,13 +222,20 @@ TEST_CASE( "Unary operators + and -", "[IntegrandContainer]" ) {
 
 TEST_CASE( "complex_to_real", "[IntegrandContainer]" ) {
 
-  std::function<std::complex<double>(int)> func = [] (int i) { return std::complex<double>(i+2,i-1); };
+  namespace complex_to_real = secdecutil::complex_to_real;
+  #ifdef SECDEC_WITH_CUDA
+      using dcmplx = thrust::complex<double>;
+  #else
+      using dcmplx = std::complex<double>;
+  #endif
 
-  auto ic = secdecutil::IntegrandContainer<std::complex<double>, int>(1,func);
+  std::function<dcmplx(int)> func = [] (int i) { return dcmplx(i+2,i-1); };
+
+  auto ic = secdecutil::IntegrandContainer<dcmplx, int>(1,func);
 
   SECTION ( " std::real " ) {
 
-    auto real_part = complex_to_real(ic,std::real);
+    auto real_part = complex_to_real::real(ic);
     REQUIRE( real_part.integrand(5) == Approx(7.) );
     REQUIRE( real_part.integrand(-4) == Approx(-2.) );
 
@@ -232,17 +243,9 @@ TEST_CASE( "complex_to_real", "[IntegrandContainer]" ) {
 
   SECTION ( " std::imag " ) {
 
-    auto imag_part = complex_to_real(ic,std::imag);
+    auto imag_part = complex_to_real::imag(ic);
     REQUIRE( imag_part.integrand(5) == Approx(4.) );
     REQUIRE( imag_part.integrand(-4) == Approx(-5.) );
-
-  };
-
-  SECTION ( " std::abs " ) {
-
-    auto abs_value = complex_to_real(ic,std::abs);
-    REQUIRE( abs_value.integrand(5) == Approx(8.06225774829855) );
-    REQUIRE( abs_value.integrand(-4) == Approx(5.385164807134504) );
 
   };
 
