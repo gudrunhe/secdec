@@ -1,6 +1,9 @@
 check_PROGRAMS = test_integrator test_cuba_integrators test_cquad test_series test_integrand_container test_deep_apply test_uncertainties
 
 AM_CPPFLAGS = -I$(top_srcdir)
+if SECDEC_WITH_CUDA
+AM_CPPFLAGS += -DSECDEC_WITH_CUDA=1
+endif
 
 test_integrator_SOURCES = main.cpp test_integrator.cpp catch.hpp
 test_cuba_integrators_SOURCES = main.cpp test_cuba_integrators.cpp catch.hpp
