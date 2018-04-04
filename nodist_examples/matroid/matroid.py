@@ -4,6 +4,7 @@ from pySecDec.loop_integral import LoopIntegralFromGraph
 from pySecDec.matrix_sort import Pak_sort
 from pySecDec.algebra import Polynomial
 from pySecDec.misc import flatten, argsort_ND_array
+import itertools
 
 def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
     '''
@@ -26,12 +27,15 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
         The value of each external momentum squared.
 
     :param masses:
-        list of strings;
-        The names of the masses.
+        list of lists of strings;
+        The mass labels appearing in each list of strings
+        can be swapped with each other, but labels should
+        not be swapped between lists.
+        The ordering of the lists is maintained.
 
     :return:
         dict;
-        A canonical representation of the loop integral
+        A canonical representation of the loop integral.
 
     '''
 
@@ -97,9 +101,57 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
                 likely_candidates.append((expolist, candidate[1] + dropped_cols))
         return likely_candidates
 
+    def drop_missing_parameters(index_of_first_parameter, index_of_last_parameter, candidates):
+        '''
+        Consider a list `candidates` of candidate expolists,
+        drop zero columns with indices
+        between `index_of_first_parameter` and
+        `index_of_last_parameter`. Return the candidates
+        with the most dropped columns as well as the
+        remaining columns.
+
+        :param index_of_first_parameter:
+            integer;
+            The index of the first parameter to consider dropping.
+
+        :param index_of_last_parameter:
+            integer:
+            The index of the last parameter to consider dropping.
+
+        :param candidates:
+            list of tuples (expolist, dropped_cols)
+            The candidates to consider and the columns
+            already dropped.
+
+        :return:
+            tuple (shortest_candidates, remaining_indices);
+            The shortest candidates and the considered indices
+            that were not dropped.
+
+        '''
+        relevant_indices = range(index_of_first_parameter, index_of_last_parameter)
+        already_dropped = len(candidates[0][1]) # Number of parameters already dropped
+        shortest_candidates = get_shortest_candidates(candidates, relevant_indices)
+        num_dropped = len(shortest_candidates[0][1]) - already_dropped
+        remaining_indices = range(index_of_first_parameter, index_of_last_parameter - num_dropped)
+        return shortest_candidates, remaining_indices
+
     external_momenta = [ line[0] for line in external_lines]
+
     assert len(external_momenta)==len(onshell_conditions),\
            'Number of onshell conditions does not match the number of external momenta'
+
+    # sort masses so that all graphs have their special masses in the same order in u,f
+    masses = [ sorted(x) for x in masses ]
+    flattened_masses = list(itertools.chain.from_iterable(masses))
+
+    assert len(flattened_masses) == len(set(flattened_masses)),\
+           'Identical masses appear in the masses list: ' + \
+           'masses: ' + str(flattened_masses)
+
+    assert set(onshell_conditions + ['0']).difference(set(flattened_masses + ['0'])) == set(),\
+           'Not all masses appearing in the onshell_conditions are present in the masses, missing: ' \
+           + str(set(onshell_conditions + ['0']).difference(set(flattened_masses + ['0'])))
 
     # Generate replacement_rules
     replacement_rules = [('(' + mom + ')**2', '(' + onshell_condition + ')**2')
@@ -116,12 +168,12 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
         replacement_rules=replacement_rules
     )
 
-    # Make li_f a polynomial also in the external_momenta and masses
-    symbols = li.F.polysymbols + external_momenta + masses
+    # Make li_f a polynomial also in the external_momenta and flattened_masses
+    symbols = li.F.polysymbols + external_momenta + flattened_masses
     poly_coeffs = [Polynomial.from_expression(coeff, symbols) for coeff in li.F.coeffs]
     li_f = Polynomial(
         np.hstack(
-            (li.F.expolist, np.zeros((len(li.F.expolist), len(external_momenta) + len(masses)), dtype=int))
+            (li.F.expolist, np.zeros((len(li.F.expolist), len(external_momenta) + len(flattened_masses)), dtype=int))
         ), poly_coeffs, symbols)
     li_f = flatten(li_f).simplify()
 
@@ -154,7 +206,7 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
                 if repl == '0':
                     new_li_f.coeffs[squared_mom] = 0
                 else:
-                    mass_index = len(li.F.polysymbols) + len(external_momenta) + masses.index(repl)
+                    mass_index = len(li.F.polysymbols) + len(external_momenta) + flattened_masses.index(repl)
                     new_li_f.expolist[:, mass_index][squared_mom] += 2
 
             new_li_f.simplify()
@@ -163,7 +215,7 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
 
     # Build u
     li_u = Polynomial(
-        np.hstack((li.U.expolist, np.zeros((len(li.U.expolist), len(external_momenta) + len(masses)), dtype=int))),
+        np.hstack((li.U.expolist, np.zeros((len(li.U.expolist), len(external_momenta) + len(flattened_masses)), dtype=int))),
         li.U.coeffs.copy(), symbols, copy=False).simplify()
     li_u.coeffs = li_u.coeffs.astype(int)
     li_u = np.hstack((li_u.coeffs.reshape((-1, 1)), li_u.expolist))
@@ -180,28 +232,34 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
     candidates_li = [(candidate, []) for candidate in all_li]
 
     # Drop Feynman parameters missing in u and f polynomials
-    index_of_first_feynman = 2  # Skip tag and coefficient of polynomials
-    feynman_indices = range(index_of_first_feynman, index_of_first_feynman + len(li.F.polysymbols))
-    candidates_li = get_shortest_candidates(candidates_li, feynman_indices)
-    # Update feynman indices
-    num_dropped = len(candidates_li[0][1])
-    feynman_indices = range(index_of_first_feynman, index_of_first_feynman + len(li.F.polysymbols) - num_dropped)
+    candidates_li, feynman_indices = drop_missing_parameters(
+        2,
+        2+len(li.F.polysymbols),
+        candidates_li
+    )
 
     # Drop momenta which do not appear in f
-    index_of_first_momentum = 2 + len(li.F.polysymbols) - len(candidates_li[0][1])
-    momenta_indices = range(index_of_first_momentum, index_of_first_momentum + len(external_momenta))
-    candidates_li = get_shortest_candidates(candidates_li, momenta_indices)
-    # Update momenta indices
-    num_dropped = len(candidates_li[0][1]) - num_dropped
-    momenta_indices = range(index_of_first_momentum, index_of_first_momentum + len(external_momenta) - num_dropped)
+    candidates_li , momenta_indices = drop_missing_parameters(
+        2 + len(li.F.polysymbols) - len(candidates_li[0][1]),
+        2 + len(li.F.polysymbols) - len(candidates_li[0][1]) + len(external_momenta),
+        candidates_li
+    )
 
-    # Drop masses which do not appear in f
-    index_of_first_mass = 2 + len(li.F.polysymbols) + len(external_momenta) - len(candidates_li[0][1])
-    mass_indices = range(index_of_first_mass, index_of_first_mass + len(masses))
-    candidates_li = get_shortest_candidates(candidates_li, mass_indices)
-    # Update mass indices
-    num_dropped = len(candidates_li[0][1]) - num_dropped
-    mass_indices = range(index_of_first_mass, index_of_first_mass + len(masses) - num_dropped)
+    # Drop special masses which do not appear in f
+    named_mass_indices = []
+    remaining_masses = []
+    for idx, named_mass_list in enumerate(masses):
+        previous_named_mass_indices = list(itertools.chain.from_iterable(named_mass_indices))
+        index_of_first = 2 + len(li.F.polysymbols) + len(external_momenta) - len(candidates_li[0][1]) \
+                         + len(previous_named_mass_indices)
+        candidates_li, named_mass_list_indices = drop_missing_parameters(
+            index_of_first,
+            index_of_first + len(named_mass_list),
+            candidates_li
+        )
+        named_mass_indices.append(named_mass_list_indices)
+        # keep the first named_mass labels
+        remaining_masses.append(masses[idx][:len(named_mass_list_indices)])
 
     # Pick polynomials with fewest terms
     len_shortest_poly = np.array([len(candidate[0]) for candidate in candidates_li]).min()
@@ -220,9 +278,10 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
     # Canonicalize u,f
     canonicals_li = []
     for li_uf in unique_li:
-        Pak_sort(li_uf[0], feynman_indices, momenta_indices, mass_indices)
+        Pak_sort(li_uf[0], feynman_indices, momenta_indices, *named_mass_indices)
         canonicals_li.append(li_uf[0])
 
+    # Sort the canonical u,f candidates and pick the first
     sort_key = argsort_ND_array(canonicals_li)
     canonical_li = canonicals_li[sort_key[0]]
 
@@ -238,7 +297,7 @@ def canonicalize(internal_lines, external_lines, onshell_conditions, masses):
     representation["expo_f_coeffs"] = expo_f.coeffs.tolist()
     representation["num_feynman"] = len(feynman_indices)
     representation["num_momenta"] = len(momenta_indices)
-    representation["num_mass"] = len(mass_indices)
+    representation["num_masses"] = map(len,remaining_masses)
 
     return representation
 
