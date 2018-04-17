@@ -11,8 +11,18 @@ python_major_version = sys.version[0]
 class TestTemplateParsing(unittest.TestCase):
     def setUp(self):
         # create a temporary working directory
-        self.tmpdir = 'tmpdir_test_template_parsing_python' + python_major_version
-        os.mkdir(self.tmpdir)
+        i = 0
+        nodir = True
+        while i < 10 and nodir:
+            try:
+                i += 1
+                self.tmpdir = 'tmpdir_test_template_parsing_%i_python'%i + python_major_version
+                os.mkdir(self.tmpdir)
+                nodir = False
+            except OSError:
+                pass
+        if nodir:
+            raise
 
     def tearDown(self):
         # delete the temporary directory
