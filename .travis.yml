@@ -128,6 +128,19 @@ matrix:
         - brew update
         - brew install graphviz
 
+    - os: osx
+      osx_image: xcode9.3
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.4.0
+      before_install:
+        - export PYTHON_INSTALL='sudo easy_install'
+        - $PYTHON_INSTALL nose
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz
+
 install:
   - export PATH=${TRAVIS_BUILD_DIR}/dist_install/bin:$PATH
   - export SECDEC_CONTRIB=${TRAVIS_BUILD_DIR}/dist_install/
