@@ -45,6 +45,7 @@ namespace secdecutil
       }
     ) {};
 
+    virtual ~Integrator() = default;
 
   };
 
@@ -89,6 +90,8 @@ namespace secdecutil
         }
     }
     ) {};
+
+    virtual ~Integrator() = default;
 
   };
 
