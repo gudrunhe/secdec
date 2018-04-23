@@ -40,6 +40,23 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
+            - g++-7
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+        - NORMALIZ_VERSION=3.5.4
+      before_install:
+        - eval ${MATRIX_EVAL}
+      python: 2.7
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
             - g++-6
             - texlive-full
             - graphviz
@@ -97,13 +114,30 @@ matrix:
       env:
         - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
         - NORMALIZ_VERSION=3.4.0
+      python: 3.6
+      before_install:
+        - eval ${MATRIX_EVAL}
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+        - NORMALIZ_VERSION=3.5.4
       python: 3.6
       before_install:
         - eval ${MATRIX_EVAL}
       language: python
 
     - os: osx
-      osx_image: xcode8.3
+      osx_image: xcode9.3
       language: c++
       compiler: clang
       env:
@@ -116,7 +150,7 @@ matrix:
         - brew install graphviz
 
     - os: osx
-      osx_image: xcode9.2
+      osx_image: xcode9.3
       language: c++
       compiler: clang
       env:
@@ -133,7 +167,7 @@ matrix:
       language: c++
       compiler: clang
       env:
-        - NORMALIZ_VERSION=3.4.0
+        - NORMALIZ_VERSION=3.5.4
       before_install:
         - export PYTHON_INSTALL='sudo easy_install'
         - $PYTHON_INSTALL nose
