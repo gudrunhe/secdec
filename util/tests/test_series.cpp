@@ -7,6 +7,7 @@
 #include <type_traits>
 
 #include "../secdecutil/integrand_container.hpp"
+#include "../secdecutil/uncertainties.hpp"
 
 // Helper struct to check is an iterator is a const_iterator
 template<typename Iterator>
@@ -626,6 +627,9 @@ TEST_CASE( "Operator /" , "[Series]" ) {
     auto truncated_one            = secdecutil::Series<int>(0,1,{1,0    },true );
     auto truncated_one_more_terms = secdecutil::Series<int>(0,3,{1,0,0,0},true );
     auto exact_one                = secdecutil::Series<int>(0,0,{1      },false);
+    
+    auto series_uncorrelated_deviation = secdecutil::Series<secdecutil::UncorrelatedDeviation<int>>( 4, 5,{ {1,3}, {1,4}},false);
+    auto uncorrelated_deviation_one    = secdecutil::Series<secdecutil::UncorrelatedDeviation<int>>( 0, 1,{ {1,3}, {0,5}},false);
 
     SECTION ( " series / scalar " ) {
         REQUIRE( (two_times_series /  2) == series );
@@ -649,6 +653,41 @@ TEST_CASE( "Operator /" , "[Series]" ) {
         REQUIRE( (        2 * series /  two_times_series  ) == truncated_one            );
         REQUIRE( (            series /= series            ) == truncated_one            );
         REQUIRE(              series                        == truncated_one            ); // after application of "/="
+    };
+    
+    SECTION ( " series_uncorrelated_deviation / series " ) {
+        
+        // Note: Can not compare two uncertain series for equality
+        // Implement by hand:
+        // REQUIRE( ( series_uncorrelated_deviation /  series  ) == uncorrelated_deviation_one );
+        auto ratio = series_uncorrelated_deviation /  series;
+        auto s1 = ratio;
+        auto s2 = uncorrelated_deviation_one;
+        REQUIRE ( s1.expansion_parameter == s2.expansion_parameter );
+        REQUIRE ( s1.get_order_min() == s2.get_order_min() );
+        REQUIRE ( s1.get_order_max() == s2.get_order_max() );
+        REQUIRE ( s1.get_truncated_above() != s2.get_truncated_above() );
+        for ( size_t idx = 0 ; idx < s1.get_order_max()-s1.get_order_min()+1 ; ++idx )
+        {
+            REQUIRE ( s1.get_content().at(idx).value == s2.get_content().at(idx).value ); // Compare value
+            REQUIRE ( s1.get_content().at(idx).uncertainty == s2.get_content().at(idx).uncertainty ); // Compare uncertainty
+        }
+        
+        // Implement by hand:
+        // REQUIRE( ( series_uncorrelated_deviation /=  series ) == uncorrelated_deviation_one );
+        series_uncorrelated_deviation /= series;
+        s1 = series_uncorrelated_deviation;
+        s2 = uncorrelated_deviation_one;
+        REQUIRE ( s1.expansion_parameter == s2.expansion_parameter );
+        REQUIRE ( s1.get_order_min() == s2.get_order_min() );
+        REQUIRE ( s1.get_order_max() == s2.get_order_max() );
+        REQUIRE ( s1.get_truncated_above() != s2.get_truncated_above() );
+        for ( size_t idx = 0 ; idx < s1.get_order_max()-s1.get_order_min()+1 ; ++idx )
+        {
+            REQUIRE ( s1.get_content().at(idx).value == s2.get_content().at(idx).value ); // Compare value
+            REQUIRE ( s1.get_content().at(idx).uncertainty == s2.get_content().at(idx).uncertainty ); // Compare uncertainty
+        }
+        
     };
 
     SECTION ( " series with one term in denominator does not get truncated " ) {

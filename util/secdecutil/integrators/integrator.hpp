@@ -101,7 +101,7 @@ namespace secdecutil
     } \
     ) {}; \
  \
-  virtual ~Integrator() = default; \
+    virtual ~Integrator() = default; \
  \
   };
 
@@ -154,7 +154,7 @@ namespace secdecutil
       } \
     ) {}; \
  \
-  virtual ~Integrator() = default; \
+    virtual ~Integrator() = default; \
  \
   };
 
