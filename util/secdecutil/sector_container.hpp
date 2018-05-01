@@ -565,7 +565,7 @@ namespace secdecutil {
                     device_functions[k] = get_device_functions[k]();
                     host_functions[k] = in_host_functions[k];
                     if (in_deformation_parameters != nullptr)
-                        for (i=0; i<maximal_number_of_integration_variables; ++i)
+                        for (i=0; i<number_of_integration_variables; ++i)
                             deformation_parameters[k][i] = in_deformation_parameters[k][i];
                 }
                 if (in_real_parameters != nullptr)
@@ -599,7 +599,7 @@ namespace secdecutil {
                     device_functions[k] = get_device_functions[k]();
                     host_functions[k] = other.host_functions[k];
                     if (other.deformation_parameters != nullptr)
-                        for (i=0; i<maximal_number_of_integration_variables; ++i)
+                        for (i=0; i<number_of_integration_variables; ++i)
                             deformation_parameters[k][i] = other.deformation_parameters[k][i];
                 }
                 if (other.real_parameters != nullptr)
@@ -638,7 +638,7 @@ namespace secdecutil {
                     get_device_functions[k] = other.get_device_functions[k];
                     device_functions[k] = get_device_functions[k]();
                     host_functions[k] = other.host_functions[k];
-                    for (i=0; i<maximal_number_of_integration_variables; ++i)
+                    for (i=0; i<number_of_integration_variables; ++i)
                         deformation_parameters[k][i] = other.deformation_parameters[k][i];
                 }
                 for (i=0; i<number_of_real_parameters; ++i)
@@ -690,7 +690,7 @@ namespace secdecutil {
                     get_device_functions[k+offset] = other.get_device_functions[k];
                     device_functions[k+offset] = get_device_functions[k+offset]();
                     host_functions[k+offset] = other.host_functions[k];
-                    for (i=0; i<maximal_number_of_integration_variables; ++i)
+                    for (i=0; i<other.number_of_integration_variables; ++i)
                         deformation_parameters[k+offset][i] = other.deformation_parameters[k][i];
                 }
                 for (i=0; i<number_of_real_parameters; ++i)
