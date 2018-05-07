@@ -280,3 +280,27 @@ class TestExpandSympy(unittest.TestCase):
 
         for coeff in expansion.coeffs:
             self.assertTrue(isinstance(coeff, sp.Expr))
+
+    #@attr('active')
+    def test_higher_pole(self):
+        expression = 'gamma(eps)/eps'
+        variables = ['eps']
+
+        expansion = expand_sympy(expression, variables, orders=[0])
+
+        target_expansion_expolist = np.arange(3).reshape([3,1]) - 2
+        target_expansion_coeffs = [
+                                      '1',                         # eps ** -2
+                                      '-EulerGamma',               # eps ** -1
+                                      'EulerGamma**2/2 + pi**2/12' # eps **  0
+                                  ]
+        target_expansion = Polynomial(target_expansion_expolist, target_expansion_coeffs, ['eps'])
+
+        self.assertEqual( sp.sympify(expansion - target_expansion).simplify() , 0 )
+
+        np.testing.assert_array_equal(expansion.expolist, target_expansion.expolist)
+        np.testing.assert_array_equal(expansion.coeffs, target_expansion.coeffs)
+        self.assertTrue(expansion.truncated is True)
+
+        for coeff in expansion.coeffs:
+            self.assertTrue(isinstance(coeff, sp.Expr))

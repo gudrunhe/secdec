@@ -344,7 +344,10 @@ def expand_sympy(expression, variables, orders):
                 # all higher orders are exactly zero
                 truncated = False
                 break
-            current_term_order = sp.poly(next_term, variable).monoms()[0][0]
+            try:
+                current_term_order = sp.poly(next_term, variable).monoms()[0][0]
+            except sp.PolynomialError:
+                current_term_order = -sp.poly(next_term**-1, variable).monoms()[0][0]
             # if some intermediate orders are zero, append zeros to the expansion
             while current_order < current_term_order and current_order <= order:
                 coeffs.append(_sympy_zero)
