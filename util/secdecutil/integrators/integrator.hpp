@@ -30,7 +30,7 @@
 namespace secdecutil
 {
 
-  template<typename return_t, typename input_t, typename container_t = secdecutil::IntegrandContainer<return_t, input_t const * const>> // TODO: document "container_t", cuda example
+  template<typename return_t, typename input_t, typename container_t = secdecutil::IntegrandContainer<return_t, input_t const * const>> // TODO: cuda example
   struct Integrator
   {
   protected:

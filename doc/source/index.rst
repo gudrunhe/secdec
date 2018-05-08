@@ -11,6 +11,7 @@ Please cite the following references if you use `pySecDec` for a scientific publ
  * GSL [GSL]_
  * nauty [MP+14]_ (if you use `dreadnaut`)
  * normaliz [BIR]_, [BIS16]_ (if you use a geometric decomposition strategy)
+ * [LWY+15]_ (if you use the quasi monte carlo integrator)
 
 .. toctree::
     :numbered:

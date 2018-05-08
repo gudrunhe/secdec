@@ -179,7 +179,7 @@ After running the python script `generate_box1L.py` the folder `box1L` is create
 
 .. code::
 
-    Makefile    Makefile.conf    README    box1L.hpp    codegen    integrate_box1L.cpp    pylink    src
+    Makefile    Makefile.conf    README    box1L.hpp    codegen    integrate_box1L.cpp    cuda_integrate_box1L.cpp    pylink    src
 
 in the folder `box1L`, typing
 
@@ -187,8 +187,23 @@ in the folder `box1L`, typing
 
     $ make
 
-will create the libraries ``libbox1L.a`` and ``box1L_pylink.so`` which can be linked to an external program calling these integrals.
-The ``make`` command can also be run in parallel by using the ``-j`` option.
+will create the static library ``libbox1L.a`` and ``box1L_pylink.so`` which can be linked to external programs.
+The ``make`` command can also be run in parallel by using the ``-j`` option. The number of threads each instance of ``tform`` uses can be
+set via the environment variable `FORMTHREADS`. To build the dynamic library ``libbox1L.so`` set ``dynamic`` as build target:
+
+.. code::
+
+    $ make dynamic
+
+The code generation with FORM without subsequent compilation can be run by setting ``source`` as build target.
+
+To build the library with `nvcc` for GPU support, type
+
+.. code::
+
+    $ CXX=nvcc SECDEC_WITH_CUDA=sm_XX make
+
+where ``sm_XX`` must be replaced by the target GPU architechtures, see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
 
 To evaluate the integral numerically a program can call one of these libraries.
 How to do this interactively or via a python script is explained in the section :ref:`Python Interface <python_interface>`.
@@ -217,6 +232,15 @@ Next, an integrator is configured for the numerical integration. The full list o
 
     # choose integrator
     box.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+
+If you want to use GPUs, change to the :mod:`CudaQmc<pySecDec.integral_interface.CudaQmc>` integrator and specify the ``devices`` to use. For example, to run on GPUs 0 and 1 and on the CPU,
+change the above lines to
+
+.. code::
+
+    # choose integrator
+    box.use_Qmc(verbosity=2, devices=[-1,0,1])
+
 
 Calling the ``box`` library numerically evaluates the integral.
 Note that the order of the real parameters must match that specified in ``generate_box1L.py``.
@@ -287,7 +311,7 @@ The :cpp:func:`name::make_integrands` function returns an :cpp:class:`secdecutil
     //  Generate the integrands (optimization of the contour if applicable)
         const std::vector<box1L::nested_series_t<box1L::integrand_t>> sector_integrands = box1L::make_integrands(real_parameters, complex_parameters);
 
-The sectors can be added before integration::
+The contour deformation can be adjusted via additional arguments to :cpp:func:`name::make_integrands`. The sectors can be added before integration::
 
     //  Add integrands of sectors (together flag)
         const box1L::nested_series_t<box1L::integrand_t> all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
@@ -329,6 +353,30 @@ After editing the ``real_parameters`` as described above the C++ program can be 
 
     $ make integrate_box1L
     $ ./integrate_box1L
+
+.. versionadded:: 1.4
+
+The similar template file ``cuda_integrate_box1L.cpp`` provides an example to run on GPUs. The main differences are in the lines that generate, add, and integrate the integrands.
+Rather than :cpp:func:`name::make_integrands`, :cpp:func:`name::make_cuda_integrands` is called::
+
+    // Generate the integrands (optimization of the contour if applicable)
+    const std::vector<box1L::nested_series_t<box1L::cuda_integrand_t>> sector_integrands = box1L::make_cuda_integrands(real_parameters, complex_parameters);
+
+If the integrands are added together before integration, the sum command is as follows::
+
+    // Add integrands of sectors (together flag)
+    const box1L::nested_series_t<box1L::cuda_together_integrand_t> all_sectors =
+        std::accumulate(++sector_integrands.begin(), sector_integrands.end(), box1L::cuda_together_integrand_t()+*sector_integrands.begin());
+
+Note the conversion from :cpp:type:`name::cuda_integrand_t` to :cpp:type:`name::cuda_together_integrand_t`. The CUDA-capable version of the Qmc
+integrator takes an additional template argument :cpp:type:`name::cuda_integrand_t`::
+
+    // Integrate
+    secdecutil::integrators::Qmc<box1L::integrand_return_t,box1L::cuda_together_integrand_t> integrator;
+    integrator.verbosity = 1;
+    const box1L::nested_series_t<secdecutil::UncorrelatedDeviation<box1L::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors, integrator.integrate );
+
+If the integrands are integrated separately, :cpp:type:`name::cuda_together_integrand_t` should be changed to :cpp:type:`name::cuda_integrand_t`.
 
 .. _list_of_examples:
 

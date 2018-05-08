@@ -147,7 +147,7 @@ Integrand Container
 
 A class template for containing integrands. It stores the number of integration variables and the integrand as a :cpp:class:`std::function`.
 
-This class overloads the arithmetic operators (``+``, ``-``, ``*``, ``/``).
+This class overloads the arithmetic operators (``+``, ``-``, ``*``, ``/``) and the call operator (``()``).
 
     .. cpp:class:: template <typename T, typename ...Args> IntegrandContainer
 
@@ -157,7 +157,7 @@ This class overloads the arithmetic operators (``+``, ``-``, ``*``, ``/``).
 
         .. cpp:var:: std::function<T(Args...)> integrand
 
-            The integrand function.
+            The integrand function. The call operator forwards to this function.
 
 Example (add two :cpp:class:`IntegrandContainer` and evaluate one point):
 
@@ -178,7 +178,11 @@ Integrator
 
 A base class template from which integrator implementations inherit. It defines the minimal API available for all integrators.
 
-    .. cpp:class:: template<typename return_t, typename input_t> Integrator
+    .. cpp:class:: template<typename return_t, typename input_t, typename container_t = secdecutil::IntegrandContainer<return_t, input_t const * const>> Integrator
+
+        .. cpp::type:: container_t
+
+            The type of the integrand. It must have the field ``number_of_integration_variables`` and be callable.
 
         .. cpp:var:: bool together 
       
@@ -221,6 +225,36 @@ CQuad takes the following options:
  * ``n`` -  The size of the workspace. This value can only be set in the constructor. Changing this attribute of an instance is not possible. Default: ``100``.
  * ``verbose`` -  Whether or not to print status information. Default: ``false``.
  * ``zero_border`` - The minimal value an integration variable can take. Default: ``0.0``. (`new in version 1.3`)
+
+.. _chapter_cpp_qmc:
+
+Qmc
+~~~
+
+.. cpp:namespace:: secdecutil::integrators
+
+.. TODO: reference updated pySecDec paper
+
+The quasi monte carlo integrator as described in [LWY+15]_ and references therein.
+
+.. cpp:class:: template <typename return_t, typename container_t = secdecutil::IntegrandContainer<return_t, return_t const * const>> Qmc
+
+    Derived from :cpp:class:`secdecutil::Integrator` and :cpp:class:`::integrators::Qmc` - the
+    underlying standalone implementation of the Qmc.
+
+The most important fields of :cpp:class:`Qmc` are:
+ * ``minn` - The minimal number of points in the Qmc lattice. Will be augmented to the next larger available ``n``.
+ * ``minm`` - The minimal number of random shifts.
+ * ``maxeval`` - The maximal number of integrand evaluations.
+ * ``epsrel`` - The desired relative accuracy for the numerical evaluation.
+ * ``epsabs`` - The desired absolute accuracy for the numerical evaluation.
+ * ``border`` - The minimal value an integration variable can take.
+ * ``verbosity`` - Controls the amount of status messages during integration. Can be ``0``, ``1``, ``2``, or ``3``.
+ * ``devices`` - A :cpp:class:`std::set` of devices to run on. ``-1`` denotes the CPU, positive integers refer to GPUs.
+
+Refer to the documentation of the standalone Qmc for the default values and additional information.
+
+.. cpp:namespace:: secdecutil
 
 .. _chapter_cpp_cuba:
 
