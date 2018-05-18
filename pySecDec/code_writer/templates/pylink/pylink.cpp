@@ -1,3 +1,7 @@
+#include "%(name)s.hpp"
+
+
+
 #define INTEGRAL_NAME %(name)s
 
 // whether or not to use contour deformation
@@ -8,10 +12,6 @@
 
 // whether or no the return type should be complex in any case
 #define integral_enforce_complex_return_type %(enforce_complex_return_type)i
-
-
-
-#include "%(name)s.hpp"
 
 
 
