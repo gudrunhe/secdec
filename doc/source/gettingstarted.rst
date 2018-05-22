@@ -23,7 +23,7 @@ To run the example change to the `easy` directory and run the commands::
     $ make -C easy
     $ python integrate_easy.py
 
-This will evaluate and print the result of the integral::
+Additional build options are discussed in the :ref:`next section <building_the_cpp_lib>`. This will evaluate and print the result of the integral::
 
     Numerical Result: + (1.00015897181235158e+00 +/- 4.03392522752491021e-03)*eps^-1 + (3.06903035514056399e-01 +/- 2.82319349818329918e-03) + O(eps)
     Analytic Result: + (1.000000)*eps^-1 + (0.306853) + O(eps)
@@ -172,6 +172,8 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 
     )
 
+.. _building_the_cpp_lib:
+
 Building the C++ Library
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -189,7 +191,13 @@ in the folder `box1L`, typing
 
 will create the static library ``libbox1L.a`` and ``box1L_pylink.so`` which can be linked to external programs.
 The ``make`` command can also be run in parallel by using the ``-j`` option. The number of threads each instance of ``tform`` uses can be
-set via the environment variable `FORMTHREADS`. To build the dynamic library ``libbox1L.so`` set ``dynamic`` as build target:
+set via the environment variable `FORMTHREADS`.
+
+.. versionadded:: 1.4
+    The environment variable `FORMOPT` sets FORM's code optimization level. If not set, the value that was passed to :func:`make_package <pySecDec.code_writer.make_package>`
+    or :func:`loop_package <pySecDec.loop_integral.loop_package>` is used.
+
+To build the dynamic library ``libbox1L.so`` set ``dynamic`` as build target:
 
 .. code::
 

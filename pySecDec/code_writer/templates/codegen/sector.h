@@ -55,7 +55,6 @@ AutoDeclare Symbols SecDecInternalLabel;
 
 #define highestPoles "%(highest_regulator_poles)s"
 #define numOrders "%(number_of_orders)s"
-#define optimizationLevel "%(form_optimization_level)i"
 
 * Specify and enumerate all occurring orders in python.
 * Define the preprocessor variables
