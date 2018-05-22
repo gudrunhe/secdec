@@ -25,3 +25,12 @@ very-clean : clean
 clean:
 	for dir in */; do $(MAKE) -C $$dir $@; done
 	rm -f *.o *.so *.a integrate_$(NAME) cuda_integrate_$(NAME)
+
+# implicit rule to build object files
+ifdef SECDEC_WITH_CUDA
+%%.o : %%.cpp
+	$(CXX) -dc $(CXXFLAGS) -Xcompiler -fPIC $< -o $@
+else
+%%.o : %%.cpp
+	$(CXX) -c $(CXXFLAGS) -fPIC $< -o $@
+endif
