@@ -28,7 +28,7 @@ polynomials_to_decompose = ['z0**(-1-7*eps)','z1**(-1-5*eps)','z2**(-1-3*eps)','
 # the order here matches the order of ``regulators``
 requested_orders = [4],
 
-# the optimization level to use in FORM (can be 0, 1, 2, 3)
+# the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
 form_optimization_level = 2,
 
 # the WorkSpace parameter for FORM

@@ -156,7 +156,7 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
     requested_order = 0,
 
-    # the optimization level to use in FORM (can be 0, 1, 2, 3)
+    # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
     form_optimization_level = 2,
 
     # the WorkSpace parameter for FORM

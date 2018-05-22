@@ -78,7 +78,7 @@ def loop_package(name, loop_integral, requested_order,
         `real_parameters`, and the `complex_parameters`.
 
     :param form_optimization_level:
-        integer out of the interval [0,3], optional;
+        integer out of the interval [0,4], optional;
         The optimization level to be used in FORM.
         Default: ``2``.
 

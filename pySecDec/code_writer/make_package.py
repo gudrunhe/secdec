@@ -1472,7 +1472,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         Symbols to be interpreted as complex variables.
 
     :param form_optimization_level:
-        integer out of the interval [0,3], optional;
+        integer out of the interval [0,4], optional;
         The optimization level to be used in FORM.
         Default: ``2``.
 

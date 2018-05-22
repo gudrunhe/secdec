@@ -35,7 +35,7 @@ requested_order = 0,
 complex_parameters =['s1','s2','sij'],
 real_parameters =['m1','m2'],
 
-# the optimization level to use in FORM (can be 0, 1, 2, 3)
+# the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
 form_optimization_level = 3,
 
 # the WorkSpace parameter for FORM
