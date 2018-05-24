@@ -98,6 +98,7 @@ class TestConvertInput(TestMakePackage):
         self.correct_input = dict(
                                       name=self.tmpdir,
                                       integration_variables=['z0','z1','z2'],
+                                      ibp_power_goal=-1,
                                       regulators=['eps','alpha'],
                                       requested_orders=[1,2],
                                       polynomials_to_decompose=[1,Polynomial([[0,0,0,0,0,0,0],[1,1,1,0,0,0,0]],['-s','-t'],['z0','z1','z2','eps','alpha','U','F'])],
@@ -226,6 +227,42 @@ class TestConvertInput(TestMakePackage):
         keyword_arguments = self.correct_input.copy()
         keyword_arguments['polynomials_to_decompose'] = ['z0 + firstPolynomialName', 'z0*z1 + (eps+1)*z1*z2']
         self.assertRaisesRegexp(AssertionError, r'polynomials_to_decompose.*not depend.*regulators', _convert_input, **keyword_arguments)
+
+    #@attr('active')
+    def test_selective_ibp_power_goals_error_message(self):
+        keyword_arguments = self.correct_input.copy()
+        integration_variables = ['z0','z1','z2']
+        keyword_arguments['integration_variables'] = list(integration_variables)
+        keyword_arguments['ibp_power_goal'] = [-1,0]
+        self.assertRaisesRegexp(AssertionError, r'number of .*ibp_power_goal.* \(2\).* (match|equal) .*number of .*integration_variables.* \(3\)', _convert_input, **keyword_arguments)
+
+    #@attr('active')
+    def test_selective_ibp_power_goals(self):
+        keyword_arguments = self.correct_input.copy()
+        integration_variables = ['z0','z1','z2']
+        ibp_power_goal = [-1,0,1]
+        keyword_arguments['integration_variables'] = list(integration_variables)
+        keyword_arguments['ibp_power_goal'] = list(ibp_power_goal)
+        converted_input = _convert_input(**keyword_arguments)
+        converted_integration_variables = converted_input[1]
+        converted_ibp_power_goal = converted_input[2]
+        for i in range(3):
+            self.assertEqual(converted_integration_variables[i],sp.symbols(integration_variables[i]))
+            self.assertEqual(converted_ibp_power_goal[converted_integration_variables[i]], ibp_power_goal[i])
+
+    #@attr('active')
+    def test_old_single_ibp_power_goal(self):
+        keyword_arguments = self.correct_input.copy()
+        integration_variables = ['z0','z1','z2']
+        keyword_arguments['integration_variables'] = list(integration_variables)
+        ibp_power_goal = 0
+        keyword_arguments['ibp_power_goal'] = ibp_power_goal
+        converted_input = _convert_input(**keyword_arguments)
+        converted_integration_variables = converted_input[1]
+        converted_ibp_power_goal = converted_input[2]
+        for i in range(3):
+            self.assertEqual(converted_integration_variables[i],sp.symbols(integration_variables[i]))
+            self.assertEqual(converted_ibp_power_goal[converted_integration_variables[i]], ibp_power_goal)
 
 # --------------------------------- write FORM code ---------------------------------
 class TestMakeFORMDefinition(unittest.TestCase):
