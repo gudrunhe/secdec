@@ -16,7 +16,7 @@ from ..subtraction import integrate_pole_part, integrate_by_parts, pole_structur
 from ..expansion import expand_singular, expand_Taylor, expand_sympy, OrderError
 from ..misc import lowest_order, parallel_det
 from .template_parser import parse_template_file, parse_template_tree
-from itertools import chain
+from itertools import chain, repeat
 from multiprocessing import Pool
 from time import strftime
 from re import match
@@ -160,7 +160,7 @@ def _validate(name, allow_underscore=False):
         if name.lower().startswith(banstart.lower()):
             raise NameError( '"%s" cannot be used as symbol (must not begin with "%s")' % (name,banstart) )
 
-def _convert_input(name, integration_variables, regulators,
+def _convert_input(name, integration_variables, ibp_power_goal, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
@@ -229,6 +229,16 @@ def _convert_input(name, integration_variables, regulators,
     assert form_insertion_depth == int(form_insertion_depth), '`form_insertion_depth` must be an integer.'
     assert form_insertion_depth >= 0, '`form_insertion_depth` must not be negative.'
 
+    # convert ``ibp_power_goal`` to a dictionary between integration variables and the power goal to keep track after primary decomposition
+    # layout as "d = {x:-1, y:0}"
+    if np.iterable(ibp_power_goal):
+        if not isinstance(ibp_power_goal,list):
+            ibp_power_goal = list(ibp_power_goal)
+        assert len(ibp_power_goal) == len(integration_variables), 'The number of `ibp_power_goal` (%i) must equal the number of integration_variables (%i).' % (len(ibp_power_goal), len(integration_variables))
+    else:
+        ibp_power_goal = repeat(ibp_power_goal)
+    ibp_power_goal = {iv: power_goal for iv, power_goal in zip(integration_variables, ibp_power_goal)}
+
     # check that neither the `remainder_expression` nor the `polynomials_to_decompose` refer to any of the `polynomial_names`
     str_error = internal_prefix + 'Error'
     error = sp.symbols(str_error)
@@ -244,7 +254,7 @@ def _convert_input(name, integration_variables, regulators,
         if str_error in str_poly:
             raise ValueError('The `polynomial_names` %s cannot be used in the `polynomials_to_decompose`.' % polynomial_names)
 
-    return (name, integration_variables, regulators,
+    return (name, integration_variables, ibp_power_goal, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
             other_polynomials, prefactor, remainder_expression, functions, function_calls,
             real_parameters, complex_parameters, form_optimization_level,
@@ -797,7 +807,7 @@ def _process_secondary_sector(environment):
     regulators = environment['regulators']
     all_integration_variables = environment['all_integration_variables']
     pole_structures = environment['pole_structures']
-    ibp_power_goal = environment['ibp_power_goal']
+    ibp_power_goal_this_primary_sector = environment['ibp_power_goal_this_primary_sector']
     nested_series_type = environment['nested_series_type']
     form_insertion_depth = environment['form_insertion_depth']
     reversed_polynomial_names = environment['reversed_polynomial_names']
@@ -1059,9 +1069,9 @@ def _process_secondary_sector(environment):
     # call the subtraction routines
     # Integrate by parts until the `ibp_power_goal` is reached,
     # then do the original subtraction (`integrate_pole_part`).
-    at_most_log_poles = integrate_by_parts(subtraction_initializer, ibp_power_goal, *integration_variable_indices)
+    after_ibp = integrate_by_parts(subtraction_initializer, ibp_power_goal_this_primary_sector, integration_variable_indices)
     subtracted = []
-    for item in at_most_log_poles:
+    for item in after_ibp:
         subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
 
     # intialize expansion
@@ -1549,7 +1559,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         Default: ``False``
 
     :param ibp_power_goal:
-        integer, optional;
+        number or iterable of number, optional;
         The `power_goal` that is forwarded to
         :func:`.integrate_by_parts`.
 
@@ -1557,6 +1567,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
         generated. Setting it to ``-numpy.inf`` disables
         :func:`.integrate_by_parts`, while ``0`` disables
         :func:`.integrate_pole_part`.
+
+        .. versionadded: 1.4
+            A separate power_goal for each of the
+            `integration_variables` can be set by passing an
+            iterable.
 
         .. seealso::
             To generate the subtraction terms, this function
@@ -1597,7 +1612,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     print('running "make_package" for "' + name + '"')
 
     # convert input data types to the data types we need
-    name, integration_variables, regulators, \
+    name, integration_variables, ibp_power_goal, regulators, \
     requested_orders, polynomials_to_decompose, polynomial_names, \
     other_polynomials, prefactor, remainder_expression, functions, \
     function_calls, real_parameters, complex_parameters, \
@@ -1605,7 +1620,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     contour_deformation_polynomial, positive_polynomials, decomposition_method, \
     symbols_polynomials_to_decompose, symbols_other_polynomials, \
     symbols_remainder_expression, all_symbols = \
-    _convert_input(name, integration_variables, regulators,
+    _convert_input(name, integration_variables, ibp_power_goal, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
@@ -1814,6 +1829,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
         # get the indices of the `integration_variables`, the `regulators`, and the `polynomial_names` in the polysymbols
         integration_variable_indices = list(range(len(integration_variables)))
         regulator_indices = [i + len(integration_variables) for i in range(len(regulators))]
+
+        # get the ibp power goals for the remaining integration variables
+        ibp_power_goal_this_primary_sector = [ibp_power_goal[integration_variables[index]] for index in integration_variable_indices]
 
         # define "elementary" `_Expression`s such as ``x = Polynomial.from_expression('x', polysymbols)`` for all x
         elementary_monomials = []
