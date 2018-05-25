@@ -1059,9 +1059,9 @@ def _process_secondary_sector(environment):
     # call the subtraction routines
     # Integrate by parts until the `ibp_power_goal` is reached,
     # then do the original subtraction (`integrate_pole_part`).
-    at_most_log_poles = integrate_by_parts(subtraction_initializer, ibp_power_goal, *integration_variable_indices)
+    after_ibp = integrate_by_parts(subtraction_initializer, ibp_power_goal, integration_variable_indices)
     subtracted = []
-    for item in at_most_log_poles:
+    for item in after_ibp:
         subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
 
     # intialize expansion
