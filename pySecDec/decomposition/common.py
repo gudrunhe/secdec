@@ -667,19 +667,33 @@ def squash_symmetry_redundant_sectors_sort(sectors, sort_function, indices=None)
         # must move the indices to ignore to the coefficients
         replaced_sectors = _remove_variables(sectors, indices)
 
-    # combine all expolists and coeffs into one large array
-    # use the collision free hash for the coefficients
-    all_sectors_array = []
+    # combine all expolists and coeffs into two large arrays
+    all_sectors_expolist = []
+    all_sectors_coeffs = []
     for sector in replaced_sectors:
         this_sector_expolist, this_sector_coeffs = _sector2array(sector)
-        this_sector_coeffs = _collision_safe_hash(this_sector_coeffs)
 
-        this_sector_array = np.hstack([this_sector_coeffs.reshape(len(this_sector_coeffs),1),this_sector_expolist])
+        all_sectors_expolist.append( this_sector_expolist )
+        all_sectors_coeffs.append( this_sector_coeffs )
+
+    # call the collision free hash for the coefficients
+    # must call the collision safe hash on ALL coefficients TOGETHER
+    all_sectors_coeffs = np.array(all_sectors_coeffs)
+    all_sectors_coeffs = _collision_safe_hash(all_sectors_coeffs.flatten()).reshape(all_sectors_coeffs.shape)
+
+    # combine coefficients and expolists into one large array
+    assert len(all_sectors_expolist)  == len(all_sectors_coeffs)
+    all_sectors_array = []
+    for this_sector_expolist,this_sector_coeffs in zip(all_sectors_expolist,all_sectors_coeffs):
+        this_sector_array = np.hstack((this_sector_coeffs.reshape(-1,1),this_sector_expolist))
 
         # sort the arrays of the individual sectors to pick one specific permutation --> symmetry finding
         sort_function(this_sector_array)
 
         all_sectors_array.append( this_sector_array )
+
+    # clean up large temporary arrays
+    del all_sectors_expolist, all_sectors_coeffs
 
     all_sectors_array = np.array(all_sectors_array)
 
