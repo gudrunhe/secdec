@@ -339,7 +339,7 @@ def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
                 if str(term_coeff) == coeff:
                     terms.append(cols + row)
             f.write(",".join(map(str, terms)))
-            f.write(" ;" + "\n")
+            f.write(";" + "\n")
             offset += 1
 
         # Colour vertices: columns | rows | elements | exponent1 | exponent2 | ... | coeff1 | coeff2 | ...

@@ -1,7 +1,7 @@
 """Unit tests for the Sector container class"""
 
 from .common import *
-from .common import _sector2array, _collision_safe_hash
+from .common import _sector2array, _array_to_dreadnaut, _collision_safe_hash
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
 from ..matrix_sort import iterative_sort, Pak_sort, light_Pak_sort
 import unittest
@@ -9,7 +9,8 @@ import sympy as sp
 import numpy as np
 from itertools import permutations
 from nose.plugins.attrib import attr
-import sys
+import sys, os
+import shutil
 
 python_major_version = sys.version[0]
 
@@ -546,3 +547,51 @@ class TestOther(unittest.TestCase):
 
         self.assertEqual(str(copy2.factors[0]), ' + (1)')
         self.assertEqual(str(copy2.factors[1]), ' + (-s12)*t0*t1 + (-s23)*t0*t2')
+
+    #@attr('active')
+    def test_array_to_dreadnaut(self):
+        workdir = 'tmpdir_test_array_to_dreadnaut_python' + python_major_version
+        dreadnaut_canonical_file = 'canonical'
+        dreadnaut_hash_file = 'hash'
+        dreadnaut_file = 'ingraph'
+
+        expolist = np.array([[2]])
+        coeffs = np.array([1])
+
+        unique_exponents = [2]
+        unique_coeffs = ['1']
+
+        os.mkdir(workdir)
+        try:
+            _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs, dreadnaut_file, dreadnaut_hash_file, dreadnaut_canonical_file, workdir)
+            with open(os.path.join(workdir,dreadnaut_file)) as f:
+                ingraph = f.read()
+        finally:
+            shutil.rmtree(workdir)
+
+        target_ingraph = \
+        '''n=5
+        g
+        ! columns
+        0: 2;
+        ! rows
+        1: 2;
+        ! elements
+        2: 3;
+        ! exponents
+        3: ;
+        ! coeffs
+        4: 1;
+        f=[0:0|1:1|2:2|3|4]
+        c
+        x
+        B
+        >hash
+        z
+        >canonical
+        b
+        ->
+        q
+        '''.replace('\n        ','\n')
+
+        self.assertEqual(ingraph, target_ingraph)
