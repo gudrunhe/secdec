@@ -8,6 +8,7 @@ expansion.
 """
 
 from .algebra import Polynomial, ExponentiatedPolynomial, Sum, Product, Pow
+from itertools import repeat
 import numpy as np
 import sympy as sp
 
@@ -71,6 +72,7 @@ def _integrate_pole_part_single_index(polyprod, index):
 
     # finite variance of Monte Carlo integral estimator only if ``exponent_constant_term > -0.5``
     # to be absolutely safe here, we eliminate integrable singularities; i.e. ``exponent_constant_term >= 0``
+    # TODO: Change to a dynamic `power_goal` just like in :func:`.integrate_by_parts`
     if exponent_constant_term >= 0:
         # no subtraction needed, the input `polyprod` is numerically integrable
         return [polyprod]
@@ -277,31 +279,31 @@ def _integrate_by_parts_single_index(polyprod, power_goal, index):
 
     return [term_without_integral] + _integrate_by_parts_single_index(term_with_integral, power_goal, index)
 
-def integrate_by_parts(polyprod, power_goal, *indices):
+def integrate_by_parts(polyprod, power_goals, indices):
     r'''
     Repeatedly apply integration by parts,
 
     .. math::
         \int_0^1
         {
-            dt_j t_j^{(a - b \epsilon_1 - c \epsilon_2 + ...)}
+            dt_j t_j^{(a_j - b_j \epsilon_1 - c \epsilon_2 + ...)}
             \mathcal{I} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
         }
         =
-        \frac{1}{a + 1 - b \epsilon_1 - c \epsilon_2 - ...}
+        \frac{1}{a_j + 1 - b_j \epsilon_1 - c \epsilon_2 - ...}
         \left(
         \mathcal{I} (1,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
         -
         \int_0^1
         {
-            dt_j t_j^{(a + 1 - b \epsilon_1 - c \epsilon_2 + ...)}
+            dt_j t_j^{(a_j + 1 - b_j \epsilon_1 - c \epsilon_2 + ...)}
             \mathcal{I}^{\prime} (t_j,\{t_{i \neq j}\}, \epsilon_1, \epsilon_2, ...)
         }
         \right)
 
     , where :math:`\mathcal{I}^{\prime}` denotes the derivative
     of :math:`\mathcal{I}` with respect to :math:`t_j`. The iteration
-    stops, when :math:`a>=` `power_goal`.
+    stops, when :math:`a_j>=` `power_goal_j`.
 
     .. seealso::
         This function provides an alternative to :func:`.integrate_pole_part`.
@@ -333,12 +335,12 @@ def integrate_by_parts(polyprod, power_goal, *indices):
         as :class:`pySecDec.algebra.Pow` with ``exponent = -1``
         and the ``base`` of type :class:`pySecDec.algebra.Polynomial`.
 
-    :param power_goal:
-        number, e.g. float, integer, ...;
+    :param power_goals:
+        number or iterable of numbers, e.g. float, integer, ...;
         The stopping criterion for the iteration.
 
     :param indices:
-        arbitrarily many integers;
+        iterable of integers;
         The index/indices of the parameter(s) to partially integrate.
         :math:`j` in the formulae above.
 
@@ -348,8 +350,16 @@ def integrate_by_parts(polyprod, power_goal, *indices):
     `polyprod`.
 
     '''
+    if not isinstance(indices,list):
+        indices = list(indices)
+    if np.iterable(power_goals):
+        if not isinstance(power_goals,list):
+            power_goals = list(power_goals)
+        assert len(power_goals) == len(indices), 'The number of `power_goals` (%i) must equal the number of indices (%i).' % (len(power_goals), len(indices))
+    else:
+        power_goals = repeat(power_goals)
     new_products = [polyprod]
-    for index in indices:
+    for power_goal,index in zip(power_goals,indices):
         old_products = new_products
         new_products = []
         for polyprod in old_products:

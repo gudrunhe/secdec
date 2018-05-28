@@ -132,6 +132,7 @@ class TestIntegratePolePart(unittest.TestCase):
         self.assertEqual( pole_structure(self.monomial_product1,0,1) , [-2,-4] )
         self.assertEqual( pole_structure(self.monomial_product2,0,1) , [-2,-4] )
 
+#@attr('active')
 class TestIntegrateByParts(unittest.TestCase):
     def setUp(self):
         self.symbols = ['x0', 'x1', 'x2', 'eps1', 'eps2']
@@ -163,8 +164,12 @@ class TestIntegrateByParts(unittest.TestCase):
             self.assertEqual(difference,0)
 
     #@attr('active')
+    def test_error_messages(self):
+        self.assertRaisesRegexp(AssertionError, 'number of .*power_goals.* \(1\).* (match|equal) .*number of .*indices.* \(2\)', integrate_by_parts, self.ibp_input, [-1], [0,2])
+
+    #@attr('active')
     def test_power_goal_minus1(self):
-        terms_after_ibp = integrate_by_parts(self.ibp_input, -1, 0,1,2)
+        terms_after_ibp = integrate_by_parts(self.ibp_input, -1, [0,1,2])
         target_terms_after_ibp = \
         [
             'x0**(-1 + a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * 1/(-1 + a*eps1 + b*eps2) * cal_I(x0,1,x2,eps1,eps2)',
@@ -174,7 +179,8 @@ class TestIntegrateByParts(unittest.TestCase):
 
     #@attr('active')
     def test_power_goal_0(self):
-        terms_after_ibp = integrate_by_parts(self.ibp_input, 0, 0,1,2)
+        terms_after_ibp_input_together = integrate_by_parts(self.ibp_input, 0, (0,1,2))
+        terms_after_ibp_input_separate = integrate_by_parts(self.ibp_input, (0,0,0), (0,1,2))
         target_terms_after_ibp = \
         [
             'x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2) * 1/(-1 + a*eps1 + b*eps2) * cal_I(1,1,x2,eps1,eps2)',
@@ -184,11 +190,24 @@ class TestIntegrateByParts(unittest.TestCase):
             '- x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2)**2 * 1/(-1 + a*eps1 + b*eps2) * (- x0**(a*eps1 + b*eps2) * ddcal_Id0d1(x0,1,x2,eps1,eps2))',
             'x1**(a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2)**2 * 1/(-1 + a*eps1 + b*eps2) * (- x0**(a*eps1 + b*eps2) * dddcal_Id0d1d1(x0,x1,x2,eps1,eps2))'
         ]
+        self.check_terms(terms_after_ibp_input_together, target_terms_after_ibp)
+        self.check_terms(terms_after_ibp_input_separate, target_terms_after_ibp)
+
+    #@attr('active')
+    def test_power_goals_0_minus1_1(self):
+        terms_after_ibp = integrate_by_parts(self.ibp_input, [0,-1,1], [0,1,2])
+        target_terms_after_ibp = \
+        [
+            'x2**(a*eps1 + b*eps2 + 2)*cal_I(1, 1, x2, eps1, eps2)/(a**2*eps1**2 + 2*a*b*eps1*eps2 - a*eps1 + b**2*eps2**2 - b*eps2)',
+            '-x1*x1**(a*eps1 + b*eps2 - 2)*x2**(a*eps1 + b*eps2 + 2)*dcal_Id1(1, x1, x2, eps1, eps2)/(a**2*eps1**2 + 2*a*b*eps1*eps2 - a*eps1 + b**2*eps2**2 - b*eps2)',
+            '-x0*x0**(a*eps1 + b*eps2 - 1)*x2**(a*eps1 + b*eps2 + 2)*dcal_Id0(x0, 1, x2, eps1, eps2)/(a**2*eps1**2 + 2*a*b*eps1*eps2 - a*eps1 + b**2*eps2**2 - b*eps2)',
+            'x0*x0**(a*eps1 + b*eps2 - 1)*x1*x1**(a*eps1 + b*eps2 - 2)*x2**(a*eps1 + b*eps2 + 2)*ddcal_Id0d1(x0, x1, x2, eps1, eps2)/(a**2*eps1**2 + 2*a*b*eps1*eps2 - a*eps1 + b**2*eps2**2 - b*eps2)'
+        ]
         self.check_terms(terms_after_ibp, target_terms_after_ibp)
 
     #@attr('active')
     def test_select_index(self):
-        terms_after_ibp = integrate_by_parts(self.ibp_input, 0, 0)
+        terms_after_ibp = integrate_by_parts(self.ibp_input, 0, [0])
         target_terms_after_ibp = \
         [
             'x1**(-2 + a*eps1 + b*eps2) * x2**(2 + a*eps1 + b*eps2) * 1/(a*eps1 + b*eps2) * cal_I(1,x1,x2,eps1,eps2)',

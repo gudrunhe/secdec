@@ -132,7 +132,7 @@ def loop_package(name, loop_integral, requested_order,
         Default: ``False``
 
     :param ibp_power_goal:
-        integer, optional;
+        number or iterable of number, optional;
         The `power_goal` that is forwarded to
         :func:`.integrate_by_parts`.
 
@@ -140,6 +140,11 @@ def loop_package(name, loop_integral, requested_order,
         generated. Setting it to ``-numpy.inf`` disables
         :func:`.integrate_by_parts`, while ``0`` disables
         :func:`.integrate_pole_part`.
+
+        .. versionadded: 1.4
+            A separate power_goal for each of the
+            `integration_variables` can be set by passing an
+            iterable.
 
         .. seealso::
             To generate the subtraction terms, this function
