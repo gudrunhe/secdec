@@ -348,9 +348,9 @@ def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
                 str(cols) + ":" + str(cols + rows - 1) + "|" + \
                 str(cols + rows) + ":" + str(cols + rows + elements - 1) + "|" + \
                 "|".join(map(str, range(cols + rows + elements,
-                                        cols + rows + elements + number_unique_exponents - 1))) + "|" + \
+                                        cols + rows + elements + number_unique_exponents))) + "|" + \
                 "|".join(map(str, range(cols + rows + elements + number_unique_exponents,
-                                        cols + rows + elements + number_unique_exponents + number_unique_coeffs - 1))) + \
+                                        cols + rows + elements + number_unique_exponents + number_unique_coeffs))) + \
                 "]" + "\n")
 
         # Issue dreadnaut commands
