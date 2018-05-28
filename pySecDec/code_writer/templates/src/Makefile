@@ -25,7 +25,7 @@ very-clean : clean
 # implicit rule to build object files
 ifdef SECDEC_WITH_CUDA
 %%.o : %%.cpp
-	$(CXX) -dc $(CXXFLAGS) -Xptxas -O1 -Xptxas --disable-optimizer-constants -Xcompiler -fPIC $< -o $@
+	$(CXX) -dc $(CXXFLAGS) -Xptxas -O0 -Xptxas --disable-optimizer-constants -Xcompiler -fPIC $< -o $@
 else
 %%.o : %%.cpp
 	$(CXX) -c $(CXXFLAGS) -fPIC $< -o $@
