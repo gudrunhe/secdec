@@ -24,9 +24,10 @@ class CPPIntegrator(object):
 
     '''
     def __del__(self):
-        self.c_lib.free_integrator.restype = None
-        self.c_lib.free_integrator.argtypes = [c_void_p]
-        self.c_lib.free_integrator(self.c_integrator_ptr)
+        if hasattr(self, 'c_integrator_ptr'):
+            self.c_lib.free_integrator.restype = None
+            self.c_lib.free_integrator.argtypes = [c_void_p]
+            self.c_lib.free_integrator(self.c_integrator_ptr)
 
 class MultiIntegrator(CPPIntegrator):
     '''
@@ -194,35 +195,60 @@ class Qmc(CPPIntegrator):
         :class:`IntegralLibrary`;
         The integral to be computed with this integrator.
 
+    :param errormode:
+        string;
+        The `errormode` parameter of the Qmc, can be
+        ``"default"``, ``"all"``, and ``"largest"``.
+        ``"default"`` takes the default from the Qmc
+        library. See the Qmc docs for details on the
+        other settings.
+
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
     Qmc library is used.
 
     '''
-    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,border=0.0,maxeval=0,minn=0,minm=0,maxworkpackages=0,
-                      cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minn=0,minm=0,maxnperpackage=0,
+                      maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_integrators_Qmc.restype = c_void_p
         self.c_lib.allocate_integrators_Qmc.argtypes = [
-                                                            c_double, # epsrel
-                                                            c_double, # epsabs
-                                                            c_double, # border
-                                                            c_ulonglong, # maxeval
-                                                            c_ulonglong, # minn
-                                                            c_ulonglong, # minm
-                                                            c_ulonglong, # maxworkpackages
-                                                            c_ulonglong, # cputhreads
-                                                            c_ulonglong, # cudablocks
-                                                            c_ulonglong, # cudathreadsperblock
-                                                            c_ulonglong, # verbosity
+                                                            c_double, # epsrel,
+                                                            c_double, # epsabs,
+                                                            c_ulonglong, # maxeval,
+                                                            c_int, # errormode,
+                                                            c_ulonglong, # minn,
+                                                            c_ulonglong, # minm,
+                                                            c_ulonglong, # maxnperpackage,
+                                                            c_ulonglong, # maxmperpackage,
+                                                            c_ulonglong, # cputhreads,
+                                                            c_ulonglong, # cudablocks,
+                                                            c_ulonglong, # cudathreadsperblock,
+                                                            c_ulonglong, # verbosity,
                                                             c_longlong # seed
-                                                       ]
+                                                      ]
 
-        self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(epsrel,epsabs,border,maxeval,minn,minm,maxworkpackages,
-                                                                    cputhreads,cudablocks,cudathreadsperblock,verbosity,seed)
+        # assuming:
+        # enum ErrorMode : int
+        # {
+        #     all = 1,
+        #     largest = 2
+        # };
+        if errormode == 'default':
+            errormode_enum = 0
+        elif errormode == 'all':
+            errormode_enum = 1
+        elif errormode == 'largest':
+            errormode_enum = 2
+        else:
+            raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
 
-class CudaQmc(object): # TODO: high-level test for python interface
+        self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(epsrel,epsabs,maxeval,errormode_enum,minn,minm,
+                                                                    maxnperpackage,maxmperpackage,cputhreads,
+                                                                    cudablocks,cudathreadsperblock,verbosity,seed)
+
+class CudaQmc(object):
     '''
     Wrapper for the Qmc integrator defined in the integrators
     library for GPU use.
@@ -231,27 +257,36 @@ class CudaQmc(object): # TODO: high-level test for python interface
         :class:`IntegralLibrary`;
         The integral to be computed with this integrator.
 
+    :param errormode:
+        string;
+        The `errormode` parameter of the Qmc, can be
+        ``"default"``, ``"all"``, and ``"largest"``.
+        ``"default"`` takes the default from the Qmc
+        library. See the Qmc docs for details on the
+        other settings.
+
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
     Qmc library is used.
 
     '''
-    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,border=0.0,maxeval=0,minn=0,minm=0,maxworkpackages=0,
-                      cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minn=0,minm=0,maxnperpackage=0,
+                      maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
                         c_double, # epsrel,
                         c_double, # epsabs,
-                        c_double, # border,
                         c_ulonglong, # maxeval,
+                        c_int, # errormode,
                         c_ulonglong, # minn,
                         c_ulonglong, # minm,
-                        c_ulonglong, # maxworkpackages,
+                        c_ulonglong, # maxnperpackage,
+                        c_ulonglong, # maxmperpackage,
                         c_ulonglong, # cputhreads,
                         c_ulonglong, # cudablocks,
                         c_ulonglong, # cudathreadsperblock,
                         c_ulonglong, # verbosity,
-                        c_longlong, # seed,
+                        c_longlong, # seed
                         c_ulonglong, # number_of_devices
                         devices_t # devices[]
                    ]
@@ -259,20 +294,44 @@ class CudaQmc(object): # TODO: high-level test for python interface
         self.c_lib.allocate_cuda_integrators_Qmc_together.restype = self.c_lib.allocate_cuda_integrators_Qmc_separate.restype = c_void_p
         self.c_lib.allocate_cuda_integrators_Qmc_together.argtypes = self.c_lib.allocate_cuda_integrators_Qmc_separate.argtypes = argtypes
 
-        self.c_integrator_ptr_together = self.c_lib.allocate_cuda_integrators_Qmc_together(epsrel,epsabs,border,maxeval,minn,minm,maxworkpackages,cputhreads,
-                                                                                           cudablocks,cudathreadsperblock,verbosity,seed,len(devices),devices_t(*devices))
+        # assuming:
+        # enum ErrorMode : int
+        # {
+        #     all = 1,
+        #     largest = 2
+        # };
+        if errormode == 'default':
+            errormode_enum = 0
+        elif errormode == 'all':
+            errormode_enum = 1
+        elif errormode == 'largest':
+            errormode_enum = 2
+        else:
+            raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
 
-        self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(epsrel,epsabs,border,maxeval,minn,minm,maxworkpackages,cputhreads,
-                                                                                           cudablocks,cudathreadsperblock,verbosity,seed,len(devices),devices_t(*devices))
+        self.c_integrator_ptr_together = self.c_lib.allocate_cuda_integrators_Qmc_together(
+                                                                                               epsrel,epsabs,maxeval,errormode_enum,minn,minm,
+                                                                                               maxnperpackage,maxmperpackage,cputhreads,
+                                                                                               cudablocks,cudathreadsperblock,verbosity,
+                                                                                               seed,len(devices),devices_t(*devices)
+                                                                                          )
+        self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(
+                                                                                               epsrel,epsabs,maxeval,errormode_enum,minn,minm,
+                                                                                               maxnperpackage,maxmperpackage,cputhreads,
+                                                                                               cudablocks,cudathreadsperblock,verbosity,
+                                                                                               seed,len(devices),devices_t(*devices)
+                                                                                          )
 
     def __del__(self):
-        self.c_lib.free_cuda_together_integrator.restype = None
-        self.c_lib.free_cuda_together_integrator.argtypes = [c_void_p]
-        self.c_lib.free_cuda_together_integrator(self.c_integrator_ptr_together)
+        if hasattr(self, 'c_integrator_ptr_together'):
+            self.c_lib.free_cuda_together_integrator.restype = None
+            self.c_lib.free_cuda_together_integrator.argtypes = [c_void_p]
+            self.c_lib.free_cuda_together_integrator(self.c_integrator_ptr_together)
 
-        self.c_lib.free_cuda_separate_integrator.restype = None
-        self.c_lib.free_cuda_separate_integrator.argtypes = [c_void_p]
-        self.c_lib.free_cuda_separate_integrator(self.c_integrator_ptr_separate)
+        if hasattr(self, 'c_integrator_ptr_separate'):
+            self.c_lib.free_cuda_separate_integrator.restype = None
+            self.c_lib.free_cuda_separate_integrator.argtypes = [c_void_p]
+            self.c_lib.free_cuda_separate_integrator(self.c_integrator_ptr_separate)
 
 class IntegralLibrary(object):
     r'''

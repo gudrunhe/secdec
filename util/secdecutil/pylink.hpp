@@ -238,52 +238,59 @@ extern "C"
         SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX();
         return integrator;
     }
+    #define COMMON_ALLOCATE_QMC_ARGS \
+        double epsrel, \
+        double epsabs, \
+        unsigned long long int maxeval, \
+        int errormode, \
+        unsigned long long int minn, \
+        unsigned long long int minm, \
+        unsigned long long int maxnperpackage, \
+        unsigned long long int maxmperpackage, \
+        unsigned long long int cputhreads, \
+        unsigned long long int cudablocks, \
+        unsigned long long int cudathreadsperblock, \
+        unsigned long long int verbosity, \
+        long long int seed
+    #define SET_COMMON_QMC_ARGS \
+        /* If an argument is set to 0 then use the default of the Qmc library */ \
+        if ( epsrel != 0 ) \
+            integrator->epsrel = epsrel; \
+        if ( epsabs != 0 ) \
+            integrator->epsabs = epsabs; \
+        if ( maxeval != 0 ) \
+            integrator->maxeval = maxeval; \
+        if ( errormode != 0 ) \
+            integrator->errormode = static_cast<::integrators::ErrorMode>(errormode); \
+        if ( minn != 0 ) \
+            integrator->minn = minn; \
+        if ( minm != 0 ) \
+            integrator->minm = minm; \
+        if ( maxnperpackage != 0 ) \
+            integrator->maxnperpackage = maxnperpackage; \
+        if ( maxmperpackage != 0 ) \
+            integrator->maxmperpackage = maxmperpackage; \
+        if ( cputhreads != 0 ) \
+            integrator->cputhreads = cputhreads; \
+        if ( cudablocks != 0 ) \
+            integrator->cudablocks = cudablocks; \
+        if ( cudathreadsperblock != 0 ) \
+            integrator->cudathreadsperblock = cudathreadsperblock; \
+        if ( verbosity != 0 ) \
+            integrator->verbosity = verbosity; \
+        if ( seed != 0 ) \
+            integrator->randomgenerator.seed(seed);
     #ifdef SECDEC_WITH_CUDA
         secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> *
         allocate_cuda_integrators_Qmc_together(
-                                double epsrel,
-                                double epsabs,
-                                double border,
-                                unsigned long long int maxeval,
-                                unsigned long long int minn,
-                                unsigned long long int minm,
-                                unsigned long long int maxworkpackages,
-                                unsigned long long int cputhreads,
-                                unsigned long long int cudablocks,
-                                unsigned long long int cudathreadsperblock,
-                                unsigned long long int verbosity,
-                                long long int seed,
-                                unsigned long long int number_of_devices,
-                                int devices[]
-                            )
+                                                   COMMON_ALLOCATE_QMC_ARGS,
+                                                   unsigned long long int number_of_devices,
+                                                   int devices[]
+                                              )
         {
             auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t>;
-            // If an argument is set to 0 then use the default of the Qmc library
-            if ( epsrel != 0 )
-                integrator->epsrel = epsrel;
-            if ( epsabs != 0 )
-                integrator->epsabs = epsabs;
-            if ( border != 0 )
-                integrator->border = border;
-            if ( maxeval != 0 )
-                integrator->maxeval = maxeval;
-            if ( maxworkpackages != 0 )
-                integrator->maxworkpackages = maxworkpackages;
-            if ( cputhreads != 0 )
-                integrator->cputhreads = cputhreads;
-            if ( cudablocks != 0 )
-                integrator->cudablocks = cudablocks;
-            if ( cudathreadsperblock != 0 )
-                integrator->cudathreadsperblock = cudathreadsperblock;
-            if ( minn != 0 )
-                integrator->minn = minn;
-            if ( minm != 0 )
-                integrator->minm = minm;
-            if ( verbosity != 0 )
-                integrator->verbosity = verbosity;
-            if ( seed != 0 )
-                integrator->randomGenerator.seed(seed);
 
+            SET_COMMON_QMC_ARGS
             if (number_of_devices > 0)
             {
                 integrator->devices.clear();
@@ -295,49 +302,14 @@ extern "C"
         }
         secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> *
         allocate_cuda_integrators_Qmc_separate(
-                                double epsrel,
-                                double epsabs,
-                                double border,
-                                unsigned long long int maxeval,
-                                unsigned long long int minn,
-                                unsigned long long int minm,
-                                unsigned long long int maxworkpackages,
-                                unsigned long long int cputhreads,
-                                unsigned long long int cudablocks,
-                                unsigned long long int cudathreadsperblock,
-                                unsigned long long int verbosity,
-                                long long int seed,
-                                unsigned long long int number_of_devices,
-                                int devices[]
-                            )
+                                                   COMMON_ALLOCATE_QMC_ARGS,
+                                                   unsigned long long int number_of_devices,
+                                                   int devices[]
+                                              )
         {
             auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t>;
-            // If an argument is set to 0 then use the default of the Qmc library
-            if ( epsrel != 0 )
-                integrator->epsrel = epsrel;
-            if ( epsabs != 0 )
-                integrator->epsabs = epsabs;
-            if ( border != 0 )
-                integrator->border = border;
-            if ( maxeval != 0 )
-                integrator->maxeval = maxeval;
-            if ( maxworkpackages != 0 )
-                integrator->maxworkpackages = maxworkpackages;
-            if ( cputhreads != 0 )
-                integrator->cputhreads = cputhreads;
-            if ( cudablocks != 0 )
-                integrator->cudablocks = cudablocks;
-            if ( cudathreadsperblock != 0 )
-                integrator->cudathreadsperblock = cudathreadsperblock;
-            if ( minn != 0 )
-                integrator->minn = minn;
-            if ( minm != 0 )
-                integrator->minm = minm;
-            if ( verbosity != 0 )
-                integrator->verbosity = verbosity;
-            if ( seed != 0 )
-                integrator->randomGenerator.seed(seed);
 
+            SET_COMMON_QMC_ARGS
             if (number_of_devices > 0)
             {
                 integrator->devices.clear();
@@ -349,50 +321,15 @@ extern "C"
         }
     #else
         secdecutil::Integrator<integrand_return_t,real_t> *
-        allocate_integrators_Qmc(
-                                double epsrel,
-                                double epsabs,
-                                double border,
-                                unsigned long long int maxeval,
-                                unsigned long long int minn,
-                                unsigned long long int minm,
-                                unsigned long long int maxworkpackages,
-                                unsigned long long int cputhreads,
-                                unsigned long long int cudablocks,
-                                unsigned long long int cudathreadsperblock,
-                                unsigned long long int verbosity,
-                                long long int seed
-                            )
+        allocate_integrators_Qmc(COMMON_ALLOCATE_QMC_ARGS)
         {
             auto integrator = new secdecutil::integrators::Qmc<integrand_return_t>;
-            // If an argument is set to 0 then use the default of the Qmc library
-            if ( epsrel != 0 )
-                integrator->epsrel = epsrel;
-            if ( epsabs != 0 )
-                integrator->epsabs = epsabs;
-            if ( border != 0 )
-                integrator->border = border;
-            if ( maxeval != 0 )
-                integrator->maxeval = maxeval;
-            if ( maxworkpackages != 0 )
-                integrator->maxworkpackages = maxworkpackages;
-            if ( cputhreads != 0 )
-                integrator->cputhreads = cputhreads;
-            if ( cudablocks != 0 )
-                integrator->cudablocks = cudablocks;
-            if ( cudathreadsperblock != 0 )
-                integrator->cudathreadsperblock = cudathreadsperblock;
-            if ( minn != 0 )
-                integrator->minn = minn;
-            if ( minm != 0 )
-                integrator->minm = minm;
-            if ( verbosity != 0 )
-                integrator->verbosity = verbosity;
-            if ( seed != 0 )
-                integrator->randomGenerator.seed(seed);
+            SET_COMMON_QMC_ARGS
             return integrator;
         }
     #endif
+    #undef COMMON_ALLOCATE_QMC_ARGS
+    #undef SET_COMMON_QMC_ARGS
     void free_integrator (secdecutil::Integrator<integrand_return_t,real_t> * integrator)
     {
         delete integrator;
