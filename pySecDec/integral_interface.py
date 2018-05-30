@@ -456,28 +456,39 @@ class IntegralLibrary(object):
                 ):
         # Initialize and launch the underlying c routines in a subprocess
         # to enable KeyboardInterrupt and avoid crashing the primary python
-        # interpreter on error.
+        # interpreter on error. May crash with cuda --> don't use then.
         queue = SimpleQueue()
-        integration_process = Process(
-                                         target=self._call_implementation,
-                                         args=(
-                                                  queue, real_parameters,
-                                                  complex_parameters, together,
-                                                  number_of_presamples,
-                                                  deformation_parameters_maximum,
-                                                  deformation_parameters_minimum,
-                                                  deformation_parameters_decrease_factor
-                                              )
+        if self._cuda:
+            self._call_implementation(
+                                          queue, real_parameters,
+                                          complex_parameters, together,
+                                          number_of_presamples,
+                                          deformation_parameters_maximum,
+                                          deformation_parameters_minimum,
+                                          deformation_parameters_decrease_factor
                                      )
-        try:
-            integration_process.start()
-            result = queue.get()
-        except:
-            integration_process.terminate()
-            raise
-        finally:
-            integration_process.join()
-        return result
+            return queue.get()
+        else:
+            integration_process = Process(
+                                             target=self._call_implementation,
+                                             args=(
+                                                      queue, real_parameters,
+                                                      complex_parameters, together,
+                                                      number_of_presamples,
+                                                      deformation_parameters_maximum,
+                                                      deformation_parameters_minimum,
+                                                      deformation_parameters_decrease_factor
+                                                  )
+                                         )
+            try:
+                integration_process.start()
+                result = queue.get()
+            except:
+                integration_process.terminate()
+                raise
+            finally:
+                integration_process.join()
+            return result
 
     def _call_implementation(
                                 self, queue, real_parameters, complex_parameters, together,
