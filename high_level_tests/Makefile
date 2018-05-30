@@ -17,10 +17,6 @@ SELECTED_TESTS = regulator_in_powerlist bubble1L_dot_rank4 tadpole2L_rank2 userd
 .PHONY : runselected
 runselected : $(SELECTED_TESTS)
 
-CUDA_TESTS = bubble1L_dot_rank4_cuda one_integration_variable_cuda
-.PHONY : runselected
-runcuda : $(CUDA_TESTS)
-
 # General rule
 # ------------
 .PHONY .SILENT : $(ALL_EXAMPLES)

@@ -2,38 +2,51 @@
 
 #include <complex> // std::complex
 #include <numeric> // std::accumulate
-#include <secdecutil/integrators/integrator.hpp> // MultiIntegrator
-#include <secdecutil/integrators/cuba.hpp> // Vegas
-#include <secdecutil/integrators/cquad.hpp> // CQuad
+#include <secdecutil/integrators/qmc.hpp> // Qmc
 #include <secdecutil/deep_apply.hpp> // deep_apply
 #include <secdecutil/series.hpp> // Series
 
 #define QUOTE(ARG) #ARG
 #define QUOTE_EXPAND(ARG) QUOTE(ARG)
-#define INTEGRAL_NAME bubble1L_dot_rank4
+#define INTEGRAL_NAME one_integration_variable
 
 #include QUOTE_EXPAND(INTEGRAL_NAME.hpp)
 
-TEST_CASE( "check result", "[INTEGRAL_NAME]" ) {
+TEST_CASE( "check result with qmc", "[INTEGRAL_NAME]" ) {
 
     // User Specified Phase-space point
-    const std::vector<INTEGRAL_NAME::real_t> real_parameters = { 1.275, 1.275 };
-    const std::vector<INTEGRAL_NAME::complex_t> complex_parameters = { 30.886875, 30.886875, 123.5475 };
+    const std::vector<INTEGRAL_NAME::real_t> real_parameters = {};
+    const std::vector<INTEGRAL_NAME::complex_t> complex_parameters = {};
 
     // get the integrands
-    const auto sector_integrands = INTEGRAL_NAME::make_integrands(real_parameters, complex_parameters);
+    #ifdef SECDEC_WITH_CUDA
+        const auto sector_integrands = INTEGRAL_NAME::make_cuda_integrands(real_parameters, complex_parameters);
+    #else
+        const auto sector_integrands = INTEGRAL_NAME::make_integrands(real_parameters, complex_parameters);
+    #endif
 
     // add integrands of sectors (together flag)
-    const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
+    const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(),
+    #ifdef SECDEC_WITH_CUDA
+        INTEGRAL_NAME::cuda_together_integrand_t()+
+    #endif
+    *sector_integrands.begin() );
 
     // define and configure integrator
-    secdecutil::gsl::CQuad<INTEGRAL_NAME::integrand_return_t> cquad;
-    secdecutil::cuba::Cuhre<INTEGRAL_NAME::integrand_return_t> cuhre;
-    cuhre.maxeval = 1e7;
-    cuhre.together = true;
-    const double epsrel = 1e-4; cquad.epsrel = cuhre.epsrel = epsrel;
-    const double epsabs = 1e-7; cquad.epsabs = cuhre.epsabs = epsabs;
-    secdecutil::MultiIntegrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t> integrator(cquad,cuhre,2);
+    secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t
+    #ifdef SECDEC_WITH_CUDA
+        ,INTEGRAL_NAME::cuda_together_integrand_t
+    #endif
+    > integrator;
+    integrator.minn = 1e5;
+    integrator.devices = {-1};
+    integrator.maxeval = 1e6;
+
+    const double epsrel = 1e-11;
+    const double epsabs = 1e-10;
+    integrator.epsrel = 1e-11;
+    integrator.epsabs = 1e-10;
+    integrator.randomgenerator.seed(798431);
 
     // integrate
     auto result_without_prefactor = secdecutil::deep_apply( all_sectors,  integrator.integrate );
@@ -42,16 +55,16 @@ TEST_CASE( "check result", "[INTEGRAL_NAME]" ) {
 
 
     // target result, obtained in a long run of pySecDec
-    constexpr std::complex<double> I(0,1);
-    secdecutil::Series<std::complex<double>> target_result_with_prefactor
+    secdecutil::Series<double> target_result_with_prefactor
     (
 
         -1, // lowest order in epsilon
-         0, // highest computed order in epsilon
+         1, // highest computed order in epsilon
 
         {
-             1.0    + 0.0    * I, // eps ** -1
-            -1.2708 + 2.4179 * I, // eps **  0
+             0.0 , // eps ** -1
+            -0.5 , // eps **  0
+            -0.25, // eps **  1
         },
 
         true, // series is truncated above; i.e. "+ O(eps**2)"
@@ -71,16 +84,14 @@ TEST_CASE( "check result", "[INTEGRAL_NAME]" ) {
         std::cout << "checking order \"eps^" << order << "\" ..." << std::endl;
 
         // check that the uncertainties are reasonable
-        REQUIRE(      result_with_prefactor.at(order).uncertainty.real() <= std::abs(2*epsrel * target_result_with_prefactor.at(order).real())      );
-        if (  target_result_with_prefactor.at(order).imag() != 0.0  )
-            REQUIRE(      result_with_prefactor.at(order).uncertainty.imag() <= std::abs(2*epsrel * target_result_with_prefactor.at(order).imag())      );
+        if (  target_result_with_prefactor.at(order) != 0.0  )
+            REQUIRE(  result_with_prefactor.at(order).uncertainty <= std::abs(2*epsrel * target_result_with_prefactor.at(order))  );
 
         // check values
-        REQUIRE(  result_with_prefactor.at(order).value.real() == Approx( target_result_with_prefactor.at(order).real() ).epsilon( 10.0*epsrel )  );
-        if (  target_result_with_prefactor.at(order).imag() == 0.0  )
-            REQUIRE(  result_with_prefactor.at(order).value.imag() <= epsabs  );
+        if (  target_result_with_prefactor.at(order) == 0.0  )
+            REQUIRE(  result_with_prefactor.at(order).value <= epsabs  );
         else
-            REQUIRE(  result_with_prefactor.at(order).value.imag() == Approx( target_result_with_prefactor.at(order).imag() ).epsilon( 10.0*epsrel )  );
+            REQUIRE(  result_with_prefactor.at(order).value == Approx( target_result_with_prefactor.at(order) ).epsilon( 10.0*epsrel )  );
 
         std::cout << "----------------" << std::endl << std::endl;
     }

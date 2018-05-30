@@ -36,4 +36,12 @@ In order to change the c++ compiler or the python executable, you can set the
 environment variables CXX and PYTHON, respectively. For example, to run the
 example difference with python3 and the clang++ compiler type
 'CXX=clang++ PYTHON=python3 make difference'. The form executable can be set
-by the environment variable FORMCMD.
+by the environment variable FORM.
+
+GPU support
+-----------
+
+Some tests can run the numerical integration on GPUs using CUDA. In order to
+enable CUDA, set the environment variables 'CXX=nvcc' and
+'SECDEC_WITH_CUDA=<target compute capabilities>', see the "Building the C++
+Library" in the "Getting Started" section of the documentaion for details.
