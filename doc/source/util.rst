@@ -243,12 +243,11 @@ The quasi monte carlo integrator as described in [LWY+15]_ and references therei
     underlying standalone implementation of the Qmc.
 
 The most important fields of :cpp:class:`Qmc` are:
- * ``minn` - The minimal number of points in the Qmc lattice. Will be augmented to the next larger available ``n``.
+ * ``minn`` - The minimal number of points in the Qmc lattice. Will be augmented to the next larger available ``n``.
  * ``minm`` - The minimal number of random shifts.
  * ``maxeval`` - The maximal number of integrand evaluations.
  * ``epsrel`` - The desired relative accuracy for the numerical evaluation.
  * ``epsabs`` - The desired absolute accuracy for the numerical evaluation.
- * ``border`` - The minimal value an integration variable can take.
  * ``verbosity`` - Controls the amount of status messages during integration. Can be ``0``, ``1``, ``2``, or ``3``.
  * ``devices`` - A :cpp:class:`std::set` of devices to run on. ``-1`` denotes the CPU, positive integers refer to GPUs.
 
