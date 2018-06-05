@@ -37,12 +37,6 @@ listed :ref:`below <additional_cpp_dependencies>`. Typing
 should build all redistributed packages and display two commands
 to be added to your ``.bashrc`` or ``.profile``.
 
-.. note::
-    Parallel build with ``make -j<number-of-cores>`` causes trouble
-    on some systems. If ``make`` finished without a message starting
-    with `Successfully built "pySecDec" and its dependencies`, try
-    again without the ``-j`` option.
-
 .. _installation_normaliz:
 
 The Geomethod and Normaliz
