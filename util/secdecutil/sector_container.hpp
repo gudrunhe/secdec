@@ -358,6 +358,7 @@ namespace secdecutil {
             IntegrandFunction* host_functions[maximal_number_of_functions];
             real_t real_parameters[number_of_real_parameters];
             complex_t complex_parameters[number_of_complex_parameters];
+            bool call_get_device_functions_on_copy; // must call the slow function "get_device_functions" only after all other setup is finished
 
             // constructor
             CudaIntegrandContainerWithoutDeformation
@@ -367,10 +368,11 @@ namespace secdecutil {
                 GetDeviceIntegrandFunction *const in_get_device_functions[]=nullptr,
                 IntegrandFunction *const in_host_functions[]=nullptr,
                 real_t const*const in_real_parameters=nullptr,
-                complex_t const*const in_complex_parameters=nullptr
+                complex_t const*const in_complex_parameters=nullptr,
+                bool in_call_get_device_functions_on_copy=false
             ):
             number_of_integration_variables(number_of_integration_variables), number_of_functions(number_of_functions),
-            get_device_functions(), host_functions(), real_parameters(), complex_parameters()
+            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), call_get_device_functions_on_copy(in_call_get_device_functions_on_copy)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -383,7 +385,7 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                    get_device_functions[k] = in_get_device_functions[k];
-                   device_functions[k] = get_device_functions[k]();
+                   if(call_get_device_functions_on_copy) device_functions[k] = get_device_functions[k]();
                    host_functions[k] = in_host_functions[k];
                 }
                 if (in_real_parameters != nullptr)
@@ -406,7 +408,8 @@ namespace secdecutil {
                 other.get_device_functions,
                 other.host_functions,
                 other.real_parameters,
-                other.complex_parameters
+                other.complex_parameters,
+                other.call_get_device_functions_on_copy
             )
             {}
 
@@ -422,7 +425,7 @@ namespace secdecutil {
                       >& other
             ) :
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions),
-            get_device_functions(), host_functions(), real_parameters(), complex_parameters()
+            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -435,7 +438,7 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                    get_device_functions[k] = other.get_device_functions[k];
-                   device_functions[k] = get_device_functions[k]();
+                   if(call_get_device_functions_on_copy) device_functions[k] = get_device_functions[k]();
                    host_functions[k] = other.host_functions[k];
                 }
                 for (i=0; i<number_of_real_parameters; ++i)
@@ -484,7 +487,6 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<other.number_of_functions; ++k)
                 {
                     get_device_functions[k+offset] = other.get_device_functions[k];
-                    device_functions[k+offset] = get_device_functions[k+offset]();
                     host_functions[k+offset] = other.host_functions[k];
                 }
                 for (i=0; i<number_of_real_parameters; ++i)
@@ -536,20 +538,22 @@ namespace secdecutil {
             real_t real_parameters[number_of_real_parameters];
             complex_t complex_parameters[number_of_complex_parameters];
             real_t deformation_parameters[maximal_number_of_functions][maximal_number_of_integration_variables];
+            bool call_get_device_functions_on_copy;
 
             // constructor
             CudaIntegrandContainerWithDeformation
             (
                 unsigned number_of_integration_variables=0,
                 unsigned long long number_of_functions=0,
-                GetDeviceIntegrandFunction *const in_get_device_functions[] = nullptr,
-                IntegrandFunction *const in_host_functions[] = nullptr,
-                real_t const*const in_real_parameters = nullptr,
-                complex_t const*const in_complex_parameters = nullptr,
-                real_t const*const in_deformation_parameters[maximal_number_of_integration_variables] = nullptr
+                GetDeviceIntegrandFunction *const in_get_device_functions[]=nullptr,
+                IntegrandFunction *const in_host_functions[]=nullptr,
+                real_t const*const in_real_parameters=nullptr,
+                complex_t const*const in_complex_parameters=nullptr,
+                real_t const*const in_deformation_parameters[maximal_number_of_integration_variables]=nullptr,
+                bool in_call_get_device_functions_on_copy=false
             ):
             number_of_integration_variables(number_of_integration_variables), number_of_functions(number_of_functions),
-            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), deformation_parameters()
+            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), deformation_parameters(), call_get_device_functions_on_copy(in_call_get_device_functions_on_copy)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -562,7 +566,7 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     get_device_functions[k] = in_get_device_functions[k];
-                    device_functions[k] = get_device_functions[k]();
+                    if(call_get_device_functions_on_copy) device_functions[k] = get_device_functions[k]();
                     host_functions[k] = in_host_functions[k];
                     if (in_deformation_parameters != nullptr)
                         for (i=0; i<number_of_integration_variables; ++i)
@@ -583,7 +587,7 @@ namespace secdecutil {
                 const CudaIntegrandContainerWithDeformation& other
             ):
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions),
-            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), deformation_parameters()
+            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), deformation_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -596,7 +600,7 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     get_device_functions[k] = other.get_device_functions[k];
-                    device_functions[k] = get_device_functions[k]();
+                    if(call_get_device_functions_on_copy) device_functions[k] = get_device_functions[k]();
                     host_functions[k] = other.host_functions[k];
                     if (other.deformation_parameters != nullptr)
                         for (i=0; i<number_of_integration_variables; ++i)
@@ -623,7 +627,7 @@ namespace secdecutil {
                       >& other
             ) :
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions),
-            get_device_functions(), host_functions(), real_parameters(), complex_parameters()
+            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -636,7 +640,7 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     get_device_functions[k] = other.get_device_functions[k];
-                    device_functions[k] = get_device_functions[k]();
+                    if(call_get_device_functions_on_copy) device_functions[k] = get_device_functions[k]();
                     host_functions[k] = other.host_functions[k];
                     for (i=0; i<number_of_integration_variables; ++i)
                         deformation_parameters[k][i] = other.deformation_parameters[k][i];
@@ -688,7 +692,6 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<other.number_of_functions; ++k)
                 {
                     get_device_functions[k+offset] = other.get_device_functions[k];
-                    device_functions[k+offset] = get_device_functions[k+offset]();
                     host_functions[k+offset] = other.host_functions[k];
                     for (i=0; i<other.number_of_integration_variables; ++i)
                         deformation_parameters[k+offset][i] = other.deformation_parameters[k][i];

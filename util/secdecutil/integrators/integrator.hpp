@@ -24,6 +24,7 @@
 #include <complex>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
 #include <secdecutil/integrand_container.hpp>
 #include <secdecutil/uncertainties.hpp>
 
@@ -33,6 +34,35 @@ namespace secdecutil
   template<typename return_t, typename input_t, typename container_t = secdecutil::IntegrandContainer<return_t, input_t const * const>> // TODO: cuda example
   struct Integrator
   {
+  private:
+    // taken from https://stackoverflow.com/questions/1005476/how-to-detect-whether-there-is-a-specific-member-variable-in-class
+    template <typename T, typename = int> struct has_call_get_device_functions_on_copy : std::false_type { };
+    template <typename T> struct has_call_get_device_functions_on_copy <T, decltype((void) T::call_get_device_functions_on_copy, 0)> : std::true_type { };
+
+    template<typename container_t_in_getter>
+    typename std::enable_if<has_call_get_device_functions_on_copy<container_t_in_getter>::value, std::function<secdecutil::UncorrelatedDeviation<return_t>(const container_t_in_getter&)>>::type
+    get_integrate_getter(void)
+      {
+        return
+          [ this ] (const container_t_in_getter& integrand_container)
+          {
+            container_t_in_getter copy_of_integrand_container = integrand_container;
+            copy_of_integrand_container.call_get_device_functions_on_copy = true;
+            return get_integrate()(copy_of_integrand_container);
+          };
+      }
+
+    template<typename container_t_in_getter>
+    typename std::enable_if<not has_call_get_device_functions_on_copy<container_t_in_getter>::value, std::function<secdecutil::UncorrelatedDeviation<return_t>(const container_t_in_getter&)>>::type
+    get_integrate_getter(void)
+      {
+        return
+          [ this ] (const container_t_in_getter& integrand_container)
+          {
+            return get_integrate()(integrand_container);
+          };
+      }
+
   protected:
     virtual std::function<secdecutil::UncorrelatedDeviation<return_t>
       (const container_t&)>
@@ -44,13 +74,8 @@ namespace secdecutil
       integrate;
 
     Integrator() :
-    integrate
-    (
-      [ this ] (const container_t& integrand_container)
-      {
-          return get_integrate()(integrand_container);
-      }
-    ) {};
+    integrate(  get_integrate_getter<container_t>()  )
+    {};
 
   virtual ~Integrator() = default;
 
@@ -115,6 +140,54 @@ namespace secdecutil
   template<typename return_t, typename input_t, typename container_t> \
   struct Integrator<complex_template<return_t>, input_t, container_t> \
   { \
+  private: \
+    /* taken from https://stackoverflow.com/questions/1005476/how-to-detect-whether-there-is-a-specific-member-variable-in-class */ \
+    template <typename T, typename = int> struct has_call_get_device_functions_on_copy : std::false_type { }; \
+    template <typename T> struct has_call_get_device_functions_on_copy <T, decltype((void) T::call_get_device_functions_on_copy, 0)> : std::true_type { }; \
+ \
+    template<typename container_t_in_getter> \
+    typename std::enable_if<has_call_get_device_functions_on_copy<container_t_in_getter>::value, std::function<secdecutil::UncorrelatedDeviation<complex_template<return_t>>(const container_t_in_getter&)>>::type \
+    get_integrate_getter(void) \
+      { \
+        return \
+        [ this ] (const container_t_in_getter& integrand_container) \
+          { \
+            if (together) { \
+ \
+              container_t_in_getter copy_of_integrand_container = integrand_container; \
+              copy_of_integrand_container.call_get_device_functions_on_copy = true; \
+              return get_together_integrate()(copy_of_integrand_container); \
+ \
+            } else { \
+ \
+              throw std::runtime_error("Simultaneous integration of real and imaginary part is not implemented for this integrator. Try \"together = false\"."); \
+ \
+            } \
+          }; \
+      } \
+ \
+    template<typename container_t_in_getter> \
+    typename std::enable_if< \
+      not has_call_get_device_functions_on_copy<container_t_in_getter>::value, \
+      std::function<secdecutil::UncorrelatedDeviation<complex_template<return_t> \
+    >(const container_t_in_getter&)>>::type \
+    get_integrate_getter(void) \
+      { \
+        return \
+        [ this ] (const container_t& integrand_container) \
+          { \
+            if (together) { \
+ \
+              return get_together_integrate()(integrand_container); \
+ \
+            } else { \
+ \
+              throw std::runtime_error("Simultaneous integration of real and imaginary part is not implemented for this integrator. Try \"together = false\"."); \
+ \
+            } \
+          }; \
+      } \
+ \
   protected: \
     virtual std::function<secdecutil::UncorrelatedDeviation<complex_template<return_t>> \
       (const container_t&)> \
@@ -138,21 +211,8 @@ namespace secdecutil
  \
     Integrator() : \
     together(false), \
-    integrate \
-    ( \
-      [ this ] (const container_t& integrand_container) \
-      { \
-        if (together) { \
- \
-          return get_together_integrate()(integrand_container); \
- \
-        } else { \
- \
-          throw std::runtime_error("Simultaneous integration of real and imaginary part is not implemented for this integrator. Try \"together = false\"."); \
- \
-        } \
-      } \
-    ) {}; \
+    integrate( get_integrate_getter<container_t>() ) \
+    {}; \
  \
     virtual ~Integrator() = default; \
  \
