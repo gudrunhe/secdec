@@ -38,7 +38,7 @@ real_parameters = Mandelstam_symbols + mass_symbols,
 requested_order = 1,
 
 # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
-form_optimization_level = 2,
+form_optimization_level = 4,
 
 # the WorkSpace parameter for FORM
 form_work_space = '100M',
@@ -53,8 +53,9 @@ decomposition_method = 'geometric',
 
 contour_deformation = False,
 
-# there are no symmetries to be found by dreadnaut
+# there are no symmetries
 use_dreadnaut = False,
+use_Pak = False,
 
 )
 
