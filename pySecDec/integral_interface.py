@@ -203,6 +203,17 @@ class Qmc(CPPIntegrator):
         library. See the Qmc docs for details on the
         other settings.
 
+    :param transform:
+        string;
+        An integral transform related to the `integral_transform`
+        parameter of the Qmc. The possible choices
+        correspond to the integral transforms of the
+        underlying Qmc implementation. Possible values
+        are ``"default"``, ``"trivial"``, ``"tent"``, and
+        ``"korobov#"``, where ``#`` (the rank of the
+        Korobov transform) must be an integer between
+        1 and 10.
+
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
     Qmc library is used.
@@ -305,6 +316,17 @@ class CudaQmc(object):
         ``"default"`` takes the default from the Qmc
         library. See the Qmc docs for details on the
         other settings.
+
+    :param transform:
+        string;
+        An integral transform related to the `integral_transform`
+        parameter of the Qmc. The possible choices
+        correspond to the integral transforms of the
+        underlying Qmc implementation. Possible values
+        are ``"default"``, ``"trivial"``, ``"tent"``, and
+        ``"korobov#"``, where ``#`` (the rank of the
+        Korobov transform) must be an integer between
+        1 and 10.
 
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the

@@ -22,7 +22,7 @@ LDFLAGS =
 else
 LDFLAGS = -L$(SECDEC_CONTRIB)/lib
 endif
-LDFLAGS += -L$(TOPDIR) -lcuba -lgsl -lgslcblas -lm
+LDFLAGS += -pthread -L$(TOPDIR) -lcuba -lgsl -lgslcblas -lm
 
 .PHONY: clean doctest $(TESTS)
 

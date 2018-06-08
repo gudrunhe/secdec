@@ -14,7 +14,7 @@
 
 namespace secdecutil
 {
-    namespace integrators { // TODO: add to manual how to change transform
+    namespace integrators {
 
         template<typename return_t, typename container_t = secdecutil::IntegrandContainer<return_t, return_t const * const>, typename transform_t = void>
         struct Qmc : Integrator<return_t,return_t,container_t>, public ::integrators::Qmc<return_t,return_t>

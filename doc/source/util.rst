@@ -237,7 +237,7 @@ Qmc
 
 The quasi monte carlo integrator as described in [LWY+15]_ and references therein.
 
-.. cpp:class:: template <typename return_t, typename container_t = secdecutil::IntegrandContainer<return_t, return_t const * const>> Qmc
+.. cpp:class:: template <typename return_t, typename container_t = secdecutil::IntegrandContainer<return_t, return_t const * const>, typename transform_t = void> Qmc
 
     Derived from :cpp:class:`secdecutil::Integrator` and :cpp:class:`::integrators::Qmc` - the
     underlying standalone implementation of the Qmc.
@@ -252,6 +252,9 @@ The most important fields of :cpp:class:`Qmc` are:
  * ``devices`` - A :cpp:class:`std::set` of devices to run on. ``-1`` denotes the CPU, positive integers refer to GPUs.
 
 Refer to the documentation of the standalone Qmc for the default values and additional information.
+
+Set the type :cpp:type:`transform_t` to use a specific integral transform rather than the default of the
+underlying implementation. :ref:`An example is shown below<example_set_qmc_transform_cpp>`.
 
 .. cpp:namespace:: secdecutil
 
@@ -351,4 +354,23 @@ Compile/Run:
 Output:
 
 .. literalinclude:: cpp_doctest/integrator_doctest_Vegas_CQuad.txt
+   :language: sh
+
+Set the integral transform of the Qmc
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _example_set_qmc_transform_cpp:
+
+Example:
+
+.. literalinclude:: cpp_doctest/integrator_doctest_set_transform_qmc.cpp
+   :language: cpp
+
+Compile/Run:
+
+.. literalinclude:: cpp_doctest/compile_and_run_set_transform_qmc.txt
+
+Output:
+
+.. literalinclude:: cpp_doctest/integrator_doctest_set_transform_qmc.txt
    :language: sh
