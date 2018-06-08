@@ -251,7 +251,8 @@ extern "C"
         unsigned long long int cudablocks, \
         unsigned long long int cudathreadsperblock, \
         unsigned long long int verbosity, \
-        long long int seed
+        long long int seed, \
+        int transform_id
     #define SET_COMMON_QMC_ARGS \
         /* If an argument is set to 0 then use the default of the Qmc library */ \
         if ( epsrel != 0 ) \
@@ -280,6 +281,34 @@ extern "C"
             integrator->verbosity = verbosity; \
         if ( seed != 0 ) \
             integrator->randomgenerator.seed(seed);
+    #define SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+            SET_COMMON_QMC_ARGS \
+            if (number_of_devices > 0) \
+            { \
+                integrator->devices.clear(); \
+                for (int i = 0; i < number_of_devices; ++i) \
+                    integrator->devices.insert( devices[i] ); \
+            } \
+            return integrator;
+    enum qmc_transform_t : int
+    {
+        default_transform = 0,
+
+        trivial = -1,
+
+        tent = -2,
+
+        korobov1 = 1,
+        korobov2 = 2,
+        korobov3 = 3,
+        korobov4 = 4,
+        korobov5 = 5,
+        korobov6 = 6,
+        korobov7 = 7,
+        korobov8 = 8,
+        korobov9 = 9,
+        korobov10 = 10
+    };
     #ifdef SECDEC_WITH_CUDA
         secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> *
         allocate_cuda_integrators_Qmc_together(
@@ -288,17 +317,31 @@ extern "C"
                                                    int devices[]
                                               )
         {
-            auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t>;
+            if (transform_id == default_transform) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t>;
+                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
 
-            SET_COMMON_QMC_ARGS
-            if (number_of_devices > 0)
-            {
-                integrator->devices.clear();
-                for (int i = 0; i < number_of_devices; ++i)
-                    integrator->devices.insert( devices[i] );
+            } else if (transform_id == trivial) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t,::integrators::transforms::Trivial<real_t, long long int>>;
+                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+
+            } else if (transform_id == tent) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t,::integrators::transforms::Tent<real_t, long long int>>;
+                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+
+            #define CASE_KOROBOV(KOROBOVDEGREE) \
+                } else if (transform_id == korobov##KOROBOVDEGREE) { \
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t, \
+                        ::integrators::transforms::Korobov<real_t, long long int, KOROBOVDEGREE>>; \
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+
+            CASE_KOROBOV(1) CASE_KOROBOV(2) CASE_KOROBOV(3) CASE_KOROBOV(4) CASE_KOROBOV(5) CASE_KOROBOV(6) CASE_KOROBOV(7) CASE_KOROBOV(8) CASE_KOROBOV(9) CASE_KOROBOV(10)
+
+            #undef CASE_KOROBOV
+
+            } else {
+                throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + ").");
             }
-
-            return integrator;
         }
         secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> *
         allocate_cuda_integrators_Qmc_separate(
@@ -307,29 +350,70 @@ extern "C"
                                                    int devices[]
                                               )
         {
-            auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t>;
+            if (transform_id == default_transform) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t>;
+                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
 
-            SET_COMMON_QMC_ARGS
-            if (number_of_devices > 0)
-            {
-                integrator->devices.clear();
-                for (int i = 0; i < number_of_devices; ++i)
-                    integrator->devices.insert( devices[i] );
+            } else if (transform_id == trivial) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t,::integrators::transforms::Trivial<real_t, long long int>>;
+                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+
+            } else if (transform_id == tent) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t,::integrators::transforms::Tent<real_t, long long int>>;
+                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+
+            #define CASE_KOROBOV(KOROBOVDEGREE) \
+                } else if (transform_id == korobov##KOROBOVDEGREE) { \
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t, \
+                        ::integrators::transforms::Korobov<real_t, long long int, KOROBOVDEGREE>>; \
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+
+            CASE_KOROBOV(1) CASE_KOROBOV(2) CASE_KOROBOV(3) CASE_KOROBOV(4) CASE_KOROBOV(5) CASE_KOROBOV(6) CASE_KOROBOV(7) CASE_KOROBOV(8) CASE_KOROBOV(9) CASE_KOROBOV(10)
+
+            #undef CASE_KOROBOV
+
+            } else {
+                throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + ").");
             }
-
-            return integrator;
         }
     #else
         secdecutil::Integrator<integrand_return_t,real_t> *
         allocate_integrators_Qmc(COMMON_ALLOCATE_QMC_ARGS)
         {
-            auto integrator = new secdecutil::integrators::Qmc<integrand_return_t>;
-            SET_COMMON_QMC_ARGS
-            return integrator;
+            if (transform_id == default_transform) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t>;
+                SET_COMMON_QMC_ARGS
+                return integrator;
+
+            } else if (transform_id == trivial) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,secdec_integrand_t,::integrators::transforms::Trivial<real_t, long long int>>;
+                SET_COMMON_QMC_ARGS
+                return integrator;
+
+            } else if (transform_id == tent) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,secdec_integrand_t,::integrators::transforms::Tent<real_t, long long int>>;
+                SET_COMMON_QMC_ARGS
+                return integrator;
+
+            #define CASE_KOROBOV(KOROBOVDEGREE) \
+                } else if (transform_id == korobov##KOROBOVDEGREE) { \
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,secdec_integrand_t, \
+                        ::integrators::transforms::Korobov<real_t, long long int, KOROBOVDEGREE>>; \
+                    SET_COMMON_QMC_ARGS \
+                    return integrator;
+
+            CASE_KOROBOV(1) CASE_KOROBOV(2) CASE_KOROBOV(3) CASE_KOROBOV(4) CASE_KOROBOV(5) CASE_KOROBOV(6) CASE_KOROBOV(7) CASE_KOROBOV(8) CASE_KOROBOV(9) CASE_KOROBOV(10)
+
+            #undef CASE_KOROBOV
+
+            } else {
+                throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + ").");
+            }
         }
     #endif
     #undef COMMON_ALLOCATE_QMC_ARGS
     #undef SET_COMMON_QMC_ARGS
+    #undef SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
     void free_integrator (secdecutil::Integrator<integrand_return_t,real_t> * integrator)
     {
         delete integrator;

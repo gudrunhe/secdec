@@ -209,24 +209,25 @@ class Qmc(CPPIntegrator):
 
     '''
     def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minn=0,minm=0,maxnperpackage=0,
-                      maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,transform='default',devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_integrators_Qmc.restype = c_void_p
         self.c_lib.allocate_integrators_Qmc.argtypes = [
-                                                            c_double, # epsrel,
-                                                            c_double, # epsabs,
-                                                            c_ulonglong, # maxeval,
-                                                            c_int, # errormode,
-                                                            c_ulonglong, # minn,
-                                                            c_ulonglong, # minm,
-                                                            c_ulonglong, # maxnperpackage,
-                                                            c_ulonglong, # maxmperpackage,
-                                                            c_ulonglong, # cputhreads,
-                                                            c_ulonglong, # cudablocks,
-                                                            c_ulonglong, # cudathreadsperblock,
-                                                            c_ulonglong, # verbosity,
-                                                            c_longlong # seed
+                                                            c_double, # epsrel
+                                                            c_double, # epsabs
+                                                            c_ulonglong, # maxeval
+                                                            c_int, # errormode
+                                                            c_ulonglong, # minn
+                                                            c_ulonglong, # minm
+                                                            c_ulonglong, # maxnperpackage
+                                                            c_ulonglong, # maxmperpackage
+                                                            c_ulonglong, # cputhreads
+                                                            c_ulonglong, # cudablocks
+                                                            c_ulonglong, # cudathreadsperblock
+                                                            c_ulonglong, # verbosity
+                                                            c_longlong, # seed
+                                                            c_int, # transform_id
                                                       ]
 
         # assuming:
@@ -244,9 +245,49 @@ class Qmc(CPPIntegrator):
         else:
             raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
 
+        # assuming
+        # enum qmc_transform_t : int
+        # {
+        #     default_transform = 0,
+        #
+        #     trivial = -1,
+        #
+        #     tent = -2,
+        #
+        #     korobov1 = 1,
+        #     korobov2 = 2,
+        #     korobov3 = 3,
+        #     korobov4 = 4,
+        #     korobov5 = 5,
+        #     korobov6 = 6,
+        #     korobov7 = 7,
+        #     korobov8 = 8,
+        #     korobov9 = 9,
+        #     korobov10 = 10
+        # }
+        known_transforms = dict(
+            default = 0, # "default" is a keyword and cannot be used in the underlying c++
+
+            trivial = -1,
+
+            tent = -2,
+
+            korobov1 = 1,
+            korobov2 = 2,
+            korobov3 = 3,
+            korobov4 = 4,
+            korobov5 = 5,
+            korobov6 = 6,
+            korobov7 = 7,
+            korobov8 = 8,
+            korobov9 = 9,
+            korobov10 = 10
+        )
+
         self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(epsrel,epsabs,maxeval,errormode_enum,minn,minm,
                                                                     maxnperpackage,maxmperpackage,cputhreads,
-                                                                    cudablocks,cudathreadsperblock,verbosity,seed)
+                                                                    cudablocks,cudathreadsperblock,verbosity,
+                                                                    seed,known_transforms[str(transform).lower()])
 
 class CudaQmc(object):
     '''
@@ -271,22 +312,23 @@ class CudaQmc(object):
 
     '''
     def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minn=0,minm=0,maxnperpackage=0,
-                      maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,transform='default',devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
-                        c_double, # epsrel,
-                        c_double, # epsabs,
-                        c_ulonglong, # maxeval,
-                        c_int, # errormode,
-                        c_ulonglong, # minn,
-                        c_ulonglong, # minm,
-                        c_ulonglong, # maxnperpackage,
-                        c_ulonglong, # maxmperpackage,
-                        c_ulonglong, # cputhreads,
-                        c_ulonglong, # cudablocks,
-                        c_ulonglong, # cudathreadsperblock,
-                        c_ulonglong, # verbosity,
+                        c_double, # epsrel
+                        c_double, # epsabs
+                        c_ulonglong, # maxeval
+                        c_int, # errormode
+                        c_ulonglong, # minn
+                        c_ulonglong, # minm
+                        c_ulonglong, # maxnperpackage
+                        c_ulonglong, # maxmperpackage
+                        c_ulonglong, # cputhreads
+                        c_ulonglong, # cudablocks
+                        c_ulonglong, # cudathreadsperblock
+                        c_ulonglong, # verbosity
                         c_longlong, # seed
+                        c_int, # transform_id
                         c_ulonglong, # number_of_devices
                         devices_t # devices[]
                    ]
@@ -309,17 +351,58 @@ class CudaQmc(object):
         else:
             raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
 
+        # assuming
+        # enum qmc_transform_t : int
+        # {
+        #     default_transform = 0,
+        #
+        #     trivial = -1,
+        #
+        #     tent = -2,
+        #
+        #     korobov1 = 1,
+        #     korobov2 = 2,
+        #     korobov3 = 3,
+        #     korobov4 = 4,
+        #     korobov5 = 5,
+        #     korobov6 = 6,
+        #     korobov7 = 7,
+        #     korobov8 = 8,
+        #     korobov9 = 9,
+        #     korobov10 = 10
+        # }
+        known_transforms = dict(
+            default = 0,
+
+            trivial = -1,
+
+            tent = -2,
+
+            korobov1 = 1,
+            korobov2 = 2,
+            korobov3 = 3,
+            korobov4 = 4,
+            korobov5 = 5,
+            korobov6 = 6,
+            korobov7 = 7,
+            korobov8 = 8,
+            korobov9 = 9,
+            korobov10 = 10
+        )
+
         self.c_integrator_ptr_together = self.c_lib.allocate_cuda_integrators_Qmc_together(
                                                                                                epsrel,epsabs,maxeval,errormode_enum,minn,minm,
                                                                                                maxnperpackage,maxmperpackage,cputhreads,
                                                                                                cudablocks,cudathreadsperblock,verbosity,
-                                                                                               seed,len(devices),devices_t(*devices)
+                                                                                               seed,known_transforms[str(transform).lower()],len(devices),
+                                                                                               devices_t(*devices)
                                                                                           )
         self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(
                                                                                                epsrel,epsabs,maxeval,errormode_enum,minn,minm,
                                                                                                maxnperpackage,maxmperpackage,cputhreads,
                                                                                                cudablocks,cudathreadsperblock,verbosity,
-                                                                                               seed,len(devices),devices_t(*devices)
+                                                                                               seed,known_transforms[str(transform).lower()],len(devices),
+                                                                                               devices_t(*devices)
                                                                                           )
 
     def __del__(self):
