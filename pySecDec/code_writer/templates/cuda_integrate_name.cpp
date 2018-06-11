@@ -1,18 +1,12 @@
-#include <iostream>
-#include <stdexcept>
-#include <vector>
-#include <cstdint>
+#include <iostream> // std::cout
 #include <numeric> // std::accumulate
-#include <functional> // std::bind
-#include <type_traits> // std::remove_const
-#include <typeinfo>
+#include <vector> // std::vector
 
-#include <secdecutil/integrators/qmc.hpp> // Qmc
-#include <secdecutil/series.hpp> // Series
-#include <secdecutil/uncertainties.hpp> // UncorrelatedDeviation
-#include <secdecutil/sector_container.hpp> // SectorContainer to IntegrandContainer
-#include <secdecutil/integrand_container.hpp> // IntegrandContainer
-#include <secdecutil/deep_apply.hpp> // deep_apply
+#include <secdecutil/integrators/cuba.hpp> // secdecutil::cuba::Vegas, secdecutil::cuba::Suave, secdecutil::cuba::Cuhre, secdecutil::cuba::Divonne
+#include <secdecutil/integrators/qmc.hpp> // secdecutil::integrators::Qmc
+#include <secdecutil/series.hpp> // secdecutil::Series
+#include <secdecutil/uncertainties.hpp> // secdecutil::UncorrelatedDeviation
+#include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
 
 #include "%(name)s.hpp"
 
