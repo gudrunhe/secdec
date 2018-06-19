@@ -306,8 +306,6 @@ def expand_sympy(expression, variables, orders):
         variable = variables[index]
         order = orders[index]
 
-        sympy_expansion = sp.series(expression, variable, n=None)
-
         # get the lowest term
         expansion_generator = sp.series(expression, variable, n=None)
         lowest_order_term = next(expansion_generator)
@@ -315,13 +313,12 @@ def expand_sympy(expression, variables, orders):
         # find out how many more terms are required:
         #   -> step1: get the order of the lowest term
         #      try conversion to sympy polynomial --> fails for pole
+        lowest_order_variable_only = (lowest_order_term/lowest_order_term.subs(variable,1)).cancel()
         try:
-            lowest_order_term = sp.poly(lowest_order_term, variable)
-            lowest_order = lowest_order_term.monoms()[0][0]
+            lowest_order = sp.poly(lowest_order_variable_only, variable).monoms()[0][0]
         except sp.PolynomialError:
             # pole --> convert the inverse to polynomial
-            highest_pole = sp.poly(lowest_order_term**-1, variable)
-            lowest_order = - highest_pole.monoms()[0][0]
+            lowest_order = - sp.poly(1/lowest_order_variable_only, variable).monoms()[0][0]
 
         #   -> step2: compute how many orders lie between the lowest and the requested order
         number_of_remaining_orders = order - lowest_order
@@ -332,22 +329,23 @@ def expand_sympy(expression, variables, orders):
 
         # compute the remaining terms
         coeffs = []
-        next_term = lowest_order_term
+        current_term = lowest_order_term
         current_order = lowest_order
         truncated = True
         while current_order <= order:
-            coeffs.append( (next_term/variable**(current_order)).expand() )
+            coeffs.append( (current_term/variable**(current_order)).expand() )
             current_order += 1
             try:
-                next_term = next(expansion_generator)
+                current_term = next(expansion_generator)
             except StopIteration:
                 # all higher orders are exactly zero
                 truncated = False
                 break
+            current_term_variable_only = (current_term/current_term.subs(variable,1)).cancel()
             try:
-                current_term_order = sp.poly(next_term, variable).monoms()[0][0]
+                current_term_order = sp.poly(current_term_variable_only, variable).monoms()[0][0]
             except sp.PolynomialError:
-                current_term_order = -sp.poly(next_term**-1, variable).monoms()[0][0]
+                current_term_order = -sp.poly(1/current_term_variable_only, variable).monoms()[0][0]
             # if some intermediate orders are zero, append zeros to the expansion
             while current_order < current_term_order and current_order <= order:
                 coeffs.append(_sympy_zero)

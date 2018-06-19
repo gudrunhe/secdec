@@ -10,7 +10,6 @@ AUTOTOOLS_PACKAGES = Cuba form gsl secdecutil
 # the distributed version of pySecDec
 PYSECDEC_VERSION = $(patsubst pySecDec-%.tar.gz,%,$(wildcard pySecDec-*.tar.gz))
 
-
 .PHONY : clean $(AUTOTOOLS_PACKAGES) pySecDec nauty qmc
 
 .PHONY .SILENT : install
