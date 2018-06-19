@@ -201,7 +201,7 @@ install:
   - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then make thin-dist; else make dist; fi
   - mv pySecDec-*/ dist_install
   - cd dist_install
-  - make
+  - make -j4
   - mv pySecDec-*/ pySecDec_install/
   - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/normaliz-${NORMALIZ_VERSION}MacOs.zip -o normaliz.zip; else curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/normaliz-${NORMALIZ_VERSION}Linux64.zip -o normaliz.zip; fi
   - unzip normaliz.zip
@@ -209,7 +209,7 @@ install:
   - cd ..
 
 script:
-  - nosetests
-  - make util-check
-  - make doctest
-  - make -C high_level_tests runselected && make -C high_level_tests summarize-selected
+  - nosetests --processes=4 --process-timeout=600
+  - make util-check -j4
+  - make doctest -j4
+  - make -C high_level_tests runselected -j4 && make -C high_level_tests summarize-selected
