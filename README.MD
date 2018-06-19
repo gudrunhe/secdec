@@ -185,8 +185,7 @@ checked out in the git repository. The following steps should be seen as a guide
 
 3) Unpack the tarball to a location OUTSIDE of the repository.
 
-4) Run "make" in the directory with the unpacked tarball. Note that makes's "-j" option sometimes causes problems.
-   If you don't see a success message after running "make -j<jmake>", rerun without the "-j" option.
+4) Run "make" in the directory with the unpacked tarball.
 
 5) The success message tells you two environment variables to be set in the ".profile"/".bashrc". Set SECDEC_CONTRIB
    as shown in the message, but set PYTHONPATH to the root directory of the git repository. With that, python will
