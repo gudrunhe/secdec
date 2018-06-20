@@ -1,5 +1,3 @@
-"""Unit tests for the algebra module"""
-
 from __future__ import print_function
 from .matrix_sort import *
 import unittest

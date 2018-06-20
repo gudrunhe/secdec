@@ -1,5 +1,3 @@
-"""Unit tests for the miscellaneous routines"""
-
 from .misc import *
 from .algebra import Polynomial
 from multiprocessing import Pool

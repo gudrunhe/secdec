@@ -1,5 +1,3 @@
-"""Unit tests for the template parser module"""
-
 from __future__ import print_function
 from .make_package import *
 from .make_package import _convert_input, _make_FORM_definition, \

@@ -1,5 +1,3 @@
-"""Unit tests for the subtraction routines"""
-
 from .subtraction import *
 from .algebra import *
 import sympy as sp

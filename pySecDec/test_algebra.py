@@ -1,5 +1,3 @@
-"""Unit tests for the algebra module"""
-
 from .algebra import *
 from .algebra import _Expression
 import sympy as sp

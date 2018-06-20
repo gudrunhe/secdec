@@ -1,5 +1,3 @@
-"""Unit tests for the Polynomial container class"""
-
 from .geometric import *
 from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial

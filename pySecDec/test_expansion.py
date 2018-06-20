@@ -1,5 +1,3 @@
-"""Unit tests for the expansion routines"""
-
 from .expansion import *
 from .expansion import _expand_singular_step, _expand_Taylor_step
 from .algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial, Product, Sum, _Expression

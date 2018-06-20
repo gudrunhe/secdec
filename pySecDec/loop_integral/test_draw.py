@@ -1,5 +1,3 @@
-"""Unit tests for the U, F, and numerator construction routines"""
-
 from .draw import *
 from nose.plugins.attrib import attr
 import sys, os
