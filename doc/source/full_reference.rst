@@ -9,6 +9,9 @@ This section describes all public functions and classes in `pySecDec`.
 .. automodule:: pySecDec.loop_integral
     :members:
 
+.. automodule:: pySecDec.polytope
+    :members:
+
 .. automodule:: pySecDec.decomposition
     :members:
 
