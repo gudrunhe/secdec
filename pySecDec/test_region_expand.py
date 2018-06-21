@@ -80,3 +80,59 @@ class TestExpansionByRegions(unittest.TestCase):
         exp_param = 'r'
 
         regions = list(apply_regions( exp_param, sector, workdir = 'tmpdir_test_apply_regions_python' + python_major_version ))
+
+    #@attr('active')
+    def test_derivative_product_1(self):
+        p1 = lambda expo: ExponentiatedPolynomial([[1,0,0,0],[0,2,0,0]],['a','b'],expo,['x','y','p1','p2'])
+        p2 = lambda expo: ExponentiatedPolynomial([[1,2,0,0],[1,1,0,0]],['c','d'],expo,['x','y','p1','p2'])
+        numerator = Polynomial([[1,2,1,1]],['e'],['x','y','p1','p2'])
+        target_numerator = sp.sympify('e*y^2*p1*p2*(4*a*x*p2 + p1*(3*x*y*(d + c*y) + p2))')
+        derive_prod_output = sp.sympify(derive_prod([p1(3),p2(2)],numerator,0,[2,3]))
+
+        self.assertEqual(len(derive_prod_output[0]), 2)
+        self.assertEqual(sp.sympify(derive_prod_output[0][0]-p1(2)).simplify(), 0)
+        self.assertEqual(sp.sympify(derive_prod_output[0][1]-p2(1)).simplify(), 0)
+        self.assertEqual(sp.sympify(derive_prod_output[1]-target_numerator).simplify(), 0)
+
+    #@attr('active')
+    def test_derivative_product_2(self):
+        p1 = lambda expo: ExponentiatedPolynomial([[1,2,0,0,0]],['a'],expo,['x','y','p1','p2','p3'])
+        p2 = lambda expo: ExponentiatedPolynomial([[3,2,0,0,0],[1,1,0,0,0]],['b','c'],expo,['x','y','p1','p2','p3'])
+        p3 = lambda expo: ExponentiatedPolynomial([[2,2,0,0,0],[1,1,0,0,0]],['d','e'],expo,['x','y','p1','p2','p3'])
+        numerator = Polynomial([[1,2,2,1,1]],['f'],['x','y','p1','p2','p3'])
+        target_numerator = sp.sympify('f*x*y*p1^2*p2*p3*(10*a*x*y^2*p2*p3 + p1*(3*x*y*(c + 2*b*x^2*y)*p3 + p2*(3*x*y*(e + 2*d*x*y) +2*p3)))')
+
+        derive_prod_output = sp.sympify(derive_prod([p1(3),p2(2),p3(2)],numerator,1,[2,3,4]))
+
+        self.assertEqual(len(derive_prod_output[0]), 3)
+        self.assertEqual(sp.sympify(derive_prod_output[0][0]-p1(2)).simplify(), 0)
+        self.assertEqual(sp.sympify(derive_prod_output[0][1]-p2(1)).simplify(), 0)
+        self.assertEqual(sp.sympify(derive_prod_output[0][2]-p3(1)).simplify(), 0)
+        self.assertEqual(sp.sympify(derive_prod_output[1]-target_numerator).simplify(), 0)
+
+    #@attr('active')
+    def test_derivative_product_3(self):
+        p1 = lambda expo: ExponentiatedPolynomial([[1,0,0,0],[0,2,0,0]],['a','b'],expo,['x','y','p1','p2'])
+        p2 = lambda expo: ExponentiatedPolynomial([[1,2,0,0],[1,1,0,0]],['c','d'],expo,['x','y','p1','p2'])
+        numerator = Polynomial([[1,2,1,1]],['e'],['x','y','p1','p2'])
+        target_numerator = sp.sympify('e*y^2*p1*p2*(2*a*x*p2 + p1*(2*x*y*(d + c*y) + p2))')
+
+        derive_prod_output = sp.sympify(derive_prod([p1(1),p2(1)],numerator,0,[2,3]))
+
+        self.assertEqual(len(derive_prod_output[0]), 2)
+        self.assertEqual(sp.sympify(derive_prod_output[0][0]-p1(0)).simplify(), 0)
+        self.assertEqual(sp.sympify(derive_prod_output[0][1]-p2(0)).simplify(), 0)
+        self.assertEqual(sp.sympify(derive_prod_output[1]-target_numerator).simplify(), 0)
+
+    #@attr('active')
+    def test_derivative_product_exponent_eps(self):
+        p1 = lambda expo: ExponentiatedPolynomial([[1,0,0,0],[0,2,0,0]],['a','b'],expo,['x','y','p1','p2'])
+        p2 = lambda expo: ExponentiatedPolynomial([[1,2,0,0],[1,1,0,0]],['c','d'],expo,['x','y','p1','p2'])
+        numerator = Polynomial([[1,2,0,0]],['e'],['x','y','p1','p2'])
+        target_numerator = sp.sympify('e*y^2*(-(a*(-3 + eps)*x*p2) + p1*(-((-4 + eps)*x*y*(d + c*y)) +p2))')
+
+        poly_list, numerator = sp.sympify(derive_prod([p1('3-eps'),p2('4-eps')],numerator,0,[2,3]))
+
+        self.assertEqual(sp.sympify(poly_list[0]-p1('2-eps')).simplify(), 0)
+        self.assertEqual(sp.sympify(poly_list[1]-p2('3-eps')).simplify(), 0)
+        self.assertEqual(sp.sympify(numerator-target_numerator).simplify(), 0)
