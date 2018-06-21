@@ -147,7 +147,7 @@ matrix:
             - graphviz
       env:
         - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
-        - NORMALIZ_VERSION=3.5.4
+        - NORMALIZ_VERSION=3.6.0
       python: 3.6
       before_install:
         - eval ${MATRIX_EVAL}
@@ -205,6 +205,19 @@ matrix:
         - brew update
         - brew install graphviz
 
+    - os: osx
+      osx_image: xcode9.4
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.6.0
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        - $PYTHON_INSTALL nose
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz
+
 install:
   - export PROCESSES=4
   - export NOSETESTS_TIMEOUT=600
@@ -224,7 +237,7 @@ install:
   - mv pySecDec-*/ pySecDec_install/
   - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/normaliz-${NORMALIZ_VERSION}MacOs.zip -o normaliz.zip; else curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/normaliz-${NORMALIZ_VERSION}Linux64.zip -o normaliz.zip; fi
   - unzip normaliz.zip
-  - mv normaliz-${NORMALIZ_VERSION}/normaliz bin/normaliz
+  - mv normaliz-${NORMALIZ_VERSION}/* bin/
   - cd ..
 
 script:
