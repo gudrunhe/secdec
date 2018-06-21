@@ -80,6 +80,11 @@ References
             | `doi:10.1088/1742-6596/368/1/012049 <http://dx.doi.org/10.1088/1742-6596/368/1/012049>`_,
             | `arXiv:1111.0868 <http://arxiv.org/abs/1111.0868>`_
 
+.. [PS11]   | A. Pak, A. Smirnov,
+              *Geometric approach to asymptotic expansion of Feynman integrals*, 2011, Eur.\ Phys.\ J.\ C 71, 1626,
+            | `doi:10.1140/epjc/s10052-011-1626-1 <http://dx.doi.org/10.1140/epjc/s10052-011-1626-1>`_,
+            | `arXiv:1011.4863 <http://arxiv.org/abs/1011.4863>`_
+
 .. [PSD17]  | S. Borowka, G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, J. Schlenk, T. Zirke,
               *pySecDec: A toolbox for the numerical evaluation of
 	      multi-scale integrals*, Comput.Phys.Comm. 222 (2018),
