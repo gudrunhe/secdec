@@ -40,11 +40,11 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-7
+            - g++-8
             - texlive-full
             - graphviz
       env:
-        - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+        - MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
         - NORMALIZ_VERSION=3.5.4
       before_install:
         - eval ${MATRIX_EVAL}
@@ -91,6 +91,23 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
+            - g++-8
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
+        - NORMALIZ_VERSION=3.5.4
+      before_install:
+        - eval ${MATRIX_EVAL}
+      python: 3.5
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
             - g++-6
             - texlive-full
             - graphviz
@@ -108,11 +125,11 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-7
+            - g++-8
             - texlive-full
             - graphviz
       env:
-        - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+        - MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
         - NORMALIZ_VERSION=3.4.0
       python: 3.6
       before_install:
