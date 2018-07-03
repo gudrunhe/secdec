@@ -23,400 +23,48 @@
 #include "F1diminc2_21/F1diminc2_21.hpp"
 #include "F1diminc2_13/F1diminc2_13.hpp"
 
-/*
- * pySecDec Master Integrals
- */
-F1diminc2_63::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_63::integrand_return_t>> f1diminc2x63()
+typedef double real_t;
+typedef std::complex<real_t> complex_t;
+template<typename T> using nested_series_t = secdecutil::Series<T>;
+
+template<typename integrand_return_t, typename integrand_t, typename ...other_types>
+nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>> compute
+(
+    std::vector<nested_series_t<integrand_t>> integrands,
+    nested_series_t<integrand_return_t> prefactor,
+    secdecutil::Integrator<integrand_return_t,other_types...> integrator
+)
 {
-    using namespace F1diminc2_63;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 0.1;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1diminc2_63::integrand_t>> integrands = F1diminc2_63::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                             // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                             // optionally set here as additional arguments.
-                                                                                                             );
-
     // add integrands of sectors (together flag)
-    const F1diminc2_63::nested_series_t<F1diminc2_63::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Divonne<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-    integrator.border = 1e-8;
+    const nested_series_t<integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
 
     // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1diminc2_63::prefactor(real_parameters, complex_parameters);
+    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * prefactor;
 }
 
-F1diminc2_62::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_62::integrand_return_t>> f1diminc2x62()
-{
-    using namespace F1diminc2_62;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 0.1;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1diminc2_62::integrand_t>> integrands = F1diminc2_62::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                             // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                             // optionally set here as additional arguments.
-                                                                                                             );
-
-    // add integrands of sectors (together flag)
-    const F1diminc2_62::nested_series_t<F1diminc2_62::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Divonne<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-    integrator.border = 1e-8;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1diminc2_62::prefactor(real_parameters, complex_parameters);
-}
-
-F1diminc2_61::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_61::integrand_return_t>> f1diminc2x61()
-{
-    using namespace F1diminc2_61;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 0.1;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1diminc2_61::integrand_t>> integrands = F1diminc2_61::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                             // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                             // optionally set here as additional arguments.
-                                                                                                             );
-
-    // add integrands of sectors (together flag)
-    const F1diminc2_61::nested_series_t<F1diminc2_61::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Divonne<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-    integrator.border = 1e-8;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1diminc2_61::prefactor(real_parameters, complex_parameters);
-}
-
-F1_47::nested_series_t<secdecutil::UncorrelatedDeviation<F1_47::integrand_return_t>> f1x47()
-{
-    using namespace F1_47;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 0.1;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1_47::integrand_t>> integrands = F1_47::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                               // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                               // optionally set here as additional arguments.
-                                                                                               );
-
-    // add integrands of sectors (together flag)
-    const F1_47::nested_series_t<F1_47::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Divonne<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-    integrator.border = 1e-8;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1_47::prefactor(real_parameters, complex_parameters);
-}
-
-F1diminc4_51::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc4_51::integrand_return_t>> f1diminc4x51()
-{
-    using namespace F1diminc4_51;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 0.1;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1diminc4_51::integrand_t>> integrands = F1diminc4_51::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                             // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                             // optionally set here as additional arguments.
-                                                                                                             );
-
-    // add integrands of sectors (together flag)
-    const F1diminc4_51::nested_series_t<F1diminc4_51::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Divonne<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-    integrator.border = 1e-8;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1diminc4_51::prefactor(real_parameters, complex_parameters);
-}
-
-F1diminc2_46::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_46::integrand_return_t>> f1diminc2x46()
-{
-    using namespace F1diminc2_46;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 1.;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1diminc2_46::integrand_t>> integrands = F1diminc2_46::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                             // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                             // optionally set here as additional arguments.
-                                                                                                             );
-
-    // add integrands of sectors (together flag)
-    const F1diminc2_46::nested_series_t<F1diminc2_46::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Divonne<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-    integrator.border = 1e-8;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1diminc2_46::prefactor(real_parameters, complex_parameters);
-}
-
-F1_45::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45::integrand_return_t>> f1x45()
-{
-    using namespace F1_45;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 1.;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1_45::integrand_t>> integrands = F1_45::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                               // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                               // optionally set here as additional arguments.
-                                                                                               );
-
-    // add integrands of sectors (together flag)
-    const F1_45::nested_series_t<F1_45::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Divonne<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-    integrator.border = 1e-8;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1_45::prefactor(real_parameters, complex_parameters);
-}
-
-F1_45_2::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45_2::integrand_return_t>> f1x45x2()
-{
-    using namespace F1_45_2;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 1.;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1_45_2::integrand_t>> integrands = F1_45_2::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                   // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                   // optionally set here as additional arguments.
-                                                                                                   );
-
-    // add integrands of sectors (together flag)
-    const F1_45_2::nested_series_t<F1_45_2::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Divonne<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-    integrator.border = 1e-8;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1_45_2::prefactor(real_parameters, complex_parameters);
-}
-
-F1_45_2_alt::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45_2_alt::integrand_return_t>> f1x45x2xalt()
-{
-    using namespace F1_45_2_alt;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 1.;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1_45_2_alt::integrand_t>> integrands = F1_45_2_alt::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                           // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                           // optionally set here as additional arguments.
-                                                                                                           );
-
-    // add integrands of sectors (together flag)
-    const F1_45_2_alt::nested_series_t<F1_45_2_alt::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Divonne<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-    integrator.border = 1e-8;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1_45_2_alt::prefactor(real_parameters, complex_parameters);
-}
-
-F1diminc4_42::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc4_42::integrand_return_t>> f1diminc4x42()
-{
-    using namespace F1diminc4_42;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 1.;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1diminc4_42::integrand_t>> integrands = F1diminc4_42::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                             // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                             // optionally set here as additional arguments.
-                                                                                                             );
-
-    // add integrands of sectors (together flag)
-    const F1diminc4_42::nested_series_t<F1diminc4_42::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Cuhre<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1diminc4_42::prefactor(real_parameters, complex_parameters);
-}
-
-F1diminc2_37::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_37::integrand_return_t>> f1diminc2x37()
-{
-    using namespace F1diminc2_37;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 1e2;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1diminc2_37::integrand_t>> integrands = F1diminc2_37::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                             // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                             // optionally set here as additional arguments.
-                                                                                                             );
-
-    // add integrands of sectors (together flag)
-    const F1diminc2_37::nested_series_t<F1diminc2_37::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Cuhre<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1diminc2_37::prefactor(real_parameters, complex_parameters);
-}
-
-F1diminc2_21::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_21::integrand_return_t>> f1diminc2x21()
-{
-    using namespace F1diminc2_21;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 1.;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1diminc2_21::integrand_t>> integrands = F1diminc2_21::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                             // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                             // optionally set here as additional arguments.
-                                                                                                             );
-
-    // add integrands of sectors (together flag)
-    const F1diminc2_21::nested_series_t<F1diminc2_21::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Cuhre<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1diminc2_21::prefactor(real_parameters, complex_parameters);
-}
-
-F1diminc2_13::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_13::integrand_return_t>> f1diminc2x13()
-{
-    using namespace F1diminc2_13;
-
-    const std::vector<real_t> real_parameters{};
-    const std::vector<complex_t> complex_parameters{};
-    const unsigned number_of_samples = 10000;
-    const double deformation_parameters_maximum = 1.;
-
-    // optimize contour
-    const std::vector<nested_series_t<F1diminc2_13::integrand_t>> integrands = F1diminc2_13::make_integrands(real_parameters, complex_parameters, number_of_samples, deformation_parameters_maximum
-                                                                                                             // The number of samples for the contour optimization, the minimal and maximal deformation parameters, and the decrease factor can be
-                                                                                                             // optionally set here as additional arguments.
-                                                                                                             );
-
-    // add integrands of sectors (together flag)
-    const F1diminc2_13::nested_series_t<F1diminc2_13::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Cuhre<std::complex<double>>();
-    integrator.flags = 2; // verbose output
-    integrator.epsrel = 1e-8;
-    integrator.epsabs = 1e-8;
-    integrator.maxeval = 1e6;
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * F1diminc2_13::prefactor(real_parameters, complex_parameters);
-}
 
 int main()
 {
+    const std::vector<real_t> real_parameters = {};
+    const std::vector<complex_t> complex_parameters = {};
+
+    auto cuhre = secdecutil::cuba::Cuhre<complex_t>();
+    cuhre.flags = 2; // verbose output
+    cuhre.epsrel = 1e-8;
+    cuhre.epsabs = 1e-8;
+    cuhre.maxeval = 1e6;
+
+    auto divonne = secdecutil::cuba::Divonne<complex_t>();
+    divonne.flags = 2; // verbose output
+    divonne.epsrel = 1e-8;
+    divonne.epsabs = 1e-8;
+    divonne.maxeval = 1e6;
+    divonne.border = 1e-8;
+
+
     // F1diminc2_37::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_37::integrand_return_t>> f1diminc2x37xRes = f1diminc2x37(); // factorizable - requires split
     // Insert analytic result for factorizable F1diminc2_37
-    const secdecutil::Series<std::complex<double>> f1diminc2x37xRes =
+    const secdecutil::Series<complex_t> f1diminc2x37xRes =
     {
         0,4,
         {
@@ -429,19 +77,38 @@ int main()
         true,"eps"
     };
 
-    // F1_45_2::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45_2::integrand_return_t>> f1x45x2xRes = f1x45x2(); // requires split
+    // F1_45_2::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45_2::integrand_retucd rn_t>> f1x45x2xRes = f1x45x2(); // requires split
 
-    F1_45_2_alt::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45_2_alt::integrand_return_t>> f1x45x2xAltxRes = f1x45x2xalt();
-    F1_45::nested_series_t<secdecutil::UncorrelatedDeviation<F1_45::integrand_return_t>> f1x45xRes = f1x45();
-    F1diminc2_63::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_63::integrand_return_t>> f1diminc2x63xRes = f1diminc2x63();
-    F1diminc2_62::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_62::integrand_return_t>> f1diminc2x62xRes = f1diminc2x62();
-    F1diminc2_61::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_61::integrand_return_t>> f1diminc2x61xRes = f1diminc2x61();
-    F1_47::nested_series_t<secdecutil::UncorrelatedDeviation<F1_47::integrand_return_t>> f1x47xRes = f1x47();
-    F1diminc4_51::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc4_51::integrand_return_t>> f1diminc4x51xRes = f1diminc4x51();
-    F1diminc2_46::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_46::integrand_return_t>> f1diminc2x46xRes = f1diminc2x46();
-    F1diminc4_42::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc4_42::integrand_return_t>> f1diminc4x42xRes = f1diminc4x42();
-    F1diminc2_21::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_21::integrand_return_t>> f1diminc2x21xRes = f1diminc2x21();
-    F1diminc2_13::nested_series_t<secdecutil::UncorrelatedDeviation<F1diminc2_13::integrand_return_t>> f1diminc2x13xRes = f1diminc2x13();
+    #define COMPUTE(RESULT, NAME, DEFORMATION_PARAMETERS_MAXIMUM, INTEGRATOR) \
+    \
+    NAME::nested_series_t<secdecutil::UncorrelatedDeviation<NAME::integrand_return_t>> RESULT = \
+    compute \
+    ( \
+        NAME::make_integrands( \
+                                        real_parameters, \
+                                        complex_parameters, \
+                                        10000, /*number of presamples*/ \
+                                        DEFORMATION_PARAMETERS_MAXIMUM \
+                                    ), \
+        NAME::prefactor(real_parameters,complex_parameters), \
+        INTEGRATOR \
+    );
+
+    COMPUTE(f1x45x2xAltxRes, F1_45_2_alt, 1., divonne);
+    COMPUTE(f1x45xRes, F1_45, 1., divonne);
+    COMPUTE(f1diminc2x63xRes, F1diminc2_63, 0.1, divonne);
+
+    COMPUTE(f1diminc2x62xRes, F1diminc2_62, 0.1, divonne);
+    COMPUTE(f1diminc2x61xRes, F1diminc2_61, 0.1, divonne);
+    COMPUTE(f1x47xRes, F1_47, 0.1, divonne);
+
+    COMPUTE(f1diminc4x51xRes, F1diminc4_51, 0.1, divonne);
+    COMPUTE(f1diminc2x46xRes, F1diminc2_46, 1., divonne);
+    COMPUTE(f1diminc4x42xRes, F1diminc4_42, 1., cuhre);
+
+    COMPUTE(f1diminc2x21xRes, F1diminc2_21, 1., cuhre);
+    COMPUTE(f1diminc2x13xRes, F1diminc2_13, 1., cuhre);
+
 
     std::cout << "f1diminc2x63xRes " << f1diminc2x63xRes << std::endl;
     std::cout << "f1diminc2x62xRes " << f1diminc2x62xRes << std::endl;
@@ -457,7 +124,7 @@ int main()
     std::cout << "f1diminc2x21xRes " << f1diminc2x21xRes << std::endl;
     std::cout << "f1diminc2x13xRes " << f1diminc2x13xRes << std::endl;
 
-    const secdecutil::Series<double> eps = {1,1,{1},false,"eps"};
+    const secdecutil::Series<real_t> eps = {1,1,{1},false,"eps"};
 
     // Finite basis 1
     //    auto result =

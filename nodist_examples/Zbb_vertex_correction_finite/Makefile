@@ -5,7 +5,7 @@ SECDEC_CONTRIB = $(shell python3 -m pySecDecContrib --dirname)
 CXXFLAGS = -I"$(SECDEC_CONTRIB)/include" -c -std=c++14 -O2 -I.
 
 # LDFLAGS
-LDFLAGS = -L"$(SECDEC_CONTRIB)/lib" $(patsubst %,-L%,$(INTEGRALS)) $(patsubst %,-l%,$(INTEGRALS)) -lcuba -lm
+LDFLAGS = -L"$(SECDEC_CONTRIB)/lib" $(patsubst %,-L%,$(INTEGRALS)) $(patsubst %,-l%,$(INTEGRALS)) -lgslcblas -lgsl -lcuba -lm
 
 finite : finite.o $(patsubst %,lib%.a,$(INTEGRALS))
 	$(CXX) -o $@ $< $(LDFLAGS)
