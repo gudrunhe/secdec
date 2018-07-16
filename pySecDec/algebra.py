@@ -747,6 +747,19 @@ class Polynomial(_Expression):
         else:
             return ExponentiatedPolynomial(new_expolist, new_coeffs, exponent, new_polysymbols, copy=False)
 
+    def refactorize(self, *parameters):
+        """
+        Returns a product of the greatest factor that
+        could be pulled out and the factorised polynomial.
+
+        :param parameter:
+            arbitrarily many integers;
+
+        """
+        prod = Product(Polynomial([np.zeros(len(self.symbols), dtype=int)],[1],self.symbols),self)
+        refactorize(prod, *parameters)
+        return prod
+
 class ExponentiatedPolynomial(Polynomial):
     '''
     Like :class:`.Polynomial`, but with a global exponent.
@@ -899,6 +912,26 @@ class ExponentiatedPolynomial(Polynomial):
             return Polynomial(self.expolist, self.coeffs, self.polysymbols, copy=False)
 
         return self
+
+    def refactorize(self, *parameters):
+        """
+        Returns a product of the greatest factor that
+        could be pulled out and the factorised polynomial.
+
+        :param parameter:
+            arbitrarily many integers;
+
+        """
+        # remove global exponent
+        polynomial_without_exponent = Polynomial(self.expolist, self.coeffs, self.symbols)
+        # refactorize
+        prod = Product(Polynomial([np.zeros(len(self.symbols), dtype=int)],[1],self.symbols),polynomial_without_exponent)
+        refactorize(prod, *parameters)
+        poly1,poly2 = prod.factors[0],prod.factors[1]
+        # add exponent back on
+        expo_poly1 = ExponentiatedPolynomial(poly1.expolist, poly1.coeffs, self.exponent, poly1.symbols)
+        expo_poly2 = ExponentiatedPolynomial(poly2.expolist, poly2.coeffs, self.exponent, poly2.symbols)
+        return Product(expo_poly1,expo_poly2)
 
 class LogOfPolynomial(Polynomial):
     '''
@@ -1717,3 +1750,35 @@ def Expression(expression, polysymbols, follow_functions=False):
 
     parsed_expression = recursive_call(expression) if isinstance(expression, sp.Expr) else recursive_call( sympify_expression(str(expression)) )
     return (parsed_expression, functions) if follow_functions else parsed_expression
+
+def refactorize(polyprod, *parameters):
+    '''
+    In a :class:`.algebra.Product` of
+    the form `<monomial> * <polynomial>`, check if
+    a parameter in `<polynomial>` can be shifted to
+    the `<monomial>`.
+    If possible, modify `polyprod` accordingly.
+
+    :param polyprod:
+        :class:`.algebra.Product` of the
+        form <monomial> * <polynomial>`;
+        The product to refactorize.
+
+    :param parameter:
+        integer, optional;
+        Check only the parameter with this index.
+        If not provided, all parameters are checked.
+
+    '''
+    expolist_mono = polyprod.factors[0].expolist
+    expolist_poly = polyprod.factors[1].expolist
+
+    if not parameters:
+        factorizable_powers = expolist_poly.min(axis=0)
+        expolist_mono[:] += factorizable_powers
+        expolist_poly[:] -= factorizable_powers
+    else:
+        for parameter in parameters:
+            factorizable_power = expolist_poly[:,parameter].min()
+            expolist_mono[:,parameter] += factorizable_power
+            expolist_poly[:,parameter] -= factorizable_power

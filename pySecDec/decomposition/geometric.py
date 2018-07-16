@@ -4,9 +4,9 @@ The geometric sector decomposition routines.
 
 """
 
-from .common import Sector, refactorize
+from .common import Sector
 from ..polytope import convex_hull, triangulate, Polytope
-from ..algebra import Polynomial, ExponentiatedPolynomial, Product
+from ..algebra import Polynomial, ExponentiatedPolynomial, Product, refactorize
 import itertools, numpy as np, sympy as sp
 
 # *********************** primary decomposition ***********************

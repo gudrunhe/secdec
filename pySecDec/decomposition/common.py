@@ -4,7 +4,7 @@ multiple decompition modules.
 
 '''
 
-from ..algebra import Polynomial, ExponentiatedPolynomial, Product
+from ..algebra import Polynomial, ExponentiatedPolynomial, Product, refactorize
 from ..misc import argsort_ND_array, sympify_expression
 import numpy as np
 import sympy as sp
@@ -75,18 +75,7 @@ class Sector(object):
             if hasattr(item, 'factors'): # expect type `Product`
                 self.cast.append(item.copy())
             else: # expect type `Polynomial`
-                if hasattr(item, 'exponent'): # `ExponentiatedPolynomial` --> same exponent for the factorizable monomial
-                    monomial = ExponentiatedPolynomial(initial_monomial_factor.expolist,
-                                                       initial_monomial_factor.coeffs,
-                                                       polysymbols=initial_monomial_factor.polysymbols,
-                                                       exponent=item.exponent)
-                    item = Product(monomial, item)
-                else:
-                    item = Product(initial_monomial_factor, item)
-
-                # try to factorize only if constructed from `Polynomial`
-                refactorize(item)
-                self.cast.append(item)
+                self.cast.append(item.refactorize())
 
     def __repr__(self):
         return 'Sector(Jacobian=%s, cast=%s, other=%s)' % (self.Jacobian, self.cast, self.other)

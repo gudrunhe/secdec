@@ -524,29 +524,6 @@ class TestSymmetryFinding(unittest.TestCase):
 
 
 class TestOther(unittest.TestCase):
-    def test_refactorize(self):
-        prod = Product(Polynomial([(0,0,0)],[1],'t'), Polynomial([(1,1,0),(1,0,1)],["-s12","-s23"],'t'))
-
-        self.assertEqual(str(prod.factors[0]), ' + (1)')
-        self.assertEqual(str(prod.factors[1]), ' + (-s12)*t0*t1 + (-s23)*t0*t2')
-
-        copy0 = prod.copy()
-        copy1 = prod.copy()
-        copy2 = prod.copy()
-
-        refactorize(copy0) # refactorize all parameters -> should find the factorization of parameter 0
-        refactorize(copy1,0) # refactorize parameter 0 -> should find a factorization
-        refactorize(copy2,1) # refactorize parameter 1 -> should NOT find the factorization of parameter 0
-
-        self.assertEqual(str(copy0.factors[0]), str(copy1.factors[0]))
-        self.assertEqual(str(copy0.factors[1]), str(copy1.factors[1]))
-
-        self.assertEqual(str(copy1.factors[0]), ' + (1)*t0')
-        self.assertEqual(str(copy1.factors[1]), ' + (-s12)*t1 + (-s23)*t2')
-
-        self.assertEqual(str(copy2.factors[0]), ' + (1)')
-        self.assertEqual(str(copy2.factors[1]), ' + (-s12)*t0*t1 + (-s23)*t0*t2')
-
     #@attr('active')
     def test_array_to_dreadnaut(self):
         workdir = 'tmpdir_test_array_to_dreadnaut_python' + python_major_version

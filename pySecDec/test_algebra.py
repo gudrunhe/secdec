@@ -318,6 +318,91 @@ class TestPolynomial(unittest.TestCase):
         np.testing.assert_array_equal(expr2.coeffs, [sp.symbols('A')])
 
     #@attr('active')
+    def test_refactorize(self):
+        prod = Product(Polynomial([(0,0,0)],[1],'t'), Polynomial([(1,1,0),(1,0,1)],["-s12","-s23"],'t'))
+
+        self.assertEqual(str(prod.factors[0]), ' + (1)')
+        self.assertEqual(str(prod.factors[1]), ' + (-s12)*t0*t1 + (-s23)*t0*t2')
+
+        copy0 = prod.copy()
+        copy1 = prod.copy()
+        copy2 = prod.copy()
+
+        refactorize(copy0) # refactorize all parameters -> should find the factorization of parameter 0
+        refactorize(copy1,0) # refactorize parameter 0 -> should find a factorization
+        refactorize(copy2,1) # refactorize parameter 1 -> should NOT find the factorization of parameter 0
+
+        self.assertEqual(str(copy0.factors[0]), str(copy1.factors[0]))
+        self.assertEqual(str(copy0.factors[1]), str(copy1.factors[1]))
+
+        self.assertEqual(str(copy1.factors[0]), ' + (1)*t0')
+        self.assertEqual(str(copy1.factors[1]), ' + (-s12)*t1 + (-s23)*t2')
+
+        self.assertEqual(str(copy2.factors[0]), ' + (1)')
+        self.assertEqual(str(copy2.factors[1]), ' + (-s12)*t0*t1 + (-s23)*t0*t2')
+
+    #@attr('active')
+    def test_refactorize_multiple_parameters(self):
+        prod = Product(Polynomial([(0,0,0)],[1],'t'), Polynomial([(1,1,3),(1,0,1)],["-s12","-s23"],'t'))
+
+        self.assertEqual(str(prod.factors[0]), ' + (1)')
+        self.assertEqual(str(prod.factors[1]), ' + (-s12)*t0*t1*t2**3 + (-s23)*t0*t2')
+
+        copy0 = prod.copy()
+        copy1 = prod.copy()
+
+        refactorize(copy0,0,2) # refactorize parameter 0 and 2 -> should find a factorization for both
+        refactorize(copy1,0,1) # refactorize parameter 0 and 1 -> should only find the factorization of parameter 0
+
+        self.assertEqual(str(copy0.factors[0]), ' + (1)*t0*t2')
+        self.assertEqual(str(copy0.factors[1]), ' + (-s12)*t1*t2**2 + (-s23)')
+
+        self.assertEqual(str(copy1.factors[0]), ' + (1)*t0')
+        self.assertEqual(str(copy1.factors[1]), ' + (-s12)*t1*t2**3 + (-s23)*t2')
+
+    #@attr('active')
+    def test_refactorize_polynomial(self):
+        poly = Polynomial([(1,1,0),(1,0,1)],["-s12","-s23"],'t')
+
+        copy0 = poly.copy()
+        copy1 = poly.copy()
+        copy2 = poly.copy()
+
+        copy0 = copy0.refactorize() # refactorize all parameters -> should find the factorization of parameter 0
+        copy1 = copy1.refactorize(0) # refactorize parameter 0 -> should find a factorization
+        copy2 = copy2.refactorize(1) # refactorize parameter 1 -> should NOT find the factorization of parameter 0
+
+        self.assertEqual(str(copy0.factors[0]), str(copy1.factors[0]))
+        self.assertEqual(str(copy0.factors[1]), str(copy1.factors[1]))
+
+        self.assertEqual(str(copy1.factors[0]), ' + (1)*t0')
+        self.assertEqual(str(copy1.factors[1]), ' + (-s12)*t1 + (-s23)*t2')
+
+        self.assertEqual(str(copy2.factors[0]), ' + (1)')
+        self.assertEqual(str(copy2.factors[1]), ' + (-s12)*t0*t1 + (-s23)*t0*t2')
+
+    #@attr('active')
+    def test_refactorize_exponentiated_polynomial(self):
+        exponentiated_poly = ExponentiatedPolynomial([(1,1,0),(1,0,1)],["-s12","-s23"],3,'t')
+
+        copy0 = exponentiated_poly.copy()
+        copy1 = exponentiated_poly.copy()
+        copy2 = exponentiated_poly.copy()
+
+        copy0 = copy0.refactorize() # refactorize all parameters -> should find the factorization of parameter 0
+        copy1 = copy1.refactorize(0) # refactorize parameter 0 -> should find a factorization
+        copy2 = copy2.refactorize(1) # refactorize parameter 1 -> should NOT find the factorization of parameter 0
+
+        self.assertEqual(sp.sympify(copy0.factors[0] - copy1.factors[0]).simplify(), 0)
+        self.assertEqual(sp.sympify(copy0.factors[1] - copy1.factors[1]).simplify(), 0)
+
+        self.assertEqual(sp.sympify(str(copy1.factors[0])+ ' - ' + ' (+(1)*t0)**(3)').simplify(), 0)
+        self.assertEqual(sp.sympify(str(copy1.factors[1])+ ' - ' + ' + ((-s12)*t1 + (-s23)*t2)**3').simplify(), 0)
+
+        self.assertEqual(sp.sympify(str(copy2.factors[0])+ ' - ' + ' 1').simplify(), 0)
+        self.assertEqual(sp.sympify(str(copy2.factors[1])+ ' - ' + ' ((-s12)*t0*t1 + (-s23)*t0*t2)**3').simplify(), 0)
+
+    #@attr('active')
     def test_simplify_to_zero(self):
         zero = Polynomial([[0,0,0]]*11,[-1,0,1,0,0,-2,0,0,0,1,1]).simplify()
 
