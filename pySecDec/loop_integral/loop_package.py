@@ -9,7 +9,7 @@ function :func:`.loop_package`.
 from .from_graph import LoopIntegralFromGraph
 from .draw import plot_diagram
 from ..algebra import Polynomial
-from ..code_writer import make_package
+from ..code_writer.make_package import make_package
 from ..misc import flatten, sympify_expression
 from itertools import chain
 import numpy as np
