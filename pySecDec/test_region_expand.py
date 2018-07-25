@@ -135,3 +135,16 @@ class TestExpansionByRegions(unittest.TestCase):
         self.assertEqual(sp.sympify(poly_list[0]-p1('2-eps')).simplify(), 0)
         self.assertEqual(sp.sympify(poly_list[1]-p2('3-eps')).simplify(), 0)
         self.assertEqual(sp.sympify(numerator-target_numerator).simplify(), 0)
+
+    #@attr('active')
+    def test_expand_region(self):
+        p1 = lambda expo: ExponentiatedPolynomial([[1,0,0,0],[0,2,0,0]],['a','b'],expo,['x','y','p1','p2'])
+        p2 = lambda expo: ExponentiatedPolynomial([[0,2,0,0],[1,1,0,0]],['c','d'],expo,['x','y','p1','p2'])
+        numerator = Polynomial([[1,2,1,0]],['e'],['x','y','p1','p2'])
+        series = expand_region([p1('2'),p2('2')],numerator,0,5,[2,3])
+        target_series=[sp.sympify('0'),sp.sympify('b*c*e*y^6*p1^2*p2'),\
+        sp.sympify('2*d*e*y^3*p1^3*p2+3*a*e*y^2*p1^2*p2^2')]
+
+        self.assertEqual(sp.sympify(next(series)-target_series[0]).simplify(), 0)
+        self.assertEqual(sp.sympify(next(series)-target_series[1]).simplify(), 0)
+        self.assertEqual(sp.sympify(next(series)-target_series[2]).simplify(), 0)

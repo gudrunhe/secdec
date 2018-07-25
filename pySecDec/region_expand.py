@@ -8,8 +8,12 @@ Routines to perform an expansion by regions, see e.g. [PS11]_.
 
 from .decomposition.common import Sector, refactorize
 from .polytope import Polytope
-from .algebra import Polynomial, ExponentiatedPolynomial
+from .algebra import Polynomial, ExponentiatedPolynomial, Product
+from .code_writer.make_package import _parse_expressions,make_package
+from .code_writer.sum_package import sum_package, Coefficient
 import numpy as np, sympy as sp
+
+_sympy_one = sp.sympify(1)
 
 def find_regions( exp_param_index , polynomials, normaliz='normaliz', workdir='normaliz_tmp'):
     '''
@@ -179,3 +183,68 @@ def derive_prod(poly_list,numerator,index,polynomial_name_indices):
         new_poly_list.append(ExponentiatedPolynomial(poly_list[i].expolist, poly_list[i].coeffs,poly_list[i].exponent -1 ,poly_list[i].polysymbols))
 
     return new_poly_list,numerator_new
+
+def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
+    r"""
+    Expands the product of the polynomials in `poly_list` and the numerator with respect
+    to the variable whose `index` is given to a desired order specified by `order`.
+
+    :param poly_list:
+        list of :class:`.ExponentiatedPolynomial`;
+        The exponentiated polynomials that should be expanded.
+        They need to be defined in terms of the symbols ``x0,x1,x2,..`` and
+        ``p0,p1,p2..`` where ``p0,p1,p2..`` are the bases of the exponentiated
+        polynomials.
+
+    :param numerator:
+        :class:`.Polynomial`;
+        The numerator also defined as an exponentiated polynomial with
+        ``symbols = [x0,x1,...,p0,p1,...]``.
+
+    :param index:
+        integer;
+        Index of variable with respect to which the polynomials are expanded.
+
+    :param order:
+        integer;
+        Desired order of expansion.
+
+    :param polynomial_name_indices:
+        list of int;
+        Indices of polynomials in the symbols of the input polynomials.
+
+    """
+    # TODO: assert order >=0
+
+    if order < 0:
+        return
+
+    else:
+        number_of_polys = len(poly_list)
+        number_of_symbols = len(numerator.polysymbols)
+        i = 1
+        # 0th order term
+        term = Product(*poly_list)
+        term.factors.append(numerator)
+        term = term.replace(index, 0)
+        for factor in term.factors:
+            factor.simplify()
+        yield term
+
+        # calculate higher order terms
+        derivative = derive_prod(poly_list,numerator,index,polynomial_name_indices)
+
+        inverse_i_factorial = sp.sympify(1)
+        while i <= order:
+
+            inverse_i_factorial /= i
+            term = Product(*derivative[0])
+            term.factors.append((derivative[1] * inverse_i_factorial))
+            term = term.replace(index, 0)
+            for factor in term.factors:
+                factor.simplify()
+            yield term
+
+            derivative = derive_prod(derivative[0],derivative[1],index, polynomial_name_indices)
+
+            i+=1
