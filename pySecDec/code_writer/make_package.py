@@ -924,6 +924,7 @@ def _process_secondary_sector(environment):
                                   *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
                                   maxdegrees=MaxDegreeFunction.get_maxdegrees(
                                                                                   sector.cast[i].factors[1],
+                                                                                  indices=None if contour_deformation_polynomial is None else regulator_indices,
                                                                                   ignore_subclass=True
                                                                              )
                                   ),
