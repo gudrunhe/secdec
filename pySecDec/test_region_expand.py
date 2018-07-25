@@ -51,35 +51,34 @@ class  TestFindRegions(unittest.TestCase):
 #@attr('active')
 class TestExpansionByRegions(unittest.TestCase):
     #@attr('active')
-    def test_apply_regions_small(self):
-        poly = Polynomial.from_expression('t + u + u**2', ['u'])
-        sector = Sector([poly])
-        exp_param = 't'
+    def test_apply_region_small(self):
+        poly = Polynomial.from_expression('z*t + u + u**2', ['z','u'])
+        expansion_parameter_index = 0
+        regions = np.array([[1,0], [1,1]]) # [(z->z^1, u->z^0*u), (z->z^1, u->z^1*u)]
 
-        regions = list(apply_regions( exp_param, sector, workdir = 'tmpdir_test_apply_regions_python' + python_major_version ))
-        print(regions)
+        target_polys = [sp.sympify('z*t + u + u**2'), sp.sympify('z*t + z*u + (z*u)**2')]
 
-        target_Jacobians = [sp.sympify('1'), sp.sympify(' zz')]
-        target_polys = [sp.sympify('1 * (t* zz + u**2 + u)'), sp.sympify('zz**1 * (t + u**2*zz + u)')]
+        for region, target_poly in zip(regions,target_polys):
+            polys = apply_region([poly.copy()], region, expansion_parameter_index)
+            self.assertEqual(sp.sympify(polys[0]-target_poly).simplify(), 0)
 
-        try:
-            for target_poly, target_Jacobian, region in zip(target_polys, target_Jacobians, regions):
-                self.assertEqual( (sp.sympify(region.cast[0])-target_poly).simplify() , 0)
-                self.assertEqual( (sp.sympify(region.Jacobian)-target_Jacobian).simplify() , 0)
-        except AssertionError:
-            for target_poly, target_Jacobian, region in zip(target_polys, target_Jacobians, reversed(regions)):
-                self.assertEqual( (sp.sympify(region.cast[0])-target_poly).simplify() , 0)
-                self.assertEqual( (sp.sympify(region.Jacobian)-target_Jacobian).simplify() , 0)
-
-    # TODO: complete or remove
     #@attr('active')
-    def test_apply_regions(self):
-        poly_u = Polynomial.from_expression('x0 + x1', ['x0','x1'])
-        poly_f = Polynomial.from_expression('+ (-psq*r)*x1**2 + (-2*psq*r - psq)*x0*x1 + (-psq*r)*x0**2', ['x0','x1'])
-        sector = Sector([poly_u,poly_f])
-        exp_param = 'r'
+    def test_apply_region(self):
+        poly_u = Polynomial.from_expression('x0 + x1', ['z','x0','x1'])
+        poly_f = Polynomial.from_expression('-s*x0*x1 + z*msq*(x0+x1)**2', ['z','x0','x1'])
+        region_vectors = np.array([[1,0,0],[1,-1,0],[1,0,-1]])
+        expansion_parameter_index = 0
+        target_polynomial1 = [sp.sympify('x0 + x1'), sp.sympify('-s*x0*x1 + z*msq*(x0+x1)**2')]
+        target_polynomial2 = [sp.sympify('z**(-1)*x0 + x1'), sp.sympify('-s*(z**(-1)*x0)*x1 + z*msq*((z**(-1)*x0)+x1)**2')]
+        target_polynomial3 = [sp.sympify('x0 + (z**(-1)*x1)'), sp.sympify('-s*x0*(z**(-1)*x1) + z*msq*(x0+(z**(-1)*x1))**2')]
+        target_polynomials=[target_polynomial1, target_polynomial2, target_polynomial3]
 
-        regions = list(apply_regions( exp_param, sector, workdir = 'tmpdir_test_apply_regions_python' + python_major_version ))
+        for region_vector,target_polynomial in zip(region_vectors,target_polynomials):
+            polys=apply_region([poly_u.copy(),poly_f.copy()],region_vector,expansion_parameter_index)
+            print(polys)
+            self.assertEqual(sp.sympify(polys[0]-target_polynomial[0]).simplify(), 0)
+            self.assertEqual(sp.sympify(polys[1]-target_polynomial[1]).simplify(), 0)
+
 
     #@attr('active')
     def test_derivative_product_1(self):

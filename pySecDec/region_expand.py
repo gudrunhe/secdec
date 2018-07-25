@@ -61,70 +61,43 @@ def find_regions( exp_param_index , polynomials, normaliz='normaliz', workdir='n
 
     return regions
 
-def apply_regions( exp_param , sector, normaliz='normaliz', workdir='normaliz_tmp'):
-    '''
-    Unexpanded integrals for expansion by regions in limit `exp_param` to zero.
+def apply_region(polynomials, region_vector, expansion_parameter_index):
+    r'''
+    Apply the `region_vector` to the input `polynomials`.
 
     .. note::
-        This function calls the command line executable of
-        `normaliz` [BIR]_. See :ref:`installation_normaliz`
-        for installation and a list of tested versions.
+        Redefines the `expansion_parameter` as
+        :math:`\rho \rightarrow \rho ^ n`, where
+        :math:`n` is given by the `region_vector`.
 
-    :param exp_param:
-        string;
-        Expansion parameter.
+    .. note::
+        `apply_region` modifies the input
+        `polynomials`.
 
-    :param sector:
-        :class:`.Sector`;
-        The sector to be decomposed into regions.
+    :param polynomials:
+        iterable of polynomials;
+        Polynomials to be computed in different regions.
 
-    :param normaliz:
-        string;
-        The shell command to run `normaliz`.
+    :param region_vector:
+        vector-like array;
+        Region specified by the power of the `expansion_parameter`
+        in the rescaled variables. The region vectors have to be
+        specified in the same order as the symbols are specified
+        in the polynomials. E.g. if symbols are specified as
+        ['x0','x1','rho'] and want rescaling x0 -> rho^i * x0,
+        x1 -> rho^k * x1 and rho -> rho^n, then the region vector
+        needs to be [i,k,n]
 
-    :param workdir:
-        string;
-        The directory for the communication with `normaliz`.
-        A directory with the specified name will be created
-        in the current working directory. If the specified
-        directory name already exists, an :class:`OSError`
-        is raised.
-
-        .. note::
-            The communication with `normaliz` is done via
-            files.
+    :param expansion_parameter_index:
+        integer;
+        Index of the expansion parameter in the list of symbols.
 
     '''
-    # include expansion parameter as polynomial variable
-    symbols = [ exp_param ] + sector.Jacobian.polysymbols
-    sector.Jacobian = Polynomial.from_expression( str( sector.Jacobian ), symbols )
-    for product in sector.cast:
-        for i, factor in enumerate( product.factors ):
-            product.factors[i] = Polynomial.from_expression( str( factor ), symbols )
-    for i, poly in enumerate( sector.other ):
-        sector.other[i] = Polynomial.from_expression( str( poly ), symbols )
+    for polynomial in polynomials:
+        polynomial.expolist[:,expansion_parameter_index] = np.dot(polynomial.expolist, region_vector)
 
-    # should sector.other be included in the decomposition?
-    region_vectors = find_regions( symbols.index( exp_param ), [ prod.factors[1] for prod in sector.cast ] + [ prod.factors[1] for prod in sector.other ] , normaliz, workdir )
+    return polynomials
 
-    def rescale_polynomial(polynomial, region_vector):
-        return Polynomial([np.append( exponentvector,  np.dot(region_vector, exponentvector)) for exponentvector in polynomial.expolist ], polynomial.coeffs, polysymbols = symbols + ['zz'])
-
-    def make_sector_region(region_vector):
-        subsector = sector.copy()
-        # includes scaling factor from integral measure
-        subsector.Jacobian =  Polynomial( [np.append( np.zeros(len(symbols), dtype = int), sum(region_vector[1:]))], [1], polysymbols = symbols + ['zz'] )*rescale_polynomial( subsector.Jacobian, region_vector )
-        for resulting_product, output_product in zip(sector.cast, subsector.cast):
-            for j in range(2):
-                output_product.factors[j] = rescale_polynomial( resulting_product.factors[j], region_vector )
-            refactorize(output_product)
-        for resulting_polynomial, output_polynomial in zip(sector.other, subsector.other):
-            output_polynomial = rescale_polynomial(resulting_polynomial)
-        return subsector
-
-    #ToDo: pass relation between 'zz' and exp_param (i.e. exp_param = zz**somepower)
-    for region in region_vectors:
-        yield make_sector_region( region )
 
 def derive_prod(poly_list,numerator,index,polynomial_name_indices):
     r"""
