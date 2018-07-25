@@ -1,5 +1,3 @@
-"""Unit tests for the Sector container class"""
-
 from .common import *
 from .common import _sector2array, _array_to_dreadnaut, _collision_safe_hash
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product

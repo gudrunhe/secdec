@@ -1,5 +1,3 @@
-"""Unit tests for the Polynomial container class"""
-
 from .iterative import *
 from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product

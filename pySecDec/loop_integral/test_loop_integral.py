@@ -1,5 +1,3 @@
-"""Unit tests for the U, F, and numerator construction routines"""
-
 from . import *
 import numpy as np
 import sympy as sp
