@@ -18,7 +18,7 @@ maxnperpackage=64, maxmperpackage=32,
 
 verbosity=3,
 
-transform='tent',
+transform='baker',
 )
 
 # integrate

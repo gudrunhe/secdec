@@ -1,2 +1,2 @@
 result with default transform: 0.0625 +/- 1.84811e-09
-result with tent transform: 0.0625 +/- 7.93855e-08
+result with the baker's transform: 0.0625 +/- 7.93855e-08

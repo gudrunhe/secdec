@@ -296,7 +296,7 @@ extern "C"
 
         trivial = -1,
 
-        tent = -2,
+        baker = -2,
 
         korobov1 = 1,
         korobov2 = 2,
@@ -325,8 +325,8 @@ extern "C"
                 auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t,::integrators::transforms::Trivial<real_t, long long int>>;
                 SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
 
-            } else if (transform_id == tent) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t,::integrators::transforms::Tent<real_t, long long int>>;
+            } else if (transform_id == baker) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t,::integrators::transforms::Baker<real_t, long long int>>;
                 SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
 
             #define CASE_KOROBOV(KOROBOVDEGREE) \
@@ -358,8 +358,8 @@ extern "C"
                 auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t,::integrators::transforms::Trivial<real_t, long long int>>;
                 SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
 
-            } else if (transform_id == tent) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t,::integrators::transforms::Tent<real_t, long long int>>;
+            } else if (transform_id == baker) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t,::integrators::transforms::Baker<real_t, long long int>>;
                 SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
 
             #define CASE_KOROBOV(KOROBOVDEGREE) \
@@ -390,8 +390,8 @@ extern "C"
                 SET_COMMON_QMC_ARGS
                 return integrator;
 
-            } else if (transform_id == tent) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,secdec_integrand_t,::integrators::transforms::Tent<real_t, long long int>>;
+            } else if (transform_id == baker) {
+                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,secdec_integrand_t,::integrators::transforms::Baker<real_t, long long int>>;
                 SET_COMMON_QMC_ARGS
                 return integrator;
 

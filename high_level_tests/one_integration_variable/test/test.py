@@ -106,9 +106,9 @@ class CheckLib(unittest.TestCase):
         # check
         self.check_result(str_integral_with_prefactor, self.epsrel, self.epsabs)
 
-    def test_Qmc_tent_transform(self):
+    def test_Qmc_baker_transform(self):
         # choose integrator
-        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3212, transform='tent')
+        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3212, transform='baker')
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib()

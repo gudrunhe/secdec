@@ -81,9 +81,9 @@ class CheckLib(unittest.TestCase):
         # check integral
         self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs)
 
-    def test_Qmc_tent_transform(self):
+    def test_Qmc_baker_transform(self):
         # choose integrator
-        self.lib.use_Qmc(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, verbosity=0, seed=143, transform='tent')
+        self.lib.use_Qmc(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, verbosity=0, seed=143, transform='baker')
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters)

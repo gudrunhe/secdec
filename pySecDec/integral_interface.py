@@ -209,7 +209,7 @@ class Qmc(CPPIntegrator):
         parameter of the Qmc. The possible choices
         correspond to the integral transforms of the
         underlying Qmc implementation. Possible values
-        are ``"default"``, ``"trivial"``, ``"tent"``, and
+        are ``"default"``, ``"trivial"``, ``"baker"``, and
         ``"korobov#"``, where ``#`` (the rank of the
         Korobov transform) must be an integer between
         1 and 10.
@@ -263,7 +263,7 @@ class Qmc(CPPIntegrator):
         #
         #     trivial = -1,
         #
-        #     tent = -2,
+        #     baker = -2,
         #
         #     korobov1 = 1,
         #     korobov2 = 2,
@@ -281,7 +281,7 @@ class Qmc(CPPIntegrator):
 
             trivial = -1,
 
-            tent = -2,
+            baker = -2,
 
             korobov1 = 1,
             korobov2 = 2,
@@ -323,7 +323,7 @@ class CudaQmc(object):
         parameter of the Qmc. The possible choices
         correspond to the integral transforms of the
         underlying Qmc implementation. Possible values
-        are ``"default"``, ``"trivial"``, ``"tent"``, and
+        are ``"default"``, ``"trivial"``, ``"baker"``, and
         ``"korobov#"``, where ``#`` (the rank of the
         Korobov transform) must be an integer between
         1 and 10.
@@ -380,7 +380,7 @@ class CudaQmc(object):
         #
         #     trivial = -1,
         #
-        #     tent = -2,
+        #     baker = -2,
         #
         #     korobov1 = 1,
         #     korobov2 = 2,
@@ -398,7 +398,7 @@ class CudaQmc(object):
 
             trivial = -1,
 
-            tent = -2,
+            baker = -2,
 
             korobov1 = 1,
             korobov2 = 2,

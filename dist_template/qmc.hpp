@@ -1,23 +1,26 @@
-// qmc single header, generated from commit "0a6174b4c18decb4b500709847dea1cc32974cbe"
-
-#pragma once
+/*
+ * Qmc Single Header
+ * Commit: e88ebbff1787e6127d796da2e2438bd9b67ea3d0
+ * Generated: 27-07-2018 15:12:08
+ *
+ * ----------------------------------------------------------
+ * This file has been merged from multiple headers.
+ * Please don't edit it directly
+ * ----------------------------------------------------------
+ */
 #ifndef QMC_H
 #define QMC_H
 
 #include <mutex>
+#include <random> // mt19937_64, uniform_real_distribution
 #include <vector>
 #include <map>
-#include <memory> // unique_ptr
 #include <set>
-#include <random> // mt19937_64, uniform_real_distribution
-#include <type_traits> // make_signed
-#include <iterator>
-#include <functional> // reference_wrapper
 
-// Custom types
-/*
- * begin included header "qmc_logger.hpp"
- */
+// Custom Types
+#ifndef QMC_LOGGER_H
+#define QMC_LOGGER_H
+
 #include <functional> // reference_wrapper
 #include <ostream> // ostream
 #include <chrono> // chrono
@@ -49,14 +52,10 @@ namespace integrators
     };
 };
 
+#endif
+#ifndef QMC_RESULT_H
+#define QMC_RESULT_H
 
-/*
- * end included header "qmc_logger.hpp"
- */
-
-/*
- * begin included header "qmc_result.hpp"
- */
 namespace integrators
 {
     template <typename T, typename U = unsigned long long int>
@@ -69,13 +68,10 @@ namespace integrators
     };
 };
 
-/*
- * end included header "qmc_result.hpp"
- */
+#endif
+#ifndef QMC_ERRORMODE_H
+#define QMC_ERRORMODE_H
 
-/*
- * begin included header "qmc_errormode.hpp"
- */
 namespace integrators
 {
     enum ErrorMode : int
@@ -85,39 +81,30 @@ namespace integrators
     };
 };
 
-/*
- * end included header "qmc_errormode.hpp"
- */
-
+#endif
 
 namespace integrators
 {
-
-// TODO - unsigned int MAXDIM = 20,
-    template <typename T, typename D, typename U = unsigned long long int, typename G = std::mt19937_64>
+    template <typename T, typename D, typename U = unsigned long long int, typename G = std::mt19937_64, typename H = std::uniform_real_distribution<D>>
     class Qmc
     {
 
     private:
 
-        std::uniform_real_distribution<D> uniform_distribution = std::uniform_real_distribution<D>(0,1);
+        H uniform_distribution{0,1};
 
         void init_z(std::vector<U>& z, const U n, const U dim) const;
         void init_d(std::vector<D>& d, const U m, const U dim);
         void init_r(std::vector<T>& r, const U m, const U r_size_over_m) const;
-        
-        result<T,U> reduce(const std::vector<T>& r, const U n, const U m, std::vector<result<T,U>> & previous_iterations) const;
-        template <typename F1, typename F2> void compute(const U i, const std::vector<U>& z, const std::vector<D>& d, T* r_element, const U r_size_over_m, const U total_work_packages, const U n, const U m, F1& func, const U dim, F2& integral_transform) const;
-        template <typename F1, typename F2> void compute_worker(const U thread_id, U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U total_work_packages, const U n, const U m,  F1& func, const U dim, F2& integral_transform, const int device) const;
+
+        template <typename F1, typename F2> void worker(const U thread_id,U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U total_work_packages, const U n, const U m,  F1& func, const U dim, F2& integral_transform, const int device, D& time_in_ns, U& points_computed) const;
         template <typename F1, typename F2> result<T,U> sample(F1& func, const U dim, F2& integral_transform, const U n, const U m, std::vector<result<T,U>> & previous_iterations);
         void update(result<T,U>& res, U& n, U& m, U& function_evaluations) const;
 
     public:
 
         Logger logger;
-
         G randomgenerator;
-
         U minn;
         U minm;
         D epsrel;
@@ -133,90 +120,97 @@ namespace integrators
         std::map<U,std::vector<U>> generatingvectors;
         U verbosity;
 
+        U get_next_n(U preferred_n) const;
+
         template <typename F1, typename F2> result<T,U> integrate(F1& func, const U dim, F2& integral_transform);
         template <typename F1> result<T,U> integrate(F1& func, const U dim);
-        U get_next_n(U preferred_n) const;
 
         Qmc();
         virtual ~Qmc() {}
     };
-    
 };
 
 // Implementation
-/*
- * begin included header "qmc_mul_mod.hpp"
- */
+#ifndef QMC_MATH_MUL_MOD_H
+#define QMC_MATH_MUL_MOD_H
+
 #include <type_traits> // make_signed
 
 namespace integrators
 {
-
-    template <typename R, typename D, typename U>
-#ifdef __CUDACC__
-    __host__ __device__
-#endif
-    R mul_mod(U a, U b, U k)
+    namespace math
     {
-        // Computes: (a*b % k) correctly even when a*b overflows std::numeric_limits<typename std::make_signed<U>>
-        // Assumes:
-        // 1) std::numeric_limits<U>::is_modulo
-        // 2) a < k
-        // 3) b < k
-        // 4) k < std::numeric_limits<typename std::make_signed<U>::type>::max()
-        // 5) k < std::pow(std::numeric_limits<D>::radix,std::numeric_limits<D>::digits-1)
-        using S = typename std::make_signed<U>::type;
-        D x = static_cast<D>(a);
-        U c = static_cast<U>( (x*b) / k );
-        S r = static_cast<S>( (a*b) - (c*k) ) % static_cast<S>(k);
-        return static_cast<R>(r < 0 ? static_cast<R>(static_cast<U>(r)+k) : static_cast<R>(r));
+        template <typename R, typename D, typename U>
+#ifdef __CUDACC__
+        __host__ __device__
+#endif
+        R mul_mod(U a, U b, U k)
+        {
+            // Computes: (a*b % k) correctly even when a*b overflows std::numeric_limits<typename std::make_signed<U>>
+            // Assumes:
+            // 1) std::numeric_limits<U>::is_modulo
+            // 2) a < k
+            // 3) b < k
+            // 4) k < std::numeric_limits<typename std::make_signed<U>::type>::max()
+            // 5) k < std::pow(std::numeric_limits<D>::radix,std::numeric_limits<D>::digits-1)
+            using S = typename std::make_signed<U>::type;
+            D x = static_cast<D>(a);
+            U c = static_cast<U>( (x*b) / k );
+            S r = static_cast<S>( (a*b) - (c*k) ) % static_cast<S>(k);
+            return r < 0 ? static_cast<R>(static_cast<U>(r)+k) : static_cast<R>(r);
+        };
     };
-
 };
 
-/*
- * end included header "qmc_mul_mod.hpp"
- */
+#endif
+#ifndef QMC_OVERLOADS_REAL_H
+#define QMC_OVERLOADS_REAL_H
 
-/*
- * begin included header "qmc_real.hpp"
- */
 #include <cmath> // abs, sqrt
 
 namespace integrators
 {
-    template <typename T>
-    T compute_variance(const T& mean, const T& variance, const T& sum, const T& delta )
+    namespace overloads
     {
-        return variance + delta*(sum - mean);
-    };
-    
-    template <typename T>
-    T compute_error(const T& variance)
-    {
-        return T(std::sqrt(std::abs(variance)));
-    };
+        template <typename T>
+        T compute_variance(const T& mean, const T& variance, const T& sum, const T& delta )
+        {
+            return variance + delta*(sum - mean);
+        };
 
-    template <typename T>
-    T compute_variance_from_error(const T& error)
-    {
-        return T(error*error);
-    };
-    
-    template <typename T, typename D, typename U>
-    D compute_error_ratio(const result<T,U>& res, const D& epsrel, const D&epsabs, const ErrorMode errormode)
-    {
-        return std::min(res.error/epsabs, std::abs(res.error/(res.integral*epsrel)));
-    };
-}
+        template <typename T>
+        T compute_error(const T& variance)
+        {
+            using std::sqrt;
+            using std::abs;
+            return T(sqrt(abs(variance)));
+        };
 
-/*
- * end included header "qmc_real.hpp"
- */
+        template <typename T>
+        T compute_variance_from_error(const T& error)
+        {
+            return T(error*error);
+        };
 
-/*
- * begin included header "qmc_complex.hpp"
- */
+        template <typename T, typename D, typename U>
+        D compute_error_ratio(const result<T,U>& res, const D& epsrel, const D&epsabs, const ErrorMode errormode)
+        {
+            using std::abs;
+
+            #define QMC_ABS_CALL abs(res.error/(res.integral*epsrel))
+
+            static_assert(std::is_same<decltype(QMC_ABS_CALL),D>::value, "Downcast detected in integrators::overloads::compute_error_ratio. Please implement \"D abs(D)\".");
+            return std::min(res.error/epsabs, QMC_ABS_CALL);
+
+            #undef QMC_ABS_CALL
+        };
+    };
+};
+
+#endif
+#ifndef QMC_OVERLOADS_COMPLEX_H
+#define QMC_OVERLOADS_COMPLEX_H
+
 #include <complex>
 #include <cmath> // abs, sqrt
 #include <stdexcept> // invalid_argument
@@ -228,73 +222,76 @@ namespace integrators
 
 namespace integrators
 {
-    // Implementation
-    template <typename T>
-    T compute_variance_complex(const T& mean, const T& variance, const T& sum, const T& delta )
+    namespace overloads
     {
-        return variance + T(delta.real()*(sum.real() - mean.real()), delta.imag()*(sum.imag() - mean.imag()));
-    }
-
-    template <typename T>
-    T compute_error_complex(const T& svariance)
-    {
-        return T(std::sqrt(std::abs(svariance.real())), std::sqrt(std::abs(svariance.imag())));
-    };
-
-    template <typename T>
-    T compute_variance_from_error_complex(const T& error)
-    {
-        return T(error.real()*error.real(), error.imag()*error.imag());
-    }
-
-    template <typename T, typename D, typename U>
-    D compute_error_ratio_complex(const result<T,U>& res, const D& epsrel, const D& epsabs, const ErrorMode errormode)
-    {
-        if( errormode == all )
+        // Implementation
+        template <typename T>
+        T compute_variance_complex(const T& mean, const T& variance, const T& sum, const T& delta )
         {
-            return std::max(
-                            std::min(res.error.real()/epsabs, res.error.real()/std::abs(res.integral.real()*epsrel)),
-                            std::min(res.error.imag()/epsabs, res.error.imag()/std::abs(res.integral.imag()*epsrel))
-                            );
+            return variance + T(delta.real()*(sum.real() - mean.real()), delta.imag()*(sum.imag() - mean.imag()));
         }
-        else if ( errormode == largest )
-        {
-            return std::min(
-                            std::max(res.error.real(),res.error.imag())/epsabs,
-                            std::max(res.error.real(),res.error.imag())/(std::max(std::abs(res.integral.real()),std::abs(res.integral.imag()))*epsrel)
-                            );
-        }
-        else
-        {
-            throw std::invalid_argument("Invalid errormode = " + std::to_string(errormode) + " passed to compute_error_ratio.");
-        }
-    };
 
-    // Overloads (std::complex)
-    template <typename T> std::complex<T> compute_variance(const std::complex<T>& mean, const std::complex<T>& variance, const std::complex<T>& sum, const std::complex<T>& delta ) { return compute_variance_complex(mean,variance,sum,delta); };
-    template <typename T> std::complex<T> compute_error(const std::complex<T>& svariance) { return compute_error_complex(svariance); };
-    template <typename T> std::complex<T> compute_variance_from_error(const std::complex<T>& error) { return compute_variance_from_error_complex(error); };
-    template <typename T, typename D, typename U> D compute_error_ratio(const result<std::complex<T>,U>& res, const D& epsrel, const D& epsabs, const ErrorMode errormode) { return compute_error_ratio_complex(res, epsrel, epsabs, errormode); };
+        template <typename T>
+        T compute_error_complex(const T& svariance)
+        {
+            return T(std::sqrt(std::abs(svariance.real())), std::sqrt(std::abs(svariance.imag())));
+        };
+
+        template <typename T>
+        T compute_variance_from_error_complex(const T& error)
+        {
+            return T(error.real()*error.real(), error.imag()*error.imag());
+        }
+
+        template <typename T, typename D, typename U>
+        D compute_error_ratio_complex(const result<T,U>& res, const D& epsrel, const D& epsabs, const ErrorMode errormode)
+        {
+            if( errormode == all )
+            {
+                return std::max(
+                                std::min(res.error.real()/epsabs, res.error.real()/std::abs(res.integral.real()*epsrel)),
+                                std::min(res.error.imag()/epsabs, res.error.imag()/std::abs(res.integral.imag()*epsrel))
+                                );
+            }
+            else if ( errormode == largest )
+            {
+                return std::min(
+                                std::max(res.error.real(),res.error.imag())/epsabs,
+                                std::max(res.error.real(),res.error.imag())/(std::max(std::abs(res.integral.real()),std::abs(res.integral.imag()))*epsrel)
+                                );
+            }
+            else
+            {
+                throw std::invalid_argument("Invalid errormode = " + std::to_string(errormode) + " passed to compute_error_ratio.");
+            }
+        };
+
+        // Overloads (std::complex)
+        template <typename T> std::complex<T> compute_variance(const std::complex<T>& mean, const std::complex<T>& variance, const std::complex<T>& sum, const std::complex<T>& delta ) { return compute_variance_complex(mean,variance,sum,delta); };
+        template <typename T> std::complex<T> compute_error(const std::complex<T>& svariance) { return compute_error_complex(svariance); };
+        template <typename T> std::complex<T> compute_variance_from_error(const std::complex<T>& error) { return compute_variance_from_error_complex(error); };
+        template <typename T, typename D, typename U> D compute_error_ratio(const result<std::complex<T>,U>& res, const D& epsrel, const D& epsabs, const ErrorMode errormode) { return compute_error_ratio_complex(res, epsrel, epsabs, errormode); };
 
 #ifdef __CUDACC__
-    // Overloads (thrust::complex)
-    template <typename T> thrust::complex<T> compute_variance(const thrust::complex<T>& mean, const thrust::complex<T>& variance, const thrust::complex<T>& sum, const thrust::complex<T>& delta ) { return compute_variance_complex(mean,variance,sum,delta); };
-    template <typename T> thrust::complex<T> compute_error(const thrust::complex<T>& svariance) { return compute_error_complex(svariance); };
-    template <typename T> thrust::complex<T> compute_variance_from_error(const thrust::complex<T>& error) { return compute_variance_from_error_complex(error); };
-    template <typename T, typename D, typename U> D compute_error_ratio(const result<thrust::complex<T>,U>& res, const D& epsrel, const D& epsabs, const ErrorMode errormode) { return compute_error_ratio_complex(res, epsrel, epsabs, errormode); };
+        // Overloads (thrust::complex)
+        template <typename T> thrust::complex<T> compute_variance(const thrust::complex<T>& mean, const thrust::complex<T>& variance, const thrust::complex<T>& sum, const thrust::complex<T>& delta ) { return compute_variance_complex(mean,variance,sum,delta); };
+        template <typename T> thrust::complex<T> compute_error(const thrust::complex<T>& svariance) { return compute_error_complex(svariance); };
+        template <typename T> thrust::complex<T> compute_variance_from_error(const thrust::complex<T>& error) { return compute_variance_from_error_complex(error); };
+        template <typename T, typename D, typename U> D compute_error_ratio(const result<thrust::complex<T>,U>& res, const D& epsrel, const D& epsabs, const ErrorMode errormode) { return compute_error_ratio_complex(res, epsrel, epsabs, errormode); };
 #endif
-}
+    };
+};
 
+#endif
+#ifndef QMC_TRANSFORMS_KOROBOV_H
+#define QMC_TRANSFORMS_KOROBOV_H
 
-
-/*
- * end included header "qmc_complex.hpp"
- */
-
-/*
- * begin included header "qmc_transform.hpp"
- */
 #include <type_traits> // integral_constant
+
+#ifndef QMC_TRANSFORMS_DETAIL_IPOW_H
+#define QMC_TRANSFORMS_DETAIL_IPOW_H
+
+#include <type_traits> // enable_if
 
 namespace integrators
 {
@@ -303,34 +300,34 @@ namespace integrators
         namespace detail
         {
             /*
-             * Power function: ipow<D,U,i>(d) raises the D d to the U power i
+             * Power function: IPow<D,U,i>(d) raises the D d to the U power i
              */
             template<typename D, typename U, U n, typename = void>
-            struct ipow // n%2 == 0 && n != 0
+            struct IPow // n%2 == 0 && n != 0
             {
 #ifdef __CUDACC__
                 __host__ __device__
 #endif
                 static D value(D base)
                 {
-                    D power = ipow<D,U,n/2>::value(base);
+                    D power = IPow<D,U,n/2>::value(base);
                     return power * power;
                 }
             };
             template<typename D, typename U, U n>
-            struct ipow<D, U, n, typename std::enable_if< n%2 != 0 && n != 0>::type>
+            struct IPow<D, U, n, typename std::enable_if< n%2 != 0 && n != 0>::type>
             {
 #ifdef __CUDACC__
                 __host__ __device__
 #endif
                 static D value(D base)
                 {
-                    D power = ipow<D,U,(n-1)/2>::value(base);
+                    D power = IPow<D,U,(n-1)/2>::value(base);
                     return base * power * power;
                 }
             };
             template<typename D, typename U, U n>
-            struct ipow<D, U, n, typename std::enable_if< n == 0>::type>
+            struct IPow<D, U, n, typename std::enable_if< n == 0>::type>
             {
 #ifdef __CUDACC__
                 __host__ __device__
@@ -340,7 +337,22 @@ namespace integrators
                     return D(1);
                 }
             };
+        };
+    };
+};
 
+#endif
+#ifndef QMC_TRANSFORMS_DETAIL_BINOMIAL_H
+#define QMC_TRANSFORMS_DETAIL_BINOMIAL_H
+
+#include <type_traits> // enable_if
+
+namespace integrators
+{
+    namespace transforms
+    {
+        namespace detail
+        {
             /*
              * Binomial Coefficients: Binomial<U,n,k>::value gives the type U binomial coefficient (n k)
              */
@@ -371,30 +383,78 @@ namespace integrators
                 constexpr static U value = 1;
             };
 
+            // require declaration, see e.g.: https://stackoverflow.com/questions/8016780/undefined-reference-to-static-constexpr-char
+            template<typename U, U n, U k, typename T>
+            constexpr U Binomial<U,n,k,T>::value;
+        };
+    };
+};
+
+#endif
+#ifndef QMC_TRANSFORMS_DETAIL_KOROBOV_COEFFICIENT_H
+#define QMC_TRANSFORMS_DETAIL_KOROBOV_COEFFICIENT_H
+
+#include <type_traits> // enable_if
+
+// (Included Above): #include "binomial.hpp"
+
+namespace integrators
+{
+    namespace transforms
+    {
+        namespace detail
+        {
             /*
-             * Korobov Coefficients and Transform Terms
+             * Korobov Coefficients
              */
             template<typename D, typename U, U k, U a, U b, typename = void>
             struct KorobovCoefficient
             {
-                constexpr static D value = (D(-1)*(D(b)-D(k)+D(1))*D(KorobovCoefficient<D,U,k-1,a,b>::value)*(D(a)+D(k)))/(D(k)*(D(a)+D(k)+D(1)));
+                const static D value()
+                {
+                    return (D(-1)*(D(b)-D(k)+D(1))*D(KorobovCoefficient<D,U,k-1,a,b>::value())*(D(a)+D(k)))/(D(k)*(D(a)+D(k)+D(1)));
+                }
             };
 
             template<typename D, typename U, U k, U a, U b>
             struct KorobovCoefficient<D, U, k, a, b, typename std::enable_if<k == 0>::type>
             {
-                constexpr static D value = ((D(2)*D(b)+D(1))*D(Binomial<U,2*b,b>::value))/(D(a)+D(1));
+                const static D value()
+                {
+                    return ((D(2)*D(b)+D(1))*D(Binomial<U,2*b,b>::value))/(D(a)+D(1));
+                }
             };
+        };
+    };
+};
 
+#endif
+#ifndef QMC_TRANSFORMS_DETAIL_KOROBOV_TERM_H
+#define QMC_TRANSFORMS_DETAIL_KOROBOV_TERM_H
+
+#include <type_traits> // enable_if
+
+// (Included Above): #include "binomial.hpp"
+// (Included Above): #include "korobov_coefficient.hpp"
+
+namespace integrators
+{
+    namespace transforms
+    {
+        namespace detail
+        {
+            /*
+             * Korobov Transform Terms
+             */
             template<typename D, typename U, U k, U a, U b, typename = void>
             struct KorobovTerm
             {
 #ifdef __CUDACC__
                 __host__ __device__
 #endif
-                constexpr static D value(const D& x)
+                const static D value(const D& x)
                 {
-                    return KorobovTerm<D,U,k-1,a,b>::value(x)*x+KorobovCoefficient<D,U,b-k,a,b>::value;
+                    return KorobovTerm<D,U,k-1,a,b>::value(x)*x+KorobovCoefficient<D,U,b-k,a,b>::value();
                 }
             };
             template<typename D, typename U, U k, U a, U b>
@@ -403,13 +463,21 @@ namespace integrators
 #ifdef __CUDACC__
                 __host__ __device__
 #endif
-                constexpr static D value(const D& x)
+                const static D value(const D& x)
                 {
-                    return KorobovCoefficient<D,U,b,a,b>::value;
+                    return KorobovCoefficient<D,U,b,a,b>::value();
                 }
             };
         };
+    };
+};
 
+#endif
+
+namespace integrators
+{
+    namespace transforms
+    {
         /*
          * Korobov Transform: Korobov<D,U,r>(x,weight,dim) takes the weight r Korobov transform of x
          */
@@ -424,17 +492,27 @@ namespace integrators
                 const D prefactor = (D(2)*r+D(1))*detail::Binomial<U,2*r,r>::value;
                 for(U s = 0; s<dim; s++)
                 {
-                    wgt *= prefactor*detail::ipow<D,U,r>::value(x[s])*detail::ipow<D,U,r>::value(D(1)-x[s]);
-                    x[s] = detail::ipow<D,U,r+1>::value(x[s])*detail::KorobovTerm<D,U,r,r,r>::value(x[s]);
+                    wgt *= prefactor*detail::IPow<D,U,r>::value(x[s])*detail::IPow<D,U,r>::value(D(1)-x[s]);
+                    x[s] = detail::IPow<D,U,r+1>::value(x[s])*detail::KorobovTerm<D,U,r,r,r>::value(x[s]);
                     // loss of precision can cause x < 0 or x > 1 must keep in x \elem [0,1]
                     if (x[s] > D(1)) x[s] = D(1);
                     if (x[s] < D(0)) x[s] = D(0);
                 }
             }
         };
+    };
+};
 
-        template <typename D, typename U = unsigned long long int>
-        struct Tent
+#endif
+#ifndef QMC_TRANSFORMS_BAKER_H
+#define QMC_TRANSFORMS_BAKER_H
+
+namespace integrators
+{
+    namespace transforms
+    {
+        template<typename D, typename U = unsigned long long int>
+        struct Baker
         {
 #ifdef __CUDACC__
             __host__ __device__
@@ -450,7 +528,17 @@ namespace integrators
                 }
             }
         };
+    };
+};
 
+#endif
+#ifndef QMC_TRANSFORMS_TRIVIAL_H
+#define QMC_TRANSFORMS_TRIVIAL_H
+
+namespace integrators
+{
+    namespace transforms
+    {
         template<typename D, typename U = unsigned long long int>
         struct Trivial
         {
@@ -464,16 +552,10 @@ namespace integrators
 
 };
 
+#endif
+#ifndef QMC_GENERATINGVECTORS_CBCPT_DN1_100_H
+#define QMC_GENERATINGVECTORS_CBCPT_DN1_100_H
 
-
-
-/*
- * end included header "qmc_transform.hpp"
- */
-
-/*
- * begin included header "qmc_generating_vectors.hpp"
- */
 #include <vector>
 #include <map>
 
@@ -481,7 +563,6 @@ namespace integrators
 {
     namespace generatingvectors
     {
-
         template <typename U>
         std::map<U,std::vector<U>> cbcpt_dn1_100()
         {
@@ -652,7 +733,19 @@ namespace integrators
             return generatingvectors;
 
         }
+    };
+};
+#endif
+#ifndef QMC_GENERATINGVECTORS_CBCPT_DN2_6_H
+#define QMC_GENERATINGVECTORS_CBCPT_DN2_6_H
 
+#include <vector>
+#include <map>
+
+namespace integrators
+{
+    namespace generatingvectors
+    {
         template <typename U>
         std::map<U,std::vector<U>> cbcpt_dn2_6()
         {
@@ -712,198 +805,504 @@ namespace integrators
             return generatingvectors;
 
         }
-
     };
 };
+#endif
+#ifndef QMC_GENERATINGVECTORS_CBCPT_CFFTW1_6_H
+#define QMC_GENERATINGVECTORS_CBCPT_CFFTW1_6_H
 
-
-/*
- * end included header "qmc_generating_vectors.hpp"
- */
-
-#ifdef __CUDACC__
-/*
- * begin included header "qmc_core_gpu.hpp"
- */
-#ifdef __CUDACC__
-#include <iostream>
-#include <stdexcept>
-#include <exception>
-#include <utility>
-#include <string>
-#include <cstddef>
-#include <iterator>
-#include <type_traits>
-#include <memory> // unique_ptr
-#include <cassert> // assert
-
-#include <cuda_runtime_api.h>
-
-#define CUDA_SAFE_CALL(err) { integrators::detail::cuda_safe_call_impl((err), __FILE__, __LINE__); }
+#include <vector>
+#include <map>
 
 namespace integrators
 {
-    struct cuda_error : public std::runtime_error { using std::runtime_error::runtime_error; };
-
-    namespace detail
+    namespace generatingvectors
     {
-        inline void cuda_safe_call_impl(cudaError_t error, const char *file, int line)
+        template <typename U>
+        std::map<U,std::vector<U>> cbcpt_cfftw1_6()
         {
-            if (error != cudaSuccess)
-            {
-                throw cuda_error(std::string(cudaGetErrorString(error)) + ": " + std::string(file) + " line " + std::to_string(line));
-            }
-        };
 
-        template<typename Tin>
-        class cuda_memory
-        {
-        public:
-            using T = typename std::remove_const<Tin>::type;
-        private:
-            T* memory;
-        public:
-            operator T*() { return memory; }
-            cuda_memory(std::size_t s) { CUDA_SAFE_CALL(cudaMalloc(&memory, s*sizeof(T))); };
-            ~cuda_memory() { CUDA_SAFE_CALL(cudaFree(memory)); }
-        };
+            // Vectors generated using custom CBC tool based on FFTW
+            // Settings:
+            // s = 100
+            // omega=inline('2*pi^2*(x.^2-x+1/6)')
+            // gamma=1/s
+            // beta=1
 
-    };
+            std::map<U,std::vector<U>> generatingvectors;
 
-    // TODO - make use of restricted pointers?
-    template <typename T, typename D, typename U, typename F1, typename F2>
-    __global__
-    void compute_kernel_gpu(const U work_offset, const U work_this_iteration, const U total_work_packages, const U* z, const D* d, T* r, const U d_r_size_over_m, const U n, const U m, F1* func, const U dim, F2* integral_transform)
-    {
-        U i = blockIdx.x*blockDim.x + threadIdx.x;
-        if (i < work_this_iteration)
-        {
-            for (U k = 0; k < m; k++)
-            {
-                T kahan_c = {0.};
-                for (U offset = work_offset + i; offset < n; offset += total_work_packages)
-                {
-                    D wgt = 1.;
-                    D mynull = 0;
-                    D x[25]; // TODO - template parameter?
+            generatingvectors[2500000001]={1,1056092002,604902782,1140518443,1168484358,678540231};
+            generatingvectors[3010560001]={1,1265039176,710224583,570392900,246175051,776375237};
+            generatingvectors[3527193601]={1,1477280710,1631679535,500900763,1337951012,990240443};
+            generatingvectors[4046192641]={1,1545350222,1821675932,852726071,257150351,1540501786};
+            generatingvectors[4515840001]={1,1895743314,1978110099,1051107732,1249084094,95135867};
+            generatingvectors[5040947521]={1,2084035980,585653597,448523180,856444223,2389197079};
+            generatingvectors[5505024001]={1,2280282288,503769990,2547746687,2668753240,2100976149};
+            generatingvectors[6165626881]={1,2360163115,1727923807,3043833953,2316665784,2702804871};
+            generatingvectors[6561000001]={1,1812543072,1410669934,1037177071,1156985284,3184493703};
+            generatingvectors[7112448001]={1,2716396872,3010889702,2894020956,1485836748,1959799747};
+            generatingvectors[7501410001]={1,2757177450,879378109,2460097563,3069036981,3181359993};
+            generatingvectors[10088401751]={1,4180383535,3234338499,4352977744,1736039557,4095101376};
+            generatingvectors[15173222401]={1,5795573206,4481927636,1112677318,2916664894,2804891062};
 
-                    for (U sDim = 0; sDim < dim; sDim++)
-                    {
-                        x[sDim] = modf(integrators::mul_mod<D, D, U>(offset, z[sDim], n) / n + d[k*dim + sDim], &mynull);
-                    }
+            return generatingvectors;
 
-                    (*integral_transform)(x, wgt, dim);
-
-                    T point = (*func)(x);
-
-                    // Compute sum using Kahan summation
-                    // equivalent to: r[k*d_r_size_over_m + i] += wgt*point;
-                    T kahan_y = wgt*point - kahan_c;
-                    T kahan_t = r[k*d_r_size_over_m + i] + kahan_y;
-                    T kahan_d = kahan_t - r[k*d_r_size_over_m + i];
-                    kahan_c = kahan_d - kahan_y;
-                    r[k*d_r_size_over_m + i] = kahan_t;
-                }
-            }
         }
     };
-
-    template <typename F1, typename F2, typename T, typename D, typename U, typename G>
-    void compute_gpu(
-                        const Qmc<T, D, U, G>& qmc,
-                        const U i, const U work_this_iteration, const U total_work_packages,
-                        std::unique_ptr<integrators::detail::cuda_memory<U>>& d_z,
-                        std::unique_ptr<integrators::detail::cuda_memory<D>>& d_d,
-                        std::unique_ptr<integrators::detail::cuda_memory<T>>& d_r,
-                        const U d_r_size_over_m, const U n, const U m,
-                        std::unique_ptr<integrators::detail::cuda_memory<F1>>& d_func,
-                        const U dim,
-                        std::unique_ptr<integrators::detail::cuda_memory<F2>>& d_integral_transform,
-                        const int device
-                    )
-    {
-        if (qmc.verbosity > 1) qmc.logger << "- (" << device << ") computing work_package " << i << ", work_this_iteration " << work_this_iteration << ", total_work_packages " << total_work_packages << std::endl;
-
-        if(qmc.verbosity > 2) qmc.logger << "- (" << device << ") launching gpu kernel<<<" << qmc.cudablocks << "," << qmc.cudathreadsperblock << ">>>" << std::endl;
-        integrators::compute_kernel_gpu<<< qmc.cudablocks, qmc.cudathreadsperblock >>>(i, work_this_iteration, total_work_packages, static_cast<U*>(*d_z), static_cast<D*>(*d_d), static_cast<T*>(*d_r), d_r_size_over_m, n, m, static_cast<F1*>(*d_func), dim, static_cast<F2*>(*d_integral_transform));
-        CUDA_SAFE_CALL(cudaDeviceSynchronize());
-    };
-
-    template <typename F1, typename F2, typename T, typename D, typename U>
-    void setup_gpu(
-                        std::unique_ptr<integrators::detail::cuda_memory<U>>& d_z, const std::vector<U>& z,
-                        std::unique_ptr<integrators::detail::cuda_memory<D>>& d_d, const std::vector<D>& d,
-                        std::unique_ptr<integrators::detail::cuda_memory<T>>& d_r, const U d_r_size_over_m,
-                        const T* r_element, const U r_size_over_m, const U m,
-                        std::unique_ptr<integrators::detail::cuda_memory<F1>>& d_func, F1& func,
-                        std::unique_ptr<integrators::detail::cuda_memory<F2>>& d_integral_transform, F2& integral_transform,
-                        const int device, const U verbosity, const Logger& logger
-                  )
-    {
-        // Set Device
-        if (verbosity > 1) logger << "- (" << device << ") setting device" << std::endl;
-        CUDA_SAFE_CALL(cudaSetDevice(device));
-        if (verbosity > 1) logger << "- (" << device << ") device set" << std::endl;
-
-        d_func.reset( new integrators::detail::cuda_memory<F1>(1) );
-        d_integral_transform.reset( new integrators::detail::cuda_memory<F2>(1) );
-        d_z.reset( new integrators::detail::cuda_memory<U>(z.size()) );
-        d_d.reset( new integrators::detail::cuda_memory<D>(d.size()) );
-        d_r.reset( new integrators::detail::cuda_memory<T>(d_r_size_over_m*m) );
-        if(verbosity > 1) logger << "- (" << device << ") allocated d_func,d_integral_transform,d_z,d_d,d_r" << std::endl;
-
-        // copy func and integral_transform (initialize on new active device)
-        F1 func_copy = func;
-        F2 integral_transform_copy = integral_transform;
-
-        CUDA_SAFE_CALL(cudaMemcpy(static_cast<typename std::remove_const<F1>::type*>(*d_func), &func_copy, sizeof(F1), cudaMemcpyHostToDevice));
-        CUDA_SAFE_CALL(cudaMemcpy(static_cast<typename std::remove_const<F2>::type*>(*d_integral_transform), &integral_transform_copy, sizeof(F2), cudaMemcpyHostToDevice));
-        if(verbosity > 1) logger << "- (" << device << ") copied d_func,d_integral_transform to device memory" << std::endl;
-
-        // Copy z,d,r,func,integral_transform to device
-        CUDA_SAFE_CALL(cudaMemcpy(static_cast<U*>(*d_z), z.data(), z.size() * sizeof(U), cudaMemcpyHostToDevice));
-        CUDA_SAFE_CALL(cudaMemcpy(static_cast<D*>(*d_d), d.data(), d.size() * sizeof(D), cudaMemcpyHostToDevice));
-        for (U k = 0; k < m; k++)
-        {
-            CUDA_SAFE_CALL(cudaMemcpy(&(static_cast<T*>(*d_r)[k*d_r_size_over_m]), &r_element[k*r_size_over_m], d_r_size_over_m * sizeof(T), cudaMemcpyHostToDevice));
-        }
-
-        if(verbosity > 1) logger << "- (" << device << ") copied z,d,r to device memory" << std::endl;
-
-        //        CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1)); // TODO - investigate if this helps
-        //        cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, MyKernel, 0, 0); // TODO - investigate if this helps - https://devblogs.nvidia.com/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/
-    };
-
-    template <typename T, typename U>
-    void tear_down_gpu(const std::unique_ptr<integrators::detail::cuda_memory<T>>& d_r, const U d_r_size_over_m, T* r_element, const U r_size_over_m, const U m, const int device, const U verbosity, const Logger& logger)
-    {
-        // Copy r to host
-        for (U k = 0; k < m; k++)
-        {
-            CUDA_SAFE_CALL(cudaMemcpy(&r_element[k*r_size_over_m], &(static_cast<T*>(*d_r)[k*d_r_size_over_m]), d_r_size_over_m * sizeof(T), cudaMemcpyDeviceToHost));
-        }
-        if (verbosity > 1) logger << "- (" << device << ") copied r to host memory" << std::endl;
-    };
-
-    int get_device_count_gpu()
-    {
-        int device_count;
-        CUDA_SAFE_CALL(cudaGetDeviceCount(&device_count));
-        assert(device_count >= 0);
-        return device_count;
-    };
-
 };
 #endif
+#ifndef QMC_CORE_CUDA_COMPUTE_KERNEL_H
+#define QMC_CORE_CUDA_COMPUTE_KERNEL_H
 
-/*
- * end included header "qmc_core_gpu.hpp"
- */
+#ifdef __CUDACC__
+
+namespace integrators
+{
+    namespace core
+    {
+        namespace cuda
+        {
+            // TODO - make use of restricted pointers?
+            template <typename T, typename D, typename U, typename F1, typename F2>
+            __global__
+            void compute_kernel(const U work_offset, const U work_this_iteration, const U total_work_packages, const U* z, const D* d, T* r, const U d_r_size_over_m, const U n, const U m, F1* func, const U dim, F2* integral_transform)
+            {
+                U i = blockIdx.x*blockDim.x + threadIdx.x;
+                if (i < work_this_iteration)
+                {
+                    for (U k = 0; k < m; k++)
+                    {
+                        T kahan_c = {0.};
+                        for (U offset = work_offset + i; offset < n; offset += total_work_packages)
+                        {
+                            D wgt = 1.;
+                            D mynull = 0;
+                            D x[25]; // TODO - template parameter?
+
+                            for (U sDim = 0; sDim < dim; sDim++)
+                            {
+                                x[sDim] = modf(integrators::math::mul_mod<D, D, U>(offset, z[sDim], n) / n + d[k*dim + sDim], &mynull);
+                            }
+
+                            (*integral_transform)(x, wgt, dim);
+
+                            T point = (*func)(x);
+
+                            // Compute sum using Kahan summation
+                            // equivalent to: r[k*d_r_size_over_m + i] += wgt*point;
+                            T kahan_y = wgt*point - kahan_c;
+                            T kahan_t = r[k*d_r_size_over_m + i] + kahan_y;
+                            T kahan_d = kahan_t - r[k*d_r_size_over_m + i];
+                            kahan_c = kahan_d - kahan_y;
+                            r[k*d_r_size_over_m + i] = kahan_t;
+                        }
+                    }
+                }
+            };
+        };
+    };
+};
 
 #endif
-/*
- * begin included header "qmc_core.hpp"
- */
+#endif
+#ifndef QMC_CORE_CUDA_COMPUTE_H
+#define QMC_CORE_CUDA_COMPUTE_H
+
+#ifdef __CUDACC__
+#include <memory> // unique_ptr
+#include <cuda_runtime_api.h> // cudadDeviceSynchronize
+
+#ifndef QMC_CORE_CUDA_DETAIL_CUDA_MEMORY_H
+#define QMC_CORE_CUDA_DETAIL_CUDA_MEMORY_H
+
+#ifdef __CUDACC__
+#include <type_traits> // remove_const
+#include <cuda_runtime_api.h>
+
+#ifndef QMC_CORE_CUDA_DETAIL_CUDA_SAFE_CALL_H
+#define QMC_CORE_CUDA_DETAIL_CUDA_SAFE_CALL_H
+
+#ifdef __CUDACC__
+#include <stdexcept>
+#include <exception>
+#include <string>
+
+#include <cuda_runtime_api.h>
+
+namespace integrators
+{
+    namespace core
+    {
+        namespace cuda
+        {
+            namespace detail
+            {
+                struct cuda_error : public std::runtime_error { using std::runtime_error::runtime_error; };
+
+                inline void cuda_safe_call(cudaError_t error, const char *file, int line)
+                {
+                    if (error != cudaSuccess)
+                    {
+                        throw cuda_error(std::string(cudaGetErrorString(error)) + ": " + std::string(file) + " line " + std::to_string(line));
+                    }
+                };
+            };
+        };
+    };
+};
+
+#endif
+#endif
+
+#define QMC_CORE_CUDA_SAFE_CALL(err) { integrators::core::cuda::detail::cuda_safe_call((err), __FILE__, __LINE__); }
+
+namespace integrators
+{
+    namespace core
+    {
+        namespace cuda
+        {
+            namespace detail
+            {
+                template<typename Tin>
+                class cuda_memory
+                {
+                public:
+                    using T = typename std::remove_const<Tin>::type;
+                private:
+                    T* memory;
+                public:
+                    operator T*() { return memory; }
+                    cuda_memory(std::size_t s) { QMC_CORE_CUDA_SAFE_CALL(cudaMalloc(&memory, s*sizeof(T))); };
+                    ~cuda_memory() { QMC_CORE_CUDA_SAFE_CALL(cudaFree(memory)); }
+                };
+            };
+        };
+    };
+};
+
+#undef QMC_CORE_CUDA_SAFE_CALL
+
+#endif
+#endif
+// (Included Above): #include "detail/cuda_safe_call.hpp"
+
+#define QMC_CORE_CUDA_SAFE_CALL(err) { integrators::core::cuda::detail::cuda_safe_call((err), __FILE__, __LINE__); }
+
+namespace integrators
+{
+    namespace core
+    {
+        namespace cuda
+        {
+            template <typename F1, typename F2, typename T, typename D, typename U, typename G>
+            void compute(
+                         const Qmc<T, D, U, G>& qmc,
+                         const U i, const U work_this_iteration, const U total_work_packages,
+                         std::unique_ptr<integrators::core::cuda::detail::cuda_memory<U>>& d_z,
+                         std::unique_ptr<integrators::core::cuda::detail::cuda_memory<D>>& d_d,
+                         std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r,
+                         const U d_r_size_over_m, const U n, const U m,
+                         std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F1>>& d_func,
+                         const U dim,
+                         std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F2>>& d_integral_transform,
+                         const int device
+                         )
+            {
+                if (qmc.verbosity > 1) qmc.logger << "- (" << device << ") computing work_package " << i << ", work_this_iteration " << work_this_iteration << ", total_work_packages " << total_work_packages << std::endl;
+
+                if(qmc.verbosity > 2) qmc.logger << "- (" << device << ") launching gpu kernel<<<" << qmc.cudablocks << "," << qmc.cudathreadsperblock << ">>>" << std::endl;
+
+                integrators::core::cuda::compute_kernel<<< qmc.cudablocks, qmc.cudathreadsperblock >>>(i, work_this_iteration, total_work_packages,
+                                                                                                       static_cast<U*>(*d_z),
+                                                                                                       static_cast<D*>(*d_d),
+                                                                                                       static_cast<T*>(*d_r),
+                                                                                                       d_r_size_over_m, n, m,
+                                                                                                       static_cast<F1*>(*d_func),
+                                                                                                       dim,
+                                                                                                       static_cast<F2*>(*d_integral_transform)
+                                                                                                       );
+                QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSynchronize());
+
+            };
+        };
+    };
+};
+
+#undef QMC_CORE_CUDA_SAFE_CALL
+
+#endif
+#endif
+
+#ifndef QMC_CORE_CUDA_SETUP_H
+#define QMC_CORE_CUDA_SETUP_H
+
+#ifdef __CUDACC__
+#include <memory> // unique_ptr
+#include <cassert> // assert
+#include <cuda_runtime_api.h> // cudaMemcpy
+
+// (Included Above): #include "detail/cuda_memory.hpp"
+// (Included Above): #include "detail/cuda_safe_call.hpp"
+
+#define QMC_CORE_CUDA_SAFE_CALL(err) { integrators::core::cuda::detail::cuda_safe_call((err), __FILE__, __LINE__); }
+
+namespace integrators
+{
+    namespace core
+    {
+        namespace cuda
+        {
+            template <typename F1, typename F2, typename T, typename D, typename U>
+            void setup(
+                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<U>>& d_z, const std::vector<U>& z,
+                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<D>>& d_d, const std::vector<D>& d,
+                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r, const U d_r_size_over_m,
+                           const T* r_element, const U r_size_over_m, const U m,
+                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F1>>& d_func, F1& func,
+                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F2>>& d_integral_transform, F2& integral_transform,
+                           const int device, const U verbosity, const Logger& logger
+                           )
+            {
+                // Set Device
+                if (verbosity > 1) logger << "- (" << device << ") setting device" << std::endl;
+                QMC_CORE_CUDA_SAFE_CALL(cudaSetDevice(device));
+                if (verbosity > 1) logger << "- (" << device << ") device set" << std::endl;
+
+                d_func.reset( new integrators::core::cuda::detail::cuda_memory<F1>(1) );
+                d_integral_transform.reset( new integrators::core::cuda::detail::cuda_memory<F2>(1) );
+                d_z.reset( new integrators::core::cuda::detail::cuda_memory<U>(z.size()) );
+                d_d.reset( new integrators::core::cuda::detail::cuda_memory<D>(d.size()) );
+                d_r.reset( new integrators::core::cuda::detail::cuda_memory<T>(d_r_size_over_m*m) );
+                if(verbosity > 1) logger << "- (" << device << ") allocated d_func,d_integral_transform,d_z,d_d,d_r" << std::endl;
+
+                // copy func and integral_transform (initialize on new active device)
+                F1 func_copy = func;
+                F2 integral_transform_copy = integral_transform;
+
+                QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<typename std::remove_const<F1>::type*>(*d_func), &func_copy, sizeof(F1), cudaMemcpyHostToDevice));
+                QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<typename std::remove_const<F2>::type*>(*d_integral_transform), &integral_transform_copy, sizeof(F2), cudaMemcpyHostToDevice));
+                if(verbosity > 1) logger << "- (" << device << ") copied d_func,d_integral_transform to device memory" << std::endl;
+
+                // Copy z,d,r,func,integral_transform to device
+                QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<U*>(*d_z), z.data(), z.size() * sizeof(U), cudaMemcpyHostToDevice));
+                QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<D*>(*d_d), d.data(), d.size() * sizeof(D), cudaMemcpyHostToDevice));
+                for (U k = 0; k < m; k++)
+                {
+                    QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(&(static_cast<T*>(*d_r)[k*d_r_size_over_m]), &r_element[k*r_size_over_m], d_r_size_over_m * sizeof(T), cudaMemcpyHostToDevice));
+                }
+
+                if(verbosity > 1) logger << "- (" << device << ") copied z,d,r to device memory" << std::endl;
+
+                //        QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1)); // TODO - investigate if this helps
+                //        cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, MyKernel, 0, 0); // TODO - investigate if this helps - https://devblogs.nvidia.com/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/
+            };
+        };
+    };
+};
+
+#undef QMC_CORE_CUDA_SAFE_CALL
+
+#endif
+#endif
+#ifndef QMC_CORE_CUDA_TEARDOWN_H
+#define QMC_CORE_CUDA_TEARDOWN_H
+
+#ifdef __CUDACC__
+#include <memory> // unique_ptr
+#include <cuda_runtime_api.h> // cudaMemcpy
+
+// (Included Above): #include "detail/cuda_memory.hpp"
+// (Included Above): #include "detail/cuda_safe_call.hpp"
+
+#define QMC_CORE_CUDA_SAFE_CALL(err) { integrators::core::cuda::detail::cuda_safe_call((err), __FILE__, __LINE__); }
+
+namespace integrators
+{
+    namespace core
+    {
+        namespace cuda
+        {
+            template <typename T, typename U>
+            void teardown(const std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r, const U d_r_size_over_m, T* r_element, const U r_size_over_m, const U m, const int device, const U verbosity, const Logger& logger)
+            {
+                // Copy r to host
+                for (U k = 0; k < m; k++)
+                {
+                    QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(&r_element[k*r_size_over_m], &(static_cast<T*>(*d_r)[k*d_r_size_over_m]), d_r_size_over_m * sizeof(T), cudaMemcpyDeviceToHost));
+                }
+                if (verbosity > 1) logger << "- (" << device << ") copied r to host memory" << std::endl;
+            };
+        };
+    };
+};
+
+#undef QMC_CORE_CUDA_SAFE_CALL
+
+#endif
+#endif
+#ifndef QMC_CORE_CUDA_GET_DEVICE_COUNT_H
+#define QMC_CORE_CUDA_GET_DEVICE_COUNT_H
+
+#ifdef __CUDACC__
+#include <cassert> // assert
+#include <cuda_runtime_api.h> // cudaMemcpy
+
+// (Included Above): #include "detail/cuda_safe_call.hpp"
+
+#define QMC_CORE_CUDA_SAFE_CALL(err) { integrators::core::cuda::detail::cuda_safe_call((err), __FILE__, __LINE__); }
+
+namespace integrators
+{
+    namespace core
+    {
+        namespace cuda
+        {
+            int get_device_count()
+            {
+                int device_count;
+                QMC_CORE_CUDA_SAFE_CALL(cudaGetDeviceCount(&device_count));
+                assert(device_count >= 0);
+                return device_count;
+            };
+        };
+    };
+};
+
+#undef QMC_CORE_CUDA_SAFE_CALL
+
+#endif
+#endif
+#ifndef QMC_CORE_GENERIC_COMPUTE_H
+#define QMC_CORE_GENERIC_COMPUTE_H
+
+#include <cmath>
+
+// (Included Above): #include "../../math/mul_mod.hpp"
+
+namespace integrators
+{
+    namespace core
+    {
+        namespace generic
+        {
+            template <typename T, typename D, typename U, typename F1, typename F2>
+            void compute(const U i, const std::vector<U>& z, const std::vector<D>& d, T* r_element, const U r_size_over_m, const U total_work_packages, const U n, const U m, F1& func, const U dim, F2& integral_transform)
+            {
+                using std::modf;
+
+                for (U k = 0; k < m; k++)
+                {
+                    T kahan_c = {0.};
+                    for( U offset = i; offset < n; offset += total_work_packages )
+                    {
+                        D wgt = 1.;
+                        D mynull = 0;
+                        std::vector<D> x(dim,0);
+
+                        for (U sDim = 0; sDim < dim; sDim++)
+                        {
+                            #define QMC_MODF_CALL modf( integrators::math::mul_mod<D,D,U>(offset,z.at(sDim),n)/(static_cast<D>(n)) + d.at(k*dim+sDim), &mynull)
+
+                            static_assert(std::is_same<decltype(QMC_MODF_CALL),D>::value, "Downcast detected in integrators::core::generic::compute. Please implement \"D modf(D)\".");
+                            x[sDim] = QMC_MODF_CALL;
+
+                            #undef QMC_MODF_CALL
+                        }
+
+                        integral_transform(x.data(), wgt, dim);
+
+                        T point = func(x.data());
+
+                        // Compute sum using Kahan summation
+                        // equivalent to: r_element[k*r_size_over_m] += wgt*point;
+                        T kahan_y = wgt*point - kahan_c;
+                        T kahan_t = r_element[k*r_size_over_m] + kahan_y;
+                        T kahan_d = kahan_t - r_element[k*r_size_over_m];
+                        kahan_c = kahan_d - kahan_y;
+                        r_element[k*r_size_over_m] = kahan_t;
+                    }
+                }
+            }
+        };
+    };
+};
+
+#endif
+
+#ifndef QMC_CORE_REDUCE_H
+#define QMC_CORE_REDUCE_H
+
+// (Included Above): #include "../types/result.hpp"
+
+namespace integrators
+{
+    namespace core
+    {
+        template <typename T, typename U>
+        integrators::result<T,U> reduce(const std::vector<T>& r, const U n, const U m, std::vector<result<T,U>> & previous_iterations, const U& verbosity, const Logger& logger)
+        {
+            if (verbosity > 1)
+            {
+                logger << "-- qmc::reduce called --" << std::endl;
+                for(const auto& previous_result : previous_iterations)
+                {
+                    logger << "previous_result: integral " << previous_result.integral << ", error " << previous_result.error << ", n " << previous_result.n << ", m " << previous_result.m << std::endl;
+                }
+            }
+
+            T mean = {0.};
+            T variance = {0.};
+            U previous_m = 0;
+            if(!previous_iterations.empty())
+            {
+                result<T,U> & previous_res = previous_iterations.back();
+                if(previous_res.n == n)
+                {
+                    if (verbosity>2) logger << "using additional shifts to improve previous iteration" << std::endl;
+                    previous_m = previous_res.m;
+                    mean = previous_res.integral*static_cast<T>(n);
+                    variance = integrators::overloads::compute_variance_from_error(previous_res.error);
+                    variance *= static_cast<T>(previous_res.m-1) * static_cast<T>(previous_res.m) * static_cast<T>(previous_res.n) * static_cast<T>(previous_res.n);
+                    previous_iterations.pop_back();
+                }
+            }
+            for(U k = 0; k < m; k++)
+            {
+                T sum = {0.};
+                T delta = {0.};
+                T kahan_c = {0.};
+                for (U i = 0; i<r.size()/m; i++)
+                {
+                    // Compute sum using Kahan summation
+                    // equivalent to: sum += r.at(k*r.size()/m+i);
+                    T kahan_y = r.at(k*r.size()/m+i) - kahan_c;
+                    T kahan_t = sum + kahan_y;
+                    T kahan_d = kahan_t - sum;
+                    kahan_c = kahan_d - kahan_y;
+                    sum = kahan_t;
+                }
+                if (verbosity > 1) logger << "shift " << k+previous_m << " result: " << sum/static_cast<T>(n) << std::endl;
+                // Compute Variance using online algorithm (Knuth, The Art of Computer Programming)
+                delta = sum - mean;
+                mean = mean + delta/(static_cast<T>(k+previous_m+1));
+                variance = integrators::overloads::compute_variance(mean, variance, sum, delta);
+            }
+            T integral = mean/(static_cast<T>(n));
+            variance = variance/( static_cast<T>(m+previous_m-1) * static_cast<T>(m+previous_m) * static_cast<T>(n) * static_cast<T>(n) ); // variance of the mean
+            T error = integrators::overloads::compute_error(variance);
+            previous_iterations.push_back({integral, error, n, m+previous_m});
+            if (verbosity > 0)
+                logger << "integral " << integral << ", error " << error << ", n " << n << ", m " << m+previous_m << std::endl;
+            return {integral, error, n, m+previous_m};
+        };
+    };
+};
+
+#endif
+#ifndef QMC_MEMBERS_H
+#define QMC_MEMBERS_H
+
 #include <cstddef> // size_t
 #include <cmath> // modf, abs, sqrt, pow
 #include <stdexcept> // domain_error, invalid_argument
@@ -918,39 +1317,20 @@ namespace integrators
 #include <mutex>
 #include <memory> // unique_ptr
 #include <cassert> // assert
+#include <chrono>
 
 namespace integrators
 {
-    
-    template <typename T, typename D, typename U, typename G>
-    U Qmc<T,D,U,G>::get_next_n(U preferred_n) const
-    {
-        U n;
-        if ( generatingvectors.lower_bound(preferred_n) == generatingvectors.end() )
-        {
-            n = generatingvectors.rbegin()->first;
-            if (verbosity > 0) logger << "Qmc integrator does not have generating vector with n larger than " << std::to_string(preferred_n) << ", using largest generating vector with size " << std::to_string(n) << "." << std::endl;
-        } else {
-            n = generatingvectors.lower_bound(preferred_n)->first;
-        }
-        
-        // Check n satisfies requirements of mod_mul implementation
-        if ( n >= std::numeric_limits<typename std::make_signed<U>::type>::max() ) throw std::domain_error("Qmc integrator called with n larger than the largest finite value representable with the signed type corresponding to U. Please decrease minn or use a larger unsigned integer type for U.");
-        if ( n >= std::pow(std::numeric_limits<D>::radix,std::numeric_limits<D>::digits-1) ) throw std::domain_error("Qmc integrator called with n larger than the largest finite value representable by the mantiassa.");
-        
-        return n;
-    };
-    
-    template <typename T, typename D, typename U, typename G>
-    void Qmc<T,D,U,G>::init_z(std::vector<U>& z, const U n, const U dim) const
+    template <typename T, typename D, typename U, typename G, typename H>
+    void Qmc<T,D,U,G,H>::init_z(std::vector<U>& z, const U n, const U dim) const
     {
         z = generatingvectors.at(n);
         if ( dim > z.size() ) throw std::domain_error("dim > generating vector dimension. Please supply a generating vector table with a larger number of dimensions.");
         z.resize(dim);
     };
     
-    template <typename T, typename D, typename U, typename G>
-    void Qmc<T,D,U,G>::init_d(std::vector<D>& d, const U m, const U dim)
+    template <typename T, typename D, typename U, typename G, typename H>
+    void Qmc<T,D,U,G,H>::init_d(std::vector<D>& d, const U m, const U dim)
     {
         d.clear();
         for (U k = 0; k < m; k++)
@@ -958,118 +1338,31 @@ namespace integrators
                 d.push_back(uniform_distribution(randomgenerator));
     };
     
-    template <typename T, typename D, typename U, typename G>
-    void Qmc<T,D,U,G>::init_r(std::vector<T>& r, const U m, const U r_size_over_m) const
+    template <typename T, typename D, typename U, typename G, typename H>
+    void Qmc<T,D,U,G,H>::init_r(std::vector<T>& r, const U m, const U r_size_over_m) const
     {
         r.clear();
         r.resize(m * r_size_over_m, {0.});
     };
     
-    template <typename T, typename D, typename U, typename G>
-    result<T,U> Qmc<T,D,U,G>::reduce(const std::vector<T>& r, const U n, const U m, std::vector<result<T,U>> & previous_iterations) const
-    {
-        if (verbosity > 1)
-        {
-            logger << "-- qmc::reduce called --" << std::endl;
-            for(const auto& previous_result : previous_iterations)
-            {
-                logger << "previous_result: integral " << previous_result.integral << ", error " << previous_result.error << ", n " << previous_result.n << ", m " << previous_result.m << std::endl;
-            }
-        }
-
-        T mean = {0.};
-        T variance = {0.};
-        U previous_m = 0;
-        if(!previous_iterations.empty())
-        {
-            result<T,U> & previous_res = previous_iterations.back();
-            if(previous_res.n == n)
-            {
-                if (verbosity>2) logger << "using additional shifts to improve previous iteration" << std::endl;
-                previous_m = previous_res.m;
-                mean = previous_res.integral*static_cast<T>(n);
-                variance = compute_variance_from_error(previous_res.error);
-                variance *= static_cast<T>(previous_res.m-1) * static_cast<T>(previous_res.m) * static_cast<T>(previous_res.n) * static_cast<T>(previous_res.n);
-                previous_iterations.pop_back();
-            }
-        }
-        for(U k = 0; k < m; k++)
-        {
-            T sum = {0.};
-            T delta = {0.};
-            T kahan_c = {0.};
-            for (U i = 0; i<r.size()/m; i++)
-            {
-                // Compute sum using Kahan summation
-                // equivalent to: sum += r.at(k*r.size()/m+i);
-                T kahan_y = r.at(k*r.size()/m+i) - kahan_c;
-                T kahan_t = sum + kahan_y;
-                T kahan_d = kahan_t - sum;
-                kahan_c = kahan_d - kahan_y;
-                sum = kahan_t;
-            }
-            if (verbosity > 1) logger << "shift " << k+previous_m << " result: " << sum/static_cast<T>(n) << std::endl;
-            // Compute Variance using online algorithm (Knuth, The Art of Computer Programming)
-            delta = sum - mean;
-            mean = mean + delta/(static_cast<T>(k+previous_m+1));
-            variance = compute_variance(mean, variance, sum, delta);
-        }
-        T integral = mean/(static_cast<T>(n));
-        variance = variance/( static_cast<T>(m+previous_m-1) * static_cast<T>(m+previous_m) * static_cast<T>(n) * static_cast<T>(n) ); // variance of the mean
-        T error = compute_error(variance);
-        previous_iterations.push_back({integral, error, n, m+previous_m});
-        if (verbosity > 0)
-            logger << "integral " << integral << ", error " << error << ", n " << n << ", m " << m+previous_m << std::endl;
-        return {integral, error, n, m+previous_m};
-    };
-    
-    template <typename T, typename D, typename U, typename G>
+    template <typename T, typename D, typename U, typename G, typename H>
     template <typename F1, typename F2>
-    void Qmc<T,D,U,G>::compute(const U i, const std::vector<U>& z, const std::vector<D>& d, T* r_element, const U r_size_over_m, const U total_work_packages, const U n, const U m, F1& func, const U dim, F2& integral_transform) const
+    void Qmc<T,D,U,G,H>::worker(const U thread_id, U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U total_work_packages, const U n, const U m, F1& func, const U dim, F2& integral_transform, const int device, D& time_in_ns, U& points_computed) const
     {
-        for (U k = 0; k < m; k++)
-        {
-            T kahan_c = {0.};
-            for( U offset = i; offset < n; offset += total_work_packages )
-            {
-                D wgt = 1.;
-                D mynull = 0;
-                std::vector<D> x(dim,0);
+        std::chrono::steady_clock::time_point time_before_compute = std::chrono::steady_clock::now();
 
-                for (U sDim = 0; sDim < dim; sDim++)
-                {
-                    x[sDim] = std::modf( integrators::mul_mod<D,D,U>(offset,z.at(sDim),n)/(static_cast<D>(n)) + d.at(k*dim+sDim), &mynull);
-                }
+        points_computed = 0;
 
-                integral_transform(x.data(), wgt, dim);
-
-                T point = func(x.data());
-
-                // Compute sum using Kahan summation
-                // equivalent to: r_element[k*r_size_over_m] += wgt*point;
-                T kahan_y = wgt*point - kahan_c;
-                T kahan_t = r_element[k*r_size_over_m] + kahan_y;
-                T kahan_d = kahan_t - r_element[k*r_size_over_m];
-                kahan_c = kahan_d - kahan_y;
-                r_element[k*r_size_over_m] = kahan_t;
-            }
-        }
-    };
-    
-    template <typename T, typename D, typename U, typename G>
-    template <typename F1, typename F2>
-    void Qmc<T,D,U,G>::compute_worker(const U thread_id, U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U total_work_packages, const U n, const U m, F1& func, const U dim, F2& integral_transform, const int device) const
-    {
+        // Setup worker
 #ifdef __CUDACC__
         // define device pointers (must be accessible in local scope of the entire function)
         U d_r_size = m*cudablocks*cudathreadsperblock;
-        std::unique_ptr<integrators::detail::cuda_memory<F1>> d_func;
-        std::unique_ptr<integrators::detail::cuda_memory<F2>> d_integral_transform;
-        std::unique_ptr<integrators::detail::cuda_memory<U>> d_z;
-        std::unique_ptr<integrators::detail::cuda_memory<D>> d_d;
-        std::unique_ptr<integrators::detail::cuda_memory<T>> d_r;
+        std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F1>> d_func;
+        std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F2>> d_integral_transform;
+        std::unique_ptr<integrators::core::cuda::detail::cuda_memory<U>> d_z;
+        std::unique_ptr<integrators::core::cuda::detail::cuda_memory<D>> d_d;
+        std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>> d_r;
 #endif
-
         U i;
         U  work_this_iteration;
         if (device == -1) {
@@ -1077,7 +1370,7 @@ namespace integrators
         } else {
             work_this_iteration = cudablocks*cudathreadsperblock;
 #ifdef __CUDACC__
-            setup_gpu(d_z, z, d_d, d, d_r, d_r_size/m, &r[thread_id], r.size()/m, m, d_func, func, d_integral_transform, integral_transform, device, verbosity, logger);
+            integrators::core::cuda::setup(d_z, z, d_d, d, d_r, d_r_size/m, &r[thread_id], r.size()/m, m, d_func, func, d_integral_transform, integral_transform, device, verbosity, logger);
 #endif
         }
 
@@ -1110,25 +1403,34 @@ namespace integrators
             // Do work
             if (device == -1)
             {
-                compute(i, z, d, &r[thread_id], r.size()/m, total_work_packages, n, m, func, dim, integral_transform);
+                integrators::core::generic::compute(i, z, d, &r[thread_id], r.size()/m, total_work_packages, n, m, func, dim, integral_transform);
             }
             else
             {
 #ifdef __CUDACC__
-                compute_gpu(*this, i, work_this_iteration, total_work_packages, d_z, d_d, d_r, d_r_size/m, n, m, d_func, dim, d_integral_transform, device);
+                integrators::core::cuda::compute(*this, i, work_this_iteration, total_work_packages, d_z, d_d, d_r, d_r_size/m, n, m, d_func, dim, d_integral_transform, device);
 #endif
             }
+
+            points_computed += work_this_iteration*m;
+
         }
+
+        // Teardown worker
 #ifdef __CUDACC__
         if (device != -1) {
-            tear_down_gpu(d_r, d_r_size/m, &r[thread_id], r.size()/m, m, device, verbosity, logger);
+            integrators::core::cuda::teardown(d_r, d_r_size/m, &r[thread_id], r.size()/m, m, device, verbosity, logger);
         }
 #endif
+
+        std::chrono::steady_clock::time_point time_after_compute = std::chrono::steady_clock::now();
+        time_in_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(time_after_compute - time_before_compute).count();
+
     };
     
-    template <typename T, typename D, typename U, typename G>
+    template <typename T, typename D, typename U, typename G, typename H>
     template <typename F1, typename F2>
-    result<T,U> Qmc<T,D,U,G>::sample(F1& func, const U dim, F2& integral_transform, const U n, const U m, std::vector<result<T,U>> & previous_iterations)
+    result<T,U> Qmc<T,D,U,G,H>::sample(F1& func, const U dim, F2& integral_transform, const U n, const U m, std::vector<result<T,U>> & previous_iterations)
     {
         std::vector<U> z;
         std::vector<D> d;
@@ -1192,13 +1494,15 @@ namespace integrators
                 logger << "r " << shifts << "*" << r_size_over_m << std::endl;
             }
 
+            std::chrono::steady_clock::time_point time_before_compute = std::chrono::steady_clock::now();
+
             if ( cputhreads == 1 && devices.size() == 1 && devices.count(-1) == 1)
             {
                 // Compute serially on cpu
                 if (verbosity > 2) logger << "computing serially" << std::endl;
                 for( U i=0; i < total_work_packages; i++)
                 {
-                    compute(i, z, d, &r[0], r.size()/shifts, total_work_packages, n, shifts, func, dim, integral_transform);
+                    integrators::core::generic::compute(i, z, d, &r[0], r.size()/shifts, total_work_packages, n, shifts, func, dim, integral_transform);
                 }
             }
             else
@@ -1219,15 +1523,19 @@ namespace integrators
 
                 // Launch worker threads
                 U thread_id = 0;
+                U thread_number = 0;
                 std::vector<std::thread> thread_pool;
                 thread_pool.reserve(cputhreads+extra_threads);
+                std::vector<D> time_in_ns_per_thread(cputhreads+extra_threads,D(0));
+                std::vector<U> points_computed_per_thread(cputhreads+extra_threads,U(0));
                 for (int device : devices)
                 {
                     if( device != -1)
                     {
 #ifdef __CUDACC__
-                        thread_pool.push_back( std::thread( &Qmc<T,D,U,G>::compute_worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), total_work_packages, n, shifts, std::ref(func), dim, std::ref(integral_transform), device ) ); // Launch non-cpu workers
+                        thread_pool.push_back( std::thread( &Qmc<T,D,U,G,H>::worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), total_work_packages, n, shifts, std::ref(func), dim, std::ref(integral_transform), device, std::ref(time_in_ns_per_thread[thread_number]), std::ref(points_computed_per_thread[thread_number])  ) ); // Launch non-cpu workers
                         thread_id += cudablocks*cudathreadsperblock;
+                        thread_number += 1;
 #else
                         throw std::invalid_argument("qmc::sample called with device != -1 (CPU) but CUDA not supported by compiler, device: " + std::to_string(device));
 #endif
@@ -1237,23 +1545,53 @@ namespace integrators
                 {
                     for ( U i=0; i < cputhreads; i++)
                     {
-                        thread_pool.push_back( std::thread( &Qmc<T,D,U,G>::compute_worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), total_work_packages, n, shifts, std::ref(func), dim, std::ref(integral_transform), -1 ) ); // Launch cpu workers
+                        thread_pool.push_back( std::thread( &Qmc<T,D,U,G,H>::worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), total_work_packages, n, shifts, std::ref(func), dim, std::ref(integral_transform), -1, std::ref(time_in_ns_per_thread[thread_number]), std::ref(points_computed_per_thread[thread_number]) ) ); // Launch cpu workers
                         thread_id += 1;
+                        thread_number += 1;
                     }
                 }
                 // Destroy threadpool
                 for( std::thread& thread : thread_pool )
                     thread.join();
                 thread_pool.clear();
+
+                if(verbosity > 2)
+                {
+                    for( U i=0; i< extra_threads; i++)
+                    {
+                        logger << "(" << i << ") Million Function Evaluations/s: " << D(1000)*D(points_computed_per_thread[i])/D(time_in_ns_per_thread[i]) << " Mfeps (Approx)" << std::endl;
+                    }
+                    if( devices.count(-1) != 0)
+                    {
+                        D time_in_ns_on_cpu = 0;
+                        U points_computed_on_cpu = 0;
+                        for( U i=extra_threads; i< extra_threads+cputhreads; i++)
+                        {
+                            points_computed_on_cpu += points_computed_per_thread[i];
+                            time_in_ns_on_cpu = std::max(time_in_ns_on_cpu,time_in_ns_per_thread[i]);
+                        }
+                        logger << "(-1) Million Function Evaluations/s: " << D(1000)*D(points_computed_on_cpu)/D(time_in_ns_on_cpu) << " Mfeps (Approx)" << std::endl;
+                    }
+                }
             }
-            res = reduce(r, n, shifts,  previous_iterations);
+
+            std::chrono::steady_clock::time_point time_after_compute = std::chrono::steady_clock::now();
+
+            if(verbosity > 2)
+            {
+                D mfeps = D(1000)*D(n*shifts)/D(std::chrono::duration_cast<std::chrono::nanoseconds>(time_after_compute - time_before_compute).count()); // million function evaluations per second
+                logger << "(Total) Million Function Evaluations/s: " << mfeps << " Mfeps" << std::endl;
+            }
+            res = integrators::core::reduce(r, n, shifts,  previous_iterations, verbosity, logger);
         }
         return res;
     };
     
-    template <typename T, typename D, typename U, typename G>
-    void Qmc<T,D,U,G>::update(result<T,U>& res, U& n, U& m, U& function_evaluations) const
+    template <typename T, typename D, typename U, typename G, typename H>
+    void Qmc<T,D,U,G,H>::update(result<T,U>& res, U& n, U& m, U& function_evaluations) const
     {
+        using std::pow;
+
         if (verbosity > 2) logger << "-- qmc::update called --" << std::endl;
 
         const D MAXIMUM_ERROR_RATIO = static_cast<D>(20);
@@ -1262,14 +1600,17 @@ namespace integrators
         function_evaluations += res.n*res.m; // update count of function_evaluations
         if(verbosity > 1 ) logger << "function_evaluations " << function_evaluations << std::endl;
 
-        D error_ratio = std::min(compute_error_ratio(res, epsrel, epsabs, errormode),MAXIMUM_ERROR_RATIO);
+        D error_ratio = std::min(integrators::overloads::compute_error_ratio(res, epsrel, epsabs, errormode),MAXIMUM_ERROR_RATIO);
         if (error_ratio < static_cast<D>(1))
         {
             if (verbosity > 2) logger << "error goal reached" << std::endl;
             return;
         }
         U new_m = minm;
-        U new_n = get_next_n(static_cast<U>(static_cast<D>(n)*std::pow(error_ratio,static_cast<D>(1)/EXPECTED_SCALING)));
+        #define QMC_POW_CALL pow(error_ratio,static_cast<D>(1)/EXPECTED_SCALING)
+        static_assert(std::is_same<decltype(QMC_POW_CALL),D>::value, "Downcast detected in qmc::update(. Please implement \"D pow(D)\".");
+        U new_n = get_next_n(static_cast<U>(static_cast<D>(n)*QMC_POW_CALL));
+        #undef QMC_POW_CALL
         if ( new_n <= n or ( error_ratio*error_ratio - static_cast<D>(1) < static_cast<D>(new_n)/static_cast<D>(n)))
         {
             // n did not increase, or increasing m will be faster
@@ -1289,10 +1630,29 @@ namespace integrators
         m = new_m;
         if(verbosity > 1 ) logger << "updated n m " << n << " " << m << std::endl;
     };
+
+    template <typename T, typename D, typename U, typename G, typename H>
+    U Qmc<T,D,U,G,H>::get_next_n(U preferred_n) const
+    {
+        U n;
+        if ( generatingvectors.lower_bound(preferred_n) == generatingvectors.end() )
+        {
+            n = generatingvectors.rbegin()->first;
+            if (verbosity > 0) logger << "Qmc integrator does not have generating vector with n larger than " << std::to_string(preferred_n) << ", using largest generating vector with size " << std::to_string(n) << "." << std::endl;
+        } else {
+            n = generatingvectors.lower_bound(preferred_n)->first;
+        }
+
+        // Check n satisfies requirements of mod_mul implementation
+        if ( n >= std::numeric_limits<typename std::make_signed<U>::type>::max() ) throw std::domain_error("Qmc integrator called with n larger than the largest finite value representable with the signed type corresponding to U. Please decrease minn or use a larger unsigned integer type for U.");
+        if ( n >= std::pow(std::numeric_limits<D>::radix,std::numeric_limits<D>::digits-1) ) throw std::domain_error("Qmc integrator called with n larger than the largest finite value representable by the mantiassa.");
+
+        return n;
+    };
     
-    template <typename T, typename D, typename U, typename G>
+    template <typename T, typename D, typename U, typename G, typename H>
     template <typename F1, typename F2>
-    result<T,U> Qmc<T,D,U,G>::integrate(F1& func, const U dim, F2& integral_transform)
+    result<T,U> Qmc<T,D,U,G,H>::integrate(F1& func, const U dim, F2& integral_transform)
     {
         if ( dim < 1 ) throw std::invalid_argument("qmc::integrate called with dim < 1. Check that your integrand depends on at least one variable of integration.");
         if ( minm < 2 ) throw std::domain_error("qmc::integrate called with minm < 2. This algorithm can not be used with less than 2 random shifts. Please increase minm.");
@@ -1313,20 +1673,20 @@ namespace integrators
             res = sample(func,dim,integral_transform,n,m, previous_iterations);
             if (verbosity > 1) logger << "result " << res.integral << " " << res.error << std::endl;
             update(res,n,m,function_evaluations);
-        } while  ( compute_error_ratio(res, epsrel, epsabs, errormode) > static_cast<D>(1) && function_evaluations < maxeval );
+        } while  ( integrators::overloads::compute_error_ratio(res, epsrel, epsabs, errormode) > static_cast<D>(1) && function_evaluations < maxeval );
         return res;
     };
     
-    template <typename T, typename D, typename U, typename G>
+    template <typename T, typename D, typename U, typename G, typename H>
     template <typename F1>
-    result<T,U> Qmc<T,D,U,G>::integrate(F1& func, const U dim)
+    result<T,U> Qmc<T,D,U,G,H>::integrate(F1& func, const U dim)
     {
         integrators::transforms::Korobov<D,U,3> default_integral_transform;
         return integrate(func, dim, default_integral_transform);
     };
     
-    template <typename T, typename D, typename U, typename G>
-    Qmc<T,D,U,G>::Qmc() :
+    template <typename T, typename D, typename U, typename G, typename H>
+    Qmc<T,D,U,G,H>::Qmc() :
     logger(std::cout), randomgenerator( G( std::random_device{}() ) ), minn(8191), minm(32), epsrel(0.01), epsabs(1e-7), maxeval(1000000), maxnperpackage(1), maxmperpackage(1024), errormode(integrators::ErrorMode::all), cputhreads(std::thread::hardware_concurrency()), cudablocks(1024), cudathreadsperblock(256), devices({-1}), generatingvectors(integrators::generatingvectors::cbcpt_dn1_100<U>()), verbosity(0)
     {
         // Check U satisfies requirements of mod_mul implementation
@@ -1341,17 +1701,13 @@ namespace integrators
 
 #ifdef __CUDACC__
         // Get available gpus and add to devices
-        int device_count = get_device_count_gpu();
+        int device_count = integrators::core::cuda::get_device_count();
         for(int i = 0; i < device_count; i++)
             devices.insert(i);
 #endif
     };
-    
 };
 
-/*
- * end included header "qmc_core.hpp"
- */
-
+#endif
 
 #endif
