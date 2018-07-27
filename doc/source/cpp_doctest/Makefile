@@ -22,14 +22,17 @@ LDFLAGS =
 else
 LDFLAGS = -L$(SECDEC_CONTRIB)/lib
 endif
-LDFLAGS += -pthread -L$(TOPDIR) -lcuba -lgsl -lgslcblas -lm
+ifneq (x$(CXX), xnvcc)
+LDFLAGS += -pthread
+endif
+LDFLAGS += -L$(TOPDIR) -lcuba -lgsl -lgslcblas -lm
 
 .PHONY: clean doctest $(TESTS)
 
 doctest: $(TESTS)
 
 $(TESTS):
-	$(CXX) $(CXXFLAGS) -fPIC $@.cpp -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $@.cpp -o $@ $(LDFLAGS)
 	./$@ > $@.tmp
 	diff $@.tmp $@.txt | tee $@.log
 	test ! -s $@.log 
