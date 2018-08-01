@@ -7,7 +7,6 @@ li = psd.loop_integral.LoopIntegralFromGraph(
 
 internal_lines = [ [0,[1,2]],[0,[1,3]],[0,[2,3]],[0,[2,5]],[0,[5,6]],[0,[6,3]],[0,[6,7]],[0,[7,4]],[0,[4,7]],[0,[4,3]],[0,[4,1]] ],
 external_lines = [['p',1],['p',2]],
-powerlist = [1,1,1,1,1,1,1,8,9,10,11],
 
 replacement_rules = [ ('p*p','s') ]
 
@@ -15,7 +14,6 @@ replacement_rules = [ ('p*p','s') ]
 
 
 Mandelstam_symbols = ['s']
-#mass_symbols = ['m1sq']
 
 
 loop_package(
@@ -31,7 +29,7 @@ requested_order = 0,
 
 #additional_prefactor = '(gamma(1-eps)**2*gamma(1+eps)/gamma(2-2*eps))**6',
 
-# the optimization level to use in FORM (can be 0, 1, 2, 3)
+# the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
 form_optimization_level = 2,
 
 # the WorkSpace parameter for FORM
