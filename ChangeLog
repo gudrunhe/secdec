@@ -1,3 +1,16 @@
+02.08.2018 pySecDec-1.3.2
+
+    [prefactor expansion] fix bug if ``x``-expansion starts lower than ``1/x``
+    [prefactor expansion] fix error if poles have multiple terms
+    [subtraction] implement individual `ibp_power_goals` for the `indices` as suggested in
+                  issue #2 (https://github.com/mppmu/secdec/issues/2)
+    [symmetry_finder] fix rare bugs that may occur on hash collisions
+    [dreadnaut symmetry_finder] fix finding fake symmetries by illegal swappings;
+                                note that dreadnaut is disabled by default since version 1.2.2
+    [dist] building the tarball with make's `-j` option is now supported
+    [make_package] fix dropping of nonzero terms when using contour deformation in the presence
+                   of linear or higher poles
+
 24.04.2018 pySecDec-1.3.1
 
     [integral_interface] support `MultiIntegrator` in python interface
