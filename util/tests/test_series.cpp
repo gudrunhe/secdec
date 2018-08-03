@@ -892,6 +892,165 @@ TEST_CASE( "Default construct template type on +/-", "[Series][IntegrandContaine
 
     }
 
+    SECTION( " 3d " ) {
+
+        auto multivariate_series_one =
+        secdecutil::Series<secdecutil::Series<secdecutil::Series<int>>>(2,3,{
+            secdecutil::Series<secdecutil::Series<int>>(0,2,{
+                secdecutil::Series<int>(1,1,{4},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(2,5,{
+                secdecutil::Series<int>(1,3,{1,2,3},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner"),
+                secdecutil::Series<int>(1,1,{8},false,"inner")
+            },false,"middle")
+        },false,"outer");
+
+        auto multivariate_series_two =
+        secdecutil::Series<secdecutil::Series<secdecutil::Series<int>>>(-1,0,{
+            secdecutil::Series<secdecutil::Series<int>>(1,3,{
+                secdecutil::Series<int>(0,0,{4},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-3,-2,{4,5},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(2,5,{
+                secdecutil::Series<int>(1,3,{1,2,3},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner"),
+                secdecutil::Series<int>(1,1,{8},false,"inner")
+            },false,"middle")
+        },false,"outer");
+
+        auto multivariate_series_two_overlapping =
+        secdecutil::Series<secdecutil::Series<secdecutil::Series<int>>>(1,2,{
+            secdecutil::Series<secdecutil::Series<int>>(1,3,{
+                secdecutil::Series<int>(0,0,{4},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-3,-2,{4,5},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(2,5,{
+                secdecutil::Series<int>(1,3,{1,2,3},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner"),
+                secdecutil::Series<int>(1,1,{8},false,"inner")
+            },false,"middle")
+        },false,"outer");
+
+        auto multivariate_series_one_plus_two =
+        secdecutil::Series<secdecutil::Series<secdecutil::Series<int>>>(-1,3,{
+            secdecutil::Series<secdecutil::Series<int>>(1,3,{
+                secdecutil::Series<int>(0,0,{4},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-3,-2,{4,5},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(2,5,{
+                secdecutil::Series<int>(1,3,{1,2,3},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner"),
+                secdecutil::Series<int>(1,1,{8},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(0,0,{
+                secdecutil::Series<int>(0,0,{0},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(0,2,{
+                secdecutil::Series<int>(1,1,{4},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(2,5,{
+                secdecutil::Series<int>(1,3,{1,2,3},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner"),
+                secdecutil::Series<int>(1,1,{8},false,"inner")
+            },false,"middle")
+        },false,"outer");
+
+        auto multivariate_series_one_minus_two =
+        secdecutil::Series<secdecutil::Series<secdecutil::Series<int>>>(-1,3,{
+            secdecutil::Series<secdecutil::Series<int>>(1,3,{
+                secdecutil::Series<int>(0,0,{-4},false,"inner"),
+                secdecutil::Series<int>(0,1,{-1,-4},false,"inner"),
+                secdecutil::Series<int>(-3,-2,{-4,-5},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(2,5,{
+                secdecutil::Series<int>(1,3,{-1,-2,-3},false,"inner"),
+                secdecutil::Series<int>(0,1,{-1,-4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{-4,-5},false,"inner"),
+                secdecutil::Series<int>(1,1,{-8},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(0,0,{
+                secdecutil::Series<int>(0,0,{0},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(0,2,{
+                secdecutil::Series<int>(1,1,{4},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(2,5,{
+                secdecutil::Series<int>(1,3,{1,2,3},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner"),
+                secdecutil::Series<int>(1,1,{8},false,"inner")
+            },false,"middle")
+        },false,"outer");
+
+        auto multivariate_series_one_plus_two_overlapping =
+        secdecutil::Series<secdecutil::Series<secdecutil::Series<int>>>(1,3,{
+            secdecutil::Series<secdecutil::Series<int>>(1,3,{
+                secdecutil::Series<int>(0,0,{4},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-3,-2,{4,5},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(0,5,{
+                secdecutil::Series<int>(1,1,{4},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,3,{4,5,1,2,3},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner"),
+                secdecutil::Series<int>(1,1,{8},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(2,5,{
+                secdecutil::Series<int>(1,3,{1,2,3},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner"),
+                secdecutil::Series<int>(1,1,{8},false,"inner")
+            },false,"middle")
+        },false,"outer");
+
+        auto multivariate_series_one_minus_two_overlapping =
+        secdecutil::Series<secdecutil::Series<secdecutil::Series<int>>>(1,3,{
+            secdecutil::Series<secdecutil::Series<int>>(1,3,{
+                secdecutil::Series<int>(0,0,{-4},false,"inner"),
+                secdecutil::Series<int>(0,1,{-1,-4},false,"inner"),
+                secdecutil::Series<int>(-3,-2,{-4,-5},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(0,5,{
+                secdecutil::Series<int>(1,1,{4},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,3,{4,5,-1,-2,-3},false,"inner"),
+                secdecutil::Series<int>(0,1,{-1,-4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{-4,-5},false,"inner"),
+                secdecutil::Series<int>(1,1,{-8},false,"inner")
+            },false,"middle"),
+            secdecutil::Series<secdecutil::Series<int>>(2,5,{
+                secdecutil::Series<int>(1,3,{1,2,3},false,"inner"),
+                secdecutil::Series<int>(0,1,{1,4},false,"inner"),
+                secdecutil::Series<int>(-1,0,{4,5},false,"inner"),
+                secdecutil::Series<int>(1,1,{8},false,"inner")
+            },false,"middle")
+        },false,"outer");
+
+        REQUIRE( multivariate_series_one + multivariate_series_two == multivariate_series_one_plus_two);
+        REQUIRE( multivariate_series_one - multivariate_series_two == multivariate_series_one_minus_two);
+
+        REQUIRE( multivariate_series_one + multivariate_series_two_overlapping == multivariate_series_one_plus_two_overlapping);
+        REQUIRE( multivariate_series_one - multivariate_series_two_overlapping == multivariate_series_one_minus_two_overlapping);
+
+    }
+
     SECTION( " IntegrandContainer " ) {
 
         int two_three[]{2,3};

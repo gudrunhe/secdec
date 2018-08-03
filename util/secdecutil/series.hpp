@@ -30,7 +30,7 @@ namespace secdecutil {
         template<typename U>
         struct CreateContent
         {
-            static U create(const Series& s)
+            static U create(const Series<U>& s)
             {
                 return U();
             }
@@ -39,9 +39,9 @@ namespace secdecutil {
         template<typename U>
         struct CreateContent<Series<U>>
         {
-            static Series<U> create(const Series& s)
+            static Series<U> create(const Series<Series<U>>& s)
             {
-                return {0,0,{U()},false,s.content.at(0).expansion_parameter};
+                return {0,0,{CreateContent<U>::create(s.get_content().at(0))},false,s.get_content().at(0).expansion_parameter};
             }
         };
 
