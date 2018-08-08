@@ -11,13 +11,93 @@ import numpy as np
 import sympy as sp
 
 class Coefficient(object):
-    def __init__(self, numerator, denominator, order):
-        assert (isinstance(numerator, list) == True), "numerator has to be a list of the individual terms"
-        assert (isinstance(denominator, list) == True), "denominator has to be a list of the individual terms"
-        assert (isinstance(order, int) == True), "order has to be an integer"
-        self.numerator = numerator
-        self.denominator = denominator
-        self.order = order
+    r'''
+    Coefficient.
+    Store a coefficient expressed through a product
+    of terms in the numerator and a product of terms
+    in the denominator.
+
+    :param numerators:
+        :iterable of type :class:`.Polynomial`
+        or :class:`.ExponentiatedPolynomial`;
+        The terms in the numerator.
+
+    :param denominators:
+        :iterable of type :class:`.Polynomial`
+        or :class:`.ExponentiatedPolynomial`;
+        The terms in the denominator.
+
+    :param regulator_indices:
+        iterable of integers;
+        The indices of the regulators.
+
+        '''
+    def __init__(self, numerators, denominators, regulator_indices):
+        assert np.iterable(numerators), \
+               "numerators has to be an iterable of `Polynomials` or `ExponentiatedPolynomials`"
+        assert np.iterable(denominators), \
+               "denominators has to be an iterable of `Polynomials` or `ExponentiatedPolynomials`"
+        assert np.iterable(regulator_indices), \
+               "regulator_indices have to be an iterable of integers"
+
+        for numerator in numerators:
+            assert type(numerator) in (Polynomial, ExponentiatedPolynomial), \
+                   "All numerators have to be of type `Polynomials` or `ExponentiatedPolynomials`"
+        for denominator in denominators:
+            assert type(denominator) in (Polynomial, ExponentiatedPolynomial), \
+                   "All denominators have to be of type `Polynomials` or `ExponentiatedPolynomials`"
+        for regulator_index in regulator_indices:
+            assert isinstance(regulator_index, int), \
+                   "All regulator_indices have to be integers."
+
+        self.numerators = list(numerators)
+        self.denominators = list(denominators)
+        self.regulator_indices = list(regulator_indices)
+
+    @cached_property
+    def orders(self):
+        r'''
+        Calculate the orders of the coefficients in
+        the regulators specified by `regulator_indices`.
+
+        '''
+        orders = []
+        for parameter in self.regulator_indices:
+            order_numerators = 0
+            order_denominators = 0
+            for numerator in self.numerators:
+                min_order_numerator = min(numerator.expolist[:,parameter])
+                try:
+                    exponent = numerator.exponent
+                except AttributeError:
+                    exponent = 1
+                order_numerators += exponent*min_order_numerator
+            for denominator in self.denominators:
+                min_order_denominator = min(denominator.expolist[:,parameter])
+                try:
+                    exponent = denominator.exponent
+                except AttributeError:
+                    exponent = 1
+                order_denominators += exponent*min_order_denominator
+            orders.append(order_numerators - order_denominators)
+        return orders
+
+    def __repr__(self):
+        outstr = ''
+        outstr += '('
+        if self.numerators:
+            outstr += '*'.join(['('+str(numerator)+')' for numerator in self.numerators])
+        else:
+            outstr += str(1)
+        outstr += ')/('
+        if self.denominators:
+            outstr += '*'.join(['('+str(denominator)+')' for denominator in self.denominators])
+        else:
+            outstr += str(1)
+        outstr += ')'
+        return outstr
+
+    __str__ = __repr__
 
 def sum_package(integral_name, package_generators, generators_args, requested_orders, real_parameters=[],
                 complex_parameters=[], coefficients=None):
