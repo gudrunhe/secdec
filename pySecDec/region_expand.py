@@ -248,3 +248,166 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
             derivative = derive_prod(derivative[0],derivative[1],index, polynomial_name_indices)
 
             i+=1
+
+# TODO: high-level test
+
+def make_regions(name, integration_variables, regulators, requested_orders, smallness_parameter,
+                 polynomials_to_decompose, expansion_by_regions_order=0, real_parameters=[], complex_parameters=[],
+                 normaliz='normaliz', **make_package_args):
+    r'''
+    Applies the expansion by regions method
+    (see e.g. [PS11]_) to a list of polynomials.
+
+    :param name:
+        string;
+        The name of the c++ namepace and the output
+        directory.
+
+    :param integration_variables:
+        iterable of strings or sympy symbols;
+        The variables that are to be integrated from
+        0 to 1.
+
+    :param regulators:
+        iterable of strings or sympy symbols;
+        The regulators of the integral.
+
+    :param requested_orders:
+        iterable of integers;
+        Compute the expansion in the regulators to these
+        orders.
+
+    :param smallness_parameter:
+        string or sympy symbol;
+        The symbol of the variable in which the
+        expression is expanded.
+
+    :param polynomials_to_decompose:
+        iterable of strings or sympy expressions or
+        :class:`pySecDec.algebra.ExponentiatedPolynomial`
+        or :class:`pySecDec.algebra.Polynomial`;
+        The polynomials to be decomposed.
+
+    :param expansion_by_regions_order:
+        integer;
+        The order up to which the expression is expanded
+        in the `smallness_parameter`.
+        Default: 0
+
+    :param real_parameters:
+        iterable of strings or sympy symbols, optional;
+        Symbols to be interpreted as real variables.
+
+    :param complex_parameters:
+        iterable of strings or sympy symbols, optional;
+        Symbols to be interpreted as complex variables.
+
+    :param normaliz:
+        string;
+        The shell command to run `normaliz`.
+        Default: 'normaliz'
+
+    :param make_package_args:
+        The arguments to be forwarded to
+        :func:`pySecDec.code_writer.make_package`.
+
+    '''
+    # check that there are as many polynomial names as polynomials
+    # and introduce more names if needed
+    polynomial_names = []
+    if not make_package_args['polynomial_names']:
+        polynomial_names = ['SecDecDecoPoly%i' % i for i in range(len(polynomials_to_decompose))]
+    elif len(make_package_args['polynomial_names']) < len(polynomials_to_decompose):
+        polynomial_names = make_package_args['polynomial_names'] + ['SecDecDecoPoly%i' % i for i in range(len(polynomials_to_decompose)-len( make_package_args['polynomial_names']))]
+    else:
+        polynomial_names = make_package_args['polynomial_names']
+
+    symbols_polynomials_to_decompose = integration_variables + regulators + polynomial_names + [smallness_parameter]
+    polynomial_name_indices = np.arange(len(polynomial_names)) + ( len(integration_variables) + len(regulators) )
+    smallness_parameter_index = -1
+
+    # parse polynomials_to_decompose
+    polynomials_to_decompose = _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompose, ExponentiatedPolynomial, 'polynomials_to_decompose')
+    # ensure that exponent is Polynomial so that when the derivative is taken
+    # regulators are not treated as coefficients but as variables
+    for poly in polynomials_to_decompose:
+        poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
+
+    # find the regions for the expansion
+    regions = find_regions(smallness_parameter_index, polynomials_to_decompose, normaliz=normaliz, workdir=name)
+
+    #TODO: Search regions for fractional entry, redefine z to make all entries integer
+
+    generators_args = []
+    package_args_common = {'integration_variables':integration_variables, 'regulators':regulators,
+                           'requested_orders':requested_orders, 'polynomial_names':polynomial_names}
+
+    if regions.size > 0:
+        for region in regions:
+            # decompose the polynomials in the respective region
+            polynomials_to_decompose_region_specific = apply_region([poly.copy() for poly in polynomials_to_decompose], region, smallness_parameter_index)
+
+            # factor out the smallness_parameter and store it's power
+            polynomials_refactorized = []
+            power_overall_smallness_parameter = 0
+            for polynomial in polynomials_to_decompose_region_specific:
+                factor0 ,factor1 = polynomial.refactorize(smallness_parameter_index).factors
+                try:
+                    exponent = factor0.exponent
+                except AttributeError:
+                    exponent = 1
+                power_overall_smallness_parameter +=factor0.expolist[0][smallness_parameter_index] * exponent
+                polynomials_refactorized.append(factor1)
+
+            # compute overall power of smallness_parameter with all regulators -> 0
+            power_overall_smallness_parameter_no_regulators = sp.sympify(power_overall_smallness_parameter)
+            for regulator in regulators:
+                power_overall_smallness_parameter_no_regulators = power_overall_smallness_parameter_no_regulators.subs(regulator,0)
+
+            # define a dummy numerator
+            numerator = Polynomial(np.zeros((1,len(symbols_polynomials_to_decompose)),dtype=int), np.array([1]), symbols_polynomials_to_decompose, copy=False)
+
+            # TODO: get explanation from Long!
+            power_smallness_parameter_measure = np.sum(region[:-1])
+
+            # TODO: ensure expansion_by_regions_order, power_overall_smallness_parameter_no_regulators, power_smallness_parameter_measure are integer
+            assert int(power_overall_smallness_parameter_no_regulators) == power_overall_smallness_parameter_no_regulators, "`power_overall_smallness_parameter_no_regulators` (%s) is not an integer" % power_overall_smallness_parameter_no_regulators
+            assert int(power_smallness_parameter_measure) == power_smallness_parameter_measure, "`power_smallness_parameter_measure` (%s) is not an integer" % power_smallness_parameter_measure
+
+            # expand the polynomials to the desired order:
+            # expansion_by_regions_order - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
+            expand_region_expansion_order = expansion_by_regions_order - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
+            series = expand_region(polynomials_refactorized, numerator, smallness_parameter_index, expand_region_expansion_order, polynomial_name_indices)
+
+            for i,term in enumerate(series):
+                package_args = make_package_args.copy()
+                package_args['name'] = name + '_region_' + '_'.join(str(number).replace('-','m') for number in region) + '_expansion_order_' + str(int(power_overall_smallness_parameter_no_regulators) + int(power_smallness_parameter_measure) + i).replace('-','m')
+
+                #TODO: dont convert polynomials to string
+                package_args['other_polynomials'] = [str(term.factors.pop())]
+                package_args['polynomials_to_decompose'] = [str(poly) for poly in term.factors]
+
+                package_args.update(package_args_common)
+
+                #TODO : !!! Does the smallness parameter always cancel out at the end, or should we produce integrals that depend on the smallness_paramter and let the user set it? !!!
+                #coefficients.append(Coefficient(
+                #                                [ExponentiatedPolynomial([[0]*len(regulators)],
+                #                                                         [smallness_parameter],
+                #                                                         power_overall_smallness_parameter + power_smallness_parameter_measure +i,
+                #                                                         regulators)
+                #                                ],
+                #                                [],
+                #                                range(len(regulators))
+                #                                )
+                #                    )
+                generators_args.append(package_args)
+    else:
+        package_args = make_package_args.copy()
+        package_args['name'] = name
+        package_args['polynomials_to_decompose'] = map(str,polynomials_to_decompose)
+        package_args.update(package_args_common)
+        generators_args.append(package_args)
+        
+
+    sum_package(name, [make_package]*len(generators_args), generators_args, requested_orders, real_parameters,
+                complex_parameters)
