@@ -264,41 +264,33 @@ class LoopIntegralFromPropagators(LoopIntegral):
                                       numerator_symbols)
 
         '''
-        def append_double_indices(expr, lst, momenta, indices):
-            '''
-            Append the double indices of an expression of the form
-            ``<momentum>(<index>)`` to `lst`.
-            Return the remaining factors.
-
-            '''
-            for index in indices:
-                index_count = 0
-                for i,momentum in enumerate(momenta):
-                    for j in range(2): # should have the same index at most twice
-                        if expr.subs(momentum(index), 0) == 0: # expression has a factor `momentum(index)`
-                            expr /= momentum(index)
-                            lst.append((i,index))
-                            index_count += 1
-                        else:
-                            break
-                    # should not have factors of `momentum(index)` left after the loop above
-                    assert str(momentum(index)) not in str(expr), 'Could not parse `numerator`'
-                assert index_count <= 2, 'Could not parse `numerator`'
-            return expr
-
         numerator_loop_tensors = []
         numerator_external_tensors = []
         numerator_symbols = []
         for term in self.numerator_input_terms:
+            original_term = term
             current_loop_tensor = []
             current_external_tensor = []
 
-            # search for ``momentum(index)``
-            term = append_double_indices(term, current_loop_tensor, self.loop_momenta, self.Lorentz_indices)
-            term = append_double_indices(term, current_external_tensor, self.external_momenta, self.Lorentz_indices)
+            for index in self.Lorentz_indices:
+                index_count = 0
+                for lst,momenta in zip([current_loop_tensor,current_external_tensor],[self.loop_momenta, self.external_momenta]):
+                    for i,momentum in enumerate(momenta):
+
+                        # search for ``momentum(index)``
+                        while term.subs(momentum(index), 0) == 0: # expression has a factor `momentum(index)`
+                            term /= momentum(index)
+                            lst.append((i,index))
+                            index_count += 1
+
+                            # should not have found the `index` more than twice
+                            assert index_count <= 2, \
+                                'A term (%s) in the `numerator` has one of the `Lorentz_indices` (%s) occurring more than twice.' % (original_term, index)
+
             numerator_loop_tensors.append(current_loop_tensor)
             numerator_external_tensors.append(current_external_tensor)
             numerator_symbols.append(term)
+
         return numerator_loop_tensors, numerator_external_tensors, numerator_symbols
 
     @cached_property
