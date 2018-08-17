@@ -5,6 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -30,7 +31,7 @@ namespace secdecutil {
         template<typename U>
         struct CreateContent
         {
-            static U create(const Series& s)
+            static U create(const Series<U>& s)
             {
                 return U();
             }
@@ -39,9 +40,9 @@ namespace secdecutil {
         template<typename U>
         struct CreateContent<Series<U>>
         {
-            static Series<U> create(const Series& s)
+            static Series<U> create(const Series<Series<U>>& s)
             {
-                return {0,0,{U()},false,s.content.at(0).expansion_parameter};
+                return {0,0,{CreateContent<U>::create(s.get_content().at(0))},false,s.get_content().at(0).expansion_parameter};
             }
         };
 
@@ -60,9 +61,9 @@ namespace secdecutil {
          */
         template<typename T1, typename T2>
         static auto subtract(const Series<T1>& s1, const Series<T2>& s2)
-        -> Series<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>::type>
         {
-            using Tout = decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()));
+            using Tout = typename std::remove_cv<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>::type;
 
             if (s1.expansion_parameter != s2.expansion_parameter)
                 throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
@@ -115,9 +116,9 @@ namespace secdecutil {
          */
         template<typename T1, typename T2>
         static auto add(const Series<T1>& s1, const Series<T2>& s2)
-        -> Series<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>::type>
         {
-            using Tout = decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()));
+            using Tout = typename std::remove_cv<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>::type;
 
             if (s1.expansion_parameter != s2.expansion_parameter)
                 throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
@@ -167,9 +168,9 @@ namespace secdecutil {
         // (\Sum_i=a1^b1 c_i * eps^i) * (\Sum_j=a2^b2 c'_j * eps^j)
         template<typename T1, typename T2>
         static auto multiply_series(const Series<T1>& s1, const Series<T2>& s2)
-        -> Series<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>::type>
         {
-            using Tout = decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()));
+            using Tout = typename std::remove_cv<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>::type;
 
             if (s1.expansion_parameter != s2.expansion_parameter)
                 throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
@@ -215,9 +216,9 @@ namespace secdecutil {
         // d * \Sum_i=a1^b1 c_i * eps^i = \Sum_i=a1^b1 d* c_i * eps^i
         template<bool from_left, typename T1, typename T2>
         static auto multiply_scalar(const Series<T1>& s1, const T2& val)
-        -> Series<decltype(s1.at(s1.get_order_min()) * val)>
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) * val)>::type>
         {
-            using Tout = decltype(s1.at(s1.get_order_min()) * val);
+            using Tout = typename std::remove_cv<decltype(s1.at(s1.get_order_min()) * val)>::type;
             std::vector<Tout> content;
             content.reserve(s1.order_max-s1.order_min+1);
             for ( int i = s1.order_min; i < s1.order_max + 1; i++ )
@@ -247,9 +248,9 @@ namespace secdecutil {
          */
         template<typename T1, typename T2>
         static auto division_series_by_series(const Series<T1>& s1, const Series<T2>& s2)
-        -> Series<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>::type>
         {
-            using Tout = decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()));
+            using Tout = typename std::remove_cv<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>::type;
 
             if (s1.expansion_parameter != s2.expansion_parameter)
                 throw expansion_parameter_mismatch_error("\"" + s1.expansion_parameter + "\" != \"" + s2.expansion_parameter + "\"");
@@ -329,9 +330,9 @@ namespace secdecutil {
 
         template<typename T1, typename T2>
         static auto division_series_by_scalar(const Series<T1>& s1, const T2& value)
-        -> Series<decltype(s1.at(s1.get_order_min()) / value)>
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) / value)>::type>
         {
-            using Tout = decltype(s1.at(s1.get_order_min()) / value);
+            using Tout = typename std::remove_cv<decltype(s1.at(s1.get_order_min()) / value)>::type;
 
             // copy content
             std::vector<Tout> content = s1.get_content();
@@ -461,43 +462,43 @@ namespace secdecutil {
          */
         template<typename T1, typename T2>
         friend auto operator+(const Series<T1>& s1, const Series<T2>& s2)
-        -> Series<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>;
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>::type>;
         template<typename T1, typename T2>
         friend auto operator+(const Series<T1>& series, const T2& scalar)
-        -> Series<decltype(series.at(series.get_order_min()) + scalar)>;
+        -> Series<typename std::remove_cv<decltype(series.at(series.get_order_min()) + scalar)>::type>;
         template<typename T1, typename T2>
         friend auto operator+(const T1& scalar, const Series<T2>& series)
-        -> Series<decltype(scalar + series.at(series.get_order_min()))>;
+        -> Series<typename std::remove_cv<decltype(scalar + series.at(series.get_order_min()))>::type>;
 
         template<typename T1, typename T2>
         friend auto operator-(const Series<T1>& s1, const Series<T2>& s2)
-        -> Series<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>;
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>::type>;
         template<typename T1, typename T2>
         friend auto operator-(const Series<T1>& series, const T2& scalar)
-        -> Series<decltype(series.at(series.get_order_min()) - scalar)>;
+        -> Series<typename std::remove_cv<decltype(series.at(series.get_order_min()) - scalar)>::type>;
         template<typename T1, typename T2>
         friend auto operator-(const T1& scalar, const Series<T2>& series)
-        -> Series<decltype(scalar - series.at(series.get_order_min()))>;
+        -> Series<typename std::remove_cv<decltype(scalar - series.at(series.get_order_min()))>::type>;
 
         template<typename T1, typename T2>
         friend auto operator*(const Series<T1>& s1, const Series<T2>& s2)
-        -> Series<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>;
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>::type>;
         template<typename T1, typename T2>
         friend auto operator*(const Series<T1>& series, const T2& scalar)
-        -> Series<decltype(series.at(series.get_order_min()) * scalar)>;
+        -> Series<typename std::remove_cv<decltype(series.at(series.get_order_min()) * scalar)>::type>;
         template<typename T1, typename T2>
         friend auto operator*(const T1& scalar, const Series<T2>& series)
-        -> Series<decltype(scalar * series.at(series.get_order_min()))>;
+        -> Series<typename std::remove_cv<decltype(scalar * series.at(series.get_order_min()))>::type>;
 
         template<typename T1, typename T2>
         friend auto operator/(const Series<T1>& s1, const Series<T2>& s2)
-        -> Series<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>;
+        -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>::type>;
         template<typename T1, typename T2>
         friend auto operator/(const Series<T1>& series, const T2& scalar)
-        -> Series<decltype(series.at(series.get_order_min()) / scalar)>;
+        -> Series<typename std::remove_cv<decltype(series.at(series.get_order_min()) / scalar)>::type>;
         template<typename T1, typename T2>
         friend auto operator/(const T1& scalar, const Series<T2>& series)
-        -> Series<decltype(scalar / series.at(series.get_order_min()))>;
+        -> Series<typename std::remove_cv<decltype(scalar / series.at(series.get_order_min()))>::type>;
 
         friend std::ostream& operator<< (std::ostream& os, const Series& s1)
         {
@@ -590,76 +591,76 @@ namespace secdecutil {
      */
     template<typename T1, typename T2>
     inline auto operator+(const Series<T1>& s1, const Series<T2>& s2)
-    -> Series<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>
+    -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) + s2.at(s2.get_order_min()))>::type>
     {
         return s1.template add(s1,s2);
     };
     template<typename T1, typename T2>
     inline auto operator+(const Series<T1>& series, const T2& scalar)
-    -> Series<decltype(series.at(series.get_order_min()) + scalar)>
+    -> Series<typename std::remove_cv<decltype(series.at(series.get_order_min()) + scalar)>::type>
     {
         return series.template add(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
     };
     template<typename T1, typename T2>
     inline auto operator+(const T1& scalar, const Series<T2>& series)
-    -> Series<decltype(scalar + series.at(series.get_order_min()))>
+    -> Series<typename std::remove_cv<decltype(scalar + series.at(series.get_order_min()))>::type>
     {
         return series.template add(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
     };
 
     template<typename T1, typename T2>
     inline auto operator-(const Series<T1>& s1, const Series<T2>& s2)
-    -> Series<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>
+    -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) - s2.at(s2.get_order_min()))>::type>
     {
         return s1.template subtract(s1,s2);
     };
     template<typename T1, typename T2>
     inline auto operator-(const Series<T1>& series, const T2& scalar)
-    -> Series<decltype(series.at(series.get_order_min()) - scalar)>
+    -> Series<typename std::remove_cv<decltype(series.at(series.get_order_min()) - scalar)>::type>
     {
         return series.template subtract(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
     };
     template<typename T1, typename T2>
     inline auto operator-(const T1& scalar, const Series<T2>& series)
-    -> Series<decltype(scalar - series.at(series.get_order_min()))>
+    -> Series<typename std::remove_cv<decltype(scalar - series.at(series.get_order_min()))>::type>
     {
         return series.template subtract(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
     };
 
     template<typename T1, typename T2>
     inline auto operator*(const Series<T1>& s1, const Series<T2>& s2)
-    -> Series<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>
+    -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) * s2.at(s2.get_order_min()))>::type>
     {
         return s1.template multiply_series(s1,s2);
     }
     template<typename T1, typename T2>
     inline auto operator*(const Series<T1>& s1, const T2& val)
-    -> Series<decltype(s1.at(s1.get_order_min()) * val)>
+    -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) * val)>::type>
     {
         return s1.template multiply_scalar</* from_left = */ false>(s1, val);
     }
     template<typename T1, typename T2>
     inline auto operator*(const T1& val, const Series<T2>& s1)
-    -> Series<decltype(val * s1.at(s1.get_order_min()))>
+    -> Series<typename std::remove_cv<decltype(val * s1.at(s1.get_order_min()))>::type>
     {
         return s1.template multiply_scalar</* from_left = */ true>(s1, val);
     }
 
     template<typename T1, typename T2>
     inline auto operator/(const Series<T1>& s1, const Series<T2>& s2)
-    -> Series<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>
+    -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) / s2.at(s2.get_order_min()))>::type>
     {
         return s1.template division_series_by_series(s1,s2);
     }
     template<typename T1, typename T2>
     inline auto operator/(const Series<T1>& s1, const T2& val)
-    -> Series<decltype(s1.at(s1.get_order_min()) / val)>
+    -> Series<typename std::remove_cv<decltype(s1.at(s1.get_order_min()) / val)>::type>
     {
         return s1.template division_series_by_scalar(s1,val);
     }
     template<typename T1, typename T2>
     inline auto operator/(const T1& val, const Series<T2>& s1)
-    -> Series<decltype(val / s1.at(s1.get_order_min()))>
+    -> Series<typename std::remove_cv<decltype(val / s1.at(s1.get_order_min()))>::type>
     {
         return s1.template division_series_by_series(Series<T1>{0,0,{val},false,s1.expansion_parameter},s1);
     }

@@ -908,16 +908,53 @@ class TestNumerator(unittest.TestCase):
         self.assertEqual( (sp.sympify(double_tadpole.exponent_U) - target_exponent_U).simplify() , 0 )
         self.assertEqual( (sp.sympify(double_tadpole.numerator) - target_numerator).simplify() , 0 )
 
-# TODO: uncomment when implemented
-#    def test_error_if_index_too_often(self):
-#        mu, nu = sp.symbols('mu nu')
-#        numerator = 'k1(mu)*k2(mu)*k2(1)*k2(2)*p1(1)*p2(2)*p1(mu)'
-#        loop_momenta = ['k1', 'k2']
-#        external_momenta = ['p1', 'p2']
-#        propagators = [] # dummy, do not need to specify propagators for the double index notation
-#
-#        li = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator)
-#        self.assertRaisesRegexp(AssertionError, '(E|e)ach.*index.*(exactly|at most).*(twice|two times)', lambda: li.numerator)
+    #@attr('active')
+    def test_error_if_index_too_often_loop_momenta(self):
+        li = LoopIntegralFromPropagators(
+            Lorentz_indices = ('mu', 1, 2),
+            numerator = 'k1(1)*k1(1)*k1(1) + k2(mu)*k2(2)*p1(mu)*p2(2)',
+            loop_momenta = ['k1', 'k2'],
+            external_momenta = ['p1', 'p2'],
+            propagators = ['(k1-p1)^2','(k2-p1-p2)^2']
+        )
+        self.assertRaisesRegexp(
+            AssertionError,
+            str(li.numerator_input.args[0]).replace('(',r'\(').replace(')','\)').replace('*',r'\*') + \
+                '.*Lorentz_indices.*1.*more than.*(twice|two times)',
+            lambda: li.numerator
+        )
+
+    #@attr('active')
+    def test_error_if_index_too_often_external_momenta(self):
+        li = LoopIntegralFromPropagators(
+            Lorentz_indices = ('mu', 1, 2),
+            numerator = 'p1(1)*p1(1)*p2(1) + k2(mu)*k2(2)*p1(mu)*p2(2)',
+            loop_momenta = ['k1', 'k2'],
+            external_momenta = ['p1', 'p2'],
+            propagators = ['(k1-p1)^2','(k2-p1-p2)^2']
+        )
+        self.assertRaisesRegexp(
+            AssertionError,
+            str(li.numerator_input.args[0]).replace('(',r'\(').replace(')','\)').replace('*',r'\*') + \
+                '.*Lorentz_indices.*1.*more than.*(twice|two times)',
+            lambda: li.numerator
+        )
+
+    #@attr('active')
+    def test_error_if_index_too_often_mixed(self):
+        li = LoopIntegralFromPropagators(
+            Lorentz_indices = ('mu', 1, 2),
+            numerator = 'k1(mu)*k2(mu)*k2(1)*k2(2)*p1(1)*p2(2)*p1(mu)',
+            loop_momenta = ['k1', 'k2'],
+            external_momenta = ['p1', 'p2'],
+            propagators = ['(k1-p1)^2','(k2-p1-p2)^2']
+        )
+        self.assertRaisesRegexp(
+            AssertionError,
+            str(li.numerator_input).replace('(',r'\(').replace(')','\)').replace('*',r'\*') + \
+                '.*Lorentz_indices.*mu.*more than.*(twice|two times)',
+            lambda: li.numerator
+        )
 
 
 def uf_from_graph_generic(test_case, int_lines, ext_lines, result_L, result_u, result_f, rules=[]):
