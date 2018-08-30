@@ -243,6 +243,7 @@ extern "C"
         double epsabs, \
         unsigned long long int maxeval, \
         int errormode, \
+        unsigned long long int minnevaluate, \
         unsigned long long int minn, \
         unsigned long long int minm, \
         unsigned long long int maxnperpackage, \
@@ -263,6 +264,8 @@ extern "C"
             integrator->maxeval = maxeval; \
         if ( errormode != 0 ) \
             integrator->errormode = static_cast<::integrators::ErrorMode>(errormode); \
+        if ( minnevaluate != 1 ) /* 1 means default here because 0 has a special meaning */ \
+            integrator->minnevaluate = minnevaluate; \
         if ( minn != 0 ) \
             integrator->minn = minn; \
         if ( minm != 0 ) \

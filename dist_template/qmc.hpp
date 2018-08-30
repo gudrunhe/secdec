@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: e88ebbff1787e6127d796da2e2438bd9b67ea3d0
- * Generated: 27-07-2018 15:12:08
+ * Commit: c50aebeba705a7c76be0c1a05747e139b447d76e
+ * Generated: 30-08-2018 17:58:33
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -69,68 +69,10 @@ namespace integrators
 };
 
 #endif
-#ifndef QMC_ERRORMODE_H
-#define QMC_ERRORMODE_H
+#ifndef QMC_SAMPLES_H
+#define QMC_SAMPLES_H
 
-namespace integrators
-{
-    enum ErrorMode : int
-    {
-        all = 1,
-        largest = 2
-    };
-};
-
-#endif
-
-namespace integrators
-{
-    template <typename T, typename D, typename U = unsigned long long int, typename G = std::mt19937_64, typename H = std::uniform_real_distribution<D>>
-    class Qmc
-    {
-
-    private:
-
-        H uniform_distribution{0,1};
-
-        void init_z(std::vector<U>& z, const U n, const U dim) const;
-        void init_d(std::vector<D>& d, const U m, const U dim);
-        void init_r(std::vector<T>& r, const U m, const U r_size_over_m) const;
-
-        template <typename F1, typename F2> void worker(const U thread_id,U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U total_work_packages, const U n, const U m,  F1& func, const U dim, F2& integral_transform, const int device, D& time_in_ns, U& points_computed) const;
-        template <typename F1, typename F2> result<T,U> sample(F1& func, const U dim, F2& integral_transform, const U n, const U m, std::vector<result<T,U>> & previous_iterations);
-        void update(result<T,U>& res, U& n, U& m, U& function_evaluations) const;
-
-    public:
-
-        Logger logger;
-        G randomgenerator;
-        U minn;
-        U minm;
-        D epsrel;
-        D epsabs;
-        U maxeval;
-        U maxnperpackage;
-        U maxmperpackage;
-        ErrorMode errormode;
-        U cputhreads;
-        U cudablocks;
-        U cudathreadsperblock;
-        std::set<int> devices;
-        std::map<U,std::vector<U>> generatingvectors;
-        U verbosity;
-
-        U get_next_n(U preferred_n) const;
-
-        template <typename F1, typename F2> result<T,U> integrate(F1& func, const U dim, F2& integral_transform);
-        template <typename F1> result<T,U> integrate(F1& func, const U dim);
-
-        Qmc();
-        virtual ~Qmc() {}
-    };
-};
-
-// Implementation
+#include <vector> // vector
 #ifndef QMC_MATH_MUL_MOD_H
 #define QMC_MATH_MUL_MOD_H
 
@@ -159,6 +101,438 @@ namespace integrators
             S r = static_cast<S>( (a*b) - (c*k) ) % static_cast<S>(k);
             return r < 0 ? static_cast<R>(static_cast<U>(r)+k) : static_cast<R>(r);
         };
+    };
+};
+
+#endif
+
+namespace integrators
+{
+    template <typename T, typename D, typename U = unsigned long long int>
+    struct samples
+    {
+        std::vector<U> z;
+        std::vector<D> d;
+        std::vector<T> r;
+        U n;
+
+        D get_x(const U sample_index, const U dimension)
+        {
+            D mynull;
+            return modf( integrators::math::mul_mod<D,D,U>(sample_index,z.at(dimension),n)/(static_cast<D>(n)) + d.at(dimension), &mynull);
+        }
+    };
+};
+
+#endif
+#ifndef QMC_FIT_TRANSFORM_H
+#define QMC_FIT_TRANSFORM_H
+
+#include <stdexcept> // std::domain_error
+
+namespace integrators
+{
+
+    template <typename D>
+    struct FitFunction
+    {
+        static const int num_parameters = 4;
+        D operator()(const D x, const D* p) const
+        {
+            // constraint: no singularity
+            if (p[0]>=static_cast<D>(0) && p[0]<=static_cast<D>(1))
+                return std::numeric_limits<D>::max();
+
+            D y = x*(p[1]+x*(p[2]+x*p[3])) + (D(1)-p[1]-p[2]-p[3])*(x*(p[0]-D(1)))/(p[0]-x);
+
+            // constraint: transformed variable within unit hypercube
+            if ( y<static_cast<D>(0) || y>static_cast<D>(1) )
+                return std::numeric_limits<D>::max();
+            
+            return y;
+        }
+    };
+
+    template <typename D>
+    struct FitFunctionJacobian
+    {
+        static const int num_parameters = 4;
+        D operator()(const D x, const D* p, const size_t parameter) const
+        {
+            if (parameter == 0) {
+                return ((D(-1) + x)*x*(D(-1) + p[1] + p[2] + p[3]))/(x - p[0])/(x - p[0]);
+            } else if (parameter == 1) {
+                return x - (x*(D(-1) + p[0]))/(-x + p[0]);
+            } else if (parameter == 2) {
+                return x*x - (x*(D(-1) + p[0]))/(-x + p[0]);
+            } else if (parameter == 3) {
+                return x*x*x - (x*(D(-1) + p[0]))/(-x + p[0]);
+            } else {
+                throw std::domain_error("fit_function_jacobian called with invalid parameter: " + std::to_string(parameter));
+            }
+        }
+    };
+
+    template<typename F1, typename D, typename U = unsigned long long int, U maxdim = 25>
+    struct FitTransform {
+        const static U num_params = 4;
+
+        F1 f; // original function
+        D p[maxdim][num_params]; // fit_parameters
+        const U dim;
+
+        FitTransform(const F1& f, const U& dim) : dim(dim), f(f) {};
+
+#ifdef __CUDACC__
+        __host__ __device__
+#endif
+        auto operator()(D* x) -> decltype(f(x)) const
+        {
+            D wgt = 1.;
+            for (U d = 0; d < dim ; ++d)
+            {
+                D q = D(1)-p[d][1]-p[d][2]-p[d][3];
+                wgt *= p[d][1] + x[d]*(2*p[d][2]+x[d]*3*p[d][3]) + q*p[d][0]*(p[d][0]-1)/(p[d][0]-x[d])/(p[d][0]-x[d]);
+                x[d] = x[d]*(p[d][1]+x[d]*(p[d][2]+x[d]*p[d][3])) + q*x[d]*(p[d][0]-1)/(p[d][0]-x[d]);
+                if ( x[d] > 1. || x[d] < 0. ) return 0.;
+            }
+            return wgt * f(x);
+        }
+    };
+
+};
+
+#endif
+#ifndef QMC_ERRORMODE_H
+#define QMC_ERRORMODE_H
+
+namespace integrators
+{
+    enum ErrorMode : int
+    {
+        all = 1,
+        largest = 2
+    };
+};
+
+#endif
+
+namespace integrators
+{
+    template <typename T, typename D, typename U = unsigned long long int, typename G = std::mt19937_64, typename H = std::uniform_real_distribution<D>>
+    class Qmc
+    {
+
+    private:
+
+        H uniform_distribution{0,1};
+
+        void init_z(std::vector<U>& z, const U n, const U dim) const;
+        void init_d(std::vector<D>& d, const U m, const U dim);
+        void init_r(std::vector<T>& r, const U m, const U r_size_over_m) const;
+
+        template<typename F1> FitTransform<F1,D,U> fit(F1& func, const U dim);
+        template <typename F1, typename F2> void sample_worker(const U thread_id,U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U total_work_packages, const U n, const U m,  F1& func, const U dim, F2& integral_transform, const int device, D& time_in_ns, U& points_computed) const;
+        template <typename F1, typename F2> void evaluate_worker(const U thread_id,U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U n, F1& func, const U dim, const int device, D& time_in_ns, U& points_computed) const;
+        template <typename F1, typename F2> result<T,U> sample(F1& func, const U dim, F2& integral_transform, const U n, const U m, std::vector<result<T,U>> & previous_iterations);
+        void update(result<T,U>& res, U& n, U& m, U& function_evaluations) const;
+        template <typename F1, typename F2> result<T,U> integrate_impl(F1& func, const U dim, F2& integral_transform);
+
+    public:
+
+        Logger logger;
+        G randomgenerator;
+        U minnevaluate;
+        U minn;
+        U minm;
+        D epsrel;
+        D epsabs;
+        U maxeval;
+        U maxnperpackage;
+        U maxmperpackage;
+        ErrorMode errormode;
+        U cputhreads;
+        U cudablocks;
+        U cudathreadsperblock;
+        std::set<int> devices;
+        std::map<U,std::vector<U>> generatingvectors;
+        U verbosity;
+
+        U get_next_n(U preferred_n) const;
+
+        template <typename F1, typename F2> result<T,U> integrate(F1& func, const U dim, F2& integral_transform);
+        template <typename F1> result<T,U> integrate(F1& func, const U dim);
+
+        template <typename F1> samples<T,D,U> evaluate(F1& func, const U dim); // TODO: explicit test cases fo this function
+
+        Qmc();
+        virtual ~Qmc() {}
+    };
+};
+
+// Implementation
+// (Included Above): #include "math/mul_mod.hpp"
+#ifndef QMC_ARGSORT_H
+#define QMC_ARGSORT_H
+
+#include <algorithm> // std::sort
+#include <numeric> // std::iota
+#include <vector> // std::vector
+
+namespace integrators
+{
+    namespace math
+    {
+        // argsort as suggested in https://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
+        template <typename T>
+        std::vector<size_t> argsort(const std::vector<T> &v) {
+
+          // initialize original index locations
+          std::vector<size_t> idx(v.size());
+          std::iota(idx.begin(), idx.end(), 0);
+
+          // sort indexes based on comparing values in v
+          std::sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
+
+          // return vector of indices
+          return idx;
+        };
+    };
+};
+
+#endif
+#ifndef QMC_GSL_WRAPPER_H
+#define QMC_GSL_WRAPPER_H
+
+#include <algorithm> // std::max
+#include <cassert> // assert
+#include <cmath> // std::nan
+#include <string> // std::to_string
+#include <iostream> // std::endl
+#include <iomanip> //  std::setw, std::setfill
+#include <vector> // std::vector
+
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_multifit_nlinear.h>
+
+// (Included Above): #include "../types/fit.hpp"
+
+namespace integrators
+{
+    namespace fit
+    {
+        template<typename F1, typename F2>
+        struct least_squares_wrapper_t {
+            const F1 fit_function;
+            const F2 fit_function_jacobian;
+            const std::vector<double> x;
+            const std::vector<double> y;
+        };
+
+        template<typename F1, typename F2>
+        int fit_function_wrapper(const gsl_vector * parameters_vector, void *xyfunc_ptr, gsl_vector * f)
+        {
+            // Unpack data
+            const std::vector<double>& x = reinterpret_cast<least_squares_wrapper_t<F1,F2>*>(xyfunc_ptr)->x;
+            const std::vector<double>& y = reinterpret_cast<least_squares_wrapper_t<F1,F2>*>(xyfunc_ptr)->y;
+            const F1& fit_function = reinterpret_cast<least_squares_wrapper_t<F1,F2>*>(xyfunc_ptr)->fit_function;
+
+            // Compute deviates of fit function for input points
+            for (size_t i = 0; i < x.size(); i++)
+            {
+                gsl_vector_set(f, i, fit_function(x[i], gsl_vector_const_ptr(parameters_vector,0)) - y[i] );
+            }
+
+            return GSL_SUCCESS;
+        }
+
+        template<typename F1, typename F2>
+        int fit_function_jacobian_wrapper(const gsl_vector * parameters_vector, void *xyfunc_ptr, gsl_matrix * J)
+        {
+            // Unpack data
+            const std::vector<double>& x = reinterpret_cast<least_squares_wrapper_t<F1,F2>*>(xyfunc_ptr)->x;
+            const F2& fit_function_jacobian = reinterpret_cast<least_squares_wrapper_t<F1,F2>*>(xyfunc_ptr)->fit_function_jacobian;
+
+            for (size_t i = 0; i < x.size(); i++)
+                for (size_t j = 0; j < fit_function_jacobian.num_parameters; j++)
+                    gsl_matrix_set(J, i, j, fit_function_jacobian(x[i], gsl_vector_const_ptr(parameters_vector,0), j) );
+
+            return GSL_SUCCESS;
+        }
+
+        template<typename U>
+        struct callback_params_t {
+            const U& verbosity;
+            Logger& logger;
+        };
+
+        template<typename U>
+        void callback(const size_t iter, void *params, const gsl_multifit_nlinear_workspace *w)
+        {
+            const U& verbosity = reinterpret_cast<callback_params_t<U>*>(params)->verbosity;
+            Logger& logger = reinterpret_cast<callback_params_t<U>*>(params)->logger;
+
+            gsl_vector *f = gsl_multifit_nlinear_residual(w);
+            gsl_vector *x = gsl_multifit_nlinear_position(w);
+            double rcond = std::nan("");
+
+            // compute reciprocal condition number of J(x)
+            if ( iter > 0 )
+                gsl_multifit_nlinear_rcond(&rcond, w);
+
+            const char separator       = ' ';
+            const int name_width       = 11;
+            const int small_name_width = 9;
+            const int num_width        = 15;
+            logger << std::left << std::setw(name_width) << std::setfill(separator) << "iter " + std::to_string(iter) + ": ";
+            bool display_timing = logger.display_timing;
+            logger.display_timing = false;
+            for (size_t i = 0; i < x->size; i++)
+            {
+                logger << std::left << std::setw(small_name_width) << std::setfill(separator) << "p[" + std::to_string(i) + "] = ";
+                logger << std::left << std::setw(num_width) << std::setfill(separator) << gsl_vector_get(x, i);
+            }
+            logger << std::left << std::setw(10) << std::setfill(separator) << "cond(J) = ";
+            logger << std::left << std::setw(num_width) << std::setfill(separator) << 1.0 / rcond;
+            logger << std::left << std::setw(9) << std::setfill(separator) << "|f(x)| = ";
+            logger << std::left << std::setw(num_width) << std::setfill(separator) << gsl_blas_dnrm2(f);
+            logger << std::endl;
+            logger.display_timing = display_timing;
+        }
+
+        template <typename D, typename U, typename F1, typename F2>
+        std::vector<D> least_squares(F1& fit_function, F2& fit_function_jacobian, std::vector<D> x, std::vector<D> y, const U& verbosity, Logger& logger)
+        {
+            // fit parameters
+            // TODO - Member variables or otherwise settable?
+            const int maxiter = 40;
+            const double xtol = 1e-10;
+            const double gtol = 0.0;
+            const double ftol = 0.0;
+
+            const size_t num_points = x.size();
+            const size_t num_parameters = fit_function.num_parameters;
+
+            assert(x.size() == y.size());
+            assert(num_points > num_parameters + 1);
+
+            least_squares_wrapper_t<F1,F2> data = { fit_function, fit_function_jacobian, x, y };
+
+            const gsl_multifit_nlinear_type *method = gsl_multifit_nlinear_trust;
+            gsl_multifit_nlinear_workspace *w;
+            gsl_multifit_nlinear_fdf fdf;
+            gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters(); // TODO - set these?
+            gsl_vector *f;
+            gsl_matrix *J;
+            gsl_matrix *covar = gsl_matrix_alloc(num_parameters, num_parameters);
+            gsl_vector_view yv = gsl_vector_view_array(y.data(), num_points);
+
+            // define the function to be minimized
+            fdf.f = fit_function_wrapper<F1,F2>;
+            fdf.df = fit_function_jacobian_wrapper<F1,F2>;
+            fdf.fvv = nullptr; // not using geodesic acceleration
+            fdf.n = num_points;
+            fdf.p = num_parameters;
+            fdf.params = &data;
+
+            double chisq,chisq0,chisq1,chisq2;
+            int status, info;
+
+            // allocate workspace with parameters
+            w = gsl_multifit_nlinear_alloc(method, &fdf_params, num_points, num_parameters);
+
+            std::vector<std::vector<D>> fit_parameters;
+
+            for (int i = 1; i < 3; i++)
+            {
+                if (verbosity > 0)
+                    logger << "-- running fit (run " << i << ")" << " --" << std::endl;
+
+                static std::vector<double> initial_parameters;
+                if (i == 1)
+                    initial_parameters = { 1.1,1.0,0.0,0.0};
+                else
+                    initial_parameters = {-0.1,1.0,0.0,0.0};
+
+                gsl_vector_view pv = gsl_vector_view_array(initial_parameters.data(), num_parameters);
+
+                // initialize solver with starting point and weights
+                gsl_multifit_nlinear_winit(&pv.vector, &yv.vector, &fdf, w);
+
+                // compute initial cost function
+                f = gsl_multifit_nlinear_residual(w);
+                gsl_blas_ddot(f, f, &chisq0);
+
+                // solve the system with a maximum of "maxiter" iterations
+                callback_params_t<U> callback_params{verbosity,logger};
+                if (verbosity > 2)
+                    status = gsl_multifit_nlinear_driver(maxiter, xtol, gtol, ftol, callback<U>, &callback_params, &info, w);
+                else
+                    status = gsl_multifit_nlinear_driver(maxiter, xtol, gtol, ftol, nullptr, nullptr, &info, w);
+
+                // compute covariance of best fit parameters
+                J = gsl_multifit_nlinear_jac(w);
+                gsl_multifit_nlinear_covar(J, 0., covar);
+
+                // compute final cost
+                gsl_blas_ddot(f, f, &chisq);
+
+                // store fit parameters
+                std::vector<D> this_fit_parameters;
+                this_fit_parameters.reserve(num_parameters);
+                for (size_t i = 0; i < num_parameters; i++)
+                    this_fit_parameters.push_back( gsl_vector_get(w->x, i) );
+                fit_parameters.push_back( this_fit_parameters );
+
+                // Report output of fit function
+                if (verbosity > 1)
+                {
+                    double dof = num_points - num_parameters - 1;
+                    double c = std::max(1., sqrt(chisq/dof));
+
+                    logger << "-- fit output (run " << i << ")" << " --" << std::endl;
+                    logger << "summary from method "   << gsl_multifit_nlinear_name(w) << " " << gsl_multifit_nlinear_trs_name(w) << std::endl;
+                    logger << "number of iterations: " << gsl_multifit_nlinear_niter(w) << std::endl;
+                    logger << "function evaluations: " << fdf.nevalf << std::endl;
+                    logger << "Jacobian evaluations: " << fdf.nevaldf << std::endl;
+                    if (info == 0)
+                        logger << "reason for stopping: " << "maximal number of iterations (maxiter)" << std::endl;
+                    else if (info == 1)
+                        logger << "reason for stopping: " << "small step size (xtol)" << std::endl;
+                    else if (info == 2)
+                        logger << "reason for stopping: " << "small gradient (gtol)" << std::endl;
+                    else
+                        logger << "reason for stopping: " << "unknown" << std::endl;
+                    logger << "initial |f(x)| = "      << sqrt(chisq0) << std::endl;;
+                    logger << "final   |f(x)| = "      << sqrt(chisq) << std::endl;
+                    logger << "chisq/dof = "           << chisq/dof << std::endl;
+                    for (size_t i = 0; i < num_parameters; i++)
+                        logger << "fit_parameters[" << i << "] = " << this_fit_parameters[i] << " +/- " << c*sqrt(gsl_matrix_get(covar,i,i)*chisq/dof) << std::endl;
+                    logger << "status = "              << gsl_strerror(status) << std::endl;
+                    logger << "-----------" << std::endl;
+                }
+
+                if (i == 1)
+                    chisq1 = chisq;
+                else
+                    chisq2 = chisq;
+            }
+
+            gsl_multifit_nlinear_free(w);
+            gsl_matrix_free(covar);
+
+            const size_t solution = chisq1 < chisq2 ? 0 : 1;
+
+            if (verbosity > 1)
+            {
+                logger << "choosing solution " << solution+1 << std::endl;
+                logger << "-----------" << std::endl;
+            }
+
+            return fit_parameters.at(solution);
+        }
     };
 };
 
@@ -899,6 +1273,25 @@ namespace integrators
                     }
                 }
             };
+
+            template <typename T, typename D, typename U, typename F1>
+            __global__
+            void generate_samples_kernel(const U work_offset, const U work_this_iteration, const U* z, const D* d, T* r, const U n, F1* func, const U dim)
+            {
+                U i = blockIdx.x*blockDim.x + threadIdx.x;
+                if (i < work_this_iteration)
+                {
+                    D mynull = 0;
+                    D x[25]; // TODO - template parameter?
+
+                    for (U sDim = 0; sDim < dim; sDim++)
+                    {
+                        x[sDim] = modf(integrators::math::mul_mod<D, D, U>(work_offset + i, z[sDim], n) / n + d[sDim], &mynull);
+                    }
+
+                    r[i] = (*func)(x);
+                }
+            };
         };
     };
 };
@@ -1025,6 +1418,35 @@ namespace integrators
                 QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
             };
+
+            template <typename F1, typename T, typename D, typename U, typename G>
+            void generate_samples(
+                                     const Qmc<T, D, U, G>& qmc,
+                                     const U i_start, const U work_this_iteration,
+                                     std::unique_ptr<integrators::core::cuda::detail::cuda_memory<U>>& d_z,
+                                     std::unique_ptr<integrators::core::cuda::detail::cuda_memory<D>>& d_d,
+                                     std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r,
+                                     const U n,
+                                     std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F1>>& d_func,
+                                     const U dim,
+                                     const int device
+                                 )
+            {
+                if (qmc.verbosity > 1) qmc.logger << "- (" << device << ") computing samples " << i_start << ", work_this_iteration " << work_this_iteration << ", n " << n << std::endl;
+
+                if(qmc.verbosity > 2) qmc.logger << "- (" << device << ") launching gpu kernel<<<" << qmc.cudablocks << "," << qmc.cudathreadsperblock << ">>>" << std::endl;
+
+                integrators::core::cuda::generate_samples_kernel<<< qmc.cudablocks, qmc.cudathreadsperblock >>>(i_start, work_this_iteration,
+                                                                                                                static_cast<U*>(*d_z),
+                                                                                                                static_cast<D*>(*d_d),
+                                                                                                                static_cast<T*>(*d_r),
+                                                                                                                n,
+                                                                                                                static_cast<F1*>(*d_func),
+                                                                                                                dim
+                                                                                                                );
+                QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSynchronize());
+
+            };
         };
     };
 };
@@ -1054,15 +1476,15 @@ namespace integrators
         namespace cuda
         {
             template <typename F1, typename F2, typename T, typename D, typename U>
-            void setup(
-                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<U>>& d_z, const std::vector<U>& z,
-                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<D>>& d_d, const std::vector<D>& d,
-                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r, const U d_r_size_over_m,
-                           const T* r_element, const U r_size_over_m, const U m,
-                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F1>>& d_func, F1& func,
-                           std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F2>>& d_integral_transform, F2& integral_transform,
-                           const int device, const U verbosity, const Logger& logger
-                           )
+            void setup_sample(
+                                   std::unique_ptr<integrators::core::cuda::detail::cuda_memory<U>>& d_z, const std::vector<U>& z,
+                                   std::unique_ptr<integrators::core::cuda::detail::cuda_memory<D>>& d_d, const std::vector<D>& d,
+                                   std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r, const U d_r_size_over_m,
+                                   const T* r_element, const U r_size_over_m, const U m,
+                                   std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F1>>& d_func, F1& func,
+                                   std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F2>>& d_integral_transform, F2& integral_transform,
+                                   const int device, const U verbosity, const Logger& logger
+                             )
             {
                 // Set Device
                 if (verbosity > 1) logger << "- (" << device << ") setting device" << std::endl;
@@ -1097,6 +1519,42 @@ namespace integrators
                 //        QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1)); // TODO - investigate if this helps
                 //        cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, MyKernel, 0, 0); // TODO - investigate if this helps - https://devblogs.nvidia.com/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/
             };
+
+            template <typename F1, typename T, typename D, typename U>
+            void setup_evaluate(
+                                    std::unique_ptr<integrators::core::cuda::detail::cuda_memory<U>>& d_z, const std::vector<U>& z,
+                                    std::unique_ptr<integrators::core::cuda::detail::cuda_memory<D>>& d_d, const std::vector<D>& d,
+                                    std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r, const U d_r_size,
+                                    std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F1>>& d_func, F1& func,
+                                    const int device, const U verbosity, const Logger& logger
+                                )
+            {
+                // Set Device
+                if (verbosity > 1) logger << "- (" << device << ") setting device" << std::endl;
+                QMC_CORE_CUDA_SAFE_CALL(cudaSetDevice(device));
+                if (verbosity > 1) logger << "- (" << device << ") device set" << std::endl;
+
+                d_func.reset( new integrators::core::cuda::detail::cuda_memory<F1>(1) );
+                d_z.reset( new integrators::core::cuda::detail::cuda_memory<U>(z.size()) );
+                d_d.reset( new integrators::core::cuda::detail::cuda_memory<D>(d.size()) );
+                d_r.reset( new integrators::core::cuda::detail::cuda_memory<T>(d_r_size) );
+                if(verbosity > 1) logger << "- (" << device << ") allocated d_func,d_z,d_d,d_r" << std::endl;
+
+                // copy func (initialize on new active device)
+                F1 func_copy = func;
+
+                QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<typename std::remove_const<F1>::type*>(*d_func), &func_copy, sizeof(F1), cudaMemcpyHostToDevice));
+                if(verbosity > 1) logger << "- (" << device << ") copied d_func to device memory" << std::endl;
+
+                // Copy z,d,func to device
+                QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<U*>(*d_z), z.data(), z.size() * sizeof(U), cudaMemcpyHostToDevice));
+                QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<D*>(*d_d), d.data(), d.size() * sizeof(D), cudaMemcpyHostToDevice));
+
+                if(verbosity > 1) logger << "- (" << device << ") copied z,d to device memory" << std::endl;
+
+                //        QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1)); // TODO - investigate if this helps
+                //        cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, MyKernel, 0, 0); // TODO - investigate if this helps - https://devblogs.nvidia.com/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/
+            };
         };
     };
 };
@@ -1124,7 +1582,7 @@ namespace integrators
         namespace cuda
         {
             template <typename T, typename U>
-            void teardown(const std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r, const U d_r_size_over_m, T* r_element, const U r_size_over_m, const U m, const int device, const U verbosity, const Logger& logger)
+            void teardown_sample(const std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r, const U d_r_size_over_m, T* r_element, const U r_size_over_m, const U m, const int device, const U verbosity, const Logger& logger)
             {
                 // Copy r to host
                 for (U k = 0; k < m; k++)
@@ -1132,6 +1590,14 @@ namespace integrators
                     QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(&r_element[k*r_size_over_m], &(static_cast<T*>(*d_r)[k*d_r_size_over_m]), d_r_size_over_m * sizeof(T), cudaMemcpyDeviceToHost));
                 }
                 if (verbosity > 1) logger << "- (" << device << ") copied r to host memory" << std::endl;
+            };
+
+            template <typename T, typename U>
+            void copy_back(const std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r, const U d_r_size, T* r_element, const int device, const U verbosity, const Logger& logger)
+            {
+                // Copy r_element to host
+                QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(r_element, static_cast<T*>(*d_r), d_r_size * sizeof(T), cudaMemcpyDeviceToHost));
+                if (verbosity > 1) logger << "- (" << device << ") copied r_element to host memory" << std::endl;
             };
         };
     };
@@ -1223,6 +1689,27 @@ namespace integrators
                         r_element[k*r_size_over_m] = kahan_t;
                     }
                 }
+            }
+
+            template <typename T, typename D, typename U, typename F1>
+            void generate_samples(const U i, const std::vector<U>& z, const std::vector<D>& d, T* r_element, const U n, F1& func, const U dim)
+            {
+                using std::modf;
+
+                D mynull = 0;
+                std::vector<D> x(dim,0);
+
+                for (U sDim = 0; sDim < dim; sDim++)
+                {
+                    #define QMC_MODF_CALL modf( integrators::math::mul_mod<D,D,U>(i,z.at(sDim),n)/(static_cast<D>(n)) + d.at(sDim), &mynull)
+
+                    static_assert(std::is_same<decltype(QMC_MODF_CALL),D>::value, "Downcast detected in integrators::core::generic::compute. Please implement \"D modf(D)\".");
+                    x[sDim] = QMC_MODF_CALL;
+
+                    #undef QMC_MODF_CALL
+                }
+
+                *r_element = func(x.data());
             }
         };
     };
@@ -1316,6 +1803,7 @@ namespace integrators
 #include <iterator> // advance
 #include <mutex>
 #include <memory> // unique_ptr
+#include <numeric> // partial_sum
 #include <cassert> // assert
 #include <chrono>
 
@@ -1347,7 +1835,7 @@ namespace integrators
     
     template <typename T, typename D, typename U, typename G, typename H>
     template <typename F1, typename F2>
-    void Qmc<T,D,U,G,H>::worker(const U thread_id, U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U total_work_packages, const U n, const U m, F1& func, const U dim, F2& integral_transform, const int device, D& time_in_ns, U& points_computed) const
+    void Qmc<T,D,U,G,H>::sample_worker(const U thread_id, U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U total_work_packages, const U n, const U m, F1& func, const U dim, F2& integral_transform, const int device, D& time_in_ns, U& points_computed) const
     {
         std::chrono::steady_clock::time_point time_before_compute = std::chrono::steady_clock::now();
 
@@ -1370,7 +1858,7 @@ namespace integrators
         } else {
             work_this_iteration = cudablocks*cudathreadsperblock;
 #ifdef __CUDACC__
-            integrators::core::cuda::setup(d_z, z, d_d, d, d_r, d_r_size/m, &r[thread_id], r.size()/m, m, d_func, func, d_integral_transform, integral_transform, device, verbosity, logger);
+            integrators::core::cuda::setup_sample(d_z, z, d_d, d, d_r, d_r_size/m, &r[thread_id], r.size()/m, m, d_func, func, d_integral_transform, integral_transform, device, verbosity, logger);
 #endif
         }
 
@@ -1419,7 +1907,7 @@ namespace integrators
         // Teardown worker
 #ifdef __CUDACC__
         if (device != -1) {
-            integrators::core::cuda::teardown(d_r, d_r_size/m, &r[thread_id], r.size()/m, m, device, verbosity, logger);
+            integrators::core::cuda::teardown_sample(d_r, d_r_size/m, &r[thread_id], r.size()/m, m, device, verbosity, logger);
         }
 #endif
 
@@ -1482,9 +1970,12 @@ namespace integrators
                 logger << "cudablocks " << cudablocks << std::endl;
                 logger << "cudathreadsperblock " << cudathreadsperblock << std::endl;
                 logger << "devices ";
+                bool display_timing = logger.display_timing;
+                logger.display_timing = false;
                 for (const int& i : devices)
                     logger << i << " ";
                 logger << std::endl;
+                logger.display_timing = display_timing;
                 logger << "n " << n << std::endl;
                 logger << "m " << m << std::endl;
                 logger << "shifts " << shifts << std::endl;
@@ -1533,7 +2024,7 @@ namespace integrators
                     if( device != -1)
                     {
 #ifdef __CUDACC__
-                        thread_pool.push_back( std::thread( &Qmc<T,D,U,G,H>::worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), total_work_packages, n, shifts, std::ref(func), dim, std::ref(integral_transform), device, std::ref(time_in_ns_per_thread[thread_number]), std::ref(points_computed_per_thread[thread_number])  ) ); // Launch non-cpu workers
+                        thread_pool.push_back( std::thread( &Qmc<T,D,U,G,H>::sample_worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), total_work_packages, n, shifts, std::ref(func), dim, std::ref(integral_transform), device, std::ref(time_in_ns_per_thread[thread_number]), std::ref(points_computed_per_thread[thread_number])  ) ); // Launch non-cpu workers
                         thread_id += cudablocks*cudathreadsperblock;
                         thread_number += 1;
 #else
@@ -1545,7 +2036,7 @@ namespace integrators
                 {
                     for ( U i=0; i < cputhreads; i++)
                     {
-                        thread_pool.push_back( std::thread( &Qmc<T,D,U,G,H>::worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), total_work_packages, n, shifts, std::ref(func), dim, std::ref(integral_transform), -1, std::ref(time_in_ns_per_thread[thread_number]), std::ref(points_computed_per_thread[thread_number]) ) ); // Launch cpu workers
+                        thread_pool.push_back( std::thread( &Qmc<T,D,U,G,H>::sample_worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), total_work_packages, n, shifts, std::ref(func), dim, std::ref(integral_transform), -1, std::ref(time_in_ns_per_thread[thread_number]), std::ref(points_computed_per_thread[thread_number]) ) ); // Launch cpu workers
                         thread_id += 1;
                         thread_number += 1;
                     }
@@ -1587,6 +2078,277 @@ namespace integrators
         return res;
     };
     
+    template <typename T, typename D, typename U, typename G, typename H>
+    template <typename F1, typename F2>
+    void Qmc<T,D,U,G,H>::evaluate_worker(const U thread_id, U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U n, F1& func, const U dim, const int device, D& time_in_ns, U& points_computed) const
+    {
+        std::chrono::steady_clock::time_point time_before_compute = std::chrono::steady_clock::now();
+
+        points_computed = 0;
+
+        // Setup worker
+#ifdef __CUDACC__
+        // define device pointers (must be accessible in local scope of the entire function)
+        U d_r_size = cudablocks*cudathreadsperblock;
+        std::unique_ptr<integrators::core::cuda::detail::cuda_memory<F1>> d_func;
+        std::unique_ptr<integrators::core::cuda::detail::cuda_memory<U>> d_z;
+        std::unique_ptr<integrators::core::cuda::detail::cuda_memory<D>> d_d;
+        std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>> d_r;
+#endif
+        U i;
+        U  work_this_iteration;
+        if (device == -1) {
+            work_this_iteration = 1;
+        } else {
+            work_this_iteration = cudablocks*cudathreadsperblock;
+#ifdef __CUDACC__
+            integrators::core::cuda::setup_evaluate(d_z, z, d_d, d, d_r, d_r_size, d_func, func, device, verbosity, logger);
+#endif
+        }
+
+        bool work_remaining = true;
+        while( work_remaining )
+        {
+            // Get work
+            work_queue_mutex.lock();
+            if (work_queue == 0)
+            {
+                work_remaining=false;
+                i = 0;
+            }
+            else if (work_queue >= work_this_iteration)
+            {
+                work_queue-=work_this_iteration;
+                i = work_queue;
+            }
+            else
+            {
+                work_this_iteration = work_queue;
+                work_queue = 0;
+                i = 0;
+            }
+            work_queue_mutex.unlock();
+            
+            if( !work_remaining )
+                break;
+            
+            // Do work
+            if (device == -1)
+            {
+                integrators::core::generic::generate_samples(i, z, d, &r[i], n, func, dim);
+            }
+            else
+            {
+#ifdef __CUDACC__
+                integrators::core::cuda::generate_samples(*this, i, work_this_iteration, d_z, d_d, d_r, n, d_func, dim, device);
+#endif
+            }
+
+            points_computed += work_this_iteration;
+
+
+            // copy results to host
+#ifdef __CUDACC__
+            if (device != -1) {
+                integrators::core::cuda::copy_back(d_r, work_this_iteration, &r[i], device, verbosity, logger);
+            }
+#endif
+        }
+
+        std::chrono::steady_clock::time_point time_after_compute = std::chrono::steady_clock::now();
+        time_in_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(time_after_compute - time_before_compute).count();
+
+    };
+    
+    template <typename T, typename D, typename U, typename G, typename H>
+    template <typename F1>
+    samples<T,D,U> Qmc<T,D,U,G,H>::evaluate(F1& func, const U dim) // TODO - test case
+    {
+        if ( dim < 1 ) throw std::invalid_argument("qmc::integrate called with dim < 1. Check that your integrand depends on at least one variable of integration.");
+        if ( cputhreads < 1 ) throw std::domain_error("qmc::integrate called with cputhreads < 1. Please set cputhreads to a positive integer.");
+
+        // no transform
+        using F2 = transforms::Trivial<D,U>;
+
+        // allocate memory
+        samples<T,D,U> res;
+        U& n = res.n;
+        n = get_next_n(minnevaluate); // get next available n >= minnevaluate
+        std::vector<U>& z = res.z;
+        std::vector<D>& d = res.d;
+        std::vector<T>& r = res.r;
+
+        // initialize z, d, r
+        init_z(z, n, dim);
+        init_d(d, 1, dim);
+        init_r(r, 1, n); // memory required for result vector
+
+        U extra_threads = devices.size() - devices.count(-1);
+
+        if (verbosity > 0)
+        {
+            logger << "-- qmc::evaluate called --" << std::endl;
+            logger << "dim " << dim << std::endl;
+            logger << "minnevaluate " << minnevaluate << std::endl;
+            logger << "cputhreads " << cputhreads << std::endl;
+            logger << "cudablocks " << cudablocks << std::endl;
+            logger << "cudathreadsperblock " << cudathreadsperblock << std::endl;
+            logger << "devices ";
+            bool display_timing = logger.display_timing;
+            logger.display_timing = false;
+            for (const int& i : devices)
+                logger << i << " ";
+            logger << std::endl;
+            logger.display_timing = display_timing;
+            logger << "n " << n << std::endl;
+        }
+
+        std::chrono::steady_clock::time_point time_before_compute = std::chrono::steady_clock::now();
+
+        if ( cputhreads == 1 && devices.size() == 1 && devices.count(-1) == 1) // TODO - test case
+        {
+            // Compute serially on cpu
+            if (verbosity > 2) logger << "computing serially" << std::endl;
+            for( U i=0; i < n; i++)
+            {
+                integrators::core::generic::generate_samples(i, z, d, &r[i], n, func, dim);
+            }
+        }
+        else // TODO: check this case
+        {
+            // Create threadpool
+            if (verbosity > 2)
+            {
+                logger << "distributing work" << std::endl;
+                if ( devices.count(-1) != 0)
+                    logger << "creating " << std::to_string(cputhreads) << " cputhreads," << std::to_string(extra_threads) << " non-cpu threads" << std::endl;
+                else
+                    logger << "creating " << std::to_string(extra_threads) << " non-cpu threads" << std::endl;
+            }
+
+            // Setup work queue
+            std::mutex work_queue_mutex;
+            U work_queue = n;
+
+            // Launch worker threads
+            U thread_id = 0;
+            U thread_number = 0;
+            std::vector<std::thread> thread_pool;
+            thread_pool.reserve(cputhreads+extra_threads);
+            std::vector<D> time_in_ns_per_thread(cputhreads+extra_threads,D(0));
+            std::vector<U> points_computed_per_thread(cputhreads+extra_threads,U(0));
+            for (int device : devices)
+            {
+                if( device != -1)
+                {
+#ifdef __CUDACC__
+                    thread_pool.push_back( std::thread( &Qmc<T,D,U,G,H>::evaluate_worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), n, std::ref(func), dim, device, std::ref(time_in_ns_per_thread[thread_number]), std::ref(points_computed_per_thread[thread_number]) ) ); // Launch non-cpu workers
+                    thread_id += cudablocks*cudathreadsperblock;
+                    thread_number += 1;
+#else
+                    throw std::invalid_argument("qmc::sample called with device != -1 (CPU) but CUDA not supported by compiler, device: " + std::to_string(device));
+#endif
+                }
+            }
+            if( devices.count(-1) != 0)
+            {
+                for ( U i=0; i < cputhreads; i++)
+                {
+                    thread_pool.push_back( std::thread( &Qmc<T,D,U,G,H>::evaluate_worker<F1,F2>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), n, std::ref(func), dim, -1, std::ref(time_in_ns_per_thread[thread_number]), std::ref(points_computed_per_thread[thread_number]) ) ); // Launch cpu workers
+                    thread_id += 1;
+                    thread_number += 1;
+                }
+            }
+            // Destroy threadpool
+            for( std::thread& thread : thread_pool )
+                thread.join();
+            thread_pool.clear();
+
+            if(verbosity > 2)
+            {
+                for( U i=0; i< extra_threads; i++)
+                {
+                    logger << "(" << i << ") Million Function Evaluations/s: " << D(1000)*D(points_computed_per_thread[i])/D(time_in_ns_per_thread[i]) << " Mfeps (Approx)" << std::endl;
+                }
+                if( devices.count(-1) != 0)
+                {
+                    D time_in_ns_on_cpu = 0;
+                    U points_computed_on_cpu = 0;
+                    for( U i=extra_threads; i< extra_threads+cputhreads; i++)
+                    {
+                        points_computed_on_cpu += points_computed_per_thread[i];
+                        time_in_ns_on_cpu = std::max(time_in_ns_on_cpu,time_in_ns_per_thread[i]);
+                    }
+                    logger << "(-1) Million Function Evaluations/s: " << D(1000)*D(points_computed_on_cpu)/D(time_in_ns_on_cpu) << " Mfeps (Approx)" << std::endl;
+                }
+            }
+        }
+
+        std::chrono::steady_clock::time_point time_after_compute = std::chrono::steady_clock::now();
+
+        if(verbosity > 2)
+        {
+            D mfeps = D(1000)*D(n)/D(std::chrono::duration_cast<std::chrono::nanoseconds>(time_after_compute - time_before_compute).count()); // million function evaluations per second
+            logger << "(Total) Million Function Evaluations/s: " << mfeps << " Mfeps" << std::endl;
+        }
+
+        return res;
+    };
+
+    template <typename T, typename D, typename U, typename G, typename H>
+    template <typename F1>
+    FitTransform<F1,D,U> Qmc<T,D,U,G,H>::fit(F1& func, const U dim) // TODO - test case
+    {
+        std::vector<D> x,y;
+        std::vector<std::vector<D>> fit_parameters;
+        fit_parameters.reserve(dim);
+
+        FitFunction<D> fit_function;
+        FitFunctionJacobian<D> fit_function_jacobian;
+
+        // Generate data to be fitted
+        integrators::samples<T,D,U> result = evaluate(func, dim);
+
+        // fit FitFunction (adapted from fit.py)
+        for (U idim = 0; idim < dim; ++idim)
+        {
+            // compute the x values
+            std::vector<D> unordered_x;
+            unordered_x.reserve(result.n);
+            for (size_t i = 0; i < result.n; ++i)
+            {
+                unordered_x.push_back( result.get_x(i, idim) );
+            }
+
+            // data=raw[raw[:,dim].argsort()].transpose()
+            std::vector<size_t> sort_key = math::argsort(unordered_x);
+            x.clear();
+            y.clear();
+            for (const auto& idx : sort_key)
+            {
+                x.push_back( unordered_x.at(idx) );
+                y.push_back( abs(result.r.at(idx)) );
+            }
+
+            // y=np.cumsum(data[numdims])/sumy
+            std::partial_sum(y.begin(), y.end(), y.begin());
+            for (auto& element : y)
+            {
+                element /= y.back();
+            }
+
+            // fitf = optimize.least_squares(optf,[1.1,0.5,0.1,0.1],args=(y,x),verbose=2,xtol=1e-10)
+            fit_parameters.push_back( fit::least_squares(fit_function,fit_function_jacobian,y,x,verbosity,logger) );
+        }
+
+        FitTransform<F1,D> transformed_functor{func, dim};
+        for (size_t d = 0; d < dim; ++d)
+            for (size_t i = 0; i < fit_parameters.at(d).size(); ++i)
+                transformed_functor.p[d][i] = fit_parameters.at(d).at(i);
+
+        return transformed_functor;
+    }
+
     template <typename T, typename D, typename U, typename G, typename H>
     void Qmc<T,D,U,G,H>::update(result<T,U>& res, U& n, U& m, U& function_evaluations) const
     {
@@ -1652,7 +2414,7 @@ namespace integrators
     
     template <typename T, typename D, typename U, typename G, typename H>
     template <typename F1, typename F2>
-    result<T,U> Qmc<T,D,U,G,H>::integrate(F1& func, const U dim, F2& integral_transform)
+    result<T,U> Qmc<T,D,U,G,H>::integrate_impl(F1& func, const U dim, F2& integral_transform)
     {
         if ( dim < 1 ) throw std::invalid_argument("qmc::integrate called with dim < 1. Check that your integrand depends on at least one variable of integration.");
         if ( minm < 2 ) throw std::domain_error("qmc::integrate called with minm < 2. This algorithm can not be used with less than 2 random shifts. Please increase minm.");
@@ -1676,6 +2438,18 @@ namespace integrators
         } while  ( integrators::overloads::compute_error_ratio(res, epsrel, epsabs, errormode) > static_cast<D>(1) && function_evaluations < maxeval );
         return res;
     };
+
+    template <typename T, typename D, typename U, typename G, typename H>
+    template <typename F1, typename F2>
+    result<T,U> Qmc<T,D,U,G,H>::integrate(F1& func, const U dim, F2& integral_transform)
+    {
+        if (minnevaluate > 0) {
+            FitTransform<F1,D> transformed_functor = fit(func, dim);
+            return integrate_impl(transformed_functor, dim, integral_transform);
+        } else {
+            return integrate_impl(func, dim, integral_transform);
+        }
+    };
     
     template <typename T, typename D, typename U, typename G, typename H>
     template <typename F1>
@@ -1687,7 +2461,7 @@ namespace integrators
     
     template <typename T, typename D, typename U, typename G, typename H>
     Qmc<T,D,U,G,H>::Qmc() :
-    logger(std::cout), randomgenerator( G( std::random_device{}() ) ), minn(8191), minm(32), epsrel(0.01), epsabs(1e-7), maxeval(1000000), maxnperpackage(1), maxmperpackage(1024), errormode(integrators::ErrorMode::all), cputhreads(std::thread::hardware_concurrency()), cudablocks(1024), cudathreadsperblock(256), devices({-1}), generatingvectors(integrators::generatingvectors::cbcpt_dn1_100<U>()), verbosity(0)
+    logger(std::cout), randomgenerator( G( std::random_device{}() ) ), minnevaluate(100000), minn(8191), minm(32), epsrel(0.01), epsabs(1e-7), maxeval(1000000), maxnperpackage(1), maxmperpackage(1024), errormode(integrators::ErrorMode::all), cputhreads(std::thread::hardware_concurrency()), cudablocks(1024), cudathreadsperblock(256), devices({-1}), generatingvectors(integrators::generatingvectors::cbcpt_dn1_100<U>()), verbosity(0)
     {
         // Check U satisfies requirements of mod_mul implementation
         static_assert( std::numeric_limits<U>::is_modulo, "Qmc integrator constructed with a type U that is not modulo. Please use a different unsigned integer type for U.");

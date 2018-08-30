@@ -216,10 +216,12 @@ class Qmc(CPPIntegrator):
 
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
-    Qmc library is used.
+    Qmc library is used. Since ``minnevaluate=0`` has a
+    special meaning (no fitting), ``minnevaluate=1`` means
+    using the default of the QMC library.
 
     '''
-    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minn=0,minm=0,maxnperpackage=0,
+    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minnevaluate=1,minn=0,minm=0,maxnperpackage=0,
                       maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,transform='default',devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
@@ -229,6 +231,7 @@ class Qmc(CPPIntegrator):
                                                             c_double, # epsabs
                                                             c_ulonglong, # maxeval
                                                             c_int, # errormode
+                                                            c_ulonglong, # minnevaluate
                                                             c_ulonglong, # minn
                                                             c_ulonglong, # minm
                                                             c_ulonglong, # maxnperpackage
@@ -295,8 +298,8 @@ class Qmc(CPPIntegrator):
             korobov10 = 10
         )
 
-        self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(epsrel,epsabs,maxeval,errormode_enum,minn,minm,
-                                                                    maxnperpackage,maxmperpackage,cputhreads,
+        self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(epsrel,epsabs,maxeval,errormode_enum,minnevaluate,minn,
+                                                                    minm,maxnperpackage,maxmperpackage,cputhreads,
                                                                     cudablocks,cudathreadsperblock,verbosity,
                                                                     seed,known_transforms[str(transform).lower()])
 
@@ -330,10 +333,12 @@ class CudaQmc(object):
 
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
-    Qmc library is used.
+    Qmc library is used. Since ``minnevaluate=0`` has a
+    special meaning (no fitting), ``minnevaluate=1`` means
+    using the default of the QMC library.
 
     '''
-    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minn=0,minm=0,maxnperpackage=0,
+    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minnevaluate=1,minn=0,minm=0,maxnperpackage=0,
                       maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,transform='default',devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
@@ -341,6 +346,7 @@ class CudaQmc(object):
                         c_double, # epsabs
                         c_ulonglong, # maxeval
                         c_int, # errormode
+                        c_ulonglong, # minnevaluate
                         c_ulonglong, # minn
                         c_ulonglong, # minm
                         c_ulonglong, # maxnperpackage
@@ -413,15 +419,15 @@ class CudaQmc(object):
         )
 
         self.c_integrator_ptr_together = self.c_lib.allocate_cuda_integrators_Qmc_together(
-                                                                                               epsrel,epsabs,maxeval,errormode_enum,minn,minm,
-                                                                                               maxnperpackage,maxmperpackage,cputhreads,
+                                                                                               epsrel,epsabs,maxeval,errormode_enum,minnevaluate,minn,
+                                                                                               minm,maxnperpackage,maxmperpackage,cputhreads,
                                                                                                cudablocks,cudathreadsperblock,verbosity,
                                                                                                seed,known_transforms[str(transform).lower()],len(devices),
                                                                                                devices_t(*devices)
                                                                                           )
         self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(
-                                                                                               epsrel,epsabs,maxeval,errormode_enum,minn,minm,
-                                                                                               maxnperpackage,maxmperpackage,cputhreads,
+                                                                                               epsrel,epsabs,maxeval,errormode_enum,minnevaluate,minn,
+                                                                                               minm,maxnperpackage,maxmperpackage,cputhreads,
                                                                                                cudablocks,cudathreadsperblock,verbosity,
                                                                                                seed,known_transforms[str(transform).lower()],len(devices),
                                                                                                devices_t(*devices)
