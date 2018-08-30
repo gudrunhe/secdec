@@ -28,6 +28,7 @@ CubaCONFIGURE = $(CONFIGURE_COMMON) CFLAGS="-O3 -fomit-frame-pointer -ffast-math
 formCONFIGURE = $(CONFIGURE_COMMON)
 gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static --with-pic
 secdecutilCONFIGURE = $(CONFIGURE_COMMON)
+
 $(AUTOTOOLS_PACKAGES) :
 	tar -xf $@-*.tar.gz && \
 	cd $@-*/ && \
