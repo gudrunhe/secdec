@@ -6,7 +6,7 @@ import sympy as sp
 bowtie = IntegralLibrary('bowtie/bowtie_pylink.so')
 
 # choose integrator
-bowtie.use_Qmc(verbosity=3,devices=[-1,0,1,2,3],minn=10**8) 
+bowtie.use_Qmc(verbosity=3,devices=[-1,0,1,2,3],minn=10**8,transform='korobov3') 
 #bowtie.use_Vegas(flags=2,epsrel=1e-2,epsabs=1e-10,nstart=10000,nincrease=1000,maxeval=10000000) # 
 
 # integrate

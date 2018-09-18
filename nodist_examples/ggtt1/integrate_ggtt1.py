@@ -6,7 +6,7 @@ import sympy as sp
 ggtt1 = IntegralLibrary('ggtt1/ggtt1_pylink.so')
 
 # choose integrator
-ggtt1.use_Qmc(verbosity=3,devices=[-1,0,1,2,3],minn=10**8) 
+ggtt1.use_Qmc(verbosity=3,devices=[-1,0,1,2,3],minn=10**8,transform='korobov3') 
 #ggtt1.use_Vegas(flags=2,epsrel=1e-2,epsabs=1e-10,nstart=10000,nincrease=1000,maxeval=10000000) # 
 
 # integrate

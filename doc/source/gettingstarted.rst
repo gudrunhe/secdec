@@ -377,14 +377,22 @@ If the integrands are added together before integration, the sum command is as f
         std::accumulate(++sector_integrands.begin(), sector_integrands.end(), box1L::cuda_together_integrand_t()+*sector_integrands.begin());
 
 Note the conversion from :cpp:type:`name::cuda_integrand_t` to :cpp:type:`name::cuda_together_integrand_t`. The CUDA-capable version of the Qmc
-integrator takes an additional template argument :cpp:type:`name::cuda_integrand_t`::
+integrator takes additional the template arguments :cpp:type:`box1L::maximal_number_of_integration_variables`, :cpp:type:`integrators::transforms::Korobov<3>::type`,
+and :cpp:type:`name::cuda_integrand_t`::
 
     // Integrate
-    secdecutil::integrators::Qmc<box1L::integrand_return_t,box1L::cuda_together_integrand_t> integrator;
+    secdecutil::integrators::Qmc<
+                                    box1L::integrand_return_t,
+                                    box1L::maximal_number_of_integration_variables,
+                                    integrators::transforms::Korobov<3>::type, // EDIT: integral transform specified to "Korobov<3>"
+                                    box1L::cuda_together_integrand_t
+                                > integrator;
     integrator.verbosity = 1;
     const box1L::nested_series_t<secdecutil::UncorrelatedDeviation<box1L::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors, integrator.integrate );
 
-If the integrands are integrated separately, :cpp:type:`name::cuda_together_integrand_t` should be changed to :cpp:type:`name::cuda_integrand_t`.
+If the integrands are integrated separately, :cpp:type:`name::cuda_together_integrand_t` should be changed to :cpp:type:`name::cuda_integrand_t`. If your integral
+is higher than seven dimensional, changing the integral transform to :cpp:type:`integrators::transforms::Baker::type` may improve the accuracy of the result. For further
+options of the integrator we refer to :numref:`chapter_cpp_qmc`.
 
 .. _list_of_examples:
 

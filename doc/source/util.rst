@@ -237,24 +237,31 @@ Qmc
 
 The quasi monte carlo integrator as described in [LWY+15]_ and references therein.
 
-.. cpp:class:: template <typename return_t, typename container_t = secdecutil::IntegrandContainer<return_t, return_t const * const>, typename transform_t = void> Qmc
+.. cpp:class:: template<typename return_t, ::integrators::U maxdim, template<typename,typename,::integrators::U> class transform_t,typename container_t = secdecutil::IntegrandContainer<return_t, typename remove_complex<return_t>::type const * const>,template<typename,typename,::integrators::U> class fitfunction_t = void_template> Qmc : Integrator<return_t,return_t,container_t>, public ::integrators::Qmc<return_t,return_t,maxdim,transform_t,fitfunction_t>
 
     Derived from :cpp:class:`secdecutil::Integrator` and :cpp:class:`::integrators::Qmc` - the
     underlying standalone implementation of the Qmc.
 
-The most important fields of :cpp:class:`Qmc` are:
+The most important fields and template argments of :cpp:class:`Qmc` are:
  * ``minn`` - The minimal number of points in the Qmc lattice. Will be augmented to the next larger available ``n``.
  * ``minm`` - The minimal number of random shifts.
  * ``maxeval`` - The maximal number of integrand evaluations.
  * ``epsrel`` - The desired relative accuracy for the numerical evaluation.
  * ``epsabs`` - The desired absolute accuracy for the numerical evaluation.
+ * ``maxdim`` - The highest dimension the :cpp:class:`Qmc` instance can be used for.
+ * ``transform_t`` - The periodizing transform to apply prior to integration.
+ * ``fitfunction_t`` - The fit function transform to apply for adaptive integration.
  * ``verbosity`` - Controls the amount of status messages during integration. Can be ``0``, ``1``, ``2``, or ``3``.
  * ``devices`` - A :cpp:class:`std::set` of devices to run on. ``-1`` denotes the CPU, positive integers refer to GPUs.
 
 Refer to the documentation of the standalone Qmc for the default values and additional information.
 
-Set the type :cpp:type:`transform_t` to use a specific integral transform rather than the default of the
-underlying implementation. :ref:`An example is shown below<example_set_qmc_transform_cpp>`.
+An integral transform has to be chosen by setting the template argument :cpp:type:`transform_t`. Available transforms
+are e.g. ``Korobov<r0,r1>`` and ``Sidi<r0>``, please refer to the underlying Qmc implementation for a complete list.
+The fit function for adaptive integration can be set by the :cpp:type:`fitfunction_t`, e.g. ``PolySingular``. If not set,
+the default of the underlying Qmc implementation is used.
+
+Examples how to use the Qmc :ref:`on the CPU<example_set_qmc_transform_cpp>` and on :ref:`both, CPU and GPU<example_cuda_qmc>` are shown below.
 
 .. cpp:namespace:: secdecutil
 
@@ -356,10 +363,10 @@ Output:
 .. literalinclude:: cpp_doctest/integrator_doctest_Vegas_CQuad.txt
    :language: sh
 
+.. _example_set_qmc_transform_cpp:
+
 Set the integral transform of the Qmc
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. _example_set_qmc_transform_cpp:
 
 Example:
 
@@ -373,4 +380,23 @@ Compile/Run:
 Output:
 
 .. literalinclude:: cpp_doctest/integrator_doctest_set_transform_qmc.txt
+   :language: sh
+
+.. _example_cuda_qmc:
+
+Run the Qmc on GPUs
+^^^^^^^^^^^^^^^^^^^
+
+Example:
+
+.. literalinclude:: cpp_doctest/integrator_doctest_cuda_qmc.cu
+   :language: cpp
+
+Compile/Run:
+
+.. literalinclude:: cpp_doctest/compile_and_run_cuda_qmc.txt
+
+Output:
+
+.. literalinclude:: cpp_doctest/integrator_doctest_cuda_qmc.txt
    :language: sh

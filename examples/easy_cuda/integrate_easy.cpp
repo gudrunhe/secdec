@@ -20,7 +20,7 @@ int main()
         std::accumulate(++sector_integrands.begin(), sector_integrands.end(), easy::cuda_together_integrand_t()+*sector_integrands.begin());
 
     // Integrate
-    secdecutil::integrators::Qmc<easy::integrand_return_t,easy::cuda_together_integrand_t> integrator;
+    secdecutil::integrators::Qmc<easy::integrand_return_t,easy::maximal_number_of_integration_variables,integrators::transforms::Korobov<3>::type,easy::cuda_together_integrand_t> integrator;
     const easy::nested_series_t<secdecutil::UncorrelatedDeviation<easy::integrand_return_t>> result_without_prefactor =
         secdecutil::deep_apply( all_sectors, integrator.integrate );
 

@@ -20,7 +20,7 @@ LDFLAGS =
 else
 LDFLAGS = -L$(SECDEC_CONTRIB)/lib
 endif
-LDFLAGS += -L$(INTEGRAL) -l$(INTEGRAL) -lm
+LDFLAGS += -L$(INTEGRAL) -l$(INTEGRAL) -lgsl -lgslcblas -lm
 
 # phony targets
 .PHONY : all

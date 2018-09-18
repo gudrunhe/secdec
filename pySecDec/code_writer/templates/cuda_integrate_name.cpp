@@ -62,8 +62,8 @@ void print_integral_info()
 int main()
 {
     // User Specified Phase-space point
-    const std::vector<%(name)s::real_t> real_parameters = {  };
-    const std::vector<%(name)s::complex_t> complex_parameters = {  };
+    const std::vector<%(name)s::real_t> real_parameters = { /* EDIT: insert real parameter values here */ };
+    const std::vector<%(name)s::complex_t> complex_parameters = { /* EDIT: insert complex parameter values here */ };
 
     // Generate the integrands (optimization of the contour if applicable)
     const std::vector<%(name)s::nested_series_t<%(name)s::cuda_integrand_t>> sector_integrands = %(name)s::make_cuda_integrands(real_parameters, complex_parameters);
@@ -73,7 +73,12 @@ int main()
         std::accumulate(++sector_integrands.begin(), sector_integrands.end(), %(name)s::cuda_together_integrand_t()+*sector_integrands.begin());
 
     // Integrate
-    secdecutil::integrators::Qmc<%(name)s::integrand_return_t,%(name)s::cuda_together_integrand_t> integrator;
+    secdecutil::integrators::Qmc<
+                                    %(name)s::integrand_return_t,
+                                    %(name)s::maximal_number_of_integration_variables,
+                                    integrators::transforms::/* EDIT: insert transform here */::type,
+                                    %(name)s::cuda_together_integrand_t
+                                > integrator;
     integrator.verbosity = 1;
     const %(name)s::nested_series_t<secdecutil::UncorrelatedDeviation<%(name)s::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors, integrator.integrate );
 

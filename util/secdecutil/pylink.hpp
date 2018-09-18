@@ -17,30 +17,30 @@
 #include <secdecutil/uncertainties.hpp> // UncorrelatedDeviation
 
 
+#if integral_has_complex_parameters || integral_contour_deformation || integral_enforce_complex_return_type
+    #define SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX(NOARGS) do {integrator->together = real_complex_together;} while (false)
+#else
+    #define SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX(NOARGS)
+#endif
+
+/*
+ * First perform replacements, then put item into quotes.
+ * With only a single macro, the preprocessor does not
+ * consider replacements in "item".
+ */
+#define EXPAND_STRINGIFY(item) STRINGIFY(item)
+#define STRINGIFY(item) #item
+
+using namespace INTEGRAL_NAME;
+using secdec_integrand_t = INTEGRAL_NAME::integrand_t; // avoid name conflict with cuba
+#ifdef SECDEC_WITH_CUDA
+    using INTEGRAL_NAME::cuda_integrand_t;
+    using INTEGRAL_NAME::cuda_together_integrand_t;
+#endif
+
+
 extern "C"
 {
-
-    #if integral_has_complex_parameters || integral_contour_deformation || integral_enforce_complex_return_type
-        #define SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX(NOARGS) do {integrator->together = real_complex_together;} while (false)
-    #else
-        #define SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX(NOARGS)
-    #endif
-
-    /*
-     * First perform replacements, then put item into quotes.
-     * With only a single macro, the preprocessor does not
-     * consider replacements in "item".
-     */
-    #define EXPAND_STRINGIFY(item) STRINGIFY(item)
-    #define STRINGIFY(item) #item
-
-    using namespace INTEGRAL_NAME;
-    using secdec_integrand_t = INTEGRAL_NAME::integrand_t; // avoid name conflict with cuba
-    #ifdef SECDEC_WITH_CUDA
-        using INTEGRAL_NAME::cuda_integrand_t;
-        using INTEGRAL_NAME::cuda_together_integrand_t;
-    #endif
-
     /*
      * string (de)allocation
      */
@@ -253,7 +253,8 @@ extern "C"
         unsigned long long int cudathreadsperblock, \
         unsigned long long int verbosity, \
         long long int seed, \
-        int transform_id
+        int transform_id, \
+        int fitfunction_id
     #define SET_COMMON_QMC_ARGS \
         /* If an argument is set to 0 then use the default of the Qmc library */ \
         if ( epsrel != 0 ) \
@@ -264,7 +265,7 @@ extern "C"
             integrator->maxeval = maxeval; \
         if ( errormode != 0 ) \
             integrator->errormode = static_cast<::integrators::ErrorMode>(errormode); \
-        if ( minnevaluate != 1 ) /* 1 means default here because 0 has a special meaning */ \
+        if ( minnevaluate != 0 ) \
             integrator->minnevaluate = minnevaluate; \
         if ( minn != 0 ) \
             integrator->minn = minn; \
@@ -295,22 +296,30 @@ extern "C"
             return integrator;
     enum qmc_transform_t : int
     {
-        default_transform = 0,
-
-        trivial = -1,
+        no_transform = -1,
 
         baker = -2,
 
-        korobov1 = 1,
-        korobov2 = 2,
-        korobov3 = 3,
-        korobov4 = 4,
-        korobov5 = 5,
-        korobov6 = 6,
-        korobov7 = 7,
-        korobov8 = 8,
-        korobov9 = 9,
-        korobov10 = 10
+        korobov1x1 = 1, korobov1x2 = 2, korobov1x3 = 3, korobov1x4 = 4, korobov1x5 = 5, korobov1x6 = 6,
+        korobov2x1 = 7, korobov2x2 = 8, korobov2x3 = 9, korobov2x4 = 10, korobov2x5 = 11, korobov2x6 = 12,
+        korobov3x1 = 13, korobov3x2 = 14, korobov3x3 = 15, korobov3x4 = 16, korobov3x5 = 17, korobov3x6 = 18,
+        korobov4x1 = 19, korobov4x2 = 20, korobov4x3 = 21, korobov4x4 = 22, korobov4x5 = 23, korobov4x6 = 24,
+        korobov5x1 = 25, korobov5x2 = 26, korobov5x3 = 27, korobov5x4 = 28, korobov5x5 = 29, korobov5x6 = 30,
+        korobov6x1 = 31, korobov6x2 = 32, korobov6x3 = 33, korobov6x4 = 34, korobov6x5 = 35, korobov6x6 = 36,
+
+        sidi1 = -11,
+        sidi2 = -12,
+        sidi3 = -13,
+        sidi4 = -14,
+        sidi5 = -15,
+        sidi6 = -16
+    };
+    enum qmc_fitfunction_t : int
+    {
+        default_fitfunction = 0,
+
+        no_fit = -1,
+        polysingular = 1
     };
     #ifdef SECDEC_WITH_CUDA
         secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> *
@@ -320,27 +329,111 @@ extern "C"
                                                    int devices[]
                                               )
         {
-            if (transform_id == default_transform) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+            if (transform_id == no_transform) {
 
-            } else if (transform_id == trivial) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t,::integrators::transforms::Trivial<real_t, long long int>>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                if (fitfunction_id == default_fitfunction) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::None::type,cuda_together_integrand_t>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else if (fitfunction_id == no_fit) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::None::type,cuda_together_integrand_t,::integrators::fitfunctions::None::type>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else if (fitfunction_id == polysingular) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::None::type,cuda_together_integrand_t,::integrators::fitfunctions::PolySingular::type>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else {
+                    throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
+                }
 
             } else if (transform_id == baker) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t,::integrators::transforms::Baker<real_t, long long int>>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-
-            #define CASE_KOROBOV(KOROBOVDEGREE) \
-                } else if (transform_id == korobov##KOROBOVDEGREE) { \
-                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_together_integrand_t, \
-                        ::integrators::transforms::Korobov<real_t, long long int, KOROBOVDEGREE>>; \
+                if (fitfunction_id == default_fitfunction) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::Baker::type,cuda_together_integrand_t>;
                     SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else if (fitfunction_id == no_fit) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::Baker::type,cuda_together_integrand_t,::integrators::fitfunctions::None::type>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else if (fitfunction_id == polysingular) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::Baker::type,cuda_together_integrand_t,::integrators::fitfunctions::PolySingular::type>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else {
+                    throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
+                }
 
-            CASE_KOROBOV(1) CASE_KOROBOV(2) CASE_KOROBOV(3) CASE_KOROBOV(4) CASE_KOROBOV(5) CASE_KOROBOV(6) CASE_KOROBOV(7) CASE_KOROBOV(8) CASE_KOROBOV(9) CASE_KOROBOV(10)
+            #define CASE_KOROBOV(KOROBOVDEGREE1,KOROBOVDEGREE2) \
+                } else if (transform_id == korobov##KOROBOVDEGREE1##x##KOROBOVDEGREE2) { \
+                    if (fitfunction_id == default_fitfunction) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Korobov<KOROBOVDEGREE1, KOROBOVDEGREE2>::type, \
+                                                                              cuda_together_integrand_t \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else if (fitfunction_id == no_fit) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Korobov<KOROBOVDEGREE1, KOROBOVDEGREE2>::type, \
+                                                                              cuda_together_integrand_t, \
+                                                                              ::integrators::fitfunctions::None::type \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else if (fitfunction_id == polysingular) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Korobov<KOROBOVDEGREE1, KOROBOVDEGREE2>::type, \
+                                                                              cuda_together_integrand_t, \
+                                                                              ::integrators::fitfunctions::PolySingular::type \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else { \
+                        throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
+                    }
+
+            CASE_KOROBOV(1,1) CASE_KOROBOV(1,2) CASE_KOROBOV(1,3) CASE_KOROBOV(1,4) CASE_KOROBOV(1,5) CASE_KOROBOV(1,6)
+            CASE_KOROBOV(2,1) CASE_KOROBOV(2,2) CASE_KOROBOV(2,3) CASE_KOROBOV(2,4) CASE_KOROBOV(2,5) CASE_KOROBOV(2,6)
+            CASE_KOROBOV(3,1) CASE_KOROBOV(3,2) CASE_KOROBOV(3,3) CASE_KOROBOV(3,4) CASE_KOROBOV(3,5) CASE_KOROBOV(3,6)
+            CASE_KOROBOV(4,1) CASE_KOROBOV(4,2) CASE_KOROBOV(4,3) CASE_KOROBOV(4,4) CASE_KOROBOV(4,5) CASE_KOROBOV(4,6)
+            CASE_KOROBOV(5,1) CASE_KOROBOV(5,2) CASE_KOROBOV(5,3) CASE_KOROBOV(5,4) CASE_KOROBOV(5,5) CASE_KOROBOV(5,6)
+            CASE_KOROBOV(6,1) CASE_KOROBOV(6,2) CASE_KOROBOV(6,3) CASE_KOROBOV(6,4) CASE_KOROBOV(6,5) CASE_KOROBOV(6,6)
 
             #undef CASE_KOROBOV
+
+            #define CASE_SIDI(SIDIDEGREE) \
+                } else if (transform_id == sidi##SIDIDEGREE) { \
+                    if (fitfunction_id == default_fitfunction) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                                                                              cuda_together_integrand_t \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else if (fitfunction_id == no_fit) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                                                                              cuda_together_integrand_t, \
+                                                                              ::integrators::fitfunctions::None::type \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else if (fitfunction_id == polysingular) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                                                                              cuda_together_integrand_t, \
+                                                                              ::integrators::fitfunctions::PolySingular::type \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else { \
+                        throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
+                    }
+
+            CASE_SIDI(1) CASE_SIDI(2) CASE_SIDI(3) CASE_SIDI(4) CASE_SIDI(5) CASE_SIDI(6)
+
+            #undef CASE_SIDI
 
             } else {
                 throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + ").");
@@ -353,27 +446,111 @@ extern "C"
                                                    int devices[]
                                               )
         {
-            if (transform_id == default_transform) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+            if (transform_id == no_transform) {
 
-            } else if (transform_id == trivial) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t,::integrators::transforms::Trivial<real_t, long long int>>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                if (fitfunction_id == default_fitfunction) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::None::type,cuda_integrand_t>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else if (fitfunction_id == no_fit) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::None::type,cuda_integrand_t,::integrators::fitfunctions::None::type>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else if (fitfunction_id == polysingular) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::None::type,cuda_integrand_t,::integrators::fitfunctions::PolySingular::type>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else {
+                    throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
+                }
 
             } else if (transform_id == baker) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t,::integrators::transforms::Baker<real_t, long long int>>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-
-            #define CASE_KOROBOV(KOROBOVDEGREE) \
-                } else if (transform_id == korobov##KOROBOVDEGREE) { \
-                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,cuda_integrand_t, \
-                        ::integrators::transforms::Korobov<real_t, long long int, KOROBOVDEGREE>>; \
+                if (fitfunction_id == default_fitfunction) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::Baker::type,cuda_integrand_t>;
                     SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else if (fitfunction_id == no_fit) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::Baker::type,cuda_integrand_t,::integrators::fitfunctions::None::type>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else if (fitfunction_id == polysingular) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::Baker::type,cuda_integrand_t,::integrators::fitfunctions::PolySingular::type>;
+                    SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
+                } else {
+                    throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
+                }
 
-            CASE_KOROBOV(1) CASE_KOROBOV(2) CASE_KOROBOV(3) CASE_KOROBOV(4) CASE_KOROBOV(5) CASE_KOROBOV(6) CASE_KOROBOV(7) CASE_KOROBOV(8) CASE_KOROBOV(9) CASE_KOROBOV(10)
+            #define CASE_KOROBOV(KOROBOVDEGREE1,KOROBOVDEGREE2) \
+                } else if (transform_id == korobov##KOROBOVDEGREE1##x##KOROBOVDEGREE2) { \
+                    if (fitfunction_id == default_fitfunction) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Korobov<KOROBOVDEGREE1, KOROBOVDEGREE2>::type, \
+                                                                              cuda_integrand_t \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else if (fitfunction_id == no_fit) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Korobov<KOROBOVDEGREE1, KOROBOVDEGREE2>::type, \
+                                                                              cuda_integrand_t, \
+                                                                              ::integrators::fitfunctions::None::type \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else if (fitfunction_id == polysingular) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Korobov<KOROBOVDEGREE1, KOROBOVDEGREE2>::type, \
+                                                                              cuda_integrand_t, \
+                                                                              ::integrators::fitfunctions::PolySingular::type \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else { \
+                        throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
+                    }
+
+            CASE_KOROBOV(1,1) CASE_KOROBOV(1,2) CASE_KOROBOV(1,3) CASE_KOROBOV(1,4) CASE_KOROBOV(1,5) CASE_KOROBOV(1,6)
+            CASE_KOROBOV(2,1) CASE_KOROBOV(2,2) CASE_KOROBOV(2,3) CASE_KOROBOV(2,4) CASE_KOROBOV(2,5) CASE_KOROBOV(2,6)
+            CASE_KOROBOV(3,1) CASE_KOROBOV(3,2) CASE_KOROBOV(3,3) CASE_KOROBOV(3,4) CASE_KOROBOV(3,5) CASE_KOROBOV(3,6)
+            CASE_KOROBOV(4,1) CASE_KOROBOV(4,2) CASE_KOROBOV(4,3) CASE_KOROBOV(4,4) CASE_KOROBOV(4,5) CASE_KOROBOV(4,6)
+            CASE_KOROBOV(5,1) CASE_KOROBOV(5,2) CASE_KOROBOV(5,3) CASE_KOROBOV(5,4) CASE_KOROBOV(5,5) CASE_KOROBOV(5,6)
+            CASE_KOROBOV(6,1) CASE_KOROBOV(6,2) CASE_KOROBOV(6,3) CASE_KOROBOV(6,4) CASE_KOROBOV(6,5) CASE_KOROBOV(6,6)
 
             #undef CASE_KOROBOV
+
+            #define CASE_SIDI(SIDIDEGREE) \
+                } else if (transform_id == sidi##SIDIDEGREE) { \
+                    if (fitfunction_id == default_fitfunction) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                                                                              cuda_integrand_t \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else if (fitfunction_id == no_fit) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                                                                              cuda_integrand_t, \
+                                                                              ::integrators::fitfunctions::None::type \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else if (fitfunction_id == polysingular) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                                                                              cuda_integrand_t, \
+                                                                              ::integrators::fitfunctions::PolySingular::type \
+                                                                          >; \
+                        SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
+                    } else { \
+                        throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
+                    }
+
+            CASE_SIDI(1) CASE_SIDI(2) CASE_SIDI(3) CASE_SIDI(4) CASE_SIDI(5) CASE_SIDI(6)
+
+            #undef CASE_SIDI
 
             } else {
                 throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + ").");
@@ -383,31 +560,123 @@ extern "C"
         secdecutil::Integrator<integrand_return_t,real_t> *
         allocate_integrators_Qmc(COMMON_ALLOCATE_QMC_ARGS)
         {
-            if (transform_id == default_transform) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t>;
-                SET_COMMON_QMC_ARGS
-                return integrator;
+            if (transform_id == no_transform) {
 
-            } else if (transform_id == trivial) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,secdec_integrand_t,::integrators::transforms::Trivial<real_t, long long int>>;
-                SET_COMMON_QMC_ARGS
-                return integrator;
+                if (fitfunction_id == default_fitfunction) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::None::type,secdec_integrand_t>;
+                    SET_COMMON_QMC_ARGS
+                    return integrator;
+                } else if (fitfunction_id == no_fit) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::None::type,secdec_integrand_t,::integrators::fitfunctions::None::type>;
+                    SET_COMMON_QMC_ARGS
+                    return integrator;
+                } else if (fitfunction_id == polysingular) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::None::type,secdec_integrand_t,::integrators::fitfunctions::PolySingular::type>;
+                    SET_COMMON_QMC_ARGS
+                    return integrator;
+                } else {
+                    throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
+                }
 
             } else if (transform_id == baker) {
-                auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,secdec_integrand_t,::integrators::transforms::Baker<real_t, long long int>>;
-                SET_COMMON_QMC_ARGS
-                return integrator;
-
-            #define CASE_KOROBOV(KOROBOVDEGREE) \
-                } else if (transform_id == korobov##KOROBOVDEGREE) { \
-                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,secdec_integrand_t, \
-                        ::integrators::transforms::Korobov<real_t, long long int, KOROBOVDEGREE>>; \
-                    SET_COMMON_QMC_ARGS \
+                if (fitfunction_id == default_fitfunction) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::Baker::type,secdec_integrand_t>;
+                    SET_COMMON_QMC_ARGS
                     return integrator;
+                } else if (fitfunction_id == no_fit) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::Baker::type,secdec_integrand_t,::integrators::fitfunctions::None::type>;
+                    SET_COMMON_QMC_ARGS
+                    return integrator;
+                } else if (fitfunction_id == polysingular) {
+                    auto integrator = new secdecutil::integrators::Qmc<integrand_return_t,maximal_number_of_integration_variables,::integrators::transforms::Baker::type,secdec_integrand_t,::integrators::fitfunctions::PolySingular::type>;
+                    SET_COMMON_QMC_ARGS
+                    return integrator;
+                } else {
+                    throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
+                }
 
-            CASE_KOROBOV(1) CASE_KOROBOV(2) CASE_KOROBOV(3) CASE_KOROBOV(4) CASE_KOROBOV(5) CASE_KOROBOV(6) CASE_KOROBOV(7) CASE_KOROBOV(8) CASE_KOROBOV(9) CASE_KOROBOV(10)
+            #define CASE_KOROBOV(KOROBOVDEGREE1,KOROBOVDEGREE2) \
+                } else if (transform_id == korobov##KOROBOVDEGREE1##x##KOROBOVDEGREE2) { \
+                    if (fitfunction_id == default_fitfunction) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Korobov<KOROBOVDEGREE1, KOROBOVDEGREE2>::type, \
+                                                                              secdec_integrand_t \
+                                                                          >; \
+                        SET_COMMON_QMC_ARGS \
+                        return integrator; \
+                    } else if (fitfunction_id == no_fit) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Korobov<KOROBOVDEGREE1, KOROBOVDEGREE2>::type, \
+                                                                              secdec_integrand_t, \
+                                                                              ::integrators::fitfunctions::None::type \
+                                                                          >; \
+                        SET_COMMON_QMC_ARGS \
+                        return integrator; \
+                    } else if (fitfunction_id == polysingular) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Korobov<KOROBOVDEGREE1, KOROBOVDEGREE2>::type, \
+                                                                              secdec_integrand_t, \
+                                                                              ::integrators::fitfunctions::PolySingular::type \
+                                                                          >; \
+                        SET_COMMON_QMC_ARGS \
+                        return integrator; \
+                    } else { \
+                        throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
+                    }
+
+            CASE_KOROBOV(1,1) CASE_KOROBOV(1,2) CASE_KOROBOV(1,3) CASE_KOROBOV(1,4) CASE_KOROBOV(1,5) CASE_KOROBOV(1,6)
+            CASE_KOROBOV(2,1) CASE_KOROBOV(2,2) CASE_KOROBOV(2,3) CASE_KOROBOV(2,4) CASE_KOROBOV(2,5) CASE_KOROBOV(2,6)
+            CASE_KOROBOV(3,1) CASE_KOROBOV(3,2) CASE_KOROBOV(3,3) CASE_KOROBOV(3,4) CASE_KOROBOV(3,5) CASE_KOROBOV(3,6)
+            CASE_KOROBOV(4,1) CASE_KOROBOV(4,2) CASE_KOROBOV(4,3) CASE_KOROBOV(4,4) CASE_KOROBOV(4,5) CASE_KOROBOV(4,6)
+            CASE_KOROBOV(5,1) CASE_KOROBOV(5,2) CASE_KOROBOV(5,3) CASE_KOROBOV(5,4) CASE_KOROBOV(5,5) CASE_KOROBOV(5,6)
+            CASE_KOROBOV(6,1) CASE_KOROBOV(6,2) CASE_KOROBOV(6,3) CASE_KOROBOV(6,4) CASE_KOROBOV(6,5) CASE_KOROBOV(6,6)
 
             #undef CASE_KOROBOV
+
+            #define CASE_SIDI(SIDIDEGREE) \
+                } else if (transform_id == sidi##SIDIDEGREE) { \
+                    if (fitfunction_id == default_fitfunction) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                                                                              secdec_integrand_t \
+                                                                          >; \
+                        SET_COMMON_QMC_ARGS \
+                        return integrator; \
+                    } else if (fitfunction_id == no_fit) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                                                                              secdec_integrand_t, \
+                                                                              ::integrators::fitfunctions::None::type \
+                                                                          >; \
+                        SET_COMMON_QMC_ARGS \
+                        return integrator; \
+                    } else if (fitfunction_id == polysingular) { \
+                        auto integrator = new secdecutil::integrators::Qmc< \
+                                                                              integrand_return_t, \
+                                                                              maximal_number_of_integration_variables, \
+                                                                              ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                                                                              secdec_integrand_t, \
+                                                                              ::integrators::fitfunctions::PolySingular::type \
+                                                                          >; \
+                        SET_COMMON_QMC_ARGS \
+                        return integrator; \
+                    } else { \
+                        throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
+                    }
+
+            CASE_SIDI(1) CASE_SIDI(2) CASE_SIDI(3) CASE_SIDI(4) CASE_SIDI(5) CASE_SIDI(6)
+
+            #undef CASE_SIDI
 
             } else {
                 throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + ").");

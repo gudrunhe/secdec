@@ -6,7 +6,7 @@ easy = IntegralLibrary('easy/easy_pylink.so')
 
 # choose Qmc integrator
 # automatically uses all avaliable GPUs
-easy.use_Qmc()
+easy.use_Qmc(transform='korobov3')
 
 # integrate
 _, _, result = easy()

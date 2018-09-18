@@ -73,7 +73,7 @@ class CheckLib(unittest.TestCase):
 
     def test_Qmc_default_integral_transform(self):
         # choose integrator
-        self.lib.use_Qmc(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, verbosity=0, seed=143)
+        self.lib.use_Qmc(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, verbosity=0, seed=143, transform='korobov3')
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters)
@@ -83,7 +83,7 @@ class CheckLib(unittest.TestCase):
 
     def test_Qmc_baker_transform(self):
         # choose integrator
-        self.lib.use_Qmc(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, verbosity=0, seed=143, transform='baker')
+        self.lib.use_Qmc(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, verbosity=0, seed=143, transform='baker', minnevaluate=0, fitfunction='polysingular')
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters)

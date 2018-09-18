@@ -1,6 +1,8 @@
 include ../Makefile.conf
 
-../$(NAME)_pylink.so : pylink.o ../lib$(NAME).a
+../$(NAME)_pylink.so : pylink.o ../lib$(NAME).a qmc_template_instantiations1.o \
+                       qmc_template_instantiations2.o qmc_template_instantiations3.o qmc_template_instantiations4.o \
+                       qmc_template_instantiations5.o qmc_template_instantiations6.o qmc_template_instantiations7.o
 	$(CXX) -shared -o $@ $+ $(LDFLAGS)
 
 clean:

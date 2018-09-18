@@ -7,7 +7,7 @@ int5 = IntegralLibrary('crossint5/crossint5_pylink.so')
 
 # choose integrator
 #int5.use_Vegas(nstart=10**5, nincrease=5*10**4, epsrel=1e-3, epsabs=1e-7, maxeval=10**6, real_complex_together=True, flags=2) # ``flags=2``: verbose --> see Cuba manual
-int5.use_Qmc(minn=10**8, minm=64, epsrel=1e-3, epsabs=1e-5, maxeval=10**10, verbosity=3, devices=[0,1,2,3], cudablocks=128, cudathreadsperblock=64)
+int5.use_Qmc(minn=10**8, minm=64, epsrel=1e-3, epsabs=1e-5, maxeval=10**10, verbosity=3, devices=[0,1,2,3], cudablocks=128, cudathreadsperblock=64, transform='korobov3')
 
 number_of_real_parameters = int(int5.info['number_of_real_parameters'])
 number_of_complex_parameters = int(int5.info['number_of_complex_parameters'])

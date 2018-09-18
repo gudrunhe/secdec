@@ -348,13 +348,18 @@ def _parse_global_templates(name, regulators, polynomial_names,
                           'contour_deformation.h' : None,
                           'sector.h' : None,
 
-                          # "integrands.cpp", "name.hpp", "prefactor.cpp", "pole_structures.cpp", and "functions.hpp" can only be written after the decomposition is completed
+                          # the files below can only be written after the decomposition is completed
                           'integrands.cpp' : None,
                           'name.hpp' : None,
                           'prefactor.cpp' : None,
                           'pole_structures.cpp' : None,
-                          'functions.hpp' : None
+                          'functions.hpp' : None,
+                          'pylink.cpp' : None
                      }
+    for i in range(1,8):
+        # needs `number_of_sectors` --> can only be written after the decomposition is completed
+        file_renamings['qmc_template_instantiations%i.cpp'%i] = None
+
 
     # the files below are only relevant for contour deformation --> do not parse if deactivated
     if contour_deformation_polynomial is None:
@@ -2001,6 +2006,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
     for filename in ['integrands.cpp', 'prefactor.cpp', 'pole_structures.cpp', 'functions.hpp']:
         parse_template_file(os.path.join(template_sources, 'src', filename),
                             os.path.join(name,             'src', filename),
+                            template_replacements)
+    for filename in chain(['pylink.cpp'], ('qmc_template_instantiations%i.cpp'%i for i in range(1,8))):
+        parse_template_file(os.path.join(template_sources, 'pylink', filename),
+                            os.path.join(name,             'pylink', filename),
                             template_replacements)
 
     print('"' + name + '" done')

@@ -15,6 +15,64 @@ try:
 except ImportError:
     from queue import Queue
 
+# assuming
+# enum qmc_transform_t : int
+# {
+#     no_transform = -1,
+#
+#     baker = -2,
+#
+#     korobov1x1 = 1, korobov1x2 = 2, korobov1x3 = 3, korobov1x4 = 4, korobov1x5 = 5, korobov1x6 = 6,
+#     korobov2x1 = 7, korobov2x2 = 8, korobov2x3 = 9, korobov2x4 = 10, korobov2x5 = 11, korobov2x6 = 12,
+#     korobov3x1 = 13, korobov3x2 = 14, korobov3x3 = 15, korobov3x4 = 16, korobov3x5 = 17, korobov3x6 = 18,
+#     korobov4x1 = 19, korobov4x2 = 20, korobov4x3 = 21, korobov4x4 = 22, korobov4x5 = 23, korobov4x6 = 24,
+#     korobov5x1 = 25, korobov5x2 = 26, korobov5x3 = 27, korobov5x4 = 28, korobov5x5 = 29, korobov5x6 = 30,
+#     korobov6x1 = 31, korobov6x2 = 32, korobov6x3 = 33, korobov6x4 = 34, korobov6x5 = 35, korobov6x6 = 36,
+#
+#     sidi1 = -11,
+#     sidi2 = -12,
+#     sidi3 = -13,
+#     sidi4 = -14,
+#     sidi5 = -15,
+#     sidi6 = -16
+# };
+known_qmc_transforms = dict(
+    none = -1,
+
+    baker = -2,
+
+    korobov1x1 = 1, korobov1x2 = 2, korobov1x3 = 3, korobov1x4 = 4, korobov1x5 = 5, korobov1x6 = 6,
+    korobov2x1 = 7, korobov2x2 = 8, korobov2x3 = 9, korobov2x4 = 10, korobov2x5 = 11, korobov2x6 = 12,
+    korobov3x1 = 13, korobov3x2 = 14, korobov3x3 = 15, korobov3x4 = 16, korobov3x5 = 17, korobov3x6 = 18,
+    korobov4x1 = 19, korobov4x2 = 20, korobov4x3 = 21, korobov4x4 = 22, korobov4x5 = 23, korobov4x6 = 24,
+    korobov5x1 = 25, korobov5x2 = 26, korobov5x3 = 27, korobov5x4 = 28, korobov5x5 = 29, korobov5x6 = 30,
+    korobov6x1 = 31, korobov6x2 = 32, korobov6x3 = 33, korobov6x4 = 34, korobov6x5 = 35, korobov6x6 = 36,
+
+    sidi1 = -11,
+    sidi2 = -12,
+    sidi3 = -13,
+    sidi4 = -14,
+    sidi5 = -15,
+    sidi6 = -16
+)
+for i in range(1,6):
+    known_qmc_transforms['korobov' + str(i)] = known_qmc_transforms['korobov%ix%i'%(i,i)]
+
+# assuming
+# enum qmc_fitfunction_t : int
+# {
+#     default_fitfunction = 0,
+#
+#     none = -1,
+#     polysingular = 1
+# };
+known_qmc_fitfunctions = dict(
+    default = 0,
+
+    none = -1,
+    polysingular = 1
+)
+
 class CPPIntegrator(object):
     '''
     Abstract base class for integrators to be used with
@@ -205,24 +263,30 @@ class Qmc(CPPIntegrator):
 
     :param transform:
         string;
-        An integral transform related to the `integral_transform`
-        parameter of the Qmc. The possible choices
+        An integral transform related to the parameter
+        `P` of the Qmc. The possible choices
         correspond to the integral transforms of the
         underlying Qmc implementation. Possible values
-        are ``"default"``, ``"trivial"``, ``"baker"``, and
-        ``"korobov#"``, where ``#`` (the rank of the
-        Korobov transform) must be an integer between
-        1 and 10.
+        are, ``"none"``, ``"baker"``, ``sidi#``,
+        ``"korobov#"``, and ``korobov#x#`` where
+        any ``#`` (the rank of the Korobov/Sidi transform)
+        must be an integer between 1 and 6.
+
+    :param fitfunction:
+        string;
+        An integral transform related to the parameter
+        `F` of the Qmc. The possible choices
+        correspond to the integral transforms of the
+        underlying Qmc implementation. Possible values
+        are ``"default"``, ``"none"``, ``"polysingular"``.
 
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
-    Qmc library is used. Since ``minnevaluate=0`` has a
-    special meaning (no fitting), ``minnevaluate=1`` means
-    using the default of the QMC library.
+    underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minnevaluate=1,minn=0,minm=0,maxnperpackage=0,
-                      maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,transform='default',devices=[]):
+    def __init__(self,integral_library,transform,fitfunction='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minnevaluate=0,
+                      minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_integrators_Qmc.restype = c_void_p
@@ -242,6 +306,7 @@ class Qmc(CPPIntegrator):
                                                             c_ulonglong, # verbosity
                                                             c_longlong, # seed
                                                             c_int, # transform_id
+                                                            c_int, # fitfunction_id
                                                       ]
 
         # assuming:
@@ -259,49 +324,11 @@ class Qmc(CPPIntegrator):
         else:
             raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
 
-        # assuming
-        # enum qmc_transform_t : int
-        # {
-        #     default_transform = 0,
-        #
-        #     trivial = -1,
-        #
-        #     baker = -2,
-        #
-        #     korobov1 = 1,
-        #     korobov2 = 2,
-        #     korobov3 = 3,
-        #     korobov4 = 4,
-        #     korobov5 = 5,
-        #     korobov6 = 6,
-        #     korobov7 = 7,
-        #     korobov8 = 8,
-        #     korobov9 = 9,
-        #     korobov10 = 10
-        # }
-        known_transforms = dict(
-            default = 0, # "default" is a keyword and cannot be used in the underlying c++
-
-            trivial = -1,
-
-            baker = -2,
-
-            korobov1 = 1,
-            korobov2 = 2,
-            korobov3 = 3,
-            korobov4 = 4,
-            korobov5 = 5,
-            korobov6 = 6,
-            korobov7 = 7,
-            korobov8 = 8,
-            korobov9 = 9,
-            korobov10 = 10
-        )
-
         self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(epsrel,epsabs,maxeval,errormode_enum,minnevaluate,minn,
                                                                     minm,maxnperpackage,maxmperpackage,cputhreads,
                                                                     cudablocks,cudathreadsperblock,verbosity,
-                                                                    seed,known_transforms[str(transform).lower()])
+                                                                    seed,known_qmc_transforms[str(transform).lower()],
+                                                                    known_qmc_fitfunctions[str(fitfunction).lower()])
 
 class CudaQmc(object):
     '''
@@ -322,24 +349,30 @@ class CudaQmc(object):
 
     :param transform:
         string;
-        An integral transform related to the `integral_transform`
-        parameter of the Qmc. The possible choices
+        An integral transform related to the parameter
+        `P` of the Qmc. The possible choices
         correspond to the integral transforms of the
         underlying Qmc implementation. Possible values
-        are ``"default"``, ``"trivial"``, ``"baker"``, and
-        ``"korobov#"``, where ``#`` (the rank of the
-        Korobov transform) must be an integer between
-        1 and 10.
+        are, ``"none"``, ``"baker"``, ``sidi#``,
+        ``"korobov#"``, and ``korobov#x#`` where
+        any ``#`` (the rank of the Korobov/Sidi transform)
+        must be an integer between 1 and 6.
+
+    :param fitfunction:
+        string;
+        An integral transform related to the parameter
+        `F` of the Qmc. The possible choices
+        correspond to the integral transforms of the
+        underlying Qmc implementation. Possible values
+        are ``"default"``, ``"none"``, ``"polysingular"``.
 
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
-    Qmc library is used. Since ``minnevaluate=0`` has a
-    special meaning (no fitting), ``minnevaluate=1`` means
-    using the default of the QMC library.
+    underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minnevaluate=1,minn=0,minm=0,maxnperpackage=0,
-                      maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,transform='default',devices=[]):
+    def __init__(self,integral_library,transform,fitfunction='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',minnevaluate=0,
+                      minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
                         c_double, # epsrel
@@ -357,6 +390,7 @@ class CudaQmc(object):
                         c_ulonglong, # verbosity
                         c_longlong, # seed
                         c_int, # transform_id
+                        c_int, # fitfunction_id
                         c_ulonglong, # number_of_devices
                         devices_t # devices[]
                    ]
@@ -379,58 +413,21 @@ class CudaQmc(object):
         else:
             raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
 
-        # assuming
-        # enum qmc_transform_t : int
-        # {
-        #     default_transform = 0,
-        #
-        #     trivial = -1,
-        #
-        #     baker = -2,
-        #
-        #     korobov1 = 1,
-        #     korobov2 = 2,
-        #     korobov3 = 3,
-        #     korobov4 = 4,
-        #     korobov5 = 5,
-        #     korobov6 = 6,
-        #     korobov7 = 7,
-        #     korobov8 = 8,
-        #     korobov9 = 9,
-        #     korobov10 = 10
-        # }
-        known_transforms = dict(
-            default = 0,
-
-            trivial = -1,
-
-            baker = -2,
-
-            korobov1 = 1,
-            korobov2 = 2,
-            korobov3 = 3,
-            korobov4 = 4,
-            korobov5 = 5,
-            korobov6 = 6,
-            korobov7 = 7,
-            korobov8 = 8,
-            korobov9 = 9,
-            korobov10 = 10
-        )
-
         self.c_integrator_ptr_together = self.c_lib.allocate_cuda_integrators_Qmc_together(
                                                                                                epsrel,epsabs,maxeval,errormode_enum,minnevaluate,minn,
                                                                                                minm,maxnperpackage,maxmperpackage,cputhreads,
                                                                                                cudablocks,cudathreadsperblock,verbosity,
-                                                                                               seed,known_transforms[str(transform).lower()],len(devices),
-                                                                                               devices_t(*devices)
+                                                                                               seed,known_qmc_transforms[str(transform).lower()],
+                                                                                               known_qmc_fitfunctions[str(fitfunction).lower()],
+                                                                                               len(devices),devices_t(*devices)
                                                                                           )
         self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(
                                                                                                epsrel,epsabs,maxeval,errormode_enum,minnevaluate,minn,
                                                                                                minm,maxnperpackage,maxmperpackage,cputhreads,
                                                                                                cudablocks,cudathreadsperblock,verbosity,
-                                                                                               seed,known_transforms[str(transform).lower()],len(devices),
-                                                                                               devices_t(*devices)
+                                                                                               seed,known_qmc_transforms[str(transform).lower()],
+                                                                                               known_qmc_fitfunctions[str(fitfunction).lower()],
+                                                                                               len(devices),devices_t(*devices)
                                                                                           )
 
     def __del__(self):

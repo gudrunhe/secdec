@@ -1,5 +1,6 @@
 
-TESTS := $(patsubst %.cpp,%,$(wildcard *.cpp))
+CPP_TESTS := $(patsubst %.cpp,%,$(wildcard *.cpp))
+CU_TESTS := $(patsubst %.cu,%,$(wildcard *.cu))
 
 # get path to the top level directory
 TOPDIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -23,19 +24,26 @@ else
 LDFLAGS = -L$(SECDEC_CONTRIB)/lib
 endif
 ifneq (x$(CXX), xnvcc)
+CXXFLAGS += -x c++
 LDFLAGS += -pthread
 endif
 LDFLAGS += -L$(TOPDIR) -lcuba -lgsl -lgslcblas -lm
 
-.PHONY: clean doctest $(TESTS)
+.PHONY: clean doctest $(CPP_TESTS) $(CU_TESTS)
 
-doctest: $(TESTS)
+doctest: $(CPP_TESTS) $(CU_TESTS)
 
-$(TESTS):
+$(CPP_TESTS):
 	$(CXX) $(CXXFLAGS) $@.cpp -o $@ $(LDFLAGS)
 	./$@ > $@.tmp
 	diff $@.tmp $@.txt | tee $@.log
-	test ! -s $@.log 
+	test ! -s $@.log
 
-clean: 
+$(CU_TESTS):
+	$(CXX) $(CXXFLAGS) $@.cu -o $@ $(LDFLAGS)
+	./$@ > $@.tmp
+	diff $@.tmp $@.txt | tee $@.log
+	test ! -s $@.log
+
+clean:
 	rm -rf *.tmp *.log $(TESTS)

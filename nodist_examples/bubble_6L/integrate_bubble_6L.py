@@ -6,7 +6,7 @@ import sympy as sp
 bubble_6L = IntegralLibrary('bubble_6L/bubble_6L_pylink.so')
 
 # choose integrator
-bubble_6L.use_Qmc(verbosity=3,devices=[-1,0,1,2,3],minn=10**8) 
+bubble_6L.use_Qmc(verbosity=3,devices=[-1,0,1,2,3],minn=10**8,transform='korobov3') 
 #bubble_6L.use_Vegas(flags=2,epsrel=1e-2,epsabs=1e-8,nstart=10000,nincrease=1000,maxeval=10000000) # 
 
 # integrate

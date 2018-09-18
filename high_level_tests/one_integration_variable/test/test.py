@@ -9,12 +9,12 @@ class CheckQmcErrorMessages(unittest.TestCase):
         self.lib = IntegralLibrary('../one_integration_variable/one_integration_variable_pylink.so')
 
     def test_setting_errormode(self):
-        self.assertRaisesRegexp(ValueError, 'Unknown `errormode` "foo"', self.lib.use_Qmc, errormode='foo')
+        self.assertRaisesRegexp(ValueError, 'Unknown `errormode` "foo"', self.lib.use_Qmc, transform='korobov3', errormode='foo')
 
         # test known errormodes
-        self.lib.use_Qmc(errormode='default')
-        self.lib.use_Qmc(errormode='all')
-        self.lib.use_Qmc(errormode='largest')
+        self.lib.use_Qmc(errormode='default', transform='korobov3')
+        self.lib.use_Qmc(errormode='all', transform='korobov3')
+        self.lib.use_Qmc(errormode='largest', transform='korobov3')
 
 class CheckLib(unittest.TestCase):
     def setUp(self):
@@ -98,7 +98,7 @@ class CheckLib(unittest.TestCase):
 
     def test_Qmc_default_transform(self):
         # choose integrator
-        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3212)
+        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3212, transform='korobov3', fitfunction='polysingular')
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib()
@@ -108,7 +108,7 @@ class CheckLib(unittest.TestCase):
 
     def test_Qmc_baker_transform(self):
         # choose integrator
-        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3212, transform='baker')
+        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3218, transform='baker', fitfunction='none')
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib()
@@ -116,9 +116,9 @@ class CheckLib(unittest.TestCase):
         # check
         self.check_result(str_integral_with_prefactor, self.epsrel, self.epsabs)
 
-    def test_Qmc_trivial_transform(self):
+    def test_Qmc_no_transform(self):
         # choose integrator
-        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3212, transform='trivial')
+        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3212, transform='none', fitfunction='none')
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib()
@@ -126,9 +126,9 @@ class CheckLib(unittest.TestCase):
         # check
         self.check_result(str_integral_with_prefactor, self.epsrel, self.epsabs)
 
-    def test_Qmc_Korobov6_transform(self):
+    def test_Qmc_Korobov2x1_transform(self):
         # choose integrator
-        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3212, transform='Korobov6')
+        self.lib.use_Qmc(verbosity=0, epsrel=self.epsrel, epsabs=self.epsabs, seed=3212, transform='Korobov2x1')
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib()

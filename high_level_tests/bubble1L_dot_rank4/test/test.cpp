@@ -39,7 +39,9 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
         *sector_integrands.begin() );
 
         // define and configure integrator
-        secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t
+        secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,
+        INTEGRAL_NAME::maximal_number_of_integration_variables,
+        ::integrators::transforms::Korobov<3>::type
         #ifdef SECDEC_WITH_CUDA
             ,INTEGRAL_NAME::cuda_together_integrand_t
         #endif
@@ -99,7 +101,7 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
         }
     }
 
-    SECTION("Korobov20 integral transform") {
+    SECTION("Korobov12 integral transform") {
 
         // User Specified Phase-space point
         const std::vector<INTEGRAL_NAME::real_t> real_parameters = { 1.275, 1.275 };
@@ -121,12 +123,11 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
 
         // define and configure integrator
         secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,
+        INTEGRAL_NAME::maximal_number_of_integration_variables,
+        ::integrators::transforms::Korobov<12>::type
         #ifdef SECDEC_WITH_CUDA
-            INTEGRAL_NAME::cuda_together_integrand_t,
-        #else
-            INTEGRAL_NAME::integrand_t,
+            ,INTEGRAL_NAME::cuda_together_integrand_t
         #endif
-        ::integrators::transforms::Korobov<INTEGRAL_NAME::real_t, long long int, 12>
         > integrator;
         integrator.maxeval = 1e7;
         const double epsrel = 1e-4; integrator.epsrel = epsrel;

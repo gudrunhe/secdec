@@ -35,7 +35,9 @@ TEST_CASE( "check result with qmc", "[INTEGRAL_NAME]" ) {
         *sector_integrands.begin() );
 
         // define and configure integrator
-        secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t
+        secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,
+        INTEGRAL_NAME::maximal_number_of_integration_variables,
+        ::integrators::transforms::Korobov<3>::type
         #ifdef SECDEC_WITH_CUDA
             ,INTEGRAL_NAME::cuda_together_integrand_t
         #endif
@@ -99,7 +101,7 @@ TEST_CASE( "check result with qmc", "[INTEGRAL_NAME]" ) {
 
     }
 
-    SECTION("trivial integral transform") {
+    SECTION("Sidi's integral transform") {
 
         // User Specified Phase-space point
         const std::vector<INTEGRAL_NAME::real_t> real_parameters = {};
@@ -121,12 +123,11 @@ TEST_CASE( "check result with qmc", "[INTEGRAL_NAME]" ) {
 
         // define and configure integrator
         secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,
+        INTEGRAL_NAME::maximal_number_of_integration_variables,
+        ::integrators::transforms::Sidi<3>::type
         #ifdef SECDEC_WITH_CUDA
-            INTEGRAL_NAME::cuda_together_integrand_t,
-        #else
-            INTEGRAL_NAME::integrand_t,
+            ,INTEGRAL_NAME::cuda_together_integrand_t
         #endif
-        ::integrators::transforms::Trivial<INTEGRAL_NAME::real_t>
         > integrator;
         integrator.minn = 1e5;
         integrator.maxeval = 1e6;
