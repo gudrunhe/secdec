@@ -33,6 +33,9 @@ import sys, os
 _sympy_zero = sp.sympify(0)
 _sympy_one = sp.sympify(1)
 
+# sympy symbols are no longer callable starting from version 1.3
+_to_function = lambda x: sp.Function(str(x))
+
 # define the internal names to be used in FORM
 internal_prefix = 'SecDecInternal'
 FORM_names = dict(
@@ -1927,7 +1930,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         # remove `polynomial_names` from the `remainder_expression`
         this_primary_sector_remainder_expression = remainder_expression
         for poly_name in reversed_polynomial_names:
-            this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(-1, poly_name(*symbols_polynomials_to_decompose), remove=True)
+            this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(-1, _to_function(poly_name)(*symbols_polynomials_to_decompose), remove=True)
 
         # If there is a nontrivial primary decomposition, remove the integration variables from the `remainder_expression`
         for i,var in enumerate(all_integration_variables):

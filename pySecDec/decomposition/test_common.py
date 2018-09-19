@@ -109,7 +109,7 @@ class TestSymmetryFinding(unittest.TestCase):
 
     #@attr('active')
     def test_sector2array(self):
-        SecDecInternalCast, SecDecInternalOther = sp.symbols('SecDecInternalCast SecDecInternalOther')
+        SecDecInternalCast, SecDecInternalOther = sp.symbols('SecDecInternalCast SecDecInternalOther', cls=sp.Function)
 
         combined_expolists, combined_coeffs = _sector2array(self.sector)
 
@@ -139,7 +139,7 @@ class TestSymmetryFinding(unittest.TestCase):
 
     #@attr('active')
     def test_sector2array_cancelling(self):
-        SecDecInternalCast = sp.symbols('SecDecInternalCast')
+        SecDecInternalCast = sp.symbols('SecDecInternalCast', cls=sp.Function)
         a = sp.symbols('a')
 
         mono = Polynomial([(0,1)],[1])
@@ -167,8 +167,8 @@ class TestSymmetryFinding(unittest.TestCase):
     #@attr('active')
     def test_sector2array_other_exponent(self):
 
-        SecDecInternalCast, SecDecInternalOther = sp.symbols('SecDecInternalCast SecDecInternalOther')
-        SecDecInternalExponent = sp.symbols('SecDecInternalExponent')
+        SecDecInternalCast, SecDecInternalOther = sp.symbols('SecDecInternalCast SecDecInternalOther', cls=sp.Function)
+        SecDecInternalExponent = sp.symbols('SecDecInternalExponent', cls=sp.Function)
 
         combined_expolists, combined_coeffs = _sector2array(self.sector_other_exponent)
 

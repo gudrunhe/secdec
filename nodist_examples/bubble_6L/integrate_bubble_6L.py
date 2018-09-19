@@ -30,3 +30,22 @@ print('prefactor', prefactor)
 print('eps^-2 with prefactor:', integral_with_prefactor.coeff('eps',-2).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-2).coeff('error'), ')')
 print('eps^-1 with prefactor:', integral_with_prefactor.coeff('eps',-1).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-1).coeff('error'), ')')
 print('eps^0 with prefactor:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
+
+# analytic result: 
+
+# epsm2 = 147/16*Zeta[7];
+# epsm1 = -(147/16*Zeta[7]+27/2*Zeta[3]*Zeta[5]+27/10*zeta35-2063/504000*Pi^8);
+# eps0 = unknown
+# zeta35=0.037707673;
+# prefac=Gamma[1-eps]^2*Gamma[1+eps]/Gamma[2-2*eps];
+
+# pysecdec prefactor (from Feynman parametrisation) is Gamma[6*eps]
+# prefactor in 1705.06483 eq.(A3) is prefac=Gamma[1-eps]^2*Gamma[1+eps]/Gamma[2-2*eps] per loop
+
+# result = N[Normal[Series[prefac^6*(epsm2/eps^2+epsm1/eps+fin), {eps,0,0}]]];
+# result = 9.264208985946416/eps^2 + 91.73175282208716/eps + finite
+
+# pysecdec result:
+# eps^-2: 9.26430342193453171 +/- ( 0.000899765649050767845 )
+# eps^-1: 91.7338323848475738 +/- ( 0.0125856346079082672 )
+# eps^0: 1118.67438974297716 +/- ( 0.132744000721334243 )
