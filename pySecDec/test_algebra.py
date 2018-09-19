@@ -1350,7 +1350,8 @@ class TestExpressionConverter(unittest.TestCase):
 
     #@attr('active')
     def test_function(self):
-        a, x, my_function = sp.symbols('a x my_function')
+        a, x = sp.symbols('a x')
+        my_function = sp.Function('my_function')
         sympy_function = my_function(a*x)
         function = Expression(sympy_function, ['x'])
 

@@ -614,7 +614,8 @@ class TestNumerator(unittest.TestCase):
     #@attr('active')
     @attr('slow')
     def test_rank3_numerator_2L_double_triangle(self):
-        k1, k2, p1, p2, p3, p4, s, t, mu, nu, scalar_factor, eps, F = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu nu scalar_factor eps F')
+        k1,  k2,  p1,  p2,  p3,  p4, s, t, mu, nu, scalar_factor, eps, F = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu nu scalar_factor eps F')
+        k1f, k2f, p1f, p2f, p3f, p4f = sp.symbols('k1 k2 p1 p2 p3 p4', cls=sp.Function)
         sp11, sp12, sp13, sp22, sp23, sp33 = sp.symbols('sp11 sp12 sp13 sp22 sp23 sp33')
 
         z = sp.sympify(['z%i'%i for i in range(6+1)]) # Feynman parameters (only use z[1], z[2], ..., z[6] but not z[0])
@@ -630,7 +631,7 @@ class TestNumerator(unittest.TestCase):
                              ('p1*p3', 'sp13')]
 
         propagators = [k1**2,(k1+p1)**2,(k1-k2-p3-p4)**2,(k2)**2,(k2+p2)**2,(k2+p3)**2]
-        numerator = k1(mu)*k2(nu)*k1(mu)*p2(nu)*2
+        numerator = k1f(mu)*k2f(nu)*k1f(mu)*p2f(nu)*2
 
         li = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta,
                                            numerator=numerator, Feynman_parameters=z[1:],
@@ -720,7 +721,8 @@ class TestNumerator(unittest.TestCase):
     #@attr('active')
     @attr('slow')
     def test_rank2_numerator_2L_box(self):
-        k1, k2, p1, p2, p3, p4, s, t, mu, scalar_factor, D, eps = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu scalar_factor D eps')
+        k1,  k2,  p1,  p2,  p3,  p4, s, t, mu, scalar_factor, D, eps = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu scalar_factor D eps')
+        k1f, k2f, p1f, p2f, p3f, p4f = sp.symbols('k1 k2 p1 p2 p3 p4', cls=sp.Function)
 
         z = sp.sympify(['z%i'%i for i in range(7+1)]) # Feynman parameters (only use z[1], z[2], ..., z[7] but not z[0])
         loop_momenta = [k1, k2]
@@ -728,8 +730,8 @@ class TestNumerator(unittest.TestCase):
         indices = [mu]
 
         propagators = [k1**2,(k1+p2)**2,(k1-p1)**2,(k1-k2)**2,(k2+p2)**2,(k2-p1)**2,(k2+p2+p3)**2]
-        numerator1 = 2*k1(mu)*k2(mu)
-        numerator2 = 2*k1(mu)*k1(mu)
+        numerator1 = 2*k1f(mu)*k2f(mu)
+        numerator2 = 2*k1f(mu)*k1f(mu)
         replacement_rules = [(p1**2, 0),
                              (p2**2, 0),
                              (p3**2, 0),
@@ -878,7 +880,7 @@ class TestNumerator(unittest.TestCase):
             Feynman_parametrized_numerator = - Feynman_parametrized_numerator
 
             # only one scalar product per term --> can safely remove dummy index
-            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(p1(mu), p1).subs(p2(mu), p2).subs(p3(mu), p3).subs(p4(mu), p4)
+            Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(p1f(mu), p1).subs(p2f(mu), p2).subs(p3f(mu), p3).subs(p4f(mu), p4)
 
             if i == 1:
                 Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(D, 4-2*eps)

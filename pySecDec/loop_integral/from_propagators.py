@@ -7,6 +7,9 @@ from ..misc import det, adjugate, powerset, missing, all_pairs, \
 import sympy as sp
 import numpy as np
 
+# sympy symbols are no longer callable starting from version 1.3
+_to_function = lambda x: sp.Function(str(x))
+
 class LoopIntegralFromPropagators(LoopIntegral):
     __doc__ = r'''
     Construct the Feynman parametrization of a
@@ -278,8 +281,8 @@ class LoopIntegralFromPropagators(LoopIntegral):
                     for i,momentum in enumerate(momenta):
 
                         # search for ``momentum(index)``
-                        while term.subs(momentum(index), 0) == 0: # expression has a factor `momentum(index)`
-                            term /= momentum(index)
+                        while term.subs(_to_function(momentum)(index), 0) == 0: # expression has a factor `momentum(index)`
+                            term /= _to_function(momentum)(index)
                             lst.append((i,index))
                             index_count += 1
 
@@ -326,7 +329,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
         aM = self.aM
         Q = self.Q
-        g = self.metric_tensor
+        g = _to_function(self.metric_tensor)
         D = self.dimensionality
         L = self.L
         Feynman_parameters_U_F = self.Feynman_parameters + sp.sympify(['U', 'F'])
@@ -498,7 +501,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
                         this_tensor_P_factor = aM[external_momentum_index].dot(Q)
                         for j, coeff in enumerate(this_tensor_P_factor.coeffs):
                             if isinstance(coeff, sp.Expr):
-                                this_tensor_P_factor.coeffs[j] = coeff.subs((p, p(Lorentz_index_P)) for p in self.external_momenta)
+                                this_tensor_P_factor.coeffs[j] = coeff.subs((p, _to_function(p)(Lorentz_index_P)) for p in self.external_momenta)
 
                         # must append ``F`` and ``U`` to the parameters of ``this_tensor_P_factor``
                         this_tensor_P_factor.expolist = np.hstack([this_tensor_P_factor.expolist, np.zeros((len(this_tensor_P_factor.expolist), 2), dtype=int)])
@@ -518,14 +521,14 @@ class LoopIntegralFromPropagators(LoopIntegral):
                             if metric_unmatched:
                                 if Lorentz_index_1 == Lorentz_index_external:
                                     contractions_unmatched[i] = external_momentum_unmatched = False
-                                    this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_2)
+                                    this_numerator_summand *= _to_function(self.external_momenta[external_momentum_index])(Lorentz_index_2)
                                     break
                                 if Lorentz_index_2 == Lorentz_index_external:
                                     contractions_unmatched[i] = external_momentum_unmatched = False
-                                    this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_1)
+                                    this_numerator_summand *= _to_function(self.external_momenta[external_momentum_index])(Lorentz_index_1)
                                     break
                         if external_momentum_unmatched:
-                            this_numerator_summand *= self.external_momenta[external_momentum_index](Lorentz_index_external)
+                            this_numerator_summand *= _to_function(self.external_momenta[external_momentum_index])(Lorentz_index_external)
 
                     # ------------------------------------------------------------------------------
 
@@ -558,8 +561,8 @@ class LoopIntegralFromPropagators(LoopIntegral):
                 pattern_with_index = pattern
                 replacement_with_index = replacement
                 for p in self.external_momenta:
-                    pattern_with_index = pattern_with_index.subs(p, p(mu))
-                    replacement_with_index = replacement_with_index.subs(p, p(mu))
+                    pattern_with_index = pattern_with_index.subs(p, _to_function(p)(mu))
+                    replacement_with_index = replacement_with_index.subs(p, _to_function(p)(mu))
                 replacement_rules.append( (pattern_with_index, replacement_with_index) )
 
         return replacement_rules
