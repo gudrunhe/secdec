@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: 853082d55887283ed8efc903522ac069f86bf6aa
- * Generated: 18-09-2018 20:04:17
+ * Commit: 84c19ad22a7dcad56e012b5365d3e2197a343b52
+ * Generated: 24-09-2018 16:45:24
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -220,16 +220,16 @@ namespace integrators
         template <typename D>
         struct PolySingularFunction
         {
-            static const int num_parameters = 4;
-            const std::vector<std::vector<D>> initial_parameters = { {1.1,1.0,0.0,0.0}, {-0.1,1.0,0.0,0.0} };
+            static const int num_parameters = 6;
+            const std::vector<std::vector<D>> initial_parameters = { {1.1,-0.1, 0.1,0.1, 1.0,0.0} };
 
             D operator()(const D x, const double* p) const
             {
-                // constraint: no singularity
-                if (p[0]>=static_cast<D>(0) && p[0]<=static_cast<D>(1))
+                // constraint: no singularity and singular terms have positive coefficients
+                if (p[0]<=static_cast<D>(1.001) or p[0]>=static_cast<D>(1.5) or p[1]>=static_cast<D>(-0.001) or p[1]<=static_cast<D>(-0.5) or p[2]<static_cast<D>(0) or p[3]<static_cast<D>(0))
                     return std::numeric_limits<D>::max();
 
-                D y = x*(p[1]+x*(p[2]+x*p[3])) + (D(1)-p[1]-p[2]-p[3])*(x*(p[0]-D(1)))/(p[0]-x);
+                D y = p[2]*(x*(p[0]-D(1)))/(p[0]-x) + p[3]*(x*(p[1]-D(1)))/(p[1]-x)  + x*(p[4]+x*(p[5]+x*(D(1)-p[2]-p[3]-p[4]-p[5])));
 
                 // constraint: transformed variable within unit hypercube
                 if ( y<static_cast<D>(0) || y>static_cast<D>(1) )
@@ -242,37 +242,43 @@ namespace integrators
         template <typename D>
         struct PolySingularJacobian
         {
-            static const int num_parameters = 4;
+            static const int num_parameters = 6;
 
             D operator()(const D x, const double* p, const size_t parameter) const
             {
+
                 if (parameter == 0) {
-                    return ((D(-1) + x)*x*(D(-1) + p[1] + p[2] + p[3]))/(x - p[0])/(x - p[0]);
+                    return p[2]*((D(1) - x)*x)/(x - p[0])/(x - p[0]);
                 } else if (parameter == 1) {
-                    return x - (x*(D(-1) + p[0]))/(-x + p[0]);
+                    return p[3]*((D(1) - x)*x)/(x - p[1])/(x - p[1]);
                 } else if (parameter == 2) {
-                    return x*x - (x*(D(-1) + p[0]))/(-x + p[0]);
+                    return (x*(p[0]-D(1)))/(p[0]-x) -x*x*x;
                 } else if (parameter == 3) {
-                    return x*x*x - (x*(D(-1) + p[0]))/(-x + p[0]);
+                    return (x*(p[1]-D(1)))/(p[1]-x) -x*x*x;
+                } else if (parameter == 4) {
+                    return  x*(D(1)-x*x);
+                } else if (parameter == 5) {
+                    return  x*x*(D(1)-x);
                 } else {
                     throw std::domain_error("fit_function_jacobian called with invalid parameter: " + std::to_string(parameter));
                 }
             }
         };
-
         template <typename D>
         struct PolySingularHessian
         {
             D operator()(const D x, const double* v, const double* p) const
             {
-                return (D(2)*v[0]*(D(-1)+x)*x*((v[1] + v[2]+ v[3])*(x - p[0]) + v[0]*(D(-1) + p[1] + p[2] + p[3])))/(x - p[0])/(x - p[0])/(x - p[0]);
+						    D xmp0 = x-p[0];
+						    D xmp1 = x-p[1];
+                return x*(D(1)-x)*D(2)* ( v[0]*(p[2]*v[0]+(x - p[0])*v[2])/xmp0/xmp0/xmp0  + v[1]*(p[3]*v[1]+(x - p[1])*v[3])/xmp1/xmp1/xmp1 );
             }
         };
 
         template<typename I, typename D, U M>
         struct PolySingularTransform
         {
-            static const U num_parameters = 4;
+            static const U num_parameters = 6;
 
             I f; // original function
             const U number_of_integration_variables;
@@ -288,9 +294,8 @@ namespace integrators
                 D wgt = 1;
                 for (U d = 0; d < number_of_integration_variables ; ++d)
                 {
-                    D q = D(1)-p[d][1]-p[d][2]-p[d][3];
-                    wgt *= p[d][1] + x[d]*(D(2)*p[d][2]+x[d]*D(3)*p[d][3]) + q*p[d][0]*(p[d][0]-D(1))/(p[d][0]-x[d])/(p[d][0]-x[d]);
-                    x[d] = x[d]*(p[d][1]+x[d]*(p[d][2]+x[d]*p[d][3])) + q*x[d]*(p[d][0]-D(1))/(p[d][0]-x[d]);
+                    wgt *= p[d][2]*p[d][0]*(p[d][0]-D(1))/(p[d][0]-x[d])/(p[d][0]-x[d]) + p[d][3]*p[d][1]*(p[d][1]-D(1))/(p[d][1]-x[d])/(p[d][1]-x[d]) + p[d][4] + x[d]*(D(2)*p[d][5]+x[d]*D(3)*(D(1)-p[d][2]-p[d][3]-p[d][4]-p[d][5]));
+                    x[d] = p[d][2]*(x[d]*(p[d][0]-D(1)))/(p[d][0]-x[d]) + p[d][3]*(x[d]*(p[d][1]-D(1)))/(p[d][1]-x[d])  + x[d]*(p[d][4]+x[d]*(p[d][5]+x[d]*(D(1)-p[d][2]-p[d][3]-p[d][4]-p[d][5])));
                     if ( x[d] > D(1) || x[d] < D(0) ) return D(0);
                 }
                 return wgt * f(x);
@@ -2057,6 +2062,38 @@ namespace integrators
             fdf.n = num_points;
             fdf.p = num_parameters;
             fdf.params = &data;
+            
+            // compute dx/dy of input points, which should be used as an additional weight in the evaluation of chisq
+            std::vector<D> dxdy(x.size());
+            D maxwgt;
+
+            const size_t nsteps = 1; 
+            for (size_t i = 0; i < x.size(); i++)
+            {
+                D dy = (i<nsteps) ? D(0) : -y[i-nsteps];  
+                D dx = (i<nsteps) ? D(0) : -x[i-nsteps];
+                if(i != x.size()-nsteps)
+                {
+                    dy += y[i+nsteps];
+                    dx += x[i+nsteps];
+                }
+                else
+                {
+                    dy += D(1);
+                    dx += D(1);
+                }
+                dxdy[i] = dx/dy;
+                
+                maxwgt=std::max(maxwgt,dxdy[i]);
+            }
+            
+            // the gsl fit doesn't seem to work with weights>1 
+            for(size_t i=0; i< x.size(); i++)
+            {
+                dxdy[i]/=maxwgt;
+            }
+            
+            gsl_vector_view wgt = gsl_vector_view_array(dxdy.data(), dxdy.size());
 
             double chisq,chisq0;
             int status, info;
@@ -2086,7 +2123,7 @@ namespace integrators
                 gsl_vector_view pv = gsl_vector_view_array(initial_parameters.data(), num_parameters);
 
                 // initialize solver with starting point
-                gsl_multifit_nlinear_init(&pv.vector, &fdf, w);
+                gsl_multifit_nlinear_winit(&pv.vector, &wgt.vector, &fdf, w);
 
                 // compute initial cost function
                 f = gsl_multifit_nlinear_residual(w);
@@ -2146,15 +2183,20 @@ namespace integrators
 
             }
 
+
             gsl_multifit_nlinear_free(w);
             gsl_matrix_free(covar);
 
             // get index of best fit (minimum chisq)
             const int best_fit_index = std::distance(fit_chisqs.begin(), std::min_element(fit_chisqs.begin(),fit_chisqs.end()));
 
-            if (verbosity > 1)
+            if (verbosity > 0)
             {
-                logger << "choosing fit run " << best_fit_index << std::endl;
+                if (verbosity>2) logger << "choosing fit run " << best_fit_index << std::endl;
+                std::ostringstream final_parameters_stream;
+                for(const auto& elem: fit_parameters.at(best_fit_index))
+                    final_parameters_stream << elem << " ";
+                logger << "fit final_parameters " << final_parameters_stream.str() << std::endl;
                 logger << "-----------" << std::endl;
             }
 
@@ -2797,8 +2839,18 @@ namespace integrators
                 element /= y.back();
             }
 
+            // reduce number of sampling points for fit
+            const size_t stepsize = 10;
+            std::vector<D> xx;
+            std::vector<D> yy;
+            for ( size_t i = stepsize/2; i<x.size(); i+=stepsize)
+            {
+                    xx.push_back(x.at(i));
+                    yy.push_back(y.at(i));
+            }
+
             // run a least squares fit
-            fit_parameters.push_back( core::least_squares(fit_function,fit_function_jacobian, fit_function_hessian, y,x,verbosity,logger, fitmaxiter, fitxtol, fitgtol, fitftol, fitparametersgsl) );
+            fit_parameters.push_back( core::least_squares(fit_function,fit_function_jacobian, fit_function_hessian, yy,xx,verbosity,logger, fitmaxiter, fitxtol, fitgtol, fitftol, fitparametersgsl) );
         }
 
         for (size_t d = 0; d < fit_function_transform.number_of_integration_variables; ++d)
@@ -2948,7 +3000,7 @@ namespace integrators
 
     template <typename T, typename D, U M, template<typename,typename,U> class P, template<typename,typename,U> class F, typename G, typename H>
     Qmc<T,D,M,P,F,G,H>::Qmc() :
-    logger(std::cout), randomgenerator( G( std::random_device{}() ) ), minnevaluate(100000), minn(8191), minm(32), epsrel(0.01), epsabs(1e-7), maxeval(1000000), maxnperpackage(1), maxmperpackage(1024), errormode(integrators::ErrorMode::all), cputhreads(std::thread::hardware_concurrency()), cudablocks(1024), cudathreadsperblock(256), devices({-1}), generatingvectors(integrators::generatingvectors::cbcpt_dn1_100()), verbosity(0), fitmaxiter(40), fitxtol(1e-8), fitgtol(1e-8), fitftol(1e-8), fitparametersgsl({})
+    logger(std::cout), randomgenerator( G( std::random_device{}() ) ), minnevaluate(100000), minn(8191), minm(32), epsrel(0.01), epsabs(1e-7), maxeval(1000000), maxnperpackage(1), maxmperpackage(1024), errormode(integrators::ErrorMode::all), cputhreads(std::thread::hardware_concurrency()), cudablocks(1024), cudathreadsperblock(256), devices({-1}), generatingvectors(integrators::generatingvectors::cbcpt_dn1_100()), verbosity(0), fitmaxiter(40), fitxtol(3e-3), fitgtol(1e-4), fitftol(1e-8), fitparametersgsl({})
     {
         // Check U satisfies requirements of mod_mul implementation
         static_assert( std::numeric_limits<U>::is_modulo, "Qmc integrator constructed with a type U that is not modulo. Please use a different unsigned integer type for U.");
