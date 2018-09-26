@@ -1,1 +1,1 @@
-Sidi (weight 3, adaptive): 0.0625 +/- 1.89456e-08
+Sidi (weight 3, adaptive): 0.0625 +/- 3.81235e-09
