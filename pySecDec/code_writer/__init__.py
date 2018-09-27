@@ -29,5 +29,6 @@ Template Parser
 
 """
 
-from . import template_parser, sum_package
+from . import template_parser
 from .make_package import make_package
+from .sum_package import sum_package
