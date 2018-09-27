@@ -74,16 +74,15 @@ TEST_CASE( "deep_apply std::vector container to different type", "[deep_apply]" 
 
     };
 
-
     SECTION( "type conversion 3-nest" ) {
 
         auto three_nest_double_to_int = secdecutil::deep_apply(three_nest_double, double_to_int);
 
         REQUIRE( typeid(three_nest_double_to_int) == typeid(three_nest_int) );
         REQUIRE( three_nest_double_to_int == three_nest_int );
-        
+
     };
-    
+
 };
 
 TEST_CASE( "deep_apply const std::vector container to different type", "[deep_apply]" ) {
@@ -289,9 +288,9 @@ TEST_CASE( "increment std::vector container", "[deep_apply]" ) {
     SECTION( "increment 3-nest" ) {
 
         secdecutil::deep_apply(three_nest_int, increment);
-        
+
         REQUIRE( three_nest_int == three_nest_int_increment );
-        
+
     };
 
 };
@@ -376,9 +375,9 @@ TEST_CASE( "deep_apply secdecutil::Series container to different type", "[deep_a
 
         REQUIRE( typeid(three_nest_double_to_int) == typeid(three_nest_int) );
         REQUIRE( three_nest_double_to_int == three_nest_int );
-        
+
     };
-    
+
 };
 
 TEST_CASE( "deep_apply const secdecutil::Series container to different type", "[deep_apply]" ) {
@@ -461,9 +460,9 @@ TEST_CASE( "deep_apply const secdecutil::Series container to different type", "[
 
         REQUIRE( typeid(three_nest_double_to_int) == typeid(three_nest_int) );
         REQUIRE( three_nest_double_to_int == three_nest_int );
-        
+
     };
-    
+
 };
 
 TEST_CASE( "increment secdecutil::Series container", "[deep_apply]" ) {
@@ -572,7 +571,7 @@ TEST_CASE( "increment secdecutil::Series container", "[deep_apply]" ) {
 
         REQUIRE( three_nest_int == three_nest_int_increment );
         REQUIRE( three_nest_int_to_zero == three_nest_int_zero );
-        
+
     };
 
     SECTION( "increment 1-nest" ) {
@@ -596,9 +595,9 @@ TEST_CASE( "increment secdecutil::Series container", "[deep_apply]" ) {
         secdecutil::deep_apply(three_nest_int, increment);
 
         REQUIRE( three_nest_int == three_nest_int_increment );
-        
+
     };
-    
+
 };
 
 TEST_CASE( "side-effect only function on const std::vector container", "[deep_apply]" ) {
@@ -661,6 +660,125 @@ TEST_CASE( "side-effect only function on const std::vector container", "[deep_ap
         secdecutil::deep_apply(three_nest_int, func);
 
         REQUIRE( number_of_elements == 14 );
+
+    };
+
+};
+
+TEST_CASE( "act-on-innermost-container function", "[deep_apply]" ) {
+
+    std::vector<std::vector<int>> two_nest_vector =
+    {
+            { 1, 2, 3},
+            { 4, 5, 6, 7},
+            { 8, 9, 10},
+            { 11, 12, 13, 14}
+    };
+
+    secdecutil::Series<secdecutil::Series<int>> two_nest_series =
+    {0,1,
+        {
+            {-1, 1, { 1, 1, 1}},
+            {-2,-1, { 1, 1   },false /* not truncated */}
+        }
+    };
+
+    SECTION("const void (side-effect only)") {
+
+        size_t innermost_size;
+        const std::function<void(const std::vector<int>&)> add_to_innermost_size_vector = [ &innermost_size ] (const std::vector<int>& v) { innermost_size += v.size(); };
+        const std::function<void(const secdecutil::Series<int>&)> add_to_innermost_size_series = [ &innermost_size ] (const secdecutil::Series<int>& s) { innermost_size += s.get_content().size(); };
+
+        innermost_size = 0;
+        secdecutil::deep_apply(two_nest_vector, add_to_innermost_size_vector);
+        REQUIRE( innermost_size == 14 );
+
+        innermost_size = 0;
+        secdecutil::deep_apply(two_nest_series, add_to_innermost_size_series);
+        REQUIRE( innermost_size == 5 );
+
+    };
+
+    SECTION("non-const void (modify)") {
+
+        const std::function<void(std::vector<int>&)> append_42_to_vector = [  ] (std::vector<int>& v) { v.push_back(42); };
+        const std::function<void(secdecutil::Series<int>&)> add_42_to_series = [  ] (secdecutil::Series<int>& s) { s += 42; };
+
+        secdecutil::deep_apply(two_nest_vector, append_42_to_vector);
+        std::vector<std::vector<int>> target_two_nest_vector =
+        {
+            { 1, 2, 3, 42},
+            { 4, 5, 6, 7, 42},
+            { 8, 9, 10, 42},
+            { 11, 12, 13, 14, 42}
+        };
+        REQUIRE(two_nest_vector.size() == 4);
+        for(size_t i = 0; i < 4; ++i)
+            REQUIRE(two_nest_vector.at(i) == target_two_nest_vector.at(i));
+
+        secdecutil::deep_apply(two_nest_series, add_42_to_series);
+        secdecutil::Series<secdecutil::Series<int>> target_two_nest_series =
+        {0,1,
+            {
+                {-1,1, { 1, 43, 1}},
+                {-2,0, { 1, 1, 42},false /* not truncated */}
+            }
+        };
+        REQUIRE(two_nest_series == target_two_nest_series);
+
+    };
+
+    SECTION("const non-void (return)") {
+
+        const std::function<size_t(const std::vector<int>&)> get_innermost_sizes_vector = [  ] (const std::vector<int>& v) { return v.size(); };
+        const std::function<size_t(const secdecutil::Series<int>&)> get_innermost_sizes_series = [  ] (const secdecutil::Series<int>& s) { return s.get_content().size(); };
+
+        auto sizes_two_nest_vector = secdecutil::deep_apply(two_nest_vector, get_innermost_sizes_vector);
+        std::vector<size_t> target_sizes_two_nest_vector = {3,4,3,4};
+        REQUIRE(typeid(sizes_two_nest_vector) == typeid(target_sizes_two_nest_vector));
+        REQUIRE(sizes_two_nest_vector == target_sizes_two_nest_vector);
+
+        auto sizes_two_nest_series = secdecutil::deep_apply(two_nest_series, get_innermost_sizes_series);
+        secdecutil::Series<size_t> target_sizes_two_nest_series = {0,1,{3,2}};
+        REQUIRE(typeid(sizes_two_nest_series) == typeid(target_sizes_two_nest_series));
+        REQUIRE(sizes_two_nest_series == target_sizes_two_nest_series);
+
+    };
+
+    SECTION("non-const non-void (modify and return size_count)") {
+
+        const std::function<size_t(std::vector<int>&)> append_42_to_vector = [  ] (std::vector<int>& v) { v.push_back(42); return v.size(); };
+        const std::function<size_t(secdecutil::Series<int>&)> add_42_to_series = [  ] (secdecutil::Series<int>& s) { s += 42; return s.get_content().size(); };
+
+        auto sizes_two_nest_vector = secdecutil::deep_apply(two_nest_vector, append_42_to_vector);
+        std::vector<std::vector<int>> target_two_nest_vector =
+        {
+            { 1, 2, 3, 42},
+            { 4, 5, 6, 7, 42},
+            { 8, 9, 10, 42},
+            { 11, 12, 13, 14, 42}
+        };
+        REQUIRE(typeid(sizes_two_nest_vector) == typeid(std::vector<size_t>));
+        REQUIRE(two_nest_vector.size() == 4);
+        REQUIRE(sizes_two_nest_vector.size() == 4);
+        for(size_t i = 0; i < 4; ++i)
+        {
+            REQUIRE(two_nest_vector.at(i) == target_two_nest_vector.at(i));
+            REQUIRE(sizes_two_nest_vector.at(i) == target_two_nest_vector.at(i).size());
+        };
+
+        auto sizes_two_nest_series = secdecutil::deep_apply(two_nest_series, add_42_to_series);
+        secdecutil::Series<secdecutil::Series<int>> target_two_nest_series =
+        {0,1,
+            {
+                {-1,1, { 1, 43, 1}},
+                {-2,0, { 1, 1, 42},false /* not truncated */}
+            }
+        };
+        secdecutil::Series<size_t> target_sizes_two_nest_series = {0,1,{3,3}};
+        REQUIRE(two_nest_series == target_two_nest_series);
+        REQUIRE(typeid(sizes_two_nest_series) == typeid(target_sizes_two_nest_series));
+        REQUIRE(sizes_two_nest_series == target_sizes_two_nest_series);
 
     };
 

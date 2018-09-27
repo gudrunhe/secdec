@@ -3,6 +3,7 @@
 
 #include <secdecutil/series.hpp>
 #include <functional>
+#include <type_traits>
 #include <vector>
 
 /*!
@@ -25,7 +26,7 @@ namespace secdecutil {
      func may modify the elements of the original nest
 
      */
-    template<typename out_base_type, typename in_base_type, typename T>
+    template<typename out_base_type, typename in_base_type, typename T, typename = void>
     struct deep_apply_impl
     {
         using base_type = T;
@@ -41,7 +42,12 @@ namespace secdecutil {
 
     // Specialisation for std::vector
     template<typename out_base_type, typename in_base_type, typename T>
-    struct deep_apply_impl<out_base_type,in_base_type,std::vector<T>>
+    struct deep_apply_impl<
+        out_base_type,
+        in_base_type,
+        std::vector<T>,
+        typename std::enable_if<!std::is_same<typename std::remove_cv<typename std::remove_reference<in_base_type>::type>::type,std::vector<T>>::value>::type
+    >
     {
         using base_type = typename deep_apply_impl<out_base_type,in_base_type,T>::base_type;
         using new_type = std::vector<typename deep_apply_impl<out_base_type,in_base_type,T>::new_type>;
@@ -59,7 +65,12 @@ namespace secdecutil {
 
     // Specialisation for secdecutil::Series
     template<typename out_base_type, typename in_base_type, typename T>
-    struct deep_apply_impl<out_base_type,in_base_type,secdecutil::Series<T>>
+    struct deep_apply_impl<
+        out_base_type,
+        in_base_type,
+        secdecutil::Series<T>,
+        typename std::enable_if<!std::is_same<typename std::remove_cv<typename std::remove_reference<in_base_type>::type>::type,secdecutil::Series<T>>::value>::type
+    >
     {
         using base_type = typename deep_apply_impl<out_base_type,in_base_type,T>::base_type;
         using new_type = secdecutil::Series<typename deep_apply_impl<out_base_type,in_base_type,T>::new_type>;
@@ -97,7 +108,7 @@ namespace secdecutil {
      func may not modify the elements of the original nest
 
      */
-    template<typename out_base_type, typename in_base_type, typename T>
+    template<typename out_base_type, typename in_base_type, typename T, typename = void>
     struct const_deep_apply_impl
     {
         using base_type = T;
@@ -113,7 +124,12 @@ namespace secdecutil {
 
     // Specialisation for std::vector
     template<typename out_base_type, typename in_base_type, typename T>
-    struct const_deep_apply_impl<out_base_type,in_base_type,std::vector<T>>
+    struct const_deep_apply_impl<
+        out_base_type,
+        in_base_type,
+        std::vector<T>,
+        typename std::enable_if<!std::is_same<typename std::remove_cv<typename std::remove_reference<in_base_type>::type>::type,std::vector<T>>::value>::type
+    >
     {
         using base_type = typename const_deep_apply_impl<out_base_type,in_base_type,T>::base_type;
         using new_type = std::vector<typename const_deep_apply_impl<out_base_type,in_base_type,T>::new_type>;
@@ -131,7 +147,12 @@ namespace secdecutil {
 
     // Specialisation for secdecutil::Series
     template<typename out_base_type, typename in_base_type, typename T>
-    struct const_deep_apply_impl<out_base_type,in_base_type,secdecutil::Series<T>>
+    struct const_deep_apply_impl<
+        out_base_type,
+        in_base_type,
+        secdecutil::Series<T>,
+        typename std::enable_if<!std::is_same<typename std::remove_cv<typename std::remove_reference<in_base_type>::type>::type,secdecutil::Series<T>>::value>::type
+    >
     {
         using base_type = typename const_deep_apply_impl<out_base_type,in_base_type,T>::base_type;
         using new_type = secdecutil::Series<typename const_deep_apply_impl<out_base_type,in_base_type,T>::new_type>;
@@ -169,7 +190,7 @@ namespace secdecutil {
      func may modify the elements of nest
 
      */
-    template<typename in_base_type, typename T>
+    template<typename in_base_type, typename T, typename = void>
     struct void_deep_apply_impl
     {
         T& nest;
@@ -183,7 +204,11 @@ namespace secdecutil {
 
     // Specialisation for std::vector
     template<typename in_base_type, typename T>
-    struct void_deep_apply_impl<in_base_type,std::vector<T>>
+    struct void_deep_apply_impl<
+        in_base_type,
+        std::vector<T>,
+        typename std::enable_if<!std::is_same<typename std::remove_cv<typename std::remove_reference<in_base_type>::type>::type,std::vector<T>>::value>::type
+    >
     {
         std::vector<T>& nest;
         const std::function<void(in_base_type)>& func;
@@ -197,7 +222,11 @@ namespace secdecutil {
 
     // Specialisation for secdecutil::Series
     template<typename in_base_type, typename T>
-    struct void_deep_apply_impl<in_base_type,secdecutil::Series<T>>
+    struct void_deep_apply_impl<
+        in_base_type,
+        secdecutil::Series<T>,
+        typename std::enable_if<!std::is_same<typename std::remove_cv<typename std::remove_reference<in_base_type>::type>::type,secdecutil::Series<T>>::value>::type
+    >
     {
         secdecutil::Series<T>& nest;
         const std::function<void(in_base_type)>& func;
@@ -223,7 +252,7 @@ namespace secdecutil {
      func may not modify the elements of nest (side-effects only)
 
      */
-    template<typename in_base_type, typename T>
+    template<typename in_base_type, typename T, typename = void>
     struct void_const_deep_apply_impl
     {
         const T& nest;
@@ -237,7 +266,11 @@ namespace secdecutil {
 
     // Specialisation for std::vector
     template<typename in_base_type, typename T>
-    struct void_const_deep_apply_impl<in_base_type,std::vector<T>>
+    struct void_const_deep_apply_impl<
+        in_base_type,
+        std::vector<T>,
+        typename std::enable_if<!std::is_same<typename std::remove_cv<typename std::remove_reference<in_base_type>::type>::type,std::vector<T>>::value>::type
+    >
     {
         const std::vector<T>& nest;
         const std::function<void(in_base_type)>& func;
@@ -251,7 +284,11 @@ namespace secdecutil {
 
     // Specialisation for secdecutil::Series
     template<typename in_base_type, typename T>
-    struct void_const_deep_apply_impl<in_base_type,secdecutil::Series<T>>
+    struct void_const_deep_apply_impl<
+        in_base_type,
+        secdecutil::Series<T>,
+        typename std::enable_if<!std::is_same<typename std::remove_cv<typename std::remove_reference<in_base_type>::type>::type,secdecutil::Series<T>>::value>::type
+    >
     {
         const secdecutil::Series<T>& nest;
         const std::function<void(in_base_type)>& func;
