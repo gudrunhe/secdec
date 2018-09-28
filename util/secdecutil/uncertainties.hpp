@@ -240,7 +240,8 @@ namespace secdecutil {
         UncorrelatedDeviation& operator+=(const UncorrelatedDeviation& gu1) \
         { \
             this->value += gu1.value; \
-            this->uncertainty = {std::sqrt( this->uncertainty.real()*this->uncertainty.real() + gu1.uncertainty.real()*gu1.uncertainty.real() ),  /* real part */ \
+            this->uncertainty = complex_template<T> \
+                                {std::sqrt( this->uncertainty.real()*this->uncertainty.real() + gu1.uncertainty.real()*gu1.uncertainty.real() ),  /* real part */ \
                                  std::sqrt( this->uncertainty.imag()*this->uncertainty.imag() + gu1.uncertainty.imag()*gu1.uncertainty.imag() )}; /* imaginary part */ \
             return *this; \
         }; \
@@ -258,7 +259,8 @@ namespace secdecutil {
         UncorrelatedDeviation& operator-=(const UncorrelatedDeviation& gu1) \
         { \
             this->value -= gu1.value; \
-            this->uncertainty = {std::sqrt( this->uncertainty.real()*this->uncertainty.real() + gu1.uncertainty.real()*gu1.uncertainty.real() ),  /* real part */ \
+            this->uncertainty = complex_template<T> \
+                                {std::sqrt( this->uncertainty.real()*this->uncertainty.real() + gu1.uncertainty.real()*gu1.uncertainty.real() ),  /* real part */ \
                                  std::sqrt( this->uncertainty.imag()*this->uncertainty.imag() + gu1.uncertainty.imag()*gu1.uncertainty.imag() )}; /* imaginary part */ \
             return *this; \
         }; \
@@ -271,8 +273,8 @@ namespace secdecutil {
             auto new_real_part = real0*number; \
             auto new_imag_part = number*imag0; \
  \
-            this->value = {new_real_part.value,new_imag_part.value}; \
-            this->uncertainty = {new_real_part.uncertainty,new_imag_part.uncertainty}; \
+            this->value = complex_template<T>{new_real_part.value,new_imag_part.value}; \
+            this->uncertainty = complex_template<T>{new_real_part.uncertainty,new_imag_part.uncertainty}; \
  \
             return *this; \
         }; \
@@ -284,8 +286,8 @@ namespace secdecutil {
             auto new_real_part = real0*number.real() - imag0*number.imag(); \
             auto new_imag_part = real0*number.imag() + number.real()*imag0; \
  \
-            this->value = {new_real_part.value,new_imag_part.value}; \
-            this->uncertainty = {new_real_part.uncertainty,new_imag_part.uncertainty}; \
+            this->value = complex_template<T>{new_real_part.value,new_imag_part.value}; \
+            this->uncertainty = complex_template<T>{new_real_part.uncertainty,new_imag_part.uncertainty}; \
  \
             return *this; \
         }; \
@@ -300,8 +302,8 @@ namespace secdecutil {
             auto new_real_part = real0*real1 - imag0*imag1; \
             auto new_imag_part = real0*imag1 + real1*imag0; \
  \
-            this->value = {new_real_part.value,new_imag_part.value}; \
-            this->uncertainty = {new_real_part.uncertainty,new_imag_part.uncertainty}; \
+            this->value = complex_template<T>{new_real_part.value,new_imag_part.value}; \
+            this->uncertainty = complex_template<T>{new_real_part.uncertainty,new_imag_part.uncertainty}; \
  \
             return *this; \
         }; \
@@ -316,8 +318,8 @@ namespace secdecutil {
             auto new_real_part = (real0*number) / denominator; \
             auto new_imag_part = (number*imag0) / denominator; \
  \
-            this->value = {new_real_part.value,new_imag_part.value}; \
-            this->uncertainty = {new_real_part.uncertainty,new_imag_part.uncertainty}; \
+            this->value = complex_template<T>{new_real_part.value,new_imag_part.value}; \
+            this->uncertainty = complex_template<T>{new_real_part.uncertainty,new_imag_part.uncertainty}; \
  \
             return *this; \
         }; \
@@ -331,8 +333,8 @@ namespace secdecutil {
             auto new_real_part = (real0*number.real() + imag0*number.imag()) / denominator; \
             auto new_imag_part = (number.real()*imag0 - real0*number.imag()) / denominator; \
  \
-            this->value = {new_real_part.value,new_imag_part.value}; \
-            this->uncertainty = {new_real_part.uncertainty,new_imag_part.uncertainty}; \
+            this->value = complex_template<T>{new_real_part.value,new_imag_part.value}; \
+            this->uncertainty = complex_template<T>{new_real_part.uncertainty,new_imag_part.uncertainty}; \
  \
             return *this; \
         }; \

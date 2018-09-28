@@ -732,7 +732,7 @@ extern "C"
         // read complex parameters
         std::vector<complex_t> complex_parameters(number_of_complex_parameters);
         for (i=0 ; i<number_of_complex_parameters ; ++i)
-            complex_parameters[i] = {complex_parameters_input[2*i],complex_parameters_input[2*i + 1]};
+            complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
 
         // optimize the deformation (if any)
         const std::vector<nested_series_t<secdec_integrand_t>> sector_integrands =
@@ -825,7 +825,7 @@ extern "C"
             // read complex parameters
             std::vector<complex_t> complex_parameters(number_of_complex_parameters);
             for (i=0 ; i<number_of_complex_parameters ; ++i)
-                complex_parameters[i] = {complex_parameters_input[2*i],complex_parameters_input[2*i + 1]};
+                complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
 
             // optimize the deformation (if any)
             const std::vector<nested_series_t<cuda_integrand_t>> sector_integrands =
