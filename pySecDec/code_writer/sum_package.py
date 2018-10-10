@@ -1,103 +1,225 @@
 from ..metadata import version, git_id
 from .template_parser import parse_template_file, parse_template_tree
+from ..misc import sympify_symbols, make_cpp_list
 from ..algebra import Polynomial, ExponentiatedPolynomial
-from ..misc import cached_property
 from ..loop_integral.loop_package import loop_package
 
 from time import strftime
 from itertools import repeat
-import os, sys, shutil
+import os, sys, shutil, subprocess
 import numpy as np
 import sympy as sp
 
 class Coefficient(object):
     r'''
-    Coefficient.
-    Store a coefficient expressed through a product
-    of terms in the numerator and a product of terms
-    in the denominator.
+    Store a coefficient expressed as a product of terms
+    in the numerator and a product of terms in the
+    denominator.
 
     :param numerators:
-        :iterable of type :class:`.Polynomial`
-        or :class:`.ExponentiatedPolynomial`;
+        iterable of str;
         The terms in the numerator.
 
     :param denominators:
-        :iterable of type :class:`.Polynomial`
-        or :class:`.ExponentiatedPolynomial`;
+        iterable of str;
         The terms in the denominator.
 
-    :param regulator_indices:
-        iterable of integers;
-        The indices of the regulators.
+    :param regulators:
+        iterable of strings or sympy symbols;
+        The symbols denoting the regulators.
+
+    :param parameters:
+        iterable of strings or sympy symbols;
+        The symbols other parameters.
 
         '''
-    def __init__(self, numerators, denominators, regulator_indices):
-        assert np.iterable(numerators), \
-               "numerators has to be an iterable of `Polynomials` or `ExponentiatedPolynomials`"
-        assert np.iterable(denominators), \
-               "denominators has to be an iterable of `Polynomials` or `ExponentiatedPolynomials`"
-        assert np.iterable(regulator_indices), \
-               "regulator_indices have to be an iterable of integers"
-
-        for numerator in numerators:
-            assert type(numerator) in (Polynomial, ExponentiatedPolynomial), \
-                   "All numerators have to be of type `Polynomials` or `ExponentiatedPolynomials`"
-        for denominator in denominators:
-            assert type(denominator) in (Polynomial, ExponentiatedPolynomial), \
-                   "All denominators have to be of type `Polynomials` or `ExponentiatedPolynomials`"
-        for regulator_index in regulator_indices:
-            assert isinstance(regulator_index, int), \
-                   "All regulator_indices have to be integers."
+    def __init__(self, numerators, denominators, regulators, parameters):
+        for input_value, input_name in \
+            zip(
+                    ( numerators ,  denominators ,  regulators ,  parameters ),
+                    ('numerators', 'denominators', 'regulators', 'parameters')
+               ):
+            assert np.iterable(input_value), "`%s` must be iterable." % input_name
+            if input_name in ('numerators', 'denominators'):
+                for item in input_value:
+                    assert isinstance(item, str), "All `%s` must be strings." % input_name
 
         self.numerators = list(numerators)
         self.denominators = list(denominators)
-        self.regulator_indices = list(regulator_indices)
+        self.regulators = sympify_symbols(regulators, 'All `regulators` must be symbols.')
+        self.parameters = sympify_symbols(parameters, 'All `parameters` must be symbols.')
 
-    @cached_property
-    def orders(self):
+    def process(self, form=None, workdir='form_tmp', keep_workdir=False):
         r'''
-        Calculate the orders of the coefficients in
-        the regulators specified by `regulator_indices`.
+        Calculate and return the lowest orders of the coefficients in
+        the regulators and a string defining the expressions "numerator",
+        "denominator", and "regulator_factor".
+
+        :param form:
+            string or None;
+            If given a string, interpret that string as the command
+            line executable `form`. If ``None``, try
+            ``$SECDEC_CONTRIB/bin/form`` and, if the
+            environment variable ``$SECDEC_CONTRIB`` is not set,
+            ``form``.
+
+        :param workdir:
+            string;
+            The directory for the communication with `form`.
+            A directory with the specified name will be created
+            in the current working directory. If the specified
+            directory name already exists, an :class:`OSError`
+            is raised.
+
+            .. note::
+                The communication with `form` is done via
+                files.
+
+        :param keep_workdir:
+            bool;
+            Whether or not to delete the `workdir` after execution.
 
         '''
-        orders = []
-        for parameter in self.regulator_indices:
-            order_numerators = 0
-            order_denominators = 0
-            for numerator in self.numerators:
-                min_order_numerator = min(numerator.expolist[:,parameter])
-                try:
-                    exponent = numerator.exponent
-                except AttributeError:
-                    exponent = 1
-                order_numerators += exponent*min_order_numerator
-            for denominator in self.denominators:
-                min_order_denominator = min(denominator.expolist[:,parameter])
-                try:
-                    exponent = denominator.exponent
-                except AttributeError:
-                    exponent = 1
-                order_denominators += exponent*min_order_denominator
-            orders.append(order_numerators - order_denominators)
-        return orders
-
-    def __repr__(self):
-        outstr = ''
-        outstr += '('
-        if self.numerators:
-            outstr += '*'.join(['('+str(numerator)+')' for numerator in self.numerators])
+        # get form command-line executable
+        if form is None:
+            try:
+                # use "$SECDEC_CONTRIB/bin/form" if "$SECDEC_CONTRIB" is defined
+                form = os.path.join(os.environ['SECDEC_CONTRIB'], 'bin', 'form')
+            except KeyError:
+                # "$SECDEC_CONTRIB" is not defined --> let the system find "form"
+                form = 'form'
         else:
-            outstr += str(1)
-        outstr += ')/('
-        if self.denominators:
-            outstr += '*'.join(['('+str(denominator)+')' for denominator in self.denominators])
-        else:
-            outstr += str(1)
-        outstr += ')'
-        return outstr
+            assert isinstance(form, str), "`form` must be a string."
 
-    __str__ = __repr__
+        # define the form program to run
+        program = '''
+            #Define OUTFILE "%(outfile)s"
+            #Define regulators "%(regulators)s"
+            #Define parameters "%(parameters)s"
+            #Define numberOfnum "%(number_of_num)i"
+            #Define numberOfden "%(number_of_den)i"
+
+            Symbol SecDecInternalsDUMMY;
+            Symbols `regulators';
+            Symbols `parameters';
+
+            %(expression_definitions)s
+            .sort:read;
+
+            * factor out the global power of each regulator from each numerator and denominator
+            #Do regulator = {`regulators',}
+              #If x`regulator' != x
+                #Do nORd = {num,den}
+                  #Do idx = 1,`numberOf`nORd''
+                    skip; nskip `nORd'`idx';
+                    #$min`regulator'`nORd'`idx' = maxpowerof_(`regulator');
+                    if( match(`regulator'^SecDecInternalsDUMMY?$this`regulator'pow) );
+                        if($min`regulator'`nORd'`idx' > $this`regulator'pow) $min`regulator'`nORd'`idx' = $this`regulator'pow;
+                    else;
+                        if($min`regulator'`nORd'`idx' > 0) $min`regulator'`nORd'`idx' = 0;
+                    endif;
+                    ModuleOption,local,$this`regulator'pow;
+                    ModuleOption,minimum,$min`regulator'`nORd'`idx';
+                    .sort:min`nORd'`idx';
+                    skip; nskip `nORd'`idx';
+                    multiply `regulator'^(-(`$min`regulator'`nORd'`idx''));
+                    .sort:mul`nORd'`idx';
+                  #EndDo
+                #EndDo
+
+                #$global`regulator'fac =
+                  #Do idx = 1,`numberOfnum'
+                    + $min`regulator'num`idx'
+                  #EndDo
+                  #Do idx = 1,`numberOfden'
+                    - $min`regulator'den`idx'
+                  #EndDo
+                ;
+
+              #EndIf
+            #EndDo
+
+            .sort:beforeWrite;
+
+            #write <`OUTFILE'> "numerator = 1"
+            #Do idx = 1,`numberOfnum'
+              #write <`OUTFILE'> "*(%%E)", num`idx'
+            #EndDo
+            #write <`OUTFILE'> ";"
+
+            #write <`OUTFILE'> "denominator = 1"
+            #Do idx = 1,`numberOfden'
+              #write <`OUTFILE'> "*(%%E)", den`idx'
+            #EndDo
+            #write <`OUTFILE'> ";"
+
+            #write <`OUTFILE'> "regulator_factor = 1"
+            #Do regulator = {`regulators',}
+              #If x`regulator' != x
+                #write <`OUTFILE'> "*`regulator'^(`$global`regulator'fac')"
+              #EndIf
+            #EndDo
+            #write <`OUTFILE'> ";"
+
+            .end
+
+        '''.replace('\n            ','\n')
+        expression_definitions = []
+        for idx, numerator in enumerate(self.numerators):
+            expression_definitions.append('Local num%i = %s;' % (idx+1,numerator))
+        for idx, denominator in enumerate(self.denominators):
+            expression_definitions.append('Local den%i = %s;' % (idx+1,denominator))
+        outfile = 'results.txt'
+        program = program % dict(
+                                     expression_definitions='\n'.join(expression_definitions),
+                                     outfile=outfile,
+                                     number_of_num=len(self.numerators),
+                                     number_of_den=len(self.denominators),
+                                     regulators=','.join(map(str,self.regulators)),
+                                     parameters=','.join(map(str,self.parameters))
+                                )
+
+        # run form program
+        os.mkdir(workdir)
+        try:
+            # dump program to file
+            with open(os.path.join(workdir, 'program.frm'), 'w') as f:
+                f.write(program)
+
+            # redirect stdout
+            with open(os.path.join(workdir, 'stdout'), 'w') as stdout:
+                # redirect stderr
+                with open(os.path.join(workdir, 'stderr'), 'w') as stderr:
+                    # run form
+                    #    subprocess.check_call --> run form, block until it finishes and raise error on nonzero exit status
+                    try:
+                        subprocess.check_call([form, 'program'], stdout=stdout, stderr=stderr, cwd=workdir)
+                    except OSError as error:
+                        if form not in str(error):
+                            error.filename = form
+                        raise
+
+            # collect output
+            with open(os.path.join(workdir, outfile), 'r') as f:
+                form_output = f.read()
+            assert len(form_output) > 0, "form output file (" + outfile + ") empty"
+
+        finally:
+            if not keep_workdir:
+                shutil.rmtree(workdir)
+
+        # read lowest_orders from form output
+        lowest_orders = np.empty(len(self.regulators), dtype=int)
+        regulator_factor = form_output[form_output.rfind('regulator_factor'):]
+        regulator_factor = regulator_factor[:regulator_factor.find(';')].replace('\n','').replace(' ','')
+        regulator_factors = regulator_factor.split('=')[1].split('*')[1:]
+        assert len(regulator_factors) == len(self.regulators)
+        for idx,(regulator,factor) in enumerate(zip(self.regulators,regulator_factors)):
+            form_regulator, power = factor.split('^')
+            assert form_regulator == str(regulator), '%s != %s' % (form_regulator, regulator)
+            lowest_orders[idx] = int(power.lstrip('(').rstrip(')'))
+
+        return lowest_orders, form_output
 
 def sum_package(integral_name, package_generators, generators_args, requested_orders, real_parameters=[],
                 complex_parameters=[], coefficients=None):
