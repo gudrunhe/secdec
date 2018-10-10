@@ -6,7 +6,7 @@ This module implements the main program - the function
 
 from __future__ import print_function
 from ..metadata import version, git_id
-from ..misc import sympify_symbols, rangecomb
+from ..misc import sympify_symbols, rangecomb, make_cpp_list
 from ..algebra import _Expression, Expression, Polynomial, \
                       ExponentiatedPolynomial, Pow, Product, \
                       ProductRule, Function, Sum, sympify_expression
@@ -338,14 +338,14 @@ def _parse_global_templates(name, regulators, polynomial_names,
                                      name_as_char_pack = ','.join([("'" + char + "'") for char in name]),
                                      number_of_real_parameters = len(real_parameters),
                                      real_parameters = _make_FORM_list(real_parameters),
-                                     names_of_real_parameters = _make_cpp_list(real_parameters),
+                                     names_of_real_parameters = make_cpp_list(real_parameters),
                                      number_of_complex_parameters = len(complex_parameters),
                                      complex_parameters = _make_FORM_list(complex_parameters),
-                                     names_of_complex_parameters = _make_cpp_list(complex_parameters),
+                                     names_of_complex_parameters = make_cpp_list(complex_parameters),
                                      have_complex_parameters = len(complex_parameters) > 0,
                                      number_of_regulators = len(regulators),
                                      regulators = _make_FORM_list(regulators),
-                                     names_of_regulators = _make_cpp_list(regulators),
+                                     names_of_regulators = make_cpp_list(regulators),
                                      polynomial_names = _make_FORM_list(regulators),
                                      form_optimization_level = form_optimization_level,
                                      form_work_space = form_setup.workspace,
@@ -631,20 +631,6 @@ def _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sec
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
 
     return recursion(0)
-
-def _make_cpp_list(python_list):
-    '''
-    Convert a python list to a string to be used
-    in c++ initializer list for a vector.
-
-    Example: ``['a', 'b', 'c'] --> '"a","b","c"'``
-
-    '''
-    joined_inner_part = '","'.join(str(item) for item in python_list)
-    if len(joined_inner_part) == 0:
-        return ''
-    else:
-        return '"' + joined_inner_part + '"'
 
 def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters):
     regulators = expanded_prefactor.polysymbols

@@ -4,8 +4,7 @@ from .make_package import _convert_input, _make_FORM_definition, \
                           _make_FORM_function_definition, _make_FORM_list, \
                           _derivative_muliindex_to_name, _make_FORM_shifted_orders, \
                           _make_CXX_Series_initialization, _validate, \
-                          _make_prefactor_function, _make_CXX_function_declaration, \
-                          _make_cpp_list
+                          _make_prefactor_function, _make_CXX_function_declaration
 from ..algebra import Function, Polynomial, Product, ProductRule, Sum
 from ..misc import sympify_expression
 from nose.plugins.attrib import attr
@@ -820,20 +819,6 @@ class TestMiscellaneous(unittest.TestCase):
         FORM_list = _make_FORM_list(python_list)
         target_FORM_list = 'a,b,c'
         self.assertEqual(FORM_list, target_FORM_list)
-
-    #@attr('active')
-    def test_make_cpp_list(self):
-        python_list = ['a', 'b', 'c']
-        cpp_list = _make_cpp_list(python_list)
-        target_cpp_list = '"a","b","c"'
-        self.assertEqual(cpp_list, target_cpp_list)
-
-    #@attr('active')
-    def test_make_cpp_list_empty(self):
-        python_list = []
-        cpp_list = _make_cpp_list(python_list)
-        target_cpp_list = str() # empty string
-        self.assertEqual(cpp_list, target_cpp_list)
 
     #@attr('active')
     def test_make_FORM_shifted_orders(self):

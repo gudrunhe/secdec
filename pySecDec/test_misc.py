@@ -5,6 +5,23 @@ import numpy as np
 import unittest
 from nose.plugins.attrib import attr
 
+#@attr('active')
+class TestMakeCPPList(unittest.TestCase):
+    #@attr('active')
+    def test_make_cpp_list(self):
+        python_list = ['a', 'b', 'c']
+        cpp_list = make_cpp_list(python_list)
+        target_cpp_list = '"a","b","c"'
+        self.assertEqual(cpp_list, target_cpp_list)
+
+    #@attr('active')
+    def test_make_cpp_list_empty(self):
+        python_list = []
+        cpp_list = make_cpp_list(python_list)
+        target_cpp_list = str() # empty string
+        self.assertEqual(cpp_list, target_cpp_list)
+
+
 class TestSort(unittest.TestCase):
     def test_sort_2D_array(self):
         in_array = [[1,2,3],

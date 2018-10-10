@@ -11,6 +11,20 @@ import sympy as sp
 import numpy as np
 import warnings
 
+def make_cpp_list(python_list):
+    '''
+    Convert a python list to a string to be used
+    in c++ initializer list.
+
+    Example: ``['a', 'b', 'c'] --> '"a","b","c"'``
+
+    '''
+    joined_inner_part = '","'.join(str(item) for item in python_list)
+    if len(joined_inner_part) == 0:
+        return ''
+    else:
+        return '"' + joined_inner_part + '"'
+
 def powerset(iterable, min_length=0, stride=1):
     """
     Return an iterator over the powerset of a given set.
