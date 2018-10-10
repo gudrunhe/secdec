@@ -1,74 +1,40 @@
 #include <iostream> // std::cout
-#include <cmath> // std::log
-#include <complex> // std::complex
-#include <numeric> // std::accumulate
 #include <vector> // std::vector
 
-#include <secdecutil/integrators/cuba.hpp> // secdecutil::cuba::Divonne
-#include <secdecutil/series.hpp> // secdecutil::Series
 #include <secdecutil/uncertainties.hpp> // secdecutil::UncorrelatedDeviation
-#include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
 
-%(includes)s
-
-typedef double real_t;
-typedef std::complex<real_t> complex_t;
-template<typename T> using nested_series_t = %(nested_series_type)s;
-
-template<typename integrand_return_t, typename integrand_t, typename ...other_types>
-nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>> compute
-(
-    std::vector<nested_series_t<integrand_t>> integrands,
-    nested_series_t<integrand_return_t> prefactor,
-    secdecutil::Integrator<integrand_return_t,other_types...> integrator
-)
-{
-    // add integrands of sectors (together flag)
-    const nested_series_t<integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * prefactor;
-}
-
-#define COMPUTE(RESULT, NAME, DEFORMATION_PARAMETERS_MAXIMUM, INTEGRATOR) \
-\
-NAME::nested_series_t<secdecutil::UncorrelatedDeviation<NAME::integrand_return_t>> RESULT = \
-compute \
-( \
-    NAME::make_integrands( \
-                                    real_parameters, \
-                                    complex_parameters, \
-                                    10000, /*number of presamples*/ \
-                                    DEFORMATION_PARAMETERS_MAXIMUM \
-                                ), \
-    NAME::prefactor(real_parameters,complex_parameters), \
-    INTEGRATOR \
-)
+#include "%(name)s.hpp"
 
 int main()
 {
-    const std::vector<real_t> real_parameters = {};
-    const std::vector<complex_t> complex_parameters = {};
+    // User Specified Phase-space point
+    const std::vector<%(name)s::real_t> real_parameters = { /* EDIT: insert real parameter values here */ };
+    const std::vector<%(name)s::complex_t> complex_parameters = { /* EDIT: insert complex parameter values here */ };
 
-    auto divonne = secdecutil::cuba::Divonne<complex_t>();
-    divonne.flags = 2; // verbose output
-    divonne.epsrel = 1e-8;
-    divonne.epsabs = 1e-8;
-    divonne.maxeval = 1e6;
-    divonne.border = 1e-8;
+    // Construct the amplitude. Further options for the individual integrals can be set in the
+    // corresponding "<integral_name>_weighted_integral.cpp" file in the "src/" directory
+    %(name)s::nested_series_t<%(name)s::sum_t> unwrapped_amplitude =
+        %(name)s::make_amplitude(real_parameters, complex_parameters);
 
-%(computes)s
+    // pack amplitude into handler
+    %(name)s::handler_t<%(name)s::nested_series_t> amplitude
+    (
+        unwrapped_amplitude
+        // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+    );
+    amplitude.verbose = true;
 
-%(parameter_define)s
+    // The optional further arguments of the handler are set for all orders.
+    // To specify different settings for a particular order, type e.g.: amplitude.expression.at(0).epsrel = 1e-5;
 
-// TODO - generate correct regulator nesting
-//    const secdecutil::Series<real_t> eps = {1,1,{1},false,"eps"};
+    // optionally set wall clock limits (in seconds)
+    // Note: Only the wall clock time spent in "amplitude.evaluate()" is considered for these limits.
+    // amplitude.soft_wall_clock_limit = 60 *  8;
+    // amplitude.hard_wall_clock_limit = 60 * 10;
 
-%(sum_of_integrals)s
+    // compute the amplitude
+    const %(name)s::nested_series_t<secdecutil::UncorrelatedDeviation<%(name)s::integrand_return_t>> result = amplitude.evaluate();
 
-%(parameter_undef)s
-
-    std::cout << result << std::endl;
-    
-    return 0;
+    // print the result
+    std::cout << "amplitude = " << result << std::endl;
 }

@@ -87,9 +87,7 @@ def parse_coefficient(line, dimension_symbol):
     d = sp.symbols(dimension_symbol)
     eps = sp.symbols("eps")
     coeff_n, coeff_d = sp.fraction(sp.cancel(sp.together(sp.sympify(line).subs(d,4-2*eps))))
-    coeff_n = psd.algebra.Expression(coeff_n,['eps']).simplify()
-    coeff_d = psd.algebra.Expression(coeff_d,['eps']).simplify()
-    coefficient = Coefficient([coeff_n],[coeff_d],[0])
+    coefficient = Coefficient([str(coeff_n)],[str(coeff_d)],[eps],mandelstam_symbols+mass_symbols)
     return coefficient
 
 def parse_reduze_file(reduze_file):
@@ -129,6 +127,6 @@ def parse_reduze_file(reduze_file):
     for package_args in list_package_args:
         assert package_args.pop('real_parameters') == real_parameters
 
-    sum_package(integral_name,[loop_package]*len(list_package_args), list_package_args, [requested_order],real_parameters=real_parameters,coefficients=coefficients)
+    sum_package(integral_name,[loop_package]*len(list_package_args), list_package_args, ['eps'], [requested_order],real_parameters=real_parameters,coefficients=coefficients)
 
 parse_reduze_file(name_reduze_file)

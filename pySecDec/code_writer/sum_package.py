@@ -1,7 +1,6 @@
 from ..metadata import version, git_id
 from .template_parser import parse_template_file, parse_template_tree
 from ..misc import sympify_symbols, make_cpp_list
-from ..algebra import Polynomial, ExponentiatedPolynomial
 from ..loop_integral.loop_package import loop_package
 
 from time import strftime
@@ -221,36 +220,49 @@ class Coefficient(object):
 
         return lowest_orders, form_output
 
-def sum_package(integral_name, package_generators, generators_args, requested_orders, real_parameters=[],
-                complex_parameters=[], coefficients=None):
+def sum_package(name, package_generators, generators_args, regulators, requested_orders,
+                real_parameters=[], complex_parameters=[], coefficients=None,
+                form_executable=None):
     r'''
-    Decompose, subtract and expand an expression.
-    Return it as c++ package.
+    Decompose, subtract and expand an expression of the form
 
-    :param integral_name:
+    .. math::
+        \sum_i c_i \ \int f_i
+
+    Generate a c++ package with an optmized algorithm to
+    evaluate the integrals numerically.
+
+    :param name:
         string;
         The name of the c++ namepace and the output
         directory.
 
     :param package_generators:
-        iterable;
-        List that has package_generators
-        (:func:`pySecDec.loop_integral.loop_package`
-        or :func:`pySecDec.code_writer.make_package`)
-        specified in the order in which they should
-        be called on the list of package args.
+        iterable of functions;
+        The generators functions for the integrals
+        :math:`\int f_i`
+
+        .. seealso::
+            :func:`pySecDec.code_writer.make_package` and
+            :func:`pySecDec.loop_integral.loop_package`
 
     :param generators_args:
-        iterable;
-        dictionaries specifying the arguments for the
-        package_generatorrs. See
-        :func:`pySecDec.code_writer.make_package` and
-        :func:`pySecDec.loop_integral.loop_package` for the
-        arguments.
+        iterable of dictionaries;
+        The keyword arguments that are passed to the
+        `package_generators`.
+
+        .. seealso::
+            :func:`pySecDec.code_writer.make_package` and
+            :func:`pySecDec.loop_integral.loop_package`
+
+    :param regulators:
+        iterable of strings or sympy symbols;
+        The UV/IR regulators of the integral.
 
     :param requested_orders:
-        iterable;
-        Requested orders in the regulators.
+        iterable of integers;
+        Compute the expansion in the `regulators` to
+        these orders.
 
     :param real_parameters:
         iterable of strings or sympy symbols, optional;
@@ -261,113 +273,123 @@ def sum_package(integral_name, package_generators, generators_args, requested_or
         Symbols to be interpreted as complex variables.
 
     :param coefficients:
-        list of :class:`pySecDec.code_writer.sum_package.Coefficients`;
-        coefficients of the integrals.
+        iterable of :class:`.Coefficient`, optional;
+        The coefficients :math:`c_i` of the integrals.
+        :math:`c_i = 1` is assumed if not provided.
+
+    :param form_executable:
+        string or None, optional;
+        The path to the form exectuable. The argument is passed
+        to :meth:`.Coefficient.process`.
+        Default: ``None``.
 
     '''
-    print('running "sum_package" for ' + integral_name)
+    print('running "sum_package" for ' + name)
+
+    # convert input iterables to lists
+    package_generators = list(package_generators)
+    generators_args = list(generators_args)
+    regulators = list(regulators)
+    requested_orders = list(requested_orders)
+    real_parameters = list(real_parameters)
+    complex_parameters = list(complex_parameters)
+    coefficients = None if coefficients is None else list(coefficients)
 
     assert len(package_generators) == len(generators_args), \
-               "package_generators and generators_args have to have the same length,\
-                len(package_generators) = " + len(package_generators) + \
-                "len(generators_args) = " + len(generators_args)
+        "`package_generators` (%i) and `generators_args` (%i) must have the same length." % \
+        (len(package_generators), len(generators_args))
 
-    assert (coefficients == None or len(coefficients) == len(generators_args)), \
-            "coefficients has to either be None in which case 1 is taken as the \
-            default coefficients or coefficients has to have the same length as \
-            generator_args"
+    assert (coefficients is None or len(coefficients) == len(package_generators)), \
+        "`coefficients` must either be ``None`` have the same length as `package_generators`."
 
     # construct the c++ type "nested_series_t"
     # for two regulators, the resulting code should read:
     # "secdecutil::Series<secdecutil::Series<T>>"
     nested_series_type = 'secdecutil::Series<' * len(requested_orders) + 'T' + '>' * len(requested_orders)
 
-    names_makefile = []
-    includes = ''
-    computes = ''
+    # define required listings of contributing integrals
+    sub_integral_names = []
+    weighted_integral_includes = []
+    weighted_integral_sum_initialization = []
     for package_generator,generator_args in zip(package_generators,generators_args):
-        # define the replacements in the sum_package folder
-        name = generator_args["name"]
-        names_makefile.append(name)
-        includes += '#include "' + name + '/' + name + '.hpp"\n'
-        computes += '    COMPUTE(' + name + '_res, ' + name + ', 1., divonne);\n'
-    names_makefile = ' '.join(names_makefile)
-
-    sum_of_integrals = '    auto result = \n    '
-    if not coefficients:
-        sum_of_integrals +=  ' + '.join([ generator_args["name"] + '_res\n    ' for generator_args in generators_args])
-    else:
-        for coefficient,generator_args in zip(coefficients,generators_args):
-            name = generator_args["name"]
-            for numerator in coefficient.numerators:
-                try:
-                    sum_of_integrals += ' + pow(' + str(Polynomial(numerator.expolist,numerator.coeffs,numerator.symbols)) + ',' + sp.printing.ccode(numerator.exponent.evalf(20)) + ')'
-                except AttributeError:
-                    sum_of_integrals += ' + ' + str(numerator)
-            for denominator in coefficient.denominators:
-                try:
-                    sum_of_integrals += '/ pow(' + str(Polynomial(denominator.expolist,denominator.coeffs,denominator.symbols)) + ',' + sp.printing.ccode(denominator.exponent.evalf(20)) + ')'
-                except AttributeError:
-                    sum_of_integrals += ' / ' + str(denominator)
-            sum_of_integrals += '* ' + name + '_res\n    '
-    sum_of_integrals += '    ;'
-
-    parameter_define = ''
-    for i,real_parameter in enumerate(real_parameters):
-        parameter_define += '    #define ' + real_parameter + ' real_parameters[' + str(i) + ']\n'
-
-    for i,complex_parameter in enumerate(complex_parameters):
-        parameter_define += '    #define ' + complex_parameter + ' complex_parameters[' + str(i) + ']\n'
-
-    parameter_undef = ''
-    for i,real_parameter in enumerate(real_parameters):
-        parameter_undef += '    #undef ' + real_parameter + '\n'
-
-    for i,complex_parameter in enumerate(complex_parameters):
-        parameter_undef += '    #undef ' + complex_parameter + '\n'
+        sub_name = generator_args["name"]
+        sub_integral_names.append(sub_name)
+        weighted_integral_includes.append( '#include "' + sub_name + '_weighted_integral.hpp"')
+        weighted_integral_sum_initialization.append( 'amplitude += make_weighted_integral_%s(real_parameters, complex_parameters);' % sub_name )
+    sub_integral_names = ' '.join(sub_integral_names)
+    weighted_integral_includes = '\n'.join(weighted_integral_includes)
+    weighted_integral_sum_initialization[0] = weighted_integral_sum_initialization[0].replace('+',' ',1)
+    weighted_integral_sum_initialization = '\n'.join(weighted_integral_sum_initialization)
 
     replacements_in_files = {
-                            'name' : integral_name,
-                            'includes' : includes,
-                            'computes' : computes,
-                            'parameter_define' : parameter_define,
-                            'parameter_undef' : parameter_undef,
-                            'sum_of_integrals' : sum_of_integrals,
-                            'integral_names' : names_makefile,
-                            'pySecDec_version' : version,
-                            'python_version' : sys.version,
-                            'pySecDec_git_id' : git_id,
-                            'date_time' : strftime("%a %d %b %Y %H:%M"),
-                            'nested_series_type' : nested_series_type
+                                'name' : name,
+                                'number_of_integrals' : len(package_generators),
+                                'integral_names' : sub_integral_names,
+                                'weighted_integral_includes' : weighted_integral_includes,
+                                'weighted_integral_sum_initialization' : weighted_integral_sum_initialization,
+                                'number_of_regulators' : len(regulators),
+                                'names_of_regulators' : make_cpp_list(regulators),
+                                'requested_orders' : ','.join(map(str,requested_orders)),
+                                'pySecDec_version' : version,
+                                'python_version' : sys.version,
+                                'pySecDec_git_id' : git_id,
+                                'date_time' : strftime("%a %d %b %Y %H:%M"),
+                                'nested_series_type' : nested_series_type
                             }
-    filesystem_replacements = { 'integrate_name.cpp' : 'integrate_' + integral_name + '.cpp' }
+    filesystem_replacements = {
+                                  'integrate_name.cpp' : 'integrate_' + name + '.cpp',
+                                  'name.hpp' : name + '.hpp',
+
+                                  # the following files are integral specific
+                                  'name_weighted_integral.cpp' : None,
+                                  'name_weighted_integral.hpp' : None
+                              }
 
     # get path to the directory with the template files (path relative to directory with this file: "./templates/")
     template_sources = os.path.join(os.path.split(os.path.abspath(__file__))[0],'templates','sum_package')
-    parse_template_tree(template_sources, integral_name, replacements_in_files, filesystem_replacements)
+    parse_template_tree(template_sources, name, replacements_in_files, filesystem_replacements)
 
     original_working_directory = os.getcwd()
 
     try:
-        os.chdir(integral_name)
-        # call package integrator for every integral
+        os.chdir(name)
 
         if coefficients is None:
             coefficients = repeat(None)
 
+        # call package generator for every integral
         for package_generator, generator_args, coefficient in zip(package_generators, generators_args, coefficients):
+            sub_name = generator_args['name']
+            replacements_in_files['sub_integral_name'] = sub_name
+
             generator_args['real_parameters'] = real_parameters
             generator_args['complex_parameters'] = complex_parameters
-            if package_generator == loop_package:
+
+            # process coefficient
+            lowest_coefficient_orders, coefficient_expressions = coefficient.process(form=form_executable)
+            with open(os.path.join('lib', sub_name+'_coefficient.txt'),'w') as coeffile:
+                coeffile.write(coefficient_expressions)
+            replacements_in_files['lowest_coefficient_orders'] = ','.join(map(str,lowest_coefficient_orders))
+
+            if package_generator is loop_package:
                 if coefficient is None:
                     generator_args['requested_order'] = requested_orders[0]
                 else:
-                    generator_args['requested_order'] = requested_orders[0] - coefficient.orders[0]
+                    generator_args['requested_order'] = requested_orders[0] - lowest_coefficient_orders[0]
             else:
+                generator_args['regulators'] = regulators
                 if coefficient is None:
                     generator_args['requested_orders'] = np.asarray(requested_orders)
                 else:
-                    generator_args['requested_orders'] = np.asarray(requested_orders) - np.asarray(coefficient.orders)
+                    generator_args['requested_orders'] = np.asarray(requested_orders) - lowest_coefficient_orders
+
+            # parse integral specific files
+            for ch in 'ch':
+                suffix = '_weighted_integral.%spp' % ch
+                parse_template_file(os.path.join(template_sources, 'src', 'name' + suffix), # source
+                                    os.path.join('src', sub_name + suffix), # dest
+                                    replacements_in_files)
+
             package_generator(**generator_args)
 
     finally:
