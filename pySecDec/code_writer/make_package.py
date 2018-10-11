@@ -1818,150 +1818,156 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # initialize the multiprocessing pool to process the `secondary_sectors` in parallel
     pool = Pool(processes)
 
-    for primary_sector_index, primary_sector in enumerate(primary_sectors_to_consider):
+    # ty-finally blcok to make sure that the pool is closed
+    try:
+        for primary_sector_index, primary_sector in enumerate(primary_sectors_to_consider):
 
-        # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
-        integration_variables = primary_sector.Jacobian.polysymbols[:-len(regulators)-len(polynomial_names)]
-        symbols_polynomials_to_decompose = symbols_other_polynomials = integration_variables + regulators
-        symbols_remainder_expression = integration_variables + regulators
-        all_symbols = integration_variables + regulators + polynomial_names
+            # primary decomposition removes one integration parameter --> redefine `integration_variables` and the symbols of the different classes of `_Expression`s
+            integration_variables = primary_sector.Jacobian.polysymbols[:-len(regulators)-len(polynomial_names)]
+            symbols_polynomials_to_decompose = symbols_other_polynomials = integration_variables + regulators
+            symbols_remainder_expression = integration_variables + regulators
+            all_symbols = integration_variables + regulators + polynomial_names
 
-        # define `integration_variables` in the template system
-        template_replacements['number_of_integration_variables'] = len(integration_variables)
-        template_replacements['integration_variables'] = _make_FORM_list(integration_variables)
+            # define `integration_variables` in the template system
+            template_replacements['number_of_integration_variables'] = len(integration_variables)
+            template_replacements['integration_variables'] = _make_FORM_list(integration_variables)
 
-        # get the indices of the `integration_variables`, the `regulators`, and the `polynomial_names` in the polysymbols
-        integration_variable_indices = list(range(len(integration_variables)))
-        regulator_indices = [i + len(integration_variables) for i in range(len(regulators))]
+            # get the indices of the `integration_variables`, the `regulators`, and the `polynomial_names` in the polysymbols
+            integration_variable_indices = list(range(len(integration_variables)))
+            regulator_indices = [i + len(integration_variables) for i in range(len(regulators))]
 
-        # get the ibp power goals for the remaining integration variables
-        ibp_power_goal_this_primary_sector = [ibp_power_goal[integration_variables[index]] for index in integration_variable_indices]
+            # get the ibp power goals for the remaining integration variables
+            ibp_power_goal_this_primary_sector = [ibp_power_goal[integration_variables[index]] for index in integration_variable_indices]
 
-        # define "elementary" `_Expression`s such as ``x = Polynomial.from_expression('x', polysymbols)`` for all x
-        elementary_monomials = []
-        for i, symbol in enumerate(symbols_polynomials_to_decompose):
-            expolist = np.zeros([1,len(symbols_polynomials_to_decompose)], dtype=int)
-            expolist[:,i] = 1
-            elementary_monomials.append( Polynomial(expolist, np.array([1]), symbols_polynomials_to_decompose, copy=False) )
-        elementary_monomials_all_symbols = []
-        for i, symbol in enumerate(symbols_polynomials_to_decompose):
-            expolist = np.zeros([1,len(all_symbols)], dtype=int)
-            expolist[:,i] = 1
-            elementary_monomials_all_symbols.append( Polynomial(expolist, np.array([1]), all_symbols, copy=False) )
+            # define "elementary" `_Expression`s such as ``x = Polynomial.from_expression('x', polysymbols)`` for all x
+            elementary_monomials = []
+            for i, symbol in enumerate(symbols_polynomials_to_decompose):
+                expolist = np.zeros([1,len(symbols_polynomials_to_decompose)], dtype=int)
+                expolist[:,i] = 1
+                elementary_monomials.append( Polynomial(expolist, np.array([1]), symbols_polynomials_to_decompose, copy=False) )
+            elementary_monomials_all_symbols = []
+            for i, symbol in enumerate(symbols_polynomials_to_decompose):
+                expolist = np.zeros([1,len(all_symbols)], dtype=int)
+                expolist[:,i] = 1
+                elementary_monomials_all_symbols.append( Polynomial(expolist, np.array([1]), all_symbols, copy=False) )
 
-        # we later need ``0`` and ``1`` packed into specific types
-        polynomial_zero = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([0]), symbols_other_polynomials, copy=False)
-        polynomial_one = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([1]), symbols_other_polynomials, copy=False)
-        pole_part_initializer = Pow(polynomial_one, -polynomial_one)
+            # we later need ``0`` and ``1`` packed into specific types
+            polynomial_zero = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([0]), symbols_other_polynomials, copy=False)
+            polynomial_one = Polynomial(np.zeros([1,len(symbols_other_polynomials)], dtype=int), np.array([1]), symbols_other_polynomials, copy=False)
+            pole_part_initializer = Pow(polynomial_one, -polynomial_one)
 
-        if contour_deformation_polynomial is not None:
-            symbolic_deformed_variable_names = [FORM_names['deformed_variable'] + str(original_varname) for original_varname in integration_variables]
-            symbolic_deformation_factor_names = [FORM_names['additional_deformation_factor'] + str(original_varname) for original_varname in integration_variables]
+            if contour_deformation_polynomial is not None:
+                symbolic_deformed_variable_names = [FORM_names['deformed_variable'] + str(original_varname) for original_varname in integration_variables]
+                symbolic_deformation_factor_names = [FORM_names['additional_deformation_factor'] + str(original_varname) for original_varname in integration_variables]
 
-            # Need all first and second derivatives of the `contour_deformation_polynomial`.
-            # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
-            # the maximal degrees in the regulators are unchanged by the decomposition
-            maxdegrees_contour_deformation_polynomial = MaxDegreeFunction.get_maxdegrees(primary_sector.cast[contour_deformation_polynomial_index].factors[1], indices=regulator_indices, ignore_subclass=True)
-            symbolic_contour_deformation_polynomial = MaxDegreeFunction(str(contour_deformation_polynomial), *elementary_monomials, maxdegrees=maxdegrees_contour_deformation_polynomial)
+                # Need all first and second derivatives of the `contour_deformation_polynomial`.
+                # Since the `contour_deformation_polynomial` is left symbolic they are equal for every subsector after primary decomposition.
+                # the maximal degrees in the regulators are unchanged by the decomposition
+                maxdegrees_contour_deformation_polynomial = MaxDegreeFunction.get_maxdegrees(primary_sector.cast[contour_deformation_polynomial_index].factors[1], indices=regulator_indices, ignore_subclass=True)
+                symbolic_contour_deformation_polynomial = MaxDegreeFunction(str(contour_deformation_polynomial), *elementary_monomials, maxdegrees=maxdegrees_contour_deformation_polynomial)
 
-            # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
-            # ``z_k({x_k}) = x_k * (1 - i * lambda_k * (1-x_k) * Re(dF_dx_k))``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
-            deformation_parameters = [sp.symbols(FORM_names['deformation_parameter_i'] % i) for i in range(len(integration_variables))]
-            deformed_integration_parameters = [
-                                                     Sum(
-                                                         elementary_monomials[k],
-                                                         Product(
-                                                            -imaginary_unit * deformation_parameters[k] * elementary_monomials[k],
-                                                            1 - elementary_monomials[k],
-                                                            RealPartFunction(FORM_names['real_part'], symbolic_contour_deformation_polynomial.derive(k), copy=False),
-                                                         copy=False),
-                                                     copy=False)
-                                                     for k in range(len(integration_variables))
+                # compute the deformation of the integration parameters and its Jacobian matrix (see e.g. section 3.2 in arXiv:1601.03982):
+                # ``z_k({x_k}) = x_k * (1 - i * lambda_k * (1-x_k) * Re(dF_dx_k))``, where "dF_dx_k" denotes the derivative of ``F`` by ``x_k``
+                deformation_parameters = [sp.symbols(FORM_names['deformation_parameter_i'] % i) for i in range(len(integration_variables))]
+                deformed_integration_parameters = [
+                                                         Sum(
+                                                             elementary_monomials[k],
+                                                             Product(
+                                                                -imaginary_unit * deformation_parameters[k] * elementary_monomials[k],
+                                                                1 - elementary_monomials[k],
+                                                                RealPartFunction(FORM_names['real_part'], symbolic_contour_deformation_polynomial.derive(k), copy=False),
+                                                             copy=False),
+                                                         copy=False)
+                                                         for k in range(len(integration_variables))
+                                                  ]
+
+                # define symbols for ``z_k({x_k}) / x_k``
+                deformation_factors = [
+                                             Sum(
+                                                 polynomial_one,
+                                                 Product(
+                                                    -imaginary_unit * deformation_parameters[k] * polynomial_one,
+                                                    1 - elementary_monomials[k],
+                                                    RealPartFunction(FORM_names['real_part'], symbolic_contour_deformation_polynomial.derive(k), copy=False),
+                                                 copy=False),
+                                             copy=False)
+                                             for k in range(len(integration_variables))
+                                      ]
+
+                # define the `symbolic_deformed_variables` and the `symbolic_deformation_factors` to be inserted FORM
+                symbolic_deformed_variables = [
+                                                    MaxDegreeFunction(deformed_name,
+                                                                      *elementary_monomials[:len(integration_variables)],
+                                                                      maxdegrees=maxdegrees_contour_deformation_polynomial)
+                                                    for deformed_name in symbolic_deformed_variable_names
                                               ]
+                symbolic_deformed_variables.extend( (regulator for regulator in elementary_monomials[len(integration_variables):]) )
+                symbolic_deformation_factors = [
+                                                    MaxDegreeFunction(deformed_name,
+                                                                      *elementary_monomials[:len(integration_variables)],
+                                                                      maxdegrees=maxdegrees_contour_deformation_polynomial)
+                                                    for deformed_name in symbolic_deformation_factor_names
+                                               ]
 
-            # define symbols for ``z_k({x_k}) / x_k``
-            deformation_factors = [
-                                         Sum(
-                                             polynomial_one,
-                                             Product(
-                                                -imaginary_unit * deformation_parameters[k] * polynomial_one,
-                                                1 - elementary_monomials[k],
-                                                RealPartFunction(FORM_names['real_part'], symbolic_contour_deformation_polynomial.derive(k), copy=False),
-                                             copy=False),
-                                         copy=False)
-                                         for k in range(len(integration_variables))
-                                  ]
+                # generate the Jacobian determinant
+                print('computing Jacobian determinant for primary sector', primary_sector_index)
+                contourdef_Jacobian = np.empty((len(integration_variables), len(integration_variables)), dtype=object)
+                for i in range(len(integration_variables)):
+                    for j in range(len(integration_variables)):
+                        contourdef_Jacobian[i,j] = symbolic_deformed_variables[i].derive(j).simplify()
+                contourdef_Jacobian_determinant = parallel_det(contourdef_Jacobian, pool)
 
-            # define the `symbolic_deformed_variables` and the `symbolic_deformation_factors` to be inserted FORM
-            symbolic_deformed_variables = [
-                                                MaxDegreeFunction(deformed_name,
-                                                                  *elementary_monomials[:len(integration_variables)],
-                                                                  maxdegrees=maxdegrees_contour_deformation_polynomial)
-                                                for deformed_name in symbolic_deformed_variable_names
-                                          ]
-            symbolic_deformed_variables.extend( (regulator for regulator in elementary_monomials[len(integration_variables):]) )
-            symbolic_deformation_factors = [
-                                                MaxDegreeFunction(deformed_name,
-                                                                  *elementary_monomials[:len(integration_variables)],
-                                                                  maxdegrees=maxdegrees_contour_deformation_polynomial)
-                                                for deformed_name in symbolic_deformation_factor_names
-                                           ]
+            # remove `polynomial_names` from the `remainder_expression`
+            this_primary_sector_remainder_expression = remainder_expression
+            for poly_name in reversed_polynomial_names:
+                this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(-1, _to_function(poly_name)(*symbols_polynomials_to_decompose), remove=True)
 
-            # generate the Jacobian determinant
-            print('computing Jacobian determinant for primary sector', primary_sector_index)
-            contourdef_Jacobian = np.empty((len(integration_variables), len(integration_variables)), dtype=object)
-            for i in range(len(integration_variables)):
-                for j in range(len(integration_variables)):
-                    contourdef_Jacobian[i,j] = symbolic_deformed_variables[i].derive(j).simplify()
-            contourdef_Jacobian_determinant = parallel_det(contourdef_Jacobian, pool)
+            # If there is a nontrivial primary decomposition, remove the integration variables from the `remainder_expression`
+            for i,var in enumerate(all_integration_variables):
+                if var not in integration_variables:
+                    this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(i,1,remove=True)
+                    break
 
-        # remove `polynomial_names` from the `remainder_expression`
-        this_primary_sector_remainder_expression = remainder_expression
-        for poly_name in reversed_polynomial_names:
-            this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(-1, _to_function(poly_name)(*symbols_polynomials_to_decompose), remove=True)
+            if use_symmetries and not split:
+                # search for symmetries throughout the secondary decomposition
+                indices = range(len(integration_variables))
+                secondary_sectors = []
+                for primary_sector in primary_sectors:
+                    secondary_sectors.extend( strategy['secondary'](primary_sector, indices) )
+                secondary_sectors = _reduce_sectors_by_symmetries\
+                (
+                    secondary_sectors,
+                    'total number sectors',
+                    indices,
+                    use_Pak,
+                    dreadnaut_executable if use_dreadnaut else False,
+                    name
+                )
+            else:
+                secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
-        # If there is a nontrivial primary decomposition, remove the integration variables from the `remainder_expression`
-        for i,var in enumerate(all_integration_variables):
-            if var not in integration_variables:
-                this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(i,1,remove=True)
-                break
+            # process the `secondary_sectors` in parallel
+            lowest_orders_and_function_declarations_and_pole_structures = \
+                pool.map(
+                            _process_secondary_sector,
+                            _make_environment( locals() )
+                        )
 
-        if use_symmetries and not split:
-            # search for symmetries throughout the secondary decomposition
-            indices = range(len(integration_variables))
-            secondary_sectors = []
-            for primary_sector in primary_sectors:
-                secondary_sectors.extend( strategy['secondary'](primary_sector, indices) )
-            secondary_sectors = _reduce_sectors_by_symmetries\
-            (
-                secondary_sectors,
-                'total number sectors',
-                indices,
-                use_Pak,
-                dreadnaut_executable if use_dreadnaut else False,
-                name
-            )
-        else:
-            secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
+            # get the `sector_index` after processing the secondary sectors
+            sector_index = sector_index + len(lowest_orders_and_function_declarations_and_pole_structures)
 
-        # process the `secondary_sectors` in parallel
-        lowest_orders_and_function_declarations_and_pole_structures = \
-            pool.map(
-                        _process_secondary_sector,
-                        _make_environment( locals() )
-                    )
+            # update the global `lowest_orders`
+            lowest_orders = np.min([item[0] for item in lowest_orders_and_function_declarations_and_pole_structures],axis=0)
 
-        # get the `sector_index` after processing the secondary sectors
-        sector_index = sector_index + len(lowest_orders_and_function_declarations_and_pole_structures)
+            # update the global `function_declarations` and `pole_structures`
+            for item in lowest_orders_and_function_declarations_and_pole_structures:
+                _,f,p = item
+                function_declarations.update(f)
+                pole_structures.append(p)
 
-        # update the global `lowest_orders`
-        lowest_orders = np.min([item[0] for item in lowest_orders_and_function_declarations_and_pole_structures],axis=0)
-
-        # update the global `function_declarations` and `pole_structures`
-        for item in lowest_orders_and_function_declarations_and_pole_structures:
-            _,f,p = item
-            function_declarations.update(f)
-            pole_structures.append(p)
+    finally:
+        # make sure the pool is closed
+        pool.close()
 
     # expand the `prefactor` to the required orders
     print('expanding the prefactor')
