@@ -1,4 +1,4 @@
-check_PROGRAMS = test_integrator test_cuba_integrators test_cquad test_series test_integrand_container test_deep_apply test_uncertainties test_amplitude
+check_PROGRAMS = test_integrator test_cuba_integrators test_cquad test_series test_integrand_container test_deep_apply test_uncertainties test_amplitude test_ginac_coefficient_parser
 
 AM_CPPFLAGS = -I$(top_srcdir)
 if SECDEC_WITH_CUDA
@@ -15,6 +15,7 @@ test_integrand_container_SOURCES = main.cpp test_integrand_container.cpp catch.h
 test_deep_apply_SOURCES = main.cpp test_deep_apply.cpp catch.hpp
 test_uncertainties_SOURCES = main.cpp test_uncertainties.cpp catch.hpp
 test_amplitude_SOURCES = main.cpp test_amplitude.cpp catch.hpp
+test_ginac_coefficient_parser_SOURCES = main.cpp test_ginac_coefficient_parser.cpp catch.hpp
 
 test_cuba_integrators_LDADD = -lcuba
 if HAVE_SECDEC_CONTRIB
@@ -32,6 +33,12 @@ test_amplitude_LDADD = -lgsl -lgslcblas -lcuba
 if HAVE_SECDEC_CONTRIB
 test_amplitude_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
 test_amplitude_LDADD += -L$(SECDEC_CONTRIB)/lib
+endif
+
+test_ginac_coefficient_parser_LDADD = -lginac -lcln
+if HAVE_SECDEC_CONTRIB
+test_ginac_coefficient_parser_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
+test_ginac_coefficient_parser_LDADD += -L$(SECDEC_CONTRIB)/lib
 endif
 
 TESTS = $(check_PROGRAMS)
