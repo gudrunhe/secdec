@@ -173,6 +173,8 @@ class LoopIntegral(object):
             self.derivativelist = [0] * self.P
             self.number_of_derivatives = 0
         else:
+            if not isinstance(powerlist,list):
+                powerlist = list(powerlist)
             assert len(powerlist)==self.P, "The length of the powerlist must equal the number of propagators."
 
             self.powerlist=[]
