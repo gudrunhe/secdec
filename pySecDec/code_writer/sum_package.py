@@ -319,7 +319,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     sub_integral_names = ' '.join(sub_integral_names)
     weighted_integral_includes = '\n'.join(weighted_integral_includes)
     weighted_integral_sum_initialization[0] = weighted_integral_sum_initialization[0].replace('+',' ',1)
-    weighted_integral_sum_initialization = '\n'.join(weighted_integral_sum_initialization)
+    weighted_integral_sum_initialization = '\n        '.join(weighted_integral_sum_initialization)
 
     replacements_in_files = {
                                 'name' : name,
