@@ -125,7 +125,7 @@ TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
         // exceeding largest available QMC lattice
         integral.set_next_number_of_function_evaluations(400000);
         REQUIRE_THROWS_AS(integral.compute(), std::domain_error);
-        REQUIRE_THROWS_WITH(integral.compute(), Equals("class QmcIntegral: Requested number_of_function_evaluations exceeds largest available lattice."));
+        REQUIRE_THROWS_WITH(integral.compute(), Equals("class QmcIntegral: The requested number_of_function_evaluations (400000) exceeds the largest available lattice (327673)."));
 
     };
 

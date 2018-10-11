@@ -125,7 +125,9 @@ namespace secdecutil {
                 unsigned long long int desired_next_n = this->get_next_number_of_function_evaluations();
                 unsigned long long int next_n = qmc->get_next_n(desired_next_n);
                 if(next_n < desired_next_n)
-                    throw std::domain_error("class QmcIntegral: Requested number_of_function_evaluations exceeds largest available lattice.");
+                    throw std::domain_error("class QmcIntegral: The requested number_of_function_evaluations ("
+                        + std::to_string(desired_next_n) + ") exceeds the largest available lattice ("
+                        + std::to_string(next_n) +").");
                 this->set_next_number_of_function_evaluations( next_n ); // set number of function evluations to the next larger lattice
                 qmc->minn = next_n; // set lattice size, ignore random shifts "minm"
                 qmc->maxeval = 1; // make "qmc" ignore epsrel and epsabs
