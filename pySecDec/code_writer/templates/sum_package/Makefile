@@ -4,7 +4,7 @@ $(foreach INTEGRAL,$(INTEGRALS),lib/lib$(INTEGRAL).so) lib/lib$(NAME).so:
 	$(MAKE) -C src ../$@
 
 source:
-	for INTEGRAL in $(INTEGRALS); do $(MAKE) -C $${INTEGRAL} $@; done
+	for INTEGRAL in $(INTEGRALS); do $(MAKE) -C $${INTEGRAL} $@& done; wait
 
 # rule to build the integral libraries
 libs:
