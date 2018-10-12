@@ -137,3 +137,23 @@ class TestSumPackage(unittest.TestCase):
             ).simplify()
             , 1
         )
+
+    #@attr('active')
+    def test_coefficient_with_imaginary_unit(self):
+        coeff = Coefficient(['I*(5+I*8)'], [], [], [])
+        lowest_orders, coefficient_definition = coeff.process(workdir='tmpdir_test_coefficient_with_imaginary_unit' + python_major_version)
+
+        # check lowest_orders
+        np.testing.assert_array_equal(lowest_orders, [])
+
+        # check coefficient_definition
+        processed_expressions = coefficient_definition.split(';')
+        processed_numerator = processed_expressions[0].split('=')[1]
+        processed_denominator = processed_expressions[1].split('=')[1]
+        processed_regulator_factor = processed_expressions[2].split('=')[1]
+
+        self.assertFalse( '^2' in processed_numerator )
+
+        self.assertEqual( sp.sympify(processed_numerator) - sp.sympify('5*I-8') , 0)
+        self.assertEqual( sp.sympify(processed_denominator) - sp.sympify('1') , 0)
+        self.assertEqual( sp.sympify(processed_regulator_factor) - sp.sympify('1') , 0)

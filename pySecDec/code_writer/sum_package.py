@@ -98,11 +98,13 @@ class Coefficient(object):
             #Define numberOfnum "%(number_of_num)i"
             #Define numberOfden "%(number_of_den)i"
 
-            Symbol SecDecInternalsDUMMY;
-            Symbols `regulators';
-            Symbols `parameters';
+            Symbols SecDecInternalsDUMMY,`regulators';
+            Symbols I,`parameters';
 
             %(expression_definitions)s
+
+            * convert I to i_
+            multiply replace_(I,i_);
             .sort:read;
 
             * factor out the global power of each regulator from each numerator and denominator
@@ -138,6 +140,8 @@ class Coefficient(object):
               #EndIf
             #EndDo
 
+            * convert i_ to I
+            multiply replace_(i_,I);
             .sort:beforeWrite;
 
             #write <`OUTFILE'> "numerator = 1"
