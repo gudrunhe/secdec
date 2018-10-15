@@ -341,7 +341,7 @@ namespace secdecutil {
          * Integrand containter that is usable on a CUDA device.
          */
 
-        template<typename real_t, typename complex_t, typename integrand_return_t, unsigned long long maximal_number_of_functions, size_t number_of_real_parameters, size_t number_of_complex_parameters>
+        template<typename real_t, typename complex_t, typename integrand_return_t, unsigned long long maximal_number_of_functions, size_t number_of_real_parameters, size_t number_of_complex_parameters, char... name>
         struct CudaIntegrandContainerWithoutDeformation {
 
             // the call signature of an integrand
@@ -415,13 +415,13 @@ namespace secdecutil {
 
             // converting constructor
             template
-            <unsigned long long other_maximal_number_of_functions>
+            <unsigned long long other_maximal_number_of_functions, char... other_name>
             CudaIntegrandContainerWithoutDeformation
             (
                 const CudaIntegrandContainerWithoutDeformation
                       <
                           real_t, complex_t, integrand_return_t, other_maximal_number_of_functions,
-                          number_of_real_parameters, number_of_complex_parameters
+                          number_of_real_parameters, number_of_complex_parameters, other_name...
                       >& other
             ) :
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions),
@@ -464,13 +464,13 @@ namespace secdecutil {
             }
 
             template
-            <unsigned long long other_maximal_number_of_functions>
+            <unsigned long long other_maximal_number_of_functions, char... other_name>
             CudaIntegrandContainerWithoutDeformation& operator+=
             (
                 const CudaIntegrandContainerWithoutDeformation
                       <
                           real_t, complex_t, integrand_return_t, other_maximal_number_of_functions,
-                          number_of_real_parameters, number_of_complex_parameters
+                          number_of_real_parameters, number_of_complex_parameters, other_name...
                       >& other
             )
             {
@@ -497,14 +497,14 @@ namespace secdecutil {
                 return *this;
             }
             template
-            <unsigned long long other_maximal_number_of_functions>
+            <unsigned long long other_maximal_number_of_functions, char... other_name>
             friend CudaIntegrandContainerWithoutDeformation operator+
             (
                 const CudaIntegrandContainerWithoutDeformation& ic1,
                 const CudaIntegrandContainerWithoutDeformation
                       <
                           real_t, complex_t, integrand_return_t, other_maximal_number_of_functions,
-                          number_of_real_parameters, number_of_complex_parameters
+                          number_of_real_parameters, number_of_complex_parameters, other_name...
                       >& ic2
             )
             {
@@ -518,7 +518,7 @@ namespace secdecutil {
         template
         <typename real_t, typename complex_t, unsigned long long maximal_number_of_functions,
         size_t maximal_number_of_integration_variables, size_t number_of_real_parameters,
-        size_t number_of_complex_parameters>
+        size_t number_of_complex_parameters, char... name>
         struct CudaIntegrandContainerWithDeformation {
 
             // the call signature of an integrand
@@ -616,14 +616,14 @@ namespace secdecutil {
 
             // converting constructor
             template
-            <unsigned long long other_maximal_number_of_functions>
+            <unsigned long long other_maximal_number_of_functions, char... other_name>
             CudaIntegrandContainerWithDeformation
             (
                 const CudaIntegrandContainerWithDeformation
                       <
                           real_t, complex_t, other_maximal_number_of_functions,
                           maximal_number_of_integration_variables, number_of_real_parameters,
-                          number_of_complex_parameters
+                          number_of_complex_parameters, other_name...
                       >& other
             ) :
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions),
@@ -668,14 +668,14 @@ namespace secdecutil {
             }
 
             template
-            <unsigned long long other_maximal_number_of_functions>
+            <unsigned long long other_maximal_number_of_functions, char... other_name>
             CudaIntegrandContainerWithDeformation& operator+=
             (
                 const CudaIntegrandContainerWithDeformation
                       <
                           real_t,complex_t,other_maximal_number_of_functions,
                           maximal_number_of_integration_variables, number_of_real_parameters,
-                          number_of_complex_parameters
+                          number_of_complex_parameters, other_name...
                       >& other
             )
             {
@@ -704,7 +704,7 @@ namespace secdecutil {
                 return *this;
             }
             template
-            <unsigned long long other_maximal_number_of_functions>
+            <unsigned long long other_maximal_number_of_functions, char... other_name>
             friend CudaIntegrandContainerWithDeformation operator+
             (
                 const CudaIntegrandContainerWithDeformation& ic1,
@@ -712,7 +712,7 @@ namespace secdecutil {
                       <
                           real_t,complex_t,other_maximal_number_of_functions,
                           maximal_number_of_integration_variables, number_of_real_parameters,
-                          number_of_complex_parameters
+                          number_of_complex_parameters, other_name...
                       >& ic2
             )
             {
@@ -731,10 +731,10 @@ namespace secdecutil {
          * (if applicable) without using "std::bind".
          */
         // SectorContainerWithDeformation -> CudaIntegrandContainer
-        template<size_t maximal_number_of_integration_variables, size_t number_of_real_parameters, size_t number_of_complex_parameters, typename real_t, typename complex_t>
+        template<size_t maximal_number_of_integration_variables, size_t number_of_real_parameters, size_t number_of_complex_parameters, char... name, typename real_t, typename complex_t>
         std::function
         <
-            CudaIntegrandContainerWithDeformation<real_t,complex_t,1/*maximal_number_of_functions*/,maximal_number_of_integration_variables,number_of_real_parameters,number_of_complex_parameters>
+            CudaIntegrandContainerWithDeformation<real_t,complex_t,1/*maximal_number_of_functions*/,maximal_number_of_integration_variables,number_of_real_parameters,number_of_complex_parameters,name...>
             (secdecutil::SectorContainerWithDeformation<real_t,complex_t>)
         >
         SectorContainerWithDeformation_to_CudaIntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters,
@@ -757,7 +757,7 @@ namespace secdecutil {
                         );
                 real_t const*const optimized_deformation_parameters_ptr = optimized_deformation_parameters.data();
                 return
-                CudaIntegrandContainerWithDeformation<real_t,complex_t,1/*maximal_number_of_functions*/,maximal_number_of_integration_variables,number_of_real_parameters,number_of_complex_parameters>
+                CudaIntegrandContainerWithDeformation<real_t,complex_t,1/*maximal_number_of_functions*/,maximal_number_of_integration_variables,number_of_real_parameters,number_of_complex_parameters,name...>
                 {
                     sector_container.number_of_integration_variables,
                     1, // number_of_functions
@@ -771,10 +771,10 @@ namespace secdecutil {
         };
 
         // SectorContainerWithoutDeformation -> CudaIntegrandContainer
-        template<typename integrand_return_t, size_t number_of_real_parameters, size_t number_of_complex_parameters, typename real_t, typename complex_t>
+        template<typename integrand_return_t, size_t number_of_real_parameters, size_t number_of_complex_parameters, char... name, typename real_t, typename complex_t>
         std::function
         <
-            CudaIntegrandContainerWithoutDeformation<real_t,complex_t,integrand_return_t,1/*maximal_number_of_functions*/,number_of_real_parameters,number_of_complex_parameters>
+            CudaIntegrandContainerWithoutDeformation<real_t,complex_t,integrand_return_t,1/*maximal_number_of_functions*/,number_of_real_parameters,number_of_complex_parameters,name...>
             (secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>)
         >
         SectorContainerWithoutDeformation_to_CudaIntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
@@ -783,7 +783,7 @@ namespace secdecutil {
             return [ real_parameters, complex_parameters ] (secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t> sector_container)
             {
                 return
-                CudaIntegrandContainerWithoutDeformation<real_t,complex_t,integrand_return_t,1/*maximal_number_of_functions*/,number_of_real_parameters,number_of_complex_parameters>
+                CudaIntegrandContainerWithoutDeformation<real_t,complex_t,integrand_return_t,1/*maximal_number_of_functions*/,number_of_real_parameters,number_of_complex_parameters,name...>
                 {
                     sector_container.number_of_integration_variables,
                     1, // number_of_functions

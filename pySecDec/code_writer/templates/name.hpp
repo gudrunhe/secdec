@@ -88,14 +88,16 @@ namespace %(name)s
                     <
                         real_t,complex_t,1/*maximal_number_of_functions*/,
                         maximal_number_of_integration_variables,
-                        number_of_real_parameters,number_of_complex_parameters
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
                     >
                     cuda_integrand_t;
             typedef secdecutil::CudaIntegrandContainerWithDeformation
                     <
                         real_t,complex_t,number_of_sectors/*maximal_number_of_functions*/,
                         maximal_number_of_integration_variables,
-                        number_of_real_parameters,number_of_complex_parameters
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
                     >
                     cuda_together_integrand_t;
             std::vector<nested_series_t<cuda_integrand_t>> make_cuda_integrands
@@ -112,14 +114,16 @@ namespace %(name)s
                     <
                         real_t,complex_t,integrand_return_t,
                         1/*maximal_number_of_functions*/,
-                        number_of_real_parameters,number_of_complex_parameters
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
                     >
                     cuda_integrand_t;
             typedef secdecutil::CudaIntegrandContainerWithoutDeformation
                     <
                         real_t,complex_t,integrand_return_t,
                         number_of_sectors/*maximal_number_of_functions*/,
-                        number_of_real_parameters,number_of_complex_parameters
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
                     >
                     cuda_together_integrand_t;
             std::vector<nested_series_t<cuda_integrand_t>> make_cuda_integrands

@@ -316,6 +316,7 @@ def _parse_global_templates(name, regulators, polynomial_names,
     # initialize template replacements
     template_replacements = dict(
                                      name = name,
+                                     name_as_char_pack = ','.join([("'" + char + "'") for char in name]),
                                      number_of_real_parameters = len(real_parameters),
                                      real_parameters = _make_FORM_list(real_parameters),
                                      names_of_real_parameters = _make_cpp_list(real_parameters),

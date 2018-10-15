@@ -74,7 +74,7 @@ namespace %(name)s
         #if %(name)s_contour_deformation
             std::vector<nested_series_t<
                 secdecutil::CudaIntegrandContainerWithDeformation<real_t,complex_t,1/*maximal_number_of_functions*/,
-                maximal_number_of_integration_variables,number_of_real_parameters,number_of_complex_parameters>
+                maximal_number_of_integration_variables,number_of_real_parameters,number_of_complex_parameters,%(name_as_char_pack)s>
             >> make_cuda_integrands
             (
                 const std::vector<real_t>& real_parameters,
@@ -93,7 +93,8 @@ namespace %(name)s
                         <
                             maximal_number_of_integration_variables,
                             number_of_real_parameters,
-                            number_of_complex_parameters
+                            number_of_complex_parameters,
+                            %(name_as_char_pack)s
                         >
                         (
                             real_parameters,
@@ -107,7 +108,7 @@ namespace %(name)s
             };
         #else
             std::vector<nested_series_t<
-            secdecutil::CudaIntegrandContainerWithoutDeformation<real_t,complex_t,integrand_return_t,1/*maximal_number_of_functions*/,number_of_real_parameters,number_of_complex_parameters>
+            secdecutil::CudaIntegrandContainerWithoutDeformation<real_t,complex_t,integrand_return_t,1/*maximal_number_of_functions*/,number_of_real_parameters,number_of_complex_parameters,%(name_as_char_pack)s>
             >> make_cuda_integrands
             (
                 const std::vector<real_t>& real_parameters,
@@ -121,8 +122,9 @@ namespace %(name)s
                     secdecutil::SectorContainerWithoutDeformation_to_CudaIntegrandContainer
                         <
                             integrand_return_t,
-                            %(name)s::number_of_real_parameters,
-                            %(name)s::number_of_complex_parameters
+                            number_of_real_parameters,
+                            number_of_complex_parameters,
+                            %(name_as_char_pack)s
                         >
                         (
                             real_parameters,
