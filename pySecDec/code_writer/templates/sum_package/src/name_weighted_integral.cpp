@@ -110,7 +110,7 @@ namespace SUB_INTEGRAL_NAME
     }
 };
 
-namespace %(name)s
+namespace MAIN_INTEGRAL_NAME
 {
     // convert return value of "make_integrands", "prefactor", and "coefficient" to "nested_series_t<sum_t>"
     nested_series_t<sum_t> CAT_EXPAND(make_weighted_integral_,SUB_INTEGRAL_NAME)
