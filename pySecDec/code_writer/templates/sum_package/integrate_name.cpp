@@ -32,6 +32,10 @@ int main()
     // amplitude.soft_wall_clock_limit = 60 *  8;
     // amplitude.hard_wall_clock_limit = 60 * 10;
 
+    // optionally compute multiple integrals concurrently
+    // Note: The integrals themselves may also be computed in parallel irresprective of this option.
+    // amplitude.number_of_threads = 12;
+
     // compute the amplitude
     const %(name)s::nested_series_t<secdecutil::UncorrelatedDeviation<%(name)s::integrand_return_t>> result = amplitude.evaluate();
 

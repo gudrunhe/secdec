@@ -4,11 +4,12 @@
 #include <algorithm> // std::max, std::min, std::sort
 #include <cassert> // assert
 #include <chrono> // std::chrono::steady_clock
-#include <iostream> // std::cout
+#include <iostream> // std::cout, std::dec
 #include <limits> // std::numeric_limits
 #include <memory> // std::shared_ptr
 #include <string> // std::to_string
 #include <stdexcept> // std::domain_error, std::logic_error
+#include <thread> // std::thread
 #include <utility> // std::declval, std::move
 #include <vector> // std::vector
 
@@ -245,6 +246,56 @@ namespace secdecutil {
         };
 
 
+        /*
+         * evaluate a vector of integrals
+         */
+        template<typename integral_t>
+        void evaluate_integrals(std::vector<integral_t*>& integrals, const bool& verbose, size_t number_of_threads)
+        {
+            if(number_of_threads == 0)
+                ++number_of_threads;
+
+            auto compute_integral = [ &verbose ] (integral_t* integral)
+                {
+                    const unsigned long long int curr_n = integral->get_number_of_function_evaluations();
+                    const unsigned long long int next_n = integral->get_next_number_of_function_evaluations();
+                    /*secdecutil::UncorrelatedDeviation<integrand_return_t>*/ decltype(integral->get_integral_result()) old_result;
+                    if(verbose)
+                        try {
+                            old_result = integral->get_integral_result();
+                        } catch (const integral_not_computed_error&) { /* ignore */ };
+
+                    integral->compute();
+
+                    if(verbose)
+                    {
+                        std::cout << "integral: " << integral;
+                        if(next_n > curr_n)
+                            std::cout << ", res: " << old_result << " -> " << integral->get_integral_result()
+                                      << ", n: " << curr_n << " -> " << std::dec << integral->get_number_of_function_evaluations() << std::endl;
+                        else
+                            std::cout << ", res: " << integral->get_integral_result()
+                                      << ", n: " << std::dec << next_n << std::endl;
+                    }
+                };
+
+            std::vector<std::thread> thread_pool(number_of_threads);
+            size_t idx = 0;
+            for (integral_t* integral : integrals)
+            {
+                if(thread_pool.at(idx).joinable())
+                    thread_pool.at(idx).join();
+
+                thread_pool.at(idx) = std::thread(compute_integral,integral);
+
+                if(++idx >= number_of_threads)
+                    idx = 0;
+            }
+
+            for(std::thread& worker : thread_pool)
+                if(worker.joinable())
+                    worker.join();
+        }
         template<typename integrand_return_t, typename real_t, typename coefficient_t, template<typename...> class container_t>
         class WeightedIntegralHandler
         {
@@ -287,6 +338,7 @@ namespace secdecutil {
                 real_t min_decrease_factor;
                 real_t soft_wall_clock_limit;
                 real_t hard_wall_clock_limit;
+                size_t number_of_threads;
                 container_t<sum_t> expression;
 
                 /*
@@ -309,6 +361,7 @@ namespace secdecutil {
                     min_decrease_factor(0.9),
                     hard_wall_clock_limit(std::numeric_limits<double>::infinity()),
                     soft_wall_clock_limit(std::numeric_limits<double>::infinity()),
+                    number_of_threads(0),
                     expression( deep_apply(expression,convert_to_sum_t) )
                 {
                     std::function<void(sum_t&)> set_parameters =
@@ -332,41 +385,6 @@ namespace secdecutil {
                 decltype(std::chrono::steady_clock::now()) start_time;
 
             protected:
-
-                /*
-                 * evaluate integrals
-                 */
-                void evaluate_integrals()
-                {
-                    std::function<void(sum_t&)> compute =
-                        [ this ] (sum_t& sum)
-                        {
-                            for (term_t& term : sum.summands)
-                            {
-                                const unsigned long long int curr_n = term.integral->get_number_of_function_evaluations();
-                                const unsigned long long int next_n = term.integral->get_next_number_of_function_evaluations();
-                                secdecutil::UncorrelatedDeviation<integrand_return_t> old_result;
-                                if(verbose)
-                                    try {
-                                        old_result = term.integral->get_integral_result();
-                                    } catch (const integral_not_computed_error&) { /* ignore */ };
-
-                                term.integral->compute();
-
-                                if(verbose)
-                                {
-                                    std::cout << "compute called" << "; sum: " << &sum << ", term: " << &term << ", integral: " << term.integral;
-                                    if(next_n > curr_n)
-                                        std::cout << ", res: " << old_result << " -> " << term.integral->get_integral_result()
-                                                  << ", n: " << curr_n << " -> " << next_n << std::endl;
-                                    else
-                                        std::cout << ", res: " << term.integral->get_integral_result()
-                                                  << ", n: " << next_n << std::endl;
-                                }
-                            }
-                        };
-                    secdecutil::deep_apply(expression, compute);
-                };
 
                 /*
                  * evaluate expression
@@ -405,6 +423,7 @@ namespace secdecutil {
                             time_for_next_iteration += integral->get_integration_time() * n_increase_fac;
                         }
                     }
+                    time_for_next_iteration /= number_of_threads;
 
                     if(verbose)
                     {
@@ -445,6 +464,7 @@ namespace secdecutil {
                                 }
                             }
                         }
+                        time_for_next_iteration /= number_of_threads;
 
                         // stop iterating if soft limit passed
                         if(elapsed_time > soft_wall_clock_limit)
@@ -540,13 +560,13 @@ namespace secdecutil {
                         abs_error_goal *= abs_error_goal; // require variance rather than standard deviation
 
                         if(verbose)
-                            std::cout << std::endl << "sum: " << &sum << ", current sum result : " << current_sum << std::endl;
+                            std::cout << std::endl << "sum: " << &sum << ", current sum result: " << current_sum << std::endl;
 
                         // compute the C_i
                         std::vector<real_t> c; c.reserve( sum.summands.size() );
                         for(auto& term : sum.summands)
                         {
-                            auto time = term.integral->get_integration_time();
+                            auto time = term.integral->get_integration_time() / number_of_threads;
                             auto integral = term.integral->get_integral_result();
                             real_t abserr = abs(integral.uncertainty);
                             real_t relerr = abserr / abs( integral.value );
@@ -648,6 +668,10 @@ namespace secdecutil {
 
                 // ------------------------------- main part of the function starts here -------------------------------
 
+                // ensure at least one thread
+                if(number_of_threads == 0)
+                    ++number_of_threads;
+
                 // make a unique vector of the appearing integrals
                 std::vector<integral_t*> integrals;
                 std::function<void(sum_t&)> populate_integrals =
@@ -665,7 +689,7 @@ namespace secdecutil {
                 secdecutil::deep_apply(expression, ensure_mineval);
                 if(verbose)
                     std::cout << "computing integrals to satisfy mineval" << std::endl;
-                evaluate_integrals();
+                evaluate_integrals(integrals, verbose, number_of_threads);
                 if(verbose)
                     std::cout << "---------------------" << std::endl << std::endl << std::endl;
 
@@ -678,7 +702,7 @@ namespace secdecutil {
 
                     if(verbose)
                         std::cout << std::endl << "computing integrals to satisfy min_epsrel and min_epsabs" << std::endl;
-                    evaluate_integrals();
+                    evaluate_integrals(integrals, verbose, number_of_threads);
                     if(verbose)
                         std::cout << "---------------------" << std::endl << std::endl << std::endl;
                 } while(repeat);
@@ -693,7 +717,7 @@ namespace secdecutil {
 
                     if(verbose)
                         std::cout << std::endl << "computing integrals to satisfy error goals on sums" << std::endl;
-                    evaluate_integrals();
+                    evaluate_integrals(integrals, verbose, number_of_threads);
                     if(verbose)
                         std::cout << "---------------------" << std::endl << std::endl << std::endl;
                 } while(repeat);
