@@ -496,14 +496,18 @@ namespace secdecutil {
                                 real_t abserr = abs(result.uncertainty);
                                 if(verbose)
                                     std::cout << "sum: " << &sum << ", term: " << &term << ", integral: " << term.integral << ", current integral result: " << result << std::endl;
-                                if(abserr*abs(term.coefficient) > sum.min_epsabs)
+                                if(abserr > sum.min_epsabs)
                                 {
                                     real_t relerr = abserr / abs( result.value );
                                     if(relerr > sum.min_epsrel)
                                     {
-                                        repeat = true;
-                                        auto new_n = term.integral->get_number_of_function_evaluations()*min(relerr/sum.min_epsrel,abserr/sum.min_epsabs);
-                                        term.integral->set_next_number_of_function_evaluations(new_n);
+                                        unsigned long long int old_n = term.integral->get_number_of_function_evaluations();
+                                        real_t new_n = old_n * pow(min(relerr/sum.min_epsrel,abserr/sum.min_epsabs), 1./term.integral->get_scaleexpo());
+                                        if(new_n > old_n)
+                                        {
+                                            repeat = true;
+                                            term.integral->set_next_number_of_function_evaluations( new_n > sum.maxeval ? sum.maxeval : static_cast<unsigned long long int>(new_n) );
+                                        }
                                     }
                                 }
                             }
@@ -638,7 +642,7 @@ namespace secdecutil {
                             const unsigned long long int max_next_n = curr_n * sum.maxincreasefac; // implicit cast to unsigned long long int
 
                             if( next_n > max_next_n )
-                                term.integral->set_next_number_of_function_evaluations( curr_n * sum.maxincreasefac );
+                                term.integral->set_next_number_of_function_evaluations( max_next_n );
                         }
                     };
 
