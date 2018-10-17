@@ -8,7 +8,7 @@
 #include <limits> // std::numeric_limits
 #include <memory> // std::shared_ptr
 #include <string> // std::to_string
-#include <stdexcept> // std::domain_error, std::logic_error
+#include <stdexcept> // std::domain_error, std::logic_error, std::runtime_error
 #include <thread> // std::thread
 #include <utility> // std::declval, std::move
 #include <vector> // std::vector
@@ -29,6 +29,16 @@ namespace secdecutil {
 
         // this exception is thrown when a getter function of Integral is called before the corresponding field has been populated
         struct integral_not_computed_error : public std::logic_error { using std::logic_error::logic_error; };
+
+        #ifdef SECDEC_WITH_CUDA
+            // cuda error handling
+            struct cuda_error : public std::runtime_error { using std::runtime_error::runtime_error; };
+            inline void cuda_safe_call(cudaError_t error)
+            {
+                if (error != cudaSuccess)
+                    throw cuda_error( cudaGetErrorString(error) );
+            };
+        #endif
 
         template<typename integrand_return_t, typename real_t>
         class Integral
@@ -250,7 +260,7 @@ namespace secdecutil {
          * evaluate a vector of integrals
          */
         template<typename integral_t>
-        void evaluate_integrals(std::vector<integral_t*>& integrals, const bool& verbose, size_t number_of_threads)
+        void evaluate_integrals(std::vector<integral_t*>& integrals, const bool& verbose, size_t number_of_threads, size_t reset_cuda_after)
         {
             if(number_of_threads == 0)
                 ++number_of_threads;
@@ -281,12 +291,32 @@ namespace secdecutil {
 
             std::vector<std::thread> thread_pool(number_of_threads);
             size_t idx = 0;
+            #ifdef SECDEC_WITH_CUDA
+                size_t job_counter = 0;
+                int number_of_cuda_devices; cuda_safe_call( cudaGetDeviceCount(&number_of_cuda_devices) );
+            #endif
             for (integral_t* integral : integrals)
             {
                 if(thread_pool.at(idx).joinable())
                     thread_pool.at(idx).join();
 
                 thread_pool.at(idx) = std::thread(compute_integral,integral);
+
+                // reset cuda devices after running "reset_cuda_after" integrations
+                #ifdef SECDEC_WITH_CUDA
+                    if(reset_cuda_after > 0 && ++job_counter >= reset_cuda_after)
+                    {
+                        job_counter = 0;
+                        for(std::thread& worker : thread_pool)
+                            if(worker.joinable())
+                                worker.join();
+                        for(int device_id = 0; device_id < number_of_cuda_devices; ++device_id)
+                        {
+                            cuda_safe_call( cudaSetDevice(device_id) );
+                            cuda_safe_call( cudaDeviceReset() );
+                        }
+                    }
+                #endif
 
                 if(++idx >= number_of_threads)
                     idx = 0;
@@ -339,6 +369,7 @@ namespace secdecutil {
                 real_t soft_wall_clock_limit;
                 real_t hard_wall_clock_limit;
                 size_t number_of_threads;
+                size_t reset_cuda_after;
                 container_t<sum_t> expression;
 
                 /*
@@ -362,6 +393,7 @@ namespace secdecutil {
                     hard_wall_clock_limit(std::numeric_limits<double>::infinity()),
                     soft_wall_clock_limit(std::numeric_limits<double>::infinity()),
                     number_of_threads(0),
+                    reset_cuda_after(0),
                     expression( deep_apply(expression,convert_to_sum_t) )
                 {
                     std::function<void(sum_t&)> set_parameters =
@@ -689,7 +721,7 @@ namespace secdecutil {
                 secdecutil::deep_apply(expression, ensure_mineval);
                 if(verbose)
                     std::cout << "computing integrals to satisfy mineval" << std::endl;
-                evaluate_integrals(integrals, verbose, number_of_threads);
+                evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after);
                 if(verbose)
                     std::cout << "---------------------" << std::endl << std::endl << std::endl;
 
@@ -702,7 +734,7 @@ namespace secdecutil {
 
                     if(verbose)
                         std::cout << std::endl << "computing integrals to satisfy min_epsrel and min_epsabs" << std::endl;
-                    evaluate_integrals(integrals, verbose, number_of_threads);
+                    evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after);
                     if(verbose)
                         std::cout << "---------------------" << std::endl << std::endl << std::endl;
                 } while(repeat);
@@ -717,7 +749,7 @@ namespace secdecutil {
 
                     if(verbose)
                         std::cout << std::endl << "computing integrals to satisfy error goals on sums" << std::endl;
-                    evaluate_integrals(integrals, verbose, number_of_threads);
+                    evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after);
                     if(verbose)
                         std::cout << "---------------------" << std::endl << std::endl << std::endl;
                 } while(repeat);
