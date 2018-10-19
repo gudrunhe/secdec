@@ -468,7 +468,6 @@ namespace secdecutil {
                             time_for_next_iteration += integral->get_integration_time() * n_increase_fac;
                         }
                     }
-                    time_for_next_iteration /= number_of_threads;
 
                     if(verbose)
                     {
@@ -509,7 +508,6 @@ namespace secdecutil {
                                 }
                             }
                         }
-                        time_for_next_iteration /= number_of_threads;
 
                         // stop iterating if soft limit passed
                         if(elapsed_time > soft_wall_clock_limit)
@@ -611,7 +609,7 @@ namespace secdecutil {
                         std::vector<real_t> c; c.reserve( sum.summands.size() );
                         for(auto& term : sum.summands)
                         {
-                            auto time = term.integral->get_integration_time() / number_of_threads;
+                            auto time = term.integral->get_integration_time();
                             auto integral = term.integral->get_integral_result();
                             real_t abserr = abs(integral.uncertainty);
                             real_t relerr = abserr / abs( integral.value );
