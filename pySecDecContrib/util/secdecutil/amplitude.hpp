@@ -441,6 +441,19 @@ namespace secdecutil {
                 {
                     real_t elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
                     real_t remaining_time = hard_wall_clock_limit - elapsed_time;
+
+                    if(remaining_time <= 0.)
+                    {
+                        if(verbose)
+                        {
+                            std::cout << std::endl;
+                            std::cout << "elapsed time: " << elapsed_time << std::endl;
+                            std::cout << "remaining time: " << remaining_time << std::endl;
+                            std::cout << "stopping due to time constraint" << std::endl;
+                        }
+                        return;
+                    }
+
                     real_t time_for_next_iteration = 0.;
                     real_t decrease_factor;
                     bool can_improve_in_time = true;
