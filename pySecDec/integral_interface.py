@@ -55,7 +55,7 @@ known_qmc_transforms = dict(
     sidi5 = -15,
     sidi6 = -16
 )
-for i in range(1,6):
+for i in range(1,7):
     known_qmc_transforms['korobov' + str(i)] = known_qmc_transforms['korobov%ix%i'%(i,i)]
 
 # assuming
