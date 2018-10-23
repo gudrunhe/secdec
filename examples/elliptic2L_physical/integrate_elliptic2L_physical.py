@@ -6,8 +6,7 @@ import sympy as sp
 elliptic2L_physical = IntegralLibrary('elliptic2L_physical/elliptic2L_physical_pylink.so')
 
 # choose integrator
-elliptic2L_physical.use_Vegas(flags=2,epsrel=1e-4,maxeval=10**7)
-
+elliptic2L_physical.use_Qmc(verbosity=3,minn=3*10**9,maxeval=3*10**9,transform='korobov1',fitfunction='polysingular')
  
 # integrate non-Euclidean point;
 s, t, pp4, msq = [90.,-2.5,1.6,1.] 
