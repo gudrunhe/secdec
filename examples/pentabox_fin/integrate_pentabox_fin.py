@@ -3,15 +3,14 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-pentabox = IntegralLibrary('pentabox/pentabox_pylink.so')
+pentabox = IntegralLibrary('pentabox_fin/pentabox_fin_pylink.so')
 
 # choose integrator
-pentabox.use_Vegas(flags=2,epsrel=1e-3,maxeval=10**7)
+pentabox.use_Qmc(transform='korobov3',verbosity=3,minn=10**8,maxeval=10**8,fitfunction='polysingular')
 
- 
 # integrate non-Euclidean point;
-s12, s23, s34, s45, s51 = [5.,-4.,2.,-6.,3.] 
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = pentabox([s12, s23, s34, s45, s51],deformation_parameters_maximum = 0.1)
+s12, s23, s34, s45, s51 = [5.,-4.,2.,-6.,3.]
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = pentabox([s12,s23,s34,s45,s51],deformation_parameters_maximum=0.1)
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
@@ -28,5 +27,4 @@ integral_without_prefactor_err = sp.sympify(str_integral_without_prefactor.repla
 # numerical result
 print('eps^0:', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
 
-# using epsrel=1.e-4 the 
-# result gives:eps^0: -0.0198270127732515788 - 0.034157996078159697*I +/- ( 0.00001693731512749778 + 0.0000132963931427676128*I )
+# result: eps^0: -0.019823659271430049 - 0.0341514491102190842*I +/- ( 8.60492332244851086e-9 + 7.45328059295334506e-9*I )
