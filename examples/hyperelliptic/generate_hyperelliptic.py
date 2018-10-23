@@ -7,12 +7,9 @@ li = psd.loop_integral.LoopIntegralFromPropagators(
 
 loop_momenta = ['k1','k2'],
 external_momenta = ['p1','p2','p3','p4'],
-Lorentz_indices = ['mu'],
 
 propagators = ['k1**2-m1sq','(k1-p1)**2-m1sq','(k1-p1-p2)**2-m1sq','k2**2-m3sq','(k2-p3)**2-m3sq','(k1-k2-p1-p2-p3)**2-m2sq','(k1+k2)**2-m2sq'],
 powerlist = [1,1,1,1,1,1,1],
-
-#numerator = 'k1(mu)*k2(mu)',
 
 replacement_rules = [
                         ('p1*p1', 0),
@@ -42,7 +39,7 @@ real_parameters = Mandelstam_symbols + mass_symbols,
 requested_order = 0,
 
 # the optimization level to use in FORM (can be 0, 1, 2, 3)
-form_optimization_level = 2,
+form_optimization_level = 4,
 
 # the WorkSpace parameter for FORM
 form_work_space = '2G',
@@ -60,7 +57,7 @@ decomposition_method = 'geometric',
 contour_deformation = True,
 
 # no symmetries --> no need to run the full symmetry finder
-#use_Pak = False,
+use_Pak = False,
 
 )
 
