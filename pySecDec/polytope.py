@@ -341,16 +341,21 @@ class Polytope(object):
                 # more than a single number in first two lines
                 # --> file does not contain dimensions
                 f.seek(0)
-
             # the reduced input comes next (space and newline separated) and is terminated by a line containing letters
             array_lines = []
             current_str = f.readline()
-            while re.match(r'^[\-0-9 ]+$', current_str) is not None:
+            while 'inequalities' not in current_str:
                 array_lines.append(current_str)
                 current_str = f.readline()
             array_as_str = ''.join(array_lines)
+            # check for equations that constrain the polytope to hyperplane (happens for scaleless integrals)
+            # if there are no equations the line is expected to be '0' or 'equations' depending on the normaliz version
+            current_str= f.readline()
+            if 'equations' in current_str or re.sub(r'[\n\t\s]*', '', current_str) == '0':
+                return np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)
+            else:
+                raise NotImplementedError("Polytope is not full dimensional. Are you trying to compute a scaleless integral (which evaluates to zero)?")
 
-        return np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)
 
     def _read_ext_file(self, filepath):
         with open(filepath, 'r') as f:
