@@ -280,6 +280,10 @@ class Qmc(CPPIntegrator):
         underlying Qmc implementation. Possible values
         are ``"default"``, ``"none"``, ``"polysingular"``.
 
+    .. seealso::
+        The most important options are described in
+        :numref:`chapter_cpp_qmc`.
+
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
     underlying Qmc implementation is used.
