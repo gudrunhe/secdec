@@ -399,6 +399,8 @@ options of the integrator we refer to :numref:`chapter_cpp_qmc`.
 List of Examples
 ----------------
 
+.. TODO: add reference to QMC paper
+
 Here we list the available examples. For more details regarding each example see [PSD17]_.
 
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
@@ -413,11 +415,15 @@ Here we list the available examples. For more details regarding each example see
 | **box2L_numerator**:       | a massless planar on-shell 2-loop, 4-point, 7-propagator box with a numerator, either defined as an inverse propagator         |
 |                            | ``box2L_invprop.py`` or in terms of contracted Lorentz vectors ``box2L_contracted_tensor.py``                                  |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **pentabox_fin**:          | a 2-loop, 5-point, 8-propagator diagram, evaluated in :math:`6-2 \epsilon` dimensions where it is finite                       |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **triangle3L**:            | a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **elliptic2L_euclidean**:  | an integral known to contain elliptic functions, evaluated at a Euclidean phase-space point                                    |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **elliptic2L_physical**:   | an integral known to contain elliptic functions, evaluated at a physical phase-space point                                     |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **hyperelliptic**:         | an integral known to contain hyperelliptic functions, evaluated at a physical phase-space point                                |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **triangle2L_split**:      | a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics                                  |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
