@@ -7,12 +7,9 @@ li = psd.loop_integral.LoopIntegralFromPropagators(
 
 loop_momenta = ['k1','k2','k3'],
 external_momenta = ['p'],
-#Lorentz_indices = ['mu'],
 
 propagators = ['(k1+p)**2-m1sq','(k1-k3)**2-m1sq','k2**2-m2sq','(k2-k3)**2-m3sq'],
 powerlist = [1,1,1,1],
-
-#numerator = 'k1(mu)*k2(mu)',
 
 replacement_rules = [ ('p*p','s') ]
 
@@ -35,7 +32,7 @@ real_parameters = Mandelstam_symbols + mass_symbols,
 requested_order = 0,
 
 # the optimization level to use in FORM (can be 0, 1, 2, 3)
-form_optimization_level = 2,
+form_optimization_level = 4,
 
 # the WorkSpace parameter for FORM
 form_work_space = '2G',
@@ -51,9 +48,6 @@ decomposition_method = 'geometric',
 # whether or not to produce code to perform the contour deformation
 # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
 contour_deformation = True,
-
-# no symmetries --> no need to run the full symmetry finder
-#use_Pak = False,
 
 )
 
