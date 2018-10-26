@@ -41,7 +41,7 @@ requested_order = 1,
 form_optimization_level = 4,
 
 # the WorkSpace parameter for FORM
-form_work_space = '100M',
+form_work_space = '1G',
 
 # the method to be used for the sector decomposition
 # valid values are ``iterative`` and ``geometric``
