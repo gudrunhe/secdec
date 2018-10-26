@@ -421,6 +421,8 @@ Here we list the available examples. For more details regarding each example see
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **formfactor4L**:          | a single-scale 4-loop 3-point integral in :math:`6-2 \epsilon` dimensions                                                      |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **bubble6L**:              | a single-scale 6-loop 2-point integral, evaluated at a Euclidean phase-space point                                             |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **elliptic2L_euclidean**:  | an integral known to contain elliptic functions, evaluated at a Euclidean phase-space point                                    |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **elliptic2L_physical**:   | an integral known to contain elliptic functions, evaluated at a physical phase-space point                                     |
