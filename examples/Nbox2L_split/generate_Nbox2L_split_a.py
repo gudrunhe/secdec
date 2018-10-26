@@ -26,7 +26,7 @@ mass_symbols = ['mm']
 
 loop_package(
 
-name = 'box2L_hfkk_a',
+name = 'Nbox2L_split_a',
 
 loop_integral = li,
 
@@ -47,7 +47,10 @@ form_work_space = '1G',
 # valid values are ``iterative`` and ``geometric``
 decomposition_method = 'iterative',
              
-contour_deformation=True
+contour_deformation=True,
+
+# there are singularities at one due to ``p4*p4 = mm``
+#split = True # not needed for this integral
 
 )
 

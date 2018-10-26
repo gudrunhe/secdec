@@ -26,7 +26,7 @@ mass_symbols = ['mm']
 
 loop_package(
 
-name = 'box2L_hfkk_b',
+name = 'Nbox2L_split_c',
 
 loop_integral = li,
 

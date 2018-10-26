@@ -432,6 +432,8 @@ Here we list the available examples. For more details regarding each example see
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **triangle2L_split**:      | a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics                                  |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **Nbox2L_split**:          | three 2-loop, 4-point, 5-propagator integrals that need ``split=True`` due to special kinematics                               |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **hypergeo5F4**:           | a general dimensionally regulated parameter integral                                                                           |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **4photon1L_amplitude**:   | calculation of the 4-photon amplitude, showing how to use `pySecDec` as an integral library in a larger context                |
