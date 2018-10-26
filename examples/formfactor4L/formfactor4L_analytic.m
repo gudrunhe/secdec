@@ -1,6 +1,6 @@
 (* result from equation (7.1) in arXiv:1510.06758 *)
 
-zeta53 = NSum[Sum[n^-3 m ^ -5, {n, 1, m - 1}], {m, 1, \[Infinity]}, AccuracyGoal -> 30, WorkingPrecision -> 100];
+zeta53 = NSum[Sum[n^-3 m^-5, {n, 1, m - 1}], {m, 1, \[Infinity]}, AccuracyGoal -> 30, WorkingPrecision -> 100];
 
 formfactor4L = N[
  18/5 * Zeta[2]^2  Zeta[3] -
