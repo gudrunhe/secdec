@@ -428,7 +428,7 @@ Here we list the available examples. For more details regarding each example see
 | **banana_3mass**:          | a 3-loop 2-point integral with three different internal masses known to contain hyperelliptic functions,                       |
 |                            | evaluated at a physical phase-space point                                                                                      |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **hyperelliptic**:         | an integral known to contain hyperelliptic functions, evaluated at a physical phase-space point                                |
+| **hyperelliptic**:         | a 2-loop 4-point nonplanar integral known to contain hyperelliptic functions, evaluated at a physical phase-space point        |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **triangle2L_split**:      | a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics                                  |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
