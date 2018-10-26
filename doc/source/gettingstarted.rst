@@ -419,9 +419,14 @@ Here we list the available examples. For more details regarding each example see
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **triangle3L**:            | a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **formfactor4L**:          | a single-scale 4-loop 3-point integral in :math:`6-2 \epsilon` dimensions                                                      |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **elliptic2L_euclidean**:  | an integral known to contain elliptic functions, evaluated at a Euclidean phase-space point                                    |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **elliptic2L_physical**:   | an integral known to contain elliptic functions, evaluated at a physical phase-space point                                     |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **banana_3mass**:          | a 3-loop 2-point integral with three different internal masses known to contain hyperelliptic functions,                       |
+|                            | evaluated at a physical phase-space point                                                                                      |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **hyperelliptic**:         | an integral known to contain hyperelliptic functions, evaluated at a physical phase-space point                                |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
