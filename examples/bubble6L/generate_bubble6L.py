@@ -21,8 +21,6 @@ loop_integral = li,
 # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
 requested_order = 0,
 
-additional_prefactor = '(gamma(1-eps)**2*gamma(1+eps)/gamma(2-2*eps))**6', # TODO: matches paper for "(gamma(1-eps)*gamma(1+eps))^6)" but shoud match with "(gamma(1-eps)**2*gamma(1+eps)/gamma(2-2*eps))**6"
-
 # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
 form_optimization_level = 4,
 
