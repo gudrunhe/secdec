@@ -73,6 +73,23 @@ known_qmc_fitfunctions = dict(
     polysingular = 1
 )
 
+# assuming
+# enum qmc_generatingvectors_t: int
+# {
+#     default_generatingvectors = 0,
+#
+#     cbcpt_dn1_100 = 1,
+#     cbcpt_dn2_6 = 2,
+#     cbcpt_cfftw1_6 = 3
+# };
+known_qmc_generatingvectors = dict(
+    default = 0,
+
+    cbcpt_dn1_100 = 1,
+    cbcpt_dn2_6 = 2,
+    cbcpt_cfftw1_6 = 3
+)
+
 class CPPIntegrator(object):
     '''
     Abstract base class for integrators to be used with
@@ -280,6 +297,14 @@ class Qmc(CPPIntegrator):
         underlying Qmc implementation. Possible values
         are ``"default"``, ``"none"``, ``"polysingular"``.
 
+    :param generatingvectors:
+        string;
+        The name of a set of generating vectors.
+        The possible choices correspond to the available generating
+        vectors of the underlying Qmc implementation. Possible values
+        are ``"default"``, ``"cbcpt_dn1_100"``,
+        ``"cbcpt_dn2_6"`` and ``"cbcpt_cfftw1_6"``.
+
     .. seealso::
         The most important options are described in
         :numref:`chapter_cpp_qmc`.
@@ -289,7 +314,7 @@ class Qmc(CPPIntegrator):
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform,fitfunction='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform,fitfunction='default',generatingvectors='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
                       minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
@@ -311,6 +336,7 @@ class Qmc(CPPIntegrator):
                                                             c_longlong, # seed
                                                             c_int, # transform_id
                                                             c_int, # fitfunction_id
+                                                            c_int # generatingvectors_id
                                                       ]
 
         # assuming:
@@ -332,7 +358,9 @@ class Qmc(CPPIntegrator):
                                                                     minm,maxnperpackage,maxmperpackage,cputhreads,
                                                                     cudablocks,cudathreadsperblock,verbosity,
                                                                     seed,known_qmc_transforms[str(transform).lower()],
-                                                                    known_qmc_fitfunctions[str(fitfunction).lower()])
+                                                                    known_qmc_fitfunctions[str(fitfunction).lower()],
+                                                                    known_qmc_generatingvectors[str(generatingvectors).lower()]
+                                                                   )
 
 class CudaQmc(object):
     '''
@@ -370,12 +398,20 @@ class CudaQmc(object):
         underlying Qmc implementation. Possible values
         are ``"default"``, ``"none"``, ``"polysingular"``.
 
+    :param generatingvectors:
+        string;
+        The name of a set of generating vectors.
+        The possible choices correspond to the available generating
+        vectors of the underlying Qmc implementation. Possible values
+        are ``"default"``, ``"cbcpt_dn1_100"``,
+        ``"cbcpt_dn2_6"`` and ``"cbcpt_cfftw1_6"``.
+
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform,fitfunction='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform,fitfunction='default',generatingvectors='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
                       minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
@@ -395,6 +431,7 @@ class CudaQmc(object):
                         c_longlong, # seed
                         c_int, # transform_id
                         c_int, # fitfunction_id
+                        c_int, # generatingvectors_id
                         c_ulonglong, # number_of_devices
                         devices_t # devices[]
                    ]
@@ -423,6 +460,7 @@ class CudaQmc(object):
                                                                                                cudablocks,cudathreadsperblock,verbosity,
                                                                                                seed,known_qmc_transforms[str(transform).lower()],
                                                                                                known_qmc_fitfunctions[str(fitfunction).lower()],
+                                                                                               known_qmc_generatingvectors[str(generatingvectors).lower()],
                                                                                                len(devices),devices_t(*devices)
                                                                                           )
         self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(
@@ -431,6 +469,7 @@ class CudaQmc(object):
                                                                                                cudablocks,cudathreadsperblock,verbosity,
                                                                                                seed,known_qmc_transforms[str(transform).lower()],
                                                                                                known_qmc_fitfunctions[str(fitfunction).lower()],
+                                                                                               known_qmc_generatingvectors[str(generatingvectors).lower()],
                                                                                                len(devices),devices_t(*devices)
                                                                                           )
 

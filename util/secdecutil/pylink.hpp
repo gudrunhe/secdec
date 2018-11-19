@@ -254,7 +254,8 @@ extern "C"
         unsigned long long int verbosity, \
         long long int seed, \
         int transform_id, \
-        int fitfunction_id
+        int fitfunction_id, \
+        int generatingvectors_id
     #define SET_COMMON_QMC_ARGS \
         /* If an argument is set to 0 then use the default of the Qmc library */ \
         if ( epsrel != 0 ) \
@@ -284,7 +285,13 @@ extern "C"
         if ( verbosity != 0 ) \
             integrator->verbosity = verbosity; \
         if ( seed != 0 ) \
-            integrator->randomgenerator.seed(seed);
+            integrator->randomgenerator.seed(seed); \
+        if ( generatingvectors_id == cbcpt_dn1_100 ) \
+            integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_dn1_100(); \
+        if ( generatingvectors_id == cbcpt_dn2_6 ) \
+            integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_dn2_6(); \
+        if ( generatingvectors_id == cbcpt_cfftw1_6 ) \
+            integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_cfftw1_6();
     #define SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
             SET_COMMON_QMC_ARGS \
             if (number_of_devices > 0) \
@@ -320,6 +327,14 @@ extern "C"
 
         no_fit = -1,
         polysingular = 1
+    };
+    enum qmc_generatingvectors_t : int
+    {
+        default_generatingvectors = 0,
+
+        cbcpt_dn1_100 = 1,
+        cbcpt_dn2_6 = 2,
+        cbcpt_cfftw1_6 = 3
     };
     #ifdef SECDEC_WITH_CUDA
         secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> *
