@@ -7,7 +7,8 @@ ff = IntegralLibrary('formfactor4L/formfactor4L_pylink.so')
 # choose integrator
 ff.use_Qmc(
 minn=35*10**5,
-minm = 64,
+minm=64,
+maxeval=1,
 
 cudablocks=128, cudathreadsperblock=64,
 maxnperpackage=8, maxmperpackage=8,

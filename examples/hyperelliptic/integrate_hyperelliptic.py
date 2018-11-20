@@ -6,7 +6,7 @@ import sympy as sp
 hyperelliptic = IntegralLibrary('hyperelliptic/hyperelliptic_pylink.so')
 
 # choose integrator
-hyperelliptic.use_Qmc(verbosity=3,maxeval=10**8,minn=10**8,transform='korobov3',fitfunction='polysingular')
+hyperelliptic.use_Qmc(verbosity=3,maxeval=1,minn=10**8,transform='korobov3',fitfunction='polysingular')
 
 # integrate
 str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = hyperelliptic(real_parameters=[10.0, -0.75, 1.0, 1.3, 0.7])

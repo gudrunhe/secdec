@@ -5,7 +5,7 @@ from pySecDec.integral_interface import IntegralLibrary
 box2L = IntegralLibrary('Nbox2L_split_c/Nbox2L_split_c_pylink.so')
 
 # choose integrator
-box2L.use_Qmc(verbosity=3,minn=2*10**9,maxeval=2*10**9,transform='korobov3',generatingvectors='cbcpt_cfftw1_6')
+box2L.use_Qmc(verbosity=3,minn=15173222401,maxeval=1,transform='korobov3',generatingvectors='cbcpt_cfftw1_6')
 
 # integrate
 str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box2L(real_parameters=[-1.0,-0.8,0.1])

@@ -5,7 +5,7 @@ from pySecDec.integral_interface import IntegralLibrary
 bubble_6L = IntegralLibrary('bubble6L/bubble6L_pylink.so')
 
 # choose integrator
-bubble_6L.use_Qmc(verbosity=3,minn=10**7,maxeval=10**7,transform='korobov3',fitfunction='polysingular')
+bubble_6L.use_Qmc(verbosity=3,minn=10**7,maxeval=1,transform='korobov3',fitfunction='polysingular')
 
 # integrate
 str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = bubble_6L()

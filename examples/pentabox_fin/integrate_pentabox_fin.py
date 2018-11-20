@@ -6,7 +6,7 @@ import sympy as sp
 pentabox = IntegralLibrary('pentabox_fin/pentabox_fin_pylink.so')
 
 # choose integrator
-pentabox.use_Qmc(transform='korobov3',verbosity=3,minn=10**8,maxeval=10**8,fitfunction='polysingular')
+pentabox.use_Qmc(transform='korobov3',verbosity=3,minn=10**8,maxeval=1,fitfunction='polysingular')
 
 # integrate non-Euclidean point;
 s12, s23, s34, s45, s51 = [5.,-4.,2.,-6.,3.]

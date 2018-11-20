@@ -6,7 +6,7 @@ import sympy as sp
 HZ2L_nonplanar = IntegralLibrary('HZ2L_nonplanar/HZ2L_nonplanar_pylink.so')
 
 # choose integrator
-HZ2L_nonplanar.use_Qmc(verbosity=3,minn=10**8,maxeval=10**8,transform='korobov3')
+HZ2L_nonplanar.use_Qmc(verbosity=3,minn=10**8,maxeval=1,transform='korobov3')
 
 # integrate
 str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = HZ2L_nonplanar(real_parameters=[200.,-23.,9.,1.56,0.81])
