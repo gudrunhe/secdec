@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: db11422fd0736f4b043c37c765521dc54aac670d
- * Generated: 07-10-2018 11:40:27
+ * Commit: 785deb56e6b59018a1399b310036e4410b31488c
+ * Generated: 21-11-2018 14:05:56
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -223,15 +223,17 @@ namespace integrators
         struct PolySingularFunction
         {
             static const int num_parameters = 6;
-            const std::vector<std::vector<D>> initial_parameters = { {1.1,-0.1, 0.1,0.1, 1.0,0.0} };
+            const std::vector<std::vector<D>> initial_parameters = { {1.1,-0.1, 0.1,0.1, 0.3,0.3} };
 
             D operator()(const D x, const double* p) const
             {
                 // constraint: no singularity and singular terms have positive coefficients
-                if (p[0]<=static_cast<D>(1.001) or p[0]>=static_cast<D>(1.5) or p[1]>=static_cast<D>(-0.001) or p[1]<=static_cast<D>(-0.5) or p[2]<static_cast<D>(0) or p[3]<static_cast<D>(0))
-                    return std::numeric_limits<D>::max();
-
-                D y = p[2]*(x*(p[0]-D(1)))/(p[0]-x) + p[3]*(x*(p[1]-D(1)))/(p[1]-x)  + x*(p[4]+x*(p[5]+x*(D(1)-p[2]-p[3]-p[4]-p[5])));
+                if (p[0]<=static_cast<D>(1.001) or p[0]>=static_cast<D>(5) or p[1]>=static_cast<D>(-0.001) or p[1]<=static_cast<D>(-4) )
+                    return D(10.); // std::numeric_limits<D>::max() will sometimes result in fit parameters being NaN
+                
+                D p2 = abs(p[2]);
+                D p3 = abs(p[3]);
+                D y = p2*(x*(p[0]-D(1)))/(p[0]-x) + p3*(x*(p[1]-D(1)))/(p[1]-x)  + x*(p[4]+x*(p[5]+x*(D(1)-p2-p3-p[4]-p[5])));
 
                 // constraint: transformed variable within unit hypercube
                 if ( y<static_cast<D>(0) || y>static_cast<D>(1) )
@@ -250,13 +252,13 @@ namespace integrators
             {
 
                 if (parameter == 0) {
-                    return p[2]*((D(1) - x)*x)/(x - p[0])/(x - p[0]);
+                    return abs(p[2])*((D(1) - x)*x)/(x - p[0])/(x - p[0]);
                 } else if (parameter == 1) {
-                    return p[3]*((D(1) - x)*x)/(x - p[1])/(x - p[1]);
+                    return abs(p[3])*((D(1) - x)*x)/(x - p[1])/(x - p[1]);
                 } else if (parameter == 2) {
-                    return (x*(p[0]-D(1)))/(p[0]-x) -x*x*x;
+                    return ((x*(p[0]-D(1)))/(p[0]-x) -x*x*x) * ((p[2] < 0) ? D(-1) : D(1));
                 } else if (parameter == 3) {
-                    return (x*(p[1]-D(1)))/(p[1]-x) -x*x*x;
+                    return ((x*(p[1]-D(1)))/(p[1]-x) -x*x*x) * ((p[3] < 0) ? D(-1) : D(1));
                 } else if (parameter == 4) {
                     return  x*(D(1)-x*x);
                 } else if (parameter == 5) {
@@ -271,10 +273,10 @@ namespace integrators
         {
             D operator()(const D x, const double* v, const double* p) const
             {
-						    D xmp0 = x-p[0];
-						    D xmp1 = x-p[1];
-                return x*(D(1)-x)*D(2)* ( v[0]*(p[2]*v[0]+(x - p[0])*v[2])/xmp0/xmp0/xmp0  + v[1]*(p[3]*v[1]+(x - p[1])*v[3])/xmp1/xmp1/xmp1 );
-            }
+                D xmp0 = x-p[0];
+                D xmp1 = x-p[1];
+                return x*(D(1)-x)*D(2)*(v[0]*(abs(p[2])*v[0]+(x - p[0])*v[2])/xmp0/xmp0/xmp0 + v[1]*(abs(p[3])*v[1]+(x - p[1])*v[3])/xmp1/xmp1/xmp1);
+          }
         };
 
         template<typename I, typename D, U M>
@@ -296,8 +298,10 @@ namespace integrators
                 D wgt = 1;
                 for (U d = 0; d < number_of_integration_variables ; ++d)
                 {
-                    wgt *= p[d][2]*p[d][0]*(p[d][0]-D(1))/(p[d][0]-x[d])/(p[d][0]-x[d]) + p[d][3]*p[d][1]*(p[d][1]-D(1))/(p[d][1]-x[d])/(p[d][1]-x[d]) + p[d][4] + x[d]*(D(2)*p[d][5]+x[d]*D(3)*(D(1)-p[d][2]-p[d][3]-p[d][4]-p[d][5]));
-                    x[d] = p[d][2]*(x[d]*(p[d][0]-D(1)))/(p[d][0]-x[d]) + p[d][3]*(x[d]*(p[d][1]-D(1)))/(p[d][1]-x[d])  + x[d]*(p[d][4]+x[d]*(p[d][5]+x[d]*(D(1)-p[d][2]-p[d][3]-p[d][4]-p[d][5])));
+                    D p2 = abs(p[d][2]);
+                    D p3 = abs(p[d][3]);
+                    wgt *= p2*p[d][0]*(p[d][0]-D(1))/(p[d][0]-x[d])/(p[d][0]-x[d]) + p3*p[d][1]*(p[d][1]-D(1))/(p[d][1]-x[d])/(p[d][1]-x[d]) + p[d][4] + x[d]*(D(2)*p[d][5]+x[d]*D(3)*(D(1)-p2-p3-p[d][4]-p[d][5]));
+                    x[d] = p2*(x[d]*(p[d][0]-D(1)))/(p[d][0]-x[d]) + p3*(x[d]*(p[d][1]-D(1)))/(p[d][1]-x[d])  + x[d]*(p[d][4]+x[d]*(p[d][5]+x[d]*(D(1)-p2-p3-p[d][4]-p[d][5])));
                     if ( x[d] > D(1) || x[d] < D(0) ) return D(0);
                 }
                 return wgt * f(x);
@@ -475,8 +479,8 @@ namespace integrators
                 constexpr static U value = (Binomial<n-1,k-1>::value + Binomial<n-1,k>::value);
             };
 
-            // TODO - optimisation
-            // k > n -k ? bin(n,n-k) : bin(n,k)
+            // Note: potential for optimisation
+            // k > n-k ? Binomial<n,n-k> : Binomial<n,k>
 
             template<U n, U k>
             struct Binomial<n, k, typename std::enable_if<n < k>::type>
@@ -1069,7 +1073,9 @@ namespace integrators
         template <typename T>
         T compute_error_complex(const T& svariance)
         {
-            return T(std::sqrt(std::abs(svariance.real())), std::sqrt(std::abs(svariance.imag())));
+            using std::sqrt;
+            using std::abs;
+            return T(sqrt(abs(svariance.real())), sqrt(abs(svariance.imag())));
         };
 
         template <typename T>
@@ -1081,18 +1087,19 @@ namespace integrators
         template <typename T, typename D>
         D compute_error_ratio_complex(const result<T>& res, const D& epsrel, const D& epsabs, const ErrorMode errormode)
         {
+            using std::abs;
             if( errormode == all )
             {
                 return std::max(
-                                std::min(res.error.real()/epsabs, res.error.real()/std::abs(res.integral.real()*epsrel)),
-                                std::min(res.error.imag()/epsabs, res.error.imag()/std::abs(res.integral.imag()*epsrel))
+                                std::min(res.error.real()/epsabs, res.error.real()/abs(res.integral.real()*epsrel)),
+                                std::min(res.error.imag()/epsabs, res.error.imag()/abs(res.integral.imag()*epsrel))
                                 );
             }
             else if ( errormode == largest )
             {
                 return std::min(
                                 std::max(res.error.real(),res.error.imag())/epsabs,
-                                std::max(res.error.real(),res.error.imag())/(std::max(std::abs(res.integral.real()),std::abs(res.integral.imag()))*epsrel)
+                                std::max(res.error.real(),res.error.imag())/(std::max(abs(res.integral.real()),abs(res.integral.imag()))*epsrel)
                                 );
             }
             else
@@ -1687,8 +1694,8 @@ namespace integrators
                 }
                 if(verbosity > 1) logger << "- (" << device << ") copied z,d,r to device memory" << std::endl;
 
-                //        QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1)); // TODO - investigate if this helps
-                //        cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, MyKernel, 0, 0); // TODO - investigate if this helps - https://devblogs.nvidia.com/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/
+                //        QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1)); // TODO (V2) - investigate if this helps
+                //        cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, MyKernel, 0, 0); // TODO (V2) - investigate if this helps - https://devblogs.nvidia.com/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/
             };
 
             template <typename I, typename T, typename D>
@@ -1727,8 +1734,8 @@ namespace integrators
                 QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<D*>(*d_d), d.data(), d.size() * sizeof(D), cudaMemcpyHostToDevice));
                 if(verbosity > 1) logger << "- (" << device << ") copied z,d to device memory" << std::endl;
 
-                //        QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1)); // TODO - investigate if this helps
-                //        cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, MyKernel, 0, 0); // TODO - investigate if this helps - https://devblogs.nvidia.com/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/
+                //        QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1)); // TODO (V2) - investigate if this helps
+                //        cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, MyKernel, 0, 0); // TODO (V2) - investigate if this helps - https://devblogs.nvidia.com/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/
             };
         };
     };
@@ -2063,8 +2070,8 @@ namespace integrators
             fdf.params = &data;
             
             // compute dx/dy of input points, which should be used as an additional weight in the evaluation of chisq
-            std::vector<D> dxdy(x.size());
-            D maxwgt = 0.;
+            std::vector<double> dxdy(x.size());
+            double maxwgt = 0.;
 
             const size_t nsteps = 1; 
             for (size_t i = 0; i < x.size(); i++)
@@ -2081,7 +2088,7 @@ namespace integrators
                     dy += D(1);
                     dx += D(1);
                 }
-                dxdy[i] = dx/dy;
+                dxdy[i] = static_cast<double>(dx/dy);
                 
                 maxwgt=std::max(maxwgt,dxdy[i]);
             }
@@ -2994,7 +3001,7 @@ namespace integrators
 
     template <typename T, typename D, U M, template<typename,typename,U> class P, template<typename,typename,U> class F, typename G, typename H>
     Qmc<T,D,M,P,F,G,H>::Qmc() :
-    logger(std::cout), randomgenerator( G( std::random_device{}() ) ), minn(8191), minm(32), epsrel(0.01), epsabs(1e-7), maxeval(1000000), maxnperpackage(1), maxmperpackage(1024), errormode(integrators::ErrorMode::all), cputhreads(std::thread::hardware_concurrency()), cudablocks(1024), cudathreadsperblock(256), devices({-1}), generatingvectors(integrators::generatingvectors::cbcpt_dn1_100()), verbosity(0), evaluateminn(100000), fitstepsize(10), fitmaxiter(40), fitxtol(3e-3), fitgtol(1e-4), fitftol(1e-8), fitparametersgsl({})
+    logger(std::cout), randomgenerator( G( std::random_device{}() ) ), minn(8191), minm(32), epsrel(0.01), epsabs(1e-7), maxeval(1000000), maxnperpackage(1), maxmperpackage(1024), errormode(integrators::ErrorMode::all), cputhreads(std::thread::hardware_concurrency()), cudablocks(1024), cudathreadsperblock(256), devices({-1}), generatingvectors(integrators::generatingvectors::cbcpt_dn1_100()), verbosity(0), evaluateminn(100000), fitstepsize(10), fitmaxiter(40), fitxtol(3e-3), fitgtol(1e-8), fitftol(1e-8), fitparametersgsl({})
     {
         // Check U satisfies requirements of mod_mul implementation
         static_assert( std::numeric_limits<U>::is_modulo, "Qmc integrator constructed with a type U that is not modulo. Please use a different unsigned integer type for U.");
