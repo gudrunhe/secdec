@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: 785deb56e6b59018a1399b310036e4410b31488c
- * Generated: 21-11-2018 14:05:56
+ * Commit: d0dec352034e48882c355dac94f7a1df0159d28b
+ * Generated: 26-11-2018 14:51:15
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -223,16 +223,18 @@ namespace integrators
         struct PolySingularFunction
         {
             static const int num_parameters = 6;
-            const std::vector<std::vector<D>> initial_parameters = { {1.1,-0.1, 0.1,0.1, 0.3,0.3} };
+            const std::vector<std::vector<D>> initial_parameters = { {1.1,-0.1, 0.1,0.1, 0.9,-0.1} };
 
             D operator()(const D x, const double* p) const
             {
                 // constraint: no singularity and singular terms have positive coefficients
-                if (p[0]<=static_cast<D>(1.001) or p[0]>=static_cast<D>(5) or p[1]>=static_cast<D>(-0.001) or p[1]<=static_cast<D>(-4) )
+                if (p[0]<=static_cast<D>(1.001) or p[1]>=static_cast<D>(-0.001))
                     return D(10.); // std::numeric_limits<D>::max() will sometimes result in fit parameters being NaN
                 
                 D p2 = abs(p[2]);
                 D p3 = abs(p[3]);
+                if(p2<1e-4) p2=0.;
+                if(p3<1e-4) p3=0.;
                 D y = p2*(x*(p[0]-D(1)))/(p[0]-x) + p3*(x*(p[1]-D(1)))/(p[1]-x)  + x*(p[4]+x*(p[5]+x*(D(1)-p2-p3-p[4]-p[5])));
 
                 // constraint: transformed variable within unit hypercube
@@ -252,12 +254,16 @@ namespace integrators
             {
 
                 if (parameter == 0) {
+                    if(abs(p[2])<1e-4) return D(0);
                     return abs(p[2])*((D(1) - x)*x)/(x - p[0])/(x - p[0]);
                 } else if (parameter == 1) {
+                    if(abs(p[3])<1e-4) return D(0);
                     return abs(p[3])*((D(1) - x)*x)/(x - p[1])/(x - p[1]);
                 } else if (parameter == 2) {
+                    if(abs(p[2])<1e-4) return D(0);
                     return ((x*(p[0]-D(1)))/(p[0]-x) -x*x*x) * ((p[2] < 0) ? D(-1) : D(1));
                 } else if (parameter == 3) {
+                    if(abs(p[3])<1e-4) return D(0);
                     return ((x*(p[1]-D(1)))/(p[1]-x) -x*x*x) * ((p[3] < 0) ? D(-1) : D(1));
                 } else if (parameter == 4) {
                     return  x*(D(1)-x*x);
@@ -965,7 +971,7 @@ namespace integrators
 
         template <typename I> result<T> integrate(I& func);
         template <typename I> samples<T,D> evaluate(I& func); // TODO: explicit test cases for this function
-        template <typename I> typename F<I,D,M>::transform_t fit(I& func); // TODO: explicit test cases for this function
+        template <typename I> typename F<I,D,M>::transform_t fit(I& func);
         Qmc();
         virtual ~Qmc() {}
     };
@@ -1431,7 +1437,7 @@ namespace integrators
     {
         namespace cuda
         {
-            // TODO - make use of restricted pointers?
+            // TODO (V2) - investigate if using restricted pointers improves performance
             template <U M, typename T, typename D, typename I>
             __global__
             void compute_kernel(const U work_offset, const U work_this_iteration, const U total_work_packages, const U* z, const D* d, T* r, const U d_r_size_over_m, const U n, const U m, I* func)
@@ -2351,9 +2357,11 @@ namespace integrators
         if (device == -1) {
             work_this_iteration = 1;
         } else {
-            work_this_iteration = cudablocks*cudathreadsperblock;
 #ifdef __CUDACC__
+            work_this_iteration = cudablocks*cudathreadsperblock;
             integrators::core::cuda::setup_sample(d_z, z, d_d, d, d_r, d_r_size/m, &r[thread_id], r.size()/m, m, d_func, func, device, verbosity, logger);
+#else
+            throw std::invalid_argument("qmc::sample called with device != -1 (CPU) but CUDA not supported by compiler, device: " + std::to_string(device));
 #endif
         }
 
@@ -2595,9 +2603,11 @@ namespace integrators
         if (device == -1) {
             work_this_iteration = 1;
         } else {
-            work_this_iteration = cudablocks*cudathreadsperblock;
 #ifdef __CUDACC__
+            work_this_iteration = cudablocks*cudathreadsperblock;
             integrators::core::cuda::setup_evaluate(d_z, z, d_d, d, d_r, d_r_size, d_func, func, device, verbosity, logger);
+#else
+            throw std::invalid_argument("qmc::sample called with device != -1 (CPU) but CUDA not supported by compiler, device: " + std::to_string(device));
 #endif
         }
 
@@ -2665,6 +2675,10 @@ namespace integrators
             throw std::invalid_argument("qmc::evaluate called with func.number_of_integration_variables > M. Please increase M (maximal number of integration variables).");
         if ( cputhreads < 1 )
             throw std::domain_error("qmc::evaluate called with cputhreads < 1. Please set cputhreads to a positive integer.");
+#ifndef __CUDACC__
+        if ( devices.size() != 1 || devices.count(-1) != 1)
+            throw std::invalid_argument("qmc::evaluate called with devices != {-1} (CPU) but CUDA not supported by compiler.");
+#endif
 
         // allocate memory
         samples<T,D> res;
@@ -2793,7 +2807,7 @@ namespace integrators
 
     template <typename T, typename D, U M, template<typename,typename,U> class P, template<typename,typename,U> class F, typename G, typename H>
     template <typename I>
-    typename F<I,D,M>::transform_t Qmc<T,D,M,P,F,G,H>::fit(I& func) // TODO - test case
+    typename F<I,D,M>::transform_t Qmc<T,D,M,P,F,G,H>::fit(I& func)
     {
         using std::abs;
 
@@ -2956,6 +2970,10 @@ namespace integrators
             throw std::domain_error("qmc::integrate called with maxnperpackage = 0. Please set maxnperpackage to a positive integer.");
         if ( cputhreads < 1 )
             throw std::domain_error("qmc::integrate called with cputhreads < 1. Please set cputhreads to a positive integer.");
+#ifndef __CUDACC__
+        if ( devices.size() != 1 || devices.count(-1) != 1)
+            throw std::invalid_argument("qmc::integrate called with devices != {-1} (CPU) but CUDA not supported by compiler.");
+#endif
 
         if (verbosity > 2)
             logger << "-- qmc::integrate called --" << std::endl;
