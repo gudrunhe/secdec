@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: d0dec352034e48882c355dac94f7a1df0159d28b
- * Generated: 26-11-2018 14:51:15
+ * Commit: 76daf05e3c338ed088850f023429ea413924960f
+ * Generated: 28-11-2018 18:05:32
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -970,7 +970,7 @@ namespace integrators
         U get_next_n(U preferred_n) const;
 
         template <typename I> result<T> integrate(I& func);
-        template <typename I> samples<T,D> evaluate(I& func); // TODO: explicit test cases for this function
+        template <typename I> samples<T,D> evaluate(I& func);
         template <typename I> typename F<I,D,M>::transform_t fit(I& func);
         Qmc();
         virtual ~Qmc() {}
@@ -2667,7 +2667,7 @@ namespace integrators
     
     template <typename T, typename D, U M, template<typename,typename,U> class P, template<typename,typename,U> class F, typename G, typename H>
     template <typename I>
-    samples<T,D> Qmc<T,D,M,P,F,G,H>::evaluate(I& func) // TODO - test case
+    samples<T,D> Qmc<T,D,M,P,F,G,H>::evaluate(I& func)
     {
         if ( func.number_of_integration_variables < 1 )
             throw std::invalid_argument("qmc::evaluate called with func.number_of_integration_variables < 1. Check that your integrand depends on at least one variable of integration.");
@@ -2715,7 +2715,7 @@ namespace integrators
 
         std::chrono::steady_clock::time_point time_before_compute = std::chrono::steady_clock::now();
 
-        if ( cputhreads == 1 && devices.size() == 1 && devices.count(-1) == 1) // TODO - test case
+        if ( cputhreads == 1 && devices.size() == 1 && devices.count(-1) == 1)
         {
             // Compute serially on cpu
             if (verbosity > 2) logger << "computing serially" << std::endl;
@@ -2724,7 +2724,7 @@ namespace integrators
                 integrators::core::generic::generate_samples(i, z, d, &r[i], n, func);
             }
         }
-        else // TODO: check this case
+        else
         {
             // Create threadpool
             if (verbosity > 2)
