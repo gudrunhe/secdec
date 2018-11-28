@@ -6,7 +6,12 @@ import sympy as sp
 pentabox = IntegralLibrary('pentabox_fin/pentabox_fin_pylink.so')
 
 # choose integrator
-pentabox.use_Qmc(transform='korobov3',verbosity=3,minn=10**8,maxeval=1,fitfunction='polysingular')
+pentabox.use_Qmc(verbosity=2,minn=10**8,maxeval=1,transform='korobov3',fitfunction='polysingular')
+
+# integrator settings used to run the timings
+#pentabox.use_Qmc(verbosity=2,minn=10**6,maxeval=1,transform='korobov3',fitfunction='polysingular')
+#pentabox.use_Qmc(verbosity=2,minn=10**5,maxeval=1,transform='korobov3',fitfunction='polysingular',devices=[-1])
+#pentabox.use_Vegas(flags=2,maxeval=10**6,epsrel=1e-100,epsabs=1e-100)
 
 # integrate non-Euclidean point;
 s12, s23, s34, s45, s51 = [5.,-4.,2.,-6.,3.]

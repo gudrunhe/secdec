@@ -6,7 +6,12 @@ import sympy as sp
 HZ2L_nonplanar = IntegralLibrary('HZ2L_nonplanar/HZ2L_nonplanar_pylink.so')
 
 # choose integrator
-HZ2L_nonplanar.use_Qmc(verbosity=3,minn=10**8,maxeval=1,transform='korobov3')
+HZ2L_nonplanar.use_Qmc(verbosity=2,minn=10**8,maxeval=1,transform='korobov3')
+
+# integrator settings used to run the timings
+#HZ2L_nonplanar.use_Qmc(verbosity=2,minn=10**6,maxeval=10**6,transform='korobov3')
+#HZ2L_nonplanar.use_Qmc(verbosity=2,minn=10**5,maxeval=10**5,transform='korobov3',devices=[-1])
+#HZ2L_nonplanar.use_Vegas(flags=2,maxeval=5*10**5,epsrel=1e-100,epsabs=1e-100)
 
 # integrate
 str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = HZ2L_nonplanar(real_parameters=[200.,-23.,9.,1.56,0.81])
