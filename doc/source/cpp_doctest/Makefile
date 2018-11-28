@@ -46,4 +46,4 @@ $(CU_TESTS):
 	test ! -s $@.log
 
 clean:
-	rm -rf *.tmp *.log $(TESTS)
+	rm -rf *.tmp *.log $(CPP_TESTS) $(CU_TESTS)
