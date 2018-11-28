@@ -233,9 +233,7 @@ Qmc
 
 .. cpp:namespace:: secdecutil::integrators
 
-.. TODO: reference updated pySecDec paper
-
-The quasi monte carlo integrator as described in [LWY+15]_ and references therein.
+The quasi-monte carlo integrator as described in [PSD18]_. Using a quasi-monte integrator to compute sector decomposed integrals was pioneered in [LWY+15]_.
 
 .. cpp:class:: template<typename return_t, ::integrators::U maxdim, template<typename,typename,::integrators::U> class transform_t,typename container_t = secdecutil::IntegrandContainer<return_t, typename remove_complex<return_t>::type const * const>,template<typename,typename,::integrators::U> class fitfunction_t = void_template> Qmc : Integrator<return_t,return_t,container_t>, public ::integrators::Qmc<return_t,return_t,maxdim,transform_t,fitfunction_t>
 

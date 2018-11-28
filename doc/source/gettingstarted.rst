@@ -399,9 +399,7 @@ options of the integrator we refer to :numref:`chapter_cpp_qmc`.
 List of Examples
 ----------------
 
-.. TODO: add reference to QMC paper
-
-Here we list the available examples. For more details regarding each example see [PSD17]_.
+Here we list the available examples. For more details regarding each example see [PSD17]_ and [PSD18]_.
 
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **easy**:                  | a simple parametric integral, described in :numref:`a_simple_example`                                                          |
