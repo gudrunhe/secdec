@@ -190,6 +190,9 @@ Bracket `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  #ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  __host__ __device__#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  #endif#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'_order_`cppOrder'_integrand#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const integration_variables,#@SecDecInternalNewline@#"
@@ -891,8 +894,13 @@ Bracket `regulators';
 * Processing denominators in FORM is easiest if packed into a function.
 * Define that function as c preprocessor macro.
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalDenominator(x) 1./(x)#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) (complex_t{x}).real()#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalImagPart(x) (complex_t{x}).imag()#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#else#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalImagPart(x) std::imag(x)#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
 
 * Define "SecDecInternalAbbreviation[0]" as c preprocessor variable "tmp".
 * Since FORM does not use "SecDecInternalAbbreviation[0]", we can use it.
@@ -1187,13 +1195,20 @@ Bracket `regulators';
 
       #If termsin(expr) > 0
         #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-        #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression > 0)"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> ", #@SecDecInternalEscapedDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "contour deformation polynomial"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalEscapedDblquote@#, check id #@SecDecInternalEscapedDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "`signCheckId'"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalEscapedDblquote@#,#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  if (SecDecInternalSignCheckExpression > 0) {"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "    printf(#@SecDecInternalDblquote@#Sign check `signCheckId' (contour deformation polynomial) failed.#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "    return std::nan(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  }#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#else#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  if (SecDecInternalSignCheckExpression > 0)"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  throw secdecutil::sign_check_error(#@SecDecInternalDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  , #@SecDecInternalEscapedDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  contour deformation polynomial"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  #@SecDecInternalEscapedDblquote@#, check id #@SecDecInternalEscapedDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  `signCheckId'"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  #@SecDecInternalEscapedDblquote@#,#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
       #EndIf
 
     #EndDo
@@ -1211,13 +1226,20 @@ Bracket `regulators';
 
       #If termsin(expr) > 0
         #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-        #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression < 0)"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "throw secdecutil::sign_check_error(#@SecDecInternalDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> ", #@SecDecInternalEscapedDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "positive polynomial"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalEscapedDblquote@#, check id #@SecDecInternalEscapedDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "`signCheckId'"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalEscapedDblquote@#,#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  if (SecDecInternalSignCheckExpression < 0) {"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "    printf(#@SecDecInternalDblquote@#Sign check `signCheckId' (positive polynomial) failed.#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "    return std::nan(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  }#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#else#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  if (SecDecInternalSignCheckExpression < 0)"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  throw secdecutil::sign_check_error(#@SecDecInternalDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  , #@SecDecInternalEscapedDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  positive polynomial"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  #@SecDecInternalEscapedDblquote@#, check id #@SecDecInternalEscapedDblquote@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  `signCheckId'"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  #@SecDecInternalEscapedDblquote@#,#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
       #EndIf
 
     #EndDo
@@ -1255,8 +1277,37 @@ Bracket `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalAbbreviations`shiftedOrderIndex'#@SecDecInternalNewline@#"
 
-* Close the c++ function and namespaces
+* Close the c++ function
   #write <sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
+
+* Get the __device__ function pointer to the host
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.cpp> "  __device__ secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.cpp> "  __device__ secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.cpp> "  * const device_sector_`sectorID'_order_`cppOrder'_integrand = sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.cpp> "   * get_device_sector_`sectorID'_order_`cppOrder'_integrand()#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "   {#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.cpp> "     using IntegrandFunction = secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction;#@SecDecInternalNewline@#"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.cpp> "     using IntegrandFunction = secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction;#@SecDecInternalNewline@#"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.cpp> "     IntegrandFunction* device_address_on_host;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "     auto errcode = cudaMemcpyFromSymbol(&device_address_on_host,device_sector_`sectorID'_order_`cppOrder'_integrand, sizeof(IntegrandFunction*));#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "     if (errcode != cudaSuccess) throw secdecutil::cuda_error( cudaGetErrorString(errcode) );#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "     return device_address_on_host;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "   };#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
+
+* Close the namespace
   #write <sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
 
 * Write the corresponding header "sector_`sectorID'_`cppOrder'.hpp".
@@ -1270,12 +1321,23 @@ Bracket `regulators';
   #write <sector_`sectorID'_`cppOrder'.hpp> "#define sector_`sectorID'_order_`cppOrder'_optimmaxvar_second `numberOfSecondAbbreviations'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  #ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  __host__ __device__#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  #endif#@SecDecInternalNewline@#"
   #If `contourDeformation'
     #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction#@SecDecInternalNewline@#"
   #Else
     #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction#@SecDecInternalNewline@#"
   #EndIf
   #write <sector_`sectorID'_`cppOrder'.hpp> "  sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  #ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #If `contourDeformation'
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction"
+  #Else
+    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction"
+  #EndIf
+  #write <sector_`sectorID'_`cppOrder'.hpp> "    * get_device_sector_`sectorID'_order_`cppOrder'_integrand();#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.hpp> "  #endif#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "}#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
 

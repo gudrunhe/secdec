@@ -20,12 +20,14 @@ class CheckLib(unittest.TestCase):
               -1:  1.0    + 0.0j,
                0: -1.2708 + 2.4179j
         }
+        self.order_min = -1
+        self.order_max =  0
 
-    def check_result(self, computed_series, target_series, epsrel, epsabs, order_min, order_max):
+    def check_result(self, computed_series, target_series, epsrel, epsabs):
         # convert result to sympy expressions
         computed_series = sp.sympify(  computed_series.replace(',','+I*').replace('+/-','*value+error*')  )
 
-        for order in range(order_min, order_max+1):
+        for order in range(self.order_min, self.order_max+1):
             value = complex( computed_series.coeff('eps',order).coeff('value') )
             error = complex( computed_series.coeff('eps',order).coeff('error') )
 
@@ -50,24 +52,44 @@ class CheckLib(unittest.TestCase):
 
     def test_Cuhre(self):
         # choose integrator
-        self.lib.use_Cuhre(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, real_complex_together=True, flags=2)
+        self.lib.use_Cuhre(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, real_complex_together=True, flags=0)
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters)
 
         # check integral
-        self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs, order_min=-1, order_max=0)
+        self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs)
 
     def test_Cuhre_CQuad(self):
         # choose integrator
-        self.lib.use_Cuhre(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, real_complex_together=True, flags=2)
-        self.lib.use_CQuad(epsrel=self.epsrel, epsabs=self.epsabs, verbose=True)
+        self.lib.use_Cuhre(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, real_complex_together=True, flags=0)
+        self.lib.use_CQuad(epsrel=self.epsrel, epsabs=self.epsabs, verbose=False)
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters)
 
         # check integral
-        self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs, order_min=-1, order_max=0)
+        self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs)
+
+    def test_Qmc_default_integral_transform(self):
+        # choose integrator
+        self.lib.use_Qmc(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, verbosity=0, seed=143, transform='korobov3')
+
+        # integrate
+        str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters)
+
+        # check integral
+        self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs)
+
+    def test_Qmc_baker_transform(self):
+        # choose integrator
+        self.lib.use_Qmc(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, verbosity=0, seed=143, transform='baker', evaluateminn=0, fitfunction='polysingular')
+
+        # integrate
+        str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters)
+
+        # check integral
+        self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs)
 
 if __name__ == '__main__':
     unittest.main()

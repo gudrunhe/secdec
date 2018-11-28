@@ -4,7 +4,12 @@
 #include <complex>
 #include <sstream>
 
-using dcmplx = std::complex<double>;
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+    using dcmplx = thrust::complex<double>;
+#else
+    using dcmplx = std::complex<double>;
+#endif
 
 TEST_CASE( "Access Fields", "[UncorrelatedDeviation]" ) {
 

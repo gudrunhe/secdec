@@ -21,7 +21,7 @@ remainder_expression = '(z0**2+z1**3+z2**4+z3**5 + 4*z0*z1*z2*z3+2-z0**2*z1**3*z
 # the order here matches the order of ``regulators``
 requested_orders = [1],
 
-# the optimization level to use in FORM (can be 0, 1, 2, 3)
+# the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
 form_optimization_level = 2,
 
 # the WorkSpace parameter for FORM

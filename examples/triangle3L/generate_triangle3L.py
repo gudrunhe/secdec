@@ -37,7 +37,7 @@ additional_prefactor = '(-eps*gamma(-eps))**3', # work around slow gamma expansi
 # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
 requested_order = 4,
 
-# the optimization level to use in FORM (can be 0, 1, 2, 3)
+# the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
 form_optimization_level = 2,
 
 # the WorkSpace parameter for FORM

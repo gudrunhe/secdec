@@ -23,7 +23,7 @@ To run the example change to the `easy` directory and run the commands::
     $ make -C easy
     $ python integrate_easy.py
 
-This will evaluate and print the result of the integral::
+Additional build options are discussed in the :ref:`next section <building_the_cpp_lib>`. This will evaluate and print the result of the integral::
 
     Numerical Result: + (1.00015897181235158e+00 +/- 4.03392522752491021e-03)*eps^-1 + (3.06903035514056399e-01 +/- 2.82319349818329918e-03) + O(eps)
     Analytic Result: + (1.000000)*eps^-1 + (0.306853) + O(eps)
@@ -156,7 +156,7 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
     requested_order = 0,
 
-    # the optimization level to use in FORM (can be 0, 1, 2, 3)
+    # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
     form_optimization_level = 2,
 
     # the WorkSpace parameter for FORM
@@ -172,6 +172,8 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 
     )
 
+.. _building_the_cpp_lib:
+
 Building the C++ Library
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -179,7 +181,7 @@ After running the python script `generate_box1L.py` the folder `box1L` is create
 
 .. code::
 
-    Makefile    Makefile.conf    README    box1L.hpp    codegen    integrate_box1L.cpp    pylink    src
+    Makefile    Makefile.conf    README    box1L.hpp    codegen    integrate_box1L.cpp    cuda_integrate_box1L.cpp    pylink    src
 
 in the folder `box1L`, typing
 
@@ -187,8 +189,29 @@ in the folder `box1L`, typing
 
     $ make
 
-will create the libraries ``libbox1L.a`` and ``box1L_pylink.so`` which can be linked to an external program calling these integrals.
-The ``make`` command can also be run in parallel by using the ``-j`` option.
+will create the static library ``libbox1L.a`` and ``box1L_pylink.so`` which can be linked to external programs.
+The ``make`` command can also be run in parallel by using the ``-j`` option. The number of threads each instance of ``tform`` uses can be
+set via the environment variable `FORMTHREADS`.
+
+.. versionadded:: 1.4
+    The environment variable `FORMOPT` sets FORM's code optimization level. If not set, the value that was passed to :func:`make_package <pySecDec.code_writer.make_package>`
+    or :func:`loop_package <pySecDec.loop_integral.loop_package>` is used.
+
+To build the dynamic library ``libbox1L.so`` set ``dynamic`` as build target:
+
+.. code::
+
+    $ make dynamic
+
+The code generation with FORM without subsequent compilation can be run by setting ``source`` as build target.
+
+To build the library with `nvcc` for GPU support, type
+
+.. code::
+
+    $ CXX=nvcc SECDEC_WITH_CUDA=sm_XX make
+
+where ``sm_XX`` must be replaced by the target GPU architechtures, see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
 
 To evaluate the integral numerically a program can call one of these libraries.
 How to do this interactively or via a python script is explained in the section :ref:`Python Interface <python_interface>`.
@@ -217,6 +240,15 @@ Next, an integrator is configured for the numerical integration. The full list o
 
     # choose integrator
     box.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+
+If you want to use GPUs, change to the :mod:`CudaQmc<pySecDec.integral_interface.CudaQmc>` integrator. For example, to run on all available GPUs and CPU cores
+using the Korobov transform with weight 3, change the above lines to
+
+.. code::
+
+    # choose integrator
+    box.use_Qmc(transform='Korobov3')
+
 
 Calling the ``box`` library numerically evaluates the integral.
 Note that the order of the real parameters must match that specified in ``generate_box1L.py``.
@@ -287,7 +319,7 @@ The :cpp:func:`name::make_integrands` function returns an :cpp:class:`secdecutil
     //  Generate the integrands (optimization of the contour if applicable)
         const std::vector<box1L::nested_series_t<box1L::integrand_t>> sector_integrands = box1L::make_integrands(real_parameters, complex_parameters);
 
-The sectors can be added before integration::
+The contour deformation can be adjusted via additional arguments to :cpp:func:`name::make_integrands`. The sectors can be added before integration::
 
     //  Add integrands of sectors (together flag)
         const box1L::nested_series_t<box1L::integrand_t> all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
@@ -330,15 +362,49 @@ After editing the ``real_parameters`` as described above the C++ program can be 
     $ make integrate_box1L
     $ ./integrate_box1L
 
+.. versionadded:: 1.4
+
+The similar template file ``cuda_integrate_box1L.cpp`` provides an example to run on GPUs. The main differences are in the lines that generate, add, and integrate the integrands.
+Rather than :cpp:func:`name::make_integrands`, :cpp:func:`name::make_cuda_integrands` is called::
+
+    // Generate the integrands (optimization of the contour if applicable)
+    const std::vector<box1L::nested_series_t<box1L::cuda_integrand_t>> sector_integrands = box1L::make_cuda_integrands(real_parameters, complex_parameters);
+
+If the integrands are added together before integration, the sum command is as follows::
+
+    // Add integrands of sectors (together flag)
+    const box1L::nested_series_t<box1L::cuda_together_integrand_t> all_sectors =
+        std::accumulate(++sector_integrands.begin(), sector_integrands.end(), box1L::cuda_together_integrand_t()+*sector_integrands.begin());
+
+Note the conversion from :cpp:type:`name::cuda_integrand_t` to :cpp:type:`name::cuda_together_integrand_t`. The CUDA-capable version of the Qmc
+integrator takes additional the template arguments :cpp:type:`box1L::maximal_number_of_integration_variables`, :cpp:type:`integrators::transforms::Korobov<3>::type`,
+and :cpp:type:`name::cuda_integrand_t`::
+
+    // Integrate
+    secdecutil::integrators::Qmc<
+                                    box1L::integrand_return_t,
+                                    box1L::maximal_number_of_integration_variables,
+                                    integrators::transforms::Korobov<3>::type, // EDIT: integral transform specified to "Korobov<3>"
+                                    box1L::cuda_together_integrand_t
+                                > integrator;
+    integrator.verbosity = 1;
+    const box1L::nested_series_t<secdecutil::UncorrelatedDeviation<box1L::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors, integrator.integrate );
+
+If the integrands are integrated separately, :cpp:type:`name::cuda_together_integrand_t` should be changed to :cpp:type:`name::cuda_integrand_t`. If your integral
+is higher than seven dimensional, changing the integral transform to :cpp:type:`integrators::transforms::Baker::type` may improve the accuracy of the result. For further
+options of the integrator we refer to :numref:`chapter_cpp_qmc`.
+
 .. _list_of_examples:
 
 List of Examples
 ----------------
 
-Here we list the available examples. For more details regarding each example see [PSD17]_.
+Here we list the available examples. For more details regarding each example see [PSD17]_ and [PSD18]_.
 
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **easy**:                  | a simple parametric integral, described in :numref:`a_simple_example`                                                          |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **easy_cuda**:             | the same integral as in **easy** but computed on GPUs with CUDA                                                                |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **box1L**:                 | a simple 1-loop, 4-point, 4-propagator integral, described in :numref:`evaluating_a_loop_integral`                             |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
@@ -347,13 +413,26 @@ Here we list the available examples. For more details regarding each example see
 | **box2L_numerator**:       | a massless planar on-shell 2-loop, 4-point, 7-propagator box with a numerator, either defined as an inverse propagator         |
 |                            | ``box2L_invprop.py`` or in terms of contracted Lorentz vectors ``box2L_contracted_tensor.py``                                  |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **pentabox_fin**:          | a 2-loop, 5-point, 8-propagator diagram, evaluated in :math:`6-2 \epsilon` dimensions where it is finite                       |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **triangle3L**:            | a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **formfactor4L**:          | a single-scale 4-loop 3-point integral in :math:`6-2 \epsilon` dimensions                                                      |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **bubble6L**:              | a single-scale 6-loop 2-point integral, evaluated at a Euclidean phase-space point                                             |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **elliptic2L_euclidean**:  | an integral known to contain elliptic functions, evaluated at a Euclidean phase-space point                                    |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **elliptic2L_physical**:   | an integral known to contain elliptic functions, evaluated at a physical phase-space point                                     |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **banana_3mass**:          | a 3-loop 2-point integral with three different internal masses known to contain hyperelliptic functions,                       |
+|                            | evaluated at a physical phase-space point                                                                                      |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **hyperelliptic**:         | a 2-loop 4-point nonplanar integral known to contain hyperelliptic functions, evaluated at a physical phase-space point        |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **triangle2L_split**:      | a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics                                  |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **Nbox2L_split**:          | three 2-loop, 4-point, 5-propagator integrals that need ``split=True`` due to special kinematics                               |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **hypergeo5F4**:           | a general dimensionally regulated parameter integral                                                                           |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+

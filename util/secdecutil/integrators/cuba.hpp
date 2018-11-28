@@ -8,6 +8,9 @@
 
 #include <array>
 #include <cmath>
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+#endif
 #include <complex>
 #include <cuba.h>
 #include <iostream>
@@ -86,7 +89,7 @@ namespace secdecutil
           result[0] = typed_userdata.integrand_container->integrand(bordered_integration_variables);
 
           return 0;
-        };
+        }
         static const int ncomp = 1;
         struct userdata_t
         {
@@ -134,7 +137,7 @@ namespace secdecutil
               result[0] = typed_userdata.integrand_container->integrand(integration_variables); // pass array "integration_variables" directly
               return 0;
           }
-        };
+        }
         static const int ncomp = 1;
         struct userdata_t
         {
@@ -159,114 +162,126 @@ namespace secdecutil
 
 
       // complex version
-      template<typename T>
-      struct CubaIntegrator<std::complex<T>> : Integrator<std::complex<T>,T>
-      {
-      protected:
-        template<bool have_zero_border>
-        static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
-        {
-          auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) );
-
-          /* "integration_variables" is an array of "cubareal", but the integrand expects type T
-           * --> copy them into a vector of type T using the iterator contructor.
-           * During the copy operation the type is converted implicitly.
-           * Implement "zero_border".
-           */
-          T bordered_integration_variables[*ndim];
-          for (int i = 0 ; i < *ndim ; ++i)
-          {
-              if (have_zero_border)
-                  bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i];
-              else
-                  bordered_integration_variables[i] = integration_variables[i];
-          }
-
-          // initialize result with NaN --> result will be NaN if integrand throws an error
-          result[0] = result[1] = std::nan("");
-
-          std::complex<T> evaluated_integrand = typed_userdata.integrand_container->integrand(bordered_integration_variables);
-
-          // implicit conversion of result from type T to cubareal
-          result[0] = evaluated_integrand.real();
-          result[1] = evaluated_integrand.imag();
-
-          return 0;
-        };
-        static const int ncomp = 2;
-        struct userdata_t
-        {
-            const secdecutil::IntegrandContainer<std::complex<T>, T const * const> * integrand_container;
-            const cubareal& zero_border;
-        } typed_userdata{nullptr,zero_border};
-        CUBA_STRUCT_BODY
-
-        std::function<secdecutil::UncorrelatedDeviation<std::complex<T>>
-          (const secdecutil::IntegrandContainer<std::complex<T>, T const * const>&)>
-          get_together_integrate()
-          {
-            return [this] (const secdecutil::IntegrandContainer<std::complex<T>, T const * const>& integrand_container) {
-              CUBA_INTEGRATE_BODY
-              return secdecutil::UncorrelatedDeviation<std::complex<T>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)});
-            };
-        };
-      public:
-        int flags;
-        cubareal zero_border;
+      #define COMPLEX_CUBA_INTEGRATOR(complex_template) \
+      template<typename T> \
+      struct CubaIntegrator<complex_template<T>> : Integrator<complex_template<T>,T> \
+      { \
+      protected: \
+        template<bool have_zero_border> \
+        static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata) \
+        { \
+          auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) ); \
+ \
+          /* "integration_variables" is an array of "cubareal", but the integrand expects type T \
+           * --> copy them into a vector of type T using the iterator contructor. \
+           * During the copy operation the type is converted implicitly. \
+           * Implement "zero_border". \
+           */ \
+          T bordered_integration_variables[*ndim]; \
+          for (int i = 0 ; i < *ndim ; ++i) \
+          { \
+              if (have_zero_border) \
+                  bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i]; \
+              else \
+                  bordered_integration_variables[i] = integration_variables[i]; \
+          } \
+ \
+          /* initialize result with NaN --> result will be NaN if integrand throws an error */ \
+          result[0] = result[1] = std::nan(""); \
+ \
+          complex_template<T> evaluated_integrand = typed_userdata.integrand_container->integrand(bordered_integration_variables); \
+ \
+          /* implicit conversion of result from type T to cubareal */ \
+          result[0] = evaluated_integrand.real(); \
+          result[1] = evaluated_integrand.imag(); \
+ \
+          return 0; \
+        } \
+        static const int ncomp = 2; \
+        struct userdata_t \
+        { \
+            const secdecutil::IntegrandContainer<complex_template<T>, T const * const> * integrand_container; \
+            const cubareal& zero_border; \
+        } typed_userdata{nullptr,zero_border}; \
+        CUBA_STRUCT_BODY \
+ \
+        std::function<secdecutil::UncorrelatedDeviation<complex_template<T>> \
+          (const secdecutil::IntegrandContainer<complex_template<T>, T const * const>&)> \
+          get_together_integrate() \
+          { \
+            return [this] (const secdecutil::IntegrandContainer<complex_template<T>, T const * const>& integrand_container) { \
+              CUBA_INTEGRATE_BODY \
+              return secdecutil::UncorrelatedDeviation<complex_template<T>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)}); \
+            }; \
+        }; \
+      public: \
+        int flags; \
+        cubareal zero_border; \
       };
+      COMPLEX_CUBA_INTEGRATOR(std::complex)
+      #ifdef SECDEC_WITH_CUDA
+        COMPLEX_CUBA_INTEGRATOR(thrust::complex)
+      #endif
+      #undef COMPLEX_CUBA_INTEGRATOR
 
       // complex version specialized for cubareal
-      template<>
-      struct CubaIntegrator<std::complex<cubareal>> : Integrator<std::complex<cubareal>,cubareal>
-      {
-      protected:
-        template<bool have_zero_border>
-        static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata)
-        {
-          auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) );
-
-          // initialize result with NaN --> result will be NaN if integrand throws an error
-          result[0] = result[1] = std::nan("");
-
-          // Implement "zero_border".
-          if (have_zero_border)
-          {
-              cubareal bordered_integration_variables[*ndim];
-              for (int i = 0 ; i < *ndim ; ++i)
-                  bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i];
-              std::complex<cubareal> evaluated_integrand = typed_userdata.integrand_container->integrand(bordered_integration_variables);
-              result[0] = evaluated_integrand.real();
-              result[1] = evaluated_integrand.imag();
-              return 0;
-          } else {
-              // pass array "integration_variables" directly
-              std::complex<cubareal> evaluated_integrand = typed_userdata.integrand_container->integrand(integration_variables);
-              result[0] = evaluated_integrand.real();
-              result[1] = evaluated_integrand.imag();
-              return 0;
-          }
-        };
-        static const int ncomp = 2;
-        struct userdata_t
-        {
-            const secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const> * integrand_container;
-            const cubareal& zero_border;
-        } typed_userdata{nullptr,zero_border};
-        CUBA_STRUCT_BODY
-
-        std::function<secdecutil::UncorrelatedDeviation<std::complex<cubareal>>
-          (const secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const>&)>
-          get_together_integrate()
-          {
-            return [this] (const secdecutil::IntegrandContainer<std::complex<cubareal>, cubareal const * const>& integrand_container) {
-              CUBA_INTEGRATE_BODY
-              return secdecutil::UncorrelatedDeviation<std::complex<cubareal>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)});
-            };
-        };
-      public:
-        int flags;
-        cubareal zero_border;
+      #define COMPLEX_CUBAREAL_INTEGRATOR(complex_template) \
+      template<> \
+      struct CubaIntegrator<complex_template<cubareal>> : Integrator<complex_template<cubareal>,cubareal> \
+      { \
+      protected: \
+        template<bool have_zero_border> \
+        static int cuba_integrand_prototype(const int *ndim, const cubareal integration_variables[], const int *ncomp, cubareal result[], void *userdata) \
+        { \
+          auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) ); \
+ \
+          /* initialize result with NaN --> result will be NaN if integrand throws an error */ \
+          result[0] = result[1] = std::nan(""); \
+ \
+          /* Implement "zero_border". */ \
+          if (have_zero_border) \
+          { \
+              cubareal bordered_integration_variables[*ndim]; \
+              for (int i = 0 ; i < *ndim ; ++i) \
+                  bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i]; \
+              complex_template<cubareal> evaluated_integrand = typed_userdata.integrand_container->integrand(bordered_integration_variables); \
+              result[0] = evaluated_integrand.real(); \
+              result[1] = evaluated_integrand.imag(); \
+              return 0; \
+          } else { \
+              /* pass array "integration_variables" directly */ \
+              complex_template<cubareal> evaluated_integrand = typed_userdata.integrand_container->integrand(integration_variables); \
+              result[0] = evaluated_integrand.real(); \
+              result[1] = evaluated_integrand.imag(); \
+              return 0; \
+          } \
+        } \
+        static const int ncomp = 2; \
+        struct userdata_t \
+        { \
+            const secdecutil::IntegrandContainer<complex_template<cubareal>, cubareal const * const> * integrand_container; \
+            const cubareal& zero_border; \
+        } typed_userdata{nullptr,zero_border}; \
+        CUBA_STRUCT_BODY \
+ \
+        std::function<secdecutil::UncorrelatedDeviation<complex_template<cubareal>> \
+          (const secdecutil::IntegrandContainer<complex_template<cubareal>, cubareal const * const>&)> \
+          get_together_integrate() \
+          { \
+            return [this] (const secdecutil::IntegrandContainer<complex_template<cubareal>, cubareal const * const>& integrand_container) { \
+              CUBA_INTEGRATE_BODY \
+              return secdecutil::UncorrelatedDeviation<complex_template<cubareal>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)}); \
+            }; \
+        }; \
+      public: \
+        int flags; \
+        cubareal zero_border; \
       };
+      COMPLEX_CUBAREAL_INTEGRATOR(std::complex)
+      #ifdef SECDEC_WITH_CUDA
+        COMPLEX_CUBAREAL_INTEGRATOR(thrust::complex)
+      #endif
+      #undef COMPLEX_CUBA_INTEGRATOR
 
       #undef CUBA_STRUCT_BODY
       #undef CUBA_INTEGRATE_BODY
@@ -354,22 +369,29 @@ namespace secdecutil
         };
       };
 
-      template <typename T>
-      struct Vegas<std::complex<T>> : CubaIntegrator<std::complex<T>> {
-        std::unique_ptr<Integrator<T,T>> get_real_integrator(){
-          return std::unique_ptr<Integrator<T,T>>(
-                                                     new Vegas<T>(
-                                                                     epsrel,epsabs,this->flags,
-                                                                     seed,mineval,maxeval,this->zero_border,
-                                                                     nstart,nincrease,nbatch
-                                                                 )
-                                                 );
-        };
-        VEGAS_STRUCT_BODY
-        void call_cuba(){
-          VEGAS_INTEGRATE_BODY
-        };
+      #define COMPLEX_VEGAS(complex_template) \
+      template <typename T> \
+      struct Vegas<complex_template<T>> : CubaIntegrator<complex_template<T>> { \
+        std::unique_ptr<Integrator<T,T>> get_real_integrator(){ \
+          return std::unique_ptr<Integrator<T,T>>( \
+                                                     new Vegas<T>( \
+                                                                     epsrel,epsabs,this->flags, \
+                                                                     seed,mineval,maxeval,this->zero_border, \
+                                                                     nstart,nincrease,nbatch \
+                                                                 ) \
+                                                 ); \
+        }; \
+        VEGAS_STRUCT_BODY \
+        void call_cuba(){ \
+          VEGAS_INTEGRATE_BODY \
+        }; \
       };
+
+      COMPLEX_VEGAS(std::complex)
+      #ifdef SECDEC_WITH_CUDA
+        COMPLEX_VEGAS(thrust::complex)
+      #endif
+      #undef COMPLEX_VEGAS
 
       #undef VEGAS_CALL
       #undef VEGAS_STRUCT_BODY
@@ -458,22 +480,30 @@ namespace secdecutil
           SUAVE_INTEGRATE_BODY
         }
       };
-      template <typename T>
-      struct Suave<std::complex<T>> : CubaIntegrator<std::complex<T>> {
-        std::unique_ptr<Integrator<T,T>> get_real_integrator(){
-          return std::unique_ptr<Integrator<T,T>>(
-                                                     new Suave<T>(
-                                                                     epsrel,epsabs,this->flags,
-                                                                     seed,mineval,maxeval,this->zero_border,
-                                                                     nnew,nmin,flatness
-                                                                 )
-                                                 );
-        };
-        SUAVE_STRUCT_BODY
-        void call_cuba(){
-          SUAVE_INTEGRATE_BODY
-        }
+
+      #define COMPLEX_SUAVE(complex_template) \
+      template <typename T> \
+      struct Suave<complex_template<T>> : CubaIntegrator<complex_template<T>> { \
+        std::unique_ptr<Integrator<T,T>> get_real_integrator(){ \
+          return std::unique_ptr<Integrator<T,T>>( \
+                                                     new Suave<T>( \
+                                                                     epsrel,epsabs,this->flags, \
+                                                                     seed,mineval,maxeval,this->zero_border, \
+                                                                     nnew,nmin,flatness \
+                                                                 ) \
+                                                 ); \
+        }; \
+        SUAVE_STRUCT_BODY \
+        void call_cuba(){ \
+          SUAVE_INTEGRATE_BODY \
+        } \
       };
+
+      COMPLEX_SUAVE(std::complex)
+      #ifdef SECDEC_WITH_CUDA
+        COMPLEX_SUAVE(thrust::complex)
+      #endif
+      #undef COMPLEX_SUAVE
 
       #undef SUAVE_CALL
       #undef SUAVE_STRUCT_BODY
@@ -584,23 +614,31 @@ namespace secdecutil
           DIVONNE_INTEGRATE_BODY
         }
       };
-      template <typename T>
-      struct Divonne<std::complex<T>> : CubaIntegrator<std::complex<T>> {
-        std::unique_ptr<Integrator<T,T>> get_real_integrator(){
-          return std::unique_ptr<Integrator<T,T>>(
-                                                     new Divonne<T>(
-                                                                       epsrel,epsabs,this->flags,
-                                                                       seed,mineval,maxeval,this->zero_border,
-                                                                       key1, key2, key3, maxpass,
-                                                                       border, maxchisq, mindeviation
-                                                                   )
-                                                 );
-        };
-        DIVONNE_STRUCT_BODY
-        void call_cuba(){
-          DIVONNE_INTEGRATE_BODY
-        }
+
+      #define COMPLEX_DIVONNE(complex_template) \
+      template <typename T> \
+      struct Divonne<complex_template<T>> : CubaIntegrator<complex_template<T>> { \
+        std::unique_ptr<Integrator<T,T>> get_real_integrator(){ \
+          return std::unique_ptr<Integrator<T,T>>( \
+                                                     new Divonne<T>( \
+                                                                       epsrel,epsabs,this->flags, \
+                                                                       seed,mineval,maxeval,this->zero_border, \
+                                                                       key1, key2, key3, maxpass, \
+                                                                       border, maxchisq, mindeviation \
+                                                                   ) \
+                                                 ); \
+        }; \
+        DIVONNE_STRUCT_BODY \
+        void call_cuba(){ \
+          DIVONNE_INTEGRATE_BODY \
+        } \
       };
+
+      COMPLEX_DIVONNE(std::complex)
+      #ifdef SECDEC_WITH_CUDA
+        COMPLEX_DIVONNE(thrust::complex)
+      #endif
+      #undef COMPLEX_DIVONNE
 
       #undef DIVONNE_CALL
       #undef DIVONNE_STRUCT_BODY
@@ -678,22 +716,30 @@ namespace secdecutil
           CUHRE_INTEGRATE_BODY
         }
       };
-      template <typename T>
-      struct Cuhre<std::complex<T>> : CubaIntegrator<std::complex<T>> {
-        std::unique_ptr<Integrator<T,T>> get_real_integrator(){
-          return std::unique_ptr<Integrator<T,T>>(
-                                                     new Cuhre<T>(
-                                                                     epsrel,epsabs,this->flags,
-                                                                     mineval,maxeval,this->zero_border,
-                                                                     key
-                                                                 )
-                                                 );
-        };
-        CUHRE_STRUCT_BODY
-        void call_cuba(){
-          CUHRE_INTEGRATE_BODY
-        }
+
+      #define COMPLEX_CUHRE(complex_template) \
+      template <typename T> \
+      struct Cuhre<complex_template<T>> : CubaIntegrator<complex_template<T>> { \
+        std::unique_ptr<Integrator<T,T>> get_real_integrator(){ \
+          return std::unique_ptr<Integrator<T,T>>( \
+                                                     new Cuhre<T>( \
+                                                                     epsrel,epsabs,this->flags, \
+                                                                     mineval,maxeval,this->zero_border, \
+                                                                     key \
+                                                                 ) \
+                                                 ); \
+        }; \
+        CUHRE_STRUCT_BODY \
+        void call_cuba(){ \
+          CUHRE_INTEGRATE_BODY \
+        } \
       };
+
+      COMPLEX_CUHRE(std::complex)
+      #ifdef SECDEC_WITH_CUDA
+        COMPLEX_CUHRE(thrust::complex)
+      #endif
+      #undef COMPLEX_CUHRE
 
       #undef CUHRE_CALL
       #undef CUHRE_STRUCT_BODY

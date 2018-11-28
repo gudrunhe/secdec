@@ -1,7 +1,11 @@
 #ifndef %(name)s_hpp_included
 #define %(name)s_hpp_included
 
-#include <complex>
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+#else
+    #include <complex>
+#endif
 #include <string>
 #include <vector>
 #include <secdecutil/integrand_container.hpp>
@@ -23,7 +27,11 @@ namespace %(name)s
     // basic data types
     // --{
     typedef double real_t;
-    typedef std::complex<real_t> complex_t;
+    #ifdef SECDEC_WITH_CUDA
+        typedef thrust::complex<real_t> complex_t;
+    #else
+        typedef std::complex<real_t> complex_t;
+    #endif
     #if %(name)s_has_complex_parameters || %(name)s_contour_deformation || %(name)s_enforce_complex_return_type
         typedef complex_t integrand_return_t;
     #else
@@ -38,7 +46,9 @@ namespace %(name)s
     typedef secdecutil::IntegrandContainer<integrand_return_t, real_t const * const> integrand_t;
     // --}
 
-    const unsigned int number_of_sectors = %(number_of_sectors)i;
+    const unsigned long long number_of_sectors = %(number_of_sectors)i;
+
+    const unsigned int maximal_number_of_integration_variables = %(number_of_integration_variables)i;
 
     const unsigned int number_of_regulators = %(number_of_regulators)i;
     const std::vector<std::string> names_of_regulators = {%(names_of_regulators)s};
@@ -55,7 +65,7 @@ namespace %(name)s
     const std::vector<int> highest_prefactor_orders = {%(highest_prefactor_orders)s};
     const std::vector<int> requested_orders = {%(requested_orders)s};
 
-    extern const std::vector<nested_series_t<sector_container_t>> sectors;
+    const std::vector<nested_series_t<sector_container_t>>& get_sectors();
     nested_series_t<integrand_return_t> prefactor(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters);
 
     extern const std::vector<std::vector<real_t>> pole_structures;
@@ -71,6 +81,58 @@ namespace %(name)s
             real_t deformation_parameters_decrease_factor = 0.9
         #endif
     );
+
+    #ifdef SECDEC_WITH_CUDA
+        #if %(name)s_contour_deformation
+            typedef secdecutil::CudaIntegrandContainerWithDeformation
+                    <
+                        real_t,complex_t,1/*maximal_number_of_functions*/,
+                        maximal_number_of_integration_variables,
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
+                    >
+                    cuda_integrand_t;
+            typedef secdecutil::CudaIntegrandContainerWithDeformation
+                    <
+                        real_t,complex_t,number_of_sectors/*maximal_number_of_functions*/,
+                        maximal_number_of_integration_variables,
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
+                    >
+                    cuda_together_integrand_t;
+            std::vector<nested_series_t<cuda_integrand_t>> make_cuda_integrands
+            (
+                const std::vector<real_t>& real_parameters,
+                const std::vector<complex_t>& complex_parameters,
+                unsigned number_of_presamples = 100000,
+                real_t deformation_parameters_maximum = 1.,
+                real_t deformation_parameters_minimum = 1.e-5,
+                real_t deformation_parameters_decrease_factor = 0.9
+            );
+        #else
+            typedef secdecutil::CudaIntegrandContainerWithoutDeformation
+                    <
+                        real_t,complex_t,integrand_return_t,
+                        1/*maximal_number_of_functions*/,
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
+                    >
+                    cuda_integrand_t;
+            typedef secdecutil::CudaIntegrandContainerWithoutDeformation
+                    <
+                        real_t,complex_t,integrand_return_t,
+                        number_of_sectors/*maximal_number_of_functions*/,
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
+                    >
+                    cuda_together_integrand_t;
+            std::vector<nested_series_t<cuda_integrand_t>> make_cuda_integrands
+            (
+                const std::vector<real_t>& real_parameters,
+                const std::vector<complex_t>& complex_parameters
+            );
+        #endif
+    #endif
 
     #undef %(name)s_contour_deformation
     #undef %(name)s_has_complex_parameters

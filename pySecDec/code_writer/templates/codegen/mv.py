@@ -33,6 +33,7 @@ for src_filename in src_filenames:
         for line in src:
             txt.append(line.strip('\\\t\n '))
     txt = ''.join(txt).replace("#@SecDecInternalNewline@#",'\n')
+    txt = txt.replace('#@SecDecInternalSpace@#', ' ')
     txt = txt.replace(';#@no_split_expression@# +=', '+')
     txt = txt.replace('#@SecDecInternalDblquote@#', '"')
     txt = txt.replace('#@SecDecInternalEscapedDblquote@#', r'\"')

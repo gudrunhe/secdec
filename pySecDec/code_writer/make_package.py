@@ -316,6 +316,7 @@ def _parse_global_templates(name, regulators, polynomial_names,
     # initialize template replacements
     template_replacements = dict(
                                      name = name,
+                                     name_as_char_pack = ','.join([("'" + char + "'") for char in name]),
                                      number_of_real_parameters = len(real_parameters),
                                      real_parameters = _make_FORM_list(real_parameters),
                                      names_of_real_parameters = _make_cpp_list(real_parameters),
@@ -345,18 +346,24 @@ def _parse_global_templates(name, regulators, polynomial_names,
                           # replace "name" by the name of the integral
                           'name' : name,
                           'integrate_name.cpp' : 'integrate_' + name + '.cpp',
+                          'cuda_integrate_name.cpp' : 'cuda_integrate_' + name + '.cpp',
 
                           # the files below are specific for each sector --> do not parse globally
                           'contour_deformation.h' : None,
                           'sector.h' : None,
 
-                          # "integrands.cpp", "name.hpp", "prefactor.cpp", "pole_structures.cpp", and "functions.hpp" can only be written after the decomposition is completed
+                          # the files below can only be written after the decomposition is completed
                           'integrands.cpp' : None,
                           'name.hpp' : None,
                           'prefactor.cpp' : None,
                           'pole_structures.cpp' : None,
-                          'functions.hpp' : None
+                          'functions.hpp' : None,
+                          'pylink.cpp' : None
                      }
+    for i in range(1,8):
+        # needs `number_of_sectors` --> can only be written after the decomposition is completed
+        file_renamings['qmc_template_instantiations%i.cpp'%i] = None
+
 
     # the files below are only relevant for contour deformation --> do not parse if deactivated
     if contour_deformation_polynomial is None:
@@ -547,15 +554,21 @@ def _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sec
                 current_orders[regulator_index] = this_regulator_order
                 if contour_deformation:
                     outstr_body_snippets.append(
-                        '''%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,
-                           sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial,
-                           sector_%(sector_ID)i_order_%(cpp_order)s_maximal_allowed_deformation_parameters''' \
-                        % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
+                        (
+                            '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,' +
+                            '#@SecDecInternalNewline@##ifdef#@SecDecInternalSpace@#SECDEC_WITH_CUDA#@SecDecInternalNewline@#get_device_sector_%(sector_ID)i_order_%(cpp_order)s_integrand,' +
+                            '#@SecDecInternalNewline@##endif#@SecDecInternalNewline@#' +
+                            'sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial,' +
+                            'sector_%(sector_ID)i_order_%(cpp_order)s_maximal_allowed_deformation_parameters'
+                        ) % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
                     )
                 else:
                     outstr_body_snippets.append(
-                        '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' \
-                        % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
+                        (
+                            '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' +
+                            '#@SecDecInternalNewline@##ifdef#@SecDecInternalSpace@#SECDEC_WITH_CUDA#@SecDecInternalNewline@#,get_device_sector_%(sector_ID)i_order_%(cpp_order)s_integrand' +
+                            '#@SecDecInternalNewline@##endif#@SecDecInternalNewline@#'
+                        ) % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
                     )
             outstr_tail = '}},true,#@%sDblquote@#%s#@%sDblquote@#}' % (internal_prefix,regulator_names[regulator_index],internal_prefix)
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
@@ -1479,7 +1492,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         Symbols to be interpreted as complex variables.
 
     :param form_optimization_level:
-        integer out of the interval [0,3], optional;
+        integer out of the interval [0,4], optional;
         The optimization level to be used in FORM.
         Default: ``2``.
 
@@ -2003,6 +2016,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
     for filename in ['integrands.cpp', 'prefactor.cpp', 'pole_structures.cpp', 'functions.hpp']:
         parse_template_file(os.path.join(template_sources, 'src', filename),
                             os.path.join(name,             'src', filename),
+                            template_replacements)
+    for filename in chain(['pylink.cpp'], ('qmc_template_instantiations%i.cpp'%i for i in range(1,8))):
+        parse_template_file(os.path.join(template_sources, 'pylink', filename),
+                            os.path.join(name,             'pylink', filename),
                             template_replacements)
 
     print('"' + name + '" done')

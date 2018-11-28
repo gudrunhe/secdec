@@ -1,18 +1,12 @@
-#include <iostream>
-#include <stdexcept>
-#include <vector>
-#include <cstdint>
+#include <iostream> // std::cout
 #include <numeric> // std::accumulate
-#include <functional> // std::bind
-#include <type_traits> // std::remove_const
-#include <typeinfo>
+#include <vector> // std::vector
 
-#include <secdecutil/integrators/cuba.hpp> // Vegas
-#include <secdecutil/series.hpp> // Series
-#include <secdecutil/uncertainties.hpp> // UncorrelatedDeviation
-#include <secdecutil/sector_container.hpp> // SectorContainer to IntegrandContainer
-#include <secdecutil/integrand_container.hpp> // IntegrandContainer
-#include <secdecutil/deep_apply.hpp> // deep_apply
+#include <secdecutil/integrators/cuba.hpp> // secdecutil::cuba::Vegas, secdecutil::cuba::Suave, secdecutil::cuba::Cuhre, secdecutil::cuba::Divonne
+#include <secdecutil/integrators/qmc.hpp> // secdecutil::integrators::Qmc
+#include <secdecutil/series.hpp> // secdecutil::Series
+#include <secdecutil/uncertainties.hpp> // secdecutil::UncorrelatedDeviation
+#include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
 
 #include "%(name)s.hpp"
 
@@ -68,14 +62,14 @@ void print_integral_info()
 int main()
 {
     // User Specified Phase-space point
-    const std::vector<%(name)s::real_t> real_parameters = {  };
-    const std::vector<%(name)s::complex_t> complex_parameters = {  };
+    const std::vector<%(name)s::real_t> real_parameters = { /* EDIT: insert real parameter values here */ };
+    const std::vector<%(name)s::complex_t> complex_parameters = { /* EDIT: insert complex parameter values here */ };
 
     // Generate the integrands (optimization of the contour if applicable)
     const std::vector<%(name)s::nested_series_t<%(name)s::integrand_t>> sector_integrands = %(name)s::make_integrands(real_parameters, complex_parameters);
 
     // Add integrands of sectors (together flag)
-    const %(name)s::nested_series_t<%(name)s::integrand_t> all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
+    const %(name)s::nested_series_t<%(name)s::integrand_t> all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin());
 
     // Integrate
     secdecutil::cuba::Vegas<%(name)s::integrand_return_t> integrator;

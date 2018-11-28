@@ -64,6 +64,11 @@ References
             | `doi:10.1016/j.cpc.2014.08.008 <http://dx.doi.org/10.1016/j.cpc.2014.08.008>`_,
             | `arXiv:1310.7007 <http://arxiv.org/abs/1310.7007>`_
 
+.. [LWY+15] | Z. Li, J. Wang, Q.-S. Yan, X. Zhao,
+              *Efficient Numerical Evaluation of Feynman Integrals*, 2016, Chin.Phys.C40 No. 3, 033103,
+            | `doi:10.1088/1674-1137/40/3/033103 <http://dx.doi.org/10.1088/1674-1137/40/3/033103>`_,
+            | `arXiv:1508.02512  <http://arxiv.org/abs/1508.02512>`_
+
 .. [MP+14]  | B. D. McKay and A. Piperno,
               *Practical graph isomorphism, II*, 2014, Journal of Symbolic Computation, 60, 94-112,
             | `doi:10.1016/j.jsc.2013.09.003 <http://dx.doi.org/10.1016/j.jsc.2013.09.003>`_
@@ -79,6 +84,10 @@ References
               *pySecDec: A toolbox for the numerical evaluation of multi-scale integrals*, 2018, Comput.Phys.Comm.222,
             | `doi:10.1016/j.cpc.2017.09.015 <http://dx.doi.org/10.1016/j.cpc.2017.09.015>`_,
             | `arXiv:1703.09692 <http://arxiv.org/abs/1703.09692>`_
+
+.. [PSD18]  | S. Borowka, G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, J. Schlenk,
+              *A GPU compatible quasi-Monte Carlo integrator interfaced to pySecDec*,
+            | to be published
 
 .. [RUV17]  | B. Ruijl, T. Ueda, J. Vermaseren,
               *FORM version 4.2*,

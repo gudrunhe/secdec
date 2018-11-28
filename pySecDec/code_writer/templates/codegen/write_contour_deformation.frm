@@ -67,7 +67,11 @@
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define tmp SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
 
 * c++-define "SecDecInternalRealPart"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) (complex_t{x}).real()#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#else#@SecDecInternalNewline@#"
   #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
+  #write <contour_deformation_sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
 
 * Optmimize the 2nd Symnanzik polynomial "F"
 
@@ -327,8 +331,13 @@
   #call cppDefine(`occurringIntegrationVariables',integration_variables,optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`realParameters',real_parameters,optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
   #call cppDefine(`complexParameters',complex_parameters,optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp)
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) (complex_t{x}).real()#@SecDecInternalNewline@#"
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalAbs(x) thrust::abs(complex_t{x})#@SecDecInternalNewline@#"
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#else#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalAbs(x) std::abs(x)#@SecDecInternalNewline@#"
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
 
 * optimize
   Bracket SecDecInternalLabelDeformation;

@@ -7,6 +7,11 @@ TIMEOUT=600
 # get the pySecDec version number
 PYSECDECVERSION=$(shell python -c 'import pySecDec; print(pySecDec.__version__)')
 
+# Auto detect nvcc
+ifeq ($(CXX), nvcc)
+SECDEC_WITH_CUDA = 1
+endif
+
 
 .DEFAULT_GOAL=check
 .PHONY .SILENT : help
@@ -108,6 +113,7 @@ fast-check :
 
 .PHONY : util-check
 util-check :
+	export SECDEC_WITH_CUDA=$(SECDEC_WITH_CUDA) && \
 	cd util && \
 	if [ -f Makefile ] ; \
 	then \

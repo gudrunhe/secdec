@@ -6,11 +6,15 @@ import sympy as sp
 elliptic2L_physical = IntegralLibrary('elliptic2L_physical/elliptic2L_physical_pylink.so')
 
 # choose integrator
-elliptic2L_physical.use_Vegas(flags=2,epsrel=1e-4,maxeval=10**7)
+elliptic2L_physical.use_Qmc(verbosity=2,minn=2147483647,maxeval=1,transform='korobov1',fitfunction='polysingular')
 
+# integrator settings used to run the timings
+#elliptic2L_physical.use_Qmc(verbosity=2,minn=3*10**6,maxeval=3*10**6,transform='korobov1',fitfunction='polysingular')
+#elliptic2L_physical.use_Qmc(verbosity=2,minn=3*10**6,maxeval=3*10**6,transform='korobov1',fitfunction='polysingular',devices=[-1])
+#elliptic2L_physical.use_Vegas(flags=2,maxeval=3*10**7,epsrel=1e-100,epsabs=1e-100)
  
 # integrate non-Euclidean point;
-s, t, pp4, msq = [90.,-2.5,1.6,1.] 
+s, t, pp4, msq = [90.,-2.5,1.6,1.]
 str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = elliptic2L_physical([s, t, pp4, msq])
 
 # convert complex numbers from c++ to sympy notation

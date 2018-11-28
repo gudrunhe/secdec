@@ -85,6 +85,7 @@ In order to build these c++ packages, the following additional non-python-based 
 and programs are required:
 
  * CUBA (http://www.feynarts.de/cuba/)
+ * QMC (https://github.com/mppmu/qmc)
  * FORM (http://www.nikhef.nl/~form/)
  * SecDecUtil (part of `pySecDec`, see :ref:`SedDecUtil<chapter_secdecutil>`), depends on:
 

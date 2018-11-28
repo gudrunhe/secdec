@@ -21,7 +21,7 @@ remainder_expression = 'exp(-z0/(1-z0))',
 # the order here matches the order of ``regulators``
 requested_orders = [0, 0],
 
-# the optimization level to use in FORM (can be 0, 1, 2, 3)
+# the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
 form_optimization_level = 2,
 
 # the WorkSpace parameter for FORM
