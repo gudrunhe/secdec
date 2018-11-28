@@ -1,3 +1,9 @@
+28.11.2018 pySecDec-1.4
+
+    [interal_interface] add the quasi-Monte Carlo (QMC) integrator
+    [algebra] fix for sympy-1.3
+    [dist] update to gsl-2.5
+
 02.08.2018 pySecDec-1.3.2
 
     [prefactor expansion] fix bug if ``x``-expansion starts lower than ``1/x``
