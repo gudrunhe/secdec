@@ -1,3 +1,7 @@
+29.11.2019 pySecDec-1.4.1
+
+    [dist] update to qmc-1.0.1 (fix in PolySingular fit function)
+
 28.11.2018 pySecDec-1.4
 
     [integral_interface] add the quasi-Monte Carlo (QMC) integrator
