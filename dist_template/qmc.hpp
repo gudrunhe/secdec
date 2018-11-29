@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: 76daf05e3c338ed088850f023429ea413924960f
- * Generated: 28-11-2018 18:05:32
+ * Commit: 8e0fb4b97c482573b4344f3e77abdfb0226d0eba
+ * Generated: 29-11-2018 13:58:22
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -213,6 +213,7 @@ namespace integrators
 #define QMC_FITFUNCTIONS_POLYSINGULAR_H
 
 #include <stdexcept> // std::domain_error
+#include <cmath> // abs
 #include <vector>
 
 namespace integrators
@@ -227,6 +228,7 @@ namespace integrators
 
             D operator()(const D x, const double* p) const
             {
+                using std::abs;
                 // constraint: no singularity and singular terms have positive coefficients
                 if (p[0]<=static_cast<D>(1.001) or p[1]>=static_cast<D>(-0.001))
                     return D(10.); // std::numeric_limits<D>::max() will sometimes result in fit parameters being NaN
@@ -252,7 +254,7 @@ namespace integrators
 
             D operator()(const D x, const double* p, const size_t parameter) const
             {
-
+                using std::abs;
                 if (parameter == 0) {
                     if(abs(p[2])<1e-4) return D(0);
                     return abs(p[2])*((D(1) - x)*x)/(x - p[0])/(x - p[0]);
@@ -279,6 +281,7 @@ namespace integrators
         {
             D operator()(const D x, const double* v, const double* p) const
             {
+                using std::abs;
                 D xmp0 = x-p[0];
                 D xmp1 = x-p[1];
                 return x*(D(1)-x)*D(2)*(v[0]*(abs(p[2])*v[0]+(x - p[0])*v[2])/xmp0/xmp0/xmp0 + v[1]*(abs(p[3])*v[1]+(x - p[1])*v[3])/xmp1/xmp1/xmp1);
@@ -301,6 +304,7 @@ namespace integrators
 #endif
             auto operator()(D* x) -> decltype(f(x)) const
             {
+                using std::abs;
                 D wgt = 1;
                 for (U d = 0; d < number_of_integration_variables ; ++d)
                 {
