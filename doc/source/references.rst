@@ -87,7 +87,7 @@ References
 
 .. [PSD18]  | S. Borowka, G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, J. Schlenk,
               *A GPU compatible quasi-Monte Carlo integrator interfaced to pySecDec*,
-            | to be published
+            | `arXiv:1811.11720 <http://arxiv.org/abs/1811.11720>`_
 
 .. [RUV17]  | B. Ruijl, T. Ueda, J. Vermaseren,
               *FORM version 4.2*,
