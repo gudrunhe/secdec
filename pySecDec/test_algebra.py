@@ -319,6 +319,13 @@ class TestPolynomial(unittest.TestCase):
         np.testing.assert_array_equal(expr2.expolist, [[2,1]])
         np.testing.assert_array_equal(expr2.coeffs, [sp.symbols('A')])
 
+    #@attr('active')
+    def test_simplify_to_zero(self):
+        zero = Polynomial([[0,0,0]]*11,[-1,0,1,0,0,-2,0,0,0,1,1]).simplify()
+
+        np.testing.assert_array_equal(zero.coeffs, [0])
+        np.testing.assert_array_equal(zero.expolist, [[0,0,0]])
+
 class TestFormerSNCPolynomial(unittest.TestCase):
     def setUp(self):
         self.p0 = Polynomial([(0,1),(1,0),(1,1)],[1,1,3])

@@ -664,16 +664,19 @@ class Polynomial(_Expression):
                     if type(self.coeffs[i]) is Polynomial and len(self.coeffs[i].coeffs) == 1 and (self.coeffs[i].expolist == 0).all():
                         self.coeffs[i] = self.coeffs[i].coeffs[0]
 
+        distance_to_nonzero_previous = 1
         for i in range(1,len(self.coeffs)):
-            if self.coeffs[i] == 0: continue
-            previous_exponents = self.expolist[i-1]
+            if self.coeffs[i] == 0:
+                distance_to_nonzero_previous += 1
+                continue
             # search `self.expolist` for the same term
-            # since `self.expolist` is sorted, must only compare with the previous term
-            if (previous_exponents == self.expolist[i]).all():
+            # since `self.expolist` is sorted, must only compare with the previous nonzero term
+            if (self.expolist[i-distance_to_nonzero_previous] == self.expolist[i]).all():
                 # add coefficients
-                self.coeffs[i] += self.coeffs[i-1]
+                self.coeffs[i] += self.coeffs[i-distance_to_nonzero_previous]
                 # mark previous term for removal by setting coefficient to zero
-                self.coeffs[i-1] = 0
+                self.coeffs[i-distance_to_nonzero_previous] = 0
+            distance_to_nonzero_previous = 1
 
         # remove terms with zero coefficient
         nonzero_coeffs = np.where(self.coeffs != 0)
