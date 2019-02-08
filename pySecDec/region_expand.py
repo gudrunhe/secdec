@@ -15,7 +15,7 @@ import numpy as np, sympy as sp
 
 _sympy_one = sp.sympify(1)
 
-def find_regions( exp_param_index , polynomials, normaliz='normaliz', workdir='normaliz_tmp'):
+def find_regions( exp_param_index , polynomials, indices = None, normaliz='normaliz', workdir='normaliz_tmp'):
     '''
     Find regions for the expansion by regions
     as described in [PS11]_.
@@ -33,6 +33,14 @@ def find_regions( exp_param_index , polynomials, normaliz='normaliz', workdir='n
         list of instances of :class:`.Polynomial` where
         all of these have an equal number of variables;
         The polynomials to calculate the regions for.
+
+    :param indices:
+        list of integers or None;
+        The indices of the parameters to be included 
+        in the asymptotic expansion. This should include all 
+        Feynman parameters (integration variables) and the 
+        expansion parameter. By default (``indices=None``),
+        all parameters are considered.
 
     :param normaliz:
         string;
@@ -56,12 +64,23 @@ def find_regions( exp_param_index , polynomials, normaliz='normaliz', workdir='n
         sum += Polynomial(poly.expolist, np.ones_like(poly.coeffs, dtype=int))
 
     polytope_vertices = sum.expolist
+
+
+    if indices is not None:
+        dim = len(polytope_vertices[0])
+        indices = list(indices)
+        exp_param_index = indices.index(range(dim)[exp_param_index])
+        polytope_vertices = [[vertex[i] for i in indices] for vertex in polytope_vertices]
+
     polytope = Polytope(vertices=polytope_vertices)
     polytope.complete_representation(normaliz, workdir)
 
     facets = polytope.facets[:,:-1] # do not need offset term "a_F"
 
     regions = facets[ facets[:,exp_param_index] > 0 ]
+
+    if indices is not None:
+        regions = np.array([[next(region) if i in indices else 0 for i in range(dim)] for region in [iter(r) for r in regions]])
 
     return regions
 
@@ -325,6 +344,8 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     symbols_polynomials_to_decompose = integration_variables + regulators + polynomial_names + [smallness_parameter]
     polynomial_name_indices = np.arange(len(polynomial_names)) + ( len(integration_variables) + len(regulators) )
     smallness_parameter_index = -1
+    # only integration variables and the expansion parameter should be included in the calculation of the regions
+    region_variable_indices = list(range(len(integration_variables))) + [ len(symbols_polynomials_to_decompose) - 1 ]
 
     # parse polynomials_to_decompose
     polynomials_to_decompose = _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompose, ExponentiatedPolynomial, 'polynomials_to_decompose')
@@ -333,10 +354,11 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     for poly in polynomials_to_decompose:
         poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
 
-    # find the regions for the expansion
-    regions = find_regions(smallness_parameter_index, polynomials_to_decompose, normaliz=normaliz, workdir=name)
+    if not ( all( [np.count_nonzero(poly.expolist[:,len(integration_variables)+len(regulators):-1]) == 0 for poly in polynomials_to_decompose] ) ):
+        raise NotImplementedError("Input polynomials for the asymptotic expansion are not allowed to depend on unexpanded polynomials.")
 
-    #TODO: Search regions for fractional entry, redefine z to make all entries integer
+    # find the regions for the expansion (region vectors are always integer)
+    regions = find_regions(smallness_parameter_index, polynomials_to_decompose, indices = region_variable_indices, normaliz=normaliz, workdir=name)
 
     generators_args = []
     package_args_common = {'integration_variables':integration_variables, 'regulators':regulators,
@@ -347,7 +369,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
             # decompose the polynomials in the respective region
             polynomials_to_decompose_region_specific = apply_region([poly.copy() for poly in polynomials_to_decompose], region, smallness_parameter_index)
 
-            # factor out the smallness_parameter and store it's power
+            # factor out the smallness_parameter and store its power
             polynomials_refactorized = []
             power_overall_smallness_parameter = 0
             for polynomial in polynomials_to_decompose_region_specific:
@@ -367,7 +389,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
             # define a dummy numerator
             numerator = Polynomial(np.zeros((1,len(symbols_polynomials_to_decompose)),dtype=int), np.array([1]), symbols_polynomials_to_decompose, copy=False)
 
-            # TODO: get explanation from Long!
+            # exponent of the smallness parameter introduced by rescaling the integral measure
             power_smallness_parameter_measure = np.sum(region[:-1])
 
             # TODO: ensure expansion_by_regions_order, power_overall_smallness_parameter_no_regulators, power_smallness_parameter_measure are integer
@@ -381,7 +403,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
 
             for i,term in enumerate(series):
                 package_args = make_package_args.copy()
-                package_args['name'] = name + '_region_' + '_'.join(str(number).replace('-','m') for number in region) + '_expansion_order_' + str(int(power_overall_smallness_parameter_no_regulators) + int(power_smallness_parameter_measure) + i).replace('-','m')
+                package_args['name'] = name + '_region_' + '_'.join(str(number).replace('-','m') for ind, number in enumerate(region) if ind in region_variable_indices) + '_expansion_order_' + str(int(power_overall_smallness_parameter_no_regulators) + int(power_smallness_parameter_measure) + i).replace('-','m')
 
                 #TODO: dont convert polynomials to string
                 package_args['other_polynomials'] = [str(term.factors.pop())]

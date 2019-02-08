@@ -351,10 +351,11 @@ class Polytope(object):
             # check for equations that constrain the polytope to hyperplane (happens for scaleless integrals)
             # if there are no equations the line is expected to be '0' or 'equations' depending on the normaliz version
             current_str= f.readline()
-            if 'equations' in current_str or re.sub(r'[\n\t\s]*', '', current_str) == '0':
-                return np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)
-            else:
+
+            if not ('equations' in current_str or re.sub(r'[\n\t\s]*', '', current_str) == '0'):
                 raise NotImplementedError("Polytope is not full dimensional. Are you trying to compute a scaleless integral (which evaluates to zero)?")
+
+            return np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)
 
 
     def _read_ext_file(self, filepath):
