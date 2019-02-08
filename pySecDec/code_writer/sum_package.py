@@ -224,6 +224,7 @@ class Coefficient(object):
 
         return lowest_orders, form_output
 
+# TODO: high-level test
 def sum_package(name, package_generators, generators_args, regulators, requested_orders,
                 real_parameters=[], complex_parameters=[], coefficients=None,
                 form_executable=None):
@@ -297,14 +298,19 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     requested_orders = list(requested_orders)
     real_parameters = list(real_parameters)
     complex_parameters = list(complex_parameters)
-    coefficients = None if coefficients is None else list(coefficients)
+
+    # prepare coefficients
+    empty_coefficient = Coefficient((), (), regulators, ())
+    if coefficients is None:
+        coefficients = repeat(empty_coefficient)
+    else:
+        coefficients = [empty_coefficient if c is None else c for c in coefficients]
+        assert len(coefficients) == len(package_generators), \
+            "`coefficients` must either be ``None`` have the same length as `package_generators`."
 
     assert len(package_generators) == len(generators_args), \
         "`package_generators` (%i) and `generators_args` (%i) must have the same length." % \
         (len(package_generators), len(generators_args))
-
-    assert (coefficients is None or len(coefficients) == len(package_generators)), \
-        "`coefficients` must either be ``None`` have the same length as `package_generators`."
 
     # construct the c++ type "nested_series_t"
     # for two regulators, the resulting code should read:
@@ -358,9 +364,6 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     try:
         os.chdir(name)
 
-        if coefficients is None:
-            coefficients = repeat(None)
-
         # call package generator for every integral
         for package_generator, generator_args, coefficient in zip(package_generators, generators_args, coefficients):
             sub_name = generator_args['name']
@@ -376,16 +379,10 @@ def sum_package(name, package_generators, generators_args, regulators, requested
             replacements_in_files['lowest_coefficient_orders'] = ','.join(map(str,lowest_coefficient_orders))
 
             if package_generator is loop_package:
-                if coefficient is None:
-                    generator_args['requested_order'] = requested_orders[0]
-                else:
-                    generator_args['requested_order'] = requested_orders[0] - lowest_coefficient_orders[0]
+                generator_args['requested_order'] = requested_orders[0] - lowest_coefficient_orders[0]
             else:
                 generator_args['regulators'] = regulators
-                if coefficient is None:
-                    generator_args['requested_orders'] = np.asarray(requested_orders)
-                else:
-                    generator_args['requested_orders'] = np.asarray(requested_orders) - lowest_coefficient_orders
+                generator_args['requested_orders'] = np.asarray(requested_orders) - lowest_coefficient_orders
 
             # parse integral specific files
             for ch in 'ch':
