@@ -407,7 +407,6 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
         package_args['polynomials_to_decompose'] = map(str,polynomials_to_decompose)
         package_args.update(package_args_common)
         generators_args.append(package_args)
-        
 
-    sum_package(name, [make_package]*len(generators_args), generators_args, requested_orders, real_parameters,
-                complex_parameters)
+    sum_package(name, [make_package]*len(generators_args), generators_args, regulators,
+                requested_orders, real_parameters, complex_parameters)
