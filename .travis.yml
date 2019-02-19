@@ -252,12 +252,14 @@ install:
   - export PATH=${TRAVIS_BUILD_DIR}/dist_install/bin:$PATH
   - export SECDEC_CONTRIB=${TRAVIS_BUILD_DIR}/dist_install/
   - export PYTHONPATH=${TRAVIS_BUILD_DIR}/dist_install/pySecDec_install:$PYTHONPATH
+  - export PYTHON_MAJOR_VERSION=`python -c 'from sys import version_info; print(version_info.major)'`
   - if [ x${PYTHON_INSTALL} == x ]; then export PYTHON_INSTALL='pip install'; fi
   - echo running on $TRAVIS_OS_NAME
   - echo using CXX=$CXX
   - python --version
   - $PYTHON_INSTALL --upgrade pip setuptools wheel
-  - if [ "$PYTHON_INSTALL" = 'sudo easy_install' ]; then $PYTHON_INSTALL numpy sphinx sympy ; else $PYTHON_INSTALL -r requirements.txt --only-binary=numpy; fi
+  # python2 support is dropped in sphinx-2
+  - if [ "$PYTHON_INSTALL" = 'sudo easy_install' ]; then if [ "$PYTHON_MAJOR_VERSION" = 2 ]; then $PYTHON_INSTALL 'numpy' 'sphinx<2' 'sympy'; else $PYTHON_INSTALL numpy sphinx sympy; fi; else $PYTHON_INSTALL -r requirements.txt --only-binary=numpy; fi
   - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then make thin-dist; else make dist; fi
   - mv pySecDec-*/ dist_install
   - cd dist_install
