@@ -266,6 +266,8 @@ can be added to the integrator argument list:
     # integrate
     str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box1L(real_parameters=[4.0, -0.75, 1.25, 1.0])
 
+In case of a sign check error (sign_check_error), the arguments ``number_of_presamples``, ``deformation_parameters_maximum``, and ``deformation_parameters_minimum`` as described in
+:class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>` can be used to modify the contour.
 At this point the string ``str_integral_with_prefactor`` contains the full result of the integral and can be manipulated as required.
 In the ``integrate_box1L.py`` an example is shown how to parse the expression with `sympy` and access individual orders of the regulator.
 
@@ -319,7 +321,8 @@ The :cpp:func:`name::make_integrands` function returns an :cpp:class:`secdecutil
     //  Generate the integrands (optimization of the contour if applicable)
         const std::vector<box1L::nested_series_t<box1L::integrand_t>> sector_integrands = box1L::make_integrands(real_parameters, complex_parameters);
 
-The contour deformation can be adjusted via additional arguments to :cpp:func:`name::make_integrands`. The sectors can be added before integration::
+The contour deformation has to be adjusted in case of a sign check error (sign_check_error). This can be done via additional arguments to :cpp:func:`name::make_integrands`.
+The sectors can be added before integration::
 
     //  Add integrands of sectors (together flag)
         const box1L::nested_series_t<box1L::integrand_t> all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );

@@ -169,7 +169,8 @@ A program demonstrating the use of the C++ library is generated for each integra
     of integration variables upon which they depend.
     The real and complex parameters are bound to the values passed in `real_parameters` and `complex_parameters`.
     If enabled, contour deformation is controlled by the parameters `number_of_presamples`, `deformation_parameters_maximum`, `deformation_parameters_minimum`, `deformation_parameters_decrease_factor`
-    which are documented in :class:`pySecDec.integral_interface.IntegralLibrary`.
+    which are documented in :class:`pySecDec.integral_interface.IntegralLibrary`. In case of a sign check error (sign_check_error), manually set `number_of_presamples`, `deformation_parameters_maximum`,
+    and `deformation_parameters_minimum`.
 
     Passing the `integrand_t` to the :cpp:func:`secdecutil::Integrator::integrate` function of an instance of a particular :cpp:class:`secdecutil::Integrator` will return the numerically evaluated integral.
     To integrate all orders of all sectors :cpp:func:`secdecutil::deep_apply` can be used.

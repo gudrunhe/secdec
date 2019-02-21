@@ -521,6 +521,8 @@ class IntegralLibrary(object):
         unsigned int, optional;
         The number of samples used for the
         contour optimization.
+        A larger value here may resolve a sign
+        check error (sign_check_error).
         This option is ignored if the integral
         library was created without deformation.
         Default: ``100000``.
@@ -529,6 +531,8 @@ class IntegralLibrary(object):
         float, optional;
         The maximal value the deformation parameters
         :math:`\lambda_i` can obtain.
+        Lower this value if you get a sign check
+        error (sign_check_error).
         If ``number_of_presamples=0``, all
         :math:`\lambda_i` are set to this value.
         This option is ignored if the integral
@@ -539,6 +543,8 @@ class IntegralLibrary(object):
         float, optional;
         The minimal value the deformation parameters
         :math:`\lambda_i` can obtain.
+        Lower this value if you get a sign check
+        error (sign_check_error).
         If ``number_of_presamples=0``, all
         :math:`\lambda_i` are set to this value.
         This option is ignored if the integral
@@ -548,9 +554,14 @@ class IntegralLibrary(object):
     :param deformation_parameters_decrease_factor:
         float, optional;
         If the sign check with the optimized
-        :math:`\lambda_i` fails, all :math:`\lambda_i`
-        are multiplied by this value until the sign
-        check passes.
+        :math:`\lambda_i` fails during the presampling
+        stage, all :math:`\lambda_i` are multiplied
+        by this value until the sign check passes.
+        We recommend to rather change
+        ``number_of_presamples``,
+        ``deformation_parameters_maximum``,
+        and ``deformation_parameters_minimum``
+        in case of a sign check error.
         This option is ignored if the integral
         library was created without deformation.
         Default: ``0.9``.
