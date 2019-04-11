@@ -42,7 +42,7 @@ class CheckLib(unittest.TestCase):
             (
                 self.target_result_without_prefactor_without_kinematics * \
                 self.target_prefactor
-            ).expand().replace('log(-s)',log_minus_s).subs('s',s)
+            ).expand().replace(sp.sympify('log(-s)'),log_minus_s).subs(sp.sympify('s'),s)
 
         # print results
         print("obtained result without prefactor:\n", str_integral_without_prefactor, '\n')
