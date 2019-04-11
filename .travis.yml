@@ -246,6 +246,21 @@ matrix:
         - brew install graphviz
         - $PYTHON_INSTALL nose
 
+    - os: osx
+      osx_image: xcode10.2
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.6.2
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using easy_install rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz
+        - $PYTHON_INSTALL nose
+
 install:
   - export PROCESSES=4
   - export NOSETESTS_TIMEOUT=600
