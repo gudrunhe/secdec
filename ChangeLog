@@ -1,3 +1,10 @@
+16.04.2019 pySecDec-1.4.2
+
+    [algebra] fix incomplete simplification of some expressions
+    [doc] add instructions for sign_check_error
+    [examples] correct HZ2L_nonplanar kinematics
+    [tests] fix "regulator_in_powerlist" in combination with sympy-1.4
+
 29.11.2019 pySecDec-1.4.1
 
     [dist] update to qmc-1.0.1 (fix in PolySingular fit function)
