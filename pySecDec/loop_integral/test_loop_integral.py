@@ -1896,6 +1896,57 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_F  - target_F ).simplify() , 0 )
         self.assertEqual( (result_Nu - target_Nu).simplify() , 0 )
 
+    #@attr('active')
+    def test_powerlist_regulators_bubble_1L_from_graph(self):
+        internal_lines = [['mt',[1,2]],['mt',[2,1]]]
+        external_lines = [['p1',1],['p2',2]]
+        powerlist=['1+n1','1+n2']
+        regulators=['eps','n1','n2']
+        replacement_rules = [
+                                ('p1*p1', 'msq'),
+                                ('p2*p2', 'msq'),
+                                ('mt**2', 'mtsq'),
+                            ]
+        result_U = "x0+x1"
+        result_exponent_U = "2*eps+n1+n2-2"
+        result_F = "mtsq*(x0**2+2*x0*x1+x1**2)-x0*x1*msq"
+        result_exponent_F = "-eps-n1-n2"
+        result_measure = "x0**n1*x1**n2"
+        loop_integral = LoopIntegralFromGraph(internal_lines=internal_lines, external_lines=external_lines, powerlist=powerlist, regulators=regulators, replacement_rules=replacement_rules)
+        # uf_from_graph_generic(self, internal_lines, external_lines, 1, result_U, result_F, regulators=regulators, powerlist=powerlist)
+
+        self.assertEqual(loop_integral.L,1)
+        self.assertEqual((sp.sympify(loop_integral.U)-sp.sympify(result_U)).simplify(),0)
+        self.assertEqual((sp.sympify(loop_integral.exponent_U)-sp.sympify(result_exponent_U)).simplify(),0)
+        self.assertEqual((sp.sympify(loop_integral.F)-sp.sympify(result_F)).simplify(),0)
+        self.assertEqual((sp.sympify(loop_integral.exponent_F)-sp.sympify(result_exponent_F)).simplify(),0)
+        self.assertEqual((sp.sympify(loop_integral.measure)-sp.sympify(result_measure)).simplify(),0)
+
+    #@attr('active')
+    def test_powerlist_regulators_bubble_1L_from_propagators(self):
+        propagators = ["(k**2-mtsq)", "((p1-k)**2-mtsq)"]
+        powerlist=['1+n1','1+n2']
+        regulators=['eps','n1','n2']
+        replacement_rules = [
+                                ('p1*p1', 'msq'),
+                                ('p2*p2', 'msq'),
+                                ('mt**2', 'mtsq'),
+                            ]
+        result_U = "x0+x1"
+        result_exponent_U = "2*eps+n1+n2-2"
+        result_F = "mtsq*(x0**2+2*x0*x1+x1**2)-x0*x1*msq"
+        result_exponent_F = "-eps-n1-n2"
+        result_measure = "x0**n1*x1**n2"
+        loop_integral = LoopIntegralFromPropagators(propagators=propagators, loop_momenta=["k"], powerlist=powerlist, regulators=regulators, replacement_rules=replacement_rules)
+        # uf_from_graph_generic(self, internal_lines, external_lines, 1, result_U, result_F, regulators=regulators, powerlist=powerlist)
+
+        self.assertEqual(loop_integral.L,1)
+        self.assertEqual((sp.sympify(loop_integral.U)-sp.sympify(result_U)).simplify(),0)
+        self.assertEqual((sp.sympify(loop_integral.exponent_U)-sp.sympify(result_exponent_U)).simplify(),0)
+        self.assertEqual((sp.sympify(loop_integral.F)-sp.sympify(result_F)).simplify(),0)
+        self.assertEqual((sp.sympify(loop_integral.exponent_F)-sp.sympify(result_exponent_F)).simplify(),0)
+        self.assertEqual((sp.sympify(loop_integral.measure)-sp.sympify(result_measure)).simplify(),0)
+
 class TestUF_LoopPackage(unittest.TestCase):
     def test_loop_package_twice(self):
         cwd = os.getcwd()

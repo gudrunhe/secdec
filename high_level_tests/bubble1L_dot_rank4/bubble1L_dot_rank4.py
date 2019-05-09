@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
 
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-    requested_order = 0,
+    requested_orders = [0],
 
     complex_parameters =['s1','s2','sij'],
     real_parameters =['m1','m2'],

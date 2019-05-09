@@ -38,7 +38,7 @@ class LoopIntegralFromGraph(LoopIntegral):
     ''' + LoopIntegral.common_properties_doc
 
     def __init__(self, internal_lines, external_lines, replacement_rules=[], Feynman_parameters='x', \
-                 regulator='eps', regulator_power=0, dimensionality='4-2*eps', powerlist=[]):
+                 regulators=['eps'], dimensionality='4-2*eps', powerlist=[]):
 
         # sympify and store internal lines
         assert len(internal_lines) > 0, \
@@ -71,7 +71,7 @@ class LoopIntegralFromGraph(LoopIntegral):
 
         # store properties shared between derived classes
         self.all_momenta = self.external_momenta
-        self.set_common_properties(replacement_rules, Feynman_parameters, regulator, regulator_power,
+        self.set_common_properties(replacement_rules, Feynman_parameters, regulators,
                                    dimensionality, powerlist)
 
         # remove `internal_lines` and `Feynman_parameters` that are set to zero by the `powerlist`

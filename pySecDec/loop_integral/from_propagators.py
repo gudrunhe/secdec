@@ -121,8 +121,8 @@ class LoopIntegralFromPropagators(LoopIntegral):
     ''' + LoopIntegral.common_properties_doc
 
     def __init__(self, propagators, loop_momenta, external_momenta=[], Lorentz_indices=[], \
-                 numerator=1, metric_tensor='g', replacement_rules=[], Feynman_parameters='x', regulator='eps', \
-                 regulator_power=0, dimensionality='4-2*eps', powerlist=[]):
+                 numerator=1, metric_tensor='g', replacement_rules=[], Feynman_parameters='x', regulators=['eps'], \
+                 dimensionality='4-2*eps', powerlist=[]):
 
         # sympify and store `loop_momenta`
         self.loop_momenta = sympify_symbols(loop_momenta, 'Each of the `loop_momenta` must be a symbol.')
@@ -153,7 +153,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
             self.numerator_input_terms = [self.numerator_input]
 
         # store properties shared between derived classes
-        self.set_common_properties(replacement_rules, Feynman_parameters, regulator, regulator_power,
+        self.set_common_properties(replacement_rules, Feynman_parameters, regulators,
                                    dimensionality, powerlist)
 
         # remove `propagators` and `Feynman_parameters` that are set to zero by the `powerlist`

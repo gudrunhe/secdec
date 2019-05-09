@@ -37,7 +37,7 @@ if __name__ == "__main__":
     additional_prefactor = '1',
 
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-    requested_order = 0,
+    requested_orders = [0],
 
     # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
     form_optimization_level = 4,

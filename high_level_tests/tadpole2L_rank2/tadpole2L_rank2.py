@@ -19,7 +19,7 @@ if __name__ == "__main__":
     loop_integral = li,
 
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-    requested_order = 0,
+    requested_orders = [0],
 
     real_parameters =['m1sq','m2sq','m3sq'],
 

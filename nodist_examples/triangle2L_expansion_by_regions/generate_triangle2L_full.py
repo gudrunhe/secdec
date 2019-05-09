@@ -32,7 +32,7 @@ real_parameters = Mandelstam_symbols + mass_symbols,
 additional_prefactor = '''gamma(1-2*eps)/(gamma(1+eps)*gamma(1+eps)*gamma(1-eps)*gamma(1-eps))*msq**(2+2*eps)''',
 
 # the highest order of the final epsilon expansion 
-requested_order = 0,
+requested_orders = [0],
 
 # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
 form_optimization_level = 2,

@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # additional_prefactor = '-((gamma(1-eps)**2*gamma(1+eps))/gamma(1-2*eps)/exp(-EulerGamma*eps)/3**eps)**(-2)/gamma(2*eps + 2)',
 
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-    requested_order = 2,
+    requested_orders = [2],
 
     # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
     form_optimization_level = 2,

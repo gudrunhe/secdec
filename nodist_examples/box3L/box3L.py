@@ -31,7 +31,7 @@ if __name__ == "__main__":
     name = 'box3L',
     loop_integral = li,
     real_parameters = Mandelstam_symbols + mass_symbols,
-    requested_order = 0,
+    requested_orders = [0],
     decomposition_method = 'iterative',
     contour_deformation = False,
     use_Pak = True,

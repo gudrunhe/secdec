@@ -40,7 +40,7 @@ if __name__ == "__main__":
     real_parameters = Mandelstam_symbols + mass_symbols,
 
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-    requested_order = 1,
+    requested_orders = [1],
 
     # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
     form_optimization_level = 2,

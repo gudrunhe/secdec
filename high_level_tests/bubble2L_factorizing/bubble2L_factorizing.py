@@ -19,7 +19,7 @@ if __name__ == "__main__":
     loop_package(
     name = "bubble2L_factorizing",
     loop_integral = li,
-    requested_order = -2,
+    requested_orders = [-2],
     form_optimization_level = 4,
     decomposition_method = "geometric",
     real_parameters = ['es12'],

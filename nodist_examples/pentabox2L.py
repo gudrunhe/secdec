@@ -32,7 +32,7 @@ if __name__ == "__main__":
         loop_integral = li,
         use_Pak = False, # no symmetries
         real_parameters = Mandelstam_symbols,
-        requested_order = 0,
+        requested_orders = [0],
         decomposition_method = 'geometric',
         form_work_space = '1G',
         # additional_prefactor = 'exp(2*EulerGamma*eps)',

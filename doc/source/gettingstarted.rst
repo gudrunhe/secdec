@@ -140,7 +140,7 @@ The ordering is important as the numerical values assigned to these list element
 
 Next, the function :func:`loop_package <pySecDec.loop_integral.loop_package>` is called. It will create a folder called `box1L`.
 It performs the algebraic sector decomposition steps and writes a package containing the C++ code for the numerical evaluation.
-The argument `requested_order` specifies the order in the regulator to which the integral should be expanded.
+The argument `requested_orders` specifies the order in the regulator to which the integral should be expanded.
 For a complete list of possible options see  :func:`loop_package <pySecDec.loop_integral.loop_package>`.
 
 .. code::
@@ -154,7 +154,7 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
     real_parameters = Mandelstam_symbols + mass_symbols,
 
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-    requested_order = 0,
+    requested_orders = [0],
 
     # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
     form_optimization_level = 2,

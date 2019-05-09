@@ -21,7 +21,6 @@ class LoopIntegral(object):
     of the following expressions that are accessible
     as member properties:
 
-    * ``self.regulator ** self.regulator_power``
     * ``self.Gamma_factor``
     * ``self.exponentiated_U``
     * ``self.exponentiated_F``
@@ -94,21 +93,14 @@ class LoopIntegral(object):
         variables will be consecutively numbered starting
         from zero.
 
-    :param regulator:
-        string or sympy symbol, optional;
-        The symbol to be used for the dimensional regulator
+    :param regulators:
+        list of strings or sympy symbol, optional;
+        The symbols to be used for the regulators
         (typically :math:`\epsilon` or :math:`\epsilon_D`)
 
         .. note::
-            If you change this symbol, you have to adapt
-            the `dimensionality` accordingly.
-
-    :param regulator_power:
-        integer;
-        An additional factor to the `numerator`.
-
-        .. seealso::
-            :class:`.LoopIntegral`
+            If you change the dimensional regulator symbol,
+            you have to adapt the `dimensionality` accordingly.
 
     :param dimensionality:
         string or sympy expression, optional;
@@ -118,7 +110,7 @@ class LoopIntegral(object):
     :param powerlist:
         iterable, optional;
         The powers of the propergators, possibly dependent on
-        the `regulator`. In case of negative powers, the
+        the `regulators`. In case of negative powers, the
         `numerator` is constructed by taking derivatives with
         respect to the corresponding Feynman parameters as
         explained in Section 3.2.4 of Ref. [BHJ+15]_.
@@ -128,15 +120,10 @@ class LoopIntegral(object):
 
     '''
 
-    def set_common_properties(self, replacement_rules, Feynman_parameters, regulator, regulator_power,
+    def set_common_properties(self, replacement_rules, Feynman_parameters, regulators,
                               dimensionality, powerlist):
-        # sympify and store `regulator`
-        self.regulator = sympify_symbols([regulator], '`regulator` must be a symbol.')[0]
-
-        # check and store `regulator_power`
-        regulator_power_as_int = int(regulator_power)
-        assert regulator_power_as_int == regulator_power, '`regulator_power` must be integral.'
-        self.regulator_power = regulator_power_as_int
+        # sympify and store `regulators`
+        self.regulators = sympify_symbols(regulators, '`regulators` must be symbols.')
 
         # sympify and store `dimensionality`
         self.dimensionality = sympify_expression(dimensionality)
@@ -182,8 +169,10 @@ class LoopIntegral(object):
 
             for power in powerlist:
                 power_sp = sympify_expression(power)
-                power0 = power_sp.subs(regulator,0)
-                assert power0.is_Number, "The propagator powers must be numbers for vanishing regulator."
+                power0 = power_sp
+                for regulator in regulators:
+                    power0 = power0.subs(regulator,0)
+                assert power0.is_Number, "The propagator powers must be numbers for vanishing regulators."
                 self.powerlist.append(power_sp)
                 if power0 >= 1:
                     self.derivativelist.append(0)
@@ -339,7 +328,7 @@ class LoopIntegral(object):
     def Gamma_factor(self):
         # Every term factor in the sum of equation (2.5) in arXiv:1010.1667v1 comes with
         # the scalar factor `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)`.
-        # In order to keep the `numerator` free of poles in the regulator, we divide it
+        # In order to keep the `numerator` free of poles in the dimensional regulator, we divide it
         # by the Gamma function with the smallest argument `N_nu - dim*L/2 - highest_rank//2`,
         # where `//` means integer division, and put it here.
         gamma_fac = sp.gamma(self.Gamma_argument)

@@ -16,7 +16,7 @@ import numpy as np
 import sympy as sp
 import os
 
-def loop_package(name, loop_integral, requested_order,
+def loop_package(name, loop_integral, requested_orders,
                  real_parameters=[], complex_parameters=[],
                  contour_deformation=True,
                  additional_prefactor=1, form_optimization_level=2,
@@ -53,9 +53,9 @@ def loop_package(name, loop_integral, requested_order,
         The loop integral to be computed.
 
     :param requested_orders:
-        integer;
-        Compute the expansion in the regulator to this
-        order.
+        iterable of integers;
+        Compute the expansion in the regulators to these
+        orders.
 
     :param real_parameters:
         iterable of strings or sympy symbols, optional;
@@ -77,7 +77,7 @@ def loop_package(name, loop_integral, requested_order,
     :param additional_prefactor:
         string or sympy expression, optional;
         An additional factor to be multiplied to the loop
-        integral. It may depend on the regulator, the
+        integral. It may depend on the regulators, the
         `real_parameters`, and the `complex_parameters`.
 
     :param form_optimization_level:
@@ -233,17 +233,17 @@ def loop_package(name, loop_integral, requested_order,
     U_and_F = [loop_integral.exponentiated_U.copy(), loop_integral.exponentiated_F.copy()]
     names_U_and_F = sp.symbols(['U','F'])
 
-    # append the regulator symbol and the symbols `U` and `F` to `U` and `F`
+    # append the regulator symbols and the symbols `U` and `F` to `U` and `F`
     for poly in U_and_F:
-        poly.polysymbols.extend([loop_integral.regulator] + names_U_and_F)
-        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_U_and_F)+1], dtype=int)])
+        poly.polysymbols.extend(loop_integral.regulators + names_U_and_F)
+        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_U_and_F)+len(loop_integral.regulators)], dtype=int)])
 
-    # append the regulator symbol to the `numerator` and to `measure`
+    # append the regulator symbols to the `numerator` and to `measure`
     numerator = loop_integral.numerator.copy()
     measure = loop_integral.measure.copy()
     for poly in chain([numerator], measure.factors):
-        poly.polysymbols = poly.polysymbols[:-2] + [loop_integral.regulator] + poly.polysymbols[-2:]
-        poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),1], dtype=int), poly.expolist[:,-2:]])
+        poly.polysymbols = poly.polysymbols[:-2] + loop_integral.regulators + poly.polysymbols[-2:]
+        poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),len(loop_integral.regulators)], dtype=int), poly.expolist[:,-2:]])
 
     if np.issubdtype(numerator.coeffs.dtype, np.number):
         other_polynomials = [numerator]
@@ -262,8 +262,8 @@ def loop_package(name, loop_integral, requested_order,
 
         integration_variables = loop_integral.integration_variables,
 
-        regulators = [loop_integral.regulator],
-        requested_orders = [requested_order],
+        regulators = loop_integral.regulators,
+        requested_orders = requested_orders,
 
         polynomials_to_decompose = polynomials_to_decompose,
         polynomial_names = names_U_and_F,
@@ -271,7 +271,7 @@ def loop_package(name, loop_integral, requested_order,
         contour_deformation_polynomial = 'F' if contour_deformation else None,
         positive_polynomials = ['U'],
 
-        prefactor = sympify_expression(additional_prefactor) * loop_integral.Gamma_factor * loop_integral.regulator ** loop_integral.regulator_power,
+        prefactor = sympify_expression(additional_prefactor) * loop_integral.Gamma_factor,
 
         real_parameters = real_parameters,
         complex_parameters = complex_parameters,
@@ -298,8 +298,16 @@ def loop_package(name, loop_integral, requested_order,
 
     if isinstance(loop_integral, LoopIntegralFromGraph):
         try:
+            # set regulators zero in the powerlist for the drawing
+            powerlist = []
+            for power in loop_integral.powerlist:
+                power0 = sp.sympify(power)
+                for regulator in loop_integral.regulators:
+                    power0 = power0.subs(regulator,0)
+                assert power0.is_Number, "The propagator powers must be numbers for vanishing regulators."
+                powerlist.append(power0)
             plot_diagram(loop_integral.internal_lines, loop_integral.external_lines,
-                         os.path.join(name, name), loop_integral.powerlist)
+                         os.path.join(name, name), powerlist)
         except Exception as error:
             print('WARNING: Could not draw the Feynman diagram "%s". Reason: %s' % (name,error))
 

@@ -43,7 +43,7 @@ if __name__ == "__main__":
     real_parameters = Mandelstam_symbols,
 
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-    requested_order = 0,
+    requested_orders = [0],
 
     additional_prefactor = 'exp(2*EulerGamma*eps)',
 

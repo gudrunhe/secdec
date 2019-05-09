@@ -21,7 +21,7 @@ if __name__ == "__main__":
     loop_package(
     name = 'regulator_in_powerlist',
     loop_integral = li,
-    requested_order = 0,
+    requested_orders = [0],
     real_parameters = ['s'],
     decomposition_method = 'geometric',
     )
