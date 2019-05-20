@@ -96,7 +96,7 @@ namespace secdecutil {
                         throw integral_not_computed_error("class Integral: get_integration_time called before compute.");
                     return integration_time;
                 };
-                virtual real_t get_scaleexpo() = 0;
+                virtual real_t get_scaleexpo() const = 0;
 
                 /*
                  * Functions to compute the integral with the given "number_of_function_evaluations".
@@ -121,7 +121,7 @@ namespace secdecutil {
             integrand_t integrand;
             real_t scaleexpo;
 
-            real_t get_scaleexpo() override { return scaleexpo; }
+            real_t get_scaleexpo() const override { return scaleexpo; }
 
             /*
              * constructor
@@ -162,7 +162,7 @@ namespace secdecutil {
             integrand_t integrand;
             real_t scaleexpo;
 
-            real_t get_scaleexpo() override { return scaleexpo; }
+            real_t get_scaleexpo() const override { return scaleexpo; }
 
             /*
              * constructor
