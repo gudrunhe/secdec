@@ -8,10 +8,13 @@
 
 namespace %(name)s
 {
-    nested_series_t<sum_t> make_weighted_integral_%(sub_integral_name)s
-    (
-        const std::vector<real_t>& real_parameters,
-        const std::vector<complex_t>& complex_parameters
-    );
+    namespace %(sub_integral_name)s
+    {
+        nested_series_t<sum_t> make_weighted_integral
+        (
+            const std::vector<real_t>& real_parameters,
+            const std::vector<complex_t>& complex_parameters
+        );
+    }
 };
 #endif

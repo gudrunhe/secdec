@@ -2,8 +2,6 @@
 #include <fstream> // std::ifstream
 #include <memory> // std::shared_ptr, std::make_shared
 #include <numeric> // std::accumulate
-#include <sstream> // std::stringstream
-#include <string> // std::string
 #include <vector> // std::vector
 
 #include <secdecutil/amplitude.hpp> // secdecutil::amplitude::Integral, secdecutil::amplitude::CubaIntegral, secdecutil::amplitude::QmcIntegral
@@ -13,93 +11,34 @@
 #include <secdecutil/integrators/qmc.hpp> // secdecutil::integrators::Qmc
 #include <secdecutil/series.hpp> // secdecutil::Series
 
-#include <ginac/ginac.h>
+#include "%(name)s.hpp"
+#include "%(sub_integral_name)s/%(sub_integral_name)s.hpp"
+#include "%(sub_integral_name)s_weighted_integral.hpp"
+#include "config_%(name)s.hpp"
 
-#define QUOTE(ARG) #ARG
-#define QUOTE_EXPAND(ARG) QUOTE(ARG)
-#define CAT(ARG1,ARG2) ARG1##ARG2
-#define CAT_EXPAND(ARG1,ARG2) CAT(ARG1,ARG2)
 
-#define MAIN_INTEGRAL_NAME %(name)s
-#define SUB_INTEGRAL_NAME %(sub_integral_name)s
-
-#include QUOTE_EXPAND(MAIN_INTEGRAL_NAME.hpp)
-#include QUOTE_EXPAND(SUB_INTEGRAL_NAME/SUB_INTEGRAL_NAME.hpp)
-#include QUOTE_EXPAND(CAT_EXPAND(SUB_INTEGRAL_NAME,_weighted_integral.hpp))
-
-#define CONTOURDEF_PARAMETERS \
-    // put parameters for contour deformation here: number_of_presamples, deformation_parameters_maximum, deformation_parameters_minimum, deformation_parameters_decrease_factor
-
-#define CONFIGURE_INTEGRATOR \
-    using integrator_t = secdecutil::integrators::Qmc< \
-                                                         integrand_return_t, \
-                                                         maximal_number_of_integration_variables, \
-                                                         ::integrators::transforms::Korobov<3>::type, \
-                                                         integrand_t, \
-                                                         ::integrators::fitfunctions::PolySingular::type \
-                                                     >; \
-    auto integrator = std::make_shared<integrator_t>(); \
-    // further options can be set here, e.g.: integrator->verbose = true;
-
-#define MAKE_WEIGHTED_INTEGRAL_BODY(USING_INTEGRAND_T,CUDA) \
-    using namespace SUB_INTEGRAL_NAME; \
-    USING_INTEGRAND_T; \
-    using integral_t = secdecutil::amplitude::Integral<integrand_return_t,real_t>; \
- \
-    CONFIGURE_INTEGRATOR \
- \
-    std::vector<nested_series_t<integrand_t>> raw_integrands = \
-        make_##CUDA##integrands \
-        ( \
-            real_parameters, \
-            complex_parameters \
-            CONTOURDEF_PARAMETERS \
-        ); \
- \
-    const std::function<sum_t(const integrand_t& sector)> convert_integrands = \
-        [ integrator ] (const integrand_t& sector) -> sum_t \
-        { \
-            return { /* constructor of std::vector */ \
-                        { /* constructor of WeightedIntegral */  \
-                            std::make_shared< \
-                                                secdecutil::amplitude::QmcIntegral< \
-                                                                                       integrand_return_t, \
-                                                                                       real_t, \
-                                                                                       integrator_t, \
-                                                                                       integrand_t \
-                                                                                  > \
-                                            >(integrator,sector) \
-                        } \
-                   }; \
-        }; \
- \
-    const std::vector<nested_series_t<sum_t>> integrals = deep_apply(raw_integrands, convert_integrands); \
-    nested_series_t<sum_t> amplitude = std::accumulate(++integrals.begin(), integrals.end(), *integrals.begin() ); \
-    amplitude *= prefactor(real_parameters,complex_parameters) * coefficient(real_parameters,complex_parameters); \
-    return amplitude;
-
-namespace SUB_INTEGRAL_NAME
+namespace %(sub_integral_name)s
 {
     const std::vector<int> lowest_coefficient_orders{%(lowest_coefficient_orders)s};
 
     static std::vector<int> compute_required_orders()
     {
-        assert(MAIN_INTEGRAL_NAME::requested_orders.size() == SUB_INTEGRAL_NAME::requested_orders.size());
-        size_t number_of_regulators = MAIN_INTEGRAL_NAME::requested_orders.size();
-        std::vector<int> orders; orders.reserve( MAIN_INTEGRAL_NAME::requested_orders.size() );
+        assert(%(name)s::requested_orders.size() == %(sub_integral_name)s::requested_orders.size());
+        size_t number_of_regulators = %(name)s::requested_orders.size();
+        std::vector<int> orders; orders.reserve( %(name)s::requested_orders.size() );
         for(size_t i = 0; i < number_of_regulators; ++i)
             orders.push_back(
-                                  MAIN_INTEGRAL_NAME::requested_orders.at(i) + 1
-                                - SUB_INTEGRAL_NAME::lowest_coefficient_orders.at(i)
-                                - SUB_INTEGRAL_NAME::lowest_orders.at(i)
-                                - SUB_INTEGRAL_NAME::lowest_prefactor_orders.at(i)
+                                  %(name)s::requested_orders.at(i) + 1
+                                - %(sub_integral_name)s::lowest_coefficient_orders.at(i)
+                                - %(sub_integral_name)s::lowest_orders.at(i)
+                                - %(sub_integral_name)s::lowest_prefactor_orders.at(i)
                             );
         return orders;
     }
 
     nested_series_t<complex_t> coefficient(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
     {
-        std::ifstream coeffile(QUOTE_EXPAND(lib/CAT_EXPAND(SUB_INTEGRAL_NAME,_coefficient.txt)));
+        std::ifstream coeffile("lib/%(sub_integral_name)s_coefficient.txt");
         assert( coeffile.is_open() );
         return secdecutil::ginac::read_coefficient<nested_series_t>
                (
@@ -110,19 +49,157 @@ namespace SUB_INTEGRAL_NAME
     }
 };
 
-namespace MAIN_INTEGRAL_NAME
+namespace %(name)s
 {
-    // convert return value of "make_integrands", "prefactor", and "coefficient" to "nested_series_t<sum_t>"
-    nested_series_t<sum_t> CAT_EXPAND(make_weighted_integral_,SUB_INTEGRAL_NAME)
-    (
-        const std::vector<real_t>& real_parameters,
-        const std::vector<complex_t>& complex_parameters
-    )
+    namespace %(sub_integral_name)s
     {
+        template<bool with_cuda>
+        struct WithCuda
+        {
+            using integrand_t = ::%(sub_integral_name)s::integrand_t;
+            constexpr static auto make_raw_integrands = ::%(sub_integral_name)s::make_integrands;
+
+            // with contour deformation
+            static std::vector<nested_series_t<integrand_t>> make_integrands
+            (
+                const std::vector<real_t>& real_parameters,
+                const std::vector<complex_t>& complex_parameters,
+                std::vector<nested_series_t<integrand_t>> (*make_integrands_with_contour_deformation)
+                    (
+                        const std::vector<real_t>& real_parameters,
+                        const std::vector<complex_t>& complex_parameters,
+                        unsigned number_of_presamples,
+                        real_t deformation_parameters_maximum,
+                        real_t deformation_parameters_minimum,
+                        real_t deformation_parameters_decrease_factor
+                    )
+            )
+            {
+                return make_integrands_with_contour_deformation
+                (
+                    real_parameters,
+                    complex_parameters,
+                    Options::ContourDeformation::number_of_presamples,
+                    Options::ContourDeformation::deformation_parameters_maximum,
+                    Options::ContourDeformation::deformation_parameters_minimum,
+                    Options::ContourDeformation::deformation_parameters_decrease_factor
+                );
+            };
+
+            // without contour deformation
+            static std::vector<nested_series_t<integrand_t>> make_integrands
+            (
+                const std::vector<real_t>& real_parameters,
+                const std::vector<complex_t>& complex_parameters,
+                std::vector<nested_series_t<integrand_t>> (*make_integrands_without_contour_deformation)
+                    (
+                        const std::vector<real_t>& real_parameters,
+                        const std::vector<complex_t>& complex_parameters
+                    )
+            )
+            {
+                return make_integrands_without_contour_deformation
+                (
+                    real_parameters,
+                    complex_parameters
+                );
+            };
+        };
+
         #ifdef SECDEC_WITH_CUDA
-            MAKE_WEIGHTED_INTEGRAL_BODY(using integrand_t = SUB_INTEGRAL_NAME::cuda_integrand_t, cuda_)
-        #else
-            MAKE_WEIGHTED_INTEGRAL_BODY(using SUB_INTEGRAL_NAME::integrand_t,)
+            template<>
+            struct WithCuda<true>
+            {
+                using integrand_t = ::%(sub_integral_name)s::cuda_integrand_t;
+                constexpr static auto make_raw_integrands = ::%(sub_integral_name)s::make_cuda_integrands;
+
+                // with contour deformation
+                static std::vector<nested_series_t<integrand_t>> make_integrands
+                (
+                    const std::vector<real_t>& real_parameters,
+                    const std::vector<complex_t>& complex_parameters,
+                    std::vector<nested_series_t<integrand_t>> (*make_integrands_with_contour_deformation)
+                        (
+                            const std::vector<real_t>& real_parameters,
+                            const std::vector<complex_t>& complex_parameters,
+                            unsigned number_of_presamples,
+                            real_t deformation_parameters_maximum,
+                            real_t deformation_parameters_minimum,
+                            real_t deformation_parameters_decrease_factor
+                        )
+                )
+                {
+                    return make_integrands_with_contour_deformation
+                    (
+                        real_parameters,
+                        complex_parameters,
+                        Options::ContourDeformation::number_of_presamples,
+                        Options::ContourDeformation::deformation_parameters_maximum,
+                        Options::ContourDeformation::deformation_parameters_minimum,
+                        Options::ContourDeformation::deformation_parameters_decrease_factor
+                    );
+                };
+
+                // without contour deformation
+                static std::vector<nested_series_t<integrand_t>> make_integrands
+                (
+                    const std::vector<real_t>& real_parameters,
+                    const std::vector<complex_t>& complex_parameters,
+                    std::vector<nested_series_t<integrand_t>> (*make_integrands_without_contour_deformation)
+                        (
+                            const std::vector<real_t>& real_parameters,
+                            const std::vector<complex_t>& complex_parameters
+                        )
+                )
+                {
+                    return make_integrands_without_contour_deformation
+                    (
+                        real_parameters,
+                        complex_parameters
+                    );
+                };
+            };
         #endif
-    }
+
+        nested_series_t<sum_t> make_weighted_integral
+        (
+            const std::vector<real_t>& real_parameters,
+            const std::vector<complex_t>& complex_parameters
+        )
+        {
+            using types = WithCuda<Options::cuda_compliant_integrator>;
+            using integrand_t = types::integrand_t;
+            using Integral = Options::Integral<
+                                                   integrand_t,
+                                                   ::%(sub_integral_name)s::maximal_number_of_integration_variables
+                                              >;
+            using integrator_t = Integral::integrator_t;
+
+            const std::vector<nested_series_t<integrand_t>> raw_integrands =
+            types::make_integrands
+            (
+                real_parameters,
+                complex_parameters,
+                types::make_raw_integrands
+            );
+
+            const std::shared_ptr<integrator_t> integrator = Integral::configure_integrator();
+
+            const std::function<sum_t(const integrand_t& integrand)> convert_integrands =
+                [ integrator ] (const integrand_t& integrand) -> sum_t
+                {
+                    return { /* constructor of std::vector */
+                                { /* constructor of WeightedIntegral */
+                                    std::make_shared<Integral::integral_t>(integrator,integrand)
+                                }
+                        };
+                };
+
+            const std::vector<nested_series_t<sum_t>> integrals = deep_apply(raw_integrands, convert_integrands);
+            nested_series_t<sum_t> amplitude = std::accumulate(++integrals.begin(), integrals.end(), *integrals.begin() );
+            amplitude *= ::%(sub_integral_name)s::prefactor(real_parameters,complex_parameters)
+                       * ::%(sub_integral_name)s::coefficient(real_parameters,complex_parameters);
+            return amplitude;
+        }
+    };
 };

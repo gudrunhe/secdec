@@ -43,6 +43,12 @@ namespace %(name)s
     // --{
     const unsigned long long number_of_integrals = %(number_of_integrals)i;
 
+    const unsigned int number_of_real_parameters = %(number_of_real_parameters)i;
+    const std::vector<std::string> names_of_real_parameters = {%(names_of_real_parameters)s};
+
+    const unsigned int number_of_complex_parameters = %(number_of_complex_parameters)i;
+    const std::vector<std::string> names_of_complex_parameters = {%(names_of_complex_parameters)s};
+
     const unsigned int number_of_regulators = %(number_of_regulators)i;
     const std::vector<std::string> names_of_regulators = {%(names_of_regulators)s};
 

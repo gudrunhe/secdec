@@ -325,7 +325,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         sub_name = generator_args["name"]
         sub_integral_names.append(sub_name)
         weighted_integral_includes.append( '#include "' + sub_name + '_weighted_integral.hpp"')
-        weighted_integral_sum_initialization.append( 'amplitude += make_weighted_integral_%s(real_parameters, complex_parameters);' % sub_name )
+        weighted_integral_sum_initialization.append( 'amplitude += %s::make_weighted_integral(real_parameters, complex_parameters);' % sub_name )
     sub_integral_names = ' '.join(sub_integral_names)
     weighted_integral_includes = '\n'.join(weighted_integral_includes)
     weighted_integral_sum_initialization[0] = weighted_integral_sum_initialization[0].replace('+',' ',1)
@@ -334,6 +334,10 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     replacements_in_files = {
                                 'name' : name,
                                 'number_of_integrals' : len(package_generators),
+                                'number_of_real_parameters' : len(real_parameters),
+                                'names_of_real_parameters' : make_cpp_list(real_parameters),
+                                'number_of_complex_parameters' : len(complex_parameters),
+                                'names_of_complex_parameters' : make_cpp_list(complex_parameters),
                                 'integral_names' : sub_integral_names,
                                 'weighted_integral_includes' : weighted_integral_includes,
                                 'weighted_integral_sum_initialization' : weighted_integral_sum_initialization,
@@ -349,6 +353,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     filesystem_replacements = {
                                   'integrate_name.cpp' : 'integrate_' + name + '.cpp',
                                   'name.hpp' : name + '.hpp',
+                                  'config_name.hpp' : 'config_' + name + '.hpp',
 
                                   # the following files are integral specific
                                   'name_weighted_integral.cpp' : None,

@@ -1,6 +1,6 @@
 include Makefile.conf
 
-$(foreach INTEGRAL,$(INTEGRALS),lib/lib$(INTEGRAL).so) lib/lib$(NAME).so:
+$(foreach INTEGRAL,$(INTEGRALS),lib/lib$(INTEGRAL).so) lib/lib$(NAME).so : config_$(NAME).hpp
 	$(MAKE) -C src ../$@
 
 source:
