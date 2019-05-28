@@ -82,10 +82,10 @@ class LoopIntegral(object):
         expressions, optional;
         Symbolic replacements to be made for the external
         momenta, e.g. definition of Mandelstam variables.
-        Example: [('p1*p2', 's'), ('p1**2', 0)] where
+        Example: ``[('p1*p2', 's'), ('p1**2', 0)]`` where
         ``p1`` and ``p2`` are external momenta.
         It is also possible to specify vector replacements,
-        for example [('p4', '-(p1+p2+p3)')].
+        for example ``[('p4', '-(p1+p2+p3)')]``.
 
     :param Feynman_parameters:
         iterable or string, optional;

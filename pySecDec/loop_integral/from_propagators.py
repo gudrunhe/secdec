@@ -46,16 +46,16 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
     :param propagators:
         iterable of strings or sympy expressions;
-        The propagators, e.g. ['k1**2', '(k1-k2)**2 - m1**2'].
+        The propagators, e.g. ``['k1**2', '(k1-k2)**2 - m1**2']``.
 
     :param loop_momenta:
         iterable of strings or sympy expressions;
-        The loop momenta, e.g. ['k1','k2'].
+        The loop momenta, e.g. ``['k1','k2']``.
 
     :param external_momenta:
         iterable of strings or sympy expressions,
         optional;
-        The external momenta, e.g. ['p1','p2'].
+        The external momenta, e.g. ``['p1','p2']``.
         Specifying the `external_momenta` is only
         required when a `numerator` is to be
         constructed.
@@ -76,16 +76,26 @@ class LoopIntegralFromPropagators(LoopIntegral):
         string or sympy expression, optional;
         The numerator of the loop integral.
         Scalar products must be passed in index notation e.g.
-        "k1(mu)*k2(mu)". The numerator should be a sum of
-        products of exclusively:
-        * numbers
-        * scalar products (e.g. "p1(mu)*k1(mu)*p1(nu)*k2(nu)")
-        * `symbols` (e.g. "m")
+        ``k1(mu)*k2(mu)``. The numerator must be a sum of products
+        of exclusively:
+         * numbers
+         * scalar products (e.g. ``p1(mu)*k1(mu)*p1(nu)*k2(nu)``)
+         * symbols (e.g. ``s``, ``eps``)
 
         Examples:
             * ``p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)``
             * ``p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)``
-            * ``p1(mu)*k1(mu)*my_function(eps)``
+            * ``p1(mu)*k1(mu)``
+
+        .. note::
+            In order to use the resulting `LoopIntegral` as an argument
+            to the function :func:`pySecDec.loop_integral.loop_package`,
+            the resulting Feynman parametrized ``self.numerator`` must
+            be expressible as a :class:`pySecDec.algebra.Polynomial`
+            such that all coefficients are purely numeric. In
+            addition, all scalar products of the external momenta
+            must be expressed in terms of Mandelstam variables using
+            the `replacement_rules`.
 
         .. warning::
             **All** Lorentz indices (including the contracted ones
@@ -93,28 +103,15 @@ class LoopIntegralFromPropagators(LoopIntegral):
             must be explicitly defined using the parameter
             `Lorentz_indices`.
 
-        .. warning::
-            It is assumed that the numerator is and all its
-            derivatives by the `regulator` are finite and defined
-            if :math:`\epsilon=0` is inserted explicitly.
-            In particular, if user defined functions (like in the
-            example ``p1(mu)*k1(mu)*my_function(eps)``) appear,
-            make sure that ``my_function(0)`` is finite.
-
-            .. hint::
-                In order to mimic a singular user defined function,
-                use the parameter `regulator_power`.
-                For example, instead of ``numerator = gamma(eps)`` you
-                could enter ``numerator = eps_times_gamma(eps)`` in
-                conjunction with ``regulator_power = -1``.
-
         .. hint::
             It is possible to use numbers as indices, for example
             ``p1(mu)*p2(mu)*k1(nu)*k2(nu) = p1(1)*p2(1)*k1(2)*k2(2)``.
 
         .. hint::
             The numerator may have uncontracted indices, e.g.
-            ``k1(mu)*k2(nu)``.
+            ``k1(mu)*k2(nu)``. If indices are left open, however, the
+            LoopIntegral cannot be used with the package generator
+            :func:`pySecDec.loop_integral.loop_package`.
 
     :param metric_tensor:
         string or sympy symbol, optional;
