@@ -812,6 +812,9 @@ def _process_secondary_sector(environment):
     have_dummy_functions = environment['have_dummy_functions']
     decomposition_method = environment['decomposition_method']
     normaliz_executable = environment['normaliz_executable']
+    use_iterative_sort = environment['use_iterative_sort']
+    use_light_Pak = environment['use_light_Pak']
+    use_dreadnaut = environment['use_dreadnaut']
     use_Pak = environment['use_Pak']
     complex_parameters = environment['complex_parameters']
     expolist = environment['expolist']
@@ -828,7 +831,6 @@ def _process_secondary_sector(environment):
     form_insertion_depth = environment['form_insertion_depth']
     reversed_polynomial_names = environment['reversed_polynomial_names']
     one = environment['one']
-    use_dreadnaut = environment['use_dreadnaut']
     this_primary_sector_remainder_expression = environment['this_primary_sector_remainder_expression']
     transformations = environment['transformations']
     primary_sector = environment['primary_sector']
@@ -1345,7 +1347,7 @@ def _process_secondary_sector(environment):
 
     return lowest_orders, function_declarations, this_pole_structures
 
-def _reduce_sectors_by_symmetries(sectors, message, indices, use_Pak, use_dreadnaut, name):
+def _reduce_sectors_by_symmetries(sectors, message, indices, use_iterative_sort, use_light_Pak_sort, use_Pak, use_dreadnaut, name):
     '''
     Function that reduces the number of sectors by
     identifying symmetries.
@@ -1353,10 +1355,12 @@ def _reduce_sectors_by_symmetries(sectors, message, indices, use_Pak, use_dreadn
     '''
     print(message + ' before symmetry finding:', len(sectors))
     # find symmetries
-    sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, iterative_sort, indices)
-    print(message + ' after symmetry finding (iterative):', len(sectors))
-    sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort, indices)
-    print(message + ' after symmetry finding (light Pak):', len(sectors))
+    if use_iterative_sort:
+        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, iterative_sort, indices)
+        print(message + ' after symmetry finding (iterative):', len(sectors))
+    if use_light_Pak_sort:
+        sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, light_Pak_sort, indices)
+        print(message + ' after symmetry finding (light Pak):', len(sectors))
     if use_Pak:
         sectors = decomposition.squash_symmetry_redundant_sectors_sort(sectors, Pak_sort, indices)
         print(message + ' after symmetry finding (full Pak):', len(sectors))
@@ -1373,8 +1377,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
-                 enforce_complex=False, split=False, ibp_power_goal=-1, use_dreadnaut=False,
-                 use_Pak=True, processes=None):
+                 enforce_complex=False, split=False, ibp_power_goal=-1, use_iterative_sort=True,
+                 use_light_Pak=True, use_dreadnaut=False, use_Pak=True, processes=None):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -1598,6 +1602,20 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
         Default: ``-1``
 
+    :param use_iterative_sort:
+        bool;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_sort`
+        with :func:`.iterative_sort` to find sector symmetries.
+        Default: ``True``
+
+    :param use_light_Pak:
+        bool;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_sort`
+        with :func:`.light_Pak_sort` to find sector symmetries.
+        Default: ``True``
+
     :param use_dreadnaut:
         bool or string, optional;
         Whether or not to use
@@ -1719,6 +1737,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     list(  original_decomposition_strategies['primary'](sector, indices)  ),
                     'number of primary sectors',
                     indices[:-1], # primary decomposition removes one integration variable
+                    use_iterative_sort,
+                    use_light_Pak,
                     use_Pak,
                     dreadnaut_executable if use_dreadnaut else False,
                     name
@@ -1807,6 +1827,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 primary_sectors,
                 'number of primary sectors',
                 indices[:-1], # primary decomposition removes one integration variable
+                use_iterative_sort,
+                use_light_Pak,
                 use_Pak,
                 dreadnaut_executable if use_dreadnaut else False,
                 name
@@ -1952,6 +1974,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     secondary_sectors,
                     'total number sectors',
                     indices,
+                    use_iterative_sort,
+                    use_light_Pak,
                     use_Pak,
                     dreadnaut_executable if use_dreadnaut else False,
                     name

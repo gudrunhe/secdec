@@ -25,6 +25,7 @@ def loop_package(name, loop_integral, requested_order,
                  normaliz_executable='normaliz',
                  enforce_complex=False,
                  split=False, ibp_power_goal=-1,
+                 use_iterative_sort=True, use_light_Pak=True,
                  use_dreadnaut=False, use_Pak=True,
                  processes=None):
     '''
@@ -154,6 +155,20 @@ def loop_package(name, loop_integral, requested_order,
 
         Default: ``-1``
 
+    :param use_iterative_sort:
+        bool;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_sort`
+        with :func:`.iterative_sort` to find sector symmetries.
+        Default: ``True``
+
+    :param use_light_Pak:
+        bool;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_sort`
+        with :func:`.light_Pak_sort` to find sector symmetries.
+        Default: ``True``
+
     :param use_dreadnaut:
         bool or string, optional;
         Whether or not to use
@@ -241,8 +256,10 @@ def loop_package(name, loop_integral, requested_order,
 
         normaliz_executable = normaliz_executable,
 
-        use_dreadnaut = use_dreadnaut,
+        use_iterative_sort = use_iterative_sort,
         use_Pak = use_Pak,
+        use_dreadnaut = use_dreadnaut,
+        use_light_Pak = use_light_Pak,
 
         enforce_complex = enforce_complex,
         ibp_power_goal = ibp_power_goal,
