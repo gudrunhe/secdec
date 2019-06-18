@@ -62,7 +62,7 @@ def generate_fan(*polynomials):
         factor = np.array(factor)
 
         # reshape to use numpy's broadcasting
-        cone = np.vstack( (expolists[i] - factor[i].reshape(1,number_of_variables) for i in range(len(polynomials))) )
+        cone = np.vstack( tuple(expolists[i] - factor[i].reshape(1,number_of_variables) for i in range(len(polynomials))) )
 
         # use `Polynomial` class to remove duplicates
         cone_poly = Polynomial(cone, np.ones(len(cone),dtype=int), copy=False)
