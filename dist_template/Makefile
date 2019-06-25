@@ -30,7 +30,7 @@ gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static --with-pic
 secdecutilCONFIGURE = $(CONFIGURE_COMMON)
 
 $(AUTOTOOLS_PACKAGES) :
-	tar -xf $@-*.tar.gz && \
+	tar -xf $@-*.tar.* && \
 	cd $@-*/ && \
 	./configure $($@CONFIGURE) && \
 	(if [ "$@" == "Cuba" ]; then $(MAKE) -j1; else $(MAKE); fi) && \
@@ -49,8 +49,7 @@ qmc :
 	cp qmc.hpp $(TOPDIR)/include/
 
 clean :
-	rm -rf install lib include bin nauty*/
+	rm -rf install lib include bin nauty*/ pySecDec-*/
 	for PACKAGE_NAME in $(AUTOTOOLS_PACKAGES); do \
 		rm -rf $${PACKAGE_NAME}-*/; \
 	done
-
