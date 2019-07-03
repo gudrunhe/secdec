@@ -7,8 +7,13 @@ $(foreach INTEGRAL,$(INTEGRALS),lib/lib$(INTEGRAL).so) : lib/lib%%.so : %%_weigh
 	export INTEGRAL=$(patsubst lib/lib%%.so,%%,$@) && \
 	$(MAKE) -C ../$${INTEGRAL} static && \
 	$(CXX) -o $@ -shared $${INTEGRAL}_weighted_integral.o ../$${INTEGRAL}/src/*.o $(LDFLAGS)
+ifdef SECDEC_WITH_CUDA
+lib/lib$(NAME).so : amplitude.o
+	$(CXX) -o $@ -shared $+ $(LDFLAGS)
+else
 lib/lib$(NAME).so : amplitude.o
 	$(CXX) -o $@ -shared $+ $(LDFLAGS) -Wl,-undefined,dynamic_lookup
+endif
 
 $(foreach INTEGRAL,$(INTEGRALS),../lib/lib$(INTEGRAL).so) ../lib/lib$(NAME).so : ../lib/%% : lib/%%
 	mv $< $@

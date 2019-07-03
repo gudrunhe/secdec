@@ -53,55 +53,57 @@ namespace %(name)s
 {
     namespace %(sub_integral_name)s
     {
+        // with contour deformation
+        template<typename integrand_t, typename... ArgTypes>
+        static typename std::enable_if<sizeof...(ArgTypes)==6, std::vector<nested_series_t<integrand_t>>>::type forward_make_integrands
+        (
+            const std::vector<real_t>& real_parameters,
+            const std::vector<complex_t>& complex_parameters,
+            std::vector<nested_series_t<integrand_t>> (*make_integrands_with_contour_deformation)(ArgTypes...)
+        )
+        {
+            return make_integrands_with_contour_deformation
+            (
+                real_parameters,
+                complex_parameters,
+                Options::ContourDeformation::number_of_presamples,
+                Options::ContourDeformation::deformation_parameters_maximum,
+                Options::ContourDeformation::deformation_parameters_minimum,
+                Options::ContourDeformation::deformation_parameters_decrease_factor
+            );
+        };
+        // without contour deformation
+        template<typename integrand_t, typename... ArgTypes>
+        static typename std::enable_if<sizeof...(ArgTypes)==2, std::vector<nested_series_t<integrand_t>>>::type forward_make_integrands
+        (
+            const std::vector<real_t>& real_parameters,
+            const std::vector<complex_t>& complex_parameters,
+            std::vector<nested_series_t<integrand_t>> (*make_integrands_without_contour_deformation)(ArgTypes...)
+        )
+        {
+            return make_integrands_without_contour_deformation
+            (
+                real_parameters,
+                complex_parameters
+            );
+        };
+
         template<bool with_cuda>
         struct WithCuda
         {
             using integrand_t = ::%(sub_integral_name)s::integrand_t;
-            constexpr static auto make_raw_integrands = ::%(sub_integral_name)s::make_integrands;
 
-            // with contour deformation
             static std::vector<nested_series_t<integrand_t>> make_integrands
             (
                 const std::vector<real_t>& real_parameters,
-                const std::vector<complex_t>& complex_parameters,
-                std::vector<nested_series_t<integrand_t>> (*make_integrands_with_contour_deformation)
-                    (
-                        const std::vector<real_t>& real_parameters,
-                        const std::vector<complex_t>& complex_parameters,
-                        unsigned number_of_presamples,
-                        real_t deformation_parameters_maximum,
-                        real_t deformation_parameters_minimum,
-                        real_t deformation_parameters_decrease_factor
-                    )
+                const std::vector<complex_t>& complex_parameters
             )
             {
-                return make_integrands_with_contour_deformation
+                return forward_make_integrands
                 (
                     real_parameters,
                     complex_parameters,
-                    Options::ContourDeformation::number_of_presamples,
-                    Options::ContourDeformation::deformation_parameters_maximum,
-                    Options::ContourDeformation::deformation_parameters_minimum,
-                    Options::ContourDeformation::deformation_parameters_decrease_factor
-                );
-            };
-
-            // without contour deformation
-            static std::vector<nested_series_t<integrand_t>> make_integrands
-            (
-                const std::vector<real_t>& real_parameters,
-                const std::vector<complex_t>& complex_parameters,
-                std::vector<nested_series_t<integrand_t>> (*make_integrands_without_contour_deformation)
-                    (
-                        const std::vector<real_t>& real_parameters,
-                        const std::vector<complex_t>& complex_parameters
-                    )
-            )
-            {
-                return make_integrands_without_contour_deformation
-                (
-                    real_parameters,
-                    complex_parameters
+                    ::%(sub_integral_name)s::make_integrands
                 );
             };
         };
@@ -111,51 +113,18 @@ namespace %(name)s
             struct WithCuda<true>
             {
                 using integrand_t = ::%(sub_integral_name)s::cuda_integrand_t;
-                constexpr static auto make_raw_integrands = ::%(sub_integral_name)s::make_cuda_integrands;
 
-                // with contour deformation
                 static std::vector<nested_series_t<integrand_t>> make_integrands
                 (
                     const std::vector<real_t>& real_parameters,
-                    const std::vector<complex_t>& complex_parameters,
-                    std::vector<nested_series_t<integrand_t>> (*make_integrands_with_contour_deformation)
-                        (
-                            const std::vector<real_t>& real_parameters,
-                            const std::vector<complex_t>& complex_parameters,
-                            unsigned number_of_presamples,
-                            real_t deformation_parameters_maximum,
-                            real_t deformation_parameters_minimum,
-                            real_t deformation_parameters_decrease_factor
-                        )
+                    const std::vector<complex_t>& complex_parameters
                 )
                 {
-                    return make_integrands_with_contour_deformation
+                    return forward_make_integrands
                     (
                         real_parameters,
                         complex_parameters,
-                        Options::ContourDeformation::number_of_presamples,
-                        Options::ContourDeformation::deformation_parameters_maximum,
-                        Options::ContourDeformation::deformation_parameters_minimum,
-                        Options::ContourDeformation::deformation_parameters_decrease_factor
-                    );
-                };
-
-                // without contour deformation
-                static std::vector<nested_series_t<integrand_t>> make_integrands
-                (
-                    const std::vector<real_t>& real_parameters,
-                    const std::vector<complex_t>& complex_parameters,
-                    std::vector<nested_series_t<integrand_t>> (*make_integrands_without_contour_deformation)
-                        (
-                            const std::vector<real_t>& real_parameters,
-                            const std::vector<complex_t>& complex_parameters
-                        )
-                )
-                {
-                    return make_integrands_without_contour_deformation
-                    (
-                        real_parameters,
-                        complex_parameters
+                        ::%(sub_integral_name)s::make_cuda_integrands
                     );
                 };
             };
@@ -179,8 +148,7 @@ namespace %(name)s
             types::make_integrands
             (
                 real_parameters,
-                complex_parameters,
-                types::make_raw_integrands
+                complex_parameters
             );
 
             const std::shared_ptr<integrator_t> integrator = Integral::configure_integrator();
