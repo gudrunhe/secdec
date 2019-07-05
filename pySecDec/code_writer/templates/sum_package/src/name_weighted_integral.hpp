@@ -13,7 +13,8 @@ namespace %(name)s
         nested_series_t<sum_t> make_weighted_integral
         (
             const std::vector<real_t>& real_parameters,
-            const std::vector<complex_t>& complex_parameters
+            const std::vector<complex_t>& complex_parameters,
+            const unsigned int amp_idx
         );
     }
 };

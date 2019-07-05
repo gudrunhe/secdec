@@ -32,7 +32,7 @@ namespace %(name)s
 
     // amplitude getter functions
     // --{
-    nested_series_t<sum_t> make_amplitude
+    std::vector<nested_series_t<sum_t>> make_amplitudes
     (
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters
@@ -42,6 +42,7 @@ namespace %(name)s
     // some information about the integral
     // --{
     const unsigned long long number_of_integrals = %(number_of_integrals)i;
+    const unsigned int number_of_amplitudes = %(number_of_amplitudes)i;
 
     const unsigned int number_of_real_parameters = %(number_of_real_parameters)i;
     const std::vector<std::string> names_of_real_parameters = {%(names_of_real_parameters)s};

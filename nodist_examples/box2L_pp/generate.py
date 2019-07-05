@@ -127,6 +127,6 @@ def parse_reduze_file(reduze_file):
     for package_args in list_package_args:
         assert package_args.pop('real_parameters') == real_parameters
 
-    sum_package(integral_name,[loop_package]*len(list_package_args), list_package_args, ['eps'], [requested_order],real_parameters=real_parameters,coefficients=coefficients)
+    sum_package(integral_name,[loop_package]*len(list_package_args), list_package_args, ['eps'], [requested_order],real_parameters=real_parameters,coefficients=[coefficients])
 
 parse_reduze_file(name_reduze_file)

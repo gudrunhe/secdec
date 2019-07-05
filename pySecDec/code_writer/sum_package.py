@@ -4,7 +4,6 @@ from ..misc import sympify_symbols, make_cpp_list
 from ..loop_integral.loop_package import loop_package
 
 from time import strftime
-from itertools import repeat
 import os, sys, shutil, subprocess
 import numpy as np
 import sympy as sp
@@ -229,10 +228,11 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                 real_parameters=[], complex_parameters=[], coefficients=None,
                 form_executable=None):
     r'''
-    Decompose, subtract and expand an expression of the form
+    Decompose, subtract and expand a list of expressions
+    of the form
 
     .. math::
-        \sum_i c_i \ \int f_i
+        \sum_j c_{ij} \ \int f_j
 
     Generate a c++ package with an optmized algorithm to
     evaluate the integrals numerically.
@@ -278,9 +278,10 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         Symbols to be interpreted as complex variables.
 
     :param coefficients:
-        iterable of :class:`.Coefficient`, optional;
-        The coefficients :math:`c_i` of the integrals.
-        :math:`c_i = 1` is assumed if not provided.
+        iterable of iterable of :class:`.Coefficient`, optional;
+        The coefficients :math:`c_{ij}` of the integrals.
+        :math:`c_{ij} = 1` with :math:`i \in \{0\}` is assumed if
+        not provided.
 
     :param form_executable:
         string or None, optional;
@@ -302,11 +303,12 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     # prepare coefficients
     empty_coefficient = Coefficient((), (), regulators, ())
     if coefficients is None:
-        coefficients = repeat(empty_coefficient)
+        coefficients = [[empty_coefficient] * len(package_generators)]
     else:
-        coefficients = [empty_coefficient if c is None else c for c in coefficients]
-        assert len(coefficients) == len(package_generators), \
-            "`coefficients` must either be ``None`` have the same length as `package_generators`."
+        coefficients = [[empty_coefficient if c is None else c for c in c_i] for c_i in coefficients]
+        for c_i in coefficients:
+            assert len(c_i) == len(package_generators), \
+                "`coefficients` must either be ``None`` be a list of lists which all have the same length as `package_generators`."
 
     assert len(package_generators) == len(generators_args), \
         "`package_generators` (%i) and `generators_args` (%i) must have the same length." % \
@@ -325,11 +327,11 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         sub_name = generator_args["name"]
         sub_integral_names.append(sub_name)
         weighted_integral_includes.append( '#include "' + sub_name + '_weighted_integral.hpp"')
-        weighted_integral_sum_initialization.append( 'amplitude += %s::make_weighted_integral(real_parameters, complex_parameters);' % sub_name )
+        weighted_integral_sum_initialization.append( 'amplitude += %s::make_weighted_integral(real_parameters, complex_parameters, amp_idx);' % sub_name )
     sub_integral_names = ' '.join(sub_integral_names)
     weighted_integral_includes = '\n'.join(weighted_integral_includes)
     weighted_integral_sum_initialization[0] = weighted_integral_sum_initialization[0].replace('+',' ',1)
-    weighted_integral_sum_initialization = '\n        '.join(weighted_integral_sum_initialization)
+    weighted_integral_sum_initialization = '\n            '.join(weighted_integral_sum_initialization)
 
     replacements_in_files = {
                                 'name' : name,
@@ -338,6 +340,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                                 'names_of_real_parameters' : make_cpp_list(real_parameters),
                                 'number_of_complex_parameters' : len(complex_parameters),
                                 'names_of_complex_parameters' : make_cpp_list(complex_parameters),
+                                'number_of_amplitudes' : len(coefficients),
                                 'integral_names' : sub_integral_names,
                                 'weighted_integral_includes' : weighted_integral_includes,
                                 'weighted_integral_sum_initialization' : weighted_integral_sum_initialization,
@@ -370,24 +373,29 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         os.chdir(name)
 
         # call package generator for every integral
-        for package_generator, generator_args, coefficient in zip(package_generators, generators_args, coefficients):
+        for j, (package_generator, generator_args) in enumerate(zip(package_generators, generators_args)):
             sub_name = generator_args['name']
             replacements_in_files['sub_integral_name'] = sub_name
 
             generator_args['real_parameters'] = real_parameters
             generator_args['complex_parameters'] = complex_parameters
 
-            # process coefficient
-            lowest_coefficient_orders, coefficient_expressions = coefficient.process(form=form_executable)
-            with open(os.path.join('lib', sub_name+'_coefficient.txt'),'w') as coeffile:
-                coeffile.write(coefficient_expressions)
-            replacements_in_files['lowest_coefficient_orders'] = ','.join(map(str,lowest_coefficient_orders))
+            # process coefficients
+            lowest_coefficient_orders = []
+            for i in range(len(coefficients)):
+                coefficient = coefficients[i][j]
+                this_coefficients_lowest_coefficient_orders, coefficient_expressions = coefficient.process(form=form_executable)
+                lowest_coefficient_orders.append(this_coefficients_lowest_coefficient_orders)
+                with open(os.path.join('lib', sub_name+'_coefficient%i.txt'%i),'w') as coeffile:
+                    coeffile.write(coefficient_expressions)
+            replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
 
+            minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
             if package_generator is loop_package:
-                generator_args['requested_order'] = requested_orders[0] - lowest_coefficient_orders[0]
+                generator_args['requested_order'] = requested_orders[0] - minimal_lowest_coefficient_orders[0]
             else:
                 generator_args['regulators'] = regulators
-                generator_args['requested_orders'] = np.asarray(requested_orders) - lowest_coefficient_orders
+                generator_args['requested_orders'] = np.asarray(requested_orders) - minimal_lowest_coefficient_orders
 
             # parse integral specific files
             for ch in 'ch':

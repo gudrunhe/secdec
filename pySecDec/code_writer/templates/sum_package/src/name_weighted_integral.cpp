@@ -2,6 +2,7 @@
 #include <fstream> // std::ifstream
 #include <memory> // std::shared_ptr, std::make_shared
 #include <numeric> // std::accumulate
+#include <string> // std::to_string
 #include <vector> // std::vector
 
 #include <secdecutil/amplitude.hpp> // secdecutil::amplitude::Integral, secdecutil::amplitude::CubaIntegral, secdecutil::amplitude::QmcIntegral
@@ -19,30 +20,33 @@
 
 namespace %(sub_integral_name)s
 {
-    const std::vector<int> lowest_coefficient_orders{%(lowest_coefficient_orders)s};
+    const std::vector<std::vector<int>> lowest_coefficient_orders{%(lowest_coefficient_orders)s};
 
-    static std::vector<int> compute_required_orders()
+    static std::vector<int> compute_required_orders(const unsigned int amp_idx)
     {
         assert(%(name)s::requested_orders.size() == %(sub_integral_name)s::requested_orders.size());
         size_t number_of_regulators = %(name)s::requested_orders.size();
         std::vector<int> orders; orders.reserve( %(name)s::requested_orders.size() );
         for(size_t i = 0; i < number_of_regulators; ++i)
-            orders.push_back(
-                                  %(name)s::requested_orders.at(i) + 1
-                                - %(sub_integral_name)s::lowest_coefficient_orders.at(i)
-                                - %(sub_integral_name)s::lowest_orders.at(i)
-                                - %(sub_integral_name)s::lowest_prefactor_orders.at(i)
-                            );
+        {
+            int order = (
+                              %(name)s::requested_orders.at(i) + 1
+                            - %(sub_integral_name)s::lowest_coefficient_orders.at(amp_idx).at(i)
+                            - %(sub_integral_name)s::lowest_orders.at(i)
+                            - %(sub_integral_name)s::lowest_prefactor_orders.at(i)
+                        );
+            orders.push_back(order);
+        }
         return orders;
     }
 
-    nested_series_t<complex_t> coefficient(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
+    nested_series_t<complex_t> coefficient(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters, const unsigned int amp_idx)
     {
-        std::ifstream coeffile("lib/%(sub_integral_name)s_coefficient.txt");
+        std::ifstream coeffile("lib/%(sub_integral_name)s_coefficient" + std::to_string(amp_idx) + ".txt");
         assert( coeffile.is_open() );
         return secdecutil::ginac::read_coefficient<nested_series_t>
                (
-                    coeffile, compute_required_orders(),
+                    coeffile, compute_required_orders(amp_idx),
                     names_of_regulators, names_of_real_parameters, names_of_complex_parameters,
                     real_parameters, complex_parameters
                );
@@ -133,7 +137,8 @@ namespace %(name)s
         nested_series_t<sum_t> make_weighted_integral
         (
             const std::vector<real_t>& real_parameters,
-            const std::vector<complex_t>& complex_parameters
+            const std::vector<complex_t>& complex_parameters,
+            const unsigned int amp_idx
         )
         {
             using types = WithCuda<Options::cuda_compliant_integrator>;
@@ -166,7 +171,7 @@ namespace %(name)s
             const std::vector<nested_series_t<sum_t>> integrals = deep_apply(raw_integrands, convert_integrands);
             nested_series_t<sum_t> amplitude = std::accumulate(++integrals.begin(), integrals.end(), *integrals.begin() );
             amplitude *= ::%(sub_integral_name)s::prefactor(real_parameters,complex_parameters)
-                       * ::%(sub_integral_name)s::coefficient(real_parameters,complex_parameters);
+                       * ::%(sub_integral_name)s::coefficient(real_parameters,complex_parameters,amp_idx);
             return amplitude;
         }
     };

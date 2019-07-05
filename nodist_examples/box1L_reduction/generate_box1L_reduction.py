@@ -60,11 +60,13 @@ integrals = [
             ]
 
 coefficients = [
-                    Coefficient(['1'], ['s'], ['eps'], real_parameters),
-                    Coefficient(['1'], ['t'], ['eps'], real_parameters),
-                    Coefficient(['1'], ['s'], ['eps'], real_parameters),
-                    Coefficient(['1'], ['t'], ['eps'], real_parameters),
-                    Coefficient(['2*(s+t)'], ['s*t'], ['eps'], real_parameters),
+                   [
+                        Coefficient(['1'], ['s'], ['eps'], real_parameters),
+                        Coefficient(['1'], ['t'], ['eps'], real_parameters),
+                        Coefficient(['1'], ['s'], ['eps'], real_parameters),
+                        Coefficient(['1'], ['t'], ['eps'], real_parameters),
+                        Coefficient(['2*(s+t)'], ['s*t'], ['eps'], real_parameters),
+                   ]
                ]
 
 # reduced
