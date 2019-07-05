@@ -35,7 +35,7 @@ namespace %(sub_integral_name)s
                             - %(sub_integral_name)s::lowest_orders.at(i)
                             - %(sub_integral_name)s::lowest_prefactor_orders.at(i)
                         );
-            orders.push_back(order);
+            orders.push_back(order > 0 ? order : 1);
         }
         return orders;
     }
