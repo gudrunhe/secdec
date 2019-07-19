@@ -31,7 +31,7 @@ which can be downloaded from https://www.normaliz.uni-osnabrueck.de
 [W. Bruns and B. Ichim and T. Römer and R. Sieg and C. Söger].
 The geometric decomposition module is
 designed for normaliz version 3 - currently versions
-3.0.0, 3.1.0, 3.1.1, 3.3.0, 3.4.0, 3.5.4, 3.6.0, and 3.6.2
+3.0.0, 3.1.0, 3.1.1, 3.3.0, 3.4.0, 3.5.4, 3.6.0, 3.6.2, and 3.7.3
 are known to work. We recommend to set your $PATH such that the
 `normaliz` executable is found. Alternatively, you can pass the path to the `normaliz`
 executable directly to the functions that need it.

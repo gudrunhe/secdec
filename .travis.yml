@@ -153,6 +153,24 @@ matrix:
         - eval ${MATRIX_EVAL}
       language: python
 
+    - os: linux
+      dist: xenial # required for Python >= 3.7
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-9 && export CXX=g++-9"
+        - NORMALIZ_VERSION=3.7.3
+      python: 3.7
+      before_install:
+        - eval ${MATRIX_EVAL}
+      language: python
+
     - os: osx
       osx_image: xcode9.3
       language: c++
@@ -261,6 +279,21 @@ matrix:
         - brew install graphviz
         - $PYTHON_INSTALL nose
 
+    - os: osx
+      osx_image: xcode11
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.7.3
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using easy_install rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz
+        - $PYTHON_INSTALL nose
+
 install:
   - export PROCESSES=4
   - export NOSETESTS_TIMEOUT=600
@@ -274,7 +307,7 @@ install:
   - python --version
   - $PYTHON_INSTALL --upgrade pip setuptools wheel
   # python2 support is dropped in sphinx-2
-  - if [ "$PYTHON_INSTALL" = 'sudo easy_install' ]; then if [ "$PYTHON_MAJOR_VERSION" = 2 ]; then $PYTHON_INSTALL 'numpy' 'sphinx<2' 'sympy'; else $PYTHON_INSTALL numpy sphinx sympy; fi; else $PYTHON_INSTALL -r requirements.txt --only-binary=numpy; fi
+  - if [ "$PYTHON_INSTALL" = 'sudo easy_install' ]; then if [ "$PYTHON_MAJOR_VERSION" = 2 ]; then $PYTHON_INSTALL 'numpy<1.17' 'sphinx<2' 'sympy'; else $PYTHON_INSTALL numpy sphinx sympy; fi; else $PYTHON_INSTALL -r requirements.txt --only-binary=numpy; fi
   - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then make thin-dist; else make dist; fi
   - mv pySecDec-*/ dist_install
   - cd dist_install
