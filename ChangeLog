@@ -1,3 +1,8 @@
+19.07.2019 <not release yet>
+
+    [symmetries] add options to not run any symmetry finder
+    [dist] update to form-4.2.1
+
 16.04.2019 pySecDec-1.4.2
 
     [algebra] fix incomplete simplification of some expressions
