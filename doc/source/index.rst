@@ -21,6 +21,7 @@ Please cite the following references if you use `pySecDec` for a scientific publ
     overview.rst
     util.rst
     full_reference.rst
+    faq.rst
     references.rst
 
 

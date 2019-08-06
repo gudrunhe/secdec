@@ -50,10 +50,10 @@ Example:
 .. literalinclude:: cpp_doctest/series_doctest_basic_usage.cpp
    :language: cpp
 
-Compile/Run: 
+Compile/Run:
 
 .. literalinclude:: cpp_doctest/compile_and_run.txt
-   
+
 Output:
 
 .. literalinclude:: cpp_doctest/series_doctest_basic_usage.txt
@@ -73,10 +73,10 @@ Example (complex conjugate a :cpp:class:`Series`):
 .. literalinclude:: cpp_doctest/deep_apply_doctest_basic_usage.cpp
    :language: cpp
 
-Compile/Run: 
+Compile/Run:
 
 .. literalinclude:: cpp_doctest/compile_and_run.txt
-   
+
 Output:
 
 .. literalinclude:: cpp_doctest/deep_apply_doctest_basic_usage.txt
@@ -86,25 +86,25 @@ Output:
 Uncertainties
 -------------
 
-A class template which implements uncertainty propagation for uncorrelated random variables by overloads of the ``+``, ``-``, ``*`` and partially ``/``. 
+A class template which implements uncertainty propagation for uncorrelated random variables by overloads of the ``+``, ``-``, ``*`` and partially ``/``.
 Division by :cpp:class:`UncorrelatedDeviation` is not implemented as it is not always defined. It has special overloads for :cpp:class:`std::complex\<T\>`.
 
 .. note::
-    Division by :cpp:class:`UncorrelatedDeviation` is not implemented as this operation is not always well defined. 
+    Division by :cpp:class:`UncorrelatedDeviation` is not implemented as this operation is not always well defined.
     Specifically, it is ill defined in the case that the errors are Gaussian distributed as the expectation value,
 
-    .. math:: 
+    .. math::
         \mathrm{E}\left[\frac{1}{X}\right] = \int_{-\infty}^{\infty} \frac{1}{X} p(X)\ \mathrm{d}X,
 
-    where 
+    where
 
-    .. math:: 
+    .. math::
         p(X) = \frac{1}{\sqrt{2 \pi \sigma^2 }} \exp\left( -\frac{(x-\mu)^2}{2\sigma^2} \right),
 
-    is undefined in the Riemann or Lebesgue sense. The rule :math:`\delta(a/b) = |a/b| \sqrt{ (\delta a/a)^2 + (\delta b/b)^2 }`            
+    is undefined in the Riemann or Lebesgue sense. The rule :math:`\delta(a/b) = |a/b| \sqrt{ (\delta a/a)^2 + (\delta b/b)^2 }`
     can not be derived from the first principles of probability theory.
 
- 
+
 The rules implemented for real valued error propagation are:
 
 .. math::
@@ -119,7 +119,7 @@ The rules implemented for real valued error propagation are:
 For complex numbers the above rules are implemented for the real and imaginary parts individually.
 
     .. cpp:class:: template <typename T> UncorrelatedDeviation
-    
+
         .. cpp:var:: T value
 
             The expectation value.
@@ -133,10 +133,10 @@ Example:
 .. literalinclude:: cpp_doctest/uncertainties_doctest_basic_usage.cpp
    :language: cpp
 
-Compile/Run: 
+Compile/Run:
 
 .. literalinclude:: cpp_doctest/compile_and_run.txt
-   
+
 Output:
 
 .. literalinclude:: cpp_doctest/uncertainties_doctest_basic_usage.txt
@@ -152,7 +152,7 @@ This class overloads the arithmetic operators (``+``, ``-``, ``*``, ``/``) and t
     .. cpp:class:: template <typename T, typename ...Args> IntegrandContainer
 
         .. cpp:var:: int number_of_integration_variables
-      
+
             The number of integration variables that the integrand depends on.
 
         .. cpp:var:: std::function<T(Args...)> integrand
@@ -164,14 +164,16 @@ Example (add two :cpp:class:`IntegrandContainer` and evaluate one point):
 .. literalinclude:: cpp_doctest/integrand_container_doctest_basic_usage.cpp
    :language: cpp
 
-Compile/Run: 
+Compile/Run:
 
 .. literalinclude:: cpp_doctest/compile_and_run.txt
-   
+
 Output:
 
 .. literalinclude:: cpp_doctest/integrand_container_doctest_basic_usage.txt
    :language: sh
+
+.. _chapter_secdecutil_integrator:
 
 Integrator
 ----------
@@ -184,9 +186,9 @@ A base class template from which integrator implementations inherit. It defines 
 
             The type of the integrand. It must have the field ``number_of_integration_variables`` and be callable.
 
-        .. cpp:var:: bool together 
-      
-            (Only available if ``return_t`` is a :cpp:class:`std::complex` type) 
+        .. cpp:var:: bool together
+
+            (Only available if ``return_t`` is a :cpp:class:`std::complex` type)
             If ``true`` after each call of the function both the real and imaginary parts are passed to the underlying integrator.
             If ``false`` after each call of the function only the real or imaginary part is passed to the underlying integrator.
             For some adaptive integrators considering the real and imaginary part of a complex function separately can improve the sampling.
@@ -318,10 +320,10 @@ Example:
 .. literalinclude:: cpp_doctest/integrator_doctest_basic_usage.cpp
    :language: cpp
 
-Compile/Run: 
+Compile/Run:
 
 .. literalinclude:: cpp_doctest/compile_and_run_cuba.txt
-   
+
 Output:
 
 .. literalinclude:: cpp_doctest/integrator_doctest_basic_usage.txt
@@ -335,10 +337,10 @@ Example:
 .. literalinclude:: cpp_doctest/integrator_doctest_complex.cpp
    :language: cpp
 
-Compile/Run: 
+Compile/Run:
 
 .. literalinclude:: cpp_doctest/compile_and_run_cuba.txt
-   
+
 Output:
 
 .. literalinclude:: cpp_doctest/integrator_doctest_complex.txt
