@@ -235,7 +235,9 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         \sum_j c_{ij} \ \int f_j
 
     Generate a c++ package with an optmized algorithm to
-    evaluate the integrals numerically.
+    evaluate the integrals numerically. It writes the names
+    of the integrals in the file `"integral_names.txt"`.
+    For the format of the file see :class:`~pySecDec.amplitude_interface.Parser`.
 
     :param name:
         string;
@@ -356,7 +358,6 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     filesystem_replacements = {
                                   'integrate_name.cpp' : 'integrate_' + name + '.cpp',
                                   'name.hpp' : name + '.hpp',
-                                  'config_name.hpp' : 'config_' + name + '.hpp',
 
                                   # the following files are integral specific
                                   'name_weighted_integral.cpp' : None,
@@ -371,6 +372,8 @@ def sum_package(name, package_generators, generators_args, regulators, requested
 
     try:
         os.chdir(name)
+        with open("integral_names.txt","w") as f:
+            f.write(name+"\n\n"+"\n".join(sub_integral_names.split()))
 
         # call package generator for every integral
         for j, (package_generator, generator_args) in enumerate(zip(package_generators, generators_args)):

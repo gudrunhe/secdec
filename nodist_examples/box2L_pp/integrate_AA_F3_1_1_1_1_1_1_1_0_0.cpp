@@ -43,6 +43,16 @@ int main()
     // "0", "cudaDeviceReset()" is never called. This option is ignored if compiled without cuda.
     // amplitude.reset_cuda_after = 2000;
 
+    // optionally compute multiple integrals concurrently
+    // Note: The integrals themselves may also be computed in parallel irresprective of this option.
+    // amplitude.number_of_threads = 12;
+
+    // The cuda driver does not automatically remove unneccessary functions from the device memory
+    // such that the device may run out of memry after some time. This option controls how many
+    // after how many integrals "cudaDeviceReset()" is called to clear the memory. With the default
+    // "0", "cudaDeviceReset()" is never called. This option is ignored if compiled without cuda.
+    // amplitude.reset_cuda_after = 2000;
+
     // compute the amplitude
     const AA_F3_1_1_1_1_1_1_1_0_0::nested_series_t<secdecutil::UncorrelatedDeviation<AA_F3_1_1_1_1_1_1_1_0_0::integrand_return_t>> result = amplitude.evaluate();
 
