@@ -40,6 +40,23 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
+            - g++-7
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-7 && export CXX=g++-7"
+        - NORMALIZ_VERSION=3.7.4
+      before_install:
+        - eval ${MATRIX_EVAL}
+      python: 2.7
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
             - g++-8
             - texlive-full
             - graphviz
@@ -171,44 +188,23 @@ matrix:
         - eval ${MATRIX_EVAL}
       language: python
 
-    - os: osx
-      osx_image: xcode9.3
-      language: c++
-      compiler: clang
+    - os: linux
+      dist: xenial # required for Python >= 3.7
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+            - texlive-full
+            - graphviz
       env:
-        - NORMALIZ_VERSION=3.3.0
-        - PYTHON_INSTALL='sudo easy_install'
+        - MATRIX_EVAL="export CC=gcc-9 && export CXX=g++-9"
+        - NORMALIZ_VERSION=3.7.4
+      python: 3.7
       before_install:
-        - $PYTHON_INSTALL nose
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz
-
-    - os: osx
-      osx_image: xcode9.3
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.4.0
-        - PYTHON_INSTALL='sudo easy_install'
-      before_install:
-        - $PYTHON_INSTALL nose
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz
-
-    - os: osx
-      osx_image: xcode9.3
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.5.4
-        - PYTHON_INSTALL='sudo easy_install'
-      before_install:
-        - $PYTHON_INSTALL nose
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz
+        - eval ${MATRIX_EVAL}
+      language: python
 
     - os: osx
       osx_image: xcode9.4
@@ -280,11 +276,65 @@ matrix:
         - $PYTHON_INSTALL nose
 
     - os: osx
+      osx_image: xcode10.3
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.4.0
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        - $PYTHON_INSTALL nose
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz
+
+    - os: osx
+      osx_image: xcode10.3
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.5.4
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        - $PYTHON_INSTALL nose
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz
+
+    - os: osx
+      osx_image: xcode10.3
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.7.3
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        - $PYTHON_INSTALL nose
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz
+
+    - os: osx
       osx_image: xcode11
       language: c++
       compiler: clang
       env:
         - NORMALIZ_VERSION=3.7.3
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using easy_install rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz
+        - $PYTHON_INSTALL nose
+
+    - os: osx
+      osx_image: xcode11
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.7.4
         - PYTHON_INSTALL='sudo easy_install'
       before_install:
         # update brew first, work around https://github.com/Homebrew/brew/issues/3299
