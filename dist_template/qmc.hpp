@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: 8e0fb4b97c482573b4344f3e77abdfb0226d0eba
- * Generated: 29-11-2018 13:58:22
+ * Commit: c361be07f1fafae094bc9615ecc240a983d2c5a0
+ * Generated: 21-08-2019 18:36:58
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -125,8 +125,10 @@ namespace integrators
         std::vector<T> r;
         U n;
 
-        D get_x(const U sample_index, const U integration_variable_index)
+        D get_x(const U sample_index, const U integration_variable_index) const
         {
+            using std::modf;
+
             D mynull;
             return modf( integrators::math::mul_mod<D,D>(sample_index,z.at(integration_variable_index),n)/(static_cast<D>(n)) + d.at(integration_variable_index), &mynull);
         }
