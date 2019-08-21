@@ -1,7 +1,7 @@
-19.07.2019 <not release yet>
+22.08.2019 pySecDec-1.4.3
 
     [symmetries] add options to not run any symmetry finder
-    [dist] update to form-4.2.1
+    [dist] update to form-4.2.1, qmc-1.0.2
     [doc] add faq section
 
 16.04.2019 pySecDec-1.4.2
