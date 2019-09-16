@@ -430,5 +430,4 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
         package_args.update(package_args_common)
         generators_args.append(package_args)
 
-    sum_package(name, [make_package]*len(generators_args), generators_args, regulators,
-                requested_orders, real_parameters, complex_parameters)
+    return generators_args
