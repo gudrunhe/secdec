@@ -29,6 +29,13 @@ Use the following function to draw Feynman diagrams.
 
 .. autofunction:: pySecDec.loop_integral.draw.plot_diagram
 
+Loop Regions
+~~~~~~~~~~~~
+
+Applies the expand by regions method to a loop integral.
+
+.. autofunction:: pySecDec.loop_integral.loop_regions
+
 """
 
 from .common import LoopIntegral
@@ -36,3 +43,4 @@ from .from_graph import LoopIntegralFromGraph
 from .from_propagators import LoopIntegralFromPropagators
 from .loop_package import loop_package
 from .draw import plot_diagram
+from .loop_regions import loop_regions
