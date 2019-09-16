@@ -29,5 +29,7 @@ psd.code_writer.sum_package('formfactor1L_massless_expansion_by_regions',
     real_parameters = ['qsq','lsq','psq','z'],
     complex_parameters = [],)
 
+import configure
+
 # Expected Result for qsq=100, lsq=1, psq=1 (Compared with Long Chen)
 # + ((0,0) +/- (2.93878e-19,0))*eps^-2 + ((-1.6865e-11,8.49456e-11) +/- (1.25602e-07,7.58591e-08))*eps^-1 + ((-0.244975,3.27442e-10) +/- (1.20291e-06,1.07642e-06)) + O(eps)

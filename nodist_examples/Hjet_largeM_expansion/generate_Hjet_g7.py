@@ -30,6 +30,8 @@ psd.code_writer.sum_package('Hjet_g7',
     real_parameters = ['s12','mh2','bmt2','zz'],
     complex_parameters = [],)
 
+import configure
+
 # analytic result from 1711.09875, eq. (II.68)
 
 #def g7(s12,mh2,mt2,eps):

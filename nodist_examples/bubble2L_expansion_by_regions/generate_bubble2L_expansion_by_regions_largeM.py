@@ -29,3 +29,5 @@ psd.code_writer.sum_package('bubble2L_largeM',
     regions_generator_args, regulators = ['eps'],requested_orders = [0],
     real_parameters = ['psq','msq','z'],
     complex_parameters = [],)
+
+import configure

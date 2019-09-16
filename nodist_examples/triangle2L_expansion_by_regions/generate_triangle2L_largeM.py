@@ -32,3 +32,5 @@ psd.code_writer.sum_package('triangle2L_case8_largeM',
     regions_generator_args, regulators = ['eps'],requested_orders = [0],
     real_parameters = ['s','msq','z'],
     complex_parameters = [],)
+
+import configure

@@ -29,6 +29,8 @@ psd.code_writer.sum_package('formfactor1L_massive_expansion_by_regions',
     real_parameters = ['qsq','msq','z'],
     complex_parameters = [],)
 
+import configure
+
 # Expected result from Eq(6.30) of arXiv:1111.2589
 # N[-1/qsq*(1/2*Log[qsq/msq]^2 + Log[qsq/msq]*Log[1 - msq/qsq] - PolyLog[2, msq/qsq] + Pi^2/3) /. {qsq -> 100, msq -> 1}, 20]
 # -0.13837355735881397785 + O(eps) + O(n1)

@@ -30,5 +30,7 @@ psd.code_writer.sum_package('bubble1L_expansion_by_regions_small_mass',
     real_parameters = ['s','msq','z'],
     complex_parameters = [],)
 
+import configure
+
 # Expected Result for s=1, msq=0.01
 # + ((0,0) +/- (0,0))*eps^-2 + ((1,-1.38219e-09) +/- (1.93775e-07,2.76537e-07))*eps^-1 + ((1.53572,3.07812) +/- (7.28103e-07,9.42614e-07)) + O(eps)
