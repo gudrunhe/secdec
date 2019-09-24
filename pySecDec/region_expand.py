@@ -36,9 +36,9 @@ def find_regions( exp_param_index , polynomials, indices = None, normaliz='norma
 
     :param indices:
         list of integers or None;
-        The indices of the parameters to be included 
-        in the asymptotic expansion. This should include all 
-        Feynman parameters (integration variables) and the 
+        The indices of the parameters to be included
+        in the asymptotic expansion. This should include all
+        Feynman parameters (integration variables) and the
         expansion parameter. By default (``indices=None``),
         all parameters are considered.
 
@@ -405,23 +405,15 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
                 package_args = make_package_args.copy()
                 package_args['name'] = name + '_region_' + '_'.join(str(number).replace('-','m') for ind, number in enumerate(region) if ind in region_variable_indices) + '_expansion_order_' + str(int(power_overall_smallness_parameter_no_regulators) + int(power_smallness_parameter_measure) + i).replace('-','m')
 
-                #TODO: dont convert polynomials to string
-                package_args['other_polynomials'] = [str(term.factors.pop())]
-                package_args['polynomials_to_decompose'] = [str(poly) for poly in term.factors]
+                package_args['other_polynomials'] = [term.factors.pop()]
+                package_args['polynomials_to_decompose'] = term.factors
+                prefactor = sp.sympify(smallness_parameter)**((power_overall_smallness_parameter+ power_smallness_parameter_measure +i)*(sp.sympify(1)/region[smallness_parameter_index]))
+                if 'prefactor' in package_args:
+                    prefactor *= sp.sympify(package_args['prefactor'])
+                package_args['prefactor'] = prefactor
 
                 package_args.update(package_args_common)
 
-                #TODO : !!! Does the smallness parameter always cancel out at the end, or should we produce integrals that depend on the smallness_paramter and let the user set it? !!!
-                #coefficients.append(Coefficient(
-                #                                [ExponentiatedPolynomial([[0]*len(regulators)],
-                #                                                         [smallness_parameter],
-                #                                                         power_overall_smallness_parameter + power_smallness_parameter_measure +i,
-                #                                                         regulators)
-                #                                ],
-                #                                [],
-                #                                range(len(regulators))
-                #                                )
-                #                    )
                 generators_args.append(package_args)
     else:
         package_args = make_package_args.copy()
