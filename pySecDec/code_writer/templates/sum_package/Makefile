@@ -12,11 +12,21 @@ libs:
 
 # build the example executable
 ifdef SECDEC_WITH_CUDA
-integrate_$(NAME) : integrate_$(NAME).o $(foreach INTEGRAL,$(INTEGRALS),lib/lib$(INTEGRAL).so) lib/lib$(NAME).so
-	$(CXX) -o $@ $< $(LDFLAGS) -Xlinker '-rpath lib' -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS))
+ifneq (x$(SECDEC_CONTRIB), x)
+CONTRIB_RPATH := -Xlinker "-rpath $(SECDEC_CONTRIB)/lib"
 else
+CONTRIB_RPATH :=
+endif
 integrate_$(NAME) : integrate_$(NAME).o $(foreach INTEGRAL,$(INTEGRALS),lib/lib$(INTEGRAL).so) lib/lib$(NAME).so
-	$(CXX) -o $@ $< $(LDFLAGS) -Wl,-rpath,lib -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS))
+	$(CXX) -o $@ $< $(LDFLAGS) -Xlinker '-rpath lib' $(CONTRIB_RPATH) -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS))
+else
+ifneq (x$(SECDEC_CONTRIB), x)
+CONTRIB_RPATH := -Wl,-rpath,$(SECDEC_CONTRIB)/lib
+else
+CONTRIB_RPATH :=
+endif
+integrate_$(NAME) : integrate_$(NAME).o $(foreach INTEGRAL,$(INTEGRALS),lib/lib$(INTEGRAL).so) lib/lib$(NAME).so
+	$(CXX) -o $@ $< $(LDFLAGS) -Wl,-rpath,lib $(CONTRIB_RPATH) -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS))
 endif
 
 very-clean : clean
