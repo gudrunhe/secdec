@@ -147,7 +147,58 @@ matrix:
             - graphviz
       env:
         - MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
+        - NORMALIZ_VERSION=3.6.2
+      before_install:
+        - eval ${MATRIX_EVAL}
+      python: 3.5
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-6 && export CXX=g++-6"
+        - NORMALIZ_VERSION=3.3.0
+      python: 3.6
+      before_install:
+        - eval ${MATRIX_EVAL}
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
         - NORMALIZ_VERSION=3.4.0
+      python: 3.6
+      before_install:
+        - eval ${MATRIX_EVAL}
+      language: python
+
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
+        - NORMALIZ_VERSION=3.8.1
       python: 3.6
       before_install:
         - eval ${MATRIX_EVAL}
@@ -335,6 +386,36 @@ matrix:
       compiler: clang
       env:
         - NORMALIZ_VERSION=3.7.4
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using easy_install rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz
+        - $PYTHON_INSTALL nose
+
+    - os: osx
+      osx_image: xcode11.1
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.8.1
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using easy_install rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz
+        - $PYTHON_INSTALL nose
+
+    - os: osx
+      osx_image: xcode11.2
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.8.1
         - PYTHON_INSTALL='sudo easy_install'
       before_install:
         # update brew first, work around https://github.com/Homebrew/brew/issues/3299
