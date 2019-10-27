@@ -3,7 +3,7 @@ from pySecDec.algebra import Polynomial
 
 import pySecDec as psd
 
-make_regions(
+regions_generator_args = make_regions(
 
 name = 'Hjet_g7',
 integration_variables = ['x1','x2','x3'],
@@ -20,9 +20,15 @@ prefactor = '-1',
 polynomials_to_decompose = ['(x1+x2+x3)**(2*eps-1)','(zz*(-s12*x2*x3-mh2*x1*x3) + bmt2*(x1+x2+x3)**2)**(-1-eps)'],
 expansion_by_regions_order = 1,
 decomposition_method = 'iterative',
-real_parameters = ['s12','mh2','bmt2'],
+real_parameters = ['s12','mh2','bmt2','zz'],
 complex_parameters = [],
 )
+
+psd.code_writer.sum_package('Hjet_g7',
+    [psd.make_package]*len(regions_generator_args),
+    regions_generator_args, regulators = ['eps'],requested_orders = [1],
+    real_parameters = ['s12','mh2','bmt2','zz'],
+    complex_parameters = [],)
 
 # analytic result from 1711.09875, eq. (II.68)
 
@@ -35,7 +41,7 @@ complex_parameters = [],
 #def g7_0(s12,mh2,mt2):
 #      analytic0 = -(mh2 + 12*mt2 + s12)/(24*mt2**2)
 #      return analytic0
-      
+
 #def g7_eps(s12,mh2,mt2):
 #      analytic1 =  -(mh2 + s12 + (mh2 + 12*mt2 + s12)*log(1/mt2))/(24*mt2**2)
 #      return analytic1
