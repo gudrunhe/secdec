@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: c361be07f1fafae094bc9615ecc240a983d2c5a0
- * Generated: 21-08-2019 18:36:58
+ * Commit: 208741a352ac601924c76606fbbaa59637ef318c
+ * Generated: 28-10-2019 16:33:42
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -1607,6 +1607,7 @@ namespace integrators
                                                                                                        d_r_size_over_m, n, m,
                                                                                                        static_cast<I*>(*d_func)
                                                                                                        );
+                QMC_CORE_CUDA_SAFE_CALL(cudaPeekAtLastError());
                 QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
             };
@@ -1634,6 +1635,7 @@ namespace integrators
                                                                                                                 n,
                                                                                                                 static_cast<I*>(*d_func)
                                                                                                                 );
+                QMC_CORE_CUDA_SAFE_CALL(cudaPeekAtLastError());
                 QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSynchronize());
 
             };
