@@ -245,7 +245,7 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
         # 0th order term
         term = Product(*poly_list)
         term.factors.append(numerator)
-        term = term.replace(index, 0)
+        term = term.replace(index, 0, remove=True)
         for factor in term.factors:
             factor.simplify()
         yield term
@@ -259,9 +259,17 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
             inverse_i_factorial /= i
             term = Product(*derivative[0])
             term.factors.append((derivative[1] * inverse_i_factorial))
-            term = term.replace(index, 0)
+            term = term.replace(index, 0, remove=True)
             for factor in term.factors:
-                factor.simplify()
+                if type(factor) is ExponentiatedPolynomial:
+                    # make sure we don't simplify poly**0 to 1
+                    if hasattr(factor.exponent, "simplify"):
+                        factor.exponent = factor.exponent.simplify()
+                    if type(factor.exponent) is not Polynomial and sp.sympify(factor.exponent).simplify() or \
+                        type(factor.exponent) is Polynomial and (factor.exponent.expolist != 0).any():
+                        factor.simplify()
+                else:
+                    factor.simplify()
             yield term
 
             derivative = derive_prod(derivative[0],derivative[1],index, polynomial_name_indices)
@@ -341,7 +349,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     else:
         polynomial_names = make_package_args['polynomial_names']
 
-    symbols_polynomials_to_decompose = integration_variables + regulators + polynomial_names + [smallness_parameter]
+    symbols_polynomials_to_decompose = list(map(sp.sympify, integration_variables + regulators + polynomial_names + [smallness_parameter]))
     polynomial_name_indices = np.arange(len(polynomial_names)) + ( len(integration_variables) + len(regulators) )
     smallness_parameter_index = -1
     # only integration variables and the expansion parameter should be included in the calculation of the regions

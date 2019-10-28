@@ -148,3 +148,18 @@ class TestExpansionByRegions(unittest.TestCase):
         self.assertEqual(sp.sympify(next(series)-target_series[0]).simplify(), 0)
         self.assertEqual(sp.sympify(next(series)-target_series[1]).simplify(), 0)
         self.assertEqual(sp.sympify(next(series)-target_series[2]).simplify(), 0)
+
+    #@attr('active')
+    def test_expand_region_zeroth_power(self):
+        # test that polynomial**0 is not simplified to 1, otherwise references
+        # in the numerator to the polynomial will produce a mistake
+        variables = ["x","y","p1"]
+        p1 = Polynomial.from_expression("x+y",variables)
+        p1 = ExponentiatedPolynomial(p1.expolist,p1.coeffs,1,variables)
+        numerator = Polynomial.from_expression("1", variables)
+        series = list(expand_region([p1],numerator,1,1,[2]))
+
+        zeroth_power_poly = series[1].factors[0]
+        zeroth_power_poly.exponent = 1
+
+        self.assertEqual((sp.sympify(zeroth_power_poly)-sp.sympify("x")).simplify(), 0)
