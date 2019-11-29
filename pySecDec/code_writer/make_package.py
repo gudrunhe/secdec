@@ -14,7 +14,7 @@ from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort, light_Pak_sort
 from ..subtraction import integrate_pole_part, integrate_by_parts, pole_structure as compute_pole_structure
 from ..expansion import expand_singular, expand_Taylor, expand_sympy, OrderError
-from ..misc import lowest_order, parallel_det
+from ..misc import lowest_order, parallel_det, det
 from .template_parser import parse_template_file, parse_template_tree
 from itertools import chain, repeat
 from multiprocessing import Pool
@@ -1906,7 +1906,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
         primary_sectors_to_consider = strategy['primary'](initial_sector, range(len(integration_variables)))
 
     # initialize the multiprocessing pool to process the `secondary_sectors` in parallel
-    pool = Pool(processes)
+    if processes is None or processes > 1:
+        pool = Pool(processes)
+    else:
+        pool = None
 
     # ty-finally blcok to make sure that the pool is closed
     try:
@@ -2005,7 +2008,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 for i in range(len(integration_variables)):
                     for j in range(len(integration_variables)):
                         contourdef_Jacobian[i,j] = symbolic_deformed_variables[i].derive(j).simplify()
-                contourdef_Jacobian_determinant = parallel_det(contourdef_Jacobian, pool)
+                if pool is not None:
+                    contourdef_Jacobian_determinant = parallel_det(contourdef_Jacobian, pool)
+                else:
+                    contourdef_Jacobian_determinant = det(contourdef_Jacobian)
 
             # remove `polynomial_names` from the `remainder_expression`
             this_primary_sector_remainder_expression = remainder_expression
@@ -2039,11 +2045,18 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 secondary_sectors = strategy['secondary'](primary_sector, range(len(integration_variables)))
 
             # process the `secondary_sectors` in parallel
-            lowest_orders_and_function_declarations_and_pole_structures = \
-                pool.map(
+            if pool is not None:
+                lowest_orders_and_function_declarations_and_pole_structures = \
+                    pool.map(
+                                _process_secondary_sector,
+                                _make_environment( locals() )
+                            )
+            else:
+                lowest_orders_and_function_declarations_and_pole_structures = \
+                    list(map(
                             _process_secondary_sector,
                             _make_environment( locals() )
-                        )
+                        ))
 
             # get the `sector_index` after processing the secondary sectors
             sector_index = sector_index + len(lowest_orders_and_function_declarations_and_pole_structures)
@@ -2059,7 +2072,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     finally:
         # make sure the pool is closed
-        pool.close()
+        if pool is not None:
+            pool.close()
 
     # expand the `prefactor` to the required orders
     print('expanding the prefactor')
