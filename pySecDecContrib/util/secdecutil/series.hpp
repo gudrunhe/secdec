@@ -28,21 +28,26 @@ namespace secdecutil {
 
     protected:
 
-        template<typename U>
+        template<typename U, typename V = U>
         struct CreateContent
         {
-            static U create(const Series<U>& s)
+            static V create(const Series<U>& series, const V& scalar = V())
             {
-                return U();
+                return scalar;
             }
         };
 
-        template<typename U>
-        struct CreateContent<Series<U>>
+        template<typename U, typename V>
+        struct CreateContent<Series<U>,V>
         {
-            static Series<U> create(const Series<Series<U>>& s)
+            static Series<U> create(const Series<Series<U>>& series)
             {
-                return {0,0,{CreateContent<U>::create(s.get_content().at(0))},false,s.get_content().at(0).expansion_parameter};
+                return {0,0,{CreateContent<U>::create(series.get_content().at(0))},false,series.get_content().at(0).expansion_parameter};
+            }
+            static auto create(const Series<Series<U>>& series, const V& scalar)
+            -> Series<decltype(CreateContent<U,V>::create(series.get_content().at(0), scalar))>
+            {
+                return {0,0,{CreateContent<U,V>::create(series.get_content().at(0),scalar)},false,series.get_content().at(0).expansion_parameter};
             }
         };
 
@@ -354,6 +359,22 @@ namespace secdecutil {
         typedef const T& const_reference;
         typedef T value_type;
 
+
+        // template<typename T1, typename T2>
+        // static auto create_nested_scalar_series_like(const Series<T1>& series, const T2& scalar)
+        // -> Series<T2>
+        // {
+        //     return Series<T2>{0,0,{scalar},false,series.expansion_parameter};
+        // };
+
+        // template<typename T1, typename T2>
+        // static auto create_nested_scalar_series_like(const Series<Series<T1>>& series, const T2& scalar)
+        // -> Series<decltype(create_nested_scalar_series_like(series.at(series.get_order_min()), scalar))>
+        // {
+        //     auto subseries = create_nested_scalar_series_like(series.at(series.get_order_min()), scalar);
+        //     return Series<decltype(subseries)>(0,0,{subseries},false,series.expansion_parameter);
+        // }
+
         std::string expansion_parameter; // default value "x" set in constructor
         int get_order_min() const { return order_min; }
         int get_order_max() const { return order_max; }
@@ -599,13 +620,15 @@ namespace secdecutil {
     inline auto operator+(const Series<T1>& series, const T2& scalar)
     -> Series<typename std::remove_cv<decltype(series.at(series.get_order_min()) + scalar)>::type>
     {
-        return series.template add(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
+        auto content = Series<int>::CreateContent<T1,T2>::create(series,scalar);
+        return series.template add(series,Series<decltype(content)>{0,0,{content},false,series.expansion_parameter});
     };
     template<typename T1, typename T2>
     inline auto operator+(const T1& scalar, const Series<T2>& series)
     -> Series<typename std::remove_cv<decltype(scalar + series.at(series.get_order_min()))>::type>
     {
-        return series.template add(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
+        auto content = Series<int>::CreateContent<T2,T1>::create(series,scalar);
+        return series.template add(Series<decltype(content)>{0,0,{content},false,series.expansion_parameter}, series);
     };
 
     template<typename T1, typename T2>
@@ -618,13 +641,15 @@ namespace secdecutil {
     inline auto operator-(const Series<T1>& series, const T2& scalar)
     -> Series<typename std::remove_cv<decltype(series.at(series.get_order_min()) - scalar)>::type>
     {
-        return series.template subtract(series,Series<T2>{0,0,{scalar},false,series.expansion_parameter});
+        auto content = Series<int>::CreateContent<T1,T2>::create(series,scalar);
+        return series.template subtract(series,Series<decltype(content)>{0,0,{content},false,series.expansion_parameter});
     };
     template<typename T1, typename T2>
     inline auto operator-(const T1& scalar, const Series<T2>& series)
     -> Series<typename std::remove_cv<decltype(scalar - series.at(series.get_order_min()))>::type>
     {
-        return series.template subtract(Series<T1>{0,0,{scalar},false,series.expansion_parameter}, series);
+        auto content = Series<int>::CreateContent<T2,T1>::create(series,scalar);
+        return series.template subtract(Series<decltype(content)>{0,0,{content},false,series.expansion_parameter}, series);
     };
 
     template<typename T1, typename T2>
@@ -662,7 +687,8 @@ namespace secdecutil {
     inline auto operator/(const T1& val, const Series<T2>& s1)
     -> Series<typename std::remove_cv<decltype(val / s1.at(s1.get_order_min()))>::type>
     {
-        return s1.template division_series_by_series(Series<T1>{0,0,{val},false,s1.expansion_parameter},s1);
+        auto content = Series<int>::CreateContent<T2,T1>::create(s1,val);
+        return s1.template division_series_by_series(Series<decltype(content)>{0,0,{content},false,s1.expansion_parameter},s1);
     }
 
 }

@@ -524,13 +524,23 @@ TEST_CASE( "Multivariate Operator +" , "[Series]" ) {
         secdecutil::Series<int>(-1,1,{1,2,2})
     });
 
+    auto multivariate_series_two_plus_scalar_one =
+    secdecutil::Series<secdecutil::Series<int>>(-1,1,{
+        secdecutil::Series<int>(-1,1,{1,1,1}),
+        secdecutil::Series<int>(-1,1,{1,2,1}),
+        secdecutil::Series<int>(-1,1,{1,1,1}),
+    });
+
     SECTION ( "+" ) {
         REQUIRE( (multivariate_series_one + multivariate_series_two) == multivariate_series_one_plus_two );
+        REQUIRE( (multivariate_series_two + 1.0) == multivariate_series_two_plus_scalar_one );
+        REQUIRE( (1.0 + multivariate_series_two) == multivariate_series_two_plus_scalar_one );
     };
 
     SECTION ( "Test 1: += " )
     {
         REQUIRE( (multivariate_series_one += multivariate_series_two) == multivariate_series_one_plus_two );
+        REQUIRE( (multivariate_series_two += 1.0) == multivariate_series_two_plus_scalar_one );
     }
 
 };
@@ -558,13 +568,23 @@ TEST_CASE( "Multivariate Operator -" , "[Series]" ) {
         secdecutil::Series<int>(-1,1,{-1,0,0})
     });
 
+    auto multivariate_series_two_minus_scalar_one =
+    secdecutil::Series<secdecutil::Series<int>>(-1,1,{
+        secdecutil::Series<int>(-1,1,{1,1,1}),
+        secdecutil::Series<int>(-1,1,{1,0,1}),
+        secdecutil::Series<int>(-1,1,{1,1,1}),
+    });
+
     SECTION ( "-" ) {
         REQUIRE( (multivariate_series_one - multivariate_series_two) == multivariate_series_one_minus_two );
+        REQUIRE( (multivariate_series_two - 1.0) == multivariate_series_two_minus_scalar_one );
+        REQUIRE( (1.0 - multivariate_series_two) == -multivariate_series_two_minus_scalar_one );
     };
 
     SECTION ( "Test 1: -= " )
     {
         REQUIRE( (multivariate_series_one -= multivariate_series_two) == multivariate_series_one_minus_two );
+        REQUIRE( (multivariate_series_two -= 1.0) == multivariate_series_two_minus_scalar_one );
     }
 
 };
@@ -627,7 +647,7 @@ TEST_CASE( "Operator /" , "[Series]" ) {
     auto truncated_one            = secdecutil::Series<int>(0,1,{1,0    },true );
     auto truncated_one_more_terms = secdecutil::Series<int>(0,3,{1,0,0,0},true );
     auto exact_one                = secdecutil::Series<int>(0,0,{1      },false);
-    
+
     auto series_uncorrelated_deviation = secdecutil::Series<secdecutil::UncorrelatedDeviation<int>>( 4, 5,{ {1,3}, {1,4}},false);
     auto uncorrelated_deviation_one    = secdecutil::Series<secdecutil::UncorrelatedDeviation<int>>( 0, 1,{ {1,3}, {0,5}},false);
 
@@ -654,9 +674,9 @@ TEST_CASE( "Operator /" , "[Series]" ) {
         REQUIRE( (            series /= series            ) == truncated_one            );
         REQUIRE(              series                        == truncated_one            ); // after application of "/="
     };
-    
+
     SECTION ( " series_uncorrelated_deviation / series " ) {
-        
+
         // Note: Can not compare two uncertain series for equality
         // Implement by hand:
         // REQUIRE( ( series_uncorrelated_deviation /  series  ) == uncorrelated_deviation_one );
@@ -672,7 +692,7 @@ TEST_CASE( "Operator /" , "[Series]" ) {
             REQUIRE ( s1.get_content().at(idx).value == s2.get_content().at(idx).value ); // Compare value
             REQUIRE ( s1.get_content().at(idx).uncertainty == s2.get_content().at(idx).uncertainty ); // Compare uncertainty
         }
-        
+
         // Implement by hand:
         // REQUIRE( ( series_uncorrelated_deviation /=  series ) == uncorrelated_deviation_one );
         series_uncorrelated_deviation /= series;
@@ -687,7 +707,7 @@ TEST_CASE( "Operator /" , "[Series]" ) {
             REQUIRE ( s1.get_content().at(idx).value == s2.get_content().at(idx).value ); // Compare value
             REQUIRE ( s1.get_content().at(idx).uncertainty == s2.get_content().at(idx).uncertainty ); // Compare uncertainty
         }
-        
+
     };
 
     SECTION ( " series with one term in denominator does not get truncated " ) {
