@@ -42,7 +42,17 @@ def _poly_variable_transform(poly, new_variables, add_missing_var_to_coeff = Tru
     poly.number_of_variables = len(new_variables)
 
 def loop_regions(name, loop_integral, smallness_parameter,
-                expansion_by_regions_order=0, normaliz='normaliz'):
+                expansion_by_regions_order=0,
+                contour_deformation=True,
+                additional_prefactor=1, form_optimization_level=2,
+                form_work_space='500M',
+                decomposition_method='iterative',
+                normaliz_executable='normaliz',
+                enforce_complex=False,
+                split=False, ibp_power_goal=-1,
+                use_iterative_sort=True, use_light_Pak=True,
+                use_dreadnaut=False, use_Pak=True,
+                processes=None):
     """
     Apply expansion of regions method to the loop integral using the function
     :func:`pySecDec.region_expand.make_regions`. See that function for the
@@ -76,12 +86,29 @@ def loop_regions(name, loop_integral, smallness_parameter,
         expansion_by_regions_order = expansion_by_regions_order,
         real_parameters = [],
         complex_parameters = [],
-        normaliz=normaliz,
+        normaliz=normaliz_executable,
 
         # make_package_args
         polynomial_names = polynomial_names,
-        contour_deformation_polynomial = 'F',
-        positive_polynomials = ['U'],
         prefactor = loop_integral.Gamma_factor,
-        decomposition_method = 'iterative',
+
+        contour_deformation_polynomial = 'F' if contour_deformation else None,
+        positive_polynomials = ['U'],
+
+        form_optimization_level = form_optimization_level,
+        form_work_space = form_work_space,
+
+        decomposition_method = decomposition_method,
+
+        normaliz_executable = normaliz_executable,
+
+        use_iterative_sort = use_iterative_sort,
+        use_Pak = use_Pak,
+        use_dreadnaut = use_dreadnaut,
+        use_light_Pak = use_light_Pak,
+
+        enforce_complex = enforce_complex,
+        ibp_power_goal = ibp_power_goal,
+        split = split,
+        processes = processes
     )
