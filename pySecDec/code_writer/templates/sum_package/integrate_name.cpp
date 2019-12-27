@@ -10,8 +10,8 @@ template<typename T> using amplitudes_t = std::vector<%(name)s::nested_series_t<
 int main()
 {
     // User Specified Phase-space point
-    const std::vector<%(name)s::real_t> real_parameters = { /* EDIT: insert real parameter values here */ };
-    const std::vector<%(name)s::complex_t> complex_parameters = { /* EDIT: insert complex parameter values here */ };
+    const std::vector<%(name)s::real_t> real_parameters = { /* EDIT: insert real parameter values here: %(names_of_real_parameters)s */ };
+    const std::vector<%(name)s::complex_t> complex_parameters = { /* EDIT: insert complex parameter values here: %(names_of_complex_parameters)s */ };
 
     // Construct the amplitudes. Further options for the individual integrals can be set in the
     // corresponding "<integral_name>_weighted_integral.cpp" file in the "src/" directory

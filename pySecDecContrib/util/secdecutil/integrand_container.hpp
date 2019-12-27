@@ -19,6 +19,7 @@ namespace secdecutil {
 
         int number_of_integration_variables;
         std::function<T(Args...)> integrand;
+        std::string display_name = "INTEGRAND";
 
         /*
          *  Call operator

@@ -54,12 +54,15 @@ namespace secdecutil {
 
             public:
 
+                std::string display_name = "INTEGRAL"; // used as an user readable name for the integral
+                int id; // used for user output, so that the integral can be identified more easier in thousands of integrals, without going through the names
+
                 /*
                  * constructor
                  */
                 Integral(unsigned long long int next_number_of_function_evaluations = 0) :
                     number_of_function_evaluations(0),
-                    next_number_of_function_evaluations(next_number_of_function_evaluations)
+                    next_number_of_function_evaluations(next_number_of_function_evaluations), id(0)
                  {};
 
                 /*
@@ -188,6 +191,7 @@ namespace secdecutil {
         {
             std::shared_ptr<integral_t> integral;
             coefficient_t coefficient;
+            std::string display_name = "WINTEGRAL";
 
             /*
              * constructor
@@ -265,7 +269,7 @@ namespace secdecutil {
             if(number_of_threads == 0)
                 ++number_of_threads;
 
-            auto compute_integral = [ &verbose ] (integral_t* integral)
+            auto compute_integral = [ &verbose, &integrals ] (integral_t* integral)
                 {
                     const unsigned long long int curr_n = integral->get_number_of_function_evaluations();
                     const unsigned long long int next_n = integral->get_next_number_of_function_evaluations();
@@ -279,12 +283,14 @@ namespace secdecutil {
 
                     if(verbose)
                     {
-                        std::cout << "integral: " << integral;
+                        std::cout << "integral " << integral->id << "/" << integrals.size() << ": " << integral->display_name << ", time: ";
+                        std::printf("%.1f", integral->get_integration_time());
+                        std::cout << "s" << std::endl;
                         if(next_n > curr_n)
-                            std::cout << ", res: " << old_result << " -> " << integral->get_integral_result()
+                            std::cout << "res: " << old_result << " -> " << integral->get_integral_result()
                                       << ", n: " << curr_n << " -> " << std::dec << integral->get_number_of_function_evaluations() << std::endl;
                         else
-                            std::cout << ", res: " << integral->get_integral_result()
+                            std::cout << "res: " << integral->get_integral_result()
                                       << ", n: " << std::dec << next_n << std::endl;
                     }
                 };
@@ -338,6 +344,7 @@ namespace secdecutil {
                 struct sum_t
                 {
                     std::vector<term_t> summands;
+                    std::string display_name = "SUM";
 
                     // Note: These fields are set in the constructor of WeightedIntegralHandler
                     real_t epsrel;
@@ -359,6 +366,25 @@ namespace secdecutil {
                 const std::function<sum_t(const std::vector<term_t>&)> convert_to_sum_t =
                     [] (const std::vector<term_t>& input) {  return sum_t(input);  };
 
+                // these functions give names to the sum_t sums containing the orders of the series
+                void name_sum(sum_t& sum, std::string prefix){
+                    sum.display_name = prefix;
+                }
+
+                template<typename T>
+                void name_sum(Series<T>& series, std::string prefix){
+                    for(int i = series.get_order_min(); i <= series.get_order_max(); i++){
+                        name_sum(series.at(i), prefix + "_" + series.expansion_parameter + "^" + std::to_string(i));
+                    }
+                }
+
+                template<typename T>
+                void name_sum(std::vector<T>& vector, std::string prefix){
+                    for(int i = 0; i < vector.size(); i++){
+                        name_sum(vector[i], prefix);
+                    }
+                }
+
             public:
 
                 /*
@@ -371,6 +397,15 @@ namespace secdecutil {
                 size_t number_of_threads;
                 size_t reset_cuda_after;
                 container_t<sum_t> expression;
+                real_t epsrel;
+                real_t epsabs;
+                unsigned long long int maxeval;
+                unsigned long long int mineval;
+                real_t maxincreasefac;
+                real_t min_epsrel;
+                real_t min_epsabs;
+                real_t max_epsrel;
+                real_t max_epsabs;
 
                 /*
                  * constructor
@@ -394,7 +429,9 @@ namespace secdecutil {
                     soft_wall_clock_limit(std::numeric_limits<double>::infinity()),
                     number_of_threads(0),
                     reset_cuda_after(0),
-                    expression( deep_apply(expression,convert_to_sum_t) )
+                    expression( deep_apply(expression,convert_to_sum_t) ),
+                    epsrel(epsrel),epsabs(epsabs),maxeval(maxeval),mineval(mineval),maxincreasefac(maxincreasefac),min_epsrel(min_epsrel),
+                    min_epsabs(min_epsabs),max_epsrel(max_epsrel),max_epsabs(max_epsabs)
                 {
                     std::function<void(sum_t&)> set_parameters =
                         [&] (sum_t& sum)
@@ -410,6 +447,7 @@ namespace secdecutil {
                             sum.max_epsabs = max_epsabs;
                         };
                     secdecutil::deep_apply(this->expression, set_parameters);
+                    name_sum(this->expression, "sum");
                 };
 
             private:
@@ -433,6 +471,13 @@ namespace secdecutil {
                 {
                     return secdecutil::deep_apply(expression, compute_sum);
                 };
+
+                void print_result(){
+                    std::cout << "Current result:" << std:endl;
+                    auto result = evaluate_expression();
+                    for (unsigned int amp_idx = 0; amp_idx < result.size(); ++amp_idx)
+                        std::cout << "amplitude" << amp_idx << " = " << result.at(amp_idx) << std::endl;
+                }
 
                 /*
                  * estimate total time and try to get below wall_clock_limit
@@ -558,7 +603,8 @@ namespace secdecutil {
                                 auto result = term.integral->get_integral_result();
                                 real_t abserr = abs(result.uncertainty);
                                 if(verbose)
-                                    std::cout << "sum: " << &sum << ", term: " << &term << ", integral: " << term.integral << ", current integral result: " << result << std::endl;
+                                    std::cout << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                                term.integral->display_name << ", current integral result: " << result << std::endl;
                                 if(abserr > sum.min_epsabs)
                                 {
                                     real_t relerr = abserr / abs( result.value );
@@ -603,7 +649,7 @@ namespace secdecutil {
                         abs_error_goal *= abs_error_goal; // require variance rather than standard deviation
 
                         if(verbose)
-                            std::cout << std::endl << "sum: " << &sum << ", current sum result: " << current_sum << std::endl;
+                            std::cout << std::endl << "sum: " << sum.display_name << ", current sum result: " << current_sum << std::endl;
 
                         // compute the C_i
                         std::vector<real_t> c; c.reserve( sum.summands.size() );
@@ -616,7 +662,8 @@ namespace secdecutil {
                             abserr *= abs(term.coefficient); // contribution to total error of the sum
 
                             if(verbose)
-                                std::cout << "sum: " << &sum << ", term: " << &term << ", integral: " << term.integral << ", contribution to sum error: " << abserr << std::endl;
+                                std::cout << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                     term.integral->display_name << ", contribution to sum error: " << abserr << std::endl;
 
                             if(relerr < sum.max_epsrel || abserr < sum.max_epsabs)
                                 c.push_back(  -1  );
@@ -727,14 +774,22 @@ namespace secdecutil {
                 std::sort(integrals.begin(), integrals.end());
                 integrals.erase(std::unique(integrals.begin(), integrals.end()), integrals.end());
                 integrals.shrink_to_fit();
+                for(int i = 0; i < integrals.size(); i++){
+                    integrals[i]->id = i+1;
+                }
 
                 // initialize with minimal number of sampling points
                 secdecutil::deep_apply(expression, ensure_mineval);
-                if(verbose)
-                    std::cout << "computing integrals to satisfy mineval" << std::endl;
+                if(verbose){
+                    std::cout << "computing integrals to satisfy mineval " << this->mineval << std::endl;
+                }
                 evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after);
-                if(verbose)
-                    std::cout << "---------------------" << std::endl << std::endl << std::endl;
+                if(verbose){
+                    std::cout << "---------------------" << std::endl << std::endl;
+                    std::cout << "elapsed time: " << std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count() << std::endl << std::endl;
+                    print_result();
+                    std::cout << std::endl;
+                }
 
                 // ensure each integral is at least known to min_epsrel and min_epsabs
                 do {
@@ -744,10 +799,14 @@ namespace secdecutil {
                     secdecutil::deep_apply(expression, ensure_maxincreasefac);
 
                     if(verbose)
-                        std::cout << std::endl << "computing integrals to satisfy min_epsrel and min_epsabs" << std::endl;
+                        std::cout << std::endl << "computing integrals to satisfy min_epsrel " << this->min_epsrel << " or min_epsabs " << this->min_epsabs << std::endl;
                     evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after);
-                    if(verbose)
-                        std::cout << "---------------------" << std::endl << std::endl << std::endl;
+                    if(verbose){
+                        std::cout << "---------------------" << std::endl << std::endl;
+                        std::cout << "elapsed time: " << std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count() << std::endl << std::endl;
+                        print_result();
+                        std::cout << std::endl;
+                    }
                 } while(repeat);
 
                 // ensure the error goal of each sum is reached as good as possible under the given time constraint
@@ -759,11 +818,17 @@ namespace secdecutil {
                     ensure_wall_clock_limit(repeat, integrals);
 
                     if(verbose)
-                        std::cout << std::endl << "computing integrals to satisfy error goals on sums" << std::endl;
+                        std::cout << std::endl << "computing integrals to satisfy error goals on sums: epsrel " << this->epsrel << ", epsabs " << this->epsabs << std::endl;
                     evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after);
-                    if(verbose)
-                        std::cout << "---------------------" << std::endl << std::endl << std::endl;
+                    if(verbose){
+                        std::cout << "---------------------" << std::endl << std::endl;
+                        print_result();
+                        std::cout << std::endl;
+                    }
                 } while(repeat);
+                if(verbose){
+                        std::cout << "elapsed time: " << std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count() << std::endl << std::endl;
+                }
 
             }
 
