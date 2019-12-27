@@ -62,8 +62,8 @@ void print_integral_info()
 int main()
 {
     // User Specified Phase-space point
-    const std::vector<%(name)s::real_t> real_parameters = { /* EDIT: insert real parameter values here */ };
-    const std::vector<%(name)s::complex_t> complex_parameters = { /* EDIT: insert complex parameter values here */ };
+    const std::vector<%(name)s::real_t> real_parameters = { /* EDIT: insert real parameter values here: %(names_of_real_parameters)s */ };
+    const std::vector<%(name)s::complex_t> complex_parameters = { /* EDIT: insert complex parameter values here: %(names_of_complex_parameters)s */ };
 
     // Generate the integrands (optimization of the contour if applicable)
     const std::vector<%(name)s::nested_series_t<%(name)s::cuda_integrand_t>> sector_integrands = %(name)s::make_cuda_integrands(real_parameters, complex_parameters);
