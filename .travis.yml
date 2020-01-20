@@ -257,6 +257,24 @@ matrix:
         - eval ${MATRIX_EVAL}
       language: python
 
+    - os: linux
+      dist: xenial # required for Python >= 3.7
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+            - texlive-full
+            - graphviz
+      env:
+        - MATRIX_EVAL="export CC=gcc-9 && export CXX=g++-9"
+        - NORMALIZ_VERSION=3.8.2
+      python: 3.8
+      before_install:
+        - eval ${MATRIX_EVAL}
+      language: python
+
     - os: osx
       osx_image: xcode9.4
       language: c++
@@ -416,6 +434,21 @@ matrix:
       compiler: clang
       env:
         - NORMALIZ_VERSION=3.8.1
+        - PYTHON_INSTALL='sudo easy_install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using easy_install rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz || brew link --overwrite python
+        - $PYTHON_INSTALL nose
+
+    - os: osx
+      osx_image: xcode11.3
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.8.2
         - PYTHON_INSTALL='sudo easy_install'
       before_install:
         # update brew first, work around https://github.com/Homebrew/brew/issues/3299
