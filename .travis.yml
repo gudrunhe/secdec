@@ -268,7 +268,7 @@ matrix:
         - $PYTHON_INSTALL nose
         # update brew first, work around https://github.com/Homebrew/brew/issues/3299
         - brew update
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
 
     - os: osx
       osx_image: xcode9.4
@@ -281,7 +281,7 @@ matrix:
         - $PYTHON_INSTALL nose
         # update brew first, work around https://github.com/Homebrew/brew/issues/3299
         - brew update
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
 
     - os: osx
       osx_image: xcode10
@@ -294,7 +294,7 @@ matrix:
         - $PYTHON_INSTALL nose
         # update brew first, work around https://github.com/Homebrew/brew/issues/3299
         - brew update
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
 
     - os: osx
       osx_image: xcode10.1
@@ -308,7 +308,7 @@ matrix:
         - brew update
         # install numpy using easy_install rather than homebrew
         - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
         - $PYTHON_INSTALL nose
 
     - os: osx
@@ -323,7 +323,7 @@ matrix:
         - brew update
         # install numpy using easy_install rather than homebrew
         - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
         - $PYTHON_INSTALL nose
 
     - os: osx
@@ -337,7 +337,7 @@ matrix:
         - $PYTHON_INSTALL nose
         # update brew first, work around https://github.com/Homebrew/brew/issues/3299
         - brew update
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
 
     - os: osx
       osx_image: xcode10.3
@@ -350,7 +350,7 @@ matrix:
         - $PYTHON_INSTALL nose
         # update brew first, work around https://github.com/Homebrew/brew/issues/3299
         - brew update
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
 
     - os: osx
       osx_image: xcode10.3
@@ -363,7 +363,7 @@ matrix:
         - $PYTHON_INSTALL nose
         # update brew first, work around https://github.com/Homebrew/brew/issues/3299
         - brew update
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
 
     - os: osx
       osx_image: xcode11
@@ -377,7 +377,7 @@ matrix:
         - brew update
         # install numpy using easy_install rather than homebrew
         - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
         - $PYTHON_INSTALL nose
 
     - os: osx
@@ -392,7 +392,7 @@ matrix:
         - brew update
         # install numpy using easy_install rather than homebrew
         - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
         - $PYTHON_INSTALL nose
 
     - os: osx
@@ -407,7 +407,7 @@ matrix:
         - brew update
         # install numpy using easy_install rather than homebrew
         - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
         - $PYTHON_INSTALL nose
 
     - os: osx
@@ -422,7 +422,7 @@ matrix:
         - brew update
         # install numpy using easy_install rather than homebrew
         - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz
+        - brew install graphviz || brew link --overwrite python
         - $PYTHON_INSTALL nose
 
 install:
