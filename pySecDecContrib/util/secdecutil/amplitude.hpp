@@ -320,6 +320,11 @@ namespace secdecutil {
             return map;
         }
 
+        void print_datetime(std::string prefix = "Current time: "){
+            auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+            std::cout << prefix << std::ctime(&t);
+        }
+
         /*
          * evaluate a vector of integrals
          */
@@ -396,7 +401,8 @@ namespace secdecutil {
                     {
                         std::cout << "integral " << integral->id << "/" << integrals.size() << ": " << integral->display_name << ", time: ";
                         std::printf("%.1f", integral->get_integration_time());
-                        std::cout << "s" << std::endl;
+                        std::cout << " s, ";
+                        print_datetime();
                         if(next_n > curr_n){
                             std::cout << "res: " << old_result << " -> " << integral->get_integral_result()
                                       << ", n: " << curr_n << " -> " << std::dec << integral->get_number_of_function_evaluations() << std::endl;
@@ -405,6 +411,7 @@ namespace secdecutil {
                             std::cout << "res: " << integral->get_integral_result()
                                       << ", n: " << std::dec << next_n << std::endl;
                         }
+                        std::cout << std::endl;
                     }
                 };
 
@@ -607,8 +614,8 @@ namespace secdecutil {
                         if(verbose)
                         {
                             std::cout << std::endl;
-                            std::cout << "elapsed time: " << elapsed_time << std::endl;
-                            std::cout << "remaining time: " << remaining_time << std::endl;
+                            std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                            std::cout << "remaining time: " << remaining_time << " s = " << remaining_time/60 << " min = " << remaining_time/60/60 << " hr" << std::endl;
                             std::cout << "stopping due to time constraint" << std::endl;
                         }
                         return;
@@ -632,11 +639,11 @@ namespace secdecutil {
                     if(verbose)
                     {
                         std::cout << std::endl;
-                        std::cout << "elapsed time: " << elapsed_time << std::endl;
-                        std::cout << "estimated time for integrations: " << time_for_next_iteration << std::endl;
-                        std::cout << "remaining time: " << remaining_time << std::endl;
-                        std::cout << "soft wall clock limit: " << soft_wall_clock_limit << std::endl;
-                        std::cout << "hard wall clock limit: " << hard_wall_clock_limit << std::endl;
+                        std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                        std::cout << "estimated time for integrations: " << time_for_next_iteration << " s = " << time_for_next_iteration/60 << " min = " << time_for_next_iteration/60/60 << " hr" << std::endl;
+                        std::cout << "remaining time: " << remaining_time << " s = " << remaining_time/60 << " min = " << remaining_time/60/60 << " hr" << std::endl;
+                        std::cout << "soft wall clock limit: " << soft_wall_clock_limit << " s = " << soft_wall_clock_limit/60 << " min = " << soft_wall_clock_limit/60/60 << " hr" << std::endl;
+                        std::cout << "hard wall clock limit: " << hard_wall_clock_limit << " s = " << hard_wall_clock_limit/60 << " min = " << hard_wall_clock_limit/60/60 << " hr" << std::endl;
                     }
 
                     // decrease number of sampling points if sampling would run out of time
@@ -678,7 +685,8 @@ namespace secdecutil {
 
                         if(verbose)
                         {
-                            std::cout << "estimated time for integrations (after reduction of samples): " << time_for_next_iteration << std::endl;
+                            std::cout << "estimated time for integrations (after reduction of samples): " << time_for_next_iteration << " s = " <<
+                                    time_for_next_iteration/60 << " min = " << time_for_next_iteration/60/60 << " hr" << std::endl;
                             std::cout << "can improve in time: " << (can_improve_in_time ? "true" : "false") << std::endl;
                         }
                     }
@@ -910,12 +918,15 @@ namespace secdecutil {
                 // initialize with minimal number of sampling points
                 secdecutil::deep_apply(expression, ensure_mineval);
                 if(verbose){
+                    print_datetime("Starting calculations: ");
                     std::cout << "computing integrals to satisfy mineval " << this->mineval << std::endl;
                 }
                 evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                 if(verbose){
                     std::cout << "---------------------" << std::endl << std::endl;
-                    std::cout << "elapsed time: " << std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count() << std::endl << std::endl;
+                    auto elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
+                    std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                    print_datetime();
                     print_result();
                     std::cout << std::endl;
                 }
@@ -932,7 +943,9 @@ namespace secdecutil {
                     evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
                         std::cout << "---------------------" << std::endl << std::endl;
-                        std::cout << "elapsed time: " << std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count() << std::endl << std::endl;
+                        auto elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
+                        std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                        print_datetime();
                         print_result();
                         std::cout << std::endl;
                     }
@@ -951,12 +964,15 @@ namespace secdecutil {
                     evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
                         std::cout << "---------------------" << std::endl << std::endl;
+                        print_datetime();
                         print_result();
                         std::cout << std::endl;
                     }
                 } while(repeat);
                 if(verbose){
-                        std::cout << "elapsed time: " << std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count() << std::endl << std::endl;
+                        auto elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
+                        std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                        print_datetime();
                 }
 
             }
