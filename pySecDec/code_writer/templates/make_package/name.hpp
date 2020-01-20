@@ -43,7 +43,7 @@ namespace %(name)s
         typedef secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t> sector_container_t;
     #endif
     template<typename T> using nested_series_t = %(nested_series_type)s;
-    typedef secdecutil::IntegrandContainer<integrand_return_t, real_t const * const> integrand_t;
+    typedef secdecutil::IntegrandContainerWithParameters<integrand_return_t, real_t const * const, real_t> integrand_t;
     // --}
 
     const std::string package_name = "%(name)s";

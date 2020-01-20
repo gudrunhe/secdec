@@ -12,9 +12,11 @@
 #include <thread> // std::thread
 #include <utility> // std::declval, std::move
 #include <vector> // std::vector
+#include <fstream> // for writing changed deformation parameters to file
 
 #include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
 #include <secdecutil/uncertainties.hpp> // secdecutil::UncorrelatedDeviation
+#include <secdecutil/sector_container.hpp> // for secdecutil::sign_check_error
 
 // wrapped integrators
 #include <secdecutil/integrators/cuba.hpp>
@@ -53,7 +55,7 @@ namespace secdecutil {
                 unsigned long long int number_of_function_evaluations, next_number_of_function_evaluations;
 
             public:
-
+                typedef real_t real_t_type;
                 std::string display_name = "INTEGRAL"; // used as an user readable name for the integral
                 int id; // used for user output, so that the integral can be identified more easier in thousands of integrals, without going through the names
 
@@ -100,6 +102,9 @@ namespace secdecutil {
                     return integration_time;
                 };
                 virtual real_t get_scaleexpo() const = 0;
+                virtual std::vector<std::vector<real_t*>> get_parameters() = 0;
+                virtual std::vector<std::vector<real_t>> get_extra_parameters() = 0;
+                virtual void clear_errors() = 0;
 
                 /*
                  * Functions to compute the integral with the given "number_of_function_evaluations".
@@ -125,6 +130,10 @@ namespace secdecutil {
             real_t scaleexpo;
 
             real_t get_scaleexpo() const override { return scaleexpo; }
+
+            std::vector<std::vector<real_t*>> get_parameters() override {return integrand.get_parameters();}
+            std::vector<std::vector<real_t>> get_extra_parameters() override {return integrand.get_extra_parameters();}
+            void clear_errors() override {integrand.clear_errors();}
 
             /*
              * constructor
@@ -166,6 +175,10 @@ namespace secdecutil {
             real_t scaleexpo;
 
             real_t get_scaleexpo() const override { return scaleexpo; }
+
+            std::vector<std::vector<real_t*>> get_parameters() override {return integrand.get_parameters();}
+            std::vector<std::vector<real_t>> get_extra_parameters() override {return integrand.get_extra_parameters();}
+            void clear_errors() override {integrand.clear_errors();}
 
             /*
              * constructor
@@ -259,17 +272,65 @@ namespace secdecutil {
             return b;
         };
 
+        void write_map_to_file(std::map<std::string, std::vector<std::vector<double>>> map, std::string filename="changed_deformation_parameters.txt"){
+            std::ofstream file;
+            file.open(filename);
+            file << std::setprecision(15);
+            for(auto el : map){
+                file << el.first << ": ";
+                for(int k = 0; k <el.second.size(); k++){
+                    for(int i = 0; i < el.second[k].size(); i++){
+                        file << el.second[k][i];
+                        if(i != el.second[k].size()-1)
+                            file << ", ";
+                    }
+                    if(k != el.second.size()-1)
+                        file << "; ";
+                    else
+                        file << std::endl;
+                }
+            }
+            file.close();
+        }
+
+        std::map<std::string, std::vector<std::vector<double>>> read_map_from_file(std::string filename="changed_deformation_parameters.txt"){
+            std::map<std::string, std::vector<std::vector<double>>> map;
+            std::ifstream file;
+            file.open(filename);
+            for(std::string line; std::getline(file,line);){
+                auto integral_name = line.substr(0,line.find(":"));
+                auto parameters_string = line.substr(line.find(":")+1,line.size());
+                std::vector<std::vector<double>> parameters_vector;
+                while(parameters_string.size()){
+                    parameters_vector.push_back({});
+                    auto semicolon_location = std::min(parameters_string.find(";"),parameters_string.size());
+                    auto parameters_k_string = parameters_string.substr(0,semicolon_location);
+                    parameters_string = parameters_string.substr(std::min(semicolon_location+1,parameters_string.size()),parameters_string.size());
+                    while(parameters_k_string.size()){
+                        auto comma_location = std::min(parameters_k_string.find(","),parameters_k_string.size());
+                        auto parameter = parameters_k_string.substr(0, comma_location);
+                        parameters_k_string = parameters_k_string.substr(std::min(comma_location+1,parameters_k_string.size()), parameters_k_string.size());
+                        double parameter_value = std::stod(parameter);
+                        parameters_vector.back().push_back(parameter_value);
+                    }
+                }
+                map[integral_name] = parameters_vector;
+            }
+            file.close();
+            return map;
+        }
 
         /*
          * evaluate a vector of integrals
          */
         template<typename integral_t>
-        void evaluate_integrals(std::vector<integral_t*>& integrals, const bool& verbose, size_t number_of_threads, size_t reset_cuda_after)
+        void evaluate_integrals(std::vector<integral_t*>& integrals, const bool& verbose, size_t number_of_threads, size_t reset_cuda_after,
+                    std::map<std::string, std::vector<std::vector<double>>> changed_deformation_parameters_map)
         {
             if(number_of_threads == 0)
                 ++number_of_threads;
 
-            auto compute_integral = [ &verbose, &integrals ] (integral_t* integral)
+            auto compute_integral = [ &verbose, &integrals, &changed_deformation_parameters_map ] (integral_t* integral)
                 {
                     const unsigned long long int curr_n = integral->get_number_of_function_evaluations();
                     const unsigned long long int next_n = integral->get_next_number_of_function_evaluations();
@@ -279,19 +340,71 @@ namespace secdecutil {
                             old_result = integral->get_integral_result();
                         } catch (const integral_not_computed_error&) { /* ignore */ };
 
-                    integral->compute();
+                    bool failed_atleast_once = false;
+                    while(true){
+                        bool failed = false;
+                        try{
+                            integral->compute();
+                        } catch(secdecutil::sign_check_error& e){
+                            failed = true;
+                            std::cout << "Exception: " << e.what() << std::endl;
+                            integral->clear_errors();
+
+                            std::cout << "Integral " << integral->display_name << " failed, reducing deformation parameters." << std::endl;
+                            std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type*>> pars = integral->get_parameters();
+                            std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type>> extra_pars = integral->get_extra_parameters();
+                            failed_atleast_once = true;
+                            bool changed_deformation_parameters = false;
+                            for(int k = 0; k < pars.size(); k++){
+                                for(int i = 0; i < pars[k].size(); i++){
+                                    std::cout << "par " << k << "," << i << ": " << *pars[k][i];
+                                    if(*pars[k][i] > extra_pars[k][0]){
+                                        *pars[k][i] *= extra_pars[k][1];
+                                        if(*pars[k][i] < extra_pars[k][0]){
+                                            *pars[k][i] = extra_pars[k][0];
+                                        }
+                                        changed_deformation_parameters = true;
+                                        std::cout << " -> " << *pars[k][i];
+                                    }
+                                    if(i == pars[k].size()-1 and k == pars.size()-1)
+                                        std::cout << std::endl;
+                                    else
+                                        std::cout << ", ";
+                                }
+                            }
+                            if(not changed_deformation_parameters){
+                                throw std::runtime_error("All deformation parameters at minimum already, integral still fails.");
+                            }
+                        }
+                        if(not failed){
+                            if(failed_atleast_once){
+                                std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type*>> pars = integral->get_parameters();
+                                std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type>> pars_data(pars.size());
+                                for(int i = 0; i < pars.size(); i++){
+                                    for(auto par:pars[i]){
+                                        pars_data[i].push_back(*par);
+                                    }
+                                }
+                                changed_deformation_parameters_map[integral->display_name] = pars_data;
+                                write_map_to_file(changed_deformation_parameters_map);
+                            }
+                            break;
+                        }
+                    }
 
                     if(verbose)
                     {
                         std::cout << "integral " << integral->id << "/" << integrals.size() << ": " << integral->display_name << ", time: ";
                         std::printf("%.1f", integral->get_integration_time());
                         std::cout << "s" << std::endl;
-                        if(next_n > curr_n)
+                        if(next_n > curr_n){
                             std::cout << "res: " << old_result << " -> " << integral->get_integral_result()
                                       << ", n: " << curr_n << " -> " << std::dec << integral->get_number_of_function_evaluations() << std::endl;
-                        else
+                        }
+                        else{
                             std::cout << "res: " << integral->get_integral_result()
                                       << ", n: " << std::dec << next_n << std::endl;
+                        }
                     }
                 };
 
@@ -366,6 +479,8 @@ namespace secdecutil {
                 const std::function<sum_t(const std::vector<term_t>&)> convert_to_sum_t =
                     [] (const std::vector<term_t>& input) {  return sum_t(input);  };
 
+                std::map<std::string, std::vector<std::vector<double>>> changed_deformation_parameters_map;
+
                 // these functions give names to the sum_t sums containing the orders of the series
                 void name_sum(sum_t& sum, std::string prefix){
                     sum.display_name = prefix;
@@ -431,7 +546,7 @@ namespace secdecutil {
                     reset_cuda_after(0),
                     expression( deep_apply(expression,convert_to_sum_t) ),
                     epsrel(epsrel),epsabs(epsabs),maxeval(maxeval),mineval(mineval),maxincreasefac(maxincreasefac),min_epsrel(min_epsrel),
-                    min_epsabs(min_epsabs),max_epsrel(max_epsrel),max_epsabs(max_epsabs)
+                    min_epsabs(min_epsabs),max_epsrel(max_epsrel),max_epsabs(max_epsabs),changed_deformation_parameters_map(read_map_from_file())
                 {
                     std::function<void(sum_t&)> set_parameters =
                         [&] (sum_t& sum)
@@ -473,7 +588,7 @@ namespace secdecutil {
                 };
 
                 void print_result(){
-                    std::cout << "Current result:" << std:endl;
+                    std::cout << "Current result:" << std::endl;
                     auto result = evaluate_expression();
                     for (unsigned int amp_idx = 0; amp_idx < result.size(); ++amp_idx)
                         std::cout << "amplitude" << amp_idx << " = " << result.at(amp_idx) << std::endl;
@@ -774,8 +889,22 @@ namespace secdecutil {
                 std::sort(integrals.begin(), integrals.end());
                 integrals.erase(std::unique(integrals.begin(), integrals.end()), integrals.end());
                 integrals.shrink_to_fit();
+
+                // read in changed deformation parameters from file
                 for(int i = 0; i < integrals.size(); i++){
                     integrals[i]->id = i+1;
+                    auto element = changed_deformation_parameters_map.find(integrals[i]->display_name);
+                    if(element != changed_deformation_parameters_map.end()){
+                        auto new_parameters = element->second;
+                        auto old_parameters = integrals[i]->get_parameters();
+                        for(int k = 0; k < new_parameters.size(); k++){
+                            for(int i = 0; i < new_parameters[k].size(); i++){
+                                *old_parameters[k][i] = new_parameters[k][i];
+                                if(verbose)
+                                    std::cout << "read in changed parameter " << k << "," << i << " for " << integrals[i]->display_name << ": " << *old_parameters[k][i] << std::endl;
+                            }
+                        }
+                    }
                 }
 
                 // initialize with minimal number of sampling points
@@ -783,7 +912,7 @@ namespace secdecutil {
                 if(verbose){
                     std::cout << "computing integrals to satisfy mineval " << this->mineval << std::endl;
                 }
-                evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after);
+                evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                 if(verbose){
                     std::cout << "---------------------" << std::endl << std::endl;
                     std::cout << "elapsed time: " << std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count() << std::endl << std::endl;
@@ -800,7 +929,7 @@ namespace secdecutil {
 
                     if(verbose)
                         std::cout << std::endl << "computing integrals to satisfy min_epsrel " << this->min_epsrel << " or min_epsabs " << this->min_epsabs << std::endl;
-                    evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after);
+                    evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
                         std::cout << "---------------------" << std::endl << std::endl;
                         std::cout << "elapsed time: " << std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count() << std::endl << std::endl;
@@ -819,7 +948,7 @@ namespace secdecutil {
 
                     if(verbose)
                         std::cout << std::endl << "computing integrals to satisfy error goals on sums: epsrel " << this->epsrel << ", epsabs " << this->epsabs << std::endl;
-                    evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after);
+                    evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
                         std::cout << "---------------------" << std::endl << std::endl;
                         print_result();

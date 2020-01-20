@@ -277,7 +277,7 @@ namespace secdecutil {
      */
     // SectorContainerWithDeformation -> IntegrandContainer
     template<typename real_t, typename complex_t>
-    std::function<secdecutil::IntegrandContainer<complex_t, real_t const * const>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
+    std::function<secdecutil::IntegrandContainerWithParameters<complex_t, real_t const * const, real_t>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
     SectorContainerWithDeformation_to_IntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters,
                                                          unsigned number_of_presamples = 100000, real_t deformation_parameters_maximum = 1.,
                                                          real_t deformation_parameters_minimum = 1.e-5, real_t deformation_parameters_decrease_factor = 0.9)
@@ -306,11 +306,17 @@ namespace secdecutil {
                     )
                 );
 
-            auto integrand = std::bind(&secdecutil::SectorContainerWithDeformation<real_t,complex_t>::integrand, sector_container,
-                                       std::placeholders::_1, sector_container.real_parameters->data(), sector_container.complex_parameters->data(),
-                                       sector_container.deformation_parameters->data());
 
-            auto integrand_container = secdecutil::IntegrandContainer<complex_t, real_t const * const>(sector_container.number_of_integration_variables, integrand);
+            std::function<complex_t(real_t const * const, real_t*)> integrand = [sector_container](real_t const * const Args, real_t* Pars){
+                return sector_container.integrand(Args,sector_container.real_parameters->data(), sector_container.complex_parameters->data(), Pars);
+            };
+
+            auto deformation_parameters = std::vector<std::vector<real_t>>({*sector_container.deformation_parameters});
+
+            auto integrand_container = secdecutil::IntegrandContainerWithParameters<complex_t, real_t const * const, real_t>
+                                            (sector_container.number_of_integration_variables, integrand, deformation_parameters );
+
+            integrand_container.extra_parameters = std::vector<std::vector<real_t>>({{deformation_parameters_minimum,deformation_parameters_decrease_factor}});
 
             integrand_container.display_name = "sector_"+std::to_string(sector_container.sector_id)+"_order";
             for(int i = 0; i < sector_container.orders.size(); i++){
@@ -323,7 +329,7 @@ namespace secdecutil {
 
     // SectorContainerWithoutDeformation -> IntegrandContainer
     template<typename integrand_return_t, typename real_t, typename complex_t>
-    std::function<secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>(secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>)>
+    std::function<secdecutil::IntegrandContainerWithParameters<integrand_return_t, real_t const * const>(secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>)>
     SectorContainerWithoutDeformation_to_IntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
     {
         auto shared_real_parameters = std::make_shared<std::vector<real_t>>(real_parameters);
@@ -337,7 +343,7 @@ namespace secdecutil {
             auto integrand = std::bind(&secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>::integrand, sector_container,
                                        std::placeholders::_1, sector_container.real_parameters->data(), sector_container.complex_parameters->data());
 
-            auto integrand_container = secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>(sector_container.number_of_integration_variables, integrand );
+            auto integrand_container = secdecutil::IntegrandContainerWithParameters<integrand_return_t, real_t const * const>(sector_container.number_of_integration_variables, integrand );
 
             integrand_container.display_name = "sector_"+std::to_string(sector_container.sector_id)+"_order";
             for(int i = 0; i < sector_container.orders.size(); i++){
@@ -374,6 +380,9 @@ namespace secdecutil {
             complex_t complex_parameters[number_of_complex_parameters];
             bool call_get_device_functions_on_copy; // must call the slow function "get_device_functions" only after all other setup is finished
             std::string display_name = "INTEGRAND";
+
+            std::vector<std::vector<real_t*>> get_parameters() {return std::vector<std::vector<real_t*>>();}
+            std::vector<std::vector<real_t>> get_extra_parameters() {return std::vector<std::vector<real_t>>();}
 
             // constructor
             CudaIntegrandContainerWithoutDeformation
@@ -555,8 +564,13 @@ namespace secdecutil {
             real_t real_parameters[number_of_real_parameters];
             complex_t complex_parameters[number_of_complex_parameters];
             real_t deformation_parameters[maximal_number_of_functions][maximal_number_of_integration_variables];
+            std::vector<std::vector<real_t>> extra_parameters;
+            std::vector<std::vector<real_t*>> deformation_parameters_ptrs;
             bool call_get_device_functions_on_copy;
             std::string display_name = "INTEGRAND";
+
+            auto get_parameters() -> decltype(deformation_parameters_ptrs){return deformation_parameters_ptrs;}
+            std::vector<std::vector<real_t>> get_extra_parameters(){return extra_parameters;}
 
             // constructor
             CudaIntegrandContainerWithDeformation
@@ -571,7 +585,8 @@ namespace secdecutil {
                 bool in_call_get_device_functions_on_copy=false
             ):
             number_of_integration_variables(number_of_integration_variables), number_of_functions(number_of_functions),
-            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), deformation_parameters(), call_get_device_functions_on_copy(in_call_get_device_functions_on_copy)
+            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), deformation_parameters(), call_get_device_functions_on_copy(in_call_get_device_functions_on_copy),
+            deformation_parameters_ptrs(), extra_parameters()
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -586,9 +601,13 @@ namespace secdecutil {
                     get_device_functions[k] = in_get_device_functions[k];
                     if(call_get_device_functions_on_copy) device_functions[k] = get_device_functions[k]();
                     host_functions[k] = in_host_functions[k];
-                    if (in_deformation_parameters != nullptr)
-                        for (i=0; i<number_of_integration_variables; ++i)
+                    if (in_deformation_parameters != nullptr){
+                        deformation_parameters_ptrs.push_back(std::vector<real_t*>());
+                        for (i=0; i<number_of_integration_variables; ++i){
                             deformation_parameters[k][i] = in_deformation_parameters[k][i];
+                            deformation_parameters_ptrs.back().push_back(&deformation_parameters[k][i]);
+                        }
+                    }
                 }
                 if (in_real_parameters != nullptr)
                     for (i=0; i<number_of_real_parameters; ++i)
@@ -605,7 +624,8 @@ namespace secdecutil {
                 const CudaIntegrandContainerWithDeformation& other
             ):
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions), display_name(other.display_name),
-            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), deformation_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy)
+            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), deformation_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy),
+            deformation_parameters_ptrs(), extra_parameters(other.extra_parameters)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -620,9 +640,13 @@ namespace secdecutil {
                     get_device_functions[k] = other.get_device_functions[k];
                     if(call_get_device_functions_on_copy) device_functions[k] = get_device_functions[k]();
                     host_functions[k] = other.host_functions[k];
-                    if (other.deformation_parameters != nullptr)
-                        for (i=0; i<number_of_integration_variables; ++i)
+                    if (other.deformation_parameters != nullptr){
+                        deformation_parameters_ptrs.push_back(std::vector<real_t*>());
+                        for (i=0; i<number_of_integration_variables; ++i){
                             deformation_parameters[k][i] = other.deformation_parameters[k][i];
+                            deformation_parameters_ptrs.back().push_back(&deformation_parameters[k][i]);
+                        }
+                    }
                 }
                 if (other.real_parameters != nullptr)
                     for (i=0; i<number_of_real_parameters; ++i)
@@ -645,7 +669,8 @@ namespace secdecutil {
                       >& other
             ) :
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions), display_name(other.display_name),
-            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy)
+            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy),
+            deformation_parameters_ptrs(), extra_parameters(other.extra_parameters)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -660,8 +685,11 @@ namespace secdecutil {
                     get_device_functions[k] = other.get_device_functions[k];
                     if(call_get_device_functions_on_copy) device_functions[k] = get_device_functions[k]();
                     host_functions[k] = other.host_functions[k];
-                    for (i=0; i<number_of_integration_variables; ++i)
+                    deformation_parameters_ptrs.push_back(std::vector<real_t*>());
+                    for (i=0; i<number_of_integration_variables; ++i){
                         deformation_parameters[k][i] = other.deformation_parameters[k][i];
+                        deformation_parameters_ptrs.back().push_back(&deformation_parameters[k][i]);
+                    }
                 }
                 for (i=0; i<number_of_real_parameters; ++i)
                     real_parameters[i] = other.real_parameters[i];
@@ -711,8 +739,11 @@ namespace secdecutil {
                 {
                     get_device_functions[k+offset] = other.get_device_functions[k];
                     host_functions[k+offset] = other.host_functions[k];
-                    for (i=0; i<other.number_of_integration_variables; ++i)
+                    deformation_parameters_ptrs.push_back(std::vector<real_t*>());
+                    for (i=0; i<other.number_of_integration_variables; ++i){
                         deformation_parameters[k+offset][i] = other.deformation_parameters[k][i];
+                        deformation_parameters_ptrs.back().push_back(&deformation_parameters[k+offset][i]);
+                    }
                 }
                 for (i=0; i<number_of_real_parameters; ++i)
                     real_parameters[i] = other.real_parameters[i];
@@ -786,6 +817,8 @@ namespace secdecutil {
                     complex_parameters.data(),
                     &optimized_deformation_parameters_ptr
                 };
+
+                integrand_container.extra_parameters = std::vector<std::vector<real_t>>{{deformation_parameters_minimum,deformation_parameters_decrease_factor}};
 
                 integrand_container.display_name = "sector_"+std::to_string(sector_container.sector_id)+"_order";
                 for(int i = 0; i < sector_container.orders.size(); i++){

@@ -7,7 +7,7 @@
  * Real integrators only have to implement the function "get_integrate()",
  * which returns a function taking an integrand container and returning an UncorrelatedDeviation.
  *
- * Complex integrators using "IntegrandContainer" have to implement the function "get_together_integrate()"
+ * Complex integrators using "IntegrandContainerWithParameters" have to implement the function "get_together_integrate()"
  * to integrate real and imaginary part at the same time
  * and/or "get_real_integrator()", which should return a unique pointer to a real-valued version of
  * the integrator. The latter can then be used to integrate real and imaginaty part separately
@@ -31,7 +31,7 @@
 namespace secdecutil
 {
 
-  template<typename return_t, typename input_t, typename container_t = secdecutil::IntegrandContainer<return_t, input_t const * const>>
+  template<typename return_t, typename input_t, typename container_t = secdecutil::IntegrandContainerWithParameters<return_t, input_t const * const>>
   struct Integrator
   {
   private:
@@ -85,7 +85,7 @@ namespace secdecutil
   template<typename return_t, typename input_t> \
   struct Integrator<complex_template<return_t>, input_t> \
   { \
-  using container_t = secdecutil::IntegrandContainer<complex_template<return_t>, input_t const * const>; \
+  using container_t = secdecutil::IntegrandContainerWithParameters<complex_template<return_t>, input_t const * const>; \
  \
   protected: \
     virtual std::unique_ptr<Integrator<return_t, input_t>> get_real_integrator() \
@@ -233,7 +233,7 @@ namespace secdecutil
  * is used.
  */
 
-  template<typename return_t, typename input_t, typename container_t = secdecutil::IntegrandContainer<return_t, input_t const * const>>
+  template<typename return_t, typename input_t, typename container_t = secdecutil::IntegrandContainerWithParameters<return_t, input_t const * const>>
   struct MultiIntegrator : Integrator<return_t,input_t,container_t>
   {
     Integrator<return_t,input_t,container_t>& low_dim_integrator;

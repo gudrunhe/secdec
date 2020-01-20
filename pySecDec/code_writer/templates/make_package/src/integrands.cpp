@@ -38,7 +38,7 @@ namespace %(name)s
 
     #define %(name)s_contour_deformation %(contour_deformation)i
 
-    std::vector<nested_series_t<secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>>> make_integrands
+    std::vector<nested_series_t<secdecutil::IntegrandContainerWithParameters<integrand_return_t, real_t const * const, real_t>>> make_integrands
     (
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters

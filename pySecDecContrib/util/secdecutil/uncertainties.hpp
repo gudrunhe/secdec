@@ -46,6 +46,14 @@ namespace secdecutil {
         T uncertainty;
 
         /*
+         * check for nan
+         */
+
+        bool isnan(){
+            return value!=value;
+        }
+
+        /*
          *  Unary Operators
          */
         UncorrelatedDeviation operator+() const
@@ -210,6 +218,14 @@ namespace secdecutil {
  \
         complex_template<T> value; \
         complex_template<T> uncertainty; \
+ \
+        /* \
+         * check for nan \
+         */ \
+ \
+        bool isnan(){ \
+            return value!=value; \
+        } \
  \
         /* \
          *  Unary Operators \
