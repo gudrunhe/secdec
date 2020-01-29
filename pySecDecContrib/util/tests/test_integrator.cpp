@@ -54,8 +54,8 @@ struct DummyIntegrator<std::complex<return_t>,input_t> : secdecutil::Integrator<
     };
 };
 
-double real_func(double const * const x) { return *x+2.0; }
-std::complex<double> complex_func(float const * const x) { return *x+2.0; }
+double real_func(double const * const x, secdecutil::ResultInfo* result_info) { return *x+2.0; }
+std::complex<double> complex_func(float const * const x, secdecutil::ResultInfo* result_info) { return *x+2.0; }
 
 TEST_CASE( "Test real MultiIntegrator", "[MultiIntegrator]" ) {
 

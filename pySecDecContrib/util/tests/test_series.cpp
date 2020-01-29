@@ -1075,7 +1075,7 @@ TEST_CASE( "Default construct template type on +/-", "[Series][IntegrandContaine
 
         int two_three[]{2,3};
 
-        std::function<int(int*)> func = [] (int * i) { return i[0]*i[1]; };
+        std::function<int(int*, secdecutil::ResultInfo*)> func = [] (int * i, secdecutil::ResultInfo* result_info) { return i[0]*i[1]; };
         auto ic = secdecutil::IntegrandContainer<int, int*>(2,func);
         auto series_order_0 = secdecutil::Series<decltype(ic)>{0,0,{ic},false,"eps"};
         auto series_order_5 = secdecutil::Series<decltype(ic)>{5,5,{ic},false,"eps"};
@@ -1087,14 +1087,14 @@ TEST_CASE( "Default construct template type on +/-", "[Series][IntegrandContaine
         REQUIRE( series_sum_1.get_truncated_above() == false);
         REQUIRE( series_sum_1.expansion_parameter == "eps");
         REQUIRE( series_sum_1.at(0).number_of_integration_variables == 2);
-        REQUIRE( series_sum_1.at(0).integrand(two_three) == 6);
+        REQUIRE( series_sum_1.at(0)(two_three) == 6);
         for (int i = 1 ; i < 5 ; ++i)
         {
             REQUIRE( series_sum_1.at(i).number_of_integration_variables == 0);
-            REQUIRE( series_sum_1.at(i).integrand(two_three) == 0);
+            REQUIRE( series_sum_1.at(i)(two_three) == 0);
         }
         REQUIRE( series_sum_1.at(5).number_of_integration_variables == 2);
-        REQUIRE( series_sum_1.at(5).integrand(two_three) == 6);
+        REQUIRE( series_sum_1.at(5)(two_three) == 6);
 
 
         REQUIRE( series_sum_2.get_order_min() == 0);
@@ -1102,14 +1102,14 @@ TEST_CASE( "Default construct template type on +/-", "[Series][IntegrandContaine
         REQUIRE( series_sum_2.get_truncated_above() == false);
         REQUIRE( series_sum_2.expansion_parameter == "eps");
         REQUIRE( series_sum_2.at(0).number_of_integration_variables == 2);
-        REQUIRE( series_sum_2.at(0).integrand(two_three) == 6);
+        REQUIRE( series_sum_2.at(0)(two_three) == 6);
         for (int i = 1 ; i < 5 ; ++i)
         {
             REQUIRE( series_sum_2.at(i).number_of_integration_variables == 0);
-            REQUIRE( series_sum_2.at(i).integrand(two_three) == 0);
+            REQUIRE( series_sum_2.at(i)(two_three) == 0);
         }
         REQUIRE( series_sum_2.at(5).number_of_integration_variables == 2);
-        REQUIRE( series_sum_2.at(5).integrand(two_three) == 6+6);
+        REQUIRE( series_sum_2.at(5)(two_three) == 6+6);
 
     }
 

@@ -17,9 +17,6 @@ namespace secdecutil {
         struct cuda_error : public std::runtime_error { using std::runtime_error::runtime_error; };
     #endif
 
-    // this error is thrown if the sign check of the deformation (contour_deformation_polynomial.imag() <= 0) fails
-    struct sign_check_error : public std::runtime_error { using std::runtime_error::runtime_error; };
-
     // this error is thrown if an error with the gsl occurs
     struct gsl_error : public std::runtime_error { using std::runtime_error::runtime_error; };
 
@@ -37,7 +34,8 @@ namespace secdecutil {
         (
          real_t const * const integration_variables,
          real_t const * const real_parameters,
-         complex_t const * const complex_parameters
+         complex_t const * const complex_parameters,
+         ResultInfo* result_info
         );
 
         #ifdef SECDEC_WITH_CUDA
@@ -61,10 +59,11 @@ namespace secdecutil {
         (
             real_t const * const integration_variables,
             real_t const * const real_parameters,
-            complex_t const * const complex_parameters
+            complex_t const * const complex_parameters,
+            ResultInfo* result_info
         )
         {
-            return undeformed_integrand(integration_variables, real_parameters, complex_parameters);
+            return undeformed_integrand(integration_variables, real_parameters, complex_parameters, result_info);
         };
 
         // constructor
@@ -97,7 +96,8 @@ namespace secdecutil {
          real_t const * const integration_variables,
          real_t const * const real_parameters,
          complex_t const * const complex_parameters,
-         real_t const * const deformation_parameters
+         real_t const * const deformation_parameters,
+         ResultInfo* result_info
         );
 
         #ifdef SECDEC_WITH_CUDA
@@ -111,7 +111,8 @@ namespace secdecutil {
          real_t * output_deformation_parameters,
          real_t const * const integration_variables,
          real_t const * const real_parameters,
-         complex_t const * const complex_parameters
+         complex_t const * const complex_parameters,
+         ResultInfo* result_info
         );
 
         const unsigned sector_id;
@@ -149,6 +150,7 @@ namespace secdecutil {
             real_t * optimized_deformation_parameters = optimized_deformation_parameter_vector.data();
             real_t * temp_deformation_parameters = temp_deformation_parameter_vector.data();
             real_t * real_sample = real_sample_vector.data();
+            ResultInfo result_info;
 
             // define a Sobol sequence using the gsl
             // Restriction to at most 40 dimensions only because of the implementation in the gsl. --> Use a different Sobol implementation if higher dimensionality is needed.
@@ -164,7 +166,7 @@ namespace secdecutil {
             for (i=0; i<number_of_presamples; ++i)
             {
                 gsl_qrng_get(Sobol_generator,real_sample);
-                maximal_allowed_deformation_parameters(temp_deformation_parameters, real_sample, real_parameters, complex_parameters);
+                maximal_allowed_deformation_parameters(temp_deformation_parameters, real_sample, real_parameters, complex_parameters, &result_info);
                 for (j=0; j<number_of_integration_variables; ++j)
                     if (minimum <= temp_deformation_parameters[j] && temp_deformation_parameters[j] <= maximum)
                     {
@@ -174,6 +176,7 @@ namespace secdecutil {
                         optimized_deformation_parameters[j] = minimum;
                     }
             };
+            result_info.process_errors();
 
             // reinitialize the Sobol sequence to obtain the same samples again
             gsl_qrng_free(Sobol_generator);
@@ -183,12 +186,13 @@ namespace secdecutil {
             for (i=0; i<number_of_presamples; ++i)
             {
                 gsl_qrng_get(Sobol_generator,real_sample);
-                while ( !contour_deformation_polynomial_passes_sign_check(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters) )
+                while ( !contour_deformation_polynomial_passes_sign_check(real_sample, real_parameters, complex_parameters, optimized_deformation_parameters, &result_info) )
                 {
                     for (j=0; j<number_of_integration_variables; ++j)
                         optimized_deformation_parameters[j] *= decrease_factor;
                 };
             };
+            result_info.process_errors();
 
             // delete the quasi random number generator
             gsl_qrng_free(Sobol_generator);
@@ -209,11 +213,12 @@ namespace secdecutil {
             real_t const * const integration_variables,
             real_t const * const real_parameters,
             complex_t const * const complex_parameters,
-            real_t const * const deformation_parameters
+            real_t const * const deformation_parameters,
+            ResultInfo* result_info
         ) const
         {
-            return contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters).imag()
-                <= contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, zeros.data()          ).imag();
+            return contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, deformation_parameters, result_info).imag()
+                <= contour_deformation_polynomial(integration_variables, real_parameters, complex_parameters, zeros.data()          , result_info).imag();
         }
 
         // "integrand" must be a member function, otherwise we cannot bind the struct
@@ -221,12 +226,13 @@ namespace secdecutil {
                                 real_t const * const integration_variables,
                                 real_t const * const real_parameters,
                                 complex_t const * const complex_parameters,
-                                real_t const * const deformation_parameters
+                                real_t const * const deformation_parameters,
+                                ResultInfo* result_info
                             ) const
         {
             // the required sign checks are performed inside the integrand for higher performance
             try {
-                return deformed_integrand(integration_variables, real_parameters, complex_parameters, deformation_parameters);
+                return deformed_integrand(integration_variables, real_parameters, complex_parameters, deformation_parameters, result_info);
             } catch (const sign_check_error& error) {
                 // rethrow but with proper error message
                 auto error_message = "Contour deformation in sector \"" + std::to_string(sector_id);
@@ -307,8 +313,8 @@ namespace secdecutil {
                 );
 
 
-            std::function<complex_t(real_t const * const, real_t*)> integrand = [sector_container](real_t const * const Args, real_t* Pars){
-                return sector_container.integrand(Args,sector_container.real_parameters->data(), sector_container.complex_parameters->data(), Pars);
+            std::function<complex_t(real_t const * const, real_t*, ResultInfo*)> integrand = [sector_container](real_t const * const Args, real_t* Pars, ResultInfo* result_info){
+                return sector_container.integrand(Args,sector_container.real_parameters->data(), sector_container.complex_parameters->data(), Pars, result_info);
             };
 
             auto deformation_parameters = std::vector<std::vector<real_t>>({*sector_container.deformation_parameters});
@@ -341,7 +347,7 @@ namespace secdecutil {
             sector_container.complex_parameters = shared_complex_parameters;
 
             auto integrand = std::bind(&secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>::integrand, sector_container,
-                                       std::placeholders::_1, sector_container.real_parameters->data(), sector_container.complex_parameters->data());
+                                       std::placeholders::_1, sector_container.real_parameters->data(), sector_container.complex_parameters->data(), std::placeholders::_2);
 
             auto integrand_container = secdecutil::IntegrandContainerWithParameters<integrand_return_t, real_t const * const>(sector_container.number_of_integration_variables, integrand );
 
@@ -380,6 +386,8 @@ namespace secdecutil {
             complex_t complex_parameters[number_of_complex_parameters];
             bool call_get_device_functions_on_copy; // must call the slow function "get_device_functions" only after all other setup is finished
             std::string display_name = "INTEGRAND";
+            std::shared_ptr<ResultInfo> result_info;
+            std::shared_ptr<ResultInfo> result_info_device;
 
             std::vector<std::vector<real_t*>> get_parameters() {return std::vector<std::vector<real_t*>>();}
             std::vector<std::vector<real_t>> get_extra_parameters() {return std::vector<std::vector<real_t>>();}
@@ -418,6 +426,20 @@ namespace secdecutil {
                 if (in_complex_parameters != nullptr)
                     for (i=0; i<number_of_complex_parameters; ++i)
                        complex_parameters[i] = in_complex_parameters[i];
+
+                result_info = std::make_shared<ResultInfo>();
+
+                // create a pointer that works also on the GPU
+                ResultInfo* result_info_device_raw;
+                auto error = cudaMallocManaged((void**)&result_info_device_raw,sizeof(ResultInfo));
+                if (error != cudaSuccess)
+                    throw cuda_error(std::string(cudaGetErrorString(error)));
+                memset(result_info_device_raw, 0, sizeof(ResultInfo));
+                result_info_device = std::shared_ptr<ResultInfo>(result_info_device_raw, [](ResultInfo* result_info_device){
+                    auto error = cudaFree(result_info_device);
+                    if (error != cudaSuccess)
+                        throw cuda_error(std::string(cudaGetErrorString(error)));
+                });
             }
 
             // copy constructor
@@ -437,6 +459,8 @@ namespace secdecutil {
             )
             {
                 display_name = other.display_name;
+                result_info = other.result_info;
+                result_info_device = other.result_info_device;
             }
 
             // converting constructor
@@ -451,7 +475,8 @@ namespace secdecutil {
                       >& other
             ) :
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions), display_name(other.display_name),
-            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy)
+            get_device_functions(), host_functions(), real_parameters(), complex_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy),
+            result_info(other.result_info), result_info_device(other.result_info_device)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -481,12 +506,22 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     #ifdef __CUDA_ARCH__
-                        res += device_functions[k](integration_variables, real_parameters, complex_parameters);
+                        res += device_functions[k](integration_variables, real_parameters, complex_parameters, result_info_device.get());
                     #else
-                        res += host_functions[k](integration_variables, real_parameters, complex_parameters);
+                        res += host_functions[k](integration_variables, real_parameters, complex_parameters, result_info.get());
                     #endif
                 }
                 return res;
+            }
+
+            void process_errors() const{
+                result_info_device->process_errors();
+                result_info->process_errors();
+            }
+
+            void clear_errors(){
+                result_info_device->clear_errors();
+                result_info->clear_errors();
             }
 
             template
@@ -568,6 +603,8 @@ namespace secdecutil {
             std::vector<std::vector<real_t*>> deformation_parameters_ptrs;
             bool call_get_device_functions_on_copy;
             std::string display_name = "INTEGRAND";
+            std::shared_ptr<ResultInfo> result_info;
+            std::shared_ptr<ResultInfo> result_info_device;
 
             auto get_parameters() -> decltype(deformation_parameters_ptrs){return deformation_parameters_ptrs;}
             std::vector<std::vector<real_t>> get_extra_parameters(){return extra_parameters;}
@@ -615,6 +652,20 @@ namespace secdecutil {
                 if (in_complex_parameters != nullptr)
                     for (i=0; i<number_of_complex_parameters; ++i)
                         complex_parameters[i] = in_complex_parameters[i];
+
+                result_info = std::make_shared<ResultInfo>();
+
+                // create a pointer for the GPU to use
+                ResultInfo* result_info_device_raw;
+                auto error = cudaMallocManaged((void**)&result_info_device_raw,sizeof(ResultInfo));
+                if (error != cudaSuccess)
+                    throw cuda_error(std::string(cudaGetErrorString(error)));
+                memset(result_info_device_raw, 0, sizeof(ResultInfo));
+                result_info_device = std::shared_ptr<ResultInfo>(result_info_device_raw, [](ResultInfo* result_info_device){
+                    auto error = cudaFree(result_info_device);
+                    if (error != cudaSuccess)
+                        throw cuda_error(std::string(cudaGetErrorString(error)));
+                });
             }
 
             // copy constructor
@@ -625,7 +676,7 @@ namespace secdecutil {
             ):
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions), display_name(other.display_name),
             get_device_functions(), host_functions(), real_parameters(), complex_parameters(), deformation_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy),
-            deformation_parameters_ptrs(), extra_parameters(other.extra_parameters)
+            deformation_parameters_ptrs(), extra_parameters(other.extra_parameters), result_info(other.result_info), result_info_device(other.result_info_device)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -670,7 +721,7 @@ namespace secdecutil {
             ) :
             number_of_integration_variables(other.number_of_integration_variables), number_of_functions(other.number_of_functions), display_name(other.display_name),
             get_device_functions(), host_functions(), real_parameters(), complex_parameters(), call_get_device_functions_on_copy(other.call_get_device_functions_on_copy),
-            deformation_parameters_ptrs(), extra_parameters(other.extra_parameters)
+            deformation_parameters_ptrs(), extra_parameters(other.extra_parameters), result_info(other.result_info), result_info_device(other.result_info_device)
             {
                 if (number_of_functions > maximal_number_of_functions)
                     throw std::out_of_range
@@ -705,12 +756,22 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     #ifdef __CUDA_ARCH__
-                        res += device_functions[k](integration_variables, real_parameters, complex_parameters, deformation_parameters[k]);
+                        res += device_functions[k](integration_variables, real_parameters, complex_parameters, deformation_parameters[k], result_info_device.get());
                     #else
-                        res += host_functions[k](integration_variables, real_parameters, complex_parameters, deformation_parameters[k]);
+                        res += host_functions[k](integration_variables, real_parameters, complex_parameters, deformation_parameters[k], result_info.get());
                     #endif
                 }
                 return res;
+            }
+
+            void process_errors() const{
+                result_info_device->process_errors();
+                result_info->process_errors();
+            }
+
+            void clear_errors(){
+                result_info_device->clear_errors();
+                result_info->clear_errors();
             }
 
             template

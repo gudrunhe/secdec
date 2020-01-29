@@ -18,8 +18,8 @@
 template<typename real_t>
 void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, cubareal epsrel, int dimensionality = 10, bool test_zero_border = false){
 
-    const std::function<real_t(real_t const * const)> integrand =
-    [dimensionality] (real_t const * const variables)
+    const std::function<real_t(real_t const * const, secdecutil::ResultInfo*)> integrand =
+    [dimensionality] (real_t const * const variables, secdecutil::ResultInfo* result_info)
     {
         real_t out = 1.;
         for (int i=0; i<dimensionality; ++i)
@@ -54,8 +54,8 @@ void test_integrator_complex(secdecutil::Integrator<complex_template<real_t>,rea
 
     constexpr int dimensionality = 4;
 
-    const std::function<complex_template<real_t>(real_t const * const)> integrand =
-    [] (real_t const * const variables)
+    const std::function<complex_template<real_t>(real_t const * const, secdecutil::ResultInfo*)> integrand =
+    [] (real_t const * const variables, secdecutil::ResultInfo* result_info)
     {
         real_t out_real = 1.;
         for (int i=0; i<dimensionality; ++i)
@@ -187,6 +187,30 @@ TEST_CASE( "Test Cuhre integrator with complex", "[Integrator][Cuba][Cuhre]" ) {
     test_integrator_complex(integrator, epsrel);
   }
  };
+
+ TEST_CASE( "Test Cuhre result_info contour deformation sign check error", "[Integrator][Cuba][Cuhre]" ) {
+    int dimensionality = 1;
+    const std::function<double(double const * const, secdecutil::ResultInfo*)> integrand = [] (double const * const variables, secdecutil::ResultInfo* result_info)
+        { result_info->return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_contour_deformation; return 0; };
+    const auto integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,integrand);
+
+    auto integrator = secdecutil::cuba::Cuhre<cubareal>();
+
+    REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::Contains( "contour deformation" ) );
+  };
+
+  TEST_CASE( "Test Vegas result_info positive polynomial sign check error", "[Integrator][Cuba][Cuhre]" ) {
+    int dimensionality = 1;
+    const std::function<double(double const * const, secdecutil::ResultInfo*)> integrand = [] (double const * const variables, secdecutil::ResultInfo* result_info)
+        { result_info->return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_positive_polynomial; return 0; };
+    const auto integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,integrand);
+
+    auto integrator = secdecutil::cuba::Vegas<cubareal>();
+
+    REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::Contains( "positive polynomial" ) );
+  };
 
  TEST_CASE( "Test exceptions in complex base class", "[Integrator]" ) {
 

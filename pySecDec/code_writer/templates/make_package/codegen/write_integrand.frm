@@ -198,10 +198,11 @@ Bracket `regulators';
   #write <sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const integration_variables,#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const real_parameters,#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    complex_t const * const complex_parameters#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    complex_t const * const complex_parameters,#@SecDecInternalNewline@#"
   #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.cpp> "    ,real_t const * const deformation_parameters#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const deformation_parameters,#@SecDecInternalNewline@#"
   #EndIf
+  #write <sector_`sectorID'_`cppOrder'.cpp> "    secdecutil::ResultInfo * const result_info#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "  {#@SecDecInternalNewline@#"
 
@@ -1200,20 +1201,12 @@ Bracket `regulators';
 
       #If termsin(expr) > 0
         #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  if (SecDecInternalSignCheckExpression > 0) {"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "    printf(#@SecDecInternalDblquote@#Sign check `signCheckId' (contour deformation polynomial) failed.#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "    return std::nan(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  }#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#else#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  if (SecDecInternalSignCheckExpression > 0)"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  throw secdecutil::sign_check_error(#@SecDecInternalDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  , #@SecDecInternalEscapedDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  contour deformation polynomial"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  #@SecDecInternalEscapedDblquote@#, check id #@SecDecInternalEscapedDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  `signCheckId'"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  #@SecDecInternalEscapedDblquote@#,#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression > 0) {#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::ResultInfo current_result;#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  current_result.return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_contour_deformation;#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  current_result.signCheckId = `signCheckId';#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  result_info->fill_if_empty_threadsafe(current_result);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "}#@SecDecInternalNewline@#"
       #EndIf
 
     #EndDo
@@ -1231,20 +1224,12 @@ Bracket `regulators';
 
       #If termsin(expr) > 0
         #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  if (SecDecInternalSignCheckExpression < 0) {"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "    printf(#@SecDecInternalDblquote@#Sign check `signCheckId' (positive polynomial) failed.#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "    return std::nan(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  }#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#else#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  if (SecDecInternalSignCheckExpression < 0)"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  throw secdecutil::sign_check_error(#@SecDecInternalDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  , #@SecDecInternalEscapedDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  positive polynomial"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  #@SecDecInternalEscapedDblquote@#, check id #@SecDecInternalEscapedDblquote@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  `signCheckId'"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  #@SecDecInternalEscapedDblquote@#,#@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression < 0) {#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::ResultInfo current_result;#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  current_result.return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_positive_polynomial;#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  current_result.signCheckId = `signCheckId';#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "  result_info->fill_if_empty_threadsafe(current_result);#@SecDecInternalNewline@#"
+        #write <sector_`sectorID'_`cppOrder'.cpp> "}#@SecDecInternalNewline@#"
       #EndIf
 
     #EndDo

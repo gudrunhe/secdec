@@ -16,7 +16,7 @@ using Catch::Matchers::Contains;
 
 TEST_CASE( "Test cquad error message more than 1D", "[Integrator][CQuad]" ) {
     int dimensionality = 4;
-    const std::function<double(double const * const)> integrand = [] (double const * const variables) { return 0.0; };
+    const std::function<double(double const * const, secdecutil::ResultInfo*)> integrand = [] (double const * const variables, secdecutil::ResultInfo* result_info) { return 0.0; };
     const auto integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,integrand);
     secdecutil::gsl::CQuad<double> integrator;
 
@@ -26,7 +26,7 @@ TEST_CASE( "Test cquad error message more than 1D", "[Integrator][CQuad]" ) {
 
 TEST_CASE( "Test cquad gsl error handling", "[Integrator][CQuad]" ) {
     int dimensionality = 1;
-    const std::function<double(double const * const)> integrand = [] (double const * const variables) { return 1./variables[0]; };
+    const std::function<double(double const * const, secdecutil::ResultInfo*)> integrand = [] (double const * const variables, secdecutil::ResultInfo* result_info) { return 1./variables[0]; };
     const auto integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,integrand);
 
     REQUIRE_THROWS_AS( secdecutil::gsl::CQuad<double>(1e-2,1e-7,1) , secdecutil::gsl::gsl_error);
@@ -36,6 +36,30 @@ TEST_CASE( "Test cquad gsl error handling", "[Integrator][CQuad]" ) {
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::gsl::gsl_error );
     REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Contains( "tolerance" ) && Contains( "invalid" ) );
+};
+
+TEST_CASE( "Test cquad result_info contour deformation sign check error", "[Integrator][CQuad]" ) {
+    int dimensionality = 1;
+    const std::function<double(double const * const, secdecutil::ResultInfo*)> integrand = [] (double const * const variables, secdecutil::ResultInfo* result_info)
+        { result_info->return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_contour_deformation; return 0; };
+    const auto integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,integrand);
+
+    secdecutil::gsl::CQuad<double> integrator;
+
+    REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Contains( "contour deformation" ) );
+};
+
+TEST_CASE( "Test cquad result_info positive polynomial sign check error", "[Integrator][CQuad]" ) {
+    int dimensionality = 1;
+    const std::function<double(double const * const, secdecutil::ResultInfo*)> integrand = [] (double const * const variables, secdecutil::ResultInfo* result_info)
+        { result_info->return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_positive_polynomial; return 0; };
+    const auto integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,integrand);
+
+    secdecutil::gsl::CQuad<double> integrator;
+
+    REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Contains( "positive polynomial" ) );
 };
 
 TEST_CASE( "Test cquad member access", "[Integrator][CQuad]" ) {
@@ -87,8 +111,8 @@ TEST_CASE( "Test cquad complex to real constructor", "[Integrator][CQuad]" ) {
 template<typename real_t>
 void test_integrator_real(secdecutil::Integrator<real_t,real_t>& integrator, double epsrel, int dimensionality = 1){
 
-    const std::function<real_t(real_t const * const)> integrand =
-    [dimensionality] (real_t const * const variables)
+    const std::function<real_t(real_t const * const, secdecutil::ResultInfo*)> integrand =
+    [dimensionality] (real_t const * const variables, secdecutil::ResultInfo* result_info)
     {
         real_t out = 1.;
         for (int i=0; i<dimensionality; ++i)
@@ -112,8 +136,8 @@ void test_integrator_complex(secdecutil::Integrator<complex_template<real_t>,rea
 
     constexpr int dimensionality = 1;
 
-    const std::function<complex_template<real_t>(real_t const * const)> integrand =
-    [] (real_t const * const variables)
+    const std::function<complex_template<real_t>(real_t const * const, secdecutil::ResultInfo*)> integrand =
+    [] (real_t const * const variables, secdecutil::ResultInfo* result_info)
     {
         real_t out_real = 1.;
         for (int i=0; i<dimensionality; ++i)
@@ -182,8 +206,8 @@ TEST_CASE( "Test cquad integrator with complex long double", "[Integrator][CQuad
 TEST_CASE( "Test zero_border of cquad", "[Integrator][CQuad]" ) {
     using real_t = double;
 
-    const std::function<complex_template<real_t>(real_t const * const)> integrand =
-    [] (real_t const * const variables)
+    const std::function<complex_template<real_t>(real_t const * const, secdecutil::ResultInfo*)> integrand =
+    [] (real_t const * const variables, secdecutil::ResultInfo* result_info)
     {
         real_t out_real = 6. * variables[0] * (1. - variables[0]);
 

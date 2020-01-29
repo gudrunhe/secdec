@@ -86,7 +86,7 @@ namespace secdecutil
           result[0] = std::nan("");
 
           // implicit conversion of result from type T to cubareal
-          result[0] = typed_userdata.integrand_container->integrand(bordered_integration_variables);
+          result[0] = (*typed_userdata.integrand_container)(bordered_integration_variables);
 
           return 0;
         }
@@ -104,6 +104,7 @@ namespace secdecutil
           return [this] (const secdecutil::IntegrandContainerWithParameters<T, T const * const>& integrand_container)
             {
               CUBA_INTEGRATE_BODY
+              integrand_container.process_errors();
               return secdecutil::UncorrelatedDeviation<T>(integral.at(0),error.at(0));
             };
         };
@@ -131,10 +132,10 @@ namespace secdecutil
               cubareal bordered_integration_variables[*ndim];
               for (int i = 0 ; i < *ndim ; ++i)
                   bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i];
-              result[0] = typed_userdata.integrand_container->integrand(bordered_integration_variables);
+              result[0] = (*typed_userdata.integrand_container)(bordered_integration_variables);
               return 0;
           } else {
-              result[0] = typed_userdata.integrand_container->integrand(integration_variables); // pass array "integration_variables" directly
+              result[0] = (*typed_userdata.integrand_container)(integration_variables); // pass array "integration_variables" directly
               return 0;
           }
         }
@@ -152,6 +153,7 @@ namespace secdecutil
           return [this] (const secdecutil::IntegrandContainerWithParameters<cubareal, cubareal const * const>& integrand_container)
             {
               CUBA_INTEGRATE_BODY
+              integrand_container.process_errors();
               return secdecutil::UncorrelatedDeviation<cubareal>(integral.at(0),error.at(0));
             };
         };
@@ -189,7 +191,7 @@ namespace secdecutil
           /* initialize result with NaN --> result will be NaN if integrand throws an error */ \
           result[0] = result[1] = std::nan(""); \
  \
-          complex_template<T> evaluated_integrand = typed_userdata.integrand_container->integrand(bordered_integration_variables); \
+          complex_template<T> evaluated_integrand = (*typed_userdata.integrand_container)(bordered_integration_variables); \
  \
           /* implicit conversion of result from type T to cubareal */ \
           result[0] = evaluated_integrand.real(); \
@@ -211,6 +213,7 @@ namespace secdecutil
           { \
             return [this] (const secdecutil::IntegrandContainerWithParameters<complex_template<T>, T const * const>& integrand_container) { \
               CUBA_INTEGRATE_BODY \
+              integrand_container.process_errors(); \
               return secdecutil::UncorrelatedDeviation<complex_template<T>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)}); \
             }; \
         }; \
@@ -244,13 +247,13 @@ namespace secdecutil
               cubareal bordered_integration_variables[*ndim]; \
               for (int i = 0 ; i < *ndim ; ++i) \
                   bordered_integration_variables[i] = integration_variables[i] < typed_userdata.zero_border ? typed_userdata.zero_border : integration_variables[i]; \
-              complex_template<cubareal> evaluated_integrand = typed_userdata.integrand_container->integrand(bordered_integration_variables); \
+              complex_template<cubareal> evaluated_integrand = (*typed_userdata.integrand_container)(bordered_integration_variables); \
               result[0] = evaluated_integrand.real(); \
               result[1] = evaluated_integrand.imag(); \
               return 0; \
           } else { \
               /* pass array "integration_variables" directly */ \
-              complex_template<cubareal> evaluated_integrand = typed_userdata.integrand_container->integrand(integration_variables); \
+              complex_template<cubareal> evaluated_integrand = (*typed_userdata.integrand_container)(integration_variables); \
               result[0] = evaluated_integrand.real(); \
               result[1] = evaluated_integrand.imag(); \
               return 0; \
@@ -270,6 +273,7 @@ namespace secdecutil
           { \
             return [this] (const secdecutil::IntegrandContainerWithParameters<complex_template<cubareal>, cubareal const * const>& integrand_container) { \
               CUBA_INTEGRATE_BODY \
+              integrand_container.process_errors(); \
               return secdecutil::UncorrelatedDeviation<complex_template<cubareal>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)}); \
             }; \
         }; \

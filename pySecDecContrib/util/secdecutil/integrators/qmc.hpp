@@ -57,6 +57,7 @@ namespace secdecutil
             {
                 QmcContainer<container_t> qmc_integrand_container(integrand_container);
                 ::integrators::result<return_t> result = ::integrators::Qmc<return_t,return_t,maxdim,transform_t,fitfunction_t>::integrate(qmc_integrand_container);
+                integrand_container.process_errors();
                 return secdecutil::UncorrelatedDeviation<return_t> { result.integral, result.error };
             };
             return integrate_function;
@@ -82,6 +83,7 @@ namespace secdecutil
             {
                 QmcContainer<container_t> qmc_integrand_container(integrand_container);
                 ::integrators::result<return_t> result = ::integrators::Qmc<return_t,return_t,maxdim,transform_t>::integrate(qmc_integrand_container);
+                integrand_container.process_errors();
                 return secdecutil::UncorrelatedDeviation<return_t> { result.integral, result.error };
             };
             return integrate_function;
@@ -109,6 +111,7 @@ namespace secdecutil
                 { \
                     QmcContainer<container_t> qmc_integrand_container(integrand_container); \
                     ::integrators::result<complex_template<return_t>> result = ::integrators::Qmc<complex_template<return_t>,return_t,maxdim,transform_t,fitfunction_t>::integrate(qmc_integrand_container); \
+                    integrand_container.process_errors(); \
                     return secdecutil::UncorrelatedDeviation<complex_template<return_t>> { result.integral, result.error }; \
                 }; \
                 return integrate_function; \
@@ -122,6 +125,7 @@ namespace secdecutil
                 { \
                     QmcContainer<container_t> qmc_integrand_container(integrand_container); \
                     ::integrators::result<complex_template<return_t>> result = ::integrators::Qmc<complex_template<return_t>,return_t,maxdim,transform_t>::integrate(qmc_integrand_container); \
+                    integrand_container.process_errors(); \
                     return secdecutil::UncorrelatedDeviation<complex_template<return_t>> { result.integral, result.error }; \
                 }; \
                 return integrate_function; \

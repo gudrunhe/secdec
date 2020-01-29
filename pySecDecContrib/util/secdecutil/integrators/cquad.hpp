@@ -63,7 +63,7 @@ namespace secdecutil
           // initialize result with NaN --> result will be NaN if integrand throws an error
           double evaluated_integrand = std::nan("");
 
-          evaluated_integrand = typed_params.integrand_container->integrand(&integration_variable);
+          evaluated_integrand = (*typed_params.integrand_container)(&integration_variable);
 
           return evaluated_integrand;
         };
@@ -158,6 +158,8 @@ namespace secdecutil
               gsl_set_error_handler(custom_gsl_error_handler);
               gsl_integration_cquad(&integrand_for_gsl, a, b, epsabs, epsrel, workspace.get(), &value, &abserr, &nevals);
               gsl_set_error_handler(original_error_handler);
+
+              integrand_container.process_errors();
 
               // pack result
               secdecutil::UncorrelatedDeviation<T> result(value,abserr);
