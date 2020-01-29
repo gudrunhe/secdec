@@ -70,7 +70,6 @@ void check_pySecDec_triangle(double s, double msq, secdecutil::Series<std::compl
         // define and configure integrator
         auto integrator = secdecutil::cuba::Vegas<triangle::integrand_return_t>();
         integrator.flags = 2; // verbose output --> see cuba manual
-        integrator.nstart = 1e4; // default runs into a numerical instability
         integrator.maxeval = 2e6;
 
         // basic checks

@@ -311,8 +311,8 @@ namespace secdecutil
                 long long int mineval = 0, \
                 long long int maxeval = 1e6, \
                 cubareal zero_border = 0., \
-                long long int nstart = 1000, \
-                long long int nincrease = 500, \
+                long long int nstart = 10000, \
+                long long int nincrease = 5000, \
                 long long int nbatch = 1000 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \

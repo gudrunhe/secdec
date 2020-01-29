@@ -101,7 +101,7 @@ For general polynomials not related to loop integrals, i.e. in ``make_package``,
 What can I do if I get `nan`?
 -----------------------------
 
-This means that the integral does not converge which can have several reasons. When Divonne is used as an integrator, it is important to use a non-zero value for border, e.g. ``border=1e-8``. Vegas is in general the most robust integrator. When using Vegas, try to increase the values for ``nstart`` and ``nincrease``, for example ``nstart=10000`` (default: ``1000``) and ``nincrease=5000`` (default: ``500``).
+This means that the integral does not converge which can have several reasons. When Divonne is used as an integrator, it is important to use a non-zero value for border, e.g. ``border=1e-8``. Vegas is in general the most robust integrator. When using Vegas, try to increase the values for ``nstart`` and ``nincrease``, for example ``nstart=100000`` (default: ``10000``) and ``nincrease=50000`` (default: ``5000``).
 
 If the integral is non-Euclidean, make sure that `contour_deformation=True` is set.
 Another reason for getting `nan` can be that the integral has  singularities at :math:`x_i = 1` and therefore needs usage of the ``split`` option, see item below.

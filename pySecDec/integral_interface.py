@@ -192,7 +192,7 @@ class Vegas(CPPIntegrator):
     and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,zero_border=0.0,nstart=1000,nincrease=500,nbatch=1000,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,zero_border=0.0,nstart=10000,nincrease=5000,nbatch=1000,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib.allocate_cuba_Vegas.restype = c_void_p
         self.c_lib.allocate_cuba_Vegas.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong, c_double, c_longlong, c_longlong, c_longlong, c_bool]
