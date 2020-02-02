@@ -28,7 +28,7 @@ namespace secdecutil
       * All Cuba integrators should inherit from this class.
       *
       * Cuba always uses the float type "cubareal" as defined in "cuba.h",
-      * which can be different from the type "T" used by the IntegrandContainerWithParameters.
+      * which can be different from the type "T" used by the IntegrandContainer.
       */
 
       #define CUBA_STRUCT_BODY \
@@ -93,15 +93,15 @@ namespace secdecutil
         static const int ncomp = 1;
         struct userdata_t
         {
-            const secdecutil::IntegrandContainerWithParameters<T, T const * const> * integrand_container;
+            const secdecutil::IntegrandContainer<T, T const * const> * integrand_container;
             const cubareal& zero_border;
         } typed_userdata{nullptr,zero_border};
         CUBA_STRUCT_BODY
 
         std::function<secdecutil::UncorrelatedDeviation<T>
-          (const secdecutil::IntegrandContainerWithParameters<T, T const * const>&)> get_integrate()
+          (const secdecutil::IntegrandContainer<T, T const * const>&)> get_integrate()
         {
-          return [this] (const secdecutil::IntegrandContainerWithParameters<T, T const * const>& integrand_container)
+          return [this] (const secdecutil::IntegrandContainer<T, T const * const>& integrand_container)
             {
               CUBA_INTEGRATE_BODY
               integrand_container.process_errors();
@@ -142,15 +142,15 @@ namespace secdecutil
         static const int ncomp = 1;
         struct userdata_t
         {
-            const secdecutil::IntegrandContainerWithParameters<cubareal, cubareal const * const> * integrand_container;
+            const secdecutil::IntegrandContainer<cubareal, cubareal const * const> * integrand_container;
             const cubareal& zero_border;
         } typed_userdata{nullptr,zero_border};
         CUBA_STRUCT_BODY
 
         std::function<secdecutil::UncorrelatedDeviation<cubareal>
-          (const secdecutil::IntegrandContainerWithParameters<cubareal, cubareal const * const>&)> get_integrate()
+          (const secdecutil::IntegrandContainer<cubareal, cubareal const * const>&)> get_integrate()
         {
-          return [this] (const secdecutil::IntegrandContainerWithParameters<cubareal, cubareal const * const>& integrand_container)
+          return [this] (const secdecutil::IntegrandContainer<cubareal, cubareal const * const>& integrand_container)
             {
               CUBA_INTEGRATE_BODY
               integrand_container.process_errors();
@@ -202,16 +202,16 @@ namespace secdecutil
         static const int ncomp = 2; \
         struct userdata_t \
         { \
-            const secdecutil::IntegrandContainerWithParameters<complex_template<T>, T const * const> * integrand_container; \
+            const secdecutil::IntegrandContainer<complex_template<T>, T const * const> * integrand_container; \
             const cubareal& zero_border; \
         } typed_userdata{nullptr,zero_border}; \
         CUBA_STRUCT_BODY \
  \
         std::function<secdecutil::UncorrelatedDeviation<complex_template<T>> \
-          (const secdecutil::IntegrandContainerWithParameters<complex_template<T>, T const * const>&)> \
+          (const secdecutil::IntegrandContainer<complex_template<T>, T const * const>&)> \
           get_together_integrate() \
           { \
-            return [this] (const secdecutil::IntegrandContainerWithParameters<complex_template<T>, T const * const>& integrand_container) { \
+            return [this] (const secdecutil::IntegrandContainer<complex_template<T>, T const * const>& integrand_container) { \
               CUBA_INTEGRATE_BODY \
               integrand_container.process_errors(); \
               return secdecutil::UncorrelatedDeviation<complex_template<T>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)}); \
@@ -262,16 +262,16 @@ namespace secdecutil
         static const int ncomp = 2; \
         struct userdata_t \
         { \
-            const secdecutil::IntegrandContainerWithParameters<complex_template<cubareal>, cubareal const * const> * integrand_container; \
+            const secdecutil::IntegrandContainer<complex_template<cubareal>, cubareal const * const> * integrand_container; \
             const cubareal& zero_border; \
         } typed_userdata{nullptr,zero_border}; \
         CUBA_STRUCT_BODY \
  \
         std::function<secdecutil::UncorrelatedDeviation<complex_template<cubareal>> \
-          (const secdecutil::IntegrandContainerWithParameters<complex_template<cubareal>, cubareal const * const>&)> \
+          (const secdecutil::IntegrandContainer<complex_template<cubareal>, cubareal const * const>&)> \
           get_together_integrate() \
           { \
-            return [this] (const secdecutil::IntegrandContainerWithParameters<complex_template<cubareal>, cubareal const * const>& integrand_container) { \
+            return [this] (const secdecutil::IntegrandContainer<complex_template<cubareal>, cubareal const * const>& integrand_container) { \
               CUBA_INTEGRATE_BODY \
               integrand_container.process_errors(); \
               return secdecutil::UncorrelatedDeviation<complex_template<cubareal>>({integral.at(0),integral.at(1)},{error.at(0),error.at(1)}); \

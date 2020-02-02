@@ -16,7 +16,7 @@ TEST_CASE( "Check Access", "[IntegrandContainer]" ) {
     SECTION( "Accessing fields" ) {
 
         REQUIRE( ic.number_of_integration_variables == 3 );
-        REQUIRE( ic.integrand(10, nullptr) == 10+2 );
+        REQUIRE( ic(10) == 10+2 );
 
     };
 
@@ -30,11 +30,11 @@ TEST_CASE( "Check Access", "[IntegrandContainer]" ) {
 
 TEST_CASE( "Default Constructor", "[IntegrandContainer]" ) {
 
-    auto ic = secdecutil::IntegrandContainer<int, int, bool>();
+    auto ic = secdecutil::IntegrandContainer<int, int>();
 
     REQUIRE( ic.number_of_integration_variables == 0 );
     for (int i = 0 ; i < 10 ; ++i)
-        REQUIRE( ic.integrand(i, i, nullptr) == 0 );
+        REQUIRE( ic(i) == 0 );
 
 };
 
@@ -51,7 +51,7 @@ TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
         auto ic3 = ic1 + ic2;
 
         REQUIRE( ic3.number_of_integration_variables == 4);
-        REQUIRE( ic3.integrand(10,nullptr) == 10+2+10+5);
+        REQUIRE( ic3(10) == 10+2+10+5);
 
     };
 
@@ -60,7 +60,7 @@ TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
         ic1 += ic2;
 
         REQUIRE( ic1.number_of_integration_variables == 4);
-        REQUIRE( ic1.integrand(10,nullptr) == 10+2+10+5);
+        REQUIRE( ic1(10) == 10+2+10+5);
 
     };
 
@@ -69,7 +69,7 @@ TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
         auto ic4 = ic1 - ic2;
 
         REQUIRE( ic4.number_of_integration_variables == 4);
-        REQUIRE( ic4.integrand(10,nullptr) == 10+2-10-5);
+        REQUIRE( ic4(10) == 10+2-10-5);
     };
 
     SECTION ( " -= " ) {
@@ -77,7 +77,7 @@ TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
         ic1 -= ic2;
 
         REQUIRE( ic1.number_of_integration_variables == 4);
-        REQUIRE( ic1.integrand(10,nullptr) == 10+2-10-5);
+        REQUIRE( ic1(10) == 10+2-10-5);
 
     };
 
@@ -86,7 +86,7 @@ TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
         auto ic_mul = ic1 * ic2;
 
         REQUIRE( ic_mul.number_of_integration_variables == 4);
-        REQUIRE( ic_mul.integrand(10,nullptr) == (10+2)*(10+5) );
+        REQUIRE( ic_mul(10) == (10+2)*(10+5) );
 
     };
 
@@ -95,7 +95,7 @@ TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
         ic1 *= ic2;
 
         REQUIRE( ic1.number_of_integration_variables == 4);
-        REQUIRE( ic1.integrand(10,nullptr) == (10+2)*(10+5) );
+        REQUIRE( ic1(10) == (10+2)*(10+5) );
 
     };
 
@@ -104,8 +104,8 @@ TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
         auto ic_div = ic2 / ic1;
 
         REQUIRE( ic_div.number_of_integration_variables == 4);
-        REQUIRE( ic_div.integrand( 1,nullptr) == 2);
-        REQUIRE( ic_div.integrand(10,nullptr) == 1);
+        REQUIRE( ic_div( 1) == 2);
+        REQUIRE( ic_div(10) == 1);
     };
 
     SECTION ( " /= " ) {
@@ -113,8 +113,8 @@ TEST_CASE( "Binary operators +, -, *, and /", "[IntegrandContainer]" ) {
         ic2 /= ic1;
 
         REQUIRE( ic2.number_of_integration_variables == 4);
-        REQUIRE( ic2.integrand( 1,nullptr) == 2);
-        REQUIRE( ic2.integrand(10,nullptr) == 1);
+        REQUIRE( ic2( 1) == 2);
+        REQUIRE( ic2(10) == 1);
 
     };
 
@@ -144,7 +144,7 @@ TEST_CASE( "Binary operators + and - with functions which access private fields"
     SECTION ( " + " ) {
 
         REQUIRE( ic3.number_of_integration_variables == 4);
-        REQUIRE( ic3.integrand(10,nullptr) == 10+5+10+9);
+        REQUIRE( ic3(10) == 10+5+10+9);
 
     };
 
@@ -153,14 +153,14 @@ TEST_CASE( "Binary operators + and - with functions which access private fields"
         ic1 += ic2;
 
         REQUIRE( ic1.number_of_integration_variables == 4);
-        REQUIRE( ic1.integrand(10,nullptr) == 10+5+10+9);
+        REQUIRE( ic1(10) == 10+5+10+9);
 
     };
 
     SECTION ( " - " ) {
 
         REQUIRE( ic4.number_of_integration_variables == 4);
-        REQUIRE( ic4.integrand(10,nullptr) == 10+5-10-9);
+        REQUIRE( ic4(10) == 10+5-10-9);
     };
 
     SECTION ( " -= " ) {
@@ -168,7 +168,7 @@ TEST_CASE( "Binary operators + and - with functions which access private fields"
         ic1 -= ic2;
 
         REQUIRE( ic1.number_of_integration_variables == 4);
-        REQUIRE( ic1.integrand(10,nullptr) == 10+5-10-9);
+        REQUIRE( ic1(10) == 10+5-10-9);
 
     };
 
@@ -191,7 +191,7 @@ TEST_CASE( "std::accumulate", "[IntegrandContainer]" ) {
         auto ic4 = std::accumulate(ics.begin()+1, ics.end(), ics.at(0));
 
         REQUIRE( ic4.number_of_integration_variables == 5);
-        REQUIRE( ic4.integrand(10,nullptr) == 10+2+10+5+10+7);
+        REQUIRE( ic4(10) == 10+2+10+5+10+7);
 
     };
 
@@ -199,22 +199,22 @@ TEST_CASE( "std::accumulate", "[IntegrandContainer]" ) {
 
 TEST_CASE( "Unary operators + and -", "[IntegrandContainer]" ) {
 
-    auto function = [] (int i, double d, secdecutil::ResultInfo* result_info) { return i*d; };
-    auto ic = secdecutil::IntegrandContainer<double, int, double>(2,function);
+    auto function = [] (double d, secdecutil::ResultInfo* result_info) { return d*d; };
+    auto ic = secdecutil::IntegrandContainer<double, double>(1,function);
 
     SECTION ( " + " ) {
 
-        REQUIRE( (+ic).number_of_integration_variables == 2 );
-        REQUIRE( (+ic).integrand(3, 1.5,nullptr) == Approx(4.5) );
-        REQUIRE( (+ic).integrand(4, 1.5,nullptr) == Approx(6.0) );
+        REQUIRE( (+ic).number_of_integration_variables == 1 );
+        REQUIRE( (+ic)(3) == Approx(9) );
+        REQUIRE( (+ic)(4) == Approx(16) );
 
     };
 
     SECTION ( " - " ) {
 
-        REQUIRE( (-ic).number_of_integration_variables == 2 );
-        REQUIRE( (-ic).integrand(3, 1.5,nullptr) == Approx(-4.5) );
-        REQUIRE( (-ic).integrand(4, 1.5,nullptr) == Approx(-6.0) );
+        REQUIRE( (-ic).number_of_integration_variables == 1 );
+        REQUIRE( (-ic)(3) == Approx(-9) );
+        REQUIRE( (-ic)(4) == Approx(-16) );
 
     };
 
@@ -236,16 +236,16 @@ TEST_CASE( "complex_to_real", "[IntegrandContainer]" ) {
   SECTION ( " std::real " ) {
 
     auto real_part = complex_to_real::real(ic);
-    REQUIRE( real_part.integrand(5,nullptr) == Approx(7.) );
-    REQUIRE( real_part.integrand(-4,nullptr) == Approx(-2.) );
+    REQUIRE( real_part(5) == Approx(7.) );
+    REQUIRE( real_part(-4) == Approx(-2.) );
 
   };
 
   SECTION ( " std::imag " ) {
 
     auto imag_part = complex_to_real::imag(ic);
-    REQUIRE( imag_part.integrand(5,nullptr) == Approx(4.) );
-    REQUIRE( imag_part.integrand(-4,nullptr) == Approx(-5.) );
+    REQUIRE( imag_part(5) == Approx(4.) );
+    REQUIRE( imag_part(-4) == Approx(-5.) );
 
   };
 

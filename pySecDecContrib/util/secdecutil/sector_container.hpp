@@ -283,7 +283,7 @@ namespace secdecutil {
      */
     // SectorContainerWithDeformation -> IntegrandContainer
     template<typename real_t, typename complex_t>
-    std::function<secdecutil::IntegrandContainerWithParameters<complex_t, real_t const * const, real_t>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
+    std::function<secdecutil::IntegrandContainer<complex_t, real_t const * const, real_t>(secdecutil::SectorContainerWithDeformation<real_t,complex_t>)>
     SectorContainerWithDeformation_to_IntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters,
                                                          unsigned number_of_presamples = 100000, real_t deformation_parameters_maximum = 1.,
                                                          real_t deformation_parameters_minimum = 1.e-5, real_t deformation_parameters_decrease_factor = 0.9)
@@ -313,13 +313,13 @@ namespace secdecutil {
                 );
 
 
-            std::function<complex_t(real_t const * const, real_t*, ResultInfo*)> integrand = [sector_container](real_t const * const Args, real_t* Pars, ResultInfo* result_info){
+            std::function<complex_t(real_t const * const, const real_t*, ResultInfo*)> integrand = [sector_container](real_t const * const Args, const real_t* Pars, ResultInfo* result_info){
                 return sector_container.integrand(Args,sector_container.real_parameters->data(), sector_container.complex_parameters->data(), Pars, result_info);
             };
 
             auto deformation_parameters = std::vector<std::vector<real_t>>({*sector_container.deformation_parameters});
 
-            auto integrand_container = secdecutil::IntegrandContainerWithParameters<complex_t, real_t const * const, real_t>
+            auto integrand_container = secdecutil::IntegrandContainer<complex_t, real_t const * const, real_t>
                                             (sector_container.number_of_integration_variables, integrand, deformation_parameters );
 
             integrand_container.extra_parameters = std::vector<std::vector<real_t>>({{deformation_parameters_minimum,deformation_parameters_decrease_factor}});
@@ -335,7 +335,7 @@ namespace secdecutil {
 
     // SectorContainerWithoutDeformation -> IntegrandContainer
     template<typename integrand_return_t, typename real_t, typename complex_t>
-    std::function<secdecutil::IntegrandContainerWithParameters<integrand_return_t, real_t const * const>(secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>)>
+    std::function<secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>(secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>)>
     SectorContainerWithoutDeformation_to_IntegrandContainer(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters)
     {
         auto shared_real_parameters = std::make_shared<std::vector<real_t>>(real_parameters);
@@ -349,7 +349,7 @@ namespace secdecutil {
             auto integrand = std::bind(&secdecutil::SectorContainerWithoutDeformation<real_t,complex_t,integrand_return_t>::integrand, sector_container,
                                        std::placeholders::_1, sector_container.real_parameters->data(), sector_container.complex_parameters->data(), std::placeholders::_2);
 
-            auto integrand_container = secdecutil::IntegrandContainerWithParameters<integrand_return_t, real_t const * const>(sector_container.number_of_integration_variables, integrand );
+            auto integrand_container = secdecutil::IntegrandContainer<integrand_return_t, real_t const * const>(sector_container.number_of_integration_variables, integrand );
 
             integrand_container.display_name = "sector_"+std::to_string(sector_container.sector_id)+"_order";
             for(int i = 0; i < sector_container.orders.size(); i++){
