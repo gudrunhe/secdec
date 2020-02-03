@@ -1,0 +1,737 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     30256,        729]
+NotebookOptionsPosition[     28917,        699]
+NotebookOutlinePosition[     29251,        714]
+CellTagsIndexPosition[     29208,        711]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{"<<", "HPL`"}]], "Code",
+ CellLabel->"In[1]:=",ExpressionUUID->"bdb2f9f3-e93c-403d-b8e8-3630b60174a9"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"*-*-*-*-*-* HPL 2.0 *-*-*-*-*-*\\n\\nAuthor: Daniel Maitre, \
+University of Zurich\"\>"], "Print",
+ CellChangeTimes->{3.7900260365910873`*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"a715e489-58fe-4575-aa83-8fa1ee7e2c62"],
+
+Cell[BoxData["\<\"Rules for minimal set loaded for weights: 2, 3, 4, 5, \
+6.\"\>"], "Print",
+ CellChangeTimes->{3.790026036805517*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"19129ce3-d44b-4eea-97fb-e62e7639b371"],
+
+Cell[BoxData["\<\"Rules for minimal set for + - weights loaded for weights: \
+2, 3, 4, 5, 6.\"\>"], "Print",
+ CellChangeTimes->{3.790026037320438*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"b5f33d83-a132-4978-bd3b-479b72a7bcad"],
+
+Cell[BoxData["\<\"Table of MZVs loaded up to weight 6\"\>"], "Print",
+ CellChangeTimes->{3.7900260373621387`*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"632f91d7-b92d-4435-9c27-fd82405ac7f5"],
+
+Cell[BoxData["\<\"Table of values at I loaded up to weight 6\"\>"], "Print",
+ CellChangeTimes->{3.790026038404244*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"23253c14-c26a-4aad-8b2e-e583d88e2848"],
+
+Cell[BoxData["\<\"$HPLFunctions gives a list of the functions of the package.\
+\\n$HPLOptions gives a list of the options of the package.\"\>"], "Print",
+ CellChangeTimes->{3.790026038581214*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"ef154ee6-152e-40ae-80bb-fd060727b536"],
+
+Cell[BoxData["\<\"More info in hep-ph/0507152, hep-ph/0703052 and at \\n \
+http://krone.physik.unizh.ch/~maitreda/HPL/\"\>"], "Print",
+ CellChangeTimes->{3.790026038584402*^9},
+ CellLabel->
+  "During evaluation of \
+In[1]:=",ExpressionUUID->"444b4d82-f656-4cb7-a06d-4f5a75672b41"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"integral", "[", 
+    RowBox[{"ep0_", ",", "s0_", ",", "t0_", ",", "u0_", ",", "mt0_"}], "]"}], 
+   ":=", "\n", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"ep", "=", "ep0"}], ",", 
+       RowBox[{"s", "=", "s0"}], ",", 
+       RowBox[{"t", "=", "t0"}], ",", 
+       RowBox[{"mt1", "=", "mt0"}], ",", "mus2", ",", "v", ",", "mt", ",", 
+       "im"}], "}"}], ",", "\n", "\t", 
+     RowBox[{
+      RowBox[{"v", "=", 
+       RowBox[{
+        RowBox[{"-", "t"}], "/", "s"}]}], ";", "\n", "\t", 
+      RowBox[{"mt", "=", 
+       RowBox[{"mt1", "/", 
+        RowBox[{"Sqrt", "[", "s", "]"}]}]}], ";", "\n", "\t", 
+      RowBox[{"im", "=", "I"}], ";", "\n", "\t", 
+      RowBox[{"mus2", "=", 
+       RowBox[{
+        RowBox[{"Exp", "[", 
+         RowBox[{"2", " ", "im", " ", "Pi", " ", "ep"}], "]"}], " ", 
+        RowBox[{
+         RowBox[{"Exp", "[", 
+          RowBox[{
+           RowBox[{"-", "2"}], " ", "ep", " ", "EulerGamma"}], "]"}], "/", 
+         " ", 
+         RowBox[{"s", "^", 
+          RowBox[{"(", 
+           RowBox[{"3", "+", 
+            RowBox[{"2", " ", "ep"}]}], ")"}]}]}]}]}], ";", "\n", "\t", 
+      RowBox[{"mus2", "*", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"(", 
+           RowBox[{"4", "*", "im", "*", "Pi", "*", 
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"12", "*", 
+               RowBox[{"HPL", "[", 
+                RowBox[{
+                 RowBox[{"{", "3", "}"}], ",", " ", "v"}], "]"}]}], " ", "-", 
+              " ", 
+              RowBox[{"6", "*", 
+               RowBox[{"HPL", "[", 
+                RowBox[{
+                 RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "*", 
+               RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", "\n", "     ", 
+              RowBox[{
+               RowBox[{"(", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], " ", "-", " ", 
+                 RowBox[{"Log", "[", "v", "]"}]}], ")"}], "*", 
+               RowBox[{"(", 
+                RowBox[{
+                 RowBox[{"Pi", "^", "2"}], " ", "+", " ", 
+                 RowBox[{
+                  RowBox[{"Log", "[", 
+                   RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}], " ", "-", " ", 
+                 RowBox[{"2", "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                  RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", "\n", 
+                 "       ", 
+                 RowBox[{
+                  RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], ")"}]}]}], 
+             ")"}]}], ")"}], "/", 
+          RowBox[{"(", 
+           RowBox[{"3", "*", "v"}], ")"}]}], " ", "-", " ", 
+         RowBox[{
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"7", "*", 
+             RowBox[{"Pi", "^", "4"}]}], " ", "+", " ", 
+            RowBox[{"360", "*", 
+             RowBox[{"HPL", "[", 
+              RowBox[{
+               RowBox[{"{", "4", "}"}], ",", " ", "v"}], "]"}]}], " ", "+", 
+            " ", 
+            RowBox[{"10", "*", 
+             RowBox[{"Pi", "^", "2"}], "*", 
+             RowBox[{
+              RowBox[{"Log", "[", 
+               RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}]}], " ", "-", " ", 
+            "\n", "    ", 
+            RowBox[{"15", "*", 
+             RowBox[{
+              RowBox[{"Log", "[", 
+               RowBox[{"mt", "^", "2"}], "]"}], "^", "4"}]}], " ", "-", " ", 
+            RowBox[{"240", "*", 
+             RowBox[{"HPL", "[", 
+              RowBox[{
+               RowBox[{"{", "3", "}"}], ",", " ", "v"}], "]"}], "*", 
+             RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", 
+            RowBox[{"40", "*", 
+             RowBox[{"Pi", "^", "2"}], "*", 
+             RowBox[{"Log", "[", 
+              RowBox[{"mt", "^", "2"}], "]"}], "*", 
+             RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", "\n", "    ", 
+            RowBox[{"40", "*", 
+             RowBox[{
+              RowBox[{"Log", "[", 
+               RowBox[{"mt", "^", "2"}], "]"}], "^", "3"}], "*", 
+             RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", 
+            RowBox[{"30", "*", 
+             RowBox[{"Pi", "^", "2"}], "*", 
+             RowBox[{
+              RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "+", " ", 
+            RowBox[{"60", "*", 
+             RowBox[{"HPL", "[", 
+              RowBox[{
+               RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "*", 
+             RowBox[{
+              RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "-", " ", 
+            "\n", "    ", 
+            RowBox[{"30", "*", 
+             RowBox[{
+              RowBox[{"Log", "[", 
+               RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}], "*", 
+             RowBox[{
+              RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "+", " ", 
+            RowBox[{"5", "*", 
+             RowBox[{
+              RowBox[{"Log", "[", "v", "]"}], "^", "4"}]}], " ", "+", " ", 
+            RowBox[{"60", "*", 
+             RowBox[{"Log", "[", 
+              RowBox[{"mt", "^", "2"}], "]"}], "*", 
+             RowBox[{"Zeta", "[", "3", "]"}]}], " ", "-", " ", "\n", "    ", 
+            RowBox[{"60", "*", 
+             RowBox[{"Log", "[", "v", "]"}], "*", 
+             RowBox[{"Zeta", "[", "3", "]"}]}]}], ")"}], "/", 
+          RowBox[{"(", 
+           RowBox[{"15", "*", "v"}], ")"}]}], " ", "+", " ", "\n", "  ", 
+         RowBox[{"ep", "*", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"(", 
+              RowBox[{"im", "*", "Pi", "*", 
+               RowBox[{"(", 
+                RowBox[{
+                 RowBox[{"61", "*", 
+                  RowBox[{"Pi", "^", "4"}]}], " ", "-", " ", 
+                 RowBox[{"360", "*", 
+                  RowBox[{
+                   RowBox[{"HPL", "[", 
+                    RowBox[{
+                    RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "^", 
+                   "2"}]}], " ", "-", " ", 
+                 RowBox[{"1440", "*", 
+                  RowBox[{"HPL", "[", 
+                   RowBox[{
+                    RowBox[{"{", "4", "}"}], ",", " ", "v"}], "]"}]}], " ", 
+                 "-", " ", "\n", "       ", 
+                 RowBox[{"1080", "*", 
+                  RowBox[{"HPL", "[", 
+                   RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"2", ",", " ", "2"}], "}"}], ",", " ", "v"}], 
+                   "]"}]}], " ", "+", " ", 
+                 RowBox[{"1080", "*", 
+                  RowBox[{"HPL", "[", 
+                   RowBox[{
+                    RowBox[{"{", "3", "}"}], ",", " ", "v"}], "]"}], "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"mt", "^", "2"}], "]"}]}], " ", "-", " ", "\n", 
+                 "       ", 
+                 RowBox[{"30", "*", 
+                  RowBox[{"Pi", "^", "2"}], "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", 
+                    RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}]}], " ", "-", 
+                 " ", 
+                 RowBox[{"315", "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", 
+                    RowBox[{"mt", "^", "2"}], "]"}], "^", "4"}]}], " ", "+", 
+                 " ", 
+                 RowBox[{"2160", "*", 
+                  RowBox[{"HPL", "[", 
+                   RowBox[{
+                    RowBox[{"{", "3", "}"}], ",", " ", "v"}], "]"}], "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"1", " ", "-", " ", "v"}], "]"}]}], " ", "-", " ", 
+                 "\n", "       ", 
+                 RowBox[{"2880", "*", 
+                  RowBox[{"HPL", "[", 
+                   RowBox[{
+                    RowBox[{"{", "3", "}"}], ",", " ", "v"}], "]"}], "*", 
+                  RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", 
+                 RowBox[{"720", "*", 
+                  RowBox[{"HPL", "[", 
+                   RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"2", ",", " ", "1"}], "}"}], ",", " ", "v"}], 
+                   "]"}], "*", 
+                  RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", "\n", 
+                 "       ", 
+                 RowBox[{"420", "*", 
+                  RowBox[{"Pi", "^", "2"}], "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                  RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", 
+                 RowBox[{"780", "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", 
+                    RowBox[{"mt", "^", "2"}], "]"}], "^", "3"}], "*", 
+                  RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", "\n", 
+                 "       ", 
+                 RowBox[{"180", "*", 
+                  RowBox[{"Pi", "^", "2"}], "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                  RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", 
+                 RowBox[{"180", "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", 
+                    RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}], "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                  RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", "\n", 
+                 "       ", 
+                 RowBox[{"450", "*", 
+                  RowBox[{"Pi", "^", "2"}], "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "-", 
+                 " ", 
+                 RowBox[{"450", "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", 
+                    RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}], "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "+", 
+                 " ", "\n", "       ", 
+                 RowBox[{"180", "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "-", 
+                 " ", 
+                 RowBox[{"180", "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", "v", "]"}], "^", "3"}]}], " ", "-", 
+                 " ", "\n", "       ", 
+                 RowBox[{"60", "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", "v", "]"}], "^", "3"}]}], " ", "+", 
+                 " ", 
+                 RowBox[{"165", "*", 
+                  RowBox[{
+                   RowBox[{"Log", "[", "v", "]"}], "^", "4"}]}], " ", "+", 
+                 " ", 
+                 RowBox[{"60", "*", 
+                  RowBox[{"HPL", "[", 
+                   RowBox[{
+                    RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "*", 
+                  "\n", "        ", 
+                  RowBox[{"(", 
+                   RowBox[{
+                    RowBox[{"5", "*", 
+                    RowBox[{"Pi", "^", "2"}]}], " ", "-", " ", 
+                    RowBox[{"3", "*", 
+                    RowBox[{
+                    RowBox[{"Log", "[", 
+                    RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}]}], " ", "-", 
+                    " ", 
+                    RowBox[{"6", "*", 
+                    RowBox[{"Log", "[", 
+                    RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                    RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", 
+                    RowBox[{"18", "*", 
+                    RowBox[{"Log", "[", 
+                    RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                    RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", "\n", 
+                    "         ", 
+                    RowBox[{"27", "*", 
+                    RowBox[{
+                    RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}]}], ")"}]}], 
+                 " ", "-", " ", 
+                 RowBox[{"2160", "*", 
+                  RowBox[{"Log", "[", 
+                   RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                  RowBox[{"Zeta", "[", "3", "]"}]}]}], ")"}]}], ")"}], "/", 
+             RowBox[{"(", 
+              RowBox[{"90", "*", "v"}], ")"}]}], " ", "+", " ", "\n", "    ", 
+            
+            RowBox[{
+             RowBox[{"(", 
+              RowBox[{
+               RowBox[{"7560", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "5", "}"}], ",", " ", "v"}], "]"}]}], " ", "+",
+                " ", 
+               RowBox[{"1440", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", 
+                   RowBox[{"2", ",", " ", "3"}], "}"}], ",", " ", "v"}], 
+                 "]"}]}], " ", "+", " ", 
+               RowBox[{"2520", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", 
+                   RowBox[{"3", ",", " ", "2"}], "}"}], ",", " ", "v"}], 
+                 "]"}]}], " ", "+", " ", "\n", "      ", 
+               RowBox[{"218", "*", 
+                RowBox[{"Pi", "^", "4"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"mt", "^", "2"}], "]"}]}], " ", "+", " ", 
+               RowBox[{"120", "*", 
+                RowBox[{"Pi", "^", "2"}], "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"mt", "^", "2"}], "]"}]}], " ", "-", " ", "\n", 
+               "      ", 
+               RowBox[{"1440", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "4", "}"}], ",", " ", "v"}], "]"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"mt", "^", "2"}], "]"}]}], " ", "+", " ", 
+               RowBox[{"200", "*", 
+                RowBox[{"Pi", "^", "2"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], "^", "3"}]}], " ", "-", 
+               " ", 
+               RowBox[{"120", "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], "^", "5"}]}], " ", "+", 
+               " ", "\n", "      ", 
+               RowBox[{"36", "*", 
+                RowBox[{"Pi", "^", "4"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"1", " ", "-", " ", "v"}], "]"}]}], " ", "-", " ", 
+               RowBox[{"3240", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "4", "}"}], ",", " ", "v"}], "]"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"1", " ", "-", " ", "v"}], "]"}]}], " ", "-", " ", 
+               RowBox[{"157", "*", 
+                RowBox[{"Pi", "^", "4"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", "\n", 
+               "      ", 
+               RowBox[{"540", "*", 
+                RowBox[{"Pi", "^", "2"}], "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", 
+               RowBox[{"360", "*", 
+                RowBox[{
+                 RowBox[{"HPL", "[", 
+                  RowBox[{
+                   RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "^", 
+                 "2"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", "\n", 
+               "      ", 
+               RowBox[{"1080", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", 
+                   RowBox[{"2", ",", " ", "2"}], "}"}], ",", " ", "v"}], 
+                 "]"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", 
+               RowBox[{"630", "*", 
+                RowBox[{"Pi", "^", "2"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", "\n", 
+               "      ", 
+               RowBox[{"180", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", 
+               RowBox[{"285", "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], "^", "4"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", "\n", 
+               "      ", 
+               RowBox[{"120", "*", 
+                RowBox[{"Pi", "^", "2"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", 
+               RowBox[{"360", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", 
+                   RowBox[{"2", ",", " ", "1"}], "}"}], ",", " ", "v"}], 
+                 "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "+", " ", 
+               "\n", "      ", 
+               RowBox[{"420", "*", 
+                RowBox[{"Pi", "^", "2"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "-", " ", 
+               
+               RowBox[{"180", "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], "^", "3"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "-", " ", 
+               "\n", "      ", 
+               RowBox[{"150", "*", 
+                RowBox[{"Pi", "^", "2"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "-", " ", 
+               
+               RowBox[{"540", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "-", " ", 
+               "\n", "      ", 
+               RowBox[{"90", "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}], " ", "+", " ", 
+               
+               RowBox[{"10", "*", 
+                RowBox[{"Pi", "^", "2"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "3"}]}], " ", "+", " ", 
+               "\n", "      ", 
+               RowBox[{"540", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "3"}]}], " ", "+", " ", 
+               
+               RowBox[{"30", "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "3"}]}], " ", "+", " ", 
+               "\n", "      ", 
+               RowBox[{"120", "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "3"}]}], " ", "-", " ", 
+               
+               RowBox[{"60", "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "4"}]}], " ", "-", " ", 
+               "\n", "      ", 
+               RowBox[{"45", "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "4"}]}], " ", "+", " ", 
+               
+               RowBox[{"45", "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "5"}]}], " ", "+", " ", 
+               
+               RowBox[{"60", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "3", "}"}], ",", " ", "v"}], "]"}], "*", "\n", 
+                "       ", 
+                RowBox[{"(", 
+                 RowBox[{
+                  RowBox[{"13", "*", 
+                   RowBox[{"Pi", "^", "2"}]}], " ", "+", " ", 
+                  RowBox[{"6", "*", 
+                   RowBox[{"HPL", "[", 
+                    RowBox[{
+                    RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}]}], " ", 
+                  "+", " ", 
+                  RowBox[{"3", "*", 
+                   RowBox[{
+                    RowBox[{"Log", "[", 
+                    RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}]}], " ", "+", 
+                  " ", 
+                  RowBox[{"12", "*", 
+                   RowBox[{"Log", "[", 
+                    RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                   RowBox[{"Log", "[", "v", "]"}]}], " ", "+", " ", "\n", 
+                  "        ", 
+                  RowBox[{"36", "*", 
+                   RowBox[{"Log", "[", 
+                    RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                   RowBox[{"Log", "[", "v", "]"}]}], " ", "-", " ", 
+                  RowBox[{"30", "*", 
+                   RowBox[{
+                    RowBox[{"Log", "[", "v", "]"}], "^", "2"}]}]}], ")"}]}], 
+               " ", "+", " ", 
+               RowBox[{"540", "*", 
+                RowBox[{"Pi", "^", "2"}], "*", 
+                RowBox[{"Zeta", "[", "3", "]"}]}], " ", "-", " ", "\n", 
+               "      ", 
+               RowBox[{"5040", "*", 
+                RowBox[{"HPL", "[", 
+                 RowBox[{
+                  RowBox[{"{", "2", "}"}], ",", " ", "v"}], "]"}], "*", 
+                RowBox[{"Zeta", "[", "3", "]"}]}], " ", "-", " ", 
+               RowBox[{"360", "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", 
+                  RowBox[{"mt", "^", "2"}], "]"}], "^", "2"}], "*", 
+                RowBox[{"Zeta", "[", "3", "]"}]}], " ", "+", " ", "\n", 
+               "      ", 
+               RowBox[{"720", "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"mt", "^", "2"}], "]"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}], "*", 
+                RowBox[{"Zeta", "[", "3", "]"}]}], " ", "-", " ", 
+               RowBox[{"2160", "*", 
+                RowBox[{"Log", "[", 
+                 RowBox[{"1", " ", "-", " ", "v"}], "]"}], "*", 
+                RowBox[{"Log", "[", "v", "]"}], "*", 
+                RowBox[{"Zeta", "[", "3", "]"}]}], " ", "-", " ", "\n", 
+               "      ", 
+               RowBox[{"360", "*", 
+                RowBox[{
+                 RowBox[{"Log", "[", "v", "]"}], "^", "2"}], "*", 
+                RowBox[{"Zeta", "[", "3", "]"}]}], " ", "-", " ", 
+               RowBox[{"4680", "*", 
+                RowBox[{"Zeta", "[", "5", "]"}]}]}], ")"}], "/", 
+             RowBox[{"(", 
+              RowBox[{"90", "*", "v"}], ")"}]}]}], ")"}]}]}], ")"}]}]}]}], 
+    "\n", "]"}]}], "\n"}], "\n", 
+ RowBox[{
+  RowBox[{"s", "=", "5.3"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"t", "=", 
+   RowBox[{"-", "1.86"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"u", "=", "0"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"mt", "=", 
+   RowBox[{"Sqrt", "[", "0.1", "]"}]}], ";"}], "\n", 
+ RowBox[{"Print", "[", "\"\<Series expansion:\>\"", "]"}], "\n", 
+ RowBox[{
+  RowBox[{"Series", "[", 
+   RowBox[{
+    RowBox[{"integral", "[", 
+     RowBox[{"ep", ",", "s", ",", "t", ",", "u", ",", "mt"}], "]"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"ep", ",", "0", ",", "0"}], "}"}]}], "]"}], "//", "N"}]}], "Code",\
+
+ InitializationCell->False,
+ CellChangeTimes->{
+  3.79002603441746*^9, {3.7900261842521353`*^9, 3.790026206486739*^9}},
+ CellLabel->"In[16]:=",ExpressionUUID->"d0d2e817-2351-405e-9d36-d49292cacceb"],
+
+Cell[BoxData["\<\"Series expansion:\"\>"], "Print",
+ CellChangeTimes->{
+  3.790026038744433*^9, {3.790026195884989*^9, 3.790026209223084*^9}},
+ CellLabel->
+  "During evaluation of \
+In[16]:=",ExpressionUUID->"23806ca9-7e4b-41fe-ba18-4d6376db47fa"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{"0.8431327611806739`", "\[VeryThinSpace]", "-", 
+     RowBox[{"3.7659678659091282`", " ", "\[ImaginaryI]"}]}], ")"}], "+", 
+   InterpretationBox[
+    SuperscriptBox[
+     RowBox[{"O", "[", 
+      RowBox[{"ep", "+", "0.`"}], "]"}], "1"],
+    SeriesData[$CellContext`ep, 0., {}, 0, 1, 1],
+    Editable->False]}],
+  SeriesData[$CellContext`ep, 0., {
+    Complex[0.8431327611806739, -3.7659678659091282`]}, 0, 1, 1],
+  Editable->False]], "Output",
+ CellChangeTimes->{
+  3.790026038810997*^9, {3.790026195924025*^9, 3.790026209262898*^9}},
+ CellLabel->"Out[22]=",ExpressionUUID->"c9236e14-369a-41f8-9b37-9a080c16af20"]
+}, Open  ]]
+},
+WindowSize->{808, 852},
+WindowMargins->{{Automatic, 99}, {70, Automatic}},
+FrontEndVersion->"11.3 for Linux x86 (64-bit) (March 6, 2018)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 125, 2, 53, "Code",ExpressionUUID->"bdb2f9f3-e93c-403d-b8e8-3630b60174a9"],
+Cell[CellGroupData[{
+Cell[730, 28, 264, 5, 70, "Print",ExpressionUUID->"a715e489-58fe-4575-aa83-8fa1ee7e2c62"],
+Cell[997, 35, 238, 5, 25, "Print",ExpressionUUID->"19129ce3-d44b-4eea-97fb-e62e7639b371"],
+Cell[1238, 42, 254, 5, 25, "Print",ExpressionUUID->"b5f33d83-a132-4978-bd3b-479b72a7bcad"],
+Cell[1495, 49, 217, 4, 25, "Print",ExpressionUUID->"632f91d7-b92d-4435-9c27-fd82405ac7f5"],
+Cell[1715, 55, 222, 4, 25, "Print",ExpressionUUID->"23253c14-c26a-4aad-8b2e-e583d88e2848"],
+Cell[1940, 61, 299, 5, 48, "Print",ExpressionUUID->"ef154ee6-152e-40ae-80bb-fd060727b536"],
+Cell[2242, 68, 280, 5, 48, "Print",ExpressionUUID->"444b4d82-f656-4cb7-a06d-4f5a75672b41"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[2571, 79, 25390, 591, 1138, "Code",ExpressionUUID->"d0d2e817-2351-405e-9d36-d49292cacceb",
+ InitializationCell->False],
+Cell[27964, 672, 247, 5, 25, "Print",ExpressionUUID->"23806ca9-7e4b-41fe-ba18-4d6376db47fa"],
+Cell[28214, 679, 687, 17, 37, "Output",ExpressionUUID->"c9236e14-369a-41f8-9b37-9a080c16af20"]
+}, Open  ]]
+}
+]
+*)
+
