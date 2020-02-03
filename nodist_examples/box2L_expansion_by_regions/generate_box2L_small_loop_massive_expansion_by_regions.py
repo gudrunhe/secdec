@@ -7,6 +7,7 @@ from os import chdir
 import os
 import pySecDec as psd
 from pySecDec.algebra import Polynomial
+import re
 
 import sympy as sp
 import numpy as np
@@ -19,8 +20,8 @@ li = psd.loop_integral.LoopIntegralFromGraph(
 internal_lines = [['mt',[1,5]],['mt',[1,2]],['mt',[2,6]],[0,[6,4]],[0,[4,3]],[0,[3,5]],['mt',[5,6]]],
 external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
 
-powerlist=["1+n1","1+2*n1","1+3*n1","1+4*n1","1+5*n1","1+6*n1","1+7*n1"],
-regulators=["eps","n1"],
+powerlist=["1+n1","1+n1/2","1+n1/3","1+n1/5","1+n1/7","1+n1/11","1+n1/13"],
+regulators=["n1","eps"],
 Feynman_parameters=["x%i" % i for i in range(1,8)], # this renames the parameters, so we get the same polynomials as in the paper
 
 replacement_rules = [
@@ -45,7 +46,7 @@ replacement_rules = [
                         ('m2sq',0),
                         ('m3sq',0),
                         ('m4sq',0),
-                        ('mtsq', 'z*mtsq'),
+                        # ('mtsq', 'z*mtsq'),
                     ]
 )
 
@@ -107,21 +108,50 @@ tterm = f_new.coeffs[2]
 tterm2 = -sp.sympify("x2*x5*x7")
 assert (tterm-tterm2).simplify()==0
 
+mtsqterm2 = sp.sympify("((x1+x2+x3)*(x4+x5+x6)+(x1+x2+x3+x4+x5+x6)*x7)*(x1+x2+x3+x7)") * sp.sympify("mtsq")
+sterm2 = -sp.sympify("x1*(x4*(x6+x7)+x3*(x4+x5+x6+x7))+x6*((x2+x3)*x4+(x3+x4)*x7)") * sp.sympify("s")
+tterm2 = -sp.sympify("x2*x5*x7") * sp.sympify("t")
+
+F = mtsqterm2+sterm2+tterm2
+
+print((F-sp.sympify(li.F)).expand().simplify())
+
 print("mtsqterm eq",(mtsqterm-mtsqterm2).simplify()==0)
 print("sterm eq",(sterm-sterm2).simplify()==0)
 print("tterm eq",(tterm-tterm2).simplify()==0)
 
+mathematica_vectors = "{0, -1, -1, -1, 0, 0, -1}, {0, -1, -1, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, -1}, {0, 0, 0, 0, 0, 0, 0}, {0, 0, 1, 1, 1, 0, 0}, {0, 0, 1, 1, 1, 1, 1}, {0, 1, 1, 1, 0, 0, 0}"
+mathematica_vectors = re.findall(r"{(.*?)}",mathematica_vectors)
+mathematica_vectors = np.array( [ np.array([int(el) for el in vec.split(",")]) for vec in mathematica_vectors])
+mathematica_vectors = np.array([ vec+max(0,-np.min(vec)) for vec in mathematica_vectors])
+mathematica_vectors = np.array(sorted(mathematica_vectors, key=lambda x: "".join(str(y) for y in x)))
+print(f"Mathematica vectors:\n{mathematica_vectors}")
+
+paper_vectors = "(0, 0, 0, 0, 0, 0, 0), (0, 0, 1, 1, 1, 0, 0), (0, 1, 1, 1, 0, 0, 0), (1, 0, 0, 0, 1, 1, 0), (1, 1, 0, 0, 0, 1, 0), (0, 0, 1, 1, 1, 1, 1), (1, 0, 0, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1, 0)"
+paper_vectors = re.findall(r"\((.*?)\)",paper_vectors)
+paper_vectors = np.array( [ np.array([int(el) for el in vec.split(",")]) for vec in paper_vectors])
+paper_vectors = np.array([ vec+max(0,-np.min(vec)) for vec in paper_vectors])
+paper_vectors = np.array(sorted(paper_vectors, key=lambda x: "".join(str(y) for y in x)))
+print(f"Paper vectors:\n{paper_vectors}")
+
+# note that one output folder for one region is not generated, because it has no 0th order term
 if 1:
 # if 0:
-    if isdir("box2L_big_loop_massive_expansion_by_regions"):
-        rmtree("box2L_big_loop_massive_expansion_by_regions")
+    # if isdir("box2L_small_loop_massive_expansion_by_regions"):
+    #     rmtree("box2L_small_loop_massive_expansion_by_regions")
+    if isdir("tempdir"):
+        rmtree("tempdir")
     generators_args = psd.loop_integral.loop_regions(
         name = "box2L_small_loop_massive_expansion_by_regions",
+        # name = "tempdir",
         loop_integral=li,
-        smallness_parameter = "z",
-        expansion_by_regions_order=0)
+        smallness_parameter = "mtsq",
+        expansion_by_regions_order=0,processes=1)
 
-    psd.code_writer.sum_package("box2L_expansion_by_regions", [psd.make_package]*len(generators_args), generators_args, li.regulators,
+    for arg in generators_args:
+        print(arg["name"])
+
+    psd.code_writer.sum_package("box2L_small_loop_massive_expansion_by_regions", [psd.make_package]*len(generators_args), generators_args, li.regulators,
                 requested_orders = [0,0],
                 real_parameters = ['s','t','u','mtsq'], complex_parameters = [])
 
