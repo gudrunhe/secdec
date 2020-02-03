@@ -19,8 +19,8 @@ li = psd.loop_integral.LoopIntegralFromGraph(
 internal_lines = [['mt',[1,5]],['mt',[1,2]],['mt',[2,6]],['mt',[6,4]],['mt',[4,3]],['mt',[3,5]],[0,[5,6]]],
 external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
 
-# powerlist=["1+n1","1+2*n1","1+3*n1","1+4*n1","1+5*n1","1+6*n1","1+7*n1"],
-regulators=["eps"],
+powerlist=["1+n1","1+n1/2","1+n1/3","1+n1/5","1+n1/7","1+n1/11","1+n1/13"],
+regulators=["n1","eps"],
 Feynman_parameters=["x%i" % i for i in range(1,8)], # this renames the parameters, so we get the same polynomials as in the paper
 
 replacement_rules = [
@@ -43,20 +43,9 @@ replacement_rules = [
                         ('m2sq',0),
                         ('m3sq',0),
                         ('m4sq',0),
-                        ('mtsq', 'z*mtsq'),
+                        # ('mtsq', 'z*mtsq'),
                     ]
 )
-
-def f(s,t,u, mtsq):
-    """
-    The resulting function of the integral from 1812.04373.
-
-    Expected Result from the paper for ['s','t','u','mtsq'] = [4.0, -2.82842712475, -2.82842712475, 0.1]:
-    (-1.30718609739+1.85618421207j)
-    """
-    v = -t/s
-    lsm = np.log(complex(s/mtsq))
-    return 1/(s**2*v)*(np.pi**2-2*(lsm-1j*np.pi)*(lsm+np.log(complex(v))))
 
 def fourvec(m,p):
     # creates a four-vector from the mass and the momentum three-vector
@@ -116,15 +105,15 @@ if 1:
     generators_args = psd.loop_integral.loop_regions(
         name = "box2L_big_loop_massive_expansion_by_regions",
         loop_integral=li,
-        smallness_parameter = "z",
+        smallness_parameter = "mtsq",
         expansion_by_regions_order=0,
-        add_monomial_regulator_power="n1")
-    for x in generators_args:
-        print(x["name"])
+        )
+    # for x in generators_args:
+    #     print(x["name"])
     # generators_args = generators_args[:1]
     if __name__ == "__main__":
         psd.code_writer.sum_package("box2L_big_loop_massive_expansion_by_regions", [psd.make_package]*len(generators_args), generators_args, li.regulators,
                     requested_orders = [0,0],
-                    real_parameters = ['s','t','u','mtsq','z'], complex_parameters = [])
+                    real_parameters = ['s','t','u','mtsq'], complex_parameters = [])
 
     import configure
