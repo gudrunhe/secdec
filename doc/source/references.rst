@@ -81,13 +81,16 @@ References
             | `arXiv:1111.0868 <http://arxiv.org/abs/1111.0868>`_
 
 .. [PSD17]  | S. Borowka, G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, J. Schlenk, T. Zirke,
-              *pySecDec: A toolbox for the numerical evaluation of multi-scale integrals*, 2018, Comput.Phys.Comm.222,
+              *pySecDec: A toolbox for the numerical evaluation of
+	      multi-scale integrals*, Comput.Phys.Comm. 222 (2018),
             | `doi:10.1016/j.cpc.2017.09.015 <http://dx.doi.org/10.1016/j.cpc.2017.09.015>`_,
             | `arXiv:1703.09692 <http://arxiv.org/abs/1703.09692>`_
 
 .. [PSD18]  | S. Borowka, G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, J. Schlenk,
-              *A GPU compatible quasi-Monte Carlo integrator interfaced to pySecDec*,
-            | `arXiv:1811.11720 <http://arxiv.org/abs/1811.11720>`_
+              *A GPU compatible quasi-Monte Carlo integrator
+	      interfaced to pySecDec*, Comput.Phys.Commun. 240 (2019),
+            | `doi:10.1016/j.cpc.2019.02.015 <http://dx.doi.org/10.1016/j.cpc.2019.02.015>`_,
+	    | `arXiv:1811.11720 <http://arxiv.org/abs/1811.11720>`_
 
 .. [RUV17]  | B. Ruijl, T. Ueda, J. Vermaseren,
               *FORM version 4.2*,
