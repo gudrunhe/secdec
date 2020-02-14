@@ -1,5 +1,174 @@
 matrix:
   include:
+    # Concurrent osx jobs is limited to 2 while up to 5 jobs may run
+    # simultaneously. With the osx jobs on top, the osx jobs will be
+    # queued first, not last.
+    - os: osx
+      osx_image: xcode9.4
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.5.4
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode9.4
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.6.0
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode10
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.6.0
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode10.1
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.6.0
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode10.2
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.6.2
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode10.3
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.4.0
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode10.3
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.5.4
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode10.3
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.7.3
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode11
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.7.3
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using pip rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode11
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.7.4
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using pip rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode11.1
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.8.1
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using pip rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode11.2
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.8.1
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using pip rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz || brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode11.3
+      language: c++
+      compiler: clang
+      env:
+        - NORMALIZ_VERSION=3.8.2
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
+        - brew update
+        # install numpy using pip rather than homebrew
+        - brew uninstall numpy --ignore-dependencies
+        - brew install graphviz || brew link --overwrite python
+
     - os: linux
       addons:
         apt:
@@ -274,172 +443,6 @@ matrix:
       before_install:
         - eval ${MATRIX_EVAL}
       language: python
-
-    - os: osx
-      osx_image: xcode9.4
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.5.4
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode9.4
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.6.0
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode10
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.6.0
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode10.1
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.6.0
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode10.2
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.6.2
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode10.3
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.4.0
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode10.3
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.5.4
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode10.3
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.7.3
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode11
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.7.3
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        # install numpy using pip rather than homebrew
-        - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode11
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.7.4
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        # install numpy using pip rather than homebrew
-        - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode11.1
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.8.1
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        # install numpy using pip rather than homebrew
-        - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode11.2
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.8.1
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        # install numpy using pip rather than homebrew
-        - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz || brew link --overwrite python
-
-    - os: osx
-      osx_image: xcode11.3
-      language: c++
-      compiler: clang
-      env:
-        - NORMALIZ_VERSION=3.8.2
-        - PYTHON_INSTALL='sudo -H pip install'
-      before_install:
-        # update brew first, work around https://github.com/Homebrew/brew/issues/3299
-        - brew update
-        # install numpy using pip rather than homebrew
-        - brew uninstall numpy --ignore-dependencies
-        - brew install graphviz || brew link --overwrite python
 
 install:
   - export PROCESSES=4
