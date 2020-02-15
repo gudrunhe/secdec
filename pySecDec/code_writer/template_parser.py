@@ -4,6 +4,7 @@ Functions to generate c++ sources from template files.
 """
 
 import os
+import re
 
 def parse_template_file(src, dest, replacements={}):
     '''
@@ -42,12 +43,36 @@ def parse_template_file(src, dest, replacements={}):
     with open(src, 'r') as src_file:
         string = src_file.read()
 
-    # apply replacements
-    string = string % replacements
-
     # write parsed file
     with open(dest, 'w') as dest_file:
-        dest_file.write(string)
+        def write_large(file,bigtext):
+            textsize = len(bigtext)
+            chunksize = 1000*10**6
+            chunks = textsize//chunksize+1
+            for chunk in range(chunks):
+                dest_file.write(bigtext[chunk*chunksize:(chunk+1)*chunksize])
+                dest_file.flush()
+
+        def recursive_write(file, text, unflushedlen = [0]):
+            if type(text) == list:
+                for part in text:
+                    recursive_write(file,part,unflushedlen)
+                return
+            if type(text) is not str:
+                text = str(text)
+            # file.write(text)
+            write_large(file,text)
+            unflushedlen[0] += len(text)
+            if unflushedlen[0] > 10**9:
+                file.flush()
+                unflushedlen[0] = 0
+
+        dest_file_parts = re.split("%\((.*?)\)s",string)
+        dest_file.write(dest_file_parts[0] % replacements)
+        for n in range(1,len(dest_file_parts),2):
+            bigtext = replacements[dest_file_parts[n]]
+            recursive_write(dest_file, bigtext)
+            dest_file.write(dest_file_parts[n+1] % replacements)
 
 def parse_template_tree(src, dest, replacements_in_files={}, filesystem_replacements={}):
     '''

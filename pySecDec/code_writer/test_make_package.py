@@ -293,6 +293,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         expression = Sum(x**2, y**2)
         limit = 20
         FORM_code = _make_FORM_function_definition(name, expression, None, limit)
+        FORM_code = ''.join(FORM_code)
 
         target_FORM_code  = "  Id symbol = SecDecInternalfDUMMYsymbolPart0+SecDecInternalfDUMMYsymbolPart1;\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYsymbolPart0 =  + (1)*x^2;\n"
@@ -310,6 +311,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         expression = Sum(Sum(x**2 + 10 * y, x**2 + 10 * y), y * x)
         limit = 20
         FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
+        FORM_code = ''.join(FORM_code)
 
         target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y)+SecDecInternalfDUMMYmyNamePart1(x,y);\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)+SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y);\n"
@@ -329,6 +331,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         expression = Sum(Product(x + 2 * y, x**2 + 10 * y), y * x)
         limit = 20
         FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
+        FORM_code = ''.join(FORM_code)
 
         target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y)+SecDecInternalfDUMMYmyNamePart1(x,y);\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y);\n"
@@ -348,6 +351,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         expression = ProductRule(Sum(x**2 + 10 * y, y * x), x**2 + 10 * y)
         limit = 20
         FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
+        FORM_code = ''.join(FORM_code)
 
         target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y);\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y)*SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part2(x,y);\n"
@@ -369,6 +373,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         expression = (x**2 + 10 * y + y * x) * (x**2 + 10 * y)
         limit = 20
         FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
+        FORM_code = ''.join(FORM_code)
 
         # ``expression`` has type `Polynomial` --> fall back to rescue since splitting is not implemented
         target_FORM_code  = "  Id myName(x?,y?) =  + (100)*y^2 + (10)*x*y^2 + (20)*x^2*y + (1)*x^3*y + (1)*x^4;\n"

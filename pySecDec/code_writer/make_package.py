@@ -471,18 +471,20 @@ def _make_FORM_function_definition(name, expression, args, limit):
 
     def recursion(name, expression):
         str_expression = str(expression)
+        expression.clear_cache()
 
         if len(str_expression) <= limit: # no need to split
-            codelines.append( "  Id %s = %s;" % (name+FORM_args_left_hand_side,str_expression) )
+            codelines.append( ("  Id %s = %s;\n" % (name+FORM_args_left_hand_side,str_expression)).replace("**","^") )
             return
 
         if type(expression) is ProductRule:
             expression = expression.to_sum()
 
         if type(expression) is Sum:
+            del str_expression
             name_next_level = internal_prefix+'fDUMMY'+name+'Part'
             codelines.append(
-                "  Id %s = %s;" % (
+                "  Id %s = %s;\n" % (
                     name+FORM_args_left_hand_side,
                     '+'.join( name_next_level+str(i)+FORM_args_right_hand_side for i in range(len(expression.summands)) )
                 )
@@ -492,9 +494,10 @@ def _make_FORM_function_definition(name, expression, args, limit):
             return
 
         if type(expression) is Product:
+            del str_expression
             name_next_level = internal_prefix+'fDUMMY'+name+'Part'
             codelines.append(
-                "  Id %s = %s;" % (
+                "  Id %s = %s;\n" % (
                     name+FORM_args_left_hand_side,
                     '*'.join( name_next_level+str(i)+FORM_args_right_hand_side for i in range(len(expression.factors)) )
                 )
@@ -505,12 +508,11 @@ def _make_FORM_function_definition(name, expression, args, limit):
 
         # rescue: print warning and write unsplit expression
         print( 'WARNING: Could not split "%s" (not implemented for %s)' % (name,type(expression)) )
-        codelines.append( "  Id %s = %s;" % (name+FORM_args_left_hand_side,str_expression) )
+        codelines.append( ("  Id %s = %s;\n" % (name+FORM_args_left_hand_side,str_expression)).replace("**","^") )
         return
 
     recursion(name, expression)
-    codelines.append('') # empty line
-    return (  "\n".join(codelines)  ).replace('**','^')
+    return codelines
 
 def _make_FORM_shifted_orders(positive_powers):
     r'''
@@ -1317,27 +1319,27 @@ def _process_secondary_sector(environment):
                 for i,outer_var in enumerate(integration_variables)
             for multiindex in chain([[0]*len(integration_variables)], symbolic_deformed_variables[i].derivative_tracks.keys())
         )
-        FORM_deformed_integration_variable_definitions = ''.join(
+        FORM_deformed_integration_variable_definitions = list(
             _make_FORM_function_definition(
                 name, deformed_integration_variable_derivatives[name], integration_variables, limit=10**6
             )
             for name in ordered_deformed_integration_variable_derivative_names
         )
-        FORM_contourdef_Jacobian_derivative_definitions = ''.join(
+        FORM_contourdef_Jacobian_derivative_definitions = list(
             _make_FORM_function_definition(
                 name, contourdef_Jacobian_derivatives[name], integration_variables, limit=10**6
             )
             for name in ordered_contourdef_Jacobian_derivative_names
         )
-    FORM_cal_I_definitions = ''.join(
+    FORM_cal_I_definitions = list(
         _make_FORM_function_definition(name, cal_I_derivatives[name], symbols_other_polynomials, limit=10**6)
         for name in ordered_cal_I_derivative_names
     )
-    FORM_other_definitions = ''.join(
+    FORM_other_definitions = list(
         _make_FORM_function_definition(name, other_derivatives[name], symbols_remainder_expression, limit=10**6)
         for name in ordered_other_derivative_names
     )
-    FORM_decomposed_definitions = ''.join(
+    FORM_decomposed_definitions = list(
         _make_FORM_function_definition(name, decomposed_derivatives[name], symbols_remainder_expression, limit=10**6)
         for name in ordered_decomposed_derivative_names
     )
@@ -1366,6 +1368,9 @@ def _process_secondary_sector(environment):
     parse_template_file(os.path.join(template_sources, 'codegen', 'sector.h'), # source
                         os.path.join(name,             'codegen', 'sector%i.h' % sector_index), # dest
                         template_replacements)
+    for key in 'functions', 'cal_I_derivatives', 'decomposed_polynomial_derivatives','insert_cal_I_procedure','insert_other_procedure','insert_decomposed_procedure', \
+            'integrand_definition_procedure','sector_container_initializer','highest_regulator_poles','regulator_powers','number_of_orders':
+        del template_replacements[key]
 
     if contour_deformation_polynomial is not None:
         # parse template file "contour_deformation.h"
@@ -1380,6 +1385,10 @@ def _process_secondary_sector(environment):
         parse_template_file(os.path.join(template_sources, 'codegen', 'contour_deformation.h'), # source
                             os.path.join(name,             'codegen', 'contour_deformation_sector%i.h' % sector_index), # dest
                             template_replacements)
+        for key in 'contourdef_Jacobian_derivative_functions','deformed_integration_variable_derivative_functions','contour_deformation_polynomial','positive_polynomials', \
+                'nullify_vanishing_deformed_integration_variable_calls_procedure','insert_deformed_integration_variables_procedure','insert_contourdef_Jacobian_derivatives_procedure', \
+                'deformation_parameters':
+            del template_replacements[key]
 
     return lowest_orders, function_declarations, this_pole_structures
 
