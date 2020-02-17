@@ -669,11 +669,10 @@ class MaxDegreeFunction(Function):
     def get_maxdegrees(expression, ignore_subclass, indices=None):
         if indices is None:
             indices = range(expression.number_of_variables)
-        condition = isinstance(expression, Polynomial) if ignore_subclass else type(expression) is Polynomial
-        if condition:
+        if (isinstance(expression, Polynomial) if ignore_subclass else type(expression) is Polynomial):
             maxdegrees = np.zeros_like(expression.expolist[0]) + np.inf
-            maxdegrees[indices] = expression.expolist.max(axis=0)[indices]
-            maxdegrees[maxdegrees < 0] = np.inf # Taylor series of ``1/x^n`` with ``n > 0`` never truncates
+            maxdegrees[indices] = expression.expolist[:,indices].max(axis=0)
+            maxdegrees[expression.expolist.min(axis=0) < 0] = np.inf # Taylor series of ``1/x^n`` with ``n > 0`` never truncates
         else:
             maxdegrees = np.array( [np.inf] * expression.number_of_variables )
         return maxdegrees

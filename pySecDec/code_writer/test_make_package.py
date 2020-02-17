@@ -976,3 +976,137 @@ class TestRealPartFunction(unittest.TestCase):
         Re_x0 = RealPartFunction('Re', self.variables[0]*self.variables[1]*self.variables[1])
         dRe_x0d1 = Re_x0.derive(1)
         self.assertEqual( sp.sympify(dRe_x0d1.derive(0)) , sp.sympify('Re(2*x1)') )
+
+class TestMaxDegreeFunction(unittest.TestCase):
+    def setUp(self):
+        self.polynomial = Polynomial([[0,1,3],[-1,2,1]],[1,2])
+        self.exponentiated_polynomial = ExponentiatedPolynomial(self.polynomial.expolist, self.polynomial.coeffs, exponent='exponent')
+        self.target_maxdegrees = [np.inf,2,3]
+
+
+        polysymbols = self.polynomial.polysymbols
+        self.variables = [Polynomial.from_expression(x, polysymbols) for x in polysymbols]
+        self.variables[-1] = self.variables[-1]**2
+
+    #@attr('active')
+    def test_derivative_and_copy(self):
+        maxdegrees = np.array([0,1,2])
+        f = MaxDegreeFunction('f', *self.variables, maxdegrees=maxdegrees)
+
+        self.assertEqual( sp.sympify(f) , sp.sympify('f(x0,x1,x2**2)') )
+
+        derivative = f.derive(0)
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+
+        derivative = f.derive(1)
+        self.assertEqual( sp.sympify(f.derive(1)) , sp.sympify('dfd1(x0,x1,x2**2)') )
+        derivative = derivative.derive(1)
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+
+        derivative = f.derive(2)
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('2*x2*dfd2(x0,x1,x2**2)') )
+        derivative = derivative.derive(2)
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('2*dfd2(x0,x1,x2**2)+4*x2**2*ddfd2d2(x0,x1,x2**2)') )
+        derivative = derivative.derive(2)
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('4*x2*ddfd2d2(x0,x1,x2**2)+8*x2*ddfd2d2(x0,x1,x2**2)') )
+        derivative = derivative.derive(2).copy()
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('4*ddfd2d2(x0,x1,x2**2)+8*ddfd2d2(x0,x1,x2**2)') )
+        derivative = derivative.derive(2)
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+
+        derivative = f.derive(2).derive(1).copy()
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('2*x2*ddfd1d2(x0,x1,x2**2)') )
+        derivative = derivative.derive(2)
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('2*ddfd1d2(x0,x1,x2**2)+4*x2**2*dddfd1d2d2(x0,x1,x2**2)') )
+        self.assertEqual( sp.sympify(derivative.derive(0)) , sp.sympify('0') )
+        self.assertEqual( sp.sympify(derivative.derive(1)) , sp.sympify('0') )
+        derivative = derivative.derive(2).copy()
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('4*x2*dddfd1d2d2(x0,x1,x2**2)+8*x2*dddfd1d2d2(x0,x1,x2**2)') )
+        self.assertEqual( sp.sympify(derivative.derive(0)) , sp.sympify('0') )
+        self.assertEqual( sp.sympify(derivative.derive(1)) , sp.sympify('0') )
+        derivative = derivative.derive(2)
+        self.assertEqual( sp.sympify(derivative) , sp.sympify('12*dddfd1d2d2(x0,x1,x2**2)') )
+        self.assertEqual( sp.sympify(derivative.derive(0)) , sp.sympify('0') )
+        self.assertEqual( sp.sympify(derivative.derive(1)) , sp.sympify('0') )
+        self.assertEqual( sp.sympify(derivative.derive(2)) , sp.sympify('0') )
+
+    #@attr('active')
+    def test_replace(self):
+        maxdegrees = np.array([0,1,2])
+        f0 = MaxDegreeFunction('f', *self.variables, maxdegrees=maxdegrees).replace(1,1,remove=True)
+        f1 = MaxDegreeFunction('f', *self.variables, maxdegrees=maxdegrees).replace(1,1,remove=False)
+
+        for f in [f0,f1]:
+            self.assertEqual( sp.sympify(f) , sp.sympify('f(x0,1,x2**2)') )
+
+        for derivative in [f0.derive(0),f1.derive(0)]:
+            self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+
+        for f in [f0,f1]:
+            derivative = f.derive(-1)
+            self.assertEqual( sp.sympify(derivative) , sp.sympify('2*x2*dfd2(x0,1,x2**2)') )
+            derivative = derivative.derive(-1).copy()
+            self.assertEqual( sp.sympify(derivative) , sp.sympify('2*dfd2(x0,1,x2**2)+4*x2**2*ddfd2d2(x0,1,x2**2)') )
+            derivative = derivative.derive(-1).copy()
+            self.assertEqual( sp.sympify(derivative) , sp.sympify('4*x2*ddfd2d2(x0,1,x2**2)+8*x2*ddfd2d2(x0,1,x2**2)') )
+            derivative = derivative.derive(-1).copy()
+            self.assertEqual( sp.sympify(derivative) , sp.sympify('4*ddfd2d2(x0,1,x2**2)+8*ddfd2d2(x0,1,x2**2)') )
+            derivative = derivative.derive(-1).copy()
+            self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+
+    #@attr('active')
+    def test_get_maxdegrees(self):
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.polynomial, ignore_subclass=False),
+            self.target_maxdegrees
+        )
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.polynomial, ignore_subclass=True),
+            self.target_maxdegrees
+        )
+
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.polynomial, ignore_subclass=False, indices=[0,2]),
+            (self.target_maxdegrees[0],np.inf,self.target_maxdegrees[2])
+        )
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.polynomial, ignore_subclass=True, indices=[0,2]),
+            (self.target_maxdegrees[0],np.inf,self.target_maxdegrees[2])
+        )
+
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.polynomial, ignore_subclass=False, indices=[1]),
+            (np.inf,self.target_maxdegrees[1],np.inf)
+        )
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.polynomial, ignore_subclass=True, indices=[1]),
+            (np.inf,self.target_maxdegrees[1],np.inf)
+        )
+
+
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.exponentiated_polynomial, ignore_subclass=False),
+            [np.inf] * 3
+        )
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.exponentiated_polynomial, ignore_subclass=True),
+            self.target_maxdegrees
+        )
+
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.exponentiated_polynomial, ignore_subclass=False, indices=[0,2]),
+            [np.inf] * 3
+        )
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.exponentiated_polynomial, ignore_subclass=True, indices=[0,2]),
+            (self.target_maxdegrees[0],np.inf,self.target_maxdegrees[2])
+        )
+
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.exponentiated_polynomial, ignore_subclass=False, indices=[1]),
+            [np.inf] * 3
+        )
+        np.testing.assert_array_equal(
+            MaxDegreeFunction.get_maxdegrees(self.exponentiated_polynomial, ignore_subclass=True, indices=[1]),
+            (np.inf,self.target_maxdegrees[1],np.inf)
+        )
