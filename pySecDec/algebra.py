@@ -1394,7 +1394,7 @@ class ProductRule(_Expression):
 
         # generate missing derivatives
         # do not make a copy since it does not hurt having the child point to the same ``expressions``
-        for term in new_factorlist:
+        for n, term in enumerate(new_factorlist):
             for derivative_multiindex, expression in zip(term, self.expressions):
                 derivative_multiindex = tuple(derivative_multiindex)
                 try:
@@ -1405,6 +1405,11 @@ class ProductRule(_Expression):
                     lower_derivative_multiindex = tuple(lower_derivative_multiindex)
                     lower_derivative = expression[lower_derivative_multiindex]
                     expression[derivative_multiindex] = lower_derivative.derive(index).simplify() # automatically simplify cache
+                # set the coefficent to zero if the derivative is zero, so that it doesn't get outputted in str()
+                if new_coeffs[n] != 0 and isinstance(expression[derivative_multiindex], Polynomial) and not np.any(expression[derivative_multiindex].expolist):
+                    if sp.sympify(expression[derivative_multiindex]).simplify() == 0:
+                        new_coeffs[n] = 0
+
 
         return ProductRule(internal_regenerate=True, copy=False,
                            factorlist=new_factorlist, coeffs=new_coeffs,
