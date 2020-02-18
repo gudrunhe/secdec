@@ -1070,13 +1070,25 @@ def _process_secondary_sector(environment):
 
     # define ``cal_I``, the part of the integrand that does not lead to poles
     # use the derivative tracking dummy functions for the polynomials --> faster
-    cal_I = Product(symbolic_remainder_expression, *chain([Jacobian.factors[1]], symbolic_polynomials_to_decompose, symbolic_other_polynomials), copy=False)
+    # don't use symbolic names for constant factors in the cal_I --> derivatives of cal_I much shorter
+    def is_constant(poly):
+        if isinstance(poly,Polynomial) and not np.any(poly.expolist):
+            return True
+        return False
+    nontrivial_symbolic_polynomials_to_decompose = [poly.factors[1] if is_constant(poly.factors[1]) else symbolic_poly for symbolic_poly,poly in zip(symbolic_polynomials_to_decompose,sector.cast)]
+    nontrivial_symbolic_other_polynomials = [poly.factors[1] if is_constant(poly.factors[1]) else symbolic_poly for symbolic_poly,poly in zip(symbolic_other_polynomials,sector.other)]
+    nontrivial_remainder_expression = this_primary_sector_remainder_expression if is_constant(this_primary_sector_remainder_expression) else symbolic_remainder_expression
+    cal_I = Product(nontrivial_remainder_expression, *chain([Jacobian.factors[1]], nontrivial_symbolic_polynomials_to_decompose, nontrivial_symbolic_other_polynomials), copy=False)
 
     # multiply Jacobian determinant to `cal_I`
     if contour_deformation_polynomial is not None:
         symbolic_contourdef_Jacobian = Function(FORM_names['contourdef_Jacobian'], *elementary_monomials[:len(integration_variables)])
         symbolic_additional_deformation_factor = Function(FORM_names['additional_deformation_factor'], *elementary_monomials)
-        cal_I = Product(symbolic_contourdef_Jacobian, symbolic_additional_deformation_factor, cal_I)
+        nontrivial_symbolic_contourdef_Jacobian = contourdef_Jacobian_determinant if is_constant(contourdef_Jacobian_determinant) else symbolic_contourdef_Jacobian
+        nontrivial_symbolic_additional_deformation_factor = additional_deformation_factor if is_constant(additional_deformation_factor) else symbolic_additional_deformation_factor
+        cal_I = Product(nontrivial_symbolic_contourdef_Jacobian, nontrivial_symbolic_additional_deformation_factor, cal_I)
+
+    cal_I.simplify()
 
     # it is faster to use a dummy function for ``cal_I`` and substitute back in FORM
     symbolic_cal_I = Function(FORM_names['cal_I'], *elementary_monomials)
