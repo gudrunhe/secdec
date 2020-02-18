@@ -727,7 +727,7 @@ class MaxDegreeFunction(Function):
 
     def derive(self, index):
         # modified `derive` of the base class
-        def super_derive(self, index, new_maxdegrees): #modification: additional argument `new_maxdegrees`
+        def super_derive(self, index):
             '''
             Generate the derivative by the parameter indexed `index`.
             The derivative of a function with `symbol` ``f`` by
@@ -744,6 +744,9 @@ class MaxDegreeFunction(Function):
 
             summands = []
             for argindex, arg in enumerate(self.arguments):
+                if self.maxdegrees[argindex] <= 0:
+                    continue
+
                 if self.differentiated_args[argindex, index] is None:
                     differentiated_arg = arg.derive(index)
                     self.differentiated_args[argindex, index] = differentiated_arg
@@ -765,6 +768,8 @@ class MaxDegreeFunction(Function):
                     ''.join( ('d%i' %argindex) * howmany for argindex,howmany in enumerate(new_multiindex) )
 
                 self.derivative_symbols.add(derivative_symbol)
+                new_maxdegrees = self.maxdegrees[:]
+                new_maxdegrees[argindex] -= 1
                 summands.append(
                                 ProductRule(    # chain rule
                                                 differentiated_arg,
@@ -783,11 +788,7 @@ class MaxDegreeFunction(Function):
 
             return derivative
 
-        new_maxdegrees = list(self.maxdegrees)
-        new_maxdegrees[index] -= 1
-        if new_maxdegrees[index] < 0:
-            return Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([0]), self.symbols, copy=False)
-        derivative = super_derive(self,index, new_maxdegrees)
+        derivative = super_derive(self,index)
         return derivative
 
     def copy(self):
@@ -797,11 +798,7 @@ class MaxDegreeFunction(Function):
 
     def replace(self, index, value, remove=False):
         replacement = super(MaxDegreeFunction, self).replace(index, value, remove)
-        if index == -1:
-            replacement.maxdegrees = list(self.maxdegrees)
-            replacement.maxdegrees.pop()
-        else:
-            replacement.maxdegrees = self.maxdegrees[:index] + self.maxdegrees[index+1:]
+        replacement.maxdegrees = list(self.maxdegrees)
         return replacement
 
 def _make_environment(original_environment):
@@ -983,7 +980,6 @@ def _process_secondary_sector(environment):
                                   *(elementary_monomials if contour_deformation_polynomial is None else symbolic_deformed_variables),
                                   maxdegrees=MaxDegreeFunction.get_maxdegrees(
                                                                                   sector.cast[i].factors[1],
-                                                                                  indices=None if contour_deformation_polynomial is None else regulator_indices,
                                                                                   ignore_subclass=True
                                                                              )
                                   ),
