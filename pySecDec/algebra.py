@@ -226,7 +226,7 @@ class Function(_Expression):
                 else:
                     # must compute the derivative from a lower derivative
                     index, lower_multiindex = recipies[multiindex]
-                    required_derivative = update(repository, lower_multiindex, recipies, expression).simplify().derive(index)
+                    required_derivative = update(repository, lower_multiindex, recipies, expression).derive(index).simplify()
                     repository[multiindex] = required_derivative
                     return required_derivative
 
@@ -235,7 +235,7 @@ class Function(_Expression):
 
         derivatives = {}
         for multiindex in self.derivative_tracks.keys():
-            update(derivatives, multiindex, self.derivative_tracks, expression)
+            update(derivatives, multiindex, self.derivative_tracks, expression.simplify())
 
         return derivatives
 
