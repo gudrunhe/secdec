@@ -218,11 +218,12 @@ def det(M):
         return sub_indices
 
     # resolve the first row of the matix
-    result = 0
     for i in range(D):
         sub_M = M[[[k] for k in range(1,D)],sub_indices(i)]
         term = M[0,i] * det(sub_M) # recursion
-        if is_even(i):
+        if i == 0:
+            result = term
+        elif is_even(i):
             result += term
         else:
             result -= term
