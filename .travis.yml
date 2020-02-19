@@ -473,4 +473,4 @@ script:
   - nosetests --processes=${PROCESSES} --process-timeout=${NOSETESTS_TIMEOUT}
   - make util-check -j${PROCESSES}
   - make doctest -j${PROCESSES}
-  - make -C high_level_tests runselected -j${PROCESSES} && make -C high_level_tests summarize-selected
+  - make -C high_level_tests runtests -j${PROCESSES} && make -C high_level_tests summarize
