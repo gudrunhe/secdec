@@ -375,8 +375,12 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
         FORM_code = ''.join(FORM_code)
 
-        # ``expression`` has type `Polynomial` --> fall back to rescue since splitting is not implemented
-        target_FORM_code  = "  Id myName(x?,y?) =  + (100)*y^2 + (10)*x*y^2 + (20)*x^2*y + (1)*x^3*y + (1)*x^4;\n"
+        target_FORM_code  = "  Id myName(x?,y?) = SecDecInternalfDUMMYmyNamePart0(x,y)+SecDecInternalfDUMMYmyNamePart1(x,y)+SecDecInternalfDUMMYmyNamePart2(x,y)+SecDecInternalfDUMMYmyNamePart3(x,y)+SecDecInternalfDUMMYmyNamePart4(x,y);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?) =  + (100)*y^2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart1(x?,y?) =  + (10)*x*y^2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart2(x?,y?) =  + (20)*x^2*y;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart3(x?,y?) =  + (1)*x^3*y;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart4(x?,y?) =  + (1)*x^4;\n"
 
         self.assertEqual(FORM_code, target_FORM_code)
 

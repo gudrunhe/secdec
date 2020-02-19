@@ -506,6 +506,35 @@ def _make_FORM_function_definition(name, expression, args, limit):
                 recursion(name_next_level+str(i), factor)
             return
 
+        if type(expression) is Polynomial:
+            del str_expression
+            old_n_coeffs = len(expression.coeffs)
+            if old_n_coeffs == 1:
+                # we need to break down the coefficient, instead of breaking the polynomial into sum terms
+                name_next_level = internal_prefix+'fDUMMY'+name+'Part'
+                codelines.append(
+                    "  Id %s = %s * (%s);\n" % (
+                        name+FORM_args_left_hand_side,
+                        name_next_level+str(0)+FORM_args_right_hand_side, Polynomial(expression.expolist, [1], copy=False) )
+                    )
+                recursion(name_next_level+str(0), expression.coeffs[0])
+                return
+            else:
+                # break the polynomial into roughly 10 equal sized terms
+                name_next_level = internal_prefix+'fDUMMY'+name+'Part'
+                new_n_coeffs = old_n_coeffs//10
+                if new_n_coeffs == 0: new_n_coeffs = 1
+                new_n_polys = int(np.ceil(old_n_coeffs/new_n_coeffs))
+                codelines.append(
+                    "  Id %s = %s;\n" % (
+                        name+FORM_args_left_hand_side,
+                        '+'.join( name_next_level+str(i)+FORM_args_right_hand_side for i in range(new_n_polys) )
+                    )
+                )
+                for i in range(new_n_polys):
+                    recursion(name_next_level+str(i), Polynomial(expression.expolist[i*new_n_coeffs:(i+1)*new_n_coeffs,:], expression.coeffs[i*new_n_coeffs:(i+1)*new_n_coeffs], expression.polysymbols, False) )
+                return
+
         # rescue: print warning and write unsplit expression
         print( 'WARNING: Could not split "%s" (not implemented for %s)' % (name,type(expression)) )
         codelines.append( ("  Id %s = %s;\n" % (name+FORM_args_left_hand_side,str_expression)).replace("**","^") )
