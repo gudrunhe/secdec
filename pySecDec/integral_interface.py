@@ -633,7 +633,7 @@ class IntegralLibrary(object):
         self.real_parameter_t = c_double * int(integral_info['number_of_real_parameters'])
         self.complex_parameter_t = c_double * (2*int(integral_info['number_of_complex_parameters'])) # flattened as: ``real(x0), imag(x0), real(x1), imag(x1), ...``
 
-        c_lib.compute_integral.restype = None
+        c_lib.compute_integral.restype = c_int
         c_lib.compute_integral.argtypes = [
                                                c_void_p, c_void_p, c_void_p, # output strings
                                                c_void_p, # integrator
@@ -648,7 +648,7 @@ class IntegralLibrary(object):
 
         # set cuda integrate types if applicable
         try:
-            c_lib.cuda_compute_integral.restype = None
+            c_lib.cuda_compute_integral.restype = c_int
             c_lib.cuda_compute_integral.argtypes = [
                                                         c_void_p, c_void_p, c_void_p, # output strings
                                                         c_void_p, # together integrator
@@ -679,10 +679,11 @@ class IntegralLibrary(object):
         # to enable KeyboardInterrupt and avoid crashing the primary python
         # interpreter on error.
         queue = Queue()
+        return_value_queue = Queue()
         integration_thread = Thread(
                                          target=self._call_implementation,
                                          args=(
-                                                  queue, real_parameters,
+                                                  queue, return_value_queue, real_parameters,
                                                   complex_parameters, together,
                                                   number_of_presamples,
                                                   deformation_parameters_maximum,
@@ -694,10 +695,14 @@ class IntegralLibrary(object):
         integration_thread.start()
         while integration_thread.is_alive(): # keep joining worker until it is finished
             integration_thread.join(5) # call `join` with `timeout` to keep the main thread interruptable
-        return queue.get()
+        return_value = return_value_queue.get()
+        if return_value != 0:
+            raise RuntimeError("Integration failed, see error message above.")
+        else:
+            return queue.get()
 
     def _call_implementation(
-                                self, queue, real_parameters, complex_parameters, together,
+                                self, queue, return_value_queue, real_parameters, complex_parameters, together,
                                 number_of_presamples, deformation_parameters_maximum,
                                 deformation_parameters_minimum,
                                 deformation_parameters_decrease_factor
@@ -726,7 +731,7 @@ class IntegralLibrary(object):
 
         # call the underlying c routine
         if self._cuda:
-            self.c_lib.cuda_compute_integral(
+            compute_integral_return_value = self.c_lib.cuda_compute_integral(
                                                  cpp_str_integral_without_prefactor,
                                                  cpp_str_prefactor, cpp_str_integral_with_prefactor,
                                                  self.integrator.c_integrator_ptr_together,
@@ -737,7 +742,7 @@ class IntegralLibrary(object):
                                                  deformation_parameters_decrease_factor
                                             )
         else:
-            self.c_lib.compute_integral(
+            compute_integral_return_value = self.c_lib.compute_integral(
                                             cpp_str_integral_without_prefactor,
                                             cpp_str_prefactor, cpp_str_integral_with_prefactor,
                                             self.integrator.c_integrator_ptr, c_real_parameters,
@@ -745,7 +750,10 @@ class IntegralLibrary(object):
                                             number_of_presamples, deformation_parameters_maximum,
                                             deformation_parameters_minimum,
                                             deformation_parameters_decrease_factor
-                                       )
+                                    )
+        return_value_queue.put(compute_integral_return_value)
+        if compute_integral_return_value != 0:
+            return
 
         # convert c++ stings to python strings or bytes (depending on whether we use python2 or python3)
         str_integral_without_prefactor = self.c_lib.string2charptr(cpp_str_integral_without_prefactor)

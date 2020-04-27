@@ -719,7 +719,7 @@ extern "C"
     /*
      * function to compute the integral
      */
-    void compute_integral
+    int compute_integral
     (
         std::string * integral_without_prefactor_strptr, std::string * prefactor_strptr, std::string * integral_with_prefactor_strptr, // output
         const secdecutil::Integrator<integrand_return_t,real_t> * integrator, // pointer to the integrator
@@ -763,30 +763,36 @@ extern "C"
         );
 
         std::unique_ptr<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> result_all;
-        if (together) {
-            // add integrands of sectors (together flag)
-            const nested_series_t<secdec_integrand_t> all_sectors = std::accumulate( ++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
+        try{
+            if (together) {
+                // add integrands of sectors (together flag)
+                const nested_series_t<secdec_integrand_t> all_sectors = std::accumulate( ++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
 
-            // perform the integration
-            result_all.reset
-            (
-                new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                // perform the integration
+                result_all.reset
                 (
-                    secdecutil::deep_apply( all_sectors, integrator->integrate )
-                )
-            );
-        } else {
-            // perform the integration
-            const std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> integrated_sectors = secdecutil::deep_apply( sector_integrands, integrator->integrate );
+                    new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                    (
+                        secdecutil::deep_apply( all_sectors, integrator->integrate )
+                    )
+                );
+            } else {
+                // perform the integration
+                const std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> integrated_sectors = secdecutil::deep_apply( sector_integrands, integrator->integrate );
 
-            // add integrated sectors
-            result_all.reset
-            (
-                new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                // add integrated sectors
+                result_all.reset
                 (
-                    std::accumulate( ++integrated_sectors.begin(), integrated_sectors.end(), *integrated_sectors.begin() )
-                )
-            );
+                    new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                    (
+                        std::accumulate( ++integrated_sectors.begin(), integrated_sectors.end(), *integrated_sectors.begin() )
+                    )
+                );
+            }
+        } catch (std::exception& e){
+            std::cout << "Encountered an exception of type '" << typeid(e).name() << "'" << std::endl;
+            std::cout << "  what():  " << e.what() << std::endl;
+            return -1;
         }
 
         // populate output strings:
@@ -805,13 +811,15 @@ extern "C"
         sstream.str("");
         sstream << evaluated_prefactor * (*result_all);
         *integral_with_prefactor_strptr = sstream.str();
+
+        return 0;
     }
 
     /*
      * function to compute the integral using cuda
      */
     #ifdef SECDEC_WITH_CUDA
-        void cuda_compute_integral
+        int cuda_compute_integral
         (
             std::string * integral_without_prefactor_strptr, std::string * prefactor_strptr, std::string * integral_with_prefactor_strptr, // output
             const secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> * together_integrator, // pointer to the integrator if together=true
@@ -856,31 +864,37 @@ extern "C"
             );
 
             std::unique_ptr<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> result_all;
-            if (together) {
-                // add integrands of sectors (together flag)
-                const nested_series_t<cuda_together_integrand_t> all_sectors =
-                    std::accumulate( ++sector_integrands.begin(), sector_integrands.end(), cuda_together_integrand_t()+*sector_integrands.begin() );
+            try{
+                if (together) {
+                    // add integrands of sectors (together flag)
+                    const nested_series_t<cuda_together_integrand_t> all_sectors =
+                        std::accumulate( ++sector_integrands.begin(), sector_integrands.end(), cuda_together_integrand_t()+*sector_integrands.begin() );
 
-                // perform the integration
-                result_all.reset
-                (
-                    new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                    // perform the integration
+                    result_all.reset
                     (
-                        secdecutil::deep_apply( all_sectors, together_integrator->integrate )
-                    )
-                );
-            } else {
-                // perform the integration
-                const std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> integrated_sectors = secdecutil::deep_apply( sector_integrands, separate_integrator->integrate );
+                        new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                        (
+                            secdecutil::deep_apply( all_sectors, together_integrator->integrate )
+                        )
+                    );
+                } else {
+                    // perform the integration
+                    const std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> integrated_sectors = secdecutil::deep_apply( sector_integrands, separate_integrator->integrate );
 
-                // add integrated sectors
-                result_all.reset
-                (
-                    new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                    // add integrated sectors
+                    result_all.reset
                     (
-                        std::accumulate( ++integrated_sectors.begin(), integrated_sectors.end(), *integrated_sectors.begin() )
-                    )
-                );
+                        new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
+                        (
+                            std::accumulate( ++integrated_sectors.begin(), integrated_sectors.end(), *integrated_sectors.begin() )
+                        )
+                    );
+                }
+            } catch (std::exception& e){
+                std::cout << "Encountered an exception of type '" << typeid(e).name() << "'" << std::endl;
+                std::cout << "  what():  " << e.what() << std::endl;
+                return -1;
             }
 
             // populate output strings:
@@ -899,6 +913,8 @@ extern "C"
             sstream.str("");
             sstream << evaluated_prefactor * (*result_all);
             *integral_with_prefactor_strptr = sstream.str();
+
+            return 0;
         }
     #endif
 
