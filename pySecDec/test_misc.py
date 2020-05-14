@@ -188,7 +188,7 @@ class TestDet(unittest.TestCase):
     def test_1x1_special_case(self):
         M = [[1]]
         self.assertEqual(det(M), 1)
-        self.assertTrue(np.issubdtype(type(det(M)), np.int))
+        self.assertTrue(np.issubdtype(type(det(M)), np.array(M).dtype))
 
 class TestAdjugate(unittest.TestCase):
     def test_calculation(self):
@@ -222,9 +222,9 @@ class TestAdjugate(unittest.TestCase):
             self.assertTrue(isinstance(adj_M, np.ndarray))
 
         # should keep data type of input
-        self.assertTrue(np.issubdtype(adjugate(M1).dtype, np.int))
-        self.assertTrue(np.issubdtype(adjugate(M2).dtype, np.int))
-        self.assertTrue(np.issubdtype(adjugate(M3).dtype, np.float))
+        self.assertTrue(np.issubdtype(adjugate(M1).dtype, np.array(M1).dtype))
+        self.assertTrue(np.issubdtype(adjugate(M2).dtype, np.array(M2).dtype))
+        self.assertTrue(np.issubdtype(adjugate(M3).dtype, np.array(M3).dtype))
 
 class TestCachedProperty(unittest.TestCase):
     #@attr('active')
