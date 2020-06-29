@@ -20,7 +20,8 @@ polynomial_names = ['U','F'],
 contour_deformation_polynomial = 'F',
 positive_polynomials = ['U'],
 prefactor = '-gamma(eps + 1)', # limits n0,n1->0 already taken in the prefactor
-decomposition_method = 'geometric'
+decomposition_method = 'geometric',
+polytope_from_sum_of=[0,1]
 )
 
 psd.code_writer.sum_package('formfactor1L_massive_expansion_by_regions',

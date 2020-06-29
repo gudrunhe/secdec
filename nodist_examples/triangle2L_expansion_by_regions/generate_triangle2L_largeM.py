@@ -24,7 +24,8 @@ contour_deformation_polynomial = 'F',
 positive_polynomials = ['U'],
 #prefactor = '''gamma(1-2*eps)/(gamma(1+eps)*gamma(1+eps)*gamma(1-eps)*gamma(1-eps))*msq**(2+2*eps)''',
 #prefactor = '''gamma(2+2*eps)''',
-decomposition_method = 'geometric'
+decomposition_method = 'geometric',
+polytope_from_sum_of=[0,1]
 )
 
 psd.code_writer.sum_package('triangle2L_case8_largeM',

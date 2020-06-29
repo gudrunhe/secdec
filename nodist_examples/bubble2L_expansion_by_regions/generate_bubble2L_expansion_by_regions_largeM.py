@@ -21,7 +21,8 @@ polynomial_names = ['U','F'],
 contour_deformation_polynomial = 'F',
 positive_polynomials = ['U'],
 #prefactor = '-1',
-decomposition_method = 'iterative'
+decomposition_method = 'iterative',
+polytope_from_sum_of=[0,1]
 )
 
 psd.code_writer.sum_package('bubble2L_largeM',

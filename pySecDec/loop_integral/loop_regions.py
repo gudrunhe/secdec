@@ -86,6 +86,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
         expansion_by_regions_order = expansion_by_regions_order,
         real_parameters = [],
         complex_parameters = [],
+        polytope_from_sum_of = [0,1],
         normaliz=normaliz_executable,
 
         # make_package_args

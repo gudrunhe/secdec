@@ -15,7 +15,7 @@ import numpy as np, sympy as sp
 
 _sympy_one = sp.sympify(1)
 
-def find_regions( exp_param_index , polynomials, indices = None, normaliz='normaliz', workdir='normaliz_tmp'):
+def find_regions( exp_param_index , polynomial, indices = None, normaliz='normaliz', workdir='normaliz_tmp'):
     '''
     Find regions for the expansion by regions
     as described in [PS11]_.
@@ -30,9 +30,8 @@ def find_regions( exp_param_index , polynomials, indices = None, normaliz='norma
         The index of the expansion parameter in the expolist.
 
     :param polynomials:
-        list of instances of :class:`.Polynomial` where
-        all of these have an equal number of variables;
-        The polynomials to calculate the regions for.
+        an instance of :class:`.Polynomial`, for which to
+        calculate the regions for.
 
     :param indices:
         list of integers or None;
@@ -59,11 +58,8 @@ def find_regions( exp_param_index , polynomials, indices = None, normaliz='norma
             files.
 
     '''
-    sum = 0
-    for poly in polynomials:
-        sum += Polynomial(poly.expolist, np.ones_like(poly.coeffs, dtype=int))
 
-    polytope_vertices = sum.expolist
+    polytope_vertices = polynomial.expolist
 
 
     if indices is not None:
@@ -280,7 +276,7 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
 
 def make_regions(name, integration_variables, regulators, requested_orders, smallness_parameter,
                  polynomials_to_decompose, expansion_by_regions_order=0, real_parameters=[], complex_parameters=[],
-                 normaliz='normaliz', **make_package_args):
+                 normaliz='normaliz', polytope_from_sum_of = None, **make_package_args):
     r'''
     Applies the expansion by regions method
     (see e.g. [PS11]_) to a list of polynomials.
@@ -334,6 +330,13 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
         The shell command to run `normaliz`.
         Default: 'normaliz'
 
+    :param polytope_from_sum_of:
+        iterable of integers;
+        If this value is None, the product of all the polynomials
+        `polynomials_to_decompose` is used to determine the Newton
+        polytope and the normal vectors to it. Otherwise, the sum of
+        the polynomials with the indices given by this parameter are used.
+
     :param make_package_args:
         The arguments to be forwarded to
         :func:`pySecDec.code_writer.make_package`.
@@ -342,7 +345,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     # check that there are as many polynomial names as polynomials
     # and introduce more names if needed
     polynomial_names = []
-    if not make_package_args['polynomial_names']:
+    if 'polynomial_names' not in make_package_args or not make_package_args['polynomial_names']:
         polynomial_names = ['SecDecDecoPoly%i' % i for i in range(len(polynomials_to_decompose))]
     elif len(make_package_args['polynomial_names']) < len(polynomials_to_decompose):
         polynomial_names = make_package_args['polynomial_names'] + ['SecDecDecoPoly%i' % i for i in range(len(polynomials_to_decompose)-len( make_package_args['polynomial_names']))]
@@ -365,8 +368,19 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     if not ( all( [np.count_nonzero(poly.expolist[:,len(integration_variables)+len(regulators):-1]) == 0 for poly in polynomials_to_decompose] ) ):
         raise NotImplementedError("Input polynomials for the asymptotic expansion are not allowed to depend on unexpanded polynomials.")
 
+    # define the polynomial from which the Newton polytope is determined, for which we find the normal vectors
+    if polytope_from_sum_of:
+        polytope_polynomial = 0
+        for index in polytope_from_sum_of:
+            polytope_polynomial += Polynomial(polynomials_to_decompose[index].expolist, np.ones_like(polynomials_to_decompose[index].coeffs, dtype=int))
+    else:
+        polytope_polynomial = Polynomial(polynomials_to_decompose[0].expolist, np.ones_like(polynomials_to_decompose[0].coeffs, dtype=int))
+        for poly in polynomials_to_decompose[1:]:
+            polytope_polynomial *= Polynomial(poly.expolist, np.ones_like(poly.coeffs, dtype=int))
+
     # find the regions for the expansion (region vectors are always integer)
-    regions = find_regions(smallness_parameter_index, polynomials_to_decompose, indices = region_variable_indices, normaliz=normaliz, workdir=name)
+    regions = find_regions(smallness_parameter_index, polytope_polynomial, indices = region_variable_indices,
+                            normaliz=normaliz, workdir=name)
 
     generators_args = []
     package_args_common = {'integration_variables':integration_variables, 'regulators':regulators,

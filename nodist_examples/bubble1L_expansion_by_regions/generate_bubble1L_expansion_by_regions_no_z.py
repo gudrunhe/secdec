@@ -21,7 +21,8 @@ polynomial_names = ['U','F'],
 contour_deformation_polynomial = 'F',
 positive_polynomials = ['U'],
 prefactor = 'gamma(2-1*(4-2*eps)/2)',
-decomposition_method = 'iterative'
+decomposition_method = 'iterative',
+polytope_from_sum_of=[0,1]
 )
 
 psd.code_writer.sum_package('bubble1L_expansion_by_regions_no_z',

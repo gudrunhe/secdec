@@ -22,6 +22,7 @@ expansion_by_regions_order = 1,
 decomposition_method = 'iterative',
 real_parameters = ['s12','mh2','bmt2','zz'],
 complex_parameters = [],
+polytope_from_sum_of=[0,1]
 )
 
 psd.code_writer.sum_package('Hjet_g7',
