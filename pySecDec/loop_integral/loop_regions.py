@@ -1,6 +1,6 @@
 import numpy as np
 import sympy as sp
-from pySecDec.algebra import Polynomial
+from pySecDec.algebra import Polynomial, ExponentiatedPolynomial
 
 def _poly_variable_transform(poly, new_variables, add_missing_var_to_coeff = True):
     """
@@ -46,6 +46,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
                 contour_deformation=True,
                 additional_prefactor=1, form_optimization_level=2,
                 form_work_space='500M',
+                add_monomial_regulator_power=None,
                 decomposition_method='iterative',
                 normaliz_executable='normaliz',
                 enforce_complex=False,
@@ -62,8 +63,28 @@ def loop_regions(name, loop_integral, smallness_parameter,
         :class:`pySecDec.loop_integral`;
         The loop integral to which the expansion by regions method is applied.
 
+    :param add_monomial_regulator_power:
+        string or sympy symbol;
+        Name of the regulator, using which monomial factors of the form
+        $x_i**(n/p_i)$ are added, to regulate the integrals arising from
+        the expansion by regions.
+
     """
     polynomials_to_decompose = [loop_integral.exponentiated_U, loop_integral.exponentiated_F] + loop_integral.measure.factors + [loop_integral.numerator]
+    
+    # add regulators of the form x_i**(n/p_i), where n is a regulator
+    if add_monomial_regulator_power is not None:
+        regulator = sp.sympify(add_monomial_regulator_power)
+        loop_integral.regulators.insert(1,regulator)
+        primes = [sp.prime(n+1) for n in range(len(loop_integral.integration_variables)-1)]
+        monomial_factors = []
+        for prime, variable in zip(primes,loop_integral.integration_variables[:-1]):
+            variable = Polynomial.from_expression(variable,loop_integral.integration_variables)
+            monomial = ExponentiatedPolynomial(variable.expolist,variable.coeffs,exponent=regulator/prime, polysymbols=variable.polysymbols)
+            monomial_factors.append(monomial)
+        variable = Polynomial.from_expression(loop_integral.integration_variables[-1],loop_integral.integration_variables)
+        monomial_factors.append(ExponentiatedPolynomial(variable.expolist,variable.coeffs,exponent=sum(-regulator/prime for prime in primes), polysymbols=variable.polysymbols))
+        polynomials_to_decompose = [loop_integral.exponentiated_U, loop_integral.exponentiated_F] + loop_integral.measure.factors + monomial_factors + [loop_integral.numerator]
 
     polynomial_names = ["U","F"] + ['Poly%i' % i for i in range(len(polynomials_to_decompose)-2)]
 
