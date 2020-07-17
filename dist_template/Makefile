@@ -24,7 +24,7 @@ install : nauty $(AUTOTOOLS_PACKAGES) pySecDec qmc
 pySecDec :
 	tar -xf $@-*.tar.gz
 
-CubaCONFIGURE = $(CONFIGURE_COMMON) CFLAGS="-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fPIC"
+CubaCONFIGURE = $(CONFIGURE_COMMON) CFLAGS="-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC"
 formCONFIGURE = $(CONFIGURE_COMMON)
 gslCONFIGURE = $(CONFIGURE_COMMON) --disable-shared --enable-static --with-pic
 secdecutilCONFIGURE = $(CONFIGURE_COMMON)
