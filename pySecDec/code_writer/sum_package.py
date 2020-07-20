@@ -320,8 +320,13 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     # for two regulators, the resulting code should read:
     # "secdecutil::Series<secdecutil::Series<T>>"
     nested_series_type = 'secdecutil::Series<' * len(requested_orders) + 'T' + '>' * len(requested_orders)
-    assert all(len(requested_orders) == len(args["regulators"]) for args in generators_args), \
-        "The `requested_orders` must match the number of regulators"
+    for package_generator in package_generators:
+        if package_generator is loop_package:
+            assert all(len(requested_orders) == len(args["loop_integral"].regulators) for args in generators_args), \
+                "The `requested_orders` must match the number of regulators"
+        else:
+            assert all(len(requested_orders) == len(args["regulators"]) for args in generators_args), \
+                "The `requested_orders` must match the number of regulators"
 
     # define required listings of contributing integrals
     sub_integral_names = []
@@ -397,10 +402,10 @@ def sum_package(name, package_generators, generators_args, regulators, requested
 
             minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
             if package_generator is loop_package:
-                generator_args['requested_order'] = requested_orders[0] - minimal_lowest_coefficient_orders[0]
+                pass
             else:
                 generator_args['regulators'] = regulators
-                generator_args['requested_orders'] = np.asarray(requested_orders) - minimal_lowest_coefficient_orders
+            generator_args['requested_orders'] = np.asarray(requested_orders) - minimal_lowest_coefficient_orders
 
             # parse integral specific files
             for ch in 'ch':
