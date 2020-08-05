@@ -91,6 +91,8 @@ class Coefficient(object):
 
         # define the form program to run
         program = '''
+            #: Parentheses 1001
+
             #Define OUTFILE "%(outfile)s"
             #Define regulators "%(regulators)s"
             #Define parameters "%(parameters)s"
