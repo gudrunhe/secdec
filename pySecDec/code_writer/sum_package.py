@@ -332,14 +332,17 @@ def sum_package(name, package_generators, generators_args, regulators, requested
 
     # define required listings of contributing integrals
     sub_integral_names = []
+    integral_initialization = []
     weighted_integral_includes = []
     weighted_integral_sum_initialization = []
     for package_generator,generator_args in zip(package_generators,generators_args):
         sub_name = generator_args["name"]
         sub_integral_names.append(sub_name)
+        integral_initialization.append( 'std::vector<nested_series_t<sum_t>> integral_' + sub_name + ' = ' + sub_name + '::make_integral(real_parameters,complex_parameters);' )
         weighted_integral_includes.append( '#include "' + sub_name + '_weighted_integral.hpp"')
-        weighted_integral_sum_initialization.append( 'amplitude += %s::make_weighted_integral(real_parameters, complex_parameters, amp_idx);' % sub_name )
+        weighted_integral_sum_initialization.append( 'amplitude += ' + sub_name + '::make_weighted_integral(real_parameters, complex_parameters, integral_' + sub_name + ', amp_idx);' )
     sub_integral_names = ' '.join(sub_integral_names)
+    integral_initialization = '\n        '.join(integral_initialization)
     weighted_integral_includes = '\n'.join(weighted_integral_includes)
     weighted_integral_sum_initialization[0] = weighted_integral_sum_initialization[0].replace('+',' ',1)
     weighted_integral_sum_initialization = '\n            '.join(weighted_integral_sum_initialization)
@@ -353,6 +356,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                                 'names_of_complex_parameters' : make_cpp_list(complex_parameters),
                                 'number_of_amplitudes' : len(coefficients),
                                 'integral_names' : sub_integral_names,
+                                'integral_initialization' : integral_initialization,
                                 'weighted_integral_includes' : weighted_integral_includes,
                                 'weighted_integral_sum_initialization' : weighted_integral_sum_initialization,
                                 'number_of_regulators' : len(regulators),

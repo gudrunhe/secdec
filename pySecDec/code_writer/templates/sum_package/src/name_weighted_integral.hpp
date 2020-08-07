@@ -10,10 +10,16 @@ namespace %(name)s
 {
     namespace %(sub_integral_name)s
     {
+        std::vector<nested_series_t<sum_t>> make_integral
+        (
+            const std::vector<real_t>& real_parameters,
+            const std::vector<complex_t>& complex_parameters
+        );
         nested_series_t<sum_t> make_weighted_integral
         (
             const std::vector<real_t>& real_parameters,
             const std::vector<complex_t>& complex_parameters,
+            const std::vector<nested_series_t<sum_t>>& integrals,
             const unsigned int amp_idx
         );
     }

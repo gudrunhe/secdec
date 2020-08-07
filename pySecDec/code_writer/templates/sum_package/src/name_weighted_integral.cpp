@@ -133,12 +133,11 @@ namespace %(name)s
                 };
             };
         #endif
-
-        nested_series_t<sum_t> make_weighted_integral
+        
+        std::vector<nested_series_t<sum_t>> make_integral
         (
             const std::vector<real_t>& real_parameters,
-            const std::vector<complex_t>& complex_parameters,
-            const unsigned int amp_idx
+            const std::vector<complex_t>& complex_parameters
         )
         {
             using types = WithCuda<Options::cuda_compliant_integrator>;
@@ -170,7 +169,17 @@ namespace %(name)s
                         };
                 };
 
-            const std::vector<nested_series_t<sum_t>> integrals = deep_apply(raw_integrands, convert_integrands);
+            return deep_apply(raw_integrands, convert_integrands);
+        };
+
+        nested_series_t<sum_t> make_weighted_integral
+        (
+            const std::vector<real_t>& real_parameters,
+            const std::vector<complex_t>& complex_parameters,
+            const std::vector<nested_series_t<sum_t>>& integrals,
+            const unsigned int amp_idx
+        )
+        {
             nested_series_t<sum_t> amplitude = std::accumulate(++integrals.begin(), integrals.end(), *integrals.begin() );
             amplitude *= ::%(sub_integral_name)s::prefactor(real_parameters,complex_parameters)
                        * ::%(sub_integral_name)s::coefficient(real_parameters,complex_parameters,amp_idx);

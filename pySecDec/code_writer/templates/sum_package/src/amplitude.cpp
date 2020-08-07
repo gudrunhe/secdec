@@ -12,9 +12,12 @@ namespace %(name)s
         const std::vector<complex_t>& complex_parameters
     )
     {
+        // Construct Integrals
+        %(integral_initialization)s
+
+        // Construct Amplitudes
         std::vector<nested_series_t<sum_t>> amplitudes;
         amplitudes.reserve(number_of_amplitudes);
-
         for (unsigned int amp_idx = 0; amp_idx < number_of_amplitudes; ++amp_idx)
         {
             nested_series_t<sum_t>
