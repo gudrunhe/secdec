@@ -269,6 +269,39 @@ matrix:
         - brew uninstall numpy --ignore-dependencies
         - brew link --overwrite python
 
+    - os: osx
+      osx_image: xcode12u
+      language: c++
+      compiler: clang
+      addons:
+        homebrew:
+          packages:
+            - graphviz
+          update: true
+      env:
+        - NORMALIZ_VERSION=3.8.7
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        - brew uninstall numpy --ignore-dependencies
+        - brew link --overwrite python
+
+    - os: osx
+      osx_image: xcode12u
+      language: c++
+      compiler: clang
+      addons:
+        homebrew:
+          packages:
+            - graphviz
+            - python-3.8
+          update: true
+      env:
+        - NORMALIZ_VERSION=3.8.7
+        - PYTHON_INSTALL='sudo -H pip3 install'
+      before_install:
+        - brew uninstall numpy --ignore-dependencies
+        - brew link --overwrite python
+
     - os: linux
       addons:
         apt:
