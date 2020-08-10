@@ -280,6 +280,7 @@ matrix:
           update: true
       env:
         - NORMALIZ_VERSION=3.8.7
+        - NORMALIZ_ZIP_BASE=normaliz-${NORMALIZ_VERSION}-
         - PYTHON_INSTALL='sudo -H pip install'
       before_install:
         - brew uninstall numpy --ignore-dependencies
@@ -297,6 +298,7 @@ matrix:
           update: true
       env:
         - NORMALIZ_VERSION=3.8.7
+        - NORMALIZ_ZIP_BASE=normaliz-${NORMALIZ_VERSION}-
         - PYTHON_INSTALL='sudo -H pip3 install'
       before_install:
         - brew uninstall numpy --ignore-dependencies
@@ -615,7 +617,8 @@ install:
   - cd dist_install
   - make -j${PROCESSES}
   - mv pySecDec-*/ pySecDec_install/
-  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/normaliz-${NORMALIZ_VERSION}MacOs.zip -o normaliz.zip; else curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/normaliz-${NORMALIZ_VERSION}Linux64.zip -o normaliz.zip; fi
+  - if [ "x$NORMALIZ_ZIP_BASE" = 'x' ]; then NORMALIZ_ZIP_BASE=normaliz-${NORMALIZ_VERSION}; fi
+  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/${NORMALIZ_ZIP_BASE}MacOs.zip -o normaliz.zip; else curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/${NORMALIZ_ZIP_BASE}Linux64.zip -o normaliz.zip; fi
   - unzip normaliz.zip
   - mv normaliz-${NORMALIZ_VERSION}/* bin/
   - cd ..
