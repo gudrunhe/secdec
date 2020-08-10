@@ -294,15 +294,18 @@ matrix:
         homebrew:
           packages:
             - graphviz
-            - python-3.8
+            - pyenv
           update: true
       env:
         - NORMALIZ_VERSION=3.8.7
         - NORMALIZ_ZIP_BASE=normaliz-${NORMALIZ_VERSION}-
-        - PYTHON_INSTALL='sudo -H pip3 install'
+        - PYTHON_INSTALL='sudo -H pip install'
       before_install:
         - brew uninstall numpy --ignore-dependencies
-        - brew link --overwrite python
+        - pyenv install 3.8.5
+        - pyenv global 3.8.5
+        - pyenv version
+        - if command -v pyenv 1>/dev/null 2>&1; then eval "$(pyenv init -)"; fi
 
     - os: linux
       addons:
@@ -604,21 +607,21 @@ install:
   - export SECDEC_CONTRIB=${TRAVIS_BUILD_DIR}/dist_install/
   - export PYTHONPATH=${TRAVIS_BUILD_DIR}/dist_install/pySecDec_install:$PYTHONPATH
   - export PYTHON_MAJOR_VERSION=`python -c 'from sys import version_info; print(version_info.major)'`
-  - if [ x${PYTHON_INSTALL} == x ]; then export PYTHON_INSTALL='pip install'; fi
+  - if [ "x${PYTHON_INSTALL}" == "x" ]; then export PYTHON_INSTALL='pip install'; fi
   - echo running on $TRAVIS_OS_NAME
   - echo using CXX=$CXX
   - python --version
   - $PYTHON_INSTALL --upgrade pip setuptools wheel
   - $PYTHON_INSTALL nose
   # python2 support is dropped in sphinx-2
-  - if [ "$PYTHON_MAJOR_VERSION" = 2 ]; then $PYTHON_INSTALL 'numpy<1.17' 'sphinx<2' 'sympy'; else $PYTHON_INSTALL -r requirements.txt --only-binary=numpy; fi
-  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then make thin-dist; else make dist; fi
+  - if [ "$PYTHON_MAJOR_VERSION" == "2" ]; then $PYTHON_INSTALL 'numpy<1.17' 'sphinx<2' 'sympy'; else $PYTHON_INSTALL -r requirements.txt --only-binary=numpy; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then make thin-dist; else make dist; fi
   - mv pySecDec-*/ dist_install
   - cd dist_install
   - make -j${PROCESSES}
   - mv pySecDec-*/ pySecDec_install/
-  - if [ "x$NORMALIZ_ZIP_BASE" = 'x' ]; then NORMALIZ_ZIP_BASE=normaliz-${NORMALIZ_VERSION}; fi
-  - if [ "$TRAVIS_OS_NAME" = 'osx' ]; then curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/${NORMALIZ_ZIP_BASE}MacOs.zip -o normaliz.zip; else curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/${NORMALIZ_ZIP_BASE}Linux64.zip -o normaliz.zip; fi
+  - if [ "x$NORMALIZ_ZIP_BASE" == "x" ]; then NORMALIZ_ZIP_BASE=normaliz-${NORMALIZ_VERSION}; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/${NORMALIZ_ZIP_BASE}MacOs.zip -o normaliz.zip; else curl -L https://github.com/Normaliz/Normaliz/releases/download/v${NORMALIZ_VERSION}/${NORMALIZ_ZIP_BASE}Linux64.zip -o normaliz.zip; fi
   - unzip normaliz.zip
   - mv normaliz-${NORMALIZ_VERSION}/* bin/
   - cd ..
