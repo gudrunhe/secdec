@@ -35,18 +35,9 @@ if __name__ == "__main__":
 
     # check the generated "functions.hpp"
     cpp_function_declarations = (
-    '''\
-        template<typename T0>
-        integrand_return_t HeavisideTheta(T0 arg0);\
-    ''',
-    '''\
-        template<typename T0>
-        integrand_return_t dfuncd0(T0 arg0);\
-    ''',
-    '''\
-        template<typename T0>
-        integrand_return_t func(T0 arg0);\
-    '''
+    '    template<typename T0>\n    integrand_return_t HeavisideTheta(T0 arg0);',
+    '    template<typename T0>\n    integrand_return_t dfuncd0(T0 arg0);',
+    '    template<typename T0>\n    integrand_return_t func(T0 arg0);'
     )
     with open(name + '/src/functions.hpp') as generated_header_file:
         generated_header = generated_header_file.read()
