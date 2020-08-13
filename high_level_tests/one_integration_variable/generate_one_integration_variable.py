@@ -2,21 +2,23 @@
 import shutil
 from pySecDec import make_package
 
-name = 'one_integration_variable'
+if __name__ == "__main__":
 
-make_package(
+    name = 'one_integration_variable'
 
-name=name,
-integration_variables = ['x'],
+    make_package(
 
-# the order here defines the order of the expansion
-regulators = ['eps'],
+    name=name,
+    integration_variables = ['x'],
 
-# the highest orders of the final regulator expansion
-# the order here matches the order of ``regulators``
-requested_orders = [1],
+    # the order here defines the order of the expansion
+    regulators = ['eps'],
 
-polynomials_to_decompose = ['(x)**(-1+eps)'],
-polynomial_names = ['p'],
-other_polynomials = ['p**-2'],
-)
+    # the highest orders of the final regulator expansion
+    # the order here matches the order of ``regulators``
+    requested_orders = [1],
+
+    polynomials_to_decompose = ['(x)**(-1+eps)'],
+    polynomial_names = ['p'],
+    other_polynomials = ['p**-2'],
+    )

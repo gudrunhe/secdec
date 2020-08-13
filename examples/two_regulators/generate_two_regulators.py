@@ -1,33 +1,35 @@
 #! /usr/bin/env python
 from pySecDec import make_package
 
-make_package(
+if __name__ == "__main__":
 
-name='two_regulators',
-integration_variables = ['z%i' % i for i in range(2)],
+    make_package(
 
-# the order here defines the order of the expansion
-regulators = ['alpha', 'eps'],
+    name='two_regulators',
+    integration_variables = ['z%i' % i for i in range(2)],
 
-#complex_parameters = ['A'],
-#functions = ['F1', 'F2'],
+    # the order here defines the order of the expansion
+    regulators = ['alpha', 'eps'],
 
-prefactor = '''exp(-EulerGamma*(2*eps+alpha))''',
+    #complex_parameters = ['A'],
+    #functions = ['F1', 'F2'],
 
-polynomials_to_decompose = ['z0**(-1-2*eps-alpha)','(1-z0)**(-1+2*eps+alpha)','z1**(-1+alpha/2)'],
-remainder_expression = 'exp(-z0/(1-z0))',
+    prefactor = '''exp(-EulerGamma*(2*eps+alpha))''',
 
-# the highest orders of the final regulator expansion
-# the order here matches the order of ``regulators``
-requested_orders = [0, 0],
+    polynomials_to_decompose = ['z0**(-1-2*eps-alpha)','(1-z0)**(-1+2*eps+alpha)','z1**(-1+alpha/2)'],
+    remainder_expression = 'exp(-z0/(1-z0))',
 
-# the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
-form_optimization_level = 2,
+    # the highest orders of the final regulator expansion
+    # the order here matches the order of ``regulators``
+    requested_orders = [0, 0],
 
-# the WorkSpace parameter for FORM
-form_work_space = '500M',
+    # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
+    form_optimization_level = 2,
+
+    # the WorkSpace parameter for FORM
+    form_work_space = '500M',
 
 
-)
+    )
 
-# analytic result = 2/alpha*gamma(-2*eps-alpha)*exp(-EulerGamma*(2*eps+alpha));
+    # analytic result = 2/alpha*gamma(-2*eps-alpha)*exp(-EulerGamma*(2*eps+alpha));
