@@ -8,11 +8,12 @@ expansion.
 """
 
 from .algebra import Polynomial, ExponentiatedPolynomial, Sum, Product, Pow
+from .misc import sympify_expression
 from itertools import repeat
 import numpy as np
 import sympy as sp
 
-_sympy_one = sp.sympify(1)
+_sympy_one = sympify_expression(1)
 
 def pole_structure(monomial_product, *indices):
     '''

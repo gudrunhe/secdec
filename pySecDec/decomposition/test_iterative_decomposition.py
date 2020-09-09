@@ -1,6 +1,7 @@
 from .iterative import *
 from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
+from ..misc import sympify_expression
 import numpy as np
 import sympy as sp
 
@@ -27,13 +28,13 @@ class TestPrimaryDecomposition(unittest.TestCase):
         initial_sector = Sector([U,F])
         primary_sectors = primary_decomposition(initial_sector)
 
-        target_decomposed_U = sp.sympify(1)
-        target_decomposed_F = sp.sympify('msq')
+        target_decomposed_U = sympify_expression(1)
+        target_decomposed_F = sympify_expression('msq')
 
         self.assertEqual( len(primary_sectors) , 1 )
 
-        self.assertEqual(  ( sp.sympify(primary_sectors[0].cast[0]) - target_decomposed_U ).simplify() , 0   )
-        self.assertEqual(  ( sp.sympify(primary_sectors[0].cast[1]) - target_decomposed_F ).simplify() , 0   )
+        self.assertEqual(  ( sympify_expression(primary_sectors[0].cast[0]) - target_decomposed_U ).simplify() , 0   )
+        self.assertEqual(  ( sympify_expression(primary_sectors[0].cast[1]) - target_decomposed_F ).simplify() , 0   )
 
     #@attr('active')
     def test_primary_decomposition(self):

@@ -7,12 +7,12 @@ Routines to series expand singular and nonsingular expressions.
 """
 
 from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial
-from .misc import sympify_symbols, flatten
+from .misc import sympify_symbols, flatten, sympify_expression
 from numpy import iterable
 import numpy as np
 import sympy as sp
 
-_sympy_zero = sp.sympify(0)
+_sympy_zero = sympify_expression(0)
 
 class OrderError(ValueError):
     '''
@@ -56,7 +56,7 @@ def _expand_Taylor_step(expression, index, order):
     # Construct coefficients of the Taylor polynomial
     expression_variable_set_to_zero = expression.replace(index, 0)
     coeffs = [expression_variable_set_to_zero]
-    inverse_i_factorial = sp.sympify(1)
+    inverse_i_factorial = sympify_expression(1)
     for order_i in range(order):
         inverse_i_factorial /= order_i + 1
         expression = expression.simplify().derive(index)
@@ -296,7 +296,7 @@ def expand_sympy(expression, variables, orders):
     '''
     # basic consistency checks
     if not isinstance(expression, sp.Expr):
-        expression = sp.sympify(expression)
+        expression = sympify_expression(expression)
     variables = sympify_symbols(variables, 'All `variables` must be symbols.')
     orders = np.asarray(orders)
     assert len(orders.shape) == 1, '`orders` must be vector-like'

@@ -48,23 +48,23 @@ class TestFunction(unittest.TestCase):
         str_simplified_g = str(simplified_g)
 
         self.assertNotEqual(str_simplified_g, str_unsimplified_g)
-        self.assertEqual( (sp.sympify(str_simplified_g) - sp.sympify(str_unsimplified_g)).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str_simplified_g) - sympify_expression(str_unsimplified_g)).simplify() , 0 )
         self.assertEqual( str(self.simplifyable_arg.simplify()) , str(simplified_g.arguments[-1]) )
 
     #@attr('active')
     def test_derive(self):
         # simple derivative
         dfd0 = self.f.derive(0)
-        self.assertEqual( (sp.sympify(dfd0) - sp.sympify('dfd0(x0,x1)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(dfd0) - sympify_expression('dfd0(x0,x1)')).simplify() , 0 )
 
         # g( + (1)*x0, + (1)*x1, + (1)*x2*x3 + (1)*x2*x3 + (1)*x0)
 
         # derivatives with chain rule
         dgd2 = self.g.derive(2)
-        self.assertEqual( (sp.sympify(dgd2) - sp.sympify('dgd2(x0,x1,2*x2*x3+x0)*2*x3')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(dgd2) - sympify_expression('dgd2(x0,x1,2*x2*x3+x0)*2*x3')).simplify() , 0 )
 
         dgd0 = self.g.derive(0)
-        self.assertEqual( (sp.sympify(dgd0) - sp.sympify('dgd0(x0,x1,2*x2*x3+x0) + dgd2(x0,x1,2*x2*x3+x0)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(dgd0) - sympify_expression('dgd0(x0,x1,2*x2*x3+x0) + dgd2(x0,x1,2*x2*x3+x0)')).simplify() , 0 )
 
     #@attr('active')
     def test_derivative_symbols(self):
@@ -102,17 +102,17 @@ class TestFunction(unittest.TestCase):
 
         dfd0d1 = f.derive(1).derive(0).simplify()
         target_derivatives.update(['f','dfd1','ddfd0d1'])
-        self.assertEqual(  (sp.sympify(dfd0d1) - sp.sympify('ddfd0d1(x,y,z)')).simplify()  ,  0  )
+        self.assertEqual(  (sympify_expression(dfd0d1) - sympify_expression('ddfd0d1(x,y,z)')).simplify()  ,  0  )
         self.assertEqual(derivatives, target_derivatives)
 
         dddfd0d0d1 = f.derive(1).derive(0).derive(0).simplify()
         target_derivatives.update(['f','dfd1','ddfd0d1','dddfd0d0d1'])
-        self.assertEqual(  (sp.sympify(dddfd0d0d1) - sp.sympify('dddfd0d0d1(x,y,z)')).simplify()  ,  0  )
+        self.assertEqual(  (sympify_expression(dddfd0d0d1) - sympify_expression('dddfd0d0d1(x,y,z)')).simplify()  ,  0  )
         self.assertEqual(derivatives, target_derivatives)
 
         ddddfd0d0d1d2_with_copy = f.derive(1).copy().derive(0).simplify().derive(2).copy().derive(0).simplify()
         target_derivatives.update(['f','dfd1','ddfd0d1','dddfd0d1d2','ddddfd0d0d1d2'])
-        self.assertEqual(  (sp.sympify(ddddfd0d0d1d2_with_copy) - sp.sympify('ddddfd0d0d1d2(x,y,z)')).simplify()  ,  0  )
+        self.assertEqual(  (sympify_expression(ddddfd0d0d1d2_with_copy) - sympify_expression('ddddfd0d0d1d2(x,y,z)')).simplify()  ,  0  )
         self.assertEqual(derivatives, target_derivatives)
 
     #@attr('active')
@@ -128,7 +128,7 @@ class TestFunction(unittest.TestCase):
 
         ddfd0d1 = f.derive(1).derive(0).simplify()
         target_derivatives.update(['f','dfd1','dfd0','ddfd0d1','ddfd0d0','ddfd1d1'])
-        self.assertEqual(  (sp.sympify(ddfd0d1) - sp.sympify('ddfd1d1(x-y,x+y,z)-ddfd0d0(x-y,x+y,z)')).simplify()  ,  0  )
+        self.assertEqual(  (sympify_expression(ddfd0d1) - sympify_expression('ddfd1d1(x-y,x+y,z)-ddfd0d0(x-y,x+y,z)')).simplify()  ,  0  )
         self.assertEqual(derivatives, target_derivatives)
 
     #@attr('active')
@@ -178,11 +178,11 @@ class TestFunction(unittest.TestCase):
             (2,0) : 'dFd0(x**2*y,y**2) * 2*y + ddFd0d0(x**2*y,y**2) * (2*x*y)**2',
             (3,0) : 'ddFd0d0(x**2*y,y**2) * 2*y*2*x*y + ddFd0d0(x**2*y,y**2) * 2*4*x**1*y**2 + dddFd0d0d0(x**2*y,y**2) * 4*x**2*y**2*2*x*y'
         }
-        target_derivatives = {key : sp.sympify(value).expand()
+        target_derivatives = {key : sympify_expression(value).expand()
                               for key, value in target_derivatives_as_strings.items()}
 
         recomputed_derivatives_as_expressions = func.compute_derivatives()
-        recomputed_derivatives = {key : sp.sympify(value).expand()
+        recomputed_derivatives = {key : sympify_expression(value).expand()
                                   for key, value in recomputed_derivatives_as_expressions.items()}
 
         self.assertEqual(recomputed_derivatives, target_derivatives)
@@ -206,11 +206,11 @@ class TestFunction(unittest.TestCase):
             (1,1) : '1',
             (2,1) : '0'
         }
-        target_derivatives = {key : sp.sympify(value)
+        target_derivatives = {key : sympify_expression(value)
                               for key, value in target_derivatives_as_strings.items()}
 
         recomputed_derivatives_as_expressions = func.compute_derivatives(other_expression)
-        recomputed_derivatives = {key : sp.sympify(value)
+        recomputed_derivatives = {key : sympify_expression(value)
                                   for key, value in recomputed_derivatives_as_expressions.items()}
 
         self.assertEqual(recomputed_derivatives, target_derivatives)
@@ -251,8 +251,7 @@ class TestPolynomial(unittest.TestCase):
         self.assertEqual(repr(polynomial3), string_polynomial3)
 
     def test_copy(self):
-        from sympy import symbols
-        A, Afoo = symbols('A Afoo')
+        A, Afoo = sp.symbols('A Afoo')
 
         polynomial1 = Polynomial([(0,1),(1,0),(2,1),(0,0)],['A','B','C','D'])
         polynomial2 = polynomial1.copy()
@@ -287,15 +286,14 @@ class TestPolynomial(unittest.TestCase):
         self.assertFalse(Polynomial([(0,1,0,1),(2,1,0,5),(0,0,3,5)],['A','B','C']).becomes_zero_for([1,0]))
 
     def test_derive(self):
-        from sympy import sympify
         polynomial = Polynomial([(2,1),(0,1)],['A', 'B'])
 
-        derivative_0 = sympify( str(polynomial.derive(0)) )
-        target_derivative_0 = sympify('2*A*x0*x1')
+        derivative_0 = sympify_expression( str(polynomial.derive(0)) )
+        target_derivative_0 = sympify_expression('2*A*x0*x1')
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
 
-        derivative_1 = sympify( str(polynomial.derive(1)) )
-        target_derivative_1 = sympify('A*x0**2 + B')
+        derivative_1 = sympify_expression( str(polynomial.derive(1)) )
+        target_derivative_1 = sympify_expression('A*x0**2 + B')
         self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
 
     #@attr('active')
@@ -303,8 +301,8 @@ class TestPolynomial(unittest.TestCase):
         # A*x0 * x0**2*x1 + B * x1 = A * x0**3*x1 + B * x1
         expr = Polynomial([(2,1),(0,1)],[Polynomial([(1,0)], ['A']), 'B'])
 
-        derivative_0 = sp.sympify(expr.derive(0))
-        target_derivative_0 = sp.sympify('3*A * x0**2*x1')
+        derivative_0 = sympify_expression(expr.derive(0))
+        target_derivative_0 = sympify_expression('3*A * x0**2*x1')
 
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0)
 
@@ -339,7 +337,7 @@ class TestFormerSNCPolynomial(unittest.TestCase):
     def test_simplify(self):
         polynomial = Polynomial([[1,2],[1,2],[2,2]  ,  [2,1],[2,1],[3,1]  ,  [2,2],[2,2],[3,2]], [1,1,2  ,  1,1,2  ,  3,3,6])
         polynomial.simplify()
-        self.assertEqual( (sp.sympify(str(polynomial)) - sp.sympify(" + (2)*x0*x1**2 + (8)*x0**2*x1**2 + (2)*x0**2*x1 + (2)*x0**3*x1 + (6)*x0**3*x1**2")).simplify() , 0)
+        self.assertEqual( (sympify_expression(str(polynomial)) - sympify_expression(" + (2)*x0*x1**2 + (8)*x0**2*x1**2 + (2)*x0**2*x1 + (2)*x0**3*x1 + (6)*x0**3*x1**2")).simplify() , 0)
 
         # should have minimal number of terms
         self.assertEqual(len(polynomial.coeffs), 5)
@@ -350,7 +348,7 @@ class TestFormerSNCPolynomial(unittest.TestCase):
 
         poly = Polynomial([(0,2),(1,0)],[1,'C'])
         intprod = 5 * poly
-        self.assertEqual( (sp.sympify(str(intprod)) - sp.sympify(' + (5)*x1**2 + (5*C)*x0')).simplify() , 0)
+        self.assertEqual( (sympify_expression(str(intprod)) - sympify_expression(' + (5)*x1**2 + (5*C)*x0')).simplify() , 0)
         # should have minimal number of terms
         self.assertEqual(len(intprod.coeffs), 2)
         self.assertEqual(intprod.expolist.shape, (2,2))
@@ -390,7 +388,7 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         self.assertEqual( str(10 + Polynomial([(0,0),(1,0)],[2,1])) , ' + (12) + (1)*x0' )
 
         polysum = self.p0 + self.p2
-        self.assertEqual( (sp.sympify(str(polysum)) - sp.sympify(" + (1)*x1 + (7)*x0 + (10)*x0*x1 + (5)")).simplify() , 0)
+        self.assertEqual( (sympify_expression(str(polysum)) - sympify_expression(" + (1)*x1 + (7)*x0 + (10)*x0*x1 + (5)")).simplify() , 0)
 
         # should have minimal number of terms
         self.assertEqual(len(polysum.coeffs), 4)
@@ -416,7 +414,7 @@ class TestFormerSNCPolynomial(unittest.TestCase):
 
         poly_pow_string = poly ** 'a+5*b'
         self.assertTrue(isinstance(poly_pow_string.exponent.coeffs[0], sp.Expr)) # ``a+5*b`` should be converted to sympy expression
-        poly_pow_sympy = poly ** sp.sympify('a+5*b')
+        poly_pow_sympy = poly ** sympify_expression('a+5*b')
         expected_string_form_2 = '( + (1)*x0) ** ( + (a + 5*b))'
         for i, poly_pow in enumerate((poly_pow_string, poly_pow_sympy)):
             print(i)
@@ -439,31 +437,30 @@ class TestFormerSNCPolynomial(unittest.TestCase):
     def test_pow_positive_integer(self):
         target_p0_zeroth_power = 0 * self.p0 + 1
         p0_zeroth_power = self.p0 ** 0
-        self.assertEqual(sp.sympify(target_p0_zeroth_power - p0_zeroth_power), 0)
+        self.assertEqual(sympify_expression(target_p0_zeroth_power - p0_zeroth_power), 0)
 
         target_p0_third_power = self.p0 * self.p0 * self.p0
         p0_third_power = self.p0 ** 3
-        self.assertEqual(sp.sympify(target_p0_third_power - p0_third_power), 0)
+        self.assertEqual(sympify_expression(target_p0_third_power - p0_third_power), 0)
 
         target_p1_sixth_power = self.p1 * self.p1 * self.p1 * self.p1 * self.p1 * self.p1
         p1_sixth_power = self.p1 ** 6
-        self.assertEqual(sp.sympify(target_p1_sixth_power - p1_sixth_power), 0)
+        self.assertEqual(sympify_expression(target_p1_sixth_power - p1_sixth_power), 0)
 
     def test_sympy_binding(self):
-        from sympy import symbols
-        a,b = symbols('a b')
+        a,b = sp.symbols('a b')
 
         p = Polynomial([(1,0),(0,1)],[a,b])
         p_squared = p * p
         self.assertEqual(str(p), ' + (a)*x0 + (b)*x1')
-        self.assertEqual( (sp.sympify(str(p_squared)) - sp.sympify(' + (a**2)*x0**2 + (2*a*b)*x0*x1 + (b**2)*x1**2')).simplify() , 0)
+        self.assertEqual( (sympify_expression(str(p_squared)) - sympify_expression(' + (a**2)*x0**2 + (2*a*b)*x0*x1 + (b**2)*x1**2')).simplify() , 0)
 
         # should have minimal number of terms
         self.assertEqual(len(p_squared.coeffs), 3)
         self.assertEqual(p_squared.expolist.shape, (3,2))
 
         p_sum = p_squared + Polynomial([(1,1),(0,1)],[a,b])
-        self.assertEqual( (sp.sympify(str(p_sum)) - sp.sympify(' + (a**2)*x0**2 + (2*a*b + a)*x0*x1 + (b**2)*x1**2 + (b)*x1')).simplify() , 0)
+        self.assertEqual( (sympify_expression(str(p_sum)) - sympify_expression(' + (a**2)*x0**2 + (2*a*b + a)*x0*x1 + (b**2)*x1**2 + (b)*x1')).simplify() , 0)
 
         # should have minimal number of terms
         self.assertEqual(len(p_sum.coeffs), 4)
@@ -480,15 +477,14 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         np.testing.assert_array_equal(polynomial.coeffs, [0])
 
     def test_creation_from_expression(self):
-        from sympy import symbols, sympify
-        x,y, a,b,c = symbols('x y a b c')
+        x,y, a,b,c = sp.symbols('x y a b c')
         polynomial_expression = a*x + b*y + c*x**2*y
 
         poly1 = Polynomial.from_expression(polynomial_expression, [x,y])
         poly2 = Polynomial.from_expression('a*x + b*y + c*x**2*y', ['x','y'])
 
-        self.assertEqual((sympify(str(poly1)) - polynomial_expression).simplify(), 0)
-        self.assertEqual((sympify(str(poly2)) - polynomial_expression).simplify(), 0)
+        self.assertEqual((sympify_expression(str(poly1)) - polynomial_expression).simplify(), 0)
+        self.assertEqual((sympify_expression(str(poly2)) - polynomial_expression).simplify(), 0)
 
         self.assertRaisesRegexp(TypeError, "\'x\*y\' is not.*symbol", Polynomial.from_expression, 'a*x + b*y + c*x**2*y', [x,x*y])
         self.assertRaisesRegexp(TypeError, "polysymbols.*at least one.*symbol", Polynomial.from_expression, 'a*x + b*y + c*x**2*y', [])
@@ -519,29 +515,28 @@ class TestExponentiatedPolynomial(unittest.TestCase):
 
     #@attr('active')
     def test_derive(self):
-        from sympy import sympify, symbols
-        A, B = symbols('A B')
-        polynomial = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sympify('a + b*eps'))
+        A, B = sp.symbols('A B')
+        polynomial = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sympify_expression('a + b*eps'))
 
-        derivative_0 = sympify( str(polynomial.derive(0)) )
-        target_derivative_0 = sympify('(a + b*eps)*(A*x0**2*x1 + B)**(a + b*eps - 1) * (2*A*x0*x1)')
+        derivative_0 = sympify_expression( str(polynomial.derive(0)) )
+        target_derivative_0 = sympify_expression('(a + b*eps)*(A*x0**2*x1 + B)**(a + b*eps - 1) * (2*A*x0*x1)')
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
 
-        derivative_1 = sympify( str(polynomial.derive(1)) )
-        target_derivative_1 = sympify('(a + b*eps)*(A*x0**2*x1 + B)**(a + b*eps - 1) * (A*x0**2)')
+        derivative_1 = sympify_expression( str(polynomial.derive(1)) )
+        target_derivative_1 = sympify_expression('(a + b*eps)*(A*x0**2*x1 + B)**(a + b*eps - 1) * (A*x0**2)')
         self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
 
 
         polynomial = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=Polynomial.from_expression('a + b*x0',['x0','x1']))
-        derivative_0 = sympify( str(polynomial.derive(0)) )
-        target_derivative_0 = sympify('(a + b*x0)*(A*x0**2*x1 + B)**(a + b*x0 - 1) * (2*A*x0*x1)   +   (A*x0**2*x1 + B)**(a + b*x0)*b*log(A*x0**2*x1 + B)')
+        derivative_0 = sympify_expression( str(polynomial.derive(0)) )
+        target_derivative_0 = sympify_expression('(a + b*x0)*(A*x0**2*x1 + B)**(a + b*x0 - 1) * (2*A*x0*x1)   +   (A*x0**2*x1 + B)**(a + b*x0)*b*log(A*x0**2*x1 + B)')
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
 
     #@attr('active')
     def test_derive_with_coeffs(self):
         expr = ExponentiatedPolynomial([(1,1),(0,0)],[Polynomial([(1,0)], ['A']), 'B'],exponent=Polynomial.from_expression('a + b*x0',['x0','x1']))
-        derivative_0 = sp.sympify(expr.derive(0))
-        target_derivative_0 = sp.sympify('(a + b*x0)*(A*x0**2*x1 + B)**(a + b*x0 - 1) * (2*A*x0*x1)   +   (A*x0**2*x1 + B)**(a + b*x0)*b*log(A*x0**2*x1 + B)')
+        derivative_0 = sympify_expression(expr.derive(0))
+        target_derivative_0 = sympify_expression('(a + b*x0)*(A*x0**2*x1 + B)**(a + b*x0 - 1) * (2*A*x0*x1)   +   (A*x0**2*x1 + B)**(a + b*x0)*b*log(A*x0**2*x1 + B)')
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
 
     #@attr('active')
@@ -550,7 +545,7 @@ class TestExponentiatedPolynomial(unittest.TestCase):
 
         # <something>**0 = 1
         polynomial_to_power_zero_polynomial_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=Polynomial.from_expression('0',['x0','x1'])).simplify()
-        polynomial_to_power_zero_sympy_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sp.sympify('x-x')).simplify()
+        polynomial_to_power_zero_sympy_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sympify_expression('x-x')).simplify()
         polynomial_to_power_zero_numerical_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=0).simplify()
 
         for p in (polynomial_to_power_zero_polynomial_exponent, polynomial_to_power_zero_sympy_exponent, polynomial_to_power_zero_numerical_exponent):
@@ -564,7 +559,7 @@ class TestExponentiatedPolynomial(unittest.TestCase):
 
         # <something>**1 = <something>
         polynomial_to_power_one_polynomial_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=Polynomial([[0,0,0],[0,0,0]], [2, -1])).simplify()
-        polynomial_to_power_one_sympy_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sp.sympify('1/2+1/2')).simplify()
+        polynomial_to_power_one_sympy_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=sympify_expression('1/2+1/2')).simplify()
         polynomial_to_power_one_numerical_exponent = ExponentiatedPolynomial([(2,1),(0,0)],[A, B],exponent=1).simplify()
 
         for p in (polynomial_to_power_one_polynomial_exponent, polynomial_to_power_one_sympy_exponent, polynomial_to_power_one_numerical_exponent):
@@ -578,7 +573,7 @@ class TestExponentiatedPolynomial(unittest.TestCase):
 
         # 1**<something> = 1
         polynomial_exponent = ExponentiatedPolynomial([(0,0),(0,0)],[A, 1-A],exponent=Polynomial([[0,9,0],[1,2,3]], [2, A])).simplify()
-        sympy_exponent = ExponentiatedPolynomial([(0,0),(0,0)],[A, 1-A],exponent=sp.sympify('1/9+11/2 * eps')).simplify()
+        sympy_exponent = ExponentiatedPolynomial([(0,0),(0,0)],[A, 1-A],exponent=sympify_expression('1/9+11/2 * eps')).simplify()
         numerical_exponent = ExponentiatedPolynomial([(0,0),(0,0)],[A, 1-A],exponent=np.pi).simplify()
 
         for p in (polynomial_exponent, sympy_exponent, numerical_exponent):
@@ -622,17 +617,16 @@ class TestProduct(unittest.TestCase):
 
     #@attr('active')
     def test_derive(self):
-        from sympy import sympify, symbols
-        A, B = symbols('A B')
+        A, B = sp.symbols('A B')
         polynomial1 = Polynomial([(2,1),(0,0)],[A, B])
         polynomial2 = Polynomial([(0,0),(1,0)],[1, 2])
         prod = Product(polynomial1, polynomial2)
 
         derivative_0 = prod.derive(0)
-        derivative_0_1 = sympify( str(derivative_0.derive(1)) )
-        target_derivative_0_1 = sympify('(A*x0**2*x1 + B) * (1 + 2*x0)')
-        target_derivative_0_1 = sympify('(2*A*x0*x1) * (1 + 2*x0) + 2*(A*x0**2*x1 + B)')
-        target_derivative_0_1 = sympify('(2*A*x0) * (1 + 2*x0) + 2*(A*x0**2)')
+        derivative_0_1 = sympify_expression( str(derivative_0.derive(1)) )
+        target_derivative_0_1 = sympify_expression('(A*x0**2*x1 + B) * (1 + 2*x0)')
+        target_derivative_0_1 = sympify_expression('(2*A*x0*x1) * (1 + 2*x0) + 2*(A*x0**2*x1 + B)')
+        target_derivative_0_1 = sympify_expression('(2*A*x0) * (1 + 2*x0) + 2*(A*x0**2)')
         self.assertEqual( (derivative_0_1 - target_derivative_0_1).simplify() , 0 )
 
     def test_string_form(self):
@@ -651,8 +645,8 @@ class TestProduct(unittest.TestCase):
 
         simplified_prod = prod.simplify()
 
-        self.assertEqual( sp.sympify(simplified_prod) , 1 )
-        self.assertEqual( sp.sympify(prod) , 1 )
+        self.assertEqual( sympify_expression(simplified_prod) , 1 )
+        self.assertEqual( sympify_expression(prod) , 1 )
         self.assertTrue(type(prod) is Product)
         self.assertEqual(len(prod.factors), 1)
 
@@ -661,9 +655,9 @@ class TestProductRule(unittest.TestCase):
         self.poly1 = Polynomial.from_expression('x+x*y', ['x','y'])
         self.poly2 = Polynomial.from_expression('x**2-y**2', ['x','y'])
         self.p0 = ProductRule(self.poly1, self.poly2)
-        self.target_dp0_dx = sp.sympify('(1+y) * (x**2-y**2) + (x+x*y) * (2*x)')
-        self.target_ddp0_dxdy = sp.sympify('(x**2-y**2) + (1+y) * (-2*y)   +   x * (2*x)')
-        self.target_dddp0_dxdydx = sp.sympify('2*x + 4*x')
+        self.target_dp0_dx = sympify_expression('(1+y) * (x**2-y**2) + (x+x*y) * (2*x)')
+        self.target_ddp0_dxdy = sympify_expression('(x**2-y**2) + (1+y) * (-2*y)   +   x * (2*x)')
+        self.target_dddp0_dxdydx = sympify_expression('2*x + 4*x')
 
     #@attr('active')
     def test_string_form_basic(self):
@@ -685,21 +679,21 @@ class TestProductRule(unittest.TestCase):
     #@attr('active')
     def test_derive(self):
         dp0_dx = self.p0.derive(0)
-        self.assertEqual(  (sp.sympify(dp0_dx) - self.target_dp0_dx).simplify()  ,   0   )
+        self.assertEqual(  (sympify_expression(dp0_dx) - self.target_dp0_dx).simplify()  ,   0   )
 
         ddp0_dxdy = self.p0.derive(0).derive(1)
-        self.assertEqual(  (sp.sympify(ddp0_dxdy) - self.target_ddp0_dxdy).simplify()  ,   0   )
+        self.assertEqual(  (sympify_expression(ddp0_dxdy) - self.target_ddp0_dxdy).simplify()  ,   0   )
 
         dddp0_dxdydx = self.p0.derive(0).derive(1).derive(0)
-        self.assertEqual(  (sp.sympify(dddp0_dxdydx) - self.target_dddp0_dxdydx).simplify()  ,   0   )
+        self.assertEqual(  (sympify_expression(dddp0_dxdydx) - self.target_dddp0_dxdydx).simplify()  ,   0   )
 
     #@attr('active')
     def test_simplify(self):
         ddp0_dx_dx = self.p0.derive(0).derive(0)
         simplified_ddp0_dx_dx = self.p0.derive(0).derive(0).simplify()
-        target_ddp0_dx_dx = sp.sympify('(1+y) * (2*x) + 4 * x * (1+y)')
+        target_ddp0_dx_dx = sympify_expression('(1+y) * (2*x) + 4 * x * (1+y)')
 
-        self.assertEqual(   (sp.sympify(simplified_ddp0_dx_dx) - target_ddp0_dx_dx).simplify()   ,   0   )
+        self.assertEqual(   (sympify_expression(simplified_ddp0_dx_dx) - target_ddp0_dx_dx).simplify()   ,   0   )
         self.assertLess(len(simplified_ddp0_dx_dx.coeffs), len(ddp0_dx_dx.coeffs))
 
     #@attr('active')
@@ -713,14 +707,14 @@ class TestProductRule(unittest.TestCase):
         self.assertFalse(prod_rule is prod_rule_simplify_returned)
         self.assertTrue(type(prod_rule) is ProductRule)
         self.assertTrue(type(prod_rule_simplify_returned) is Polynomial)
-        self.assertEqual( sp.sympify(prod_rule).simplify(), 0 )
-        self.assertEqual( sp.sympify(prod_rule_simplify_returned).simplify(), 0 )
+        self.assertEqual( sympify_expression(prod_rule).simplify(), 0 )
+        self.assertEqual( sympify_expression(prod_rule_simplify_returned).simplify(), 0 )
 
     #@attr('active')
     def test_to_sum(self):
         p0_sum = self.p0.copy().to_sum()
         self.assertTrue(type(p0_sum) is Sum)
-        self.assertEqual(   (sp.sympify(p0_sum) - sp.sympify(self.p0)).simplify()   ,   0   )
+        self.assertEqual(   (sympify_expression(p0_sum) - sympify_expression(self.p0)).simplify()   ,   0   )
 
     #@attr('active')
     def test_replace(self):
@@ -733,7 +727,7 @@ class TestProductRule(unittest.TestCase):
         self.assertEqual(removed.symbols, sp.symbols(['y']))
 
         for derivative in [removed, replaced]:
-            self.assertEqual(   (sp.sympify(derivative) - self.target_dddp0_dxdydx.subs('x','z')).simplify()   ,   0   )
+            self.assertEqual(   (sympify_expression(derivative) - self.target_dddp0_dxdydx.subs('x','z')).simplify()   ,   0   )
 
 #@attr('active')
 class TestPow(unittest.TestCase):
@@ -820,29 +814,28 @@ class TestPow(unittest.TestCase):
 
         self.assertTrue(type(exponentiated) is ExponentiatedPolynomial)
         self.assertFalse( isinstance(exponentiated.exponent, _Expression) )
-        self.assertEqual( (sp.sympify(exponentiated) - sp.sympify('(a*x2 + b*x1 + c*x0)**(a*3 + 4*9 + b)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(exponentiated) - sympify_expression('(a*x2 + b*x1 + c*x0)**(a*3 + 4*9 + b)')).simplify() , 0 )
 
     #@attr('active')
     def test_derive(self):
-        from sympy import sympify, symbols
-        A, B = symbols('A B')
+        A, B = sp.symbols('A B')
         polynomial1 = Polynomial.from_expression('A*x0 + B*x1', ['x0','x1'])
         polynomial2 = Polynomial.from_expression('x1', ['x0','x1'])
         exp = Pow(polynomial1, polynomial2)
 
         derivative_0 = exp.derive(0)
-        target_derivative_0 = sympify('(A*x0 + B*x1) ** (x1 - 1) * A*x1')
-        self.assertEqual( (sympify(derivative_0) - target_derivative_0).simplify() , 0 )
+        target_derivative_0 = sympify_expression('(A*x0 + B*x1) ** (x1 - 1) * A*x1')
+        self.assertEqual( (sympify_expression(derivative_0) - target_derivative_0).simplify() , 0 )
 
-        derivative_0_1 = sympify(derivative_0.derive(1))
-        target_derivative_0_1 = sympify('A*x1 *( (A*x0 + B*x1) ** (x1 - 1) * (log(A*x0 + B*x1) + (x1 - 1)*B/(A*x0 + B*x1)) ) + (A*x0 + B*x1) ** (x1 - 1) * A')
+        derivative_0_1 = sympify_expression(derivative_0.derive(1))
+        target_derivative_0_1 = sympify_expression('A*x1 *( (A*x0 + B*x1) ** (x1 - 1) * (log(A*x0 + B*x1) + (x1 - 1)*B/(A*x0 + B*x1)) ) + (A*x0 + B*x1) ** (x1 - 1) * A')
         self.assertEqual( (derivative_0_1 - target_derivative_0_1).simplify() , 0 )
 
         # `_Expression` in exponent
         exp = Pow(polynomial1, Sum(polynomial1, polynomial2))
         derivative_0 = exp.derive(0)
-        target_derivative_0 = sympify('(A*x0 + B*x1)**(A*x0 + B*x1 + x1) * ( A*log(A*x0 + B*x1) + (A*x0 + B*x1 + x1)/(A*x0 + B*x1)*A )')
-        self.assertEqual( (sympify(derivative_0) - target_derivative_0).simplify() , 0 )
+        target_derivative_0 = sympify_expression('(A*x0 + B*x1)**(A*x0 + B*x1 + x1) * ( A*log(A*x0 + B*x1) + (A*x0 + B*x1 + x1)/(A*x0 + B*x1)*A )')
+        self.assertEqual( (sympify_expression(derivative_0) - target_derivative_0).simplify() , 0 )
 
     def test_string_form(self):
         p0 = ExponentiatedPolynomial([(0,1)],['A'],exponent='exponent')
@@ -887,7 +880,7 @@ class TestLog(unittest.TestCase):
         zero = Log(one).simplify()
 
         self.assertTrue(type(zero) is Polynomial)
-        self.assertEqual(sp.sympify(zero), 0)
+        self.assertEqual(sympify_expression(zero), 0)
         np.testing.assert_array_equal(zero.coeffs, [0])
         np.testing.assert_array_equal(zero.expolist, [[0,0,0]])
 
@@ -898,7 +891,7 @@ class TestLog(unittest.TestCase):
         zero = Log(one).simplify()
 
         self.assertTrue(type(zero) is Polynomial)
-        self.assertEqual(sp.sympify(zero), 0)
+        self.assertEqual(sympify_expression(zero), 0)
         np.testing.assert_array_equal(zero.coeffs, [0])
         np.testing.assert_array_equal(zero.expolist, [[0,0,0]])
 
@@ -907,11 +900,11 @@ class TestLog(unittest.TestCase):
         ln = Log(polynomial)
 
         derivative_0 = ln.derive(0).simplify()
-        target_derivative_0 = sp.sympify('1/(A*x0 + B*x1)*A')
-        self.assertEqual( (sp.sympify(derivative_0) - target_derivative_0).simplify() , 0 )
+        target_derivative_0 = sympify_expression('1/(A*x0 + B*x1)*A')
+        self.assertEqual( (sympify_expression(derivative_0) - target_derivative_0).simplify() , 0 )
 
-        derivative_0_1 = sp.sympify(derivative_0.derive(1))
-        target_derivative_0_1 = sp.sympify('-A * (A*x0 + B*x1)**(-2) * B')
+        derivative_0_1 = sympify_expression(derivative_0.derive(1))
+        target_derivative_0_1 = sympify_expression('-A * (A*x0 + B*x1)**(-2) * B')
         self.assertEqual( (derivative_0_1 - target_derivative_0_1).simplify() , 0 )
 
     def test_string_form(self):
@@ -966,15 +959,14 @@ class TestSum(unittest.TestCase):
         self.assertEqual(repr(sum), string_sum)
 
     def test_derive(self):
-        from sympy import symbols, sympify
-        A, B = symbols('A B')
+        A, B = sp.symbols('A B')
 
         p0 = ExponentiatedPolynomial([(0,1)],[A])
         p1 = ExponentiatedPolynomial([(2,1)],[B])
         psum = Sum(p0,p1)
 
-        derivative_0 = sympify( psum.derive(0) )
-        target_derivative_0 = sympify( '2*B*x0*x1' )
+        derivative_0 = sympify_expression( psum.derive(0) )
+        target_derivative_0 = sympify_expression( '2*B*x0*x1' )
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0 )
 
     #@attr('active')
@@ -984,8 +976,8 @@ class TestSum(unittest.TestCase):
 
         simplified_psum = psum.simplify()
 
-        self.assertEqual( sp.sympify(simplified_psum) , 0 )
-        self.assertEqual( sp.sympify(psum) , 0 )
+        self.assertEqual( sympify_expression(simplified_psum) , 0 )
+        self.assertEqual( sympify_expression(psum) , 0 )
         self.assertTrue(type(psum) is Sum)
         self.assertEqual(len(psum.summands), 1)
 
@@ -1000,31 +992,31 @@ class TestLogOfPolynomial(unittest.TestCase):
     def test_construct_from_expression(self):
         p1 = LogOfPolynomial.from_expression('D*x0**8*x1 + E*x0*x1**5 + F*x0*x0*x1',['x0','x1'])
         str_p1 = 'log( + (D)*x0**8*x1 + (E)*x0*x1**5 + (F)*x0**2*x1)'
-        sympy_p1 = sp.sympify(str_p1)
+        sympy_p1 = sympify_expression(str_p1)
 
         self.assertEqual(str(p1),repr(p1))
-        self.assertEqual( sp.sympify(repr(p1)) - sympy_p1 , 0 )
+        self.assertEqual( sympify_expression(repr(p1)) - sympy_p1 , 0 )
 
     def test_derive(self):
         expr = LogOfPolynomial([(2,1),(0,1)],['A', 'B'])
 
         derivative_0 = expr.derive(0)
-        sympified_derivative_0 = sp.sympify( str(derivative_0) )
-        target_derivative_0 = sp.sympify('1/(A*x0**2*x1 + B*x1) * 2*A*x0*x1')
+        sympified_derivative_0 = sympify_expression( str(derivative_0) )
+        target_derivative_0 = sympify_expression('1/(A*x0**2*x1 + B*x1) * 2*A*x0*x1')
         self.assertEqual( (sympified_derivative_0 - target_derivative_0).simplify() , 0 )
         self.assertEqual(type(derivative_0), Product)
         self.assertEqual(len(derivative_0.factors), 2)
         self.assertEqual(type(derivative_0.factors[0]), ExponentiatedPolynomial)
 
-        derivative_1 = sp.sympify( str(expr.derive(1)) )
-        target_derivative_1 = sp.sympify('1/(A*x0**2*x1 + B*x1) * (A*x0**2 + B)')
+        derivative_1 = sympify_expression( str(expr.derive(1)) )
+        target_derivative_1 = sympify_expression('1/(A*x0**2*x1 + B*x1) * (A*x0**2 + B)')
         self.assertEqual( (derivative_1 - target_derivative_1).simplify() , 0 )
 
     #@attr('active')
     def test_derive_with_coeffs(self):
         expr = LogOfPolynomial([(1,1),(0,1)],[Polynomial([(1,0)], ['A']), 'B'])
-        derivative_0 = sp.sympify(expr.derive(0))
-        target_derivative_0 = sp.sympify('1/(A*x0**2*x1 + B*x1) * 2*A*x0*x1')
+        derivative_0 = sympify_expression(expr.derive(0))
+        target_derivative_0 = sympify_expression('1/(A*x0**2*x1 + B*x1) * 2*A*x0*x1')
         self.assertEqual( (derivative_0 - target_derivative_0).simplify() , 0)
 
     def test_simplify(self):
@@ -1043,7 +1035,7 @@ class TestLogOfPolynomial(unittest.TestCase):
         zero = LogOfPolynomial([[4,1,5],[0,0,0]], [0,one], ['x','y','z']).simplify()
 
         self.assertTrue(type(zero) is Polynomial)
-        self.assertEqual(sp.sympify(zero), 0)
+        self.assertEqual(sympify_expression(zero), 0)
         np.testing.assert_array_equal(zero.coeffs, [0])
         np.testing.assert_array_equal(zero.expolist, [[0,0,0]])
 
@@ -1051,12 +1043,12 @@ class TestLogOfPolynomial(unittest.TestCase):
 class TestInsertion(unittest.TestCase):
     def test_insert_value_polynomial(self):
         poly = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
-        replaced_poly = poly.replace(index=1,value=sp.sympify('1/2'))
-        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/2 + D/4') , 0 )
+        replaced_poly = poly.replace(index=1,value=sympify_expression('1/2'))
+        self.assertEqual( sympify_expression(str(replaced_poly)) - sympify_expression('A + B*x0 + C/2 + D/4') , 0 )
         self.assertEqual(replaced_poly.number_of_variables, 2)
 
-        removed_poly = poly.replace(index=1,value=sp.sympify('1/2'), remove=True)
-        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/2 + D/4') , 0 )
+        removed_poly = poly.replace(index=1,value=sympify_expression('1/2'), remove=True)
+        self.assertEqual( sympify_expression(str(replaced_poly)) - sympify_expression('A + B*x0 + C/2 + D/4') , 0 )
         self.assertEqual(removed_poly.number_of_variables, 1)
         self.assertEqual(removed_poly.expolist.shape[1], 1)
 
@@ -1064,39 +1056,39 @@ class TestInsertion(unittest.TestCase):
     def test_insert_polynomial_coeffs(self):
         poly = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B',Polynomial([(0,1)], ['C']),'D'])
 
-        replaced_poly = poly.replace(index=1,value=sp.sympify('1/2'))
-        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/4 + D/4') , 0 )
+        replaced_poly = poly.replace(index=1,value=sympify_expression('1/2'))
+        self.assertEqual( sympify_expression(str(replaced_poly)) - sympify_expression('A + B*x0 + C/4 + D/4') , 0 )
         self.assertEqual(replaced_poly.number_of_variables, 2)
 
-        removed_poly = poly.replace(index=1,value=sp.sympify('1/2'), remove=True)
-        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/4 + D/4') , 0 )
+        removed_poly = poly.replace(index=1,value=sympify_expression('1/2'), remove=True)
+        self.assertEqual( sympify_expression(str(replaced_poly)) - sympify_expression('A + B*x0 + C/4 + D/4') , 0 )
         self.assertEqual(removed_poly.number_of_variables, 1)
         self.assertEqual(removed_poly.expolist.shape[1], 1)
 
     #@attr('active')
     def test_insert_value_polynomial_negative_index(self):
         poly = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
-        replaced_poly = poly.replace(index=-1,value=sp.sympify('1/2'))
-        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/2 + D/4') , 0 )
+        replaced_poly = poly.replace(index=-1,value=sympify_expression('1/2'))
+        self.assertEqual( sympify_expression(str(replaced_poly)) - sympify_expression('A + B*x0 + C/2 + D/4') , 0 )
         self.assertEqual(replaced_poly.number_of_variables, 2)
-        self.assertEqual(replaced_poly.polysymbols, sp.sympify(['x0','x1']))
+        self.assertEqual(replaced_poly.polysymbols, sympify_expression(['x0','x1']))
 
-        removed_poly = poly.replace(index=-1,value=sp.sympify('1/2'), remove=True)
-        self.assertEqual( sp.sympify(str(replaced_poly)) - sp.sympify('A + B*x0 + C/2 + D/4') , 0 )
+        removed_poly = poly.replace(index=-1,value=sympify_expression('1/2'), remove=True)
+        self.assertEqual( sympify_expression(str(replaced_poly)) - sympify_expression('A + B*x0 + C/2 + D/4') , 0 )
         self.assertEqual(removed_poly.number_of_variables, 1)
         self.assertEqual(removed_poly.expolist.shape[1], 1)
-        self.assertEqual(removed_poly.polysymbols, sp.sympify(['x0']))
+        self.assertEqual(removed_poly.polysymbols, sympify_expression(['x0']))
 
     def test_insert_value_polynomial_product(self):
         poly0 = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
         poly1 = Polynomial([(0,0),(5,0)],['E',1])
         prod = Product(poly0,poly1)
         replaced_prod = prod.replace(index=1,value=0)
-        self.assertEqual( (sp.sympify(str(replaced_prod)) - sp.sympify('(A + B*x0) * (E + x0**5)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(replaced_prod)) - sympify_expression('(A + B*x0) * (E + x0**5)')).simplify() , 0 )
         self.assertEqual(replaced_prod.number_of_variables, 2)
 
         removed_prod = prod.replace(index=1, value=0, remove=True)
-        self.assertEqual( (sp.sympify(str(removed_prod)) - sp.sympify('(A + B*x0) * (E + x0**5)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(removed_prod)) - sympify_expression('(A + B*x0) * (E + x0**5)')).simplify() , 0 )
         self.assertEqual(removed_prod.number_of_variables, 1)
         self.assertEqual(removed_prod.factors[0].expolist.shape[1], 1)
         self.assertEqual(removed_prod.factors[1].expolist.shape[1], 1)
@@ -1106,11 +1098,11 @@ class TestInsertion(unittest.TestCase):
         poly1 = Polynomial([(0,0),(5,0)],['E',1])
         polysum = Sum(poly0,poly1)
         replaced_sum = polysum.replace(index=1,value=0)
-        self.assertEqual( (sp.sympify(str(replaced_sum)) - sp.sympify('A + B*x0 + E + x0**5')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(replaced_sum)) - sympify_expression('A + B*x0 + E + x0**5')).simplify() , 0 )
         self.assertEqual(replaced_sum.number_of_variables, 2)
 
         removed_sum = polysum.replace(index=1,value=0, remove=True)
-        self.assertEqual( (sp.sympify(str(removed_sum)) - sp.sympify('(A + B*x0) + (E + x0**5)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(removed_sum)) - sympify_expression('(A + B*x0) + (E + x0**5)')).simplify() , 0 )
         self.assertEqual(removed_sum.number_of_variables, 1)
         self.assertEqual(removed_sum.summands[0].expolist.shape[1], 1)
         self.assertEqual(removed_sum.summands[1].expolist.shape[1], 1)
@@ -1119,14 +1111,14 @@ class TestInsertion(unittest.TestCase):
         exponent = Polynomial([(0,0),(5,0)],['E',1])
         poly1 = ExponentiatedPolynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'],exponent)
         replaced = poly1.replace(index=0,value=0)
-        self.assertEqual( (sp.sympify(str(replaced)) - sp.sympify('(A + C*x1 + D*x1**2)**(E)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(replaced)) - sympify_expression('(A + C*x1 + D*x1**2)**(E)')).simplify() , 0 )
         self.assertEqual(replaced.number_of_variables, 2)
         self.assertEqual(replaced.expolist.shape[1], 2)
         self.assertEqual(replaced.exponent.number_of_variables, 2)
         self.assertEqual(replaced.exponent.expolist.shape[1], 2)
 
         removed = poly1.replace(index=0, value=2, remove=True)
-        self.assertEqual( (sp.sympify(str(removed)) - sp.sympify('(A + 2*B + C*x1 + D*x1**2)**(E + 2**5)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(removed)) - sympify_expression('(A + 2*B + C*x1 + D*x1**2)**(E + 2**5)')).simplify() , 0 )
         self.assertEqual(removed.number_of_variables, 1)
         self.assertEqual(removed.exponent.number_of_variables, 1)
         self.assertEqual(removed.expolist.shape[1], 1)
@@ -1138,11 +1130,11 @@ class TestInsertion(unittest.TestCase):
         expr = Pow(base, exponent)
 
         replaced = expr.replace(index=0,value=0)
-        self.assertEqual( (sp.sympify(str(replaced)) - sp.sympify('(A + C*x1 + D*x1**2)**(E)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(replaced)) - sympify_expression('(A + C*x1 + D*x1**2)**(E)')).simplify() , 0 )
         self.assertEqual(replaced.number_of_variables, 2)
 
         removed = expr.replace(index=0, value=2, remove=True)
-        self.assertEqual( (sp.sympify(str(removed)) - sp.sympify('(A + 2*B + C*x1 + D*x1**2)**(E + 2**5)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(removed)) - sympify_expression('(A + 2*B + C*x1 + D*x1**2)**(E + 2**5)')).simplify() , 0 )
         self.assertEqual(removed.number_of_variables, 1)
 
     #@attr('active')
@@ -1150,12 +1142,12 @@ class TestInsertion(unittest.TestCase):
         arg = Polynomial([(0,0),(1,0),(0,1),(0,2)],['A','B','C','D'])
         expr = Log(arg)
 
-        replaced = expr.replace(index=1,value=sp.sympify('(3*k+1)'))
-        self.assertEqual( (sp.sympify(str(replaced)) - sp.sympify('log(A + B*x0 + C*(3*k+1) + D*(3*k+1)**2)')).simplify() , 0 )
+        replaced = expr.replace(index=1,value=sympify_expression('(3*k+1)'))
+        self.assertEqual( (sympify_expression(str(replaced)) - sympify_expression('log(A + B*x0 + C*(3*k+1) + D*(3*k+1)**2)')).simplify() , 0 )
         self.assertEqual(replaced.number_of_variables, 2)
 
-        removed = expr.replace(index=1, value=sp.sympify('(3*k+1)'), remove=True)
-        self.assertEqual( (sp.sympify(str(removed)) - sp.sympify('log(A + B*x0 + C*(3*k+1) + D*(3*k+1)**2)')).simplify() , 0 )
+        removed = expr.replace(index=1, value=sympify_expression('(3*k+1)'), remove=True)
+        self.assertEqual( (sympify_expression(str(removed)) - sympify_expression('log(A + B*x0 + C*(3*k+1) + D*(3*k+1)**2)')).simplify() , 0 )
         self.assertEqual(removed.number_of_variables, 1)
 
     #@attr('active')
@@ -1166,7 +1158,7 @@ class TestInsertion(unittest.TestCase):
         f = Function('f', poly1, poly2)
 
         replaced = f.replace(index=0,value=0)
-        self.assertEqual( (sp.sympify(str(replaced)) - sp.sympify('f( (A + C*x1 + D*x1**2)**(E), x1)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(replaced)) - sympify_expression('f( (A + C*x1 + D*x1**2)**(E), x1)')).simplify() , 0 )
         self.assertEqual(replaced.number_of_variables, 2)
         self.assertEqual(replaced.arguments[0].expolist.shape[1], 2)
         self.assertEqual(replaced.arguments[1].expolist.shape[1], 2)
@@ -1175,7 +1167,7 @@ class TestInsertion(unittest.TestCase):
         self.assertEqual(replaced.arguments[0].exponent.expolist.shape[1], 2)
 
         removed = f.replace(index=0, value=2, remove=True)
-        self.assertEqual( (sp.sympify(str(removed)) - sp.sympify('f( (A + 2*B + C*x1 + D*x1**2)**(E + 2**5), 2 + x1)')).simplify() , 0 )
+        self.assertEqual( (sympify_expression(str(removed)) - sympify_expression('f( (A + 2*B + C*x1 + D*x1**2)**(E + 2**5), 2 + x1)')).simplify() , 0 )
         self.assertEqual(removed.number_of_variables, 1)
         self.assertEqual(removed.arguments[0].expolist.shape[1], 1)
         self.assertEqual(removed.arguments[1].expolist.shape[1], 1)
@@ -1186,7 +1178,7 @@ class TestInsertion(unittest.TestCase):
 #@attr('active')
 class TestGetSymbols(unittest.TestCase):
     def setUp(self):
-        self.polysymbols = sp.sympify(['x','y'])
+        self.polysymbols = sympify_expression(['x','y'])
         self.p0 = Polynomial.from_expression('a*x + b*y', self.polysymbols)
         self.p1 = Polynomial.from_expression('c*x + d*y', self.polysymbols)
 
@@ -1216,144 +1208,144 @@ class TestGetSymbols(unittest.TestCase):
 
 class TestExpressionOperators(unittest.TestCase):
     def setUp(self):
-        self.polysymbols = sp.sympify(['x','y'])
+        self.polysymbols = sympify_expression(['x','y'])
         self.p0 = ExponentiatedPolynomial([(1,0),(0,1)], ['a','b'], 'exponent', self.polysymbols)
         self.p1 = LogOfPolynomial([(1,0),(0,1)], ['c','d'], self.polysymbols)
 
     #@attr('active')
     def test_add(self):
         sum_p0_p1 = self.p0 + self.p1
-        sympified_sum_p0_p1 = sp.sympify(sum_p0_p1)
-        target_sum_p0_p1 = sp.sympify('(a*x + b*y)**exponent + log(c*x + d*y)')
+        sympified_sum_p0_p1 = sympify_expression(sum_p0_p1)
+        target_sum_p0_p1 = sympify_expression('(a*x + b*y)**exponent + log(c*x + d*y)')
         self.assertTrue(type(sum_p0_p1) is Sum)
         self.assertEqual( (sympified_sum_p0_p1 - target_sum_p0_p1).simplify() , 0 )
 
         sum_p1_p0 = self.p1 + self.p0
-        sympified_sum_p1_p0 = sp.sympify(sum_p1_p0)
+        sympified_sum_p1_p0 = sympify_expression(sum_p1_p0)
         target_sum_p1_p0 = target_sum_p0_p1
         self.assertTrue(type(sum_p1_p0) is Sum)
         self.assertEqual( (sympified_sum_p1_p0 - target_sum_p1_p0).simplify() , 0 )
 
-        for expr, sympified_expr in zip([self.p0, self.p1], sp.sympify(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
+        for expr, sympified_expr in zip([self.p0, self.p1], sympify_expression(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
             # other operand is number
-            sum_p0_one = sp.sympify(expr + 1)
+            sum_p0_one = sympify_expression(expr + 1)
             self.assertEqual( (sympified_expr + 1 - sum_p0_one).simplify() , 0)
 
-            sum_one_p0 = sp.sympify(1 + expr)
+            sum_one_p0 = sympify_expression(1 + expr)
             self.assertEqual( (sympified_expr + 1 - sum_one_p0).simplify() , 0)
 
             # other operand is sympy symbol
-            sum_p0_K = sp.sympify(expr + sp.sympify('K'))
-            self.assertEqual( (sympified_expr + sp.sympify('K') - sum_p0_K).simplify() , 0)
+            sum_p0_K = sympify_expression(expr + sympify_expression('K'))
+            self.assertEqual( (sympified_expr + sympify_expression('K') - sum_p0_K).simplify() , 0)
 
-            sum_K_p0 = sp.sympify(sp.sympify('K') + expr)
-            self.assertEqual( (sympified_expr + sp.sympify('K') - sum_K_p0).simplify() , 0)
+            sum_K_p0 = sympify_expression(sympify_expression('K') + expr)
+            self.assertEqual( (sympified_expr + sympify_expression('K') - sum_K_p0).simplify() , 0)
 
     #@attr('active')
     def test_neg(self):
-        minus_p0 = sp.sympify(-self.p0)
-        target_minus_p0 = sp.sympify('-(a*x + b*y)**exponent')
+        minus_p0 = sympify_expression(-self.p0)
+        target_minus_p0 = sympify_expression('-(a*x + b*y)**exponent')
         self.assertEqual( (minus_p0 - target_minus_p0).simplify() , 0)
 
-        minus_p1 = sp.sympify(-self.p1)
-        target_minus_p1 = sp.sympify('-log(c*x + d*y)')
+        minus_p1 = sympify_expression(-self.p1)
+        target_minus_p1 = sympify_expression('-log(c*x + d*y)')
         self.assertEqual( (minus_p1 - target_minus_p1).simplify() , 0)
 
     #@attr('active')
     def test_sub(self):
         diff_p0_p1 = self.p0 - self.p1
-        sympified_diff_p0_p1 = sp.sympify(diff_p0_p1)
-        target_diff_p0_p1 = sp.sympify('(a*x + b*y)**exponent - log(c*x + d*y)')
+        sympified_diff_p0_p1 = sympify_expression(diff_p0_p1)
+        target_diff_p0_p1 = sympify_expression('(a*x + b*y)**exponent - log(c*x + d*y)')
         self.assertTrue(type(diff_p0_p1) is Sum)
         self.assertEqual( (sympified_diff_p0_p1 - target_diff_p0_p1).simplify() , 0 )
 
         diff_p1_p0 = self.p1 - self.p0
-        sympified_diff_p1_p0 = sp.sympify(diff_p1_p0)
+        sympified_diff_p1_p0 = sympify_expression(diff_p1_p0)
         target_diff_p1_p0 = -target_diff_p0_p1
         self.assertTrue(type(diff_p1_p0) is Sum)
         self.assertEqual( (sympified_diff_p1_p0 - target_diff_p1_p0).simplify() , 0 )
 
-        for expr, sympified_expr in zip([self.p0, self.p1], sp.sympify(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
+        for expr, sympified_expr in zip([self.p0, self.p1], sympify_expression(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
             # other operand is number
-            diff_p0_one = sp.sympify(expr -1)
+            diff_p0_one = sympify_expression(expr -1)
             self.assertEqual( (sympified_expr - 1 - diff_p0_one).simplify() , 0)
 
-            diff_one_p0 = sp.sympify(1 - expr)
+            diff_one_p0 = sympify_expression(1 - expr)
             self.assertEqual( (1 - sympified_expr - diff_one_p0).simplify() , 0)
 
             # other operand is sympy symbol
-            diff_p0_K = sp.sympify(expr - sp.sympify('K'))
-            self.assertEqual( (sympified_expr - sp.sympify('K') - diff_p0_K).simplify() , 0)
+            diff_p0_K = sympify_expression(expr - sympify_expression('K'))
+            self.assertEqual( (sympified_expr - sympify_expression('K') - diff_p0_K).simplify() , 0)
 
-            diff_K_p0 = sp.sympify(sp.sympify('K') - expr)
-            self.assertEqual( (sp.sympify('K') - sympified_expr - diff_K_p0).simplify() , 0)
+            diff_K_p0 = sympify_expression(sympify_expression('K') - expr)
+            self.assertEqual( (sympify_expression('K') - sympified_expr - diff_K_p0).simplify() , 0)
 
     #@attr('active')
     def test_mul(self):
         prod_p0_p1 = self.p0 * self.p1
-        sympified_prod_p0_p1 = sp.sympify(prod_p0_p1)
-        target_prod_p0_p1 = sp.sympify('(a*x + b*y)**exponent * log(c*x + d*y)')
+        sympified_prod_p0_p1 = sympify_expression(prod_p0_p1)
+        target_prod_p0_p1 = sympify_expression('(a*x + b*y)**exponent * log(c*x + d*y)')
         self.assertTrue(type(prod_p0_p1) is Product)
         self.assertEqual( (sympified_prod_p0_p1 - target_prod_p0_p1).simplify() , 0 )
 
         prod_p1_p0 = self.p1 * self.p0
-        sympified_prod_p1_p0 = sp.sympify(prod_p1_p0)
+        sympified_prod_p1_p0 = sympify_expression(prod_p1_p0)
         target_prod_p1_p0 = target_prod_p0_p1
         self.assertTrue(type(prod_p1_p0) is Product)
         self.assertEqual( (sympified_prod_p1_p0 - target_prod_p1_p0).simplify() , 0 )
 
-        for expr, sympified_expr in zip([self.p0, self.p1], sp.sympify(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
+        for expr, sympified_expr in zip([self.p0, self.p1], sympify_expression(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
             # other operand is number
-            prod_p0_ten = sp.sympify(expr * 10)
+            prod_p0_ten = sympify_expression(expr * 10)
             self.assertEqual( (sympified_expr * 10 - prod_p0_ten).simplify() , 0)
 
-            prod_ten_p0 = sp.sympify(10 * expr)
+            prod_ten_p0 = sympify_expression(10 * expr)
             self.assertEqual( (sympified_expr * 10 - prod_ten_p0).simplify() , 0)
 
             # other operand is sympy symbol
-            prod_p0_K = sp.sympify(expr * sp.sympify('K'))
-            self.assertEqual( (sympified_expr * sp.sympify('K') - prod_p0_K).simplify() , 0)
+            prod_p0_K = sympify_expression(expr * sympify_expression('K'))
+            self.assertEqual( (sympified_expr * sympify_expression('K') - prod_p0_K).simplify() , 0)
 
-            prod_K_p0 = sp.sympify(sp.sympify('K') * expr)
-            self.assertEqual( (sympified_expr * sp.sympify('K') - prod_K_p0).simplify() , 0)
+            prod_K_p0 = sympify_expression(sympify_expression('K') * expr)
+            self.assertEqual( (sympified_expr * sympify_expression('K') - prod_K_p0).simplify() , 0)
 
     #@attr('active')
     def test_pow(self):
         pow_p0_p1 = self.p0 ** self.p1
-        sympified_pow_p0_p1 = sp.sympify(pow_p0_p1)
-        target_pow_p0_p1 = sp.sympify('((a*x + b*y)**exponent) ** log(c*x + d*y)')
+        sympified_pow_p0_p1 = sympify_expression(pow_p0_p1)
+        target_pow_p0_p1 = sympify_expression('((a*x + b*y)**exponent) ** log(c*x + d*y)')
         self.assertTrue(type(pow_p0_p1) is Pow)
         self.assertEqual( (sympified_pow_p0_p1 - target_pow_p0_p1).simplify() , 0 )
 
         pow_p1_p0 = self.p1 ** self.p0
-        sympified_pow_p1_p0 = sp.sympify(pow_p1_p0)
-        target_pow_p1_p0 = sp.sympify('log(c*x + d*y) ** ((a*x + b*y)**exponent)')
+        sympified_pow_p1_p0 = sympify_expression(pow_p1_p0)
+        target_pow_p1_p0 = sympify_expression('log(c*x + d*y) ** ((a*x + b*y)**exponent)')
         self.assertTrue(type(pow_p1_p0) is Pow)
         self.assertEqual( (sympified_pow_p1_p0 - target_pow_p1_p0).simplify() , 0 )
 
-        for expr, sympified_expr in zip([self.p0, self.p1], sp.sympify(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
+        for expr, sympified_expr in zip([self.p0, self.p1], sympify_expression(['(a*x + b*y)**exponent', 'log(c*x + d*y)'])):
             # other operand is number
-            pow_p0_ten = sp.sympify(expr ** 10)
+            pow_p0_ten = sympify_expression(expr ** 10)
             self.assertEqual( (sympified_expr ** 10 - pow_p0_ten).simplify() , 0)
 
-            pow_ten_p0 = sp.sympify(10 ** expr)
+            pow_ten_p0 = sympify_expression(10 ** expr)
             self.assertEqual( (10**sympified_expr - pow_ten_p0).simplify() , 0)
 
             # other operand is sympy symbol
-            pow_p0_K = sp.sympify(expr ** sp.sympify('K'))
-            self.assertEqual( (sympified_expr ** sp.sympify('K') - pow_p0_K).simplify() , 0)
+            pow_p0_K = sympify_expression(expr ** sympify_expression('K'))
+            self.assertEqual( (sympified_expr ** sympify_expression('K') - pow_p0_K).simplify() , 0)
 
-            pow_K_p0 = sp.sympify(sp.sympify('K') ** expr)
-            self.assertEqual( (sp.sympify('K')**sympified_expr - pow_K_p0).simplify() , 0)
+            pow_K_p0 = sympify_expression(sympify_expression('K') ** expr)
+            self.assertEqual( (sympify_expression('K')**sympified_expr - pow_K_p0).simplify() , 0)
 
 class TestExpressionConverter(unittest.TestCase):
     #@attr('active')
     def test_polynomial(self):
-        sympy_poly = sp.sympify('x + x**2 - a * x*y')
+        sympy_poly = sympify_expression('x + x**2 - a * x*y')
         poly = Expression(sympy_poly, ['x','y'])
 
         self.assertTrue( type(poly) is Polynomial )
-        self.assertEqual( (sp.sympify(poly) - sympy_poly).simplify() , 0 )
+        self.assertEqual( (sympify_expression(poly) - sympy_poly).simplify() , 0 )
 
     #@attr('active')
     def test_function(self):
@@ -1362,7 +1354,7 @@ class TestExpressionConverter(unittest.TestCase):
         sympy_function = my_function(a*x)
         function = Expression(sympy_function, ['x'])
 
-        self.assertEqual( (sp.sympify(function) - sympy_function).simplify() , 0 )
+        self.assertEqual( (sympify_expression(function) - sympy_function).simplify() , 0 )
         self.assertTrue( type(function) is Function )
         self.assertEqual(function.symbol, 'my_function')
         self.assertEqual(len(function.arguments), 1)
@@ -1381,22 +1373,22 @@ class TestExpressionConverter(unittest.TestCase):
 
         found_f1_x_y = found_f2_xy_z = found_f1_y_z = found_f2_z = False
 
-        self.assertEqual( (sp.sympify(expression) - sp.sympify(string_expression)).simplify() , 0 )
+        self.assertEqual( (sympify_expression(expression) - sympify_expression(string_expression)).simplify() , 0 )
         self.assertEqual( len(functions) , 4 )
         for function in functions:
             self.assertTrue( type(function) is Function )
             if function.symbol == 'f1':
-                if sp.sympify(function.arguments) == [x,y]:
+                if sympify_expression(function.arguments) == [x,y]:
                     self.assertEqual(function.derivative_symbols, set(['f1']))
                     found_f1_x_y = True
-                elif sp.sympify(function.arguments) == [y,z]:
+                elif sympify_expression(function.arguments) == [y,z]:
                     self.assertEqual(function.derivative_symbols, set(['f1','df1d1']))
                     found_f1_y_z = True
             elif function.symbol == 'f2':
-                if sp.sympify(function.arguments) == [x*y,z]:
+                if sympify_expression(function.arguments) == [x*y,z]:
                     self.assertEqual(function.derivative_symbols, set(['f2','df2d1']))
                     found_f2_xy_z = True
-                elif sp.sympify(function.arguments) == [z]:
+                elif sympify_expression(function.arguments) == [z]:
                     self.assertEqual(function.derivative_symbols, set(['f2','df2d0']))
                     found_f2_z = True
 

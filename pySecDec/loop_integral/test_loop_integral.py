@@ -1,4 +1,5 @@
 from . import *
+from ..misc import sympify_expression
 import numpy as np
 import sympy as sp
 import unittest
@@ -10,11 +11,11 @@ def uf_from_propagators_generic(test_case, loop_momenta, propagators, result_u, 
 
     u,f = loop_integral.U, loop_integral.F
 
-    sympy_u = sp.sympify(str(u))
-    sympy_f = sp.sympify(str(f))
+    sympy_u = sympify_expression(str(u))
+    sympy_f = sympify_expression(str(f))
 
-    result_u = sp.sympify(str(result_u).replace('x','Feynman'))
-    result_f = sp.sympify(str(result_f).replace('x','Feynman'))
+    result_u = sympify_expression(str(result_u).replace('x','Feynman'))
+    result_f = sympify_expression(str(result_f).replace('x','Feynman'))
 
     zerou = (sympy_u - result_u).expand()
     zerof = (sympy_f - result_f).expand()
@@ -23,8 +24,8 @@ def uf_from_propagators_generic(test_case, loop_momenta, propagators, result_u, 
     test_case.assertEqual(zerof,0)
 
     expo_u, expo_f = loop_integral.exponent_U, loop_integral.exponent_F
-    test_case.assertEqual(expo_u, len(propagators) - sp.sympify('2-eps') * (1 + len(loop_momenta)))
-    test_case.assertEqual(expo_f, -(len(propagators) - sp.sympify('2-eps') * len(loop_momenta)))
+    test_case.assertEqual(expo_u, len(propagators) - sympify_expression('2-eps') * (1 + len(loop_momenta)))
+    test_case.assertEqual(expo_f, -(len(propagators) - sympify_expression('2-eps') * len(loop_momenta)))
 
 #@attr('active')
 class TestUF_FromPropagators(unittest.TestCase):
@@ -304,17 +305,17 @@ class TestUF_FromPropagators(unittest.TestCase):
                              ('p2*p3', 't/2'),
                              ( p1*p3 , -s/2-t/2)]
         loop_integral = LoopIntegralFromPropagators(propagators, loop_momenta, replacement_rules=replacement_rules, Feynman_parameters='z')
-        U = sp.sympify(loop_integral.U)
-        F = sp.sympify(loop_integral.F)
+        U = sympify_expression(loop_integral.U)
+        F = sympify_expression(loop_integral.F)
 
-        target_U = sp.sympify('z3*(z4 + z5 + z6) + z0*(z3 + z4 + z5 + z6) + z1*(z3 + z4 + z5 + z6) + z2*(z3 + z4 + z5 + z6)')
-        target_F = sp.sympify('-(s*z3*z4*z5) + s*z2*(-(z3*z4) - z4*z5) - z0*(s*z4*z5 + t*z3*z6) - s*z1*((z3 + z4)*z5 + z2*(z3 + z4 + z5 + z6))')
+        target_U = sympify_expression('z3*(z4 + z5 + z6) + z0*(z3 + z4 + z5 + z6) + z1*(z3 + z4 + z5 + z6) + z2*(z3 + z4 + z5 + z6)')
+        target_F = sympify_expression('-(s*z3*z4*z5) + s*z2*(-(z3*z4) - z4*z5) - z0*(s*z4*z5 + t*z3*z6) - s*z1*((z3 + z4)*z5 + z2*(z3 + z4 + z5 + z6))')
 
         self.assertEqual( (target_U - U).simplify() , 0)
         self.assertEqual( (target_F - F).simplify() , 0)
 
         L = 2
-        D = sp.sympify('4-2*eps')
+        D = sympify_expression('4-2*eps')
         N_nu = 7
         target_exponent_U = N_nu - D/2 * (L+1)
         target_exponent_F = -(N_nu - D/2 * L)
@@ -336,11 +337,11 @@ class TestUF_FromPropagators(unittest.TestCase):
                              ('p2*p4', 's1/2-t/2-s/2'),
                              ('p3*p4',     's/2'     )]
         loop_integral = LoopIntegralFromPropagators(props, loop_momenta, replacement_rules=replacement_rules, Feynman_parameters=['z1','z2','z3','z4'])
-        U = sp.sympify(loop_integral.U)
-        F = sp.sympify(loop_integral.F)
+        U = sympify_expression(loop_integral.U)
+        F = sympify_expression(loop_integral.F)
 
-        target_U = sp.sympify('z1 + z2 + z3 + z4')
-        target_F = sp.sympify('-(t*z1*z3) - (s1*z1 + s*z2)*z4 + m**2*z1*(z1 + z2 + z3 + z4)')
+        target_U = sympify_expression('z1 + z2 + z3 + z4')
+        target_F = sympify_expression('-(t*z1*z3) - (s1*z1 + s*z2)*z4 + m**2*z1*(z1 + z2 + z3 + z4)')
 
         self.assertEqual( (target_U - U).simplify() , 0)
         self.assertEqual( (target_F - F).simplify() , 0)
@@ -355,11 +356,11 @@ class TestUF_FromPropagators(unittest.TestCase):
                  ('p*v', 0)]
         li = LoopIntegralFromPropagators(props, loop_momenta, replacement_rules=rules, \
                                          Feynman_parameters=['z1','z2','z3'])
-        U = sp.sympify(li.U)
-        F = sp.sympify(li.F)
+        U = sympify_expression(li.U)
+        F = sympify_expression(li.F)
 
-        target_U = sp.sympify('z1 + z2')
-        target_F = sp.sympify('-(ssp1*z1*z2) + ssp2*z3**2')
+        target_U = sympify_expression('z1 + z2')
+        target_F = sympify_expression('-(ssp1*z1*z2) + ssp2*z3**2')
 
 
 class TestNumerator(unittest.TestCase):
@@ -432,9 +433,9 @@ class TestNumerator(unittest.TestCase):
 
     #@attr('active')
     def test_tensor_numerator_bubble_1L(self):
-        numerator = sp.sympify('k(1)*k(2)*k(3)*k(4)')
-        contracted_numerator = numerator * sp.sympify('p(1)*p(2)*p(3)*p(4)*const')
-        partially_contracted_numerator = numerator * sp.sympify('p(3)*p(4)')
+        numerator = sympify_expression('k(1)*k(2)*k(3)*k(4)')
+        contracted_numerator = numerator * sympify_expression('p(1)*p(2)*p(3)*p(4)*const')
+        partially_contracted_numerator = numerator * sympify_expression('p(3)*p(4)')
         indices = [1, 2, 3, 4]
         loop_momenta = ['k']
         external_momenta = ['p']
@@ -456,15 +457,15 @@ class TestNumerator(unittest.TestCase):
 
         self.assertEqual(tensors, target_tensors)
 
-        numerator = sp.sympify(li.numerator) * li.Gamma_factor
-        contracted_numerator = sp.sympify(li_contracted.numerator) * li.Gamma_factor
-        partially_contracted_numerator = sp.sympify(li_partially_contracted.numerator) * li.Gamma_factor
+        numerator = sympify_expression(li.numerator) * li.Gamma_factor
+        contracted_numerator = sympify_expression(li_contracted.numerator) * li.Gamma_factor
+        partially_contracted_numerator = sympify_expression(li_partially_contracted.numerator) * li.Gamma_factor
         scalar_factor_insertation = { # N_nu = 2, L = 1 in this example
-                                          sp.sympify('scalar_factor(0)'): sp.sympify('1/(-2)**(0/2)*(2 - D*1/2 - 2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(0/2)'),
-                                          sp.sympify('scalar_factor(2)'): sp.sympify('1/(-2)**(2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(2/2)'),
-                                          sp.sympify('scalar_factor(4)'): sp.sympify('1/(-2)**(4/2)*gamma(2 - D*1/2 - 4/2)*F**(4/2)')
+                                          sympify_expression('scalar_factor(0)'): sympify_expression('1/(-2)**(0/2)*(2 - D*1/2 - 2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(0/2)'),
+                                          sympify_expression('scalar_factor(2)'): sympify_expression('1/(-2)**(2/2)*(2 - D*1/2 - 4/2)*gamma(2 - D*1/2 - 4/2)*F**(2/2)'),
+                                          sympify_expression('scalar_factor(4)'): sympify_expression('1/(-2)**(4/2)*gamma(2 - D*1/2 - 4/2)*F**(4/2)')
                                     }
-        target_numerator = sp.sympify('''
+        target_numerator = sympify_expression('''
                                              scalar_factor(0)*p(1)*x2*p(2)*x2*p(3)*x2*p(4)*x2 +
                                              g(1,2) * scalar_factor(2)*p(3)*x2*p(4)*x2 +
                                              g(1,3) * scalar_factor(2)*p(2)*x2*p(4)*x2 +
@@ -476,7 +477,7 @@ class TestNumerator(unittest.TestCase):
                                              g(1,3) * g(2,4) * scalar_factor(4) +
                                              g(1,4) * g(2,3) * scalar_factor(4)
                                       ''').subs(scalar_factor_insertation)
-        target_contracted_numerator = sp.sympify('''
+        target_contracted_numerator = sympify_expression('''
                                                         scalar_factor(0)*p(1)**2*x2*p(2)**2*x2*p(3)**2*x2*p(4)**2*x2 +
                                                         p(2)*p(2) * scalar_factor(2)*p(3)*p(3)*x2*p(4)*p(4)*x2 +
                                                         p(3)*p(3) * scalar_factor(2)*p(2)*p(2)*x2*p(4)*p(4)*x2 +
@@ -487,8 +488,8 @@ class TestNumerator(unittest.TestCase):
                                                         p(2)*p(2) * p(4)*p(4) * scalar_factor(4) +
                                                         p(3)*p(3) * p(4)*p(4) * scalar_factor(4) +
                                                         p(4)*p(4) * p(3)*p(3) * scalar_factor(4)
-                                                 ''').subs(scalar_factor_insertation) * sp.sympify('const')
-        target_partially_contracted_numerator = sp.sympify('''
+                                                 ''').subs(scalar_factor_insertation) * sympify_expression('const')
+        target_partially_contracted_numerator = sympify_expression('''
                                                                   scalar_factor(0)*m**2*x2*m**2*x2*p(1)*x2*p(2)*x2 +
                                                                   m**2 * scalar_factor(2)*p(1)*x2*p(2)*x2 +
                                                                   p(1) * scalar_factor(2)*m**2*x2*p(2)*x2 +
@@ -506,7 +507,7 @@ class TestNumerator(unittest.TestCase):
 
     #@attr('active')
     def test_replacement_rules_in_numerator_bubble_1L(self):
-        numerator = sp.sympify('k(1)*k(2)*k(3)*k(4)*p(1)*p(2)*p(3)*p(4)')
+        numerator = sympify_expression('k(1)*k(2)*k(3)*k(4)*p(1)*p(2)*p(3)*p(4)')
         indices = [1, 2, 3, 4]
         loop_momenta = ['k']
         external_momenta = ['p']
@@ -515,7 +516,7 @@ class TestNumerator(unittest.TestCase):
 
         li = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['x1','x2'], replacement_rules=replacement_rules, Lorentz_indices=indices)
 
-        target_numerator = sp.sympify('''
+        target_numerator = sympify_expression('''
                                              scalar_factor(0)*m**2*x2*m**2*x2*m**2*x2*m**2*x2 +
                                              m**2 * scalar_factor(2)*m**2*x2*m**2*x2 +
                                              m**2 * scalar_factor(2)*m**2*x2*m**2*x2 +
@@ -527,12 +528,12 @@ class TestNumerator(unittest.TestCase):
                                              m**2 * m**2 * scalar_factor(4) +
                                              m**2 * m**2 * scalar_factor(4)
                                       ''').subs({ # N_nu = 2, L = 1, D=4-2*eps in this example
-                                                      sp.sympify('scalar_factor(0)'): sp.sympify('1/(-2)**(0/2)*(2 - (4-2*eps)*1/2 - 2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(0/2)'),
-                                                      sp.sympify('scalar_factor(2)'): sp.sympify('1/(-2)**(2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(2/2)'),
-                                                      sp.sympify('scalar_factor(4)'): sp.sympify('1/(-2)**(4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(4/2)')
+                                                      sympify_expression('scalar_factor(0)'): sympify_expression('1/(-2)**(0/2)*(2 - (4-2*eps)*1/2 - 2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(0/2)'),
+                                                      sympify_expression('scalar_factor(2)'): sympify_expression('1/(-2)**(2/2)*(2 - (4-2*eps)*1/2 - 4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(2/2)'),
+                                                      sympify_expression('scalar_factor(4)'): sympify_expression('1/(-2)**(4/2)*gamma(2 - (4-2*eps)*1/2 - 4/2)*F**(4/2)')
                                                 })
 
-        self.assertEqual( (sp.sympify(li.numerator)*li.Gamma_factor - target_numerator).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li.numerator)*li.Gamma_factor - target_numerator).simplify() , 0 )
 
     #@attr('active')
     def test_2L_box_with_numerator(self):
@@ -544,11 +545,11 @@ class TestNumerator(unittest.TestCase):
         li = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta, numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)], Lorentz_indices=['mu'])
 
         # comparison with Mathematica implementation of SecDec
-        target_U = sp.sympify('''
+        target_U = sympify_expression('''
                                    z4*(z5 + z6 + z7) + z1*(z4 + z5 + z6 + z7) +
                                    z2*(z4 + z5 + z6 + z7) + z3*(z4 + z5 + z6 + z7)
                               ''')
-        target_F = sp.sympify('''
+        target_F = sympify_expression('''
                                     z4*(-((p1*p1 + 2*p1*p2 + 2*p1*p3 + p2*p2 +
                                     2*p2*p3 + p3*p3)*z6*z7) -
                                     z5*(p1*p1*z6 + 2*p1*p2*z6 + p2*p2*z6 +
@@ -573,19 +574,19 @@ class TestNumerator(unittest.TestCase):
                                     p3*p3*z7) - z4*(p1*p1*z6 + (2*p2*p3 + p3*p3)*
                                     z7 + p2*p2*(z5 + z7)))
                               ''')
-        target_numerator = sp.sympify('''
+        target_numerator = sympify_expression('''
                                                2*(-(p3(mu)* p3(mu)*z4*z7)
                                              - p2(mu)* p3(mu)*(z4*(z5 + z7)
                                              + z2*(z4 + z5 + z6 + z7))
                                              + p1(mu)* p3(mu)*(z4*z6 + z3*(z4 + z5 + z6 + z7)))
                                              + eps * U
-                                      ''') * sp.sympify('gamma(7 - (4-2*eps)*2/2)')
+                                      ''') * sympify_expression('gamma(7 - (4-2*eps)*2/2)')
         # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the `Gamma_factor`.
         target_numerator = - target_numerator
 
-        self.assertEqual( (sp.sympify(li.U) - target_U).simplify() , 0 )
-        self.assertEqual( (sp.sympify(li.F) - target_F  ).simplify() , 0 )
-        self.assertEqual( (sp.sympify(li.numerator) * li.Gamma_factor - target_numerator).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li.F) - target_F  ).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li.numerator) * li.Gamma_factor - target_numerator).simplify() , 0 )
 
         replacement_rules = np.array([('p1**2', 0),
                                       ('p2**2', 0),
@@ -599,17 +600,17 @@ class TestNumerator(unittest.TestCase):
                                                                   numerator=numerator, Feynman_parameters=['z%i'%i for i in range(1,7+1)],
                                                                   replacement_rules=replacement_rules, Lorentz_indices=['mu'])
 
-        target_numerator_with_replacements = sp.sympify('''
+        target_numerator_with_replacements = sympify_expression('''
                                                              2*(
                                                                     - (t/2)*(z4*(z5 + z7)
                                                                     + z2*(z4 + z5 + z6 + z7))
                                                                     + (-s/2-t/2)*(z4*z6 + z3*(z4 + z5 + z6 + z7))
                                                                ) + eps * U
-                                                        ''') * sp.sympify('gamma(7 - (4-2*eps)*2/2)')
+                                                        ''') * sympify_expression('gamma(7 - (4-2*eps)*2/2)')
         # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the `Gamma_factor`.
         target_numerator_with_replacements = - target_numerator_with_replacements
 
-        self.assertEqual( (sp.sympify(li_with_replacement_rules.numerator) * li.Gamma_factor - target_numerator_with_replacements).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li_with_replacement_rules.numerator) * li.Gamma_factor - target_numerator_with_replacements).simplify() , 0 )
 
     #@attr('active')
     @attr('slow')
@@ -618,7 +619,7 @@ class TestNumerator(unittest.TestCase):
         k1f, k2f, p1f, p2f, p3f, p4f = sp.symbols('k1 k2 p1 p2 p3 p4', cls=sp.Function)
         sp11, sp12, sp13, sp22, sp23, sp33 = sp.symbols('sp11 sp12 sp13 sp22 sp23 sp33')
 
-        z = sp.sympify(['z%i'%i for i in range(6+1)]) # Feynman parameters (only use z[1], z[2], ..., z[6] but not z[0])
+        z = sympify_expression(['z%i'%i for i in range(6+1)]) # Feynman parameters (only use z[1], z[2], ..., z[6] but not z[0])
         loop_momenta = [k1, k2]
         external_momenta = [p1, p2, p3, p4]
         indices = [mu, nu]
@@ -640,11 +641,11 @@ class TestNumerator(unittest.TestCase):
 
         # need to insert the `scalar_factor` (and the `F` therein) when comparing with SecDec
         # `scalar_factor` = `1/(-2)**(r/2)*Gamma(N_nu - dim*L/2 - r/2)*F**(r/2)
-        N_nu = sp.sympify(len(propagators))
-        dim = sp.sympify(4 - 2*eps)
-        L = sp.sympify(2)
-        numerator = sp.sympify(li.numerator) * li.Gamma_factor
-        numerator = numerator.subs(F, sp.sympify(li.F))
+        N_nu = sympify_expression(len(propagators))
+        dim = sympify_expression(4 - 2*eps)
+        L = sympify_expression(2)
+        numerator = sympify_expression(li.numerator) * li.Gamma_factor
+        numerator = numerator.subs(F, sympify_expression(li.F))
 
         # SecDec divides by a factor of ``Gamma(N_nu - dim*L/2)`` and uses ``Gamma(N_nu - dim*L/2 - 1) = Gamma(N_nu - dim*L/2) / (N_nu - dim*L/2 - 1)``
         numerator /= sp.gamma(N_nu - dim*L/2)
@@ -705,9 +706,9 @@ class TestNumerator(unittest.TestCase):
                            z[2]*(z[3] + z[4] + z[5] + z[6])) + \
                            z[3]*(sp33*z[6] + 2*sp23*(z[4] + 2*z[5] + z[6]))))))
 
-        self.assertEqual( (sp.sympify(li.U) - target_U).simplify() , 0 )
-        self.assertEqual( (sp.sympify(li.F) - target_F).simplify() , 0 )
-        self.assertEqual( (sp.sympify(numerator) - target_numerator).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li.F) - target_F).simplify() , 0 )
+        self.assertEqual( (sympify_expression(numerator) - target_numerator).simplify() , 0 )
 
 
         rank = 3
@@ -715,8 +716,8 @@ class TestNumerator(unittest.TestCase):
         target_exponent_F = -(N_nu - dim/2 * L)
         target_exponentiated_F = target_F ** target_exponent_F
         target_exponentiated_U = target_U ** target_exponent_U
-        self.assertEqual( (sp.sympify(li.exponentiated_U) - target_exponentiated_U).simplify() , 0 )
-        self.assertEqual( (sp.sympify(li.exponentiated_F) - target_exponentiated_F).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li.exponentiated_U) - target_exponentiated_U).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li.exponentiated_F) - target_exponentiated_F).simplify() , 0 )
 
     #@attr('active')
     @attr('slow')
@@ -724,7 +725,7 @@ class TestNumerator(unittest.TestCase):
         k1,  k2,  p1,  p2,  p3,  p4, s, t, mu, scalar_factor, D, eps = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu scalar_factor D eps')
         k1f, k2f, p1f, p2f, p3f, p4f = sp.symbols('k1 k2 p1 p2 p3 p4', cls=sp.Function)
 
-        z = sp.sympify(['z%i'%i for i in range(7+1)]) # Feynman parameters (only use z[1], z[2], ..., z[7] but not z[0])
+        z = sympify_expression(['z%i'%i for i in range(7+1)]) # Feynman parameters (only use z[1], z[2], ..., z[7] but not z[0])
         loop_momenta = [k1, k2]
         external_momenta = [p1, p2, p3, p4]
         indices = [mu]
@@ -747,8 +748,8 @@ class TestNumerator(unittest.TestCase):
         li2 = LoopIntegralFromPropagators(propagators, loop_momenta, external_momenta,
                                             numerator=numerator2, Feynman_parameters=z[1:],
                                             Lorentz_indices=indices)
-        Feynman_parametrized_numerator1 = sp.sympify(li1.numerator)
-        Feynman_parametrized_numerator2 = sp.sympify(li2.numerator)
+        Feynman_parametrized_numerator1 = sympify_expression(li1.numerator)
+        Feynman_parametrized_numerator2 = sympify_expression(li2.numerator)
 
         # comparison with Mathematica implementation of SecDec
         target_U = z[4]*(z[5] + z[6] + z[7]) + z[1]*(z[4] + z[5] + z[6] + z[7]) + \
@@ -861,10 +862,10 @@ class TestNumerator(unittest.TestCase):
                             p2*p2*(z[5] + z[7])))))/(4*(1 + eps))))
         target_numerators = [target_numerator1, target_numerator2]
 
-        self.assertEqual( (sp.sympify(li1.U) - target_U).simplify() , 0 )
-        self.assertEqual( (sp.sympify(li2.U) - target_U).simplify() , 0 )
-        self.assertEqual( (sp.sympify(li1.F) - target_F1).simplify() , 0 )
-        self.assertEqual( (sp.sympify(li2.F) - target_F2).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li1.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li2.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li1.F) - target_F1).simplify() , 0 )
+        self.assertEqual( (sympify_expression(li2.F) - target_F2).simplify() , 0 )
 
         for i, Feynman_parametrized_numerator in enumerate([Feynman_parametrized_numerator1, Feynman_parametrized_numerator2]):
             print(i)
@@ -873,7 +874,7 @@ class TestNumerator(unittest.TestCase):
             Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs('F', target_Fs[i])
 
             # SecDec divides by a factor of ``Gamma(7 - D)`` while pySecDec divides by ``Gamma(6 - D)``
-            Feynman_parametrized_numerator *= li1.Gamma_factor / sp.sympify('gamma(7 - D)')
+            Feynman_parametrized_numerator *= li1.Gamma_factor / sympify_expression('gamma(7 - D)')
             Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs('gamma(7 - D)', '(6 - D)*gamma(6 - D)')
 
             # SecDec puts the ``(-1)**N_nu`` into the prefactor while `LoopIntegral` puts it into the `Gamma_factor`.
@@ -885,7 +886,7 @@ class TestNumerator(unittest.TestCase):
             if i == 1:
                 Feynman_parametrized_numerator = Feynman_parametrized_numerator.subs(D, 4-2*eps)
 
-            self.assertEqual( (sp.sympify(Feynman_parametrized_numerator) - target_numerators[i]).simplify() , 0 )
+            self.assertEqual( (sympify_expression(Feynman_parametrized_numerator) - target_numerators[i]).simplify() , 0 )
 
     #@attr('active')
     def test_numerator_without_external_momenta(self):
@@ -898,17 +899,17 @@ class TestNumerator(unittest.TestCase):
 
         D,eps = sp.symbols('D eps')
 
-        target_F = sp.sympify('msq * x0**2*x1')
-        target_exponent_F = sp.sympify('-(Nnu-L*D/2)').subs(D,4-2*eps).subs('R',2).subs('L',2).subs('Nnu',2)
-        target_U = sp.sympify('x0*x1')
-        target_exponent_U = sp.sympify('Nnu-(L+1)*D/2-R').subs(D,4-2*eps).subs('R',2).subs('L',2).subs('Nnu',2)
-        target_numerator = sp.sympify('-D/2 * x1 * F').subs(D,4-2*eps)
+        target_F = sympify_expression('msq * x0**2*x1')
+        target_exponent_F = sympify_expression('-(Nnu-L*D/2)').subs(D,4-2*eps).subs('R',2).subs('L',2).subs('Nnu',2)
+        target_U = sympify_expression('x0*x1')
+        target_exponent_U = sympify_expression('Nnu-(L+1)*D/2-R').subs(D,4-2*eps).subs('R',2).subs('L',2).subs('Nnu',2)
+        target_numerator = sympify_expression('-D/2 * x1 * F').subs(D,4-2*eps)
 
-        self.assertEqual( (sp.sympify(double_tadpole.F) - target_F).simplify() , 0 )
-        self.assertEqual( (sp.sympify(double_tadpole.exponent_F) - target_exponent_F).simplify() , 0 )
-        self.assertEqual( (sp.sympify(double_tadpole.U) - target_U).simplify() , 0 )
-        self.assertEqual( (sp.sympify(double_tadpole.exponent_U) - target_exponent_U).simplify() , 0 )
-        self.assertEqual( (sp.sympify(double_tadpole.numerator) - target_numerator).simplify() , 0 )
+        self.assertEqual( (sympify_expression(double_tadpole.F) - target_F).simplify() , 0 )
+        self.assertEqual( (sympify_expression(double_tadpole.exponent_F) - target_exponent_F).simplify() , 0 )
+        self.assertEqual( (sympify_expression(double_tadpole.U) - target_U).simplify() , 0 )
+        self.assertEqual( (sympify_expression(double_tadpole.exponent_U) - target_exponent_U).simplify() , 0 )
+        self.assertEqual( (sympify_expression(double_tadpole.numerator) - target_numerator).simplify() , 0 )
 
     #@attr('active')
     def test_error_if_index_too_often_loop_momenta(self):
@@ -967,11 +968,11 @@ def uf_from_graph_generic(test_case, int_lines, ext_lines, result_L, result_u, r
 
     u,f = loop_integral.U, loop_integral.F
 
-    sympy_u = sp.sympify(str(u))
-    sympy_f = sp.sympify(str(f))
+    sympy_u = sympify_expression(str(u))
+    sympy_f = sympify_expression(str(f))
 
-    result_u = sp.sympify(str(result_u).replace('x','Feynman'))
-    result_f = sp.sympify(str(result_f).replace('x','Feynman'))
+    result_u = sympify_expression(str(result_u).replace('x','Feynman'))
+    result_f = sympify_expression(str(result_f).replace('x','Feynman'))
 
     zerou = (sympy_u - result_u).expand()
     zerof = (sympy_f - result_f).expand()
@@ -980,8 +981,8 @@ def uf_from_graph_generic(test_case, int_lines, ext_lines, result_L, result_u, r
     test_case.assertEqual(zerof,0)
 
     expo_u, expo_f = loop_integral.exponent_U, loop_integral.exponent_F
-    test_case.assertEqual(expo_u, len(int_lines) - sp.sympify('2-eps') * (1 + loop_integral.L))
-    test_case.assertEqual(expo_f, -(len(int_lines) - sp.sympify('2-eps') * loop_integral.L))
+    test_case.assertEqual(expo_u, len(int_lines) - sympify_expression('2-eps') * (1 + loop_integral.L))
+    test_case.assertEqual(expo_f, -(len(int_lines) - sympify_expression('2-eps') * loop_integral.L))
 
 #@attr('active')
 class TestUF_FromGraph(unittest.TestCase):
@@ -1127,19 +1128,19 @@ class TestUF_FromGraph(unittest.TestCase):
                                 external_lines = [['p1',1],['p1**2',2]])
 
 def compare_two_loop_integrals(testcase, li1, li2):
-    result_U_1 = sp.sympify(li1.U)
-    result_F_1 = sp.sympify(li1.F)
-    result_Nu_1 = sp.sympify(li1.numerator).subs('U',result_U_1).subs('F',result_F_1)\
-                      *sp.sympify(li1.measure)*sp.sympify(li1.Gamma_factor)
-    result_expoU_1 = sp.sympify(li1.exponent_U)
-    result_expoF_1 = sp.sympify(li1.exponent_F)
+    result_U_1 = sympify_expression(li1.U)
+    result_F_1 = sympify_expression(li1.F)
+    result_Nu_1 = sympify_expression(li1.numerator).subs('U',result_U_1).subs('F',result_F_1)\
+                      *sympify_expression(li1.measure)*sympify_expression(li1.Gamma_factor)
+    result_expoU_1 = sympify_expression(li1.exponent_U)
+    result_expoF_1 = sympify_expression(li1.exponent_F)
 
-    result_U_2 = sp.sympify(li2.U)
-    result_F_2 = sp.sympify(li2.F)
-    result_Nu_2 = sp.sympify(li2.numerator).subs('U',result_U_2).subs('F',result_F_2)\
-                  *sp.sympify(li2.measure)*sp.sympify(li2.Gamma_factor)
-    result_expoU_2 = sp.sympify(li2.exponent_U)
-    result_expoF_2 = sp.sympify(li2.exponent_F)
+    result_U_2 = sympify_expression(li2.U)
+    result_F_2 = sympify_expression(li2.F)
+    result_Nu_2 = sympify_expression(li2.numerator).subs('U',result_U_2).subs('F',result_F_2)\
+                  *sympify_expression(li2.measure)*sympify_expression(li2.Gamma_factor)
+    result_expoU_2 = sympify_expression(li2.exponent_U)
+    result_expoF_2 = sympify_expression(li2.exponent_F)
 
     testcase.assertEqual( (result_U_1  - result_U_2 ).simplify() , 0 )
     testcase.assertEqual( (result_F_1  - result_F_2 ).simplify() , 0 )
@@ -1165,18 +1166,18 @@ class TestPowerlist(unittest.TestCase):
         # For powers that are not directly supported by SecDec3, a second identical propagator was introduced
         # and the power split up, e.g. {-1/2+eps} -> {1/2+eps, -1}
 
-        powerlist = sp.sympify([1,1,power])
+        powerlist = sympify_expression([1,1,power])
 
         if powerlist[2].is_integer and powerlist[2].is_nonpositive:
             target_U = '''z1 + z2'''
             target_F = '''-(ssp1*z1*z2)'''
-            target_integration_variables = sp.sympify(['z1', 'z2'])
+            target_integration_variables = sympify_expression(['z1', 'z2'])
         else:
             target_U = '''z1 + z2 + z3'''
             target_F = '''-((ssp1 + ssp2 + 2*ssp3)*z2*z3) - z1*(ssp1*z2 + ssp2*z3)'''
-            target_integration_variables = sp.sympify(['z1', 'z2', 'z3'])
+            target_integration_variables = sympify_expression(['z1', 'z2', 'z3'])
 
-        symbols_U_F = sp.sympify(['U', 'F'])
+        symbols_U_F = sympify_expression(['U', 'F'])
 
         target_Nu = {  '1': '1'
                      , '0': '1'
@@ -1299,18 +1300,18 @@ class TestPowerlist(unittest.TestCase):
         if (powerlist[2] + number_of_derivatives[power]) !=0:
             target_gamma /= sp.gamma(powerlist[2] + number_of_derivatives[power])
 
-        result_U = sp.sympify(li.U)
-        result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+        result_U = sympify_expression(li.U)
+        result_F = sympify_expression(li.F)
+        result_Nu = sympify_expression(li.numerator).subs('U',result_U).subs('F',result_F)*sympify_expression(li.measure)
 
         # print "number_of_derivatives: ", li.number_of_derivatives
         # print "result_Nu = ", result_Nu
         # print "target_Nu = ", target_Nu[power]
         # print "ratio = ", (result_Nu/sp.sympify(target_Nu[power])).simplify()
 
-        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
-        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
-        self.assertEqual( (result_Nu - sp.sympify(target_Nu[power])).simplify() , 0 )
+        self.assertEqual( (result_U  - sympify_expression(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sympify_expression(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sympify_expression(target_Nu[power])).simplify() , 0 )
 
         self.assertEqual( (li.exponent_U - target_exponent_U).simplify(), 0 )
         self.assertEqual( (li.exponent_F - target_exponent_F).simplify(), 0 )
@@ -1411,15 +1412,15 @@ class TestPowerlist(unittest.TestCase):
         li = LoopIntegralFromPropagators(propagators, loop_momenta, powerlist=powerlist,
                                          replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
-        result_U = sp.sympify(li.U)
-        result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
-        result_gamma_factor = sp.sympify(li.Gamma_factor)
+        result_U = sympify_expression(li.U)
+        result_F = sympify_expression(li.F)
+        result_Nu = sympify_expression(li.numerator).subs('U',result_U).subs('F',result_F)*sympify_expression(li.measure)
+        result_gamma_factor = sympify_expression(li.Gamma_factor)
 
-        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
-        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
-        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
-        self.assertEqual( (result_gamma_factor - sp.sympify(target_gamma_factor)).simplify() , 0 )
+        self.assertEqual( (result_U  - sympify_expression(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sympify_expression(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sympify_expression(target_Nu)).simplify() , 0 )
+        self.assertEqual( (result_gamma_factor - sympify_expression(target_gamma_factor)).simplify() , 0 )
 
     @attr('slow')
     #@attr('active')
@@ -1478,15 +1479,15 @@ class TestPowerlist(unittest.TestCase):
 
         target_gamma_factor = 'gamma(-2+2*eps)/gamma(eps) * exp(-I*pi * (eps+2))'
 
-        result_U = sp.sympify(li.U)
-        result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
-        result_gamma_factor = sp.sympify(li.Gamma_factor)
+        result_U = sympify_expression(li.U)
+        result_F = sympify_expression(li.F)
+        result_Nu = sympify_expression(li.numerator).subs('U',result_U).subs('F',result_F)*sympify_expression(li.measure)
+        result_gamma_factor = sympify_expression(li.Gamma_factor)
 
-        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
-        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
-        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
-        self.assertEqual( (result_gamma_factor - sp.sympify(target_gamma_factor)).simplify() , 0 )
+        self.assertEqual( (result_U  - sympify_expression(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sympify_expression(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sympify_expression(target_Nu)).simplify() , 0 )
+        self.assertEqual( (result_gamma_factor - sympify_expression(target_gamma_factor)).simplify() , 0 )
 
 
     def test_powerlist_cutconstruct(self):
@@ -1518,15 +1519,15 @@ class TestPowerlist(unittest.TestCase):
 
         target_gamma = sp.gamma('8 + 2*eps')/12
 
-        result_U = sp.sympify(li.U)
-        result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.numerator)*sp.sympify(li.measure)
+        result_U = sympify_expression(li.U)
+        result_F = sympify_expression(li.F)
+        result_Nu = sympify_expression(li.numerator)*sympify_expression(li.measure)
         result_gamma = li.Gamma_factor
 
-        self.assertEqual( li.external_momenta, sp.sympify(['p1','p2']) )
-        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
-        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
-        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+        self.assertEqual( li.external_momenta, sympify_expression(['p1','p2']) )
+        self.assertEqual( (result_U  - sympify_expression(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sympify_expression(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sympify_expression(target_Nu)).simplify() , 0 )
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
 
     #@attr('active')
@@ -1559,20 +1560,20 @@ class TestPowerlist(unittest.TestCase):
 
         target_measure = 1
 
-        target_measure_symbols = sp.sympify([ 'z1', 'z2', 'U', 'F' ])
+        target_measure_symbols = sympify_expression([ 'z1', 'z2', 'U', 'F' ])
 
-        result_U = sp.sympify(li.U)
-        result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+        result_U = sympify_expression(li.U)
+        result_F = sympify_expression(li.F)
+        result_Nu = sympify_expression(li.numerator).subs('U',result_U).subs('F',result_F)*sympify_expression(li.measure)
         result_gamma = li.Gamma_factor
-        result_measure = sp.sympify(li.measure)
+        result_measure = sympify_expression(li.measure)
         result_measure_symbols = li.measure.symbols
 
-        self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
-        self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
-        self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+        self.assertEqual( (result_U  - sympify_expression(target_U) ).simplify() , 0 )
+        self.assertEqual( (result_F  - sympify_expression(target_F) ).simplify() , 0 )
+        self.assertEqual( (result_Nu - sympify_expression(target_Nu)).simplify() , 0 )
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
-        self.assertEqual( (result_measure - sp.sympify(target_measure)).simplify() , 0 )
+        self.assertEqual( (result_measure - sympify_expression(target_measure)).simplify() , 0 )
         self.assertEqual( result_measure_symbols, target_measure_symbols)
 
     #@attr('active')
@@ -1610,19 +1611,19 @@ class TestPowerlist(unittest.TestCase):
 
             target_gamma = sp.gamma('1 + eps')/2
 
-            result_U = sp.sympify(li.U)
-            result_F = sp.sympify(li.F)
-            result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+            result_U = sympify_expression(li.U)
+            result_F = sympify_expression(li.F)
+            result_Nu = sympify_expression(li.numerator).subs('U',result_U).subs('F',result_F)*sympify_expression(li.measure)
             result_gamma = li.Gamma_factor
-            result_measure = sp.sympify(li.measure)
+            result_measure = sympify_expression(li.measure)
             result_measure_symbols = li.measure.symbols
-            target_measure_symbols = sp.sympify([ 'z1', 'z2', 'U', 'F' ])
+            target_measure_symbols = sympify_expression([ 'z1', 'z2', 'U', 'F' ])
 
-            self.assertEqual( (result_U  - sp.sympify(target_U) ).simplify() , 0 )
-            self.assertEqual( (result_F  - sp.sympify(target_F) ).simplify() , 0 )
-            self.assertEqual( (result_Nu - sp.sympify(target_Nu)).simplify() , 0 )
+            self.assertEqual( (result_U  - sympify_expression(target_U) ).simplify() , 0 )
+            self.assertEqual( (result_F  - sympify_expression(target_F) ).simplify() , 0 )
+            self.assertEqual( (result_Nu - sympify_expression(target_Nu)).simplify() , 0 )
             self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
-            self.assertEqual( (result_measure - sp.sympify(target_measure)).simplify() , 0 )
+            self.assertEqual( (result_measure - sympify_expression(target_measure)).simplify() , 0 )
             self.assertEqual( result_measure_symbols, target_measure_symbols)
 
     @attr('slow')
@@ -1865,25 +1866,25 @@ class TestPowerlist(unittest.TestCase):
                                          replacement_rules=rules, Feynman_parameters=Feynman_parameters)
 
 
-        target_U = sp.sympify('''z2*z3 + z1*(z2 + z3)''')
+        target_U = sympify_expression('''z2*z3 + z1*(z2 + z3)''')
 
-        target_F = sp.sympify('''(4*aij*z5*(z2*z6 + z3*(z4 + z6)) +
+        target_F = sympify_expression('''(4*aij*z5*(z2*z6 + z3*(z4 + z6)) +
                     4*aij**3*z5*(z2*z6 + z3*(z4 + z6)) +
                     2*aij**2*(z3*(2*z4**2 + 2*z5**2 + 4*z4*z6 + 2*z6**2) +
                     2*z1*(z4**2 + 4*z2*(z4 + z5 + 2*z6) +
                     4*z3*(z4 + z5 + 2*z6)) +
                     z2*(2*z5**2 + 2*z6**2 + 8*z3*(z4 + z5 + 2*z6))))/(16*aij**2)''')
 
-        target_Nu = sp.sympify('''-((z2*z3 + z1*(z2 + z3))*(-2*z2*z5 + 2*z3*z5 +
+        target_Nu = sympify_expression('''-((z2*z3 + z1*(z2 + z3))*(-2*z2*z5 + 2*z3*z5 +
                     2*aij**2*(2*z2*z5 - 2*z3*z5) -
                     aij**4*(2*z2*z5 - 2*z3*z5)))/(16*aij**2) -
                     (eps*(z2*z3 + z1*(z2 + z3))*(-2*z2*z5 + 2*z3*z5 +
                     2*aij**2*(2*z2*z5 - 2*z3*z5) -
                     aij**4*(2*z2*z5 - 2*z3*z5)))/(8*aij**2)''')
 
-        result_U = sp.sympify(li.U)
-        result_F = sp.sympify(li.F)
-        result_Nu = sp.sympify(li.numerator).subs('U',result_U).subs('F',result_F)*sp.sympify(li.measure)
+        result_U = sympify_expression(li.U)
+        result_F = sympify_expression(li.F)
+        result_Nu = sympify_expression(li.numerator).subs('U',result_U).subs('F',result_F)*sympify_expression(li.measure)
 
         # The `target_Nu` produced with SecDec3 has an additional factor of U in the numerator...
         result_Nu *= result_U

@@ -8,7 +8,7 @@ to :math:`0`.
 
 from .common import Sector, refactorize
 from ..algebra import Polynomial, ExponentiatedPolynomial
-from ..misc import powerset
+from ..misc import powerset, sympify_expression
 import numpy as np
 import sympy as sp
 
@@ -41,7 +41,7 @@ def remap_one_to_zero(polynomial, *indices):
     '''
     coeffs = polynomial.coeffs
     monomials = [Polynomial.from_expression(s, polynomial.polysymbols) for s in polynomial.polysymbols]
-    dummy_poly_coeffs = np.array([sp.sympify('coeffs_%i__'%i) for i in range(len(coeffs))])
+    dummy_poly_coeffs = np.array([sympify_expression('coeffs_%i__'%i) for i in range(len(coeffs))])
     dummy_poly_polysymbols = ('monomials_%i__'%i for i in range(len(polynomial.polysymbols)))
     dummy_poly = Polynomial(polynomial.expolist.copy(), dummy_poly_coeffs,
                                         dummy_poly_polysymbols, copy=False)
@@ -131,7 +131,7 @@ def split(sector, seed, *indices):
     #  --> generate ``len(indices)`` random numbers between ``1`` and ``20``,
     #      then split at ``<random>/20``
     rng = np.random.RandomState( int(seed) )
-    splitting_point = [   int( rng.randint(1,20) ) / sp.sympify(20)  for idx in indices   ]
+    splitting_point = [   int( rng.randint(1,20) ) / sympify_expression(20)  for idx in indices   ]
 
     def split_recursively(sector, indices, splitting_point):
         if not indices:

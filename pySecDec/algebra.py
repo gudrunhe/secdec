@@ -7,7 +7,7 @@ Implementation of a simple computer algebra system.
 """
 
 from .misc import argsort_2D_array, argsort_ND_array, doc, \
-                  cached_property
+                  cached_property, sympify_expression
 import numpy as np
 import sympy as sp
 
@@ -25,7 +25,7 @@ class _Expression(object):
 
     def __add__(self, other):
         if not isinstance(other, _Expression):
-            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
+            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sympify_expression(other)]), self.symbols, copy=False)
         return Sum(self, other)
     __radd__ = __add__
 
@@ -41,18 +41,18 @@ class _Expression(object):
 
     def __mul__(self, other):
         if not isinstance(other, _Expression):
-            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
+            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sympify_expression(other)]), self.symbols, copy=False)
         return Product(self, other)
     __rmul__ = __mul__
 
     def __pow__(self, other):
         if not isinstance(other, _Expression):
-            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
+            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sympify_expression(other)]), self.symbols, copy=False)
         return Pow(self, other)
 
     def __rpow__(self, other):
         if not isinstance(other, _Expression):
-            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sp.sympify(other)]), self.symbols, copy=False)
+            other = Polynomial(np.zeros([1,self.number_of_variables], dtype=int), np.array([sympify_expression(other)]), self.symbols, copy=False)
         return Pow(other, self)
 
     def clear_cache(self):
@@ -396,14 +396,14 @@ class Polynomial(_Expression):
                     assert coeff.number_of_variables == self.number_of_variables, 'Must have the same number of variables as the `Polynomial` for all coeffs'
                     parsed_coeffs.append(coeff.copy() if copy else coeff)
                 else:
-                    parsed_coeffs.append(sp.sympify(coeff))
+                    parsed_coeffs.append(sympify_expression(coeff))
             self.coeffs = np.array(parsed_coeffs)
 
         if not copy:
             # always copy the symbols but do not check them if copy is False
             self.polysymbols = list(polysymbols)
         elif isinstance(polysymbols, str):
-            self.polysymbols = sp.sympify([polysymbols + str(i) for i in range(self.number_of_variables)])
+            self.polysymbols = sympify_expression([polysymbols + str(i) for i in range(self.number_of_variables)])
             for symbol in self.polysymbols:
                 assert symbol.is_Symbol, 'All `polysymbols` must be symbols'
         else:
@@ -412,7 +412,7 @@ class Polynomial(_Expression):
                 if isinstance(item, sp.Symbol):
                     self.polysymbols.append(item)
                 else:
-                    item = sp.sympify(item)
+                    item = sympify_expression(item)
                     assert item.is_Symbol, 'All `polysymbols` must be symbols'
                     self.polysymbols.append(item)
 
@@ -438,7 +438,7 @@ class Polynomial(_Expression):
         if not polysymbols:
             raise TypeError("`polysymbols` must contain at least one symbol")
 
-        polysymbols = sp.sympify(polysymbols)
+        polysymbols = sympify_expression(polysymbols)
 
         for symbol in polysymbols:
             if not symbol.is_Symbol:
@@ -792,7 +792,7 @@ class ExponentiatedPolynomial(Polynomial):
         elif isinstance(exponent,_Expression):
             self.exponent = exponent.copy() if copy else exponent
         else:
-            self.exponent = sp.sympify(exponent) if copy else exponent
+            self.exponent = sympify_expression(exponent) if copy else exponent
 
     @staticmethod
     def from_expression(*args,**kwargs):
@@ -1670,7 +1670,7 @@ def Expression(expression, polysymbols, follow_functions=False):
     '''
     parsed_polysymbols = []
     for item in polysymbols:
-        item = sp.sympify(item)
+        item = sympify_expression(item)
         assert item.is_Symbol, 'All `polysymbols` must be symbols'
         parsed_polysymbols.append(item)
     polysymbols = parsed_polysymbols
@@ -1715,5 +1715,5 @@ def Expression(expression, polysymbols, follow_functions=False):
 
         raise ValueError('Could not parse the expression')
 
-    parsed_expression = recursive_call(expression) if isinstance(expression, sp.Expr) else recursive_call( sp.sympify(str(expression)) )
+    parsed_expression = recursive_call(expression) if isinstance(expression, sp.Expr) else recursive_call( sympify_expression(str(expression)) )
     return (parsed_expression, functions) if follow_functions else parsed_expression

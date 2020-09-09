@@ -1,7 +1,7 @@
 """Routines to Feynman parametrize a loop integral"""
 
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
-from ..misc import cached_property, sympify_symbols, assert_degree_at_most_max_degree
+from ..misc import cached_property, sympify_symbols, assert_degree_at_most_max_degree, sympify_expression
 import sympy as sp
 import numpy as np
 from math import floor
@@ -139,7 +139,7 @@ class LoopIntegral(object):
         self.regulator_power = regulator_power_as_int
 
         # sympify and store `dimensionality`
-        self.dimensionality = sp.sympify(dimensionality)
+        self.dimensionality = sympify_expression(dimensionality)
 
         # check and store replacement rules
         if not isinstance(replacement_rules, list):
@@ -151,16 +151,16 @@ class LoopIntegral(object):
             for rule in replacement_rules:
                 for expression in rule:
                     assert_degree_at_most_max_degree(expression, self.all_momenta, 2, 'Each of the `replacement_rules` must be polynomial and at most quadratic in the momenta.')
-            self.replacement_rules = [(sp.sympify(rule[0]),sp.sympify(rule[1])) for rule in replacement_rules]
+            self.replacement_rules = [(sympify_expression(rule[0]),sympify_expression(rule[1])) for rule in replacement_rules]
         else:
             self.replacement_rules = []
 
         # sympify and store `Feynman_parameters`
         # There should be one Feynman parameter for each propagator.
         if isinstance(Feynman_parameters, str):
-            self.Feynman_parameters = [sp.sympify(Feynman_parameters + str(i)) for i in range(self.P)]
+            self.Feynman_parameters = [sympify_expression(Feynman_parameters + str(i)) for i in range(self.P)]
         else:
-            self.Feynman_parameters = sp.sympify(list(Feynman_parameters))
+            self.Feynman_parameters = sympify_expression(list(Feynman_parameters))
             assert len(self.Feynman_parameters) == self.P, \
                 'Mismatch between the number of `propagators` (%i) and the number of `Feynman_parameters` (%i).' % \
                 ( len(self.propagators) , len(self.Feynman_parameters) )
@@ -169,7 +169,7 @@ class LoopIntegral(object):
         # If there are negative powers, determine the number of derivatives neseccary to make them positive
         # and store them in derivativelist.
         if not powerlist:
-            self.powerlist = [sp.sympify(1)] * self.P
+            self.powerlist = [sympify_expression(1)] * self.P
             self.derivativelist = [0] * self.P
             self.number_of_derivatives = 0
         else:
@@ -179,7 +179,7 @@ class LoopIntegral(object):
             self.derivativelist=[]
 
             for power in powerlist:
-                power_sp = sp.sympify(power)
+                power_sp = sympify_expression(power)
                 power0 = power_sp.subs(regulator,0)
                 assert power0.is_Number, "The propagator powers must be numbers for vanishing regulator."
                 self.powerlist.append(power_sp)
@@ -218,7 +218,7 @@ class LoopIntegral(object):
     @cached_property
     def numerator(self):
 
-        Feynman_parameters_U_F = self.Feynman_parameters + sp.sympify(['U', 'F'])
+        Feynman_parameters_U_F = self.Feynman_parameters + sympify_expression(['U', 'F'])
 
         extended_expolist = []
         for exponents in self.preliminary_U.expolist:
@@ -296,7 +296,7 @@ class LoopIntegral(object):
         # The factors of 1/Gamma(nu_i) are implemented in `Gamma_factor` together with the global Gamma.
         measure_factors = []
 
-        Feynman_parameters_U_F = self.Feynman_parameters + sp.sympify(['U', 'F'])
+        Feynman_parameters_U_F = self.Feynman_parameters + sympify_expression(['U', 'F'])
 
         # The effective power to be used in the measure has to be increased by the number of derivatives.
         for i in range(self.P):

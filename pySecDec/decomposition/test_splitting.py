@@ -1,6 +1,7 @@
 from .splitting import *
 from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial
+from ..misc import sympify_expression
 import numpy as np
 import sympy as sp
 import unittest
@@ -41,7 +42,7 @@ class TestRemapOneToZero(unittest.TestCase):
         x0, x1, x2, x3, x4, x5 = self.Feynman_parameters
         s = self.s
         remap_indices = [1,5]
-        remapped_U = sp.sympify( remap_one_to_zero(self.U, *remap_indices) )
+        remapped_U = sympify_expression( remap_one_to_zero(self.U, *remap_indices) )
         target_remapped_U = + (1)*x3*(1-x5) + (1)*x3*x4 + (1)*x2*(1-x5) + (1)*x2*x4 \
                             + (1)*(1-x1)*(1-x5) + (1)*(1-x1)*x4 + (1)*(1-x1)*x3 \
                             + (1)*(1-x1)*x2 + (1)*x0*(1-x5) + (1)*x0*x4 + (1)*x0*x3 \
@@ -53,7 +54,7 @@ class TestRemapOneToZero(unittest.TestCase):
         x0, x1, x2, x3, x4, x5 = self.Feynman_parameters
         s = self.s
         remap_indices = [0,1,2]
-        remapped_F = sp.sympify( remap_one_to_zero(self.F, *remap_indices) )
+        remapped_F = sympify_expression( remap_one_to_zero(self.F, *remap_indices) )
         target_remapped_F = + (s)*x3**2*x5 + (s)*x3**2*x4 + (s)*(1-x2)*x3*x5 + (s)*(1-x2)*x3*x4 \
                             + (s)*(1-x1)*x3*x5 + (s)*(1-x1)*x3*x4 + (s)*(1-x1)*x3**2 \
                             + (-s)*(1-x1)*(1-x2)*x4 + (s)*(1-x1)*(1-x2)*x3 + (s)*(1-x0)*x3*x4 \
@@ -69,7 +70,7 @@ class TestRemapOneToZero(unittest.TestCase):
         exponentiated_polynomial = ExponentiatedPolynomial(polynomial.expolist, polynomial.coeffs,
                                                            exponent, polynomial.polysymbols)
 
-        remapped_exponentiated_polynomial = sp.sympify( remap_one_to_zero(exponentiated_polynomial, 0,1) )
+        remapped_exponentiated_polynomial = sympify_expression( remap_one_to_zero(exponentiated_polynomial, 0,1) )
         target_remapped_exponentiated_polynomial = (  (1-x0) - (1-x1)  ) ** exponent
 
         self.assertEqual(  (remapped_exponentiated_polynomial - target_remapped_exponentiated_polynomial).simplify() , 0  )
@@ -78,10 +79,10 @@ class TestRemapOneToZero(unittest.TestCase):
     def test_remap_constant(self):
         polynomial = Polynomial.from_expression('coeff', self.Feynman_parameters)
         remapped = remap_one_to_zero(polynomial, 0,1)
-        target_remapped = sp.sympify('coeff')
+        target_remapped = sympify_expression('coeff')
 
         self.assertTrue( type(remapped) is Polynomial )
-        self.assertEqual(  (sp.sympify(remapped) - target_remapped).simplify() , 0  )
+        self.assertEqual(  (sympify_expression(remapped) - target_remapped).simplify() , 0  )
 
 class TestFindSingularSetsAtOne(unittest.TestCase):
     #@attr('active')
@@ -134,19 +135,19 @@ class TestSplit(unittest.TestCase):
 
         # split at 1/4
 
-        target_split_Jacobian_0 = sp.sympify('(3 - 4 *      x0 *    1/4  ) *    1/4 ')
-        target_split_Jacobian_1 = sp.sympify('(3 - 4 * (1 - x0 * (1-1/4))) * (1-1/4)')
+        target_split_Jacobian_0 = sympify_expression('(3 - 4 *      x0 *    1/4  ) *    1/4 ')
+        target_split_Jacobian_1 = sympify_expression('(3 - 4 * (1 - x0 * (1-1/4))) * (1-1/4)')
 
-        target_split_cast_0 = sp.sympify('1 -      x0 *    1/4   + x1')
-        target_split_cast_1 = sp.sympify('1 - (1 - x0 * (1-1/4)) + x1')
+        target_split_cast_0 = sympify_expression('1 -      x0 *    1/4   + x1')
+        target_split_cast_1 = sympify_expression('1 - (1 - x0 * (1-1/4)) + x1')
 
         self.assertEqual(len(split_sectors), 2)
 
-        self.assertEqual( (  sp.sympify(split_sectors[0].cast[0]) - target_split_cast_0  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(split_sectors[0].Jacobian) - target_split_Jacobian_0 ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(split_sectors[0].cast[0]) - target_split_cast_0  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(split_sectors[0].Jacobian) - target_split_Jacobian_0 ).simplify() , 0)
 
-        self.assertEqual( (  sp.sympify(split_sectors[1].cast[0]) - target_split_cast_1  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(split_sectors[1].Jacobian) - target_split_Jacobian_1 ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(split_sectors[1].cast[0]) - target_split_cast_1  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(split_sectors[1].Jacobian) - target_split_Jacobian_1 ).simplify() , 0)
 
     #@attr('active')
     def test_splitting(self):
@@ -161,47 +162,47 @@ class TestSplit(unittest.TestCase):
 
         # split at [1/2,9/10]
 
-        target_split_Jacobian_0 = sp.sympify('   1/2  *    9/10 ')
-        target_split_Jacobian_1 = sp.sympify('   1/2  * (1-9/10)')
-        target_split_Jacobian_2 = sp.sympify('(1-1/2) *    9/10 ')
-        target_split_Jacobian_3 = sp.sympify('(1-1/2) * (1-9/10)')
+        target_split_Jacobian_0 = sympify_expression('   1/2  *    9/10 ')
+        target_split_Jacobian_1 = sympify_expression('   1/2  * (1-9/10)')
+        target_split_Jacobian_2 = sympify_expression('(1-1/2) *    9/10 ')
+        target_split_Jacobian_3 = sympify_expression('(1-1/2) * (1-9/10)')
 
-        target_split_cast_0 = sp.sympify('1 - x0/2 + x1 - x2*9/10')
-        target_split_cast_1 = sp.sympify('1 - x0/2 + x1 - (1-x2*(1-9/10))')
-        target_split_cast_2 = sp.sympify('1 - (1-x0/2) + x1 - x2*9/10')
-        target_split_cast_3 = sp.sympify('1 - (1-x0/2) + x1 - (1-x2*(1-9/10))')
+        target_split_cast_0 = sympify_expression('1 - x0/2 + x1 - x2*9/10')
+        target_split_cast_1 = sympify_expression('1 - x0/2 + x1 - (1-x2*(1-9/10))')
+        target_split_cast_2 = sympify_expression('1 - (1-x0/2) + x1 - x2*9/10')
+        target_split_cast_3 = sympify_expression('1 - (1-x0/2) + x1 - (1-x2*(1-9/10))')
 
-        target_split_other_1_0 = sp.sympify('(  x0/2)**2 * (  x2*   9/10 )**5')
-        target_split_other_1_1 = sp.sympify('(  x0/2)**2 * (1-x2*(1-9/10))**5')
-        target_split_other_1_2 = sp.sympify('(1-x0/2)**2 * (  x2*   9/10 )**5')
-        target_split_other_1_3 = sp.sympify('(1-x0/2)**2 * (1-x2*(1-9/10))**5')
+        target_split_other_1_0 = sympify_expression('(  x0/2)**2 * (  x2*   9/10 )**5')
+        target_split_other_1_1 = sympify_expression('(  x0/2)**2 * (1-x2*(1-9/10))**5')
+        target_split_other_1_2 = sympify_expression('(1-x0/2)**2 * (  x2*   9/10 )**5')
+        target_split_other_1_3 = sympify_expression('(1-x0/2)**2 * (1-x2*(1-9/10))**5')
 
-        target_split_other_2_0 = sp.sympify('(  a * x1  +  b * (  x2*   9/10) **2  )   **   other_2_exponent')
-        target_split_other_2_1 = sp.sympify('(  a * x1  +  b * (1-x2*(1-9/10))**2  )   **   other_2_exponent')
-        target_split_other_2_2 = sp.sympify('(  a * x1  +  b * (  x2*   9/10) **2  )   **   other_2_exponent')
-        target_split_other_2_3 = sp.sympify('(  a * x1  +  b * (1-x2*(1-9/10))**2  )   **   other_2_exponent')
+        target_split_other_2_0 = sympify_expression('(  a * x1  +  b * (  x2*   9/10) **2  )   **   other_2_exponent')
+        target_split_other_2_1 = sympify_expression('(  a * x1  +  b * (1-x2*(1-9/10))**2  )   **   other_2_exponent')
+        target_split_other_2_2 = sympify_expression('(  a * x1  +  b * (  x2*   9/10) **2  )   **   other_2_exponent')
+        target_split_other_2_3 = sympify_expression('(  a * x1  +  b * (1-x2*(1-9/10))**2  )   **   other_2_exponent')
 
         self.assertEqual(len(subsectors), 4)
 
-        self.assertEqual( (  sp.sympify(subsectors[0].cast[0]) - target_split_cast_0  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[0].other[0]) - target_split_other_1_0  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[0].other[1]) - target_split_other_2_0  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[0].Jacobian) - target_split_Jacobian_0 ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[0].cast[0]) - target_split_cast_0  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[0].other[0]) - target_split_other_1_0  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[0].other[1]) - target_split_other_2_0  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[0].Jacobian) - target_split_Jacobian_0 ).simplify() , 0)
 
-        self.assertEqual( (  sp.sympify(subsectors[1].cast[0]) - target_split_cast_1  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[1].other[0]) - target_split_other_1_1  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[1].other[1]) - target_split_other_2_1  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[1].Jacobian) - target_split_Jacobian_1 ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[1].cast[0]) - target_split_cast_1  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[1].other[0]) - target_split_other_1_1  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[1].other[1]) - target_split_other_2_1  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[1].Jacobian) - target_split_Jacobian_1 ).simplify() , 0)
 
-        self.assertEqual( (  sp.sympify(subsectors[2].cast[0]) - target_split_cast_2  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[2].other[0]) - target_split_other_1_2  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[2].other[1]) - target_split_other_2_2  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[2].Jacobian) - target_split_Jacobian_2 ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[2].cast[0]) - target_split_cast_2  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[2].other[0]) - target_split_other_1_2  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[2].other[1]) - target_split_other_2_2  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[2].Jacobian) - target_split_Jacobian_2 ).simplify() , 0)
 
-        self.assertEqual( (  sp.sympify(subsectors[3].cast[0]) - target_split_cast_3  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[3].other[0]) - target_split_other_1_3  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[3].other[1]) - target_split_other_2_3  ).simplify() , 0)
-        self.assertEqual( (  sp.sympify(subsectors[3].Jacobian) - target_split_Jacobian_3 ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[3].cast[0]) - target_split_cast_3  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[3].other[0]) - target_split_other_1_3  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[3].other[1]) - target_split_other_2_3  ).simplify() , 0)
+        self.assertEqual( (  sympify_expression(subsectors[3].Jacobian) - target_split_Jacobian_3 ).simplify() , 0)
 
 #@attr('active')
 class TestSplitSingular(unittest.TestCase):
@@ -216,12 +217,12 @@ class TestSplitSingular(unittest.TestCase):
 
         # singular at 1 for "x0->1" or "x2->1"; expect split at for "x0" and "x2" (at [1/2,9/10])
         target_splits = []
-        target_splits.append(   sp.sympify('1 -    x0/2  + A*x1 -    x2*   9/10  ')   )
-        target_splits.append(   sp.sympify('1 -    x0/2  + A*x1 - (1-x2*(1-9/10))')   )
-        target_splits.append(   sp.sympify('1 - (1-x0/2) + A*x1 -    x2*   9/10  ')   )
-        target_splits.append(   sp.sympify('1 - (1-x0/2) + A*x1 - (1-x2*(1-9/10))')   )
+        target_splits.append(   sympify_expression('1 -    x0/2  + A*x1 -    x2*   9/10  ')   )
+        target_splits.append(   sympify_expression('1 -    x0/2  + A*x1 - (1-x2*(1-9/10))')   )
+        target_splits.append(   sympify_expression('1 - (1-x0/2) + A*x1 -    x2*   9/10  ')   )
+        target_splits.append(   sympify_expression('1 - (1-x0/2) + A*x1 - (1-x2*(1-9/10))')   )
 
-        target_Jacobians = sp.sympify([
+        target_Jacobians = sympify_expression([
                                            '   1/2  *    9/10',
                                            '   1/2  * (1-9/10)',
                                            '(1-1/2) *    9/10 ',
@@ -231,10 +232,10 @@ class TestSplitSingular(unittest.TestCase):
         self.assertEqual(len(split_sectors), 4)
         for i in range(4):
             print(i)
-            sympified_split_poly = sp.sympify(split_sectors[i].cast[0])
+            sympified_split_poly = sympify_expression(split_sectors[i].cast[0])
             self.assertEqual(  (sympified_split_poly - target_splits[i]).simplify() , 0  )
 
-            sympyfied_split_Jacobian = sp.sympify(split_sectors[i].Jacobian)
+            sympyfied_split_Jacobian = sympify_expression(split_sectors[i].Jacobian)
             self.assertEqual(  (sympyfied_split_Jacobian - target_Jacobians[i]).simplify() , 0  )
 
     #@attr('active')
@@ -248,15 +249,15 @@ class TestSplitSingular(unittest.TestCase):
 
         # singular at 1 for "x0->1" or "x2->1"; expect split at for "x0" and "x2" (at [1/2,9/10])
         target_splits = []
-        target_splits.append(   sp.sympify('(1 -    x0/2  + A*x1 -    x2*   9/10  ) ** (1 - 2*eps)')   )
-        target_splits.append(   sp.sympify('(1 -    x0/2  + A*x1 - (1-x2*(1-9/10))) ** (1 - 2*eps)')   )
-        target_splits.append(   sp.sympify('(1 - (1-x0/2) + A*x1 -    x2*   9/10  ) ** (1 - 2*eps)')   )
-        target_splits.append(   sp.sympify('(1 - (1-x0/2) + A*x1 - (1-x2*(1-9/10))) ** (1 - 2*eps)')   )
+        target_splits.append(   sympify_expression('(1 -    x0/2  + A*x1 -    x2*   9/10  ) ** (1 - 2*eps)')   )
+        target_splits.append(   sympify_expression('(1 -    x0/2  + A*x1 - (1-x2*(1-9/10))) ** (1 - 2*eps)')   )
+        target_splits.append(   sympify_expression('(1 - (1-x0/2) + A*x1 -    x2*   9/10  ) ** (1 - 2*eps)')   )
+        target_splits.append(   sympify_expression('(1 - (1-x0/2) + A*x1 - (1-x2*(1-9/10))) ** (1 - 2*eps)')   )
 
-        target_Jacobian = sp.sympify('1/4')
+        target_Jacobian = sympify_expression('1/4')
 
         self.assertEqual(len(split_sectors), 4)
         for i in range(4):
             print(i)
-            sympified_split_poly = sp.sympify(split_sectors[i].cast[0])
+            sympified_split_poly = sympify_expression(split_sectors[i].cast[0])
             self.assertEqual(  (sympified_split_poly - target_splits[i]).simplify() , 0  )

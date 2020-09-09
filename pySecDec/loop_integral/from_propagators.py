@@ -3,7 +3,7 @@
 from .common import LoopIntegral
 from ..algebra import Polynomial
 from ..misc import det, adjugate, powerset, missing, all_pairs, \
-     cached_property, sympify_symbols, assert_degree_at_most_max_degree
+     cached_property, sympify_symbols, assert_degree_at_most_max_degree, sympify_expression
 import sympy as sp
 import numpy as np
 
@@ -140,13 +140,13 @@ class LoopIntegralFromPropagators(LoopIntegral):
         self.metric_tensor = sympify_symbols([metric_tensor], '`metric_tensor` must be a symbol.')[0]
 
         # sympify and store `propagators`
-        self.propagators = sp.sympify(list(propagators))
+        self.propagators = sympify_expression(list(propagators))
         for propagator in self.propagators:
             assert_degree_at_most_max_degree(propagator, self.all_momenta, 2, 'Each of the `propagators` must be polynomial and at most quadratic in the momenta.')
         self.P = len(self.propagators)
 
         # sympify and store `numerator`
-        self.numerator_input = sp.sympify(numerator).expand()
+        self.numerator_input = sympify_expression(numerator).expand()
         if self.numerator_input.is_Add:
             self.numerator_input_terms = list(self.numerator_input.args)
         else:
@@ -329,7 +329,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
         g = _to_function(self.metric_tensor)
         D = self.dimensionality
         L = self.L
-        Feynman_parameters_U_F = self.Feynman_parameters + sp.sympify(['U', 'F'])
+        Feynman_parameters_U_F = self.Feynman_parameters + sympify_expression(['U', 'F'])
         U = Polynomial.from_expression('U', Feynman_parameters_U_F)
         F = Polynomial.from_expression('F', Feynman_parameters_U_F)
         replacement_rules = self.replacement_rules_with_Lorentz_indices
@@ -344,7 +344,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
         # In order to keep the `numerator` free of poles in the regulator, we divide it
         # by the Gamma function with the smallest argument `N_nu - D*L/2 - highest_rank//2`,
         # where `//` means integer division, and use `x*Gamma(x) = Gamma(x+1)`.
-        one_over_minus_two = sp.sympify('1/(-2)')
+        one_over_minus_two = sympify_expression('1/(-2)')
         def scalar_factor(r):
             # `r` must be even
             assert r % 2 == 0
@@ -542,7 +542,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
                     # apply the replacement rules
                     for i, coeff in enumerate(this_numerator_summand.coeffs):
-                        this_numerator_summand.coeffs[i] = sp.sympify(coeff).expand().subs(replacement_rules)
+                        this_numerator_summand.coeffs[i] = sympify_expression(coeff).expand().subs(replacement_rules)
 
                     numerator += this_numerator_summand
 
@@ -552,8 +552,8 @@ class LoopIntegralFromPropagators(LoopIntegral):
     def replacement_rules_with_Lorentz_indices(self):
         replacement_rules = []
         for rule in self.replacement_rules:
-            pattern = sp.sympify(rule[0])
-            replacement = sp.sympify(rule[1])
+            pattern = sympify_expression(rule[0])
+            replacement = sympify_expression(rule[1])
             for mu in self.Lorentz_indices:
                 pattern_with_index = pattern
                 replacement_with_index = replacement

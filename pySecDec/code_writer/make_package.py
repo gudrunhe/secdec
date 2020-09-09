@@ -9,7 +9,7 @@ from ..metadata import version, git_id
 from ..misc import sympify_symbols, rangecomb
 from ..algebra import _Expression, Expression, Polynomial, \
                       ExponentiatedPolynomial, Pow, Product, \
-                      ProductRule, Function, Sum
+                      ProductRule, Function, Sum, sympify_expression
 from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort, light_Pak_sort
 from ..subtraction import integrate_pole_part, integrate_by_parts, pole_structure as compute_pole_structure
@@ -30,8 +30,8 @@ import sys, os
 # To find the main function `make_package`, it is easiest to full-text search
 # for "def make_package(".
 
-_sympy_zero = sp.sympify(0)
-_sympy_one = sp.sympify(1)
+_sympy_zero = sympify_expression(0)
+_sympy_one = sympify_expression(1)
 
 # sympy symbols are no longer callable starting from version 1.3
 _to_function = lambda x: sp.Function(str(x))
@@ -73,19 +73,19 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
                                  % (expression, name_of_make_argument_being_parsed, expression.symbols, polysymbols))
         if target_type is ExponentiatedPolynomial:
             if type(expression) is ExponentiatedPolynomial:
-                expression.exponent = sp.sympify(str(expression.exponent))
-                expression.coeffs = np.array([ sp.sympify(str(coeff)) for coeff in expression.coeffs ])
+                expression.exponent = sympify_expression(str(expression.exponent))
+                expression.coeffs = np.array([ sympify_expression(str(coeff)) for coeff in expression.coeffs ])
             elif type(expression) is Polynomial:
                 expression = ExponentiatedPolynomial(expression.expolist,
-                                                     np.array([ sp.sympify(str(coeff)) for coeff in expression.coeffs ]),
+                                                     np.array([ sympify_expression(str(coeff)) for coeff in expression.coeffs ]),
                                                      _sympy_one, # exponent
                                                      polysymbols, copy=False)
             else:
-                expression = sp.sympify(str(expression))
+                expression = sympify_expression(str(expression))
                 if expression.is_Pow:
                     assert len(expression.args) == 2
                     expression_base = Polynomial.from_expression(expression.args[0], polysymbols)
-                    expression_exponent = sp.sympify(str(expression.args[1]))
+                    expression_exponent = sympify_expression(str(expression.args[1]))
                     expression = ExponentiatedPolynomial(expression_base.expolist,
                                                          expression_base.coeffs,
                                                          expression_exponent, polysymbols, copy=False)
@@ -223,7 +223,7 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
         assert (poly.expolist[:,regulator_indices] == 0).all(), 'The `polynomials_to_decompose` must not depend on the `regulators`. Error while checking: "%s"' % poly
 
     # convert ``prefactor`` to sympy expression
-    prefactor = sp.sympify(prefactor)
+    prefactor = sympify_expression(prefactor)
 
     # convert ``requested_orders`` to numpy array
     requested_orders = np.array(requested_orders)
@@ -1786,7 +1786,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     pole_structures = []
 
     # define the imaginary unit
-    imaginary_unit = sp.sympify('I')
+    imaginary_unit = sympify_expression('I')
 
     # define the dummy names for the `other_polynomials`
     names_other_polynomials = [FORM_names['other_polynomial'] + str(i) for i in range(len(other_polynomials))]

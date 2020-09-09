@@ -2,7 +2,7 @@
 
 from .common import LoopIntegral
 from ..algebra import Polynomial, ExponentiatedPolynomial
-from ..misc import missing, cached_property, sympify_symbols, assert_degree_at_most_max_degree
+from ..misc import missing, cached_property, sympify_symbols, assert_degree_at_most_max_degree, sympify_expression
 from itertools import combinations
 import sympy as sp
 import numpy as np
@@ -59,7 +59,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         self.external_momenta=[]
         for line in external_lines:
             assert len(line)==2, "External lines must have the form [momentum, vertex]."
-            extmom = sp.sympify(line[0])
+            extmom = sympify_expression(line[0])
             vertex = sympify_symbols([line[1]], "Names of vertices must be symbols or numbers.", \
                                      allow_number=True)[0]
             self.external_lines.append([extmom,vertex])
@@ -102,7 +102,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         # no support for tensor integrals in combination with cutconstruct for now
         self.highest_rank = 0
         self.preliminary_numerator = Polynomial(np.zeros([1,len(self.Feynman_parameters)+2], dtype=int), \
-                                                np.array([1]), self.Feynman_parameters+sp.sympify(['U','F']), \
+                                                np.array([1]), self.Feynman_parameters+sympify_expression(['U','F']), \
                                                 copy=False)
 
     @cached_property

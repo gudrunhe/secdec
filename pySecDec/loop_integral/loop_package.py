@@ -10,7 +10,7 @@ from .from_graph import LoopIntegralFromGraph
 from .draw import plot_diagram
 from ..algebra import Polynomial
 from ..code_writer import make_package
-from ..misc import flatten
+from ..misc import flatten, sympify_expression
 from itertools import chain
 import numpy as np
 import sympy as sp
@@ -226,7 +226,7 @@ def loop_package(name, loop_integral, requested_order,
         other_polynomials = [flatten(loop_integral.numerator, 1)]
 
     polynomials_to_decompose = list(U_and_F)
-    if sp.sympify( loop_integral.measure ) != 1:
+    if sympify_expression( loop_integral.measure ) != 1:
         # need ``loop_integral.measure`` only if it is nontrivial
         polynomials_to_decompose += loop_integral.measure.factors
 
@@ -244,7 +244,7 @@ def loop_package(name, loop_integral, requested_order,
         contour_deformation_polynomial = 'F' if contour_deformation else None,
         positive_polynomials = ['U'],
 
-        prefactor = sp.sympify(additional_prefactor) * loop_integral.Gamma_factor * loop_integral.regulator ** loop_integral.regulator_power,
+        prefactor = sympify_expression(additional_prefactor) * loop_integral.Gamma_factor * loop_integral.regulator ** loop_integral.regulator_power,
 
         real_parameters = real_parameters,
         complex_parameters = complex_parameters,

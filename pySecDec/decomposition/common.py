@@ -5,7 +5,7 @@ multiple decompition modules.
 '''
 
 from ..algebra import Polynomial, ExponentiatedPolynomial, Product
-from ..misc import argsort_ND_array
+from ..misc import argsort_ND_array, sympify_expression
 import numpy as np
 import sympy as sp
 import subprocess, shutil, os
@@ -157,18 +157,18 @@ def _sector2array(sector):
         combined_expolists.extend(multiplied_prod.expolist)
         # must distinguish between the individual polynomials and between `Polynomial` and `ExponentiatedPolynomial`
         if type(prod.factors[0]) is ExponentiatedPolynomial:
-            combined_coeffs.extend(multiplied_prod.coeffs * sp.sympify('SecDecInternalExponent(%s)*SecDecInternalCast(%i)'%(prod.factors[0].exponent,index)))
+            combined_coeffs.extend(multiplied_prod.coeffs * sympify_expression('SecDecInternalExponent(%s)*SecDecInternalCast(%i)'%(prod.factors[0].exponent,index)))
         else:
-            combined_coeffs.extend(multiplied_prod.coeffs * sp.sympify('SecDecInternalCast(%i)'%index))
+            combined_coeffs.extend(multiplied_prod.coeffs * sympify_expression('SecDecInternalCast(%i)'%index))
 
     # process `other`
     for index,poly in enumerate(sector.other):
         combined_expolists.append(poly.expolist)
         # must distinguish between `Polynomial` and `ExponentiatedPolynomial`
         if type(poly) is ExponentiatedPolynomial:
-            combined_coeffs.extend(poly.coeffs * sp.sympify('SecDecInternalExponent(%s)*SecDecInternalOther(%i)'%(poly.exponent,index)))
+            combined_coeffs.extend(poly.coeffs * sympify_expression('SecDecInternalExponent(%s)*SecDecInternalOther(%i)'%(poly.exponent,index)))
         else:
-            combined_coeffs.extend(poly.coeffs * sp.sympify('SecDecInternalOther(%i)'%index))
+            combined_coeffs.extend(poly.coeffs * sympify_expression('SecDecInternalOther(%i)'%index))
 
     # return as type `numpy.ndarray`
     return np.vstack(combined_expolists), np.hstack(combined_coeffs)

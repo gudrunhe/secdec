@@ -9,6 +9,7 @@ Collection of general-purpose helper functions.
 from itertools import chain, combinations, product
 import sympy as sp
 import numpy as np
+import warnings
 
 def powerset(iterable, min_length=0, stride=1):
     """
@@ -400,6 +401,33 @@ def flatten(polynomial, depth=np.inf):
             all_exponents.append(exponents)
     return Polynomial(np.vstack(all_exponents), np.array(all_coeffs), polynomial.polysymbols, copy=False)
 
+def sympify_expression(a):
+    '''
+    A helper function for converting objects to
+    sympy expressions.
+
+    First try to convert object to a sympy expression,
+    if this fails, then try to convert str(object)
+    to a sympy expression
+
+    :param a:
+    The object to be converted to a sympy expression.
+
+    :return:
+    A sympy expression representing the object.
+    '''
+    with warnings.catch_warnings():
+
+        # Promote Sympy "String fallback in sympify" (issue 18066) deprecation warning to error
+        warnings.filterwarnings(action='error', category=sp.utilities.exceptions.SymPyDeprecationWarning, module='sympy.core.sympify')
+
+        # Catch SymPyDeprecationWarning/SympifyError from sympify(e) and try sympify(str(e)) instead
+        try:
+            return sp.sympify(a)
+        except (sp.utilities.exceptions.SymPyDeprecationWarning, sp.core.SympifyError):
+            return sp.sympify(str(a))
+
+
 def sympify_symbols(iterable, error_message, allow_number=False):
     '''
     `sympify` each item in `iterable` and assert
@@ -408,7 +436,7 @@ def sympify_symbols(iterable, error_message, allow_number=False):
     '''
     symbols = []
     for expression in iterable:
-        expression = sp.sympify(expression)
+        expression = sympify_expression(expression)
         assert expression.is_Symbol or expression.is_Number if allow_number else expression.is_Symbol, error_message
         symbols.append(expression)
     return symbols
@@ -449,7 +477,7 @@ def lowest_order(expression, variable):
     # convert to sympy if neccessary
     variable = sympify_symbols([variable], '`variable` must be a symbol')[0]
     if not isinstance(expression, sp.Expr):
-        expression = sp.sympify(expression)
+        expression = sympify_expression(expression)
 
     # get the lowest term in the expansion
     lowest_expansion_term = next( sp.series(expression, variable, n=None) )

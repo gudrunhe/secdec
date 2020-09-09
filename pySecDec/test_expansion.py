@@ -1,7 +1,7 @@
 from .expansion import *
 from .expansion import _expand_singular_step, _expand_Taylor_step
 from .algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial, Product, Sum, _Expression
-from .misc import flatten
+from .misc import flatten, sympify_expression
 from nose.plugins.attrib import attr
 import sympy as sp
 import unittest
@@ -41,12 +41,12 @@ class TestSingularExpansion(unittest.TestCase):
         unexpanded = Product(self.p3, self.p3, self.p2)
 
         expanded_0 = expand_singular(unexpanded, 0, 1)
-        sympy_expanded_0 = sp.sympify(expanded_0)
-        target_expanded_0 = sp.sympify('1/(1296*eps1) * eps0**0 - 1/(1944*eps1**2) * eps0**1')
+        sympy_expanded_0 = sympify_expression(expanded_0)
+        target_expanded_0 = sympify_expression('1/(1296*eps1) * eps0**0 - 1/(1944*eps1**2) * eps0**1')
         self.assertEqual( (sympy_expanded_0 - target_expanded_0).simplify(), 0 )
 
         expanded_0_1 = expand_singular(unexpanded, [0,1], [1,10])
-        sympy_expanded_0_1 = sp.sympify(expanded_0_1)
+        sympy_expanded_0_1 = sympify_expression(expanded_0_1)
         target_expanded_0_1 = target_expanded_0 # already a Laurent expansion
         self.assertEqual( (sympy_expanded_0_1 - target_expanded_0_1).simplify(), 0 )
 
@@ -65,12 +65,12 @@ class TestSingularExpansion(unittest.TestCase):
         # expansion in eps1 yields a simple pole --> expansion to order epsilon has three terms
         self.assertEqual(len(expansion.coeffs), 3)
 
-        pole_order = sp.sympify('1/(12*eps0**2) * 1/eps1')
-        constant_order = sp.sympify('-(12*3+36)*eps0/(12*12*eps0**4) * 1')
-        order_epsilon = sp.sympify('9/(2*eps0**4) * eps1/2')
+        pole_order = sympify_expression('1/(12*eps0**2) * 1/eps1')
+        constant_order = sympify_expression('-(12*3+36)*eps0/(12*12*eps0**4) * 1')
+        order_epsilon = sympify_expression('9/(2*eps0**4) * eps1/2')
 
         target_expansion = pole_order + constant_order + order_epsilon
-        self.assertEqual(target_expansion - sp.sympify(expansion), 0)
+        self.assertEqual(target_expansion - sympify_expression(expansion), 0)
 
         # expand in the other regulator 'eps0'
         second_expansion = expansion.copy()
@@ -78,8 +78,8 @@ class TestSingularExpansion(unittest.TestCase):
             second_expansion.coeffs[i] = _expand_singular_step(coeff, index=0, order=0)
 
         # `target_expansion` is already expanded in 'eps0'
-        self.assertEqual( (sp.sympify(expansion) - sp.sympify(second_expansion)).simplify() , 0)
-        self.assertEqual( (target_expansion - sp.sympify(second_expansion)).simplify() , 0)
+        self.assertEqual( (sympify_expression(expansion) - sympify_expression(second_expansion)).simplify() , 0)
+        self.assertEqual( (target_expansion - sympify_expression(second_expansion)).simplify() , 0)
 
     #@attr('active')
     def test_high_level_function_one_regulator(self):
@@ -96,12 +96,12 @@ class TestSingularExpansion(unittest.TestCase):
         # expansion in eps1 yields a simple pole --> expansion to order epsilon has three terms
         self.assertEqual(len(expansion.coeffs), 3)
 
-        pole_order = sp.sympify('1/(12*eps0**2) * 1/eps1')
-        constant_order = sp.sympify('-(12*3+36)*eps0/(12*12*eps0**4) * 1')
-        order_epsilon = sp.sympify('9/(2*eps0**4) * eps1/2')
+        pole_order = sympify_expression('1/(12*eps0**2) * 1/eps1')
+        constant_order = sympify_expression('-(12*3+36)*eps0/(12*12*eps0**4) * 1')
+        order_epsilon = sympify_expression('9/(2*eps0**4) * eps1/2')
 
         target_expansion = pole_order + constant_order + order_epsilon
-        self.assertEqual(target_expansion - sp.sympify(expansion), 0)
+        self.assertEqual(target_expansion - sympify_expression(expansion), 0)
 
     #@attr('active')
     def test_high_level_function_two_regulators(self):
@@ -119,13 +119,13 @@ class TestSingularExpansion(unittest.TestCase):
         for coeff in high_level_output.coeffs:
             self.assertTrue(isinstance(coeff, _Expression))
 
-        self.assertEqual( (sp.sympify(high_level_output) - sp.sympify(flattened_expansion_1_0)).simplify() , 0)
+        self.assertEqual( (sympify_expression(high_level_output) - sympify_expression(flattened_expansion_1_0)).simplify() , 0)
 
     #@attr('active')
     def test_high_level_function_two_regulators_higher_order(self):
         expanded = expand_singular(self.rational_polynomial, indices=[1,0], orders=[3,2])
-        target = sp.sympify('1/(12*eps0**2*eps1) - 1/(2*eps0**3) + 9*eps1/(4*eps0**4) -  9*eps1**2/eps0**5 + 135*eps1**3/(4*eps0**6)')
-        self.assertEqual( (sp.sympify(expanded) - target).simplify() , 0)
+        target = sympify_expression('1/(12*eps0**2*eps1) - 1/(2*eps0**3) + 9*eps1/(4*eps0**4) -  9*eps1**2/eps0**5 + 135*eps1**3/(4*eps0**6)')
+        self.assertEqual( (sympify_expression(expanded) - target).simplify() , 0)
 
 class TestTaylorExpansion(unittest.TestCase):
     def setUp(self):
@@ -133,7 +133,7 @@ class TestTaylorExpansion(unittest.TestCase):
         self.p0 = ExponentiatedPolynomial(p0.expolist, p0.coeffs, polysymbols=p0.polysymbols, exponent=Polynomial.from_expression('2*x', ['x','y']))
         self.p1 = Polynomial.from_expression('3*x + y', ['x','y'])
         self.expression = Sum(self.p0, Product(self.p0, self.p1)) # (3*x + y)*(2*x + y**2 + 4*y)**(2*x) + (2*x + y**2 + 4*y)**(2*x)
-        self.expected_expansion_in_x = sp.sympify('''
+        self.expected_expansion_in_x = sympify_expression('''
                                                          + x**0 / 0!  *  (y + 1)
                                                          + x**1 / 1!  *  (2*y*log(5 + y**2 + 4*y) + 2*log(5 + y**2 + 4*y) + 3) +
                                                          + x**2 / 2!  *  (y*(4*log(5 + y**2 + 4*y)**2 + 8/(5 + y**2 + 4*y)) + 4*log(5 + y**2 + 4*y)**2 + 12*log(5 + y**2 + 4*y) + 8/(5 + y**2 + 4*y))
@@ -149,7 +149,7 @@ class TestTaylorExpansion(unittest.TestCase):
     #@attr('active')
     def test_expand_Taylor_step(self):
         expansion_in_x = _expand_Taylor_step(self.expression, 0, 2)
-        self.assertEqual( (sp.sympify(expansion_in_x) - self.expected_expansion_in_x).simplify() , 0)
+        self.assertEqual( (sympify_expression(expansion_in_x) - self.expected_expansion_in_x).simplify() , 0)
 
     #@attr('active')
     def test_expand_Taylor(self):
@@ -158,8 +158,8 @@ class TestTaylorExpansion(unittest.TestCase):
         expansion_in_y_and_x = expand_Taylor(self.expression, [1,0], [0,2])
         expected_expansion = self.expected_expansion_in_x.subs('y',0) # zeroth order in y
 
-        self.assertEqual( (sp.sympify(expansion_in_x_and_y) - expected_expansion).simplify() , 0)
-        self.assertEqual( (sp.sympify(expansion_in_y_and_x) - expected_expansion).simplify() , 0)
+        self.assertEqual( (sympify_expression(expansion_in_x_and_y) - expected_expansion).simplify() , 0)
+        self.assertEqual( (sympify_expression(expansion_in_y_and_x) - expected_expansion).simplify() , 0)
 
 #@attr('active')
 class TestExpandSympy(unittest.TestCase):
@@ -193,19 +193,19 @@ class TestExpandSympy(unittest.TestCase):
 
         self.assertTrue( type(poly) is Polynomial )
         np.testing.assert_array_equal(poly.expolist,            [[-1],[0],[  1  ]])
-        np.testing.assert_array_equal(poly.coeffs,    sp.sympify([ 1 , 1 , '1/2']))
+        np.testing.assert_array_equal(poly.coeffs,    sympify_expression([ 1 , 1 , '1/2']))
 
     #@attr('active')
     def test_2d(self):
         expression = '1/(eps+alpha)'
-        variables = sp.sympify(['alpha', 'eps'])
+        variables = sympify_expression(['alpha', 'eps'])
         orders = [0,1]
 
         # expansion in 'alpha' first
         alpha_first = expand_sympy(expression, variables, orders)
-        target_alpha_first = sp.sympify('1/eps')
+        target_alpha_first = sympify_expression('1/eps')
 
-        self.assertEqual(  (sp.sympify(alpha_first) - target_alpha_first).simplify() , 0  )
+        self.assertEqual(  (sympify_expression(alpha_first) - target_alpha_first).simplify() , 0  )
 
         self.assertTrue( type(alpha_first) is Polynomial )
         self.assertEqual(alpha_first.polysymbols, variables)
@@ -217,12 +217,12 @@ class TestExpandSympy(unittest.TestCase):
         np.testing.assert_array_equal( alpha_poly.coeffs, [1] )
 
         # expansion in 'eps' first
-        variables = sp.sympify(['eps', 'alpha'])
+        variables = sympify_expression(['eps', 'alpha'])
         orders = [1,0]
         eps_first = expand_sympy(expression, variables, orders)
-        target_eps_first = sp.sympify('1/alpha - eps/alpha**2')
+        target_eps_first = sympify_expression('1/alpha - eps/alpha**2')
 
-        self.assertEqual(  (sp.sympify(eps_first) - target_eps_first).simplify() , 0  )
+        self.assertEqual(  (sympify_expression(eps_first) - target_eps_first).simplify() , 0  )
 
         self.assertTrue( type(eps_first) is Polynomial )
         self.assertEqual(eps_first.polysymbols, variables)
@@ -244,12 +244,12 @@ class TestExpandSympy(unittest.TestCase):
 
         expansion = expand_sympy(expression, variables, orders=[1])
         target_expansion = Polynomial([[1]],[1],['x'])
-        self.assertEqual(  (sp.sympify(expansion) - sp.sympify(target_expansion)).simplify() , 0  )
+        self.assertEqual(  (sympify_expression(expansion) - sympify_expression(target_expansion)).simplify() , 0  )
         self.assertTrue(expansion.truncated is True)
 
         expansion = expand_sympy(expression, variables, orders=[4])
         target_expansion = Polynomial([[1],[2]],[1,1],['x'])
-        self.assertEqual(  (sp.sympify(expansion) - sp.sympify(target_expansion)).simplify() , 0  )
+        self.assertEqual(  (sympify_expression(expansion) - sympify_expression(target_expansion)).simplify() , 0  )
         self.assertTrue(expansion.truncated is False)
 
     #@attr('active')
@@ -270,7 +270,7 @@ class TestExpandSympy(unittest.TestCase):
                                   ]
         target_expansion = Polynomial(target_expansion_expolist, target_expansion_coeffs, ['eps'])
 
-        self.assertEqual( sp.sympify(expansion - target_expansion).simplify() , 0 )
+        self.assertEqual( sympify_expression(expansion - target_expansion).simplify() , 0 )
 
         np.testing.assert_array_equal(expansion.expolist, target_expansion.expolist)
         np.testing.assert_array_equal(expansion.coeffs, target_expansion.coeffs)
@@ -294,7 +294,7 @@ class TestExpandSympy(unittest.TestCase):
                                   ]
         target_expansion = Polynomial(target_expansion_expolist, target_expansion_coeffs, ['eps'])
 
-        self.assertEqual( sp.sympify(expansion - target_expansion).simplify() , 0 )
+        self.assertEqual( sympify_expression(expansion - target_expansion).simplify() , 0 )
 
         np.testing.assert_array_equal(expansion.expolist, target_expansion.expolist)
         np.testing.assert_array_equal(expansion.coeffs, target_expansion.coeffs)
@@ -319,7 +319,7 @@ class TestExpandSympy(unittest.TestCase):
                                   ]
         target_expansion = Polynomial(target_expansion_expolist, target_expansion_coeffs, ['eps'])
 
-        self.assertEqual( sp.sympify(expansion - target_expansion).simplify() , 0 )
+        self.assertEqual( sympify_expression(expansion - target_expansion).simplify() , 0 )
 
         np.testing.assert_array_equal(expansion.expolist, target_expansion.expolist)
         np.testing.assert_array_equal(expansion.coeffs, target_expansion.coeffs)

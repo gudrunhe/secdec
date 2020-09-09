@@ -1,7 +1,7 @@
 from .geometric import *
 from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial
-from ..misc import argsort_2D_array
+from ..misc import argsort_2D_array, sympify_expression
 from nose.plugins.attrib import attr
 import numpy as np
 import sympy as sp
@@ -38,23 +38,23 @@ class TestGeomethod(unittest.TestCase):
     def test_Cheng_Wu(self):
         Feynman_parameters = ['x1', 'x2', 'x3']
         x1, x2, x3 = sp.symbols(Feynman_parameters)
-        poly_sympy = sp.sympify('x1*x2 + 5*x2*x3')
-        other_sympy = sp.sympify('a + x3*6')
+        poly_sympy = sympify_expression('x1*x2 + 5*x2*x3')
+        other_sympy = sympify_expression('a + x3*6')
         poly = Polynomial.from_expression(poly_sympy, Feynman_parameters)
         other = Polynomial.from_expression(other_sympy, Feynman_parameters)
         sector = Sector([poly], [other])
 
         primary_x3 = Cheng_Wu(sector)
         # ``x2`` factorizes in ``poly``
-        self.assertEqual( (sp.sympify(primary_x3.cast[0].factors[0]) - x2).simplify() , 0 )
-        self.assertEqual( (sp.sympify(primary_x3.cast[0].factors[1]) - (poly_sympy/x2).subs('x3',1)).simplify() , 0 )
-        self.assertEqual( (sp.sympify(primary_x3.other[0]) - other_sympy.subs('x3',1)).simplify() , 0 )
+        self.assertEqual( (sympify_expression(primary_x3.cast[0].factors[0]) - x2).simplify() , 0 )
+        self.assertEqual( (sympify_expression(primary_x3.cast[0].factors[1]) - (poly_sympy/x2).subs('x3',1)).simplify() , 0 )
+        self.assertEqual( (sympify_expression(primary_x3.other[0]) - other_sympy.subs('x3',1)).simplify() , 0 )
 
         primary_x1 = Cheng_Wu(sector,0)
         # ``x2`` factorizes in ``poly``
-        self.assertEqual( (sp.sympify(primary_x1.cast[0].factors[0]) - x2).simplify() , 0 )
-        self.assertEqual( (sp.sympify(primary_x1.cast[0].factors[1]) - (poly_sympy/x2).subs('x1',1)).simplify() , 0 )
-        self.assertEqual( (sp.sympify(primary_x1.other[0]) - other_sympy.subs('x1',1)).simplify() , 0 )
+        self.assertEqual( (sympify_expression(primary_x1.cast[0].factors[0]) - x2).simplify() , 0 )
+        self.assertEqual( (sympify_expression(primary_x1.cast[0].factors[1]) - (poly_sympy/x2).subs('x1',1)).simplify() , 0 )
+        self.assertEqual( (sympify_expression(primary_x1.other[0]) - other_sympy.subs('x1',1)).simplify() , 0 )
 
     #@attr('active')
     def test_Cheng_Wu_one_variable(self):
@@ -63,11 +63,11 @@ class TestGeomethod(unittest.TestCase):
         initial_sector = Sector([U,F])
         primary_sector = Cheng_Wu(initial_sector)
 
-        target_decomposed_U = sp.sympify(1)
-        target_decomposed_F = sp.sympify('msq')
+        target_decomposed_U = sympify_expression(1)
+        target_decomposed_F = sympify_expression('msq')
 
-        self.assertEqual(  ( sp.sympify(primary_sector.cast[0]) - target_decomposed_U ).simplify() , 0   )
-        self.assertEqual(  ( sp.sympify(primary_sector.cast[1]) - target_decomposed_F ).simplify() , 0   )
+        self.assertEqual(  ( sympify_expression(primary_sector.cast[0]) - target_decomposed_U ).simplify() , 0   )
+        self.assertEqual(  ( sympify_expression(primary_sector.cast[1]) - target_decomposed_F ).simplify() , 0   )
 
     def test_convex_hull(self):
         hull = convex_hull(self.p0, self.p1)
@@ -197,16 +197,16 @@ class TestGeomethod(unittest.TestCase):
         transformed_exponentiated_polynomial = ExponentiatedPolynomial([[1,1,0,2],[0,0,0,0]], [1,2], polysymbols='y', exponent='exponent')
         transformed_log_of_polynomial = LogOfPolynomial([[1,1,0,2],[2,2,1,-2]], [1,2], polysymbols='y')
 
-        self.assertEqual( ( sp.sympify(transformed_x0) - sp.sympify(transform_variables(x0, transformation)) ).simplify() , 0)
-        self.assertEqual( (sp.sympify(transformed_x1) - sp.sympify(transform_variables(x1, transformation))).simplify() , 0)
-        self.assertEqual( (sp.sympify(transformed_x2) - sp.sympify(transform_variables(x2, transformation))).simplify() , 0)
-        self.assertEqual( (sp.sympify(transformed_composite_polynomial) - sp.sympify(transform_variables(composite_polynomial, transformation))).simplify() , 0)
+        self.assertEqual( ( sympify_expression(transformed_x0) - sympify_expression(transform_variables(x0, transformation)) ).simplify() , 0)
+        self.assertEqual( (sympify_expression(transformed_x1) - sympify_expression(transform_variables(x1, transformation))).simplify() , 0)
+        self.assertEqual( (sympify_expression(transformed_x2) - sympify_expression(transform_variables(x2, transformation))).simplify() , 0)
+        self.assertEqual( (sympify_expression(transformed_composite_polynomial) - sympify_expression(transform_variables(composite_polynomial, transformation))).simplify() , 0)
 
         self.assertTrue(type(transform_variables(exponentiated_polynomial, transformation)) is ExponentiatedPolynomial)
-        self.assertEqual( (sp.sympify(transformed_exponentiated_polynomial) - sp.sympify(transform_variables(exponentiated_polynomial, transformation))).simplify() , 0)
+        self.assertEqual( (sympify_expression(transformed_exponentiated_polynomial) - sympify_expression(transform_variables(exponentiated_polynomial, transformation))).simplify() , 0)
 
         self.assertTrue(type(transform_variables(log_of_polynomial, transformation)) is LogOfPolynomial)
-        self.assertEqual( (sp.sympify(transformed_log_of_polynomial) - sp.sympify(transform_variables(log_of_polynomial, transformation))).simplify() , 0)
+        self.assertEqual( (sympify_expression(transformed_log_of_polynomial) - sympify_expression(transform_variables(log_of_polynomial, transformation))).simplify() , 0)
 
     #@attr('active')
     def test_2D_geometric_decomposition(self):
@@ -215,14 +215,14 @@ class TestGeomethod(unittest.TestCase):
         indices = [1,2]
         subsectors = list( geometric_decomposition(sector, indices, workdir='tmpdir_test_2D_geometric_decomposition_python' + python_major_version) )
 
-        target_general_Jacobian = sp.sympify('x1**-2 * x2**-2 * x3')
-        target_general_poly = sp.sympify('x1**-1 * x2**-1 * x3 * (x1 + x2 + x3)')
+        target_general_Jacobian = sympify_expression('x1**-2 * x2**-2 * x3')
+        target_general_poly = sympify_expression('x1**-1 * x2**-1 * x3 * (x1 + x2 + x3)')
 
         self.assertEqual(len(subsectors), 3)
 
         for i,subsector in enumerate(subsectors):
-            Jacobian = sp.sympify(subsector.Jacobian)
-            poly = sp.sympify(subsector.cast[0])
+            Jacobian = sympify_expression(subsector.Jacobian)
+            poly = sympify_expression(subsector.cast[0])
 
             target_Jacobian = target_general_Jacobian.subs('x%i'%(i+1), 1)
             target_poly = target_general_poly.subs('x%i'%(i+1), 1)
@@ -242,25 +242,25 @@ class TestGeomethod(unittest.TestCase):
         print(subsectors)
         self.assertEqual(len(subsectors), 2)
 
-        target_Jacobians = [sp.sympify('x2**1 '), sp.sympify('x1**1 ')]
-        target_polys = [sp.sympify('x2**1 * (A*x1 + B + C*x1*x2)'), sp.sympify('x1**1 * (A + B*x2 + C*x1*x2)')]
+        target_Jacobians = [sympify_expression('x2**1 '), sympify_expression('x1**1 ')]
+        target_polys = [sympify_expression('x2**1 * (A*x1 + B + C*x1*x2)'), sympify_expression('x1**1 * (A + B*x2 + C*x1*x2)')]
 
         try:
             for target_poly, target_Jacobian, subsector in zip(target_polys, target_Jacobians,subsectors):
                 try:
-                    self.assertEqual( (sp.sympify(subsector.cast[0])-target_poly).simplify() , 0)
-                    self.assertEqual( (sp.sympify(subsector.Jacobian)-target_Jacobian).simplify() , 0)
+                    self.assertEqual( (sympify_expression(subsector.cast[0])-target_poly).simplify() , 0)
+                    self.assertEqual( (sympify_expression(subsector.Jacobian)-target_Jacobian).simplify() , 0)
                 except AssertionError:
-                    self.assertEqual( (sp.sympify(subsector.cast[0])-target_poly.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
-                    self.assertEqual( (sp.sympify(subsector.Jacobian)-target_Jacobian.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
+                    self.assertEqual( (sympify_expression(subsector.cast[0])-target_poly.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
+                    self.assertEqual( (sympify_expression(subsector.Jacobian)-target_Jacobian.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
         except AssertionError:
             for target_poly, target_Jacobian, subsector in zip(target_polys, target_Jacobians,reversed(subsectors)):
                 try:
-                    self.assertEqual( (sp.sympify(subsector.cast[0])-target_poly).simplify() , 0)
-                    self.assertEqual( (sp.sympify(subsector.Jacobian)-target_Jacobian).simplify() , 0)
+                    self.assertEqual( (sympify_expression(subsector.cast[0])-target_poly).simplify() , 0)
+                    self.assertEqual( (sympify_expression(subsector.Jacobian)-target_Jacobian).simplify() , 0)
                 except AssertionError:
-                    self.assertEqual( (sp.sympify(subsector.cast[0])-target_poly.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
-                    self.assertEqual( (sp.sympify(subsector.Jacobian)-target_Jacobian.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
+                    self.assertEqual( (sympify_expression(subsector.cast[0])-target_poly.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
+                    self.assertEqual( (sympify_expression(subsector.Jacobian)-target_Jacobian.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
 
     #@attr('active')
     def test_geometric_ku_lower_dimensional_cones(self):

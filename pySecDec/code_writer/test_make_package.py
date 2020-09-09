@@ -7,6 +7,7 @@ from .make_package import _convert_input, _make_FORM_definition, \
                           _make_prefactor_function, _make_CXX_function_declaration, \
                           _make_cpp_list
 from ..algebra import Function, Polynomial, Product, ProductRule, Sum
+from ..misc import sympify_expression
 from nose.plugins.attrib import attr
 import sys, shutil
 import unittest
@@ -106,7 +107,7 @@ class TestConvertInput(TestMakePackage):
                                       remainder_expression='DummyFunction(z0,eps)',
                                       functions=['DummyFunction'],
                                       real_parameters=['s','t'],
-                                      complex_parameters=[sp.sympify('msq')],
+                                      complex_parameters=[sympify_expression('msq')],
                                       form_optimization_level=2,
                                       form_work_space='500M',
                                       form_insertion_depth=0,
@@ -847,8 +848,8 @@ class TestWriteCppCodePrefactor(unittest.TestCase):
     #@attr('active')
     def test_one_regulator(self):
         expanded_prefactor = Polynomial([[-1],[0],[1]],['-c0','r0','r1'], ['eps'])
-        real_parameters = sp.sympify(['r0','r1'])
-        complex_parameters = sp.sympify(['c0'])
+        real_parameters = sympify_expression(['r0','r1'])
+        complex_parameters = sympify_expression(['c0'])
         regulator_names = ['a']
 
         for i in range(2):
@@ -882,15 +883,15 @@ class TestWriteCppCodePrefactor(unittest.TestCase):
 
     #@attr('active')
     def test_two_regulators(self):
-        symbols = sp.sympify(['alpha','eps'])
+        symbols = sympify_expression(['alpha','eps'])
         alpha_coeffs = [
                            Polynomial([[0,0],[0,1]], ['r0','c1'], symbols),
                            Polynomial([[0,-1]], ['c1'], symbols),
                            Polynomial([[0,1],[0,2]], ['c0','c1'], symbols)
                        ]
         expanded_prefactor = Polynomial([[-1,0],[0,0],[1,0]], alpha_coeffs, symbols)
-        real_parameters = sp.sympify(['r0'])
-        complex_parameters = sp.sympify(['c0','c1'])
+        real_parameters = sympify_expression(['r0'])
+        complex_parameters = sympify_expression(['c0','c1'])
 
         true_or_false = lambda b: 'true' if b else 'false'
 
@@ -969,13 +970,13 @@ class TestRealPartFunction(unittest.TestCase):
     #@attr('active')
     def test_base_function(self):
         Re_x0 = RealPartFunction('Re', self.variables[0])
-        self.assertEqual( sp.sympify(Re_x0) , sp.sympify('Re(x0)') )
+        self.assertEqual( sympify_expression(Re_x0) , sympify_expression('Re(x0)') )
 
     #@attr('active')
     def test_derivatives(self):
         Re_x0 = RealPartFunction('Re', self.variables[0]*self.variables[1]*self.variables[1])
         dRe_x0d1 = Re_x0.derive(1)
-        self.assertEqual( sp.sympify(dRe_x0d1.derive(0)) , sp.sympify('Re(2*x1)') )
+        self.assertEqual( sympify_expression(dRe_x0d1.derive(0)) , sympify_expression('Re(2*x1)') )
 
 class TestMaxDegreeFunction(unittest.TestCase):
     def setUp(self):
@@ -993,42 +994,42 @@ class TestMaxDegreeFunction(unittest.TestCase):
         maxdegrees = np.array([0,1,2])
         f = MaxDegreeFunction('f', *self.variables, maxdegrees=maxdegrees)
 
-        self.assertEqual( sp.sympify(f) , sp.sympify('f(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(f) , sympify_expression('f(x0,x1,x2**2)') )
 
         derivative = f.derive(0)
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('0') )
 
         derivative = f.derive(1)
-        self.assertEqual( sp.sympify(f.derive(1)) , sp.sympify('dfd1(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(f.derive(1)) , sympify_expression('dfd1(x0,x1,x2**2)') )
         derivative = derivative.derive(1)
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('0') )
 
         derivative = f.derive(2)
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('2*x2*dfd2(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('2*x2*dfd2(x0,x1,x2**2)') )
         derivative = derivative.derive(2)
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('2*dfd2(x0,x1,x2**2)+4*x2**2*ddfd2d2(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('2*dfd2(x0,x1,x2**2)+4*x2**2*ddfd2d2(x0,x1,x2**2)') )
         derivative = derivative.derive(2)
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('4*x2*ddfd2d2(x0,x1,x2**2)+8*x2*ddfd2d2(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('4*x2*ddfd2d2(x0,x1,x2**2)+8*x2*ddfd2d2(x0,x1,x2**2)') )
         derivative = derivative.derive(2).copy()
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('4*ddfd2d2(x0,x1,x2**2)+8*ddfd2d2(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('4*ddfd2d2(x0,x1,x2**2)+8*ddfd2d2(x0,x1,x2**2)') )
         derivative = derivative.derive(2)
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('0') )
 
         derivative = f.derive(2).derive(1).copy()
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('2*x2*ddfd1d2(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('2*x2*ddfd1d2(x0,x1,x2**2)') )
         derivative = derivative.derive(2)
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('2*ddfd1d2(x0,x1,x2**2)+4*x2**2*dddfd1d2d2(x0,x1,x2**2)') )
-        self.assertEqual( sp.sympify(derivative.derive(0)) , sp.sympify('0') )
-        self.assertEqual( sp.sympify(derivative.derive(1)) , sp.sympify('0') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('2*ddfd1d2(x0,x1,x2**2)+4*x2**2*dddfd1d2d2(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(derivative.derive(0)) , sympify_expression('0') )
+        self.assertEqual( sympify_expression(derivative.derive(1)) , sympify_expression('0') )
         derivative = derivative.derive(2).copy()
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('4*x2*dddfd1d2d2(x0,x1,x2**2)+8*x2*dddfd1d2d2(x0,x1,x2**2)') )
-        self.assertEqual( sp.sympify(derivative.derive(0)) , sp.sympify('0') )
-        self.assertEqual( sp.sympify(derivative.derive(1)) , sp.sympify('0') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('4*x2*dddfd1d2d2(x0,x1,x2**2)+8*x2*dddfd1d2d2(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(derivative.derive(0)) , sympify_expression('0') )
+        self.assertEqual( sympify_expression(derivative.derive(1)) , sympify_expression('0') )
         derivative = derivative.derive(2)
-        self.assertEqual( sp.sympify(derivative) , sp.sympify('12*dddfd1d2d2(x0,x1,x2**2)') )
-        self.assertEqual( sp.sympify(derivative.derive(0)) , sp.sympify('0') )
-        self.assertEqual( sp.sympify(derivative.derive(1)) , sp.sympify('0') )
-        self.assertEqual( sp.sympify(derivative.derive(2)) , sp.sympify('0') )
+        self.assertEqual( sympify_expression(derivative) , sympify_expression('12*dddfd1d2d2(x0,x1,x2**2)') )
+        self.assertEqual( sympify_expression(derivative.derive(0)) , sympify_expression('0') )
+        self.assertEqual( sympify_expression(derivative.derive(1)) , sympify_expression('0') )
+        self.assertEqual( sympify_expression(derivative.derive(2)) , sympify_expression('0') )
 
     #@attr('active')
     def test_replace(self):
@@ -1037,22 +1038,22 @@ class TestMaxDegreeFunction(unittest.TestCase):
         f1 = MaxDegreeFunction('f', *self.variables, maxdegrees=maxdegrees).replace(1,1,remove=False)
 
         for f in [f0,f1]:
-            self.assertEqual( sp.sympify(f) , sp.sympify('f(x0,1,x2**2)') )
+            self.assertEqual( sympify_expression(f) , sympify_expression('f(x0,1,x2**2)') )
 
         for derivative in [f0.derive(0),f1.derive(0)]:
-            self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+            self.assertEqual( sympify_expression(derivative) , sympify_expression('0') )
 
         for f in [f0,f1]:
             derivative = f.derive(-1)
-            self.assertEqual( sp.sympify(derivative) , sp.sympify('2*x2*dfd2(x0,1,x2**2)') )
+            self.assertEqual( sympify_expression(derivative) , sympify_expression('2*x2*dfd2(x0,1,x2**2)') )
             derivative = derivative.derive(-1).copy()
-            self.assertEqual( sp.sympify(derivative) , sp.sympify('2*dfd2(x0,1,x2**2)+4*x2**2*ddfd2d2(x0,1,x2**2)') )
+            self.assertEqual( sympify_expression(derivative) , sympify_expression('2*dfd2(x0,1,x2**2)+4*x2**2*ddfd2d2(x0,1,x2**2)') )
             derivative = derivative.derive(-1).copy()
-            self.assertEqual( sp.sympify(derivative) , sp.sympify('4*x2*ddfd2d2(x0,1,x2**2)+8*x2*ddfd2d2(x0,1,x2**2)') )
+            self.assertEqual( sympify_expression(derivative) , sympify_expression('4*x2*ddfd2d2(x0,1,x2**2)+8*x2*ddfd2d2(x0,1,x2**2)') )
             derivative = derivative.derive(-1).copy()
-            self.assertEqual( sp.sympify(derivative) , sp.sympify('4*ddfd2d2(x0,1,x2**2)+8*ddfd2d2(x0,1,x2**2)') )
+            self.assertEqual( sympify_expression(derivative) , sympify_expression('4*ddfd2d2(x0,1,x2**2)+8*ddfd2d2(x0,1,x2**2)') )
             derivative = derivative.derive(-1).copy()
-            self.assertEqual( sp.sympify(derivative) , sp.sympify('0') )
+            self.assertEqual( sympify_expression(derivative) , sympify_expression('0') )
 
     #@attr('active')
     def test_get_maxdegrees(self):
