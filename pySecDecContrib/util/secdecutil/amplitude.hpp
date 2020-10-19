@@ -514,6 +514,7 @@ namespace secdecutil {
                  */
                 bool verbose;
                 real_t min_decrease_factor;
+                real_t decrease_to_percentage; // of remaining time
                 real_t soft_wall_clock_limit;
                 real_t hard_wall_clock_limit;
                 size_t number_of_threads;
@@ -549,6 +550,7 @@ namespace secdecutil {
                     min_decrease_factor(0.9),
                     hard_wall_clock_limit(std::numeric_limits<double>::infinity()),
                     soft_wall_clock_limit(std::numeric_limits<double>::infinity()),
+                    decrease_to_percentage(0.7),
                     number_of_threads(0),
                     reset_cuda_after(0),
                     expression( deep_apply(expression,convert_to_sum_t) ),
@@ -647,12 +649,12 @@ namespace secdecutil {
                     }
 
                     // decrease number of sampling points if sampling would run out of time
-                    while(remaining_time < time_for_next_iteration)
+                    while(remaining_time * decrease_to_percentage < time_for_next_iteration)
                     {
                         if(verbose)
                             std::cout << "reducing number of samples due to time constraint ..." << std::endl;
 
-                        decrease_factor = remaining_time / time_for_next_iteration;
+                        decrease_factor = remaining_time * decrease_to_percentage / time_for_next_iteration ;
                         if(decrease_factor > min_decrease_factor)
                             decrease_factor = min_decrease_factor;
 
