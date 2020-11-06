@@ -187,6 +187,7 @@ Bracket `regulators';
 * and the corresponding header "sector_`sectorID'_`cppOrder'.hpp".
 
 * Open the namspace in which the sector is to be implemented
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#include <cmath>//nan#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
@@ -915,6 +916,10 @@ Bracket `regulators';
   Format C;
   #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalSecondAbbreviation[sector_`sectorID'_order_`cppOrder'_optimmaxvar_second + 1];#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+
+  #write <sector_`sectorID'_`cppOrder'.cpp> "for(int i=0; i<`optimmaxvar_' + 1; ++i) SecDecInternalAbbreviation[i] = nan(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
+  #write <sector_`sectorID'_`cppOrder'.cpp> "for(int i=0; i<sector_`sectorID'_order_`cppOrder'_optimmaxvar_second + 1; ++i) SecDecInternalSecondAbbreviation[i] = nan(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
   #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * write Abbreviations in c format
