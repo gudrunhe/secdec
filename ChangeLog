@@ -1,3 +1,16 @@
+17.11.2020 pySecDec-1.4.5
+
+    [make_package] init arrays to nan, avoids returning wrong results on GPU in rare cases
+    [misc] fix sympify calls (avoids sympy deprecation warning)
+    [high_level_tests] fix broken test selective_ibp
+    [examples] fix compatibility with python 3.8.6
+    [dist] update to qmc-1.0.4
+    [pylink] catch and print errors in python interface
+    [examples] add non-planar 6-propagator box
+    [algebra] improve use of .simplify()
+    [make_package] optimize jacobian calculation
+    [make_package] fix MaxDegreeFunction
+
 05.02.2020 pySecDec-1.4.4
 
 	[Vegas] increase default parameters `nstart` and `nincrease`
