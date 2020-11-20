@@ -307,6 +307,23 @@ matrix:
         - pyenv version
         - if command -v pyenv 1>/dev/null 2>&1; then eval "$(pyenv init -)"; fi
 
+    - os: osx
+      osx_image: xcode12.2
+      language: c++
+      compiler: clang
+      addons:
+        homebrew:
+          packages:
+            - graphviz
+          update: true
+      env:
+        - NORMALIZ_VERSION=3.8.7
+        - NORMALIZ_ZIP_BASE=normaliz-${NORMALIZ_VERSION}-
+        - PYTHON_INSTALL='sudo -H pip install'
+      before_install:
+        - brew uninstall numpy --ignore-dependencies
+        - brew link --overwrite python
+
     - os: linux
       addons:
         apt:
