@@ -1,4 +1,5 @@
 numpy>=1.6
 # Note: Sphinx introduces a bug that makes doctest fail in versions >=1.6 and <1.6.3 (https://github.com/sphinx-doc/sphinx/pull/3825)
 Sphinx>=1.6.3
-sympy>=0.7.6
+# Note: sympy broke lazy series expansions in version 1.7 (see issue #20551 in sympy repo)
+sympy>=0.7.6,!=1.7
