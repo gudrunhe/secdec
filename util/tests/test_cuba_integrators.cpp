@@ -145,7 +145,9 @@ TEST_CASE( "Test Suave integrator with complex", "[Integrator][Cuba][Suave]" ) {
 TEST_CASE( "Test Divonne integrator with real", "[Integrator][Cuba][Divonne]" ) {
   cubareal epsrel = 1e-3;
   auto integrator = secdecutil::cuba::Divonne<cubareal>(epsrel);
-  cubacores(1,1000);
+  const int num_idle_cores = 1;
+  const int num_max_cores = 1000;
+  cubacores(&num_idle_cores,&num_max_cores);
   integrator.key1 = -2000; // Tuned to pass this test
   integrator.seed = 1;
   test_integrator_real(integrator, epsrel);
