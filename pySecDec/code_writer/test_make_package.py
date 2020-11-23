@@ -110,6 +110,8 @@ class TestConvertInput(TestMakePackage):
                                       complex_parameters=[sympify_expression('msq')],
                                       form_optimization_level=2,
                                       form_work_space='500M',
+                                      form_memory_use=None,
+                                      form_threads=2,
                                       form_insertion_depth=0,
                                       contour_deformation_polynomial=None,
                                       positive_polynomials=[],

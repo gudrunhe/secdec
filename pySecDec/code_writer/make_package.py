@@ -20,6 +20,7 @@ from itertools import chain, repeat
 from multiprocessing import Pool
 from time import strftime
 from re import match
+from .. import formset
 import numpy as np
 import sympy as sp
 import sys, os
@@ -167,8 +168,8 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
-                   form_work_space, form_insertion_depth, contour_deformation_polynomial,
-                   positive_polynomials, decomposition_method):
+                   form_work_space, form_memory_use, form_threads, form_insertion_depth,
+                   contour_deformation_polynomial, positive_polynomials, decomposition_method):
     'Get the data types right.'
 
     # parse symbols
@@ -228,6 +229,23 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
     # convert ``requested_orders`` to numpy array
     requested_orders = np.array(requested_orders)
 
+    # convert ``form_threads`` to integer and check positivity
+    assert form_threads == int(form_threads), '`form_threads` must be an integer.'
+    assert form_threads >= 1, '`form_threads` must not be positive.'
+
+    # compute form.set parameters
+    form_setup = formset.Setup((4, 2, 0))
+    form_setup.workspace = formset.parse_number(form_work_space)
+    form_setup.threads = form_threads
+    if form_memory_use is not None:
+        requested_memory_use = formset.parse_number(form_memory_use)
+        form_setup = formset.search(form_setup, requested_memory_use)
+        obtained_memory_use = form_setup.calc()
+        if obtained_memory_use > requested_memory_use:
+            print( 'warning: FORM memory usage will be limited to ~%s (not %s)' % (
+                formset.round_human_readable(obtained_memory_use, True, True),
+                form_memory_use))
+
     # convert ``form_insertion_depth`` to integer and check nonnegativity
     assert form_insertion_depth == int(form_insertion_depth), '`form_insertion_depth` must be an integer.'
     assert form_insertion_depth >= 0, '`form_insertion_depth` must not be negative.'
@@ -261,7 +279,7 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
             other_polynomials, prefactor, remainder_expression, functions, function_calls,
             real_parameters, complex_parameters, form_optimization_level,
-            form_work_space, form_insertion_depth, contour_deformation_polynomial, positive_polynomials,
+            form_setup, form_insertion_depth, contour_deformation_polynomial, positive_polynomials,
             decomposition_method, symbols_polynomials_to_decompose, symbols_other_polynomials,
             symbols_remainder_expression, all_symbols)
 
@@ -305,7 +323,7 @@ def get_decomposition_routines(name, normaliz, workdir):
 # -------------------------------- template parsing ---------------------------------
 def _parse_global_templates(name, regulators, polynomial_names,
                             real_parameters, complex_parameters, form_optimization_level,
-                            form_work_space, form_insertion_depth, requested_orders,
+                            form_setup, form_insertion_depth, requested_orders,
                             contour_deformation_polynomial, nested_series_type,
                             enforce_complex):
     '''
@@ -329,7 +347,13 @@ def _parse_global_templates(name, regulators, polynomial_names,
                                      names_of_regulators = _make_cpp_list(regulators),
                                      polynomial_names = _make_FORM_list(regulators),
                                      form_optimization_level = form_optimization_level,
-                                     form_work_space = form_work_space,
+                                     form_work_space = form_setup.workspace,
+                                     form_small_size = form_setup.smallsize,
+                                     form_large_size = form_setup.largesize,
+                                     form_terms_in_small = form_setup.termsinsmall,
+                                     form_scratch_size = form_setup.scratchsize,
+                                     form_sort_io_size = form_setup.sortiosize,
+                                     form_threads = form_setup.threads,
                                      form_insertion_depth = form_insertion_depth,
                                      contour_deformation = int(contour_deformation_polynomial is not None),
                                      requested_orders = _make_FORM_list(requested_orders),
@@ -792,7 +816,6 @@ def _process_secondary_sector(environment):
     sector = environment['sector']
     symbols_other_polynomials = environment['symbols_other_polynomials']
     all_symbols = environment['all_symbols']
-    form_work_space = environment['form_work_space']
     contour_deformation_polynomial = environment['contour_deformation_polynomial']
     str_error_token = environment['str_error_token']
     template_sources = environment['template_sources']
@@ -1386,6 +1409,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
+                 form_memory_use=None, form_threads=2,
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
                  enforce_complex=False, split=False, ibp_power_goal=-1, use_iterative_sort=True,
@@ -1514,6 +1538,17 @@ def make_package(name, integration_variables, regulators, requested_orders,
     :param form_work_space:
         string, optional;
         The FORM WorkSpace. Default: ``'500M'``.
+
+    :param form_memory_use:
+        string, optional;
+        The target FORM memory usage. When specified, `form.set`
+        parameters will be adjusted so that FORM uses at most
+        approximately this much resident memory. Approximately
+        1G per worker thread is the minimum. Default: ``None``.
+
+    :param form_threads:
+        integer, optional;
+        Number of threads (T)FORM will use. Default: ``2``.
 
     :param form_insertion_depth:
         nonnegative integer, optional;
@@ -1662,7 +1697,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     requested_orders, polynomials_to_decompose, polynomial_names, \
     other_polynomials, prefactor, remainder_expression, functions, \
     function_calls, real_parameters, complex_parameters, \
-    form_optimization_level, form_work_space, form_insertion_depth, \
+    form_optimization_level, form_setup, form_insertion_depth, \
     contour_deformation_polynomial, positive_polynomials, decomposition_method, \
     symbols_polynomials_to_decompose, symbols_other_polynomials, \
     symbols_remainder_expression, all_symbols = \
@@ -1670,8 +1705,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                    requested_orders, polynomials_to_decompose, polynomial_names,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
-                   form_work_space, form_insertion_depth, contour_deformation_polynomial,
-                   positive_polynomials, decomposition_method)
+                   form_work_space, form_memory_use, form_threads, form_insertion_depth,
+                   contour_deformation_polynomial, positive_polynomials, decomposition_method)
 
     # construct the c++ type "nested_series_t"
     # for two regulators, the resulting code should read:
@@ -1683,7 +1718,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         _parse_global_templates(
         name, regulators, polynomial_names,
         real_parameters, complex_parameters, form_optimization_level,
-        form_work_space, form_insertion_depth, requested_orders,
+        form_setup, form_insertion_depth, requested_orders,
         contour_deformation_polynomial, nested_series_type,
         enforce_complex
     )

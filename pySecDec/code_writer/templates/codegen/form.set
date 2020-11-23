@@ -1,1 +1,6 @@
 WorkSpace %(form_work_space)s
+SmallSize %(form_small_size)s
+LargeSize %(form_large_size)s
+TermsInSmall %(form_terms_in_small)s
+ScratchSize %(form_scratch_size)s
+SortIOSize %(form_sort_io_size)s

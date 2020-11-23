@@ -21,6 +21,8 @@ def loop_package(name, loop_integral, requested_order,
                  contour_deformation=True,
                  additional_prefactor=1, form_optimization_level=2,
                  form_work_space='500M',
+                 form_memory_use=None,
+                 form_threads=2,
                  decomposition_method='iterative',
                  normaliz_executable='normaliz',
                  enforce_complex=False,
@@ -86,6 +88,17 @@ def loop_package(name, loop_integral, requested_order,
     :param form_work_space:
         string, optional;
         The FORM WorkSpace. Default: ``'500M'``.
+
+    :param form_memory_use:
+        string, optional;
+        The target FORM memory usage. When specified, ``form.set``
+        parameters will be adjusted so that FORM uses at most
+        approximately this much resident memory. Approximately
+        1G per worker thread is the minimum. Default: ``None``.
+
+    :param form_threads:
+        integer, optional;
+        Number of threads (T)FORM will use. Default: ``2``.
 
     :param decomposition_method:
         string, optional;
@@ -253,6 +266,8 @@ def loop_package(name, loop_integral, requested_order,
 
         form_optimization_level = form_optimization_level,
         form_work_space = form_work_space,
+        form_memory_use = form_memory_use,
+        form_threads = form_threads,
 
         decomposition_method = decomposition_method,
 
