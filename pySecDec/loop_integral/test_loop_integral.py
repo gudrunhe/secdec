@@ -2,6 +2,9 @@ from . import *
 from ..misc import sympify_expression
 import numpy as np
 import sympy as sp
+import os
+import shutil
+import tempfile
 import unittest
 from math import floor
 from nose.plugins.attrib import attr
@@ -1892,3 +1895,23 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_U  - target_U ).simplify() , 0 )
         self.assertEqual( (result_F  - target_F ).simplify() , 0 )
         self.assertEqual( (result_Nu - target_Nu).simplify() , 0 )
+
+class TestUF_LoopPackage(unittest.TestCase):
+    def test_loop_package_twice(self):
+        cwd = os.getcwd()
+        tmpdir = tempfile.mkdtemp(prefix="pysecdec")
+        try:
+            os.chdir(tmpdir)
+            li = LoopIntegralFromPropagators(
+                propagators=["k**2", "(q - k)**2"],
+                loop_momenta=["k"],
+                external_momenta=["q"],
+                replacement_rules=[("q**2", "1")]
+            )
+            loop_package("bubble1", li, 0)
+            loop_package("bubble2", li, 0)
+            # The test is that no exceptions are thrown up to
+            # this point.
+        finally:
+            os.chdir(cwd)
+            shutil.rmtree(tmpdir)

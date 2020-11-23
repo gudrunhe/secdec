@@ -214,21 +214,23 @@ def loop_package(name, loop_integral, requested_order,
         poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_U_and_F)+1], dtype=int)])
 
     # append the regulator symbol to the `numerator` and to `measure`
-    for poly in chain([loop_integral.numerator], loop_integral.measure.factors):
+    numerator = loop_integral.numerator.copy()
+    measure = loop_integral.measure.copy()
+    for poly in chain([numerator], measure.factors):
         poly.polysymbols = poly.polysymbols[:-2] + [loop_integral.regulator] + poly.polysymbols[-2:]
         poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),1], dtype=int), poly.expolist[:,-2:]])
 
-    if np.issubdtype(loop_integral.numerator.coeffs.dtype, np.number):
-        other_polynomials = [loop_integral.numerator]
+    if np.issubdtype(numerator.coeffs.dtype, np.number):
+        other_polynomials = [numerator]
     else:
-        symbols = loop_integral.numerator.polysymbols
-        loop_integral.numerator.coeffs = np.array( [Polynomial.from_expression(coeff, symbols) for coeff in loop_integral.numerator.coeffs] )
-        other_polynomials = [flatten(loop_integral.numerator, 1)]
+        symbols = numerator.polysymbols
+        numerator.coeffs = np.array( [Polynomial.from_expression(coeff, symbols) for coeff in numerator.coeffs] )
+        other_polynomials = [flatten(numerator, 1)]
 
     polynomials_to_decompose = list(U_and_F)
-    if sympify_expression( loop_integral.measure ) != 1:
+    if sympify_expression( measure ) != 1:
         # need ``loop_integral.measure`` only if it is nontrivial
-        polynomials_to_decompose += loop_integral.measure.factors
+        polynomials_to_decompose += measure.factors
 
     make_package_return_value = make_package(
         name = name,
