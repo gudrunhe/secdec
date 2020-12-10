@@ -80,6 +80,10 @@ http://www.graphviz.org.
 Additional Dependencies for Generated c++ Packages
 --------------------------------------------------
 
+.. note::
+    The following packages are redistributed with the `pySecDec` tarball; i.e. you don't have 
+    to install any of them yourself.
+
 The intended main usage of `pySecDec` is to make it write c++ packages using the functions
 :func:`pySecDec.code_writer.make_package` and :func:`pySecDec.loop_integral.loop_package`.
 In order to build these c++ packages, the following additional non-python-based libraries
@@ -99,5 +103,3 @@ sectors:
 
  * NAUTY (http://pallini.di.uniroma1.it/)
 
-These packages are redistributed with the `pySecDec` tarball; i.e. you don't have to install
-any of them yourself.
