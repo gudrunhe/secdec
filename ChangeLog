@@ -1,5 +1,6 @@
-17.11.2020 pySecDec-1.4.5
+13.12.2020 pySecDec-1.4.5
 
+    [dist] update to Cuba-4.2 (2020)
     [make_package] init arrays to nan, avoids returning wrong results on GPU in rare cases
     [misc] fix sympify calls (avoids sympy deprecation warning)
     [high_level_tests] fix broken test selective_ibp
