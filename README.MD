@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/mppmu/secdec.svg?branch=master)](https://travis-ci.org/mppmu/secdec)
+[![Build Status](https://travis-ci.org/gudrunhe/secdec.svg?branch=master)](https://travis-ci.org/gudrunhe/secdec)
 [![Documentation Status](https://readthedocs.org/projects/secdec/badge/?version=latest)](http://secdec.readthedocs.io/en/latest/?badge=latest)
 
 Downloading the Program and Installation
@@ -12,7 +12,7 @@ recent versions of `numpy` (http://www.numpy.org/) and
 `sympy` (http://www.sympy.org/) installed. The version of `sympy`
 should be 0.7.6 or higher, the version of `numpy` should be 1.6 or higher.
 
-To install pySecDec download and upack the tarball from https://github.com/mppmu/secdec/releases.
+To install pySecDec download and upack the tarball from https://github.com/gudrunhe/secdec/releases.
 The tarball contains a distribution of pySecDec and the additional dependencies
 listed below. Typing
 
