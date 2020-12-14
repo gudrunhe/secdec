@@ -123,6 +123,7 @@ matrix:
         homebrew:
           packages:
             - graphviz
+          update: false
       env:
         - NORMALIZ_VERSION=3.8.5
         - PYTHON_INSTALL='sudo -H pip install'
@@ -138,6 +139,7 @@ matrix:
         homebrew:
           packages:
             - graphviz
+          update: false
       env:
         - NORMALIZ_VERSION=3.8.7
         - NORMALIZ_ZIP_BASE=normaliz-${NORMALIZ_VERSION}-
@@ -175,6 +177,7 @@ matrix:
         homebrew:
           packages:
             - graphviz
+          update: false
       env:
         - NORMALIZ_VERSION=3.8.9
         - NORMALIZ_ZIP_BASE=normaliz-${NORMALIZ_VERSION}-
