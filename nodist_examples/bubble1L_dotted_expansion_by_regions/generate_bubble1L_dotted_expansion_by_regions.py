@@ -7,7 +7,7 @@
 import pySecDec as psd
 import numpy as np
 
-# for the case where we expand in z
+# define the loop integral for the case where we expand in m
 li_m = psd.loop_integral.LoopIntegralFromPropagators(
 propagators=("((k+p)**2)", "(k**2-msq_)"),
 loop_momenta=["k"],
@@ -19,6 +19,7 @@ replacement_rules = [
                     ]
 )
 
+# define the loop integeral for the case where we expand in z
 li_z = psd.loop_integral.LoopIntegralFromPropagators(
 propagators=li_m.propagators, loop_momenta=li_m.loop_momenta, regulators=li_m.regulators, powerlist=li_m.powerlist,
 replacement_rules = [
@@ -50,16 +51,22 @@ print("approximate result to order {}: {:.5f}".format(order,fapprox(psq,msq,orde
 print()
 
 for name, real_parameters, smallness_parameter, li in (
-    ("bubble1L_dotted_z_2fp", ['psq','msq','z'], "z", li_z),
-    ("bubble1L_dotted_m_2fp", ['psq','msq'], "msq", li_m)
+    ("bubble1L_dotted_z", ['psq','msq','z'], "z", li_z),
+    ("bubble1L_dotted_m", ['psq','msq'], "msq", li_m)
 ):
+    # find the regions and expand the integrals using expansion by regions
     generators_args = psd.loop_integral.loop_regions(
             name = name,
             loop_integral=li,
             smallness_parameter = smallness_parameter,
             expansion_by_regions_order=order)
 
+    # generate code that will calculate the sum of all regions and all orders in
+    # the smallness parameter
     psd.code_writer.sum_package(name, [psd.make_package]*len(generators_args), generators_args, li.regulators,
                     requested_orders = [0],
                     real_parameters = real_parameters,
                     complex_parameters = [])
+
+# the following Python script will set the integrator, see the file for more
+import configure
