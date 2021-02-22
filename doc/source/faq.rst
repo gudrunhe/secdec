@@ -61,6 +61,8 @@ What can I do if the program stops with an error message containing `sign_check_
 
 This error occurs if the contour deformation leads to a wrong sign of the Feynman :math:`i\delta` prescription, usually due to the fact that the deformation parameter :math:`\lambda` is too large. Choose a larger value for ``number_of_presamples`` and a smaller value (e.g. ``0.5``) for ``deformation_parameters_maximum`` (see item above). If that does not help, you can try ``0.1`` instead of ``0.5`` for ``deformation_parameters_maximum``. The relevant parameters are described in :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
 
+Often this error is encountered when the ``real_parameters`` and/or ``complex_parameters`` are very large/small or if some of the parameters differ from each other by orders of magnitude. If all of the ``real_parameters`` or ``complex_parameters`` are of a similar size (but not :math:`\mathcal{O}(1)`) then dividing each parameter by e.g. the largest parameter (such that all parameters are :math:`\mathcal{O}(1)`) can help to avoid a situation where extremely small deformation parameters are required to obtain a valid contour. It may then be possible to restore the desired result using dimensional analysis (i.e. multiplying the result by some power of the largest parameter).
+
 What does `additional_prefactor` mean exactly?
 ----------------------------------------------
 
