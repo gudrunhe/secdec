@@ -908,10 +908,10 @@ namespace secdecutil {
                         auto new_parameters = element->second;
                         auto old_parameters = integrals[i]->get_parameters();
                         for(int k = 0; k < new_parameters.size(); k++){
-                            for(int i = 0; i < new_parameters[k].size(); i++){
-                                *old_parameters[k][i] = new_parameters[k][i];
+                            for(int j = 0; j < new_parameters[k].size(); j++){
+                                *old_parameters[k][j] = new_parameters[k][j];
                                 if(verbose)
-                                    std::cout << "read in changed parameter " << k << "," << i << " for " << integrals[i]->display_name << ": " << *old_parameters[k][i] << std::endl;
+                                    std::cout << "read in changed parameter " << k << "," << j << " for " << integrals[i]->display_name << ": " << *old_parameters[k][j] << std::endl;
                             }
                         }
                     }
