@@ -29,7 +29,7 @@ def loop_package(name, loop_integral, requested_orders,
                  split=False, ibp_power_goal=-1,
                  use_iterative_sort=True, use_light_Pak=True,
                  use_dreadnaut=False, use_Pak=True,
-                 processes=None):
+                 processes=None, pylink_qmc_transforms=None):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -221,6 +221,17 @@ def loop_package(name, loop_integral, requested_orders,
         `New in version 1.3`.
         Default: ``None``
 
+    :param pylink_qmc_transforms:
+        list or None, optional;
+        Required qmc integral transforms, options are:
+
+        * ``korobov<i>x<j>`` for 1 <= i,j <= 6
+        * ``korobov<i>`` for 1 <= i <= 6 (same as ``korobov<i>x<i>``)
+        * ``sidi<i>`` for 1 <= i <= 6
+
+        `New in version 1.5`.
+        Default: ``None``
+        (which compiles all available templates)
     '''
     print('running "loop_package" for "' + name + '"')
 
@@ -293,7 +304,9 @@ def loop_package(name, loop_integral, requested_orders,
         enforce_complex = enforce_complex,
         ibp_power_goal = ibp_power_goal,
         split = split,
-        processes = processes
+        processes = processes,
+
+        pylink_qmc_transforms = pylink_qmc_transforms
     )
 
     if isinstance(loop_integral, LoopIntegralFromGraph):

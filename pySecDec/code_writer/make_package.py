@@ -170,7 +170,7 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
                    form_work_space, form_memory_use, form_threads, form_insertion_depth,
-                   contour_deformation_polynomial, positive_polynomials, decomposition_method):
+                   contour_deformation_polynomial, positive_polynomials, decomposition_method, pylink_qmc_transforms):
     'Get the data types right.'
 
     # parse symbols
@@ -276,12 +276,30 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
         if str_error in str_poly:
             raise ValueError('The `polynomial_names` %s cannot be used in the `polynomials_to_decompose`.' % polynomial_names)
 
+    # check pylink_qmc_transforms are valid options and remove duplicates
+    pylink_qmc_transforms_available_options = set(
+        ['korobov'+str(i)+'x'+str(j) for i in range(1,7) for j in range(1,7)] +
+        ['sidi'+str(i) for i in range(1,7)]
+    )
+    if pylink_qmc_transforms != None:
+        # korobov%i -> korobov%ix%i
+        korobov_symmetric_transforms = ['korobov%i' % i for i in range(1,7)]
+        pylink_qmc_transforms = [ x if x not in korobov_symmetric_transforms else 'korobov'+x[7:]+'x'+x[7:] for x in pylink_qmc_transforms]
+        # remove duplicates
+        pylink_qmc_transforms = set(pylink_qmc_transforms)
+    else:
+        pylink_qmc_transforms = pylink_qmc_transforms_available_options
+    assert pylink_qmc_transforms.issubset(pylink_qmc_transforms_available_options), \
+        '"%s" found in `pylink_qmc_transforms` but not in `pylink_qmc_transforms_available_options`' % \
+        pylink_qmc_transforms.difference(pylink_qmc_transforms_available_options)
+    pylink_qmc_transforms = sorted(pylink_qmc_transforms)
+
     return (name, integration_variables, ibp_power_goal, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
             other_polynomials, prefactor, remainder_expression, functions, function_calls,
             real_parameters, complex_parameters, form_optimization_level,
             form_setup, form_insertion_depth, contour_deformation_polynomial, positive_polynomials,
-            decomposition_method, symbols_polynomials_to_decompose, symbols_other_polynomials,
+            decomposition_method, pylink_qmc_transforms, symbols_polynomials_to_decompose, symbols_other_polynomials,
             symbols_remainder_expression, all_symbols)
 
 
@@ -386,9 +404,10 @@ def _parse_global_templates(name, regulators, polynomial_names,
                           'functions.hpp' : None,
                           'pylink.cpp' : None
                      }
-    for i in range(1,8):
-        # needs `number_of_sectors` --> can only be written after the decomposition is completed
-        file_renamings['qmc_template_instantiations%i.cpp'%i] = None
+    # needs `number_of_sectors` --> can only be written after the decomposition is completed
+    # required qmc template instantiations still also need to be determined
+    file_renamings['pylink.cpp'] = None
+    file_renamings['qmc_template_instantiations.cpp'] = None
 
 
     # the files below are only relevant for contour deformation --> do not parse if deactivated
@@ -1435,7 +1454,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
                  enforce_complex=False, split=False, ibp_power_goal=-1, use_iterative_sort=True,
-                 use_light_Pak=True, use_dreadnaut=False, use_Pak=True, processes=None):
+                 use_light_Pak=True, use_dreadnaut=False, use_Pak=True, processes=None, pylink_qmc_transforms=None):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -1723,6 +1742,17 @@ def make_package(name, integration_variables, regulators, requested_orders,
         `New in version 1.3`.
         Default: ``None``
 
+    :param pylink_qmc_transforms:
+        list or None, optional;
+        Required qmc integral transforms, options are:
+
+        * ``korobov<i>x<j>`` for 1 <= i,j <= 6
+        * ``korobov<i>`` for 1 <= i <= 6 (same as ``korobov<i>x<i>``)
+        * ``sidi<i>`` for 1 <= i <= 6
+
+        `New in version 1.5`.
+        Default: ``None``
+        (which compiles all available templates)
     '''
     print('running "make_package" for "' + name + '"')
 
@@ -1732,7 +1762,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     other_polynomials, prefactor, remainder_expression, functions, \
     function_calls, real_parameters, complex_parameters, \
     form_optimization_level, form_setup, form_insertion_depth, \
-    contour_deformation_polynomial, positive_polynomials, decomposition_method, \
+    contour_deformation_polynomial, positive_polynomials, decomposition_method, pylink_qmc_transforms, \
     symbols_polynomials_to_decompose, symbols_other_polynomials, \
     symbols_remainder_expression, all_symbols = \
     _convert_input(name, integration_variables, ibp_power_goal, regulators,
@@ -1740,7 +1770,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                    other_polynomials, prefactor, remainder_expression, functions,
                    real_parameters, complex_parameters, form_optimization_level,
                    form_work_space, form_memory_use, form_threads, form_insertion_depth,
-                   contour_deformation_polynomial, positive_polynomials, decomposition_method)
+                   contour_deformation_polynomial, positive_polynomials, decomposition_method, pylink_qmc_transforms)
 
     # construct the c++ type "nested_series_t"
     # for two regulators, the resulting code should read:
@@ -1931,7 +1961,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     else:
         pool = None
 
-    # ty-finally blcok to make sure that the pool is closed
+    # try-finally block to make sure that the pool is closed
     try:
         for primary_sector_index, primary_sector in enumerate(primary_sectors_to_consider):
 
@@ -2110,6 +2140,44 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                'secdecutil::IntegrandContainer<integrand_return_t, real_t const * const' + \
                                '>' * (len(regulators) + 2)
 
+    # generate translation from transform short names 'korobov#x#' and 'sidi#' to C++ macros
+    pylink_qmc_instantiations_translation = {}
+    pylink_qmc_extern_translation = {}
+    pylink_qmc_case_translation = {}
+    for i in range(1,7):
+        for j in range(1,7):
+            pylink_qmc_instantiations_translation['korobov'+str(i)+'x'+str(j)] = 'INSTANTIATE_KOROBOV_QMC(%i,%i)' % (i,j)
+            pylink_qmc_extern_translation['korobov'+str(i)+'x'+str(j)] = 'EXTERN_KOROBOV_QMC(%i,%i)' % (i,j)
+            pylink_qmc_case_translation['korobov'+str(i)+'x'+str(j)] = 'CASE_KOROBOV(%i,%i)' % (i,j)
+    for i in range(1,7):
+        pylink_qmc_instantiations_translation['sidi'+str(i)] = 'INSTANTIATE_SIDI_QMC(%i)' % i
+        pylink_qmc_extern_translation['sidi'+str(i)] = 'EXTERN_SIDI_QMC(%i)' % i
+        pylink_qmc_case_translation['sidi'+str(i)] = 'CASE_SIDI(%i)' % i
+
+    # parse the required pylink templates and generate a list of files to write
+    pylink_qmc_transform_instantiation_rules = []
+    pylink_qmc_extern_rules = []
+    pylink_qmc_case_rules = []
+    for pylink_qmc_transform in pylink_qmc_transforms:
+        pylink_qmc_extern_rules.append(pylink_qmc_extern_translation[pylink_qmc_transform])
+        pylink_qmc_case_rules.append(pylink_qmc_case_translation[pylink_qmc_transform])
+    def chunks(lst, n):
+        """Yield successive n-sized chunks from lst."""
+        if n == 0:
+            n = n + 1
+        for i in range(0, len(lst), n):
+            yield lst[i:i + n]
+    for i, pylink_qmc_transform in enumerate(chunks(pylink_qmc_transforms, 5)):
+        pylink_qmc_transform_instantiation_rules.append(
+            {
+                'src': 'qmc_template_instantiations.cpp',
+                'dest': 'qmc_template_instantiations_%i.cpp' % i,
+                'replacements': {
+                    'pylink_qmc_transforms': ' '.join([pylink_qmc_instantiations_translation[x] for x in pylink_qmc_transform])
+                }
+            }
+        )
+
     # parse the template files "integrands.cpp", "name.hpp", "pole_structures.cpp", "prefactor.cpp", and "functions.hpp"
     template_replacements['function_declarations'] = '\n'.join(function_declarations)
     template_replacements['make_integrands_return_t'] = make_integrands_return_t
@@ -2123,6 +2191,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
     template_replacements['integrand_getters'] = ''.join( 'nested_series_t<sector_container_t> get_integrand_of_sector_%i();\n' % i for i in range(1,sector_index+1) )
     template_replacements['sectors_initializer'] = ','.join( 'get_integrand_of_sector_%i()' % i for i in range(1,sector_index+1) )
     template_replacements['pole_structures_initializer'] = str(pole_structures).replace(' ','').replace("'","").replace('[','{').replace(']','}')
+    template_replacements['pylink_qmc_externs'] = ' '.join(pylink_qmc_extern_rules)
+    template_replacements['pylink_qmc_cases'] = ' '.join(pylink_qmc_case_rules)
     parse_template_file(os.path.join(template_sources, 'name.hpp'), # source
                         os.path.join(name,            name + '.hpp'), # dest
                         template_replacements)
@@ -2130,10 +2200,19 @@ def make_package(name, integration_variables, regulators, requested_orders,
         parse_template_file(os.path.join(template_sources, 'src', filename),
                             os.path.join(name,             'src', filename),
                             template_replacements)
-    for filename in chain(['pylink.cpp'], ('qmc_template_instantiations%i.cpp'%i for i in range(1,8))):
+    for filename in ['pylink.cpp']:
         parse_template_file(os.path.join(template_sources, 'pylink', filename),
                             os.path.join(name,             'pylink', filename),
                             template_replacements)
+    for pylink_qmc_transform in pylink_qmc_transform_instantiation_rules:
+        #shared_keys = set(pylink_qmc_transform['replacements']).intersection(set(template_replacements))
+        #if shared_keys:
+        #    raise ValueError('`pylink_qmc_transforms` conflicts with `template_replacements`, rename "%s" in the `replacements` dictionary in `pylink_qmc_transforms`.' % ','.join(shared_keys) )
+        pylink_qmc_transform_replacements = template_replacements.copy()
+        pylink_qmc_transform_replacements.update(pylink_qmc_transform['replacements'])
+        parse_template_file(os.path.join(template_sources, 'pylink', pylink_qmc_transform['src']),
+                            os.path.join(name,             'pylink', pylink_qmc_transform['dest']),
+                            pylink_qmc_transform_replacements)
 
     print('"' + name + '" done')
 

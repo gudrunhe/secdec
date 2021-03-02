@@ -114,7 +114,8 @@ class TestConvertInput(TestMakePackage):
                                       form_insertion_depth=0,
                                       contour_deformation_polynomial=None,
                                       positive_polynomials=[],
-                                      decomposition_method='iterative_no_primary'
+                                      decomposition_method='iterative_no_primary',
+                                      pylink_qmc_transforms=None
                                  )
 
     #@attr('active')
