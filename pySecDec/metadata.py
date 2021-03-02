@@ -1,5 +1,5 @@
 version = __version__ = '1.4.5'
-authors = __authors__ = 'Sophia Borowka, Gudrun Heinrich, Stephan Jahn, Stephen Jones, Matthias Kerner, Andres Poldaru, Johannes Schlenk, Tom Zirke'
+authors = __authors__ = 'Sophia Borowka, Gudrun Heinrich, Stephan Jahn, Stephen Jones, Matthias Kerner, Vitaly Magerya, Andres Poldaru, Johannes Schlenk, Tom Zirke'
 
 from subprocess import check_output as shell_call
 import os
