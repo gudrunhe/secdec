@@ -306,6 +306,11 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     real_parameters = list(real_parameters)
     complex_parameters = list(complex_parameters)
 
+    # check that the names of all integrals and the sum itself
+    # do not clash
+    assert len(set([args["name"] for args in generators_args] + [name])) == len(generators_args) + 1, \
+        "The `name` parameter, and the names of all integrals must all be distinct."
+
     # prepare coefficients
     empty_coefficient = Coefficient((), (), regulators, ())
     if coefficients is None:
