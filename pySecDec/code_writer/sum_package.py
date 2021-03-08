@@ -290,7 +290,9 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     :param form_executable:
         string or None, optional;
         The path to the form exectuable. The argument is passed
-        to :meth:`.Coefficient.process`.
+        to :meth:`.Coefficient.process`. If ``None``, then either
+        ``$FORM``, ``$SECDEC_CONTRIB/bin/form``, or just ``form``
+        is used, depending on which environment variable is set.
         Default: ``None``.
 
     '''
