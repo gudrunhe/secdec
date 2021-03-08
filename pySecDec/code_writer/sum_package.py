@@ -56,10 +56,10 @@ class Coefficient(object):
         :param form:
             string or None;
             If given a string, interpret that string as the command
-            line executable `form`. If ``None``, try
-            ``$SECDEC_CONTRIB/bin/form`` and, if the
-            environment variable ``$SECDEC_CONTRIB`` is not set,
-            ``form``.
+            line executable `form`. If ``None``, try ``$FORM``
+            (if the environment variable ``$FORM`` is set),
+            ``$SECDEC_CONTRIB/bin/form`` (if ``$SECDEC_CONTRIB``
+            is set), and ``form``.
 
         :param workdir:
             string;
@@ -78,14 +78,14 @@ class Coefficient(object):
             Whether or not to delete the `workdir` after execution.
 
         '''
-        # get form command-line executable
+        # get the name of FORM command-line executable
         if form is None:
-            try:
-                # use "$SECDEC_CONTRIB/bin/form" if "$SECDEC_CONTRIB" is defined
-                form = os.path.join(os.environ['SECDEC_CONTRIB'], 'bin', 'form')
-            except KeyError:
-                # "$SECDEC_CONTRIB" is not defined --> let the system find "form"
-                form = 'form'
+            form_var = os.environ.get('FORM', None)
+            contrib_var = os.environ.get('SECDEC_CONTRIB', None)
+            form = \
+                form_var if form_var else \
+                os.path.join(contrib_var, 'bin', 'form') if contrib_var else \
+                'form'
         else:
             assert isinstance(form, str), "`form` must be a string."
 
