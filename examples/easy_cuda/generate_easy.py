@@ -11,4 +11,5 @@ if __name__ == "__main__":
     requested_orders = [0],
     polynomials_to_decompose = ['(x+y)^(-2+eps)'],
 
+    pylink_qmc_transforms = ['korobov3'] # optional
     )
