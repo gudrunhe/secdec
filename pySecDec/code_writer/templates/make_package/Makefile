@@ -14,7 +14,7 @@ integrate_$(NAME).o : source
 integrate_$(NAME) : integrate_$(NAME).o lib$(NAME).a
 	$(CXX) -O2 $< -o $@ -l$(NAME) $(LDFLAGS)
 
-ifdef SECDEC_WITH_CUDA
+ifdef SECDEC_WITH_CUDA_FLAGS
 cuda_integrate_$(NAME) : cuda_integrate_$(NAME).o lib$(NAME).a
 	$(CXX) -O2 $< -o $@ -l$(NAME) $(LDFLAGS)
 endif
@@ -27,7 +27,7 @@ clean:
 	rm -f *.o *.so *.a integrate_$(NAME) cuda_integrate_$(NAME)
 
 # implicit rule to build object files
-ifdef SECDEC_WITH_CUDA
+ifdef SECDEC_WITH_CUDA_FLAGS
 %%.o : %%.cpp
 	$(CXX) -dc $(CXXFLAGS) -Xcompiler -fPIC $< -o $@
 else

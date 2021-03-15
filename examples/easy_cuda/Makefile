@@ -4,11 +4,11 @@ INTEGRAL = easy
 export CXX = nvcc
 
 # cuda architecture
-export SECDEC_WITH_CUDA = sm_52
+export SECDEC_WITH_CUDA_FLAGS = "-arch=compute_60"
 
 # CXXFLAGS
 SECDEC_CONTRIB = $(shell python3 -m pySecDecContrib --dirname)
-CXXFLAGS = -I"$(SECDEC_CONTRIB)/include" -dc -x cu -std=c++14 -O2 -I$(INTEGRAL) -DSECDEC_WITH_CUDA=$(SECDEC_WITH_CUDA)
+CXXFLAGS = -I"$(SECDEC_CONTRIB)/include" -dc -x cu -std=c++14 -O2 -I$(INTEGRAL) -DSECDEC_WITH_CUDA=$(SECDEC_WITH_CUDA_FLAGS)
 
 # LDFLAGS
 LDFLAGS = -L"$(SECDEC_CONTRIB)/lib" -L$(INTEGRAL) -l$(INTEGRAL) -lgsl -lgslcblas -lm

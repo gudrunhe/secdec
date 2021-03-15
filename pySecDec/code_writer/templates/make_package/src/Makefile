@@ -23,7 +23,7 @@ very-clean : clean
 	rm -f *sector_*.cpp *sector_*.hpp
 
 # implicit rule to build object files
-ifdef SECDEC_WITH_CUDA
+ifdef SECDEC_WITH_CUDA_FLAGS
 %%.o : %%.cpp
 	$(CXX) -dc $(CXXFLAGS) -Xptxas -O0 -Xptxas --disable-optimizer-constants -Xcompiler -fPIC $< -o $@
 else

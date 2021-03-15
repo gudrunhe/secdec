@@ -11,7 +11,7 @@ libs:
 	$(MAKE) -C src $@
 
 # build the example executable
-ifdef SECDEC_WITH_CUDA
+ifdef SECDEC_WITH_CUDA_FLAGS
 ifneq (x$(SECDEC_CONTRIB), x)
 CONTRIB_RPATH := -Xlinker "-rpath $(SECDEC_CONTRIB)/lib"
 else

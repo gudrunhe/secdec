@@ -209,9 +209,12 @@ To build the library with `nvcc` for GPU support, type
 
 .. code::
 
-    $ CXX=nvcc SECDEC_WITH_CUDA=sm_XX make
+    $ CXX=nvcc SECDEC_WITH_CUDA_FLAGS="-arch=sm_XX" make
 
 where ``sm_XX`` must be replaced by the target GPU architechtures, see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
+The ``SECDEC_WITH_CUDA_FLAGS`` environment variable, which enables GPU code compilation, contains flags which are passed to NVCC during code compilation and linking.
+Multiple GPU architectures may be specified as described in the `NVCC manual <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_, for example
+``SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_XX,code=sm_XX -gencode arch=compute_YY,code=sm_YY"`` where ``XX`` and ``YY`` are the target GPU architectures.
 
 To evaluate the integral numerically a program can call one of these libraries.
 How to do this interactively or via a python script is explained in the section :ref:`Python Interface <python_interface>`.

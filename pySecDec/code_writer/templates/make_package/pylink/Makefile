@@ -9,7 +9,7 @@ clean:
 	rm -f *.o lib$(NAME).a lib$(NAME).so
 
 # implicit rule to build object files
-ifdef SECDEC_WITH_CUDA
+ifdef SECDEC_WITH_CUDA_FLAGS
 %%.o : %%.cpp
 	$(CXX) -dc $(CXXFLAGS) -Xcompiler -fPIC $< -o $@
 else
