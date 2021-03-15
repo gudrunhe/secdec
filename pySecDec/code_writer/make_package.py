@@ -239,7 +239,7 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
     form_setup.threads = form_threads
     if form_memory_use is not None:
         requested_memory_use = formset.parse_number(form_memory_use)
-        form_setup = formset.search(form_setup, requested_memory_use)
+        form_setup = form_setup.scale(form_setup, requested_memory_use, lowest_scale=1.0)
         obtained_memory_use = form_setup.calc()
         if obtained_memory_use > requested_memory_use:
             print( 'warning: FORM memory usage will be limited to ~%s (not %s)' % (

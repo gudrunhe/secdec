@@ -1,6 +1,30 @@
 #!/bin/sh
-# formset.py by Takahiro Ueda
-# https://github.com/tueda/formset
+""":" .
+
+exec python "$0" "$@"
+"""
+
+# MIT License
+#
+# Copyright (c) 2021 Takahiro Ueda
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 from __future__ import print_function
 
@@ -30,6 +54,7 @@ if TYPE_CHECKING:
         Union,
         overload,
     )
+
     from typing_extensions import Literal
 else:
 
@@ -54,11 +79,13 @@ Python versions
 
 if "check_output" not in dir(subprocess):
     # For old systems where Python 2.6 + argparse available.
-    def check_output(*popenargs, **kwargs):  # type: ignore
+    def check_output(*popenargs, **kwargs):  # type: ignore[no-untyped-def]
         """Run a command."""
         if "stdout" in kwargs:  # pragma: no cover
             raise ValueError("stdout argument not allowed, " "it will be overridden.")
-        process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)  # type: ignore  # noqa: E501
+        process = subprocess.Popen(  # type: ignore[call-overload]  # noqa: E501,S603
+            stdout=subprocess.PIPE, *popenargs, **kwargs
+        )
         output, _ = process.communicate()
         retcode = process.poll()
         if retcode:
@@ -222,7 +249,9 @@ class SystemInfo(object):
         if cls._cpu_info is None:
             if cls.verbose:
                 sys.stderr.write("running lscpu...\n")
-            info = subprocess.check_output(["lscpu"], env={"LANG": "C"}).decode("utf-8")
+            info = subprocess.check_output(  # noqa: S603,S607
+                ["lscpu"], env={"LANG": "C"}
+            ).decode("utf-8")
             info_list = info.strip().split("\n")
             info_list_list = [[ss.strip() for ss in s.split(":")] for s in info_list]
             info_items = [(s[0], s[1]) for s in info_list_list]
@@ -235,9 +264,9 @@ class SystemInfo(object):
         if cls._mem_info is None:
             if cls.verbose:
                 sys.stderr.write("running free...\n")
-            info = subprocess.check_output(["free", "-b"], env={"LANG": "C"}).decode(
-                "utf-8"
-            )
+            info = subprocess.check_output(  # noqa: S603,S607
+                ["free", "-b"], env={"LANG": "C"}
+            ).decode("utf-8")
             info_list = info.strip().split("\n")
             info_list_list = [[ss.strip() for ss in s.split(":")] for s in info_list]
             info_pairs = [s for s in info_list_list if len(s) == 2]
@@ -312,7 +341,7 @@ class Setup(object):
         """Return pairs of parameters and values."""
         items = [(k, v) for (k, v) in self.__dict__.items() if k[0] != "_"]
         items.sort()
-        return tuple(items)  # type: ignore
+        return tuple(items)  # type: ignore[return-value]
 
     def __str__(self):
         # type: () -> str
@@ -508,65 +537,82 @@ class Setup(object):
             largesize + smallextension + 3 * termsinsmall * self._ptrsize + sortiosize
         )
 
-def search(setup, memory):
-    sp0 = setup.copy()
-    # Presumably increasing MaxTermSize requires increasing WorkSpace, too.
-    sp0.workspace = max(sp0.workspace, sp0.maxtermsize * 250)
-    if sp0.calc() >= memory:
-        return sp0
-    # Optimize the memory usage by bisection.
-    max_iteration = 50
-    def f(x):
-        # type: (float) -> Tuple[int, Setup]
-        # Hopefully monochrome increasing.
-        sp = sp0.copy()
-        sp.smallsize = int(sp.smallsize * x)
-        sp.largesize = int(sp.largesize * x)
-        sp.termsinsmall = int(sp.termsinsmall * x)
-        sp.scratchsize = int(sp.scratchsize * x)
-        m = sp.calc()
-        #if args.human_readable:
-        #    m = round_human_readable(m, True, False)
-        return (-(memory - m), sp)
-    x1 = 1.0
-    x2 = None  # type: Optional[float]
-    y1 = f(x1)[0]
-    y2 = None  # type: Optional[int]
-    for _i in range(max_iteration):
-        if x2 is None:
-            if y1 < 0:
-                x = x1 * 2.0
-                y = f(x)[0]
-                if y > 0:
-                    x2 = x
-                    y2 = y
+    def scale(self, total_memory, lowest_scale=0.0, human_readable=False):
+        # type: (int, float, bool) -> Setup
+        """
+        Scale to the given memory usage.
+
+        Search for a scaling of the given setup parameters that
+        results in the requested total memory usage, and return
+        the rescaled setup object. If the requested memory usage
+        is too high, return the parameters with the lowest
+        possible usage (scaled to lowest_scale).
+        """
+        sp0 = self.copy()
+        # Presumably increasing MaxTermSize requires increasing WorkSpace, too.
+        sp0.workspace = max(sp0.workspace, sp0.maxtermsize * 250)
+
+        def f(x):
+            # type: (float) -> Tuple[int, Setup]
+            # Hopefully monotonically increasing.
+            sp = sp0.copy()
+            sp.smallsize = int(sp.smallsize * x)
+            sp.largesize = int(sp.largesize * x)
+            sp.termsinsmall = int(sp.termsinsmall * x)
+            sp.scratchsize = int(sp.scratchsize * x)
+            m = sp.calc()
+            if human_readable:
+                m = round_human_readable(m, True, False)
+            return (-(total_memory - m), sp)
+
+        miny, minsp = f(lowest_scale)
+        if miny >= 0:
+            return minsp
+        # Optimize the memory usage by bisection.
+        max_iteration = 50
+        x1 = 1.0
+        x2 = None  # type: Optional[float]
+        y1 = f(x1)[0]
+        y2 = None  # type: Optional[int]
+        for _i in range(max_iteration):
+            if x2 is None:
+                if y1 < 0:
+                    x = x1 * 2.0
+                    y = f(x)[0]
+                    if y > 0:
+                        x2 = x
+                        y2 = y
+                    else:
+                        x1 = x
+                        y1 = y
                 else:
-                    x1 = x
-                    y1 = y
+                    x = x1 * 0.5
+                    y = f(x)[0]
+                    if y < 0:
+                        x2 = x1
+                        y2 = y1
+                        x1 = x
+                        y1 = y
+                    else:
+                        x1 = x
+                        y1 = y
             else:
-                x = x1 * 0.5
+                x = (x1 + x2) * 0.5
                 y = f(x)[0]
                 if y < 0:
-                    x2 = x1
-                    y2 = y1
                     x1 = x
                     y1 = y
                 else:
-                    x1 = x
-                    y1 = y
-        else:
-            x = (x1 + x2) * 0.5
-            y = f(x)[0]
-            if y < 0:
-                x1 = x
-                y1 = y
-            else:
-                x2 = x
-                y2 = y
-        if x2 is not None:
-            assert y2 is not None
-            assert x1 < x2 and y1 < y2
-    return f(x1)[1]
+                    x2 = x
+                    y2 = y
+            if x2 is not None:
+                if not (y2 is not None):
+                    raise AssertionError()
+                if not (x1 < x2):
+                    raise AssertionError()
+                if not (y1 < y2):
+                    raise AssertionError()
+        return f(x1)[1]
 
 
 def main():
@@ -784,79 +830,24 @@ def main():
         print("-m{0}x{1}".format(total_cpus // cpus, cpus))
         exit()
 
-    # Presumably increasing MaxTermSize requires increasing WorkSpace, too.
-    sp.workspace = max(sp.workspace, sp.maxtermsize * 250)
+    sp = sp.scale(memory, human_readable=args.human_readable)
 
-    # Optimize the memory usage by bisection.
-    max_iteration = 50
+    # Final memory usage we've found.
+    memory_usage = sp.calc()
 
-    sp0 = sp.copy()
-
-    def f(x):
-        # type: (float) -> Tuple[int, Setup]
-        # Hopefully monochrome increasing.
-        sp = sp0.copy()
-        sp.smallsize = int(sp.smallsize * x)
-        sp.largesize = int(sp.largesize * x)
-        sp.termsinsmall = int(sp.termsinsmall * x)
-        sp.scratchsize = int(sp.scratchsize * x)
-        m = sp.calc()
-        if args.human_readable:
-            m = round_human_readable(m, True, False)
-        return (-(memory - m), sp)
-
-    x1 = 1.0
-    x2 = None  # type: Optional[float]
-    y1 = f(x1)[0]
-    y2 = None  # type: Optional[int]
-    for _i in range(max_iteration):
-        if x2 is None:
-            if y1 < 0:
-                x = x1 * 2.0
-                y = f(x)[0]
-                if y > 0:
-                    x2 = x
-                    y2 = y
-                else:
-                    x1 = x
-                    y1 = y
-            else:
-                x = x1 * 0.5
-                y = f(x)[0]
-                if y < 0:
-                    x2 = x1
-                    y2 = y1
-                    x1 = x
-                    y1 = y
-                else:
-                    x1 = x
-                    y1 = y
-        else:
-            x = (x1 + x2) * 0.5
-            y = f(x)[0]
-            if y < 0:
-                x1 = x
-                y1 = y
-            else:
-                x2 = x
-                y2 = y
-        if x2 is not None:
-            assert y2 is not None
-            assert x1 < x2 and y1 < y2
-
-    if x2 is None:
-        if x1 < 1.0e-12:
-            x1 = 0
+    if memory_usage > memory:
+        shortage = memory_usage - memory
         parser.exit(
             -1,
-            ("failed to find parameters: memory({0}) = {1} " "bytes shortage").format(
-                x1, y1
+            ("failed to find parameters: {0} bytes shortage\n").format(
+                round_human_readable(shortage, True, True)
+                if args.human_readable
+                else str(shortage)
             ),
         )
 
     # For --usage option.
     if args.usage:
-        memory_usage = f(x1)[1].calc()
         if args.human_readable:
             memory_usage_str = round_human_readable(memory_usage, True, True)
         else:
@@ -888,7 +879,6 @@ def main():
             file=fi,
         )
 
-        sp = f(x1)[1]
         sp0 = Setup(target)  # default value
         dic0 = dict(sp0.items())
         for k, v in sp.items():
