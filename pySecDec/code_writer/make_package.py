@@ -239,7 +239,7 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
     form_setup.threads = form_threads
     if form_memory_use is not None:
         requested_memory_use = formset.parse_number(form_memory_use)
-        form_setup = form_setup.scale(form_setup, requested_memory_use, lowest_scale=1.0)
+        form_setup = form_setup.scale(requested_memory_use, lowest_scale=1.0)
         obtained_memory_use = form_setup.calc()
         if obtained_memory_use > requested_memory_use:
             print( 'warning: FORM memory usage will be limited to ~%s (not %s)' % (
@@ -1539,12 +1539,24 @@ def make_package(name, integration_variables, regulators, requested_orders,
         string, optional;
         The FORM WorkSpace. Default: ``'500M'``.
 
+        Setting this to smaller values will reduce FORM memory
+        usage (without affecting performance), but each problem
+        has some minimum value below which FORM will refuse to
+        work: it will fail with error message indicating that
+        larger WorkSpace is needed.
+
     :param form_memory_use:
         string, optional;
         The target FORM memory usage. When specified, `form.set`
         parameters will be adjusted so that FORM uses at most
-        approximately this much resident memory. Approximately
-        1G per worker thread is the minimum. Default: ``None``.
+        approximately this much resident memory.
+
+        The minimum is approximately 2.5G + 2.5G per worker thread
+        if form_work_space is left at ``'500M'``. This is reduced
+        to 600M + 350M per worker thread if ``form_work_space``
+        is changed to ``'50M'``.
+
+        Default: ``None``, meaning use the default FORM values.
 
     :param form_threads:
         integer, optional;
