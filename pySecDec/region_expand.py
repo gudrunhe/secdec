@@ -420,7 +420,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
 
             # expand the polynomials to the desired order:
             # expansion_by_regions_order - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
-            expand_region_expansion_order = expansion_by_regions_order - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
+            expand_region_expansion_order = expansion_by_regions_order*region[smallness_parameter_index] - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
             series = expand_region(polynomials_refactorized, numerator, smallness_parameter_index, expand_region_expansion_order, polynomial_name_indices)
 
             for i,term in enumerate(series):
