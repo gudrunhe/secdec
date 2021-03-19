@@ -456,6 +456,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     # find the regions for the expansion (region vectors are always integer)
     regions = find_regions(smallness_parameter_index, polytope_polynomial, indices = region_variable_indices,
                             normaliz=normaliz, workdir=name)
+    print("Total number of regions: {}".format(len(regions)))
 
     generators_args = []
     package_args_common = {'integration_variables':integration_variables, 'regulators':regulators,
@@ -488,6 +489,10 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
 
             # exponent of the smallness parameter introduced by rescaling the integral measure
             power_smallness_parameter_measure = np.sum(region[:-1])
+
+            print("Region ({}), smallness parameter lowest order is {}".format(
+                ",".join(map(lambda x: str(sp.sympify(x)/region[smallness_parameter_index]),region[region_variable_indices])),
+                (power_overall_smallness_parameter_no_regulators+power_smallness_parameter_measure)/region[smallness_parameter_index]))
 
             # TODO: ensure expansion_by_regions_order, power_overall_smallness_parameter_no_regulators, power_smallness_parameter_measure are integer
             assert int(power_overall_smallness_parameter_no_regulators) == power_overall_smallness_parameter_no_regulators, "`power_overall_smallness_parameter_no_regulators` (%s) is not an integer" % power_overall_smallness_parameter_no_regulators
