@@ -9,11 +9,90 @@ Routines to perform an expansion by regions, see e.g. [PS11]_.
 from .decomposition.common import Sector, refactorize
 from .polytope import Polytope
 from .algebra import Polynomial, ExponentiatedPolynomial, Product
-from .code_writer.make_package import _parse_expressions,make_package
+from .code_writer.make_package import make_package
 from .code_writer.sum_package import sum_package, Coefficient
 import numpy as np, sympy as sp
 
 _sympy_one = sp.sympify(1)
+
+def _poly_variable_transform(poly, new_variables, add_missing_var_to_coeff = True):
+    """
+    Transform the polynomial to use the new variables. The new variables can
+    contain new variables and old variables in a different order, the
+    polynomial will use them in the order given. If add_missing_var_to_coeff
+    is True, the missing variables will be added to the coefficients, otherwise
+    ignored (i.e. set to 1).
+    """
+    new_variables = list(map(sp.sympify,new_variables))
+
+    extra_variables = [variable for variable in new_variables if variable not in poly.polysymbols]
+    old_variables = poly.polysymbols + extra_variables
+    missing_variables = [variable for variable in poly.polysymbols if variable not in new_variables]
+    missing_variable_indexes = [old_variables.index(x) for x in missing_variables]
+    newexpos = []
+    newcoeffs = []
+
+    order = [old_variables.index(x) for x in new_variables]
+
+    for n, coeff in enumerate(poly.coeffs):
+        if extra_variables:
+            coeff_poly = Polynomial.from_expression(coeff, extra_variables)
+        else:
+            coeff_poly = Polynomial([[0]],[coeff])
+        if add_missing_var_to_coeff:
+            missing_variable_coeff = sp.sympify("1")
+            for m in missing_variable_indexes:
+                missing_variable_coeff *= old_variables[m]**poly.expolist[n][m]
+            for k in range(len(coeff_poly.coeffs)):
+                coeff_poly.coeffs[k] *= missing_variable_coeff
+        newcoeffs.extend(coeff_poly.coeffs)
+        for expo in coeff_poly.expolist:
+            newexpos.append(np.append(poly.expolist[n],expo)[order])
+
+    poly.coeffs = np.array(newcoeffs)
+    poly.expolist = np.array(newexpos)
+    poly.polysymbols = new_variables
+    poly.number_of_variables = len(new_variables)
+
+def _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompose):
+    """
+    Return all the input polynomials converted to type ExponentiatedPolynomial with the
+    variables symbols_polynomials_to_decompose. Also the exponent is a Polynomial with
+    the same variables and all coefficients are sympy objects. Doesn't change the input
+    polynomials.
+    """
+    parsed = []
+    for n, poly in enumerate(list(polynomials_to_decompose)):
+        if type(poly) is ExponentiatedPolynomial:
+            poly = poly.copy()
+            _poly_variable_transform(poly, symbols_polynomials_to_decompose)
+            poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
+            poly.coeffs = np.array([ sp.sympify(str(coeff)) for coeff in poly.coeffs ])
+        elif type(poly) is Polynomial:
+            poly = poly.copy()
+            _poly_variable_transform(poly, symbols_polynomials_to_decompose)
+            poly = ExponentiatedPolynomial(poly.expolist,
+                                            np.array([ sp.sympify(str(coeff)) for coeff in poly.coeffs ]),
+                                            Polynomial.from_expression(_sympy_one, symbols_polynomials_to_decompose), # exponent
+                                            symbols_polynomials_to_decompose, copy=False)
+        else:
+            poly = sp.sympify(str(poly))
+            if poly.is_Pow:
+                assert len(poly.args) == 2
+                poly_base = Polynomial.from_expression(poly.args[0], symbols_polynomials_to_decompose)
+                poly_exponent = sp.sympify(str(poly.args[1]))
+                poly = ExponentiatedPolynomial(poly_base.expolist,
+                                                poly_base.coeffs,
+                                                Polynomial.from_expression(poly_exponent, symbols_polynomials_to_decompose),
+                                                symbols_polynomials_to_decompose, copy=False)
+            else:
+                poly = Polynomial.from_expression(poly, symbols_polynomials_to_decompose)
+                poly = ExponentiatedPolynomial(poly.expolist,
+                                                poly.coeffs,
+                                                Polynomial.from_expression(_sympy_one, symbols_polynomials_to_decompose), # exponent
+                                                symbols_polynomials_to_decompose, copy=False)
+        parsed.append(poly)
+    return parsed
 
 def find_regions( exp_param_index , polynomial, indices = None, normaliz='normaliz', workdir='normaliz_tmp'):
     '''
@@ -358,12 +437,8 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     # only integration variables and the expansion parameter should be included in the calculation of the regions
     region_variable_indices = list(range(len(integration_variables))) + [ len(symbols_polynomials_to_decompose) - 1 ]
 
-    # parse polynomials_to_decompose
-    polynomials_to_decompose = _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompose, ExponentiatedPolynomial, 'polynomials_to_decompose')
-    # ensure that exponent is Polynomial so that when the derivative is taken
-    # regulators are not treated as coefficients but as variables
-    for poly in polynomials_to_decompose:
-        poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
+    # convert polynomials to ExponentedPolynomial with the proper variables
+    polynomials_to_decompose = _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompose)
 
     if not ( all( [np.count_nonzero(poly.expolist[:,len(integration_variables)+len(regulators):-1]) == 0 for poly in polynomials_to_decompose] ) ):
         raise NotImplementedError("Input polynomials for the asymptotic expansion are not allowed to depend on unexpanded polynomials.")
