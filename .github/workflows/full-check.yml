@@ -1,0 +1,56 @@
+name: Full Check
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    name: Make Check
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.6, 3.8]
+        os: [ubuntu-latest]
+    steps:
+    - name: Install dependencies
+      run: |
+        if ! dpkg -s graphviz normaliz nauty libgsl-dev; then
+          sudo apt-get install graphviz normaliz nauty libgsl-dev
+        fi
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install 'numpy>=1.6' 'sympy>=0.7.6,!=1.7' 'Sphinx>=1.6.3' nose setuptools setuptools-scm
+    - uses: actions/checkout@v2
+    - name: Nose Check, In-Place
+      run: |
+        nosetests --processes=2 --process-timeout=600 pySecDec
+    - name: Build Distribution
+      run: |
+        make thin-dist
+        mv pySecDec-*/ dist_install
+        make -C dist_install -j2
+        mv dist_install/pySecDec-*/ dist_install/pysecdec_install
+    - name: Nose Check
+      run: |
+        export SECDEC_CONTRIB=$PWD/dist_install/
+        export PYTHONPATH=$PWD/dist_install/pysecdec_install
+        nosetests --processes=2 --process-timeout=600 dist_install/pysecdec_install
+    - name: Util Check
+      run: |
+        export SECDEC_CONTRIB=$PWD/dist_install/
+        export PYTHONPATH=$PWD/dist_install/pysecdec_install
+        make -C dist_install/pysecdec_install help
+        make -C dist_install/pysecdec_install util-check -j2
+    - name: High-level Tests
+      run: |
+        export SECDEC_CONTRIB=$PWD/dist_install/
+        export PYTHONPATH=$PWD/dist_install/pysecdec_install
+        make -C dist_install/pysecdec_install/high_level_tests runtests -j2
+    - name: High-level Test Summary
+      run: |
+        export SECDEC_CONTRIB=$PWD/dist_install/
+        export PYTHONPATH=$PWD/dist_install/pysecdec_install
+        make -C dist_install/pysecdec_install/high_level_tests summarize

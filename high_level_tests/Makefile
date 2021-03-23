@@ -64,7 +64,7 @@ summarize :
 	printf "\n"
 
 	# return nonzero exit status if any example does not report success
-	for dir in $(ALL_EXAMPLES); do test -e $$dir/test/test.log || exit 1 && grep -HL "@@@ SUCCESS @@@" $$dir/test/test.log 2>&1 >/dev/null || exit 1 ; done
+	for dir in $(ALL_EXAMPLES); do test -e $$dir/test/test.log || exit 1 && grep -q "@@@ SUCCESS @@@" $$dir/test/test.log 2>&1 >/dev/null || exit 1 ; done
 
 .SILENT .PHONY : summarize-selected
 summarize-selected :
@@ -87,7 +87,7 @@ summarize-selected :
 	printf "\n"
 
 	# return nonzero exit status if any example does not report success
-	for dir in $(SELECTED_TESTS); do test -e $$dir/test/test.log || exit 1 && grep -HL "@@@ SUCCESS @@@" $$dir/test/test.log 2>&1 >/dev/null || exit 1 ; done
+	for dir in $(SELECTED_TESTS); do test -e $$dir/test/test.log || exit 1 && grep -q "@@@ SUCCESS @@@" $$dir/test/test.log 2>&1 >/dev/null || exit 1 ; done
 
 # Cleaning up
 # ===========
