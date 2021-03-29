@@ -40,8 +40,6 @@ if __name__ == "__main__":
 	requested_order = 0,
 	# the optimization level to use in FORM (can be 0, 1, 2, 3)
 	form_optimization_level = 2,
-	# the WorkSpace parameter for FORM
-	form_work_space = '3000M',
 	decomposition_method = 'iterative',
 	contour_deformation = True
 	)

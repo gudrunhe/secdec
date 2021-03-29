@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+# This script will run the command given to it as arguments (a FORM
+# invocation normally), detect if FORM has complained about WorkSpace
+# being too low, and if so, then increase WorkSpace in "form.set" file
+# from the current directory, and rerun the same FORM command.
+
+import re
+import subprocess
+import sys
+
+if len(sys.argv) <= 1:
+    sys.stderr.write("usage: formwrapper form-binary [form options] ...\n")
+    exit(1)
+
+command = sys.argv[1:]
+
+bstdout = sys.stdout if sys.version_info.major == 2 else sys.stdout.buffer
+
+rx = re.compile(b"Workspace overflow. ([0-9]*) ")
+
+try:
+    while True:
+        workspace = None
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        for line in proc.stdout:
+            bstdout.write(line)
+            m = rx.search(line)
+            if m is not None:
+                workspace = int(m.group(1))
+        proc.wait()
+        if workspace is None:
+            exit(proc.returncode)
+        else:
+            newws = max(workspace*3, 10*1000*1000)
+            bstdout.write(b"=== Will increase WorkSpace in form.set to %%d, and rerun FORM.\n" %% (newws,))
+            try:
+                with open("form.set", "r") as f:
+                    lines = [line for line in f if "workspace" not in line.lower()]
+            except (OSError, IOError) as e:
+                bstdout.write(b"=== Error reading form.set: %%s\n" %% (str(e).encode("utf8"),))
+                lines = []
+            lines.append("WorkSpace %%d\n" %% newws)
+            with open("form.set", "w") as f:
+                f.write("".join(lines))
+except KeyboardInterrupt:
+    pass

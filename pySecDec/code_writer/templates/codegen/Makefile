@@ -5,7 +5,7 @@ source : $(INTEGRAND_STAMPS)
 
 sector%%-stamp : sector%%.h
 	@ # generate c++ code
-	$(FORMCALL) -D sectorID=$(patsubst sector%%.h,%%,$<) write_integrand.frm
+	$(PYTHON) formwrapper $(FORMCALL) -D sectorID=$(patsubst sector%%.h,%%,$<) write_integrand.frm
 
 	@ # move source code to appropriate directory
 	$(PYTHON) move sector_$(patsubst sector%%.h,%%,$<).cpp ../src

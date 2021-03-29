@@ -44,7 +44,7 @@ if __name__ == "__main__":
     form_optimization_level = 4,
 
     # the WorkSpace parameter for FORM
-    form_work_space = '1G',
+    form_work_space = '200M',
 
     # the method to be used for the sector decomposition
     # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``

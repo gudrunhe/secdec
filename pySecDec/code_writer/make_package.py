@@ -1410,7 +1410,7 @@ def _reduce_sectors_by_symmetries(sectors, message, indices, use_iterative_sort,
 def make_package(name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
-                 complex_parameters=[], form_optimization_level=2, form_work_space='500M',
+                 complex_parameters=[], form_optimization_level=2, form_work_space='50M',
                  form_memory_use=None, form_threads=2,
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
@@ -1539,13 +1539,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     :param form_work_space:
         string, optional;
-        The FORM WorkSpace. Default: ``'500M'``.
+        The FORM WorkSpace. Default: ``'50M'``.
 
         Setting this to smaller values will reduce FORM memory
         usage (without affecting performance), but each problem
         has some minimum value below which FORM will refuse to
         work: it will fail with error message indicating that
-        larger WorkSpace is needed.
+        larger WorkSpace is needed, at which point WorkSpace
+        will be adjusted and FORM will be re-run.
 
     :param form_memory_use:
         string, optional;
@@ -1553,11 +1554,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
         parameters will be adjusted so that FORM uses at most
         approximately this much resident memory.
 
-        The minimum is approximately 2.5G + 2.5G per worker thread
-        if form_work_space is left at ``'500M'``. This is reduced
-        to 600M + 350M per worker thread if ``form_work_space``
-        is changed to ``'50M'``.
-
+        The minimum is approximately to 600M + 350M per worker
+        thread if ``form_work_space`` is left at ``'50M'``.
+        if form_work_space is increased to ``'500M'``, then
+        the minimum is 2.5G + 2.5G per worker thread.
         Default: ``None``, meaning use the default FORM values.
 
     :param form_threads:
