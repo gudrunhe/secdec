@@ -69,7 +69,7 @@ def _integrate_pole_part_single_index(polyprod, index):
         regulator_part = full_exponent - exponent_constant_term
         # the next line conceptually implements "assert regulator_part != 0"
         if (regulator_part.coeffs == 0).all():
-            raise ValueError('"1/0" detected.')
+            raise ValueError('"1/0" detected. An additional regulator is needed to calculate this integral.')
 
     # finite variance of Monte Carlo integral estimator only if ``exponent_constant_term > -0.5``
     # to be absolutely safe here, we eliminate integrable singularities; i.e. ``exponent_constant_term >= 0``
@@ -237,7 +237,7 @@ def _integrate_by_parts_single_index(polyprod, power_goal, index):
         regulator_part = full_exponent - exponent_constant_term
         # the next line conceptually implements "assert regulator_part != 0"
         if (regulator_part.coeffs == 0).all():
-            raise ValueError('"1/0" detected.')
+            raise ValueError('"1/0" detected. An additional regulator is needed to calculate this integral.')
 
     def increase_monomial_power_by_one(monomial_product):
         # modify one of the factors if there is one raised to power ``1``
