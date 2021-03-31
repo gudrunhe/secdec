@@ -336,7 +336,7 @@ namespace secdecutil {
             return a;
         };
 
-        void write_map_to_file(std::map<std::string, std::vector<std::vector<double>>> map, std::string filename="changed_deformation_parameters.txt"){
+        static inline void write_map_to_file(std::map<std::string, std::vector<std::vector<double>>> map, std::string filename="changed_deformation_parameters.txt"){
             std::ofstream file;
             file.open(filename);
             file << std::setprecision(15);
@@ -357,7 +357,7 @@ namespace secdecutil {
             file.close();
         }
 
-        std::map<std::string, std::vector<std::vector<double>>> read_map_from_file(std::string filename="changed_deformation_parameters.txt"){
+        static inline std::map<std::string, std::vector<std::vector<double>>> read_map_from_file(std::string filename="changed_deformation_parameters.txt"){
             std::map<std::string, std::vector<std::vector<double>>> map;
             std::ifstream file;
             file.open(filename);
@@ -384,7 +384,7 @@ namespace secdecutil {
             return map;
         }
 
-        void print_datetime(std::string prefix = "Current time: "){
+        static inline void print_datetime(std::string prefix = "Current time: "){
             auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
             std::cout << prefix << std::ctime(&t);
         }
