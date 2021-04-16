@@ -1,0 +1,28 @@
+[build-system]
+requires = ["enscons>=0.25", "pytoml>=0.1"]
+build-backend = "enscons.api"
+
+[tool.enscons]
+name = "pySecDec"
+version = "1.4.5a1.dev1"
+description = 'Numerical evaluator of integrals implementing the "Sector Decomposition" method (see arXiv:1703.09692, arXiv:hep-ph/0004013, arXiv:0803.4177).'
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: Unix",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Physics"
+]
+author = "Sophia Borowka, Gudrun Heinrich, Stephan Jahn, Stephen Jones, Matthias Kerner, Vitaly Magerya, Andres Poldaru, Johannes Schlenk, Tom Zirke"
+author_email = "secdec@projects.hepforge.org"
+url = "https://github.com/gudrunhe/secdec"
+license = "GPLv3"
+install_requires = ["numpy>=1.6", "sympy>=0.7.6,!=1.7"]
+keywords = []
+platform = "Unix"
+description_file = "README.md"
+description_content_type = "text/markdown"

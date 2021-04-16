@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pySecDec import make_package
 
 if __name__ == "__main__":

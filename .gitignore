@@ -9,6 +9,7 @@ doc/source/cpp_doctest/*
 .coverage
 coverage
 
+PKG-INFO
 pySecDec.egg-info
 
 *.tar.gz

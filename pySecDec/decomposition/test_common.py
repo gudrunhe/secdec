@@ -14,10 +14,10 @@ import shutil
 python_major_version = sys.version[0]
 
 try:
-    # use "$SECDEC_CONTRIB/bin/dreadnaut" if "$SECDEC_CONTRIB" is defined
-    dreadnaut_executable = os.path.join(os.environ['SECDEC_CONTRIB'], 'bin', 'dreadnaut')
-except KeyError:
-    # "$SECDEC_CONTRIB" is not defined --> let the system find "dreadnaut"
+    import pySecDecContrib
+    dreadnaut_executable = os.path.join(pySecDecContrib.dirname, 'bin', 'dreadnaut')
+except ImportError:
+    # Missing pySecDecContrib? Shouldn't happen, but let's fall back to "dreadnaut".
     dreadnaut_executable = 'dreadnaut'
 
 class TestSector(unittest.TestCase):

@@ -2,10 +2,6 @@ This package is a collection of tools by different authors.
 It redistributes most of the dependencies of pySecDec along with
 pySecDec itself.
 
-To install pySecDec type "make" and follow the instructions
-printed to the screen. For further instructions, please also
-refer to the full documentation:
-
 The full documentation of pySecDec is located in the directory
 "doc". You can either look into the single pdf file or open
 "doc/html/index.html" with your favorite browser.

@@ -24,6 +24,7 @@ from .. import formset
 import numpy as np
 import sympy as sp
 import sys, os
+import pySecDecContrib
 
 # The only public object this module provides is the function `make_package`.
 # The module is organized in multiple sections dedicated to specific tasks
@@ -361,6 +362,7 @@ def _parse_global_templates(name, regulators, polynomial_names,
                                      pySecDec_version = version,
                                      python_version = sys.version,
                                      pySecDec_git_id = git_id,
+                                     contrib_dirname = pySecDecContrib.dirname,
                                      date_time = strftime("%a %d %b %Y %H:%M"),
                                      enforce_complex_return_type=int(bool(enforce_complex)) # make sure that this is either ``0`` or ``1``
                                 )
@@ -1749,12 +1751,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         if isinstance(use_dreadnaut, str):
             dreadnaut_executable = use_dreadnaut
         else:
-            try:
-                # use "$SECDEC_CONTRIB/bin/dreadnaut" if "$SECDEC_CONTRIB" is defined
-                dreadnaut_executable = os.path.join(os.environ['SECDEC_CONTRIB'], 'bin', 'dreadnaut')
-            except KeyError:
-                # "$SECDEC_CONTRIB" is not defined --> let the system find "dreadnaut"
-                dreadnaut_executable = 'dreadnaut'
+            dreadnaut_executable = os.path.join(pySecDecContrib.dirname, 'bin', 'dreadnaut')
 
     # define the monomials "x0", "x1", "x2", ... to keep track of the transformations
     one = Polynomial([[0]*len(symbols_other_polynomials)], [1], symbols_other_polynomials)

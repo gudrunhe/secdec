@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/gudrunhe/secdec.svg?branch=master)](https://travis-ci.org/gudrunhe/secdec)
 [![Documentation Status](https://readthedocs.org/projects/secdec/badge/?version=latest)](http://secdec.readthedocs.io/en/latest/?badge=latest)
 
 Downloading the Program and Installation

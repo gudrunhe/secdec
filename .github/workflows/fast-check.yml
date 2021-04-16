@@ -1,6 +1,5 @@
 name: Fast Check
 on:
-  push:
   workflow_dispatch:
 jobs:
   check:
