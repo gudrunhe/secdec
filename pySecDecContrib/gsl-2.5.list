@@ -1,6 +1,3 @@
-bin/gsl-config
-bin/gsl-histogram
-bin/gsl-randist
 include/gsl/gsl_blas.h
 include/gsl/gsl_blas_types.h
 include/gsl/gsl_block.h
@@ -248,14 +245,5 @@ include/gsl/gsl_vector_ushort.h
 include/gsl/gsl_version.h
 include/gsl/gsl_wavelet.h
 include/gsl/gsl_wavelet2d.h
-install/share/aclocal/gsl.m4
-install/share/info/gsl-ref.info
-install/share/man/man1/gsl-config.1
-install/share/man/man1/gsl-histogram.1
-install/share/man/man1/gsl-randist.1
-install/share/man/man3/gsl.3
 lib/libgsl.a
-lib/libgsl.la
 lib/libgslcblas.a
-lib/libgslcblas.la
-lib/pkgconfig/gsl.pc

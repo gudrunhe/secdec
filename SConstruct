@@ -1,8 +1,9 @@
 # Python packaging has layers upon layers of cruft (setuptools)
 # on top of a very simple concept (zip files extracted into the
-# site-packages directory). You can read [1] to get a sense of it.
+# site-packages directory). You can read [1,2] to get a sense of it.
 #
 # [1] https://blog.schuetze.link/2018/07/21/a-dive-into-packaging-native-python-extensions.html
+# [2] https://packaging.python.org/specifications/core-metadata/
 #
 # In short:
 #
@@ -32,23 +33,28 @@ import os
 import pytoml
 import subprocess
 
-pyproject = pytoml.load(open("pyproject.toml"))
-
-env = Environment(
-    tools = ["default", "packaging", enscons.generate],
-    PACKAGE_METADATA = pyproject["tool"]["enscons"],
-    WHEEL_TAG = enscons.get_abi3_tag(),
-    ENV = os.environ
-)
+def get_universal_platform_tag():
+    """Return the wheel tag for universal Python 3, but specific platform."""
+    interpreter, abi, platform = enscons.get_binary_tag().split("-")
+    return f"py3-none-{platform}"
 
 def DirectoryFiles(dir):
+    """Return a File() for each file in and under a directory."""
     files = []
     for root, dirnames, filenames in os.walk(dir):
         files += File(sorted(filenames), root)
     return files
 
+pyproject = pytoml.load(open("pyproject.toml"))
+
+env = Environment(
+    tools = ["default", "packaging", enscons.generate],
+    PACKAGE_METADATA = pyproject["tool"]["enscons"],
+    WHEEL_TAG = get_universal_platform_tag(),
+    ENV = os.environ
+)
+
 contrib = SConscript("pySecDecContrib/SConscript", exports="env")
-source = DirectoryFiles("pySecDec")
 sdist_extra_source = File(Split("""
     COPYING
     ChangeLog
@@ -60,23 +66,25 @@ sdist_extra_source = File(Split("""
 
 if os.path.exists(".git"):
     git_id = subprocess.check_output(["git", "rev-parse", "HEAD"], encoding="utf8").strip()
-    metadata_py = env.Textfile(target="pySecDec/metadata.py", source=[
+    source = File(subprocess.check_output(["git", "ls-files", "pySecDec"], encoding="utf8").splitlines())
+    generated_source = env.Textfile(target="pySecDec/metadata.py", source=[
         f'__version__ = version = "{pyproject["tool"]["enscons"]["version"]}"',
         f'__authors__ = authors = "{pyproject["tool"]["enscons"]["author"]}"',
         f'__commit__ = git_id = "{git_id}"'
     ])
-    AlwaysBuild(metadata_py)
+    AlwaysBuild(generated_source)
 else:
     # We are in a giless sdist. Lets hope that metadata.py was
     # included in it.
-    metadata_py = []
+    source = DirectoryFiles("pySecDec")
+    generated_source = []
 
-platformlib = env.Whl("platlib", source + contrib, root="")
+platformlib = env.Whl("platlib", source + generated_source + contrib, root="")
 bdist = env.WhlFile(source=platformlib)
 
 # FindSourceFiles() will list every source file of every target
 # defined so far.
-sdist = env.SDist(source=FindSourceFiles() + metadata_py)
+sdist = env.SDist(source=FindSourceFiles() + generated_source)
 
 env.Alias("sdist", sdist)
 env.Alias("bdist", bdist)

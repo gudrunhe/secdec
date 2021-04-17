@@ -1,24 +1,23 @@
+pySecDec
+========
+
 [![Documentation Status](https://readthedocs.org/projects/secdec/badge/?version=latest)](http://secdec.readthedocs.io/en/latest/?badge=latest)
 
-Downloading the Program and Installation
-========================================
+Installation
+============
 
-pySecDec should run fine with both, python 2.7 and python 3
-on unix-like systems.
+pySecDec should work under Python version 3.6 or newer on the
+usual Unix-like systems.
 
-Before you install pySecDec, make sure that you have
-recent versions of `numpy` (http://www.numpy.org/) and
-`sympy` (http://www.sympy.org/) installed. The version of `sympy`
-should be 0.7.6 or higher, the version of `numpy` should be 1.6 or higher.
+The latest release can be installed from [PyPI](https://pypi.org) by running:
 
-To install pySecDec download and upack the tarball from https://github.com/gudrunhe/secdec/releases.
-The tarball contains a distribution of pySecDec and the additional dependencies
-listed below. Typing
+    $ pip3 install --user pySecDec
 
-    $ make
+To install the latest development version, run:
 
-should build all redistributed packages and display two commands
-to be added to your .bashrc or .profile.
+    $ git clone https://github.com/gudrunhe/secdec secdec
+    $ cd secdec
+    $ pip3 install --user .
 
 The geometric method and Normaliz
 ---------------------------------
@@ -106,6 +105,12 @@ List of examples
 
 Development
 ===========
+
+During development it is most convenient to define PYTHONPATH
+environment variable to point at the root of the pySecDec
+sources. Then, one needs to build the contributed software:
+
+    $ scons contrib
 
 The ``Makefile`` in the package's
 root directory implements common development tasks.

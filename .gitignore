@@ -11,6 +11,7 @@ coverage
 
 PKG-INFO
 pySecDec.egg-info
+pySecDec/metadata.py
 
 *.tar.gz
 !dist_template/*.tar.gz
