@@ -22,57 +22,38 @@ contrib += \
     Install("include/secdecutil", Glob("util/secdecutil/*hpp")) + \
     Install("include/secdecutil/integrators", Glob("util/secdecutil/integrators/*hpp"))
 
+def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", configure_extra_args=""):
+    return env.Command(target, [f"{packagename}{extension}"], f"""
+        cd pySecDecContrib && \
+        tar -xf {packagename}{extension} && \
+        cd {packagename} && \
+        sed -i 's/mcc/false/g' configure && \
+        ./configure \
+            --prefix="$$PWD/../install" \
+            --libdir="$$PWD/../lib" \
+            --includedir="$$PWD/../include" \
+            --bindir="$$PWD/../bin" \
+            {configure_extra_args} && \
+        make && \
+        make install && \
+        cd .. && \
+        rm -rf {packagename}
+    """)
+
 cuba_files = ["lib/libcuba.a", "include/cuba.h"]
 contrib += \
-    env.Command(cuba_files, [f"{cuba}.tar.gz"], f"""
-        cd pySecDecContrib && \
-        tar -xf {cuba}.tar.gz && \
-        sed -i 's/mcc/false/g' {cuba}/configure && \
-        cd {cuba} && \
-        ./configure CFLAGS="-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC" && \
-        make libcuba.a && \
-        cp -a libcuba.a ../lib/ && \
-        cp -a cuba.h ../include/ && \
-        cd .. && \
-        rm -rf {cuba}
-    """)
+    ConfigureAndInstall(env, cuba_files, cuba,
+        configure_extra_args="CFLAGS='-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'")
 
 form_files = ["bin/form", "bin/tform"]
 contrib += \
-    env.Command(form_files, [f"{form}.tar.gz"], f"""
-        cd pySecDecContrib && \
-        tar -xf {form}.tar.gz && \
-        cd {form} && \
-        ./configure \
-            --prefix="$$PWD/../install" \
-            --libdir="$$PWD/../lib" \
-            --includedir="$$PWD/../include" \
-            --bindir="$$PWD/../bin" \
-            --without-gmp \
-            --without-zlib && \
-        make && \
-        make install && \
-        cd .. && \
-        rm -rf {form}
-    """)
+    ConfigureAndInstall(env, form_files, form,
+        configure_extra_args="--without-gmp --without-zlib")
 
 gsl_files = open(f"{gsl}.list").read().splitlines()
 contrib += \
-    env.Command(gsl_files, [f"{gsl}.tar.gz"], f"""
-        cd pySecDecContrib && \
-        tar -xf {gsl}.tar.gz && \
-        cd {gsl} && \
-        ./configure \
-            --prefix="$$PWD/../install" \
-            --libdir="$$PWD/../lib" \
-            --includedir="$$PWD/../include" \
-            --bindir="$$PWD/../bin" \
-            --disable-shared --enable-static --with-pic && \
-        make && \
-        make install && \
-        cd .. && \
-        rm -rf {gsl}
-    """)
+    ConfigureAndInstall(env, gsl_files, gsl,
+        configure_extra_args="--disable-shared --enable-static --with-pic")
 
 nauty_files = ["bin/dreadnaut"]
 contrib += \
