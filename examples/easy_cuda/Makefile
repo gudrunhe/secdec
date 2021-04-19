@@ -7,20 +7,11 @@ export CXX = nvcc
 export SECDEC_WITH_CUDA = compute_30
 
 # CXXFLAGS
-ifeq (x$(SECDEC_CONTRIB), x)
-CXXFLAGS =
-else
-CXXFLAGS = -I$(SECDEC_CONTRIB)/include
-endif
-CXXFLAGS += -dc -x cu -std=c++11 -O2 -I$(INTEGRAL) -DSECDEC_WITH_CUDA=$(SECDEC_WITH_CUDA)
+SECDEC_CONTRIB = $(shell python3 -m pySecDecContrib --dirname)
+CXXFLAGS = -I"$(SECDEC_CONTRIB)/include" -dc -x cu -std=c++11 -O2 -I$(INTEGRAL) -DSECDEC_WITH_CUDA=$(SECDEC_WITH_CUDA)
 
 # LDFLAGS
-ifeq (x$(SECDEC_CONTRIB), x)
-LDFLAGS =
-else
-LDFLAGS = -L$(SECDEC_CONTRIB)/lib
-endif
-LDFLAGS += -L$(INTEGRAL) -l$(INTEGRAL) -lgsl -lgslcblas -lm
+LDFLAGS = -L"$(SECDEC_CONTRIB)/lib" -L$(INTEGRAL) -l$(INTEGRAL) -lgsl -lgslcblas -lm
 
 # phony targets
 .PHONY : all
@@ -48,7 +39,7 @@ integrate_$(INTEGRAL).o : integrate_$(INTEGRAL).cpp $(INTEGRAL)/$(INTEGRAL).hpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 $(INTEGRAL)/$(INTEGRAL).hpp : generate_$(INTEGRAL).py
-	python $<
+	python3 $<
 
 $(INTEGRAL)/lib$(INTEGRAL).a : $(INTEGRAL)/$(INTEGRAL).hpp
 	$(MAKE) -C $(INTEGRAL) static
