@@ -88,6 +88,7 @@ bdist = env.WhlFile(source=platformlib)
 # defined so far.
 sdist = env.SDist(source=FindSourceFiles() + generated_source)
 
+env.Alias("sdist", sdist)
 env.Alias("dist", sdist + bdist)
 env.Alias("build", contrib + generated_source)
 
