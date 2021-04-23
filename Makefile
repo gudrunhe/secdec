@@ -104,27 +104,27 @@ build:
 check : check2 check3 doctest util-check
 
 .PHONY : check2
-check2 : build
+check2 :
 	@ # run tests
-	nosetests-2.7 --processes=-1 --process-timeout=$(TIMEOUT)
+	python2 -m nose --processes=-1 --process-timeout=$(TIMEOUT)
 
 .PHONY : check3
-check3 : build
+check3 :
 	@ # run tests
-	nosetests3 --processes=-1 --process-timeout=$(TIMEOUT)
+	python3 -m nose --processes=-1 --process-timeout=$(TIMEOUT)
 
 .PHONY : active-check
-active-check : build
-	nosetests-2.7 -a 'active' --processes=-1 --process-timeout=$(TIMEOUT)
-	nosetests3    -a 'active' --processes=-1 --process-timeout=$(TIMEOUT)
+active-check :
+	python2 -m nose -a 'active' --processes=-1 --process-timeout=$(TIMEOUT)
+	python3 -m nose -a 'active' --processes=-1 --process-timeout=$(TIMEOUT)
 
 .PHONY : fast-check
-fast-check : build
-	nosetests-2.7 -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
-	nosetests3    -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
+fast-check :
+	python2 -m nose -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
+	python3 -m nose -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
 
 .PHONY : util-check
-util-check : build
+util-check :
 	export SECDEC_WITH_CUDA=$(SECDEC_WITH_CUDA) && \
 	export SECDEC_CONTRIB=$$(python3 -m pySecDecContrib --dirname) && \
 	cd pySecDecContrib/util && \
@@ -149,11 +149,11 @@ doc-pdf :
 	$(MAKE) -C doc latexpdf
 
 .PHONY : doctest
-doctest : build
+doctest :
 	$(MAKE) -C doc doctest
 
 .PHONY : high-level
-high-level : build
+high-level :
 	# '$(MAKE) -C high_level_tests summarize' forwards the error if an example fails
 	# 'exit 1' forwards the error out of the shell's for loop
 	export DIRNAME=high_level_tests ; \
@@ -184,7 +184,7 @@ show-todos :
 	echo
 
 .PHONY : coverage
-coverage : build
+coverage :
 	rm -rf coverage
 	nosetests --with-coverage --cover-package=pySecDec --cover-html --cover-html-dir=coverage
 	xdg-open coverage/index.html

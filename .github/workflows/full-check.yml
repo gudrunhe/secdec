@@ -19,26 +19,32 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - uses: actions/checkout@v2
     - name: Install Python dependencies
       run: |
-        python -m pip install --upgrade pip
         make dependencies
-    - name: Install pySecDec
+    - name: Build
       run: |
-        python -m pip install .
-    - uses: actions/checkout@v2
-    - name: Check
+        make build
+    - name: Nose Check
       run: |
-        make check
-    - name: Make distribution files
-      run: |
-        make dist
+        python -m nose --processes=2 --process-timeout=600 pySecDec
     - name: Build HTML documentation
       run: |
         make doc-html
+    - name: Doc Test
+      run: |
+        export PYTHONPATH=$PWD
+        make doctest
+    - name: Util Check
+      run: |
+        export PYTHONPATH=$PWD
+        make util-check -j2
     - name: High-level Tests
       run: |
+        export PYTHONPATH=$PWD
         make -C high_level_tests runtests -j2
     - name: High-level Test Summary
       run: |
+        export PYTHONPATH=$PWD
         make -C high_level_tests summarize

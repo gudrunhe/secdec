@@ -1,5 +1,6 @@
 name: Fast Check
 on:
+  push:
   workflow_dispatch:
 jobs:
   check:
@@ -19,17 +20,21 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - uses: actions/checkout@v2
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         make dependencies
-    - uses: actions/checkout@v2
-    - name: Nose Check
-      run: |
-        nosetests --processes=2 --process-timeout=600 pySecDec
     - name: Build
       run: |
         make build
+    - name: Nose Check
+      run: |
+        python -m nose --processes=2 --process-timeout=600 pySecDec
+    - name: Doc Test
+      run: |
+        export PYTHONPATH=$PWD
+        make doctest
     - name: Util Check
       run: |
         export PYTHONPATH=$PWD
