@@ -9,7 +9,7 @@ Installation
 pySecDec should work under Python version 3.6 or newer on the
 usual Unix-like systems.
 
-The latest release can be installed from [PyPI](https://pypi.org) by running:
+The latest release can be installed from [PyPI](https://pypi.org/project/pySecDec/) by running:
 
     $ pip3 install --user pySecDec
 
@@ -19,11 +19,10 @@ To install the latest development version, run:
     $ cd secdec
     $ pip3 install --user .
 
-The geometric method and Normaliz
----------------------------------
+## The geometric method and Normaliz
 
 If you want to use the geometric decomposition methods
-(decomposition_method='geometric or 'geometric_ku'),
+(`decomposition_method='geometric'` or `'geometric_ku'`),
 you need the `normaliz`  executable,
 which can be downloaded from https://www.normaliz.uni-osnabrueck.de
 [W. Bruns and B. Ichim and T. Römer and R. Sieg and C. Söger].
@@ -35,50 +34,52 @@ are known to work. We recommend to set your $PATH such that the
 `normaliz` executable is found. Alternatively, you can pass the path to the `normaliz`
 executable directly to the functions that need it.
 
-Additional dependencies for generated c++ packages
---------------------------------------------------
+## Additional dependencies for generated C++ packages
 
-The intended main usage of pySecDec is to make it write c++ packages using the functions
+The intended main usage of pySecDec is to make it write C++ packages using the functions
 `pySecDec.code_writer.make_package` and `pySecDec.loop_integral.loop_package`.
-In order to build these c++ packages, the following additional non-python-based libraries
+In order to build these C++ packages, the following additional non-python-based libraries
 and programs are required:
 
  * CUBA (http://www.feynarts.de/cuba/)
  * FORM (http://www.nikhef.nl/~form/)
- * SecDecUtil (part of pySecDec), depends on:
+ * GSL (http://www.gnu.org/software/gsl/)
+ * SecDecUtil (part of pySecDec), and its dependency:
 
-   * catch (https://github.com/philsquared/Catch)
-   * gsl (http://www.gnu.org/software/gsl/)
+   * Catch (https://github.com/philsquared/Catch)
 
-The functions `pySecDec.code_writer.make_package` and `pySecDec.loop_integral.loop_package`
-can use the external program `nauty`
- to find all sector symmetries and therefore reduce the number of sectors:
+The functions `pySecDec.code_writer.make_package` and
+`pySecDec.loop_integral.loop_package` can use the external program
+`dreadnaut` to find all sector symmetries and therefore reduce
+the number of sectors:
 
  * NAUTY (http://pallini.di.uniroma1.it/)
 [B. D. McKay and A. Piperno, Practical graph isomorphism, II, 2014, Journal of Symbolic Computation, 60, 94-112,
 doi:10.1016/j.jsc.2013.09.003]
 
-These packages are redistributed with the pySecDec tarball; i.e. you don't have to install
-any of them yourself.
+These packages are redistributed along with pySecDec itself,
+and will be built automatically during pySecDec installation.
 
 
 Basic Usage
 ===========
 
-After installation, you should have a folder `examples` in your main pySecDec directory.
-The full list of examples is given below.
+You can find the pySecDec manual over at https://secdec.readthedocs.io.
+Additionally, the development repository contains a folder `examples` with examples of pySecDec usage.
 
 A simple example of the evaluation of a loop integral with pySecDec is `box1L`.
-This example computes a one-loop box with one off-shell leg (with
-off-shellness s1) and one internal massive line (with mass squared msq).
+This example computes a one-loop box with one off-shell leg (with off-shellness s1) and one internal massive line (with mass squared msq).
 
-To run the example change to the `box1L` directory and run the commands:
+To run this example change into the `box1L` directory and run the commands:
 
-    $ python generate_box1L.py
+    $ python3 generate_box1L.py
     $ make -C box1L
-    $ python integrate_box1L.py
+    $ python3 integrate_box1L.py
 
-The file generate_box1L.py defines the loop integral and calls pySecDec to perform the sector decomposition. When run it produces the directory `box1L` which contains the code required to numerically evaluate the integral. The make command builds this code and produces a library. The file integrate_box1L.py loads the integral library and evaluates the integral for a specified numerical point.
+The file `generate_box1L.py` defines the loop integral and calls pySecDec to perform the sector decomposition.
+Once run it produces the directory `box1L` which contains the code required to numerically evaluate the integral.
+The `make` command builds this code and produces a library.
+The file `integrate_box1L.py` loads the integral library and evaluates the integral for a specified numerical point.
 
 This will print the result of the integral evaluated with Mandelstam invariants s=4.0, t=-0.75 and s1=1.25, msq=1.0:
 
@@ -87,34 +88,39 @@ This will print the result of the integral evaluated with Mandelstam invariants 
     eps^0 : -0.425514350373418893 + 1.86892487760861536*I +/- ( 0.00706834403694714484 + 0.0186497890361357298*I )
 
 
-List of examples
-================
+## List of examples
 
- * easy:             a simple parametric integral, described in the manual in Section 2.1.
- * box1L:            a simple 1-loop, 4-point, 4-propagator integral, described in the manual Section 2.2.
- * triangle2L:   a 2-loop, 3-point, 6-propagator diagram, also containing massive propagators.
- * box2L_numerator: a massless planar on-shell 2-loop, 4-point, 7-propagator box with a numerator, either defined as an inverse propagator box2L_invprop.py or in terms of contracted Lorentz vectors box2L_contracted_tensor.py.
- * triangle3L:   a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors.
- * elliptic2L_euclidean:    an integral known to contain elliptic functions, evaluated at a Euclidean phase-space point.
- * elliptic2L_physical:     an integral known to contain elliptic functions, evaluated at a physical phase-space point.
- * triangle2L_split:    a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics.
- * hypergeo5F4:             a general dimensionally regulated parameter integral, corresponding to a Hypergeometric function 5F4.
- * 4photon1L_amplitude:     calculation of the 4-photon amplitude, showing how to use pySecDec as an integral library in a larger context.
- * two_regulators:  an integral involving poles in two different regulators.
- * userdefined_cpp:        a collection of examples demonstrating how to combine polynomials to be decomposed with other user-defined functions
+ * `easy`: a simple parametric integral, described in the manual in Section 2.1.
+ * `box1L`: a simple 1-loop, 4-point, 4-propagator integral, described in the manual Section 2.2.
+ * `triangle2L`: a 2-loop, 3-point, 6-propagator diagram, also containing massive propagators.
+ * `box2L_numerator`: a massless planar on-shell 2-loop, 4-point, 7-propagator box with a numerator, either defined as an inverse propagator `box2L_invprop.py` or in terms of contracted Lorentz vectors `box2L_contracted_tensor.py`.
+ * `triangle3L`: a 2-loop, 3-point, 7-propagator integral, demonstrates that the symmetry finder can significantly reduce the number of sectors.
+ * `elliptic2L_euclidean`: an integral known to contain elliptic functions, evaluated at a Euclidean phase-space point.
+ * `elliptic2L_physical`: an integral known to contain elliptic functions, evaluated at a physical phase-space point.
+ * `triangle2L_split`: a 2-loop, 3-point, 6-propagator integral without a Euclidean region due to special kinematics.
+ * `hypergeo5F4`: a general dimensionally regulated parameter integral, corresponding to a Hypergeometric function 5F4.
+ * `4photon1L_amplitude`: calculation of the 4-photon amplitude, showing how to use pySecDec as an integral library in a larger context.
+ * `two_regulators`: an integral involving poles in two different regulators.
+ * `userdefined_cpp`: a collection of examples demonstrating how to combine polynomials to be decomposed with other user-defined functions.
+
 
 Development
 ===========
 
-During development it is most convenient to define PYTHONPATH
-environment variable to point at the root of the pySecDec
-sources. Then, one needs to build the contributed software:
+During development instead of full installation it is more
+convenient to work directly from the checked out repository.
+To make this work, first install the Python dependencies and
+build the contributed software by running
 
-    $ scons contrib
+    $ make dependencies
+    $ make build
 
-The ``Makefile`` in the package's
-root directory implements common development tasks.
-You can list all available targets with the command
+Then, define PYTHONPATH environment variable to point at the
+root of the pySecDec sources.
+
+The ``Makefile`` in the package's root directory also implements
+other common development tasks.  You can list all available
+targets with the command
 
     $ make help
 
@@ -128,8 +134,7 @@ in the source repository to run all tests. Developers should write test cases fo
 ALL functions they implement and make sure that ALL tests pass before uploading a
 commit.
 
-Building the Documentation
---------------------------
+## Building the Documentation
 
 To build the documentation of `pySecDec`, you need `sphinx` (http://www.sphinx-doc.org).
 If `sphinx` is installed, the command
@@ -137,7 +142,7 @@ If `sphinx` is installed, the command
     $ make doc
 
 generates the documentaion in `html` and in `pdf` format. Developers should inline-document
-python functions and also keep the c++ part up to date.
+python functions and also keep the C++ part up to date.
 
 Building the documentaion in pdf format requires an up-to-date installation of a latex
 implementation. If you get an error about missing ".sty" file, do the following:
@@ -151,57 +156,44 @@ implementation. If you get an error about missing ".sty" file, do the following:
     and set the environment variable TEXINPUTS to these directories in the same
     way as the PATH variable is typically set.
 
-Making a tarball
-----------------
+## Making a PyPI release
 
-A distributable tarball can be created by the command
+To create a release on PyPI, first increment the version number
+of pySecDec in `pyproject.toml`, and update `ChangeLog`. Then
+create source distribution archive suitable for PyPI by running
 
     $ make dist
 
-When publishing a new release, make sure that you increase the Version number of `pySecDec`
-and/or `SecDecUtil`. You should also describe the main changes compared to the previous release
-in the `ChangeLog`. Further, make sure that you do not have any generated code in your
-`examples` directory: It will go into the tarball if present!
+The archive will appear in `dist/pySecDec-<version>.tar.gz`. To
+double-check it, list its contents:
 
-"make dist" first runs "make clean" to make sure that no temporary or outdated files go into
-the distribution. Then it runs builds the source distribution of the python package as with
-"python setup.py sdist", the documentation as with "make doc", and it runs "make dist" in the
-"util" package. Note that the "util" is an autotools package and you must have the GNU autotools
-installed on your system.
+    $ tar tzf dist/pySecDec-*.tar.gz
 
-Installation for developers
----------------------------
+To upload this archive to PyPI follow the steps described in the
+[Packaging Python Projects](https://packaging.python.org/tutorials/packaging-projects/) reference.
+In short: once you've registered an account on pypi.org
+and obtained a key, publishing a new release is done via
+[Twine](https://pypi.org/project/twine/):
 
-This section describes how to install pySecDec and easily update to the commit that is currently
-checked out in the git repository. The following steps should be seen as a guideline to achieve this:
+    $ twine check dist/pySecDec-<version>.tar.gz
+    $ twine upload dist/pySecDec-<version>.tar.gz
 
-1) Clone the git repository.
+### Uploading prebuilt releases
 
-2) Create the tarball by running "make dist". If that does not work out of the box, make sure that you
-   have recent versions of the following packages installed:
-   * python (https://www.python.org/)
-   * Sphinx (http://www.sphinx-doc.org/)
-   * The full TeX Live distribution (http://tug.org/texlive/)
-     Note that there are slimmed distributions of TeXLive that typically result in errors about missing files.
-     Follow the instructions in the section "Building the Documentation" in that case.
-   * The GNU autotools:
-     * Autoconf(https://www.gnu.org/software/autoconf/autoconf.html)
-     * Automake(https://www.gnu.org/software/automake/)
-     * Libtool(https://www.gnu.org/software/libtool/)
+Note that along with source distribution (*.tar.gz) it is useful
+to upload prebuilt version of it too, so that users would
+not have to wait for the contributed software to build. To
+this end, one should upload `dist/pySecDec-*.whl` files
+too. The caveat is that these must be built inside one of the
+[manylinux](https://github.com/pypa/manylinux) Docker images:
+this guarantees that the prebuilt libraries and programs will
+work on a wide range of Linux systems. Once this is done, double
+check that the built distribution has the correct platform tag
+by using [auditwheel](https://pypi.org/project/auditwheel/):
 
-3) Unpack the tarball to a location OUTSIDE of the repository.
+    $ auditwheel show dist/pySecDec-<version>-<tag>.whl
+    
+And then upload:
 
-4) Run "make" in the directory with the unpacked tarball.
-
-5) The success message tells you two environment variables to be set in the ".profile"/".bashrc". Set SECDEC_CONTRIB
-   as shown in the message, but set PYTHONPATH to the root directory of the git repository. With that, python will
-   always load the version of pySecDec that is currently checked out in the git directory.
-
-6) Open a new shell and make sure that the the environment variables PYTHONPATH and SECDEC_CONTRIB are set by typing
-   "echo ${SECDEC_CONTRIB}" and "echo ${PYTHONPATH}".
-
-7) In the shell with the new variables set, cd to the git repository and then into "util".
-   Run "./configure --prefix=$SECDEC_CONTRIB && make install" there.
-
-After following the steps above, you must run "make install" in the "util" directory whenever the secdecutil is updated.
-
+    $ twine check dist/pySecDec-<version>-<tag>.whl
+    $ twine upload dist/pySecDec-<version>-<tag>.whl

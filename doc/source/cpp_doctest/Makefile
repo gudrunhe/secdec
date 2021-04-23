@@ -12,17 +12,11 @@ PYTHON ?= python
 CXX ?= g++
 
 # c++ compiler flags
-CXXFLAGS = -std=c++11 -O2 -I. -I$(TOPDIR)
-ifneq (x$(SECDEC_CONTRIB), x)
-CXXFLAGS += -I$(SECDEC_CONTRIB)/include
-endif
+SECDEC_CONTRIB = $(shell python3 -m pySecDecContrib --dirname)
+CXXFLAGS = -std=c++11 -O2 -I. -I$(TOPDIR) -I$(SECDEC_CONTRIB)/include
 
 # linker flags
-ifeq (x$(SECDEC_CONTRIB), x)
-LDFLAGS =
-else
 LDFLAGS = -L$(SECDEC_CONTRIB)/lib
-endif
 ifneq (x$(CXX), xnvcc)
 CXXFLAGS += -x c++
 LDFLAGS += -pthread

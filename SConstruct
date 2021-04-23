@@ -1,9 +1,11 @@
 # Python packaging has layers upon layers of cruft (setuptools)
 # on top of a very simple concept (zip files extracted into the
-# site-packages directory). You can read [1,2] to get a sense of it.
+# site-packages directory). You can read [1,2,3] to get a sense
+# of it.
 #
 # [1] https://blog.schuetze.link/2018/07/21/a-dive-into-packaging-native-python-extensions.html
 # [2] https://packaging.python.org/specifications/core-metadata/
+# [3] https://www.python.org/dev/peps/pep-0517/
 #
 # In short:
 #
@@ -30,7 +32,7 @@
 
 import enscons
 import os
-import pytoml
+import toml
 import subprocess
 
 def get_universal_platform_tag():
@@ -45,7 +47,7 @@ def DirectoryFiles(dir):
         files += File(sorted(filenames), root)
     return files
 
-pyproject = pytoml.load(open("pyproject.toml"))
+pyproject = toml.load("pyproject.toml")
 
 env = Environment(
     tools = ["default", "packaging", enscons.generate],
@@ -86,9 +88,7 @@ bdist = env.WhlFile(source=platformlib)
 # defined so far.
 sdist = env.SDist(source=FindSourceFiles() + generated_source)
 
-env.Alias("sdist", sdist)
-env.Alias("bdist", bdist)
-env.Alias("wheel", bdist)
-env.Alias("contrib", contrib)
+env.Alias("dist", sdist + bdist)
+env.Alias("build", contrib + generated_source)
 
 env.Default(contrib, sdist, bdist)

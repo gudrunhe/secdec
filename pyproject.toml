@@ -1,5 +1,5 @@
 [build-system]
-requires = ["enscons>=0.25", "pytoml>=0.1"]
+requires = ["enscons>=0.25", "toml>=0.10"]
 build-backend = "enscons.api"
 
 [tool.enscons]
@@ -27,3 +27,6 @@ platform = "Unix"
 description_file = "README.md"
 description_content_type = "text/markdown"
 
+[tool.enscons.extra_requires]
+testing = ["nose"]
+documentation = ["sphinx>=1.6.3"]
