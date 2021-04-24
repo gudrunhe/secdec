@@ -31,14 +31,15 @@
 # SCons will do the rest for us.
 
 import enscons
+import enscons.tags
 import os
-import toml
 import subprocess
+import toml
 
 def get_universal_platform_tag():
     """Return the wheel tag for universal Python 3, but specific platform."""
-    interpreter, abi, platform = enscons.get_binary_tag().split("-")
-    return f"py3-none-{platform}"
+    tag = list(enscons.tags.sys_tags())[0]
+    return f"py3-none-{tag.platform}"
 
 def DirectoryFiles(dir):
     """Return a File() for each file in and under a directory."""
@@ -51,7 +52,7 @@ pyproject = toml.load("pyproject.toml")
 
 env = Environment(
     tools = ["default", "packaging", enscons.generate],
-    PACKAGE_METADATA = pyproject["tool"]["enscons"],
+    PACKAGE_METADATA = pyproject["project"],
     WHEEL_TAG = get_universal_platform_tag(),
     ENV = os.environ
 )
@@ -70,8 +71,8 @@ if os.path.exists(".git"):
     git_id = subprocess.check_output(["git", "rev-parse", "HEAD"], encoding="utf8").strip()
     source = File(subprocess.check_output(["git", "ls-files", "pySecDec"], encoding="utf8").splitlines())
     generated_source = env.Textfile(target="pySecDec/metadata.py", source=[
-        f'__version__ = version = "{pyproject["tool"]["enscons"]["version"]}"',
-        f'__authors__ = authors = "{pyproject["tool"]["enscons"]["author"]}"',
+        f'__version__ = version = "{pyproject["project"]["version"]}"',
+        f'__authors__ = authors = "{pyproject["project"]["author"]}"',
         f'__commit__ = git_id = "{git_id}"'
     ])
     AlwaysBuild(generated_source)

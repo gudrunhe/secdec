@@ -94,7 +94,7 @@ clean:
 .PHONY: dependencies
 dependencies:
 	python3 -m pip install toml
-	python3 -m pip install $$(python3 -c 'import toml; m = toml.load("pyproject.toml"); print(" ".join(m["build-system"]["requires"] + m["tool"]["enscons"]["install_requires"] + sum(m["tool"]["enscons"]["extra_requires"].values(), [])));')
+	python3 -m pip install $$(python3 -c 'import toml; m = toml.load("pyproject.toml"); print(" ".join(m["build-system"]["requires"] + m["project"]["dependencies"] + sum(m["project"]["optional-dependencies"].values(), [])));')
 
 .PHONY: build
 build:
