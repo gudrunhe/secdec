@@ -455,7 +455,7 @@ namespace secdecutil {
                                     }
                                 }
                                 changed_deformation_parameters_map[integral->display_name] = pars_data;
-                                write_map_to_file(changed_deformation_parameters_map);
+                                //write_map_to_file(changed_deformation_parameters_map); // do not store changed lambda parameters on disk
                             }
                             break;
                         }
