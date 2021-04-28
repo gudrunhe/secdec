@@ -78,8 +78,8 @@ for tag in manylinux2010_x86_64 manylinux2014_x86_64 manylinux_2_24_x86_64; do
         exit 1
     fi
 
-    echo "The result is now at dist/$name-$tag.whl"
-    c cp -ai "$bdist" "dist/$name-$tag.whl"
+    echo "The result is now at dist/$name-py3-none-$tag.whl"
+    c cp -ai "$bdist" "dist/$name-py3-none-$tag.whl"
 
     echo "### Removing $dir"
     c rm -rf "$dir"
@@ -88,16 +88,15 @@ done
 echo "### Removing $tmpdir"
 rm c -rf "$tmpdir"
 
-echo "### Check dist/$name.tar.gz"
-python3 -m twine check "dist/$name.tar.gz"
+echo "### Double-check the release files by running:"
+echo "python3 -m twine check 'dist/$name.tar.gz'"
 
 for w in "dist/$name"*.whl; do
-    echo "### Check and audit $w"
-    python3 -m twine check "$w"
-    python3 -m auditwheel show "$w"
+    echo "python3 -m twine check '$w'"
+    echo "python3 -m auditwheel show '$w'"
 done
 
-echo "### If all the checks above passed, then run:"
+echo "### If all the checks pass, then upload to PyPI by running:"
 echo "python3 -m twine upload 'dist/$name.tar.gz'"
 for w in "dist/$name"*.whl; do
     echo "python3 -m twine upload '$w'"
