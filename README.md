@@ -3,6 +3,19 @@ pySecDec
 
 [![Documentation Status](https://readthedocs.org/projects/secdec/badge/?version=latest)](http://secdec.readthedocs.io/en/latest/?badge=latest)
 
+pySecDec is a toolbox for the calculation of dimensionally
+regulated parameter integrals using the sector decomposition approach.
+
+See [1811.11720](https://arxiv.org/abs/1811.11720)
+and [1703.09692](https://arxiv.org/abs/1703.09692)
+for description of the implementation;
+[0803.4177](http://arxiv.org/abs/0803.4177)
+and [hep-ph/0004013](http://arxiv.org/abs/hep-ph/0004013)
+for description of sector decomposition; and
+[1502.06595](http://arxiv.org/abs/1502.06595) for SecDec,
+the predecessor of pySecDec.
+
+
 Installation
 ============
 
