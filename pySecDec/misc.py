@@ -424,7 +424,7 @@ def sympify_expression(a):
         # Catch SymPyDeprecationWarning/SympifyError from sympify(e) and try sympify(str(e)) instead
         try:
             return sp.sympify(a)
-        except (sp.utilities.exceptions.SymPyDeprecationWarning, sp.core.SympifyError):
+        except (sp.utilities.exceptions.SymPyDeprecationWarning, sp.SympifyError):
             return sp.sympify(str(a))
 
 
