@@ -15,6 +15,114 @@ try:
 except ImportError:
     from queue import Queue
 
+def _parse_series_coefficient(text):
+    """
+    Parse a textual representation of a single coefficient in a series.
+    Return a pair of values if both the mean and the deviation are give.
+    Otherwise return a float or a complex number.
+    """
+    if "+/-" in text:
+        mean, stdev = text.split("+/-")
+        return _parse_series_coefficient(mean.strip()), _parse_series_coefficient(stdev.strip())
+    if text.startswith("(") and text.endswith(")") and "," in text:
+        real, imag = text[1:-1].split(",")
+        return complex(float(real), float(imag))
+    return float(text)
+
+def _parse_series(text):
+    """
+    Parse a textual representation of a series of complex numbers,
+    according to the format of secdecutil/series.hpp.
+    """
+    import re
+    rx_term = re.compile(r"[(](.*)[)]([*][^^]+(?:\^([0-9+-]+))?)?")
+    rx_order = re.compile(r"O[(]([^^]+)(?:\^([0-9+-]+))?[)]")
+    terms = []
+    order = None
+    variable = None
+    for part in text.split(" + "):
+        part = part.strip()
+        if part == "": continue
+        m = rx_term.fullmatch(part)
+        if m is not None:
+            value = _parse_series_coefficient(m.group(1))
+            power = 0 if m.group(2) is None else \
+                    1 if m.group(3) is None else \
+                    int(m.group(3))
+            terms.append((value, power))
+            continue
+        m = rx_order.fullmatch(part)
+        if m is not None:
+            variable = m.group(1)
+            order = 1 if m.group(2) is None else int(m.group(2))
+            continue
+        raise ValueError("Can't parse this term: " + part)
+    if terms:
+        maxpower = max(power for val, power in terms)
+        order = maxpower+1 if order is None else max(order, maxpower+1)
+    return terms, variable, order
+
+def series_to_mathematica(series):
+    """
+    Convert a textual representation of a series into Mathematica format.
+    Return two strings: the series of mean values, and the series of standard deviations.
+
+    :param series:
+        str;
+        Any of the series obtained by calling an :class:`.IntegralLibrary` object.
+    """
+    def num(val):
+        if isinstance(val, complex):
+            return ("(%.18g%+.18g*I)" % (val.real, val.imag)).replace("e", "*10^")
+        else:
+            return ("%.18g" % val).replace("e", "*10^")
+    def term(val, var, exp):
+        val = num(val)
+        return "%s" % val if exp == 0 else \
+               "%s*%s" % (val, var) if exp == 1 else \
+               "%s/%s" % (val, var) if exp == -1 else \
+               "%s/%s^%d" % (val, var, -exp) if exp < 0 else \
+               "%s*%s^%d" % (val, var, exp)
+    terms, variable, order = _parse_series(series)
+    mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
+    stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
+    order = " + O[%s]" % (variable) if order == 0 else \
+            " + O[%s]^%d" % (variable, order) if order > 0 else \
+            " + O[%s]/%s^%d" % (variable, variable, 1-order)
+    return mean + order, stdev + order
+
+def series_to_maple(series):
+    """
+    Convert a textual representation of a series into Maple format.
+    Return two strings: the series of mean values, and the series of standard deviations.
+
+    :param series:
+        str;
+        Any of the series obtained by calling an :class:`.IntegralLibrary` object.
+    """
+    def num(val):
+        if isinstance(val, complex):
+            return ("(%.18g%+.18g*I)" % (val.real, val.imag))
+        else:
+            return ("%.18g" % val)
+    def term(val, var, exp):
+        val = num(val)
+        return "%s" % val if exp == 0 else \
+               "%s*%s" % (val, var) if exp == 1 else \
+               "%s/%s" % (val, var) if exp == -1 else \
+               "%s/%s^%d" % (val, var, -exp) if exp < 0 else \
+               "%s*%s^%d" % (val, var, exp)
+    terms, variable, order = _parse_series(series)
+    mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
+    stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
+    O = " + O(%s)" % (variable) if order == 0 else \
+            " + O(%s^%d)" % (variable, order) if order > 0 else \
+            " + O(%s^(%d))" % (variable, variable, order)
+    return (
+        "series(%s%s, %s, %d)" % (mean, O, variable, order),
+        "series(%s%s, %s, %d)" % (stdev, O, variable, order)
+    )
+
 # assuming
 # enum qmc_transform_t : int
 # {
