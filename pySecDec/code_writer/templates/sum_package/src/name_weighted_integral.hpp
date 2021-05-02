@@ -10,10 +10,18 @@ namespace %(name)s
 {
     namespace %(sub_integral_name)s
     {
+        template<typename integrator_t>
         std::vector<nested_series_t<sum_t>> make_integral
         (
             const std::vector<real_t>& real_parameters,
-            const std::vector<complex_t>& complex_parameters
+            const std::vector<complex_t>& complex_parameters,
+            integrator_t integrator
+            #if %(name)s_contour_deformation
+                ,unsigned number_of_presamples,
+                real_t deformation_parameters_maximum,
+                real_t deformation_parameters_minimum,
+                real_t deformation_parameters_decrease_factor
+            #endif
         );
         nested_series_t<sum_t> make_weighted_integral
         (

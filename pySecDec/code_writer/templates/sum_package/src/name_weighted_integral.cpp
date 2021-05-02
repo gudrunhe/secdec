@@ -8,6 +8,7 @@
 #include <secdecutil/amplitude.hpp> // secdecutil::amplitude::Integral, secdecutil::amplitude::CubaIntegral, secdecutil::amplitude::QmcIntegral
 #include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
 #include <secdecutil/ginac_coefficient_parser.hpp> // secdecutil::ginac::read_coefficient
+#include <secdecutil/integrators/cquad.hpp> // secdecutil::gsl::CQuad
 #include <secdecutil/integrators/cuba.hpp> // secdecutil::cuba::Vegas, secdecutil::cuba::Suave, secdecutil::cuba::Cuhre, secdecutil::cuba::Divonne
 #include <secdecutil/integrators/qmc.hpp> // secdecutil::integrators::Qmc
 #include <secdecutil/series.hpp> // secdecutil::Series
@@ -15,8 +16,6 @@
 #include "%(name)s.hpp"
 #include "%(sub_integral_name)s/%(sub_integral_name)s.hpp"
 #include "%(sub_integral_name)s_weighted_integral.hpp"
-#include "config_%(name)s.hpp"
-
 
 namespace %(sub_integral_name)s
 {
@@ -57,40 +56,7 @@ namespace %(name)s
 {
     namespace %(sub_integral_name)s
     {
-        // with contour deformation
-        template<typename integrand_t, typename... ArgTypes>
-        static typename std::enable_if<sizeof...(ArgTypes)==6, std::vector<nested_series_t<integrand_t>>>::type forward_make_integrands
-        (
-            const std::vector<real_t>& real_parameters,
-            const std::vector<complex_t>& complex_parameters,
-            std::vector<nested_series_t<integrand_t>> (*make_integrands_with_contour_deformation)(ArgTypes...)
-        )
-        {
-            return make_integrands_with_contour_deformation
-            (
-                real_parameters,
-                complex_parameters,
-                Options::ContourDeformation::number_of_presamples,
-                Options::ContourDeformation::deformation_parameters_maximum,
-                Options::ContourDeformation::deformation_parameters_minimum,
-                Options::ContourDeformation::deformation_parameters_decrease_factor
-            );
-        };
-        // without contour deformation
-        template<typename integrand_t, typename... ArgTypes>
-        static typename std::enable_if<sizeof...(ArgTypes)==2, std::vector<nested_series_t<integrand_t>>>::type forward_make_integrands
-        (
-            const std::vector<real_t>& real_parameters,
-            const std::vector<complex_t>& complex_parameters,
-            std::vector<nested_series_t<integrand_t>> (*make_integrands_without_contour_deformation)(ArgTypes...)
-        )
-        {
-            return make_integrands_without_contour_deformation
-            (
-                real_parameters,
-                complex_parameters
-            );
-        };
+        #define INTEGRAL_NAME %(name)s
 
         template<bool with_cuda>
         struct WithCuda
@@ -101,14 +67,25 @@ namespace %(name)s
             (
                 const std::vector<real_t>& real_parameters,
                 const std::vector<complex_t>& complex_parameters
+                #if %(name)s_contour_deformation
+                    ,unsigned number_of_presamples,
+                    real_t deformation_parameters_maximum,
+                    real_t deformation_parameters_minimum,
+                    real_t deformation_parameters_decrease_factor
+                #endif
             )
             {
-                return forward_make_integrands
-                (
-                    real_parameters,
-                    complex_parameters,
-                    ::%(sub_integral_name)s::make_integrands
-                );
+                    return ::%(sub_integral_name)s::make_integrands
+                    (
+                        real_parameters,
+                        complex_parameters
+                        #if %(name)s_contour_deformation
+                            ,number_of_presamples,
+                            deformation_parameters_maximum,
+                            deformation_parameters_minimum,
+                            deformation_parameters_decrease_factor
+                        #endif
+                    );
             };
         };
 
@@ -122,45 +99,203 @@ namespace %(name)s
                 (
                     const std::vector<real_t>& real_parameters,
                     const std::vector<complex_t>& complex_parameters
+                    #if %(name)s_contour_deformation
+                        ,unsigned number_of_presamples,
+                        real_t deformation_parameters_maximum,
+                        real_t deformation_parameters_minimum,
+                        real_t deformation_parameters_decrease_factor
+                    #endif
                 )
                 {
-                    return forward_make_integrands
-                    (
-                        real_parameters,
-                        complex_parameters,
-                        ::%(sub_integral_name)s::make_cuda_integrands
-                    );
+                        return ::%(sub_integral_name)s::make_cuda_integrands
+                        (
+                            real_parameters,
+                            complex_parameters
+                            #if %(name)s_contour_deformation
+                                ,number_of_presamples,
+                                deformation_parameters_maximum,
+                                deformation_parameters_minimum,
+                                deformation_parameters_decrease_factor
+                            #endif
+                        );
                 };
             };
         #endif
         
+        // secdecutil::cuba::Vegas, secdecutil::cuba::Suave, secdecutil::cuba::Cuhre, secdecutil::cuba::Divonne
+        template<typename integrand_return_t, typename real_t, typename integrator_t, typename integrand_t>
+        struct AmplitudeIntegral
+        {
+            using integral_t = secdecutil::amplitude::CubaIntegral<integrand_return_t,real_t,integrator_t,integrand_t>;
+        };
+        
+        // secdecutil::gsl::CQuad
+        template<typename integrand_return_t, typename real_t, typename integrand_t>
+        struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::gsl::CQuad<INTEGRAL_NAME::integrand_return_t>, integrand_t>
+        {
+            using integrator_t = secdecutil::gsl::CQuad<INTEGRAL_NAME::integrand_return_t>;
+            using integral_t = secdecutil::amplitude::CQuadIntegral<integrand_return_t,real_t,integrator_t,integrand_t>;
+        };
+        
+        #define INSTANTIATE_AMPLITUDE_INTEGRAL_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                 INTEGRAL_NAME::integrand_t, \
+                 secdecutil::integrators::void_template \
+            > \
+            , integrand_t> \
+            { \
+                using integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                     INTEGRAL_NAME::integrand_t, \
+                     secdecutil::integrators::void_template \
+                >; \
+                using integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,integrator_t,integrand_t>; \
+            }; \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                 INTEGRAL_NAME::integrand_t, \
+                 ::integrators::fitfunctions::None::type \
+            > \
+            , integrand_t> \
+            { \
+                using integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                     INTEGRAL_NAME::integrand_t, \
+                     ::integrators::fitfunctions::None::type \
+                >; \
+                using integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,integrator_t,integrand_t>; \
+            }; \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                 INTEGRAL_NAME::integrand_t, \
+                 ::integrators::fitfunctions::PolySingular::type \
+            > \
+            , integrand_t> \
+            { \
+                using integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                     INTEGRAL_NAME::integrand_t, \
+                     ::integrators::fitfunctions::PolySingular::type \
+                >; \
+                using integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,integrator_t,integrand_t>; \
+            };
+        
+        #define INSTANTIATE_AMPLITUDE_INTEGRAL_SIDI_QMC(SIDIDEGREE) \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                 INTEGRAL_NAME::integrand_t, \
+                 secdecutil::integrators::void_template \
+            > \
+            , integrand_t> \
+            { \
+                using integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                     INTEGRAL_NAME::integrand_t, \
+                     secdecutil::integrators::void_template \
+                >; \
+                using integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,integrator_t,integrand_t>; \
+            }; \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                 INTEGRAL_NAME::integrand_t, \
+                 ::integrators::fitfunctions::None::type \
+            > \
+            , integrand_t> \
+            { \
+                using integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                     INTEGRAL_NAME::integrand_t, \
+                     ::integrators::fitfunctions::None::type \
+                >; \
+                using integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,integrator_t,integrand_t>; \
+            }; \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                 INTEGRAL_NAME::integrand_t, \
+                 ::integrators::fitfunctions::PolySingular::type \
+            > \
+            , integrand_t> \
+            { \
+                using integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                     INTEGRAL_NAME::integrand_t, \
+                     ::integrators::fitfunctions::PolySingular::type \
+                >; \
+                using integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,integrator_t,integrand_t>; \
+            };
+        
+        // secdecutil::integrators::Qmc
+        %(pylink_qmc_instantiate_amplitude_integral)s
+        
+        template<typename integrator_t>
         std::vector<nested_series_t<sum_t>> make_integral
         (
             const std::vector<real_t>& real_parameters,
-            const std::vector<complex_t>& complex_parameters
+            const std::vector<complex_t>& complex_parameters,
+            integrator_t integrator
+            #if %(name)s_contour_deformation
+                ,unsigned number_of_presamples,
+                real_t deformation_parameters_maximum,
+                real_t deformation_parameters_minimum,
+                real_t deformation_parameters_decrease_factor
+            #endif
         )
         {
-            using types = WithCuda<Options::cuda_compliant_integrator>;
-            using integrand_t = types::integrand_t;
-            using Integral = Options::Integral<
-                                                   integrand_t,
-                                                   ::%(sub_integral_name)s::maximal_number_of_integration_variables
-                                              >;
-            using integrator_t = Integral::integrator_t;
-
+            using types = WithCuda<integrator_t::cuda_compliant_integrator>;
+            using integrand_t = typename types::integrand_t;
+            using integrand_return_t = %(name)s::integrand_return_t;
+            using integral_t = typename AmplitudeIntegral<integrand_return_t, real_t, integrator_t, integrand_t>::integral_t;
+            
             const std::vector<nested_series_t<integrand_t>> raw_integrands =
             types::make_integrands
             (
                 real_parameters,
                 complex_parameters
+                #if %(name)s_contour_deformation
+                    ,number_of_presamples,
+                    deformation_parameters_maximum,
+                    deformation_parameters_minimum,
+                    deformation_parameters_decrease_factor
+                #endif
             );
 
-            const std::shared_ptr<integrator_t> integrator = Integral::configure_integrator();
+            const std::shared_ptr<integrator_t> integrator_ptr = std::make_shared<integrator_t>(integrator);
 
             const std::function<sum_t(const integrand_t& integrand)> convert_integrands =
-                [ integrator ] (const integrand_t& integrand) -> sum_t
+                [ integrator_ptr ] (const integrand_t& integrand) -> sum_t
                 {
-                    auto integral_pointer = std::make_shared<Integral::integral_t>(integrator,integrand);
+                    const std::shared_ptr<integral_t> integral_pointer = std::make_shared<integral_t>(integrator_ptr, integrand);
                     integral_pointer->display_name = ::%(sub_integral_name)s::package_name + "_" + integrand.display_name;
                     return { /* constructor of std::vector */
                                 { /* constructor of WeightedIntegral */
@@ -185,5 +320,145 @@ namespace %(name)s
                        * ::%(sub_integral_name)s::coefficient(real_parameters,complex_parameters,amp_idx);
             return amplitude;
         }
+        
+        #if %(name)s_contour_deformation
+        
+            #define INSTANTIATE_MAKE_INTEGRAL(INTEGRATOR) \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, INTEGRATOR, unsigned, real_t, real_t, real_t);
+        
+            #define INSTANTIATE_MAKE_INTEGRAL_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                         INTEGRAL_NAME::integrand_t, \
+                         secdecutil::integrators::void_template \
+                    >, \
+                    unsigned, real_t, real_t, real_t); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                         INTEGRAL_NAME::integrand_t, \
+                         ::integrators::fitfunctions::None::type \
+                    >, \
+                    unsigned, real_t, real_t, real_t); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                        INTEGRAL_NAME::integrand_return_t, \
+                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                        ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                        INTEGRAL_NAME::integrand_t, \
+                        ::integrators::fitfunctions::PolySingular::type \
+                    >, \
+                    unsigned, real_t, real_t, real_t);
+        
+            #define INSTANTIATE_MAKE_INTEGRAL_SIDI_QMC(SIDIDEGREE) \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                         INTEGRAL_NAME::integrand_t, \
+                         secdecutil::integrators::void_template \
+                    >, \
+                    unsigned, real_t, real_t, real_t); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                         INTEGRAL_NAME::integrand_t, \
+                         ::integrators::fitfunctions::None::type \
+                    >, \
+                    unsigned, real_t, real_t, real_t); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                        INTEGRAL_NAME::integrand_return_t, \
+                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                        ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                        INTEGRAL_NAME::integrand_t, \
+                        ::integrators::fitfunctions::PolySingular::type \
+                    >, \
+                    unsigned, real_t, real_t, real_t);
+        
+        #else
+        
+            #define INSTANTIATE_MAKE_INTEGRAL(INTEGRATOR) \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, INTEGRATOR);
+        
+            #define INSTANTIATE_MAKE_INTEGRAL_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                         INTEGRAL_NAME::integrand_t, \
+                         secdecutil::integrators::void_template \
+                    >); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                         INTEGRAL_NAME::integrand_t, \
+                         ::integrators::fitfunctions::None::type \
+                    >); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                        INTEGRAL_NAME::integrand_return_t, \
+                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                        ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
+                        INTEGRAL_NAME::integrand_t, \
+                        ::integrators::fitfunctions::PolySingular::type \
+                    >);
+        
+            #define INSTANTIATE_MAKE_INTEGRAL_SIDI_QMC(SIDIDEGREE) \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                         INTEGRAL_NAME::integrand_t, \
+                         secdecutil::integrators::void_template \
+                    >); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                         INTEGRAL_NAME::integrand_t, \
+                         ::integrators::fitfunctions::None::type \
+                    >); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                        INTEGRAL_NAME::integrand_return_t, \
+                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                        ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
+                        INTEGRAL_NAME::integrand_t, \
+                        ::integrators::fitfunctions::PolySingular::type \
+                    >);
+        #endif
+        
+        INSTANTIATE_MAKE_INTEGRAL(secdecutil::gsl::CQuad<INTEGRAL_NAME::integrand_return_t>)
+
+        // secdecutil::cuba::Vegas, secdecutil::cuba::Suave, secdecutil::cuba::Cuhre, secdecutil::cuba::Divonne
+        INSTANTIATE_MAKE_INTEGRAL(secdecutil::cuba::Vegas<INTEGRAL_NAME::integrand_return_t>)
+        INSTANTIATE_MAKE_INTEGRAL(secdecutil::cuba::Suave<INTEGRAL_NAME::integrand_return_t>)
+        INSTANTIATE_MAKE_INTEGRAL(secdecutil::cuba::Cuhre<INTEGRAL_NAME::integrand_return_t>)
+        INSTANTIATE_MAKE_INTEGRAL(secdecutil::cuba::Divonne<INTEGRAL_NAME::integrand_return_t>)
+        
+        // secdecutil::integrators::Qmc
+        %(pylink_qmc_instantiate_make_integral)s
+        
+        #undef INTEGRAL_NAME
+        #undef INSTANTIATE_AMPLITUDE_INTEGRAL_KOROBOV_QMC
+        #undef INSTANTIATE_AMPLITUDE_INTEGRAL_SIDI_QMC
+        #undef INSTANTIATE_MAKE_AMPLITUDES
+        #undef INSTANTIATE_MAKE_AMPLITUDES_KOROBOV_QMC
+        #undef INSTANTIATE_MAKE_AMPLITUDES_SIDI_QMC
+        
     };
 };

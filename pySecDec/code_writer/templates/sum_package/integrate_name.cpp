@@ -12,11 +12,21 @@ int main()
     // User Specified Phase-space point
     const std::vector<%(name)s::real_t> real_parameters = { /* EDIT: insert real parameter values here: %(names_of_real_parameters)s */ };
     const std::vector<%(name)s::complex_t> complex_parameters = { /* EDIT: insert complex parameter values here: %(names_of_complex_parameters)s */ };
+    
+    // Set up Integrator
+    //secdecutil::cuba::Vegas<%(name)s::integrand_return_t> integrator;
+    secdecutil::integrators::Qmc<
+                                    %(name)s::integrand_return_t,
+                                    %(name)s::maximal_number_of_integration_variables,
+                                    integrators::transforms::Korobov<3>::type,
+                                    %(name)s::integrand_t
+                                > integrator;
+    integrator.verbosity = 1;
 
     // Construct the amplitudes. Further options for the individual integrals can be set in the
     // corresponding "<integral_name>_weighted_integral.cpp" file in the "src/" directory
     std::vector<%(name)s::nested_series_t<%(name)s::sum_t>> unwrapped_amplitudes =
-        %(name)s::make_amplitudes(real_parameters, complex_parameters);
+        %(name)s::make_amplitudes(real_parameters, complex_parameters, integrator);
 
     // pack amplitudes into handler
     %(name)s::handler_t<amplitudes_t> amplitudes

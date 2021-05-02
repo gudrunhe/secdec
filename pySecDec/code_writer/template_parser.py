@@ -6,6 +6,60 @@ Functions to generate c++ sources from template files.
 import os
 import re
 
+def validate_pylink_qmc_transforms(pylink_qmc_transforms):
+    '''
+    Check if `pylink_qmc_transforms` are valid options and remove duplicates
+
+    :param pylink_qmc_transforms:
+        list or None;
+        Required qmc integral transforms, options are:
+
+        * ``korobov<i>x<j>`` for 1 <= i,j <= 6
+        * ``korobov<i>`` for 1 <= i <= 6 (same as ``korobov<i>x<i>``)
+        * ``sidi<i>`` for 1 <= i <= 6
+
+    :return:
+        Sorted set of pylink_qmc_transforms
+    '''
+    pylink_qmc_transforms_available_options = set(
+        ['korobov'+str(i)+'x'+str(j) for i in range(1,7) for j in range(1,7)] +
+        ['sidi'+str(i) for i in range(1,7)]
+    )
+    if pylink_qmc_transforms != None:
+        # korobov%i -> korobov%ix%i
+        korobov_symmetric_transforms = ['korobov%i' % i for i in range(1,7)]
+        pylink_qmc_transforms = [ x if x not in korobov_symmetric_transforms else 'korobov'+x[7:]+'x'+x[7:] for x in pylink_qmc_transforms]
+        # remove duplicates
+        pylink_qmc_transforms = set(pylink_qmc_transforms)
+    else:
+        pylink_qmc_transforms = pylink_qmc_transforms_available_options
+    assert pylink_qmc_transforms.issubset(pylink_qmc_transforms_available_options), \
+        '"%s" found in `pylink_qmc_transforms` but not in `pylink_qmc_transforms_available_options`' % \
+        pylink_qmc_transforms.difference(pylink_qmc_transforms_available_options)
+    return sorted(pylink_qmc_transforms)
+
+def generate_pylink_qmc_macro_dict(macro_function_name):
+    '''
+
+    Generate translation from transform short names 'korobov#x#' and 'sidi#' to C++ macros
+
+    :param macro_function_name:
+        string;
+        Name of the macro function to consider
+
+    :return:
+        dict;
+        A mapping between the transform short names and C++ macros
+
+    '''
+    pylink_qmc_translation = {}
+    for i in range(1, 7):
+        for j in range(1, 7):
+            pylink_qmc_translation['korobov' + str(i) + 'x' + str(j)] = macro_function_name + '_KOROBOV_QMC(%i,%i)' % (i, j)
+    for i in range(1, 7):
+        pylink_qmc_translation['sidi' + str(i)] = macro_function_name + '_SIDI_QMC(%i)' % i
+    return pylink_qmc_translation
+
 def parse_template_file(src, dest, replacements={}):
     '''
     Copy a file from `src` to `dest` replacing

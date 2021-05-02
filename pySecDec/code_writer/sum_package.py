@@ -1,5 +1,5 @@
 from ..metadata import version, git_id
-from .template_parser import parse_template_file, parse_template_tree
+from .template_parser import validate_pylink_qmc_transforms, generate_pylink_qmc_macro_dict, parse_template_file, parse_template_tree
 from ..misc import sympify_symbols, make_cpp_list
 from ..loop_integral.loop_package import loop_package
 
@@ -228,7 +228,7 @@ class Coefficient(object):
 # TODO: high-level test
 def sum_package(name, package_generators, generators_args, regulators, requested_orders,
                 real_parameters=[], complex_parameters=[], coefficients=None,
-                form_executable=None):
+                form_executable=None, pylink_qmc_transforms=None):
     r'''
     Decompose, subtract and expand a list of expressions
     of the form
@@ -295,6 +295,18 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         is used, depending on which environment variable is set.
         Default: ``None``.
 
+    :param pylink_qmc_transforms:
+        list or None, optional;
+        Required qmc integral transforms, options are:
+
+        * ``korobov<i>x<j>`` for 1 <= i,j <= 6
+        * ``korobov<i>`` for 1 <= i <= 6 (same as ``korobov<i>x<i>``)
+        * ``sidi<i>`` for 1 <= i <= 6
+
+        `New in version 1.5`.
+        Default: ``None``
+        (which compiles all available templates)
+
     '''
     print('running "sum_package" for ' + name)
 
@@ -310,6 +322,8 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     # do not clash
     assert len(set([args["name"] for args in generators_args] + [name])) == len(generators_args) + 1, \
         "The `name` parameter, and the names of all integrals must all be distinct."
+
+    pylink_qmc_transforms = validate_pylink_qmc_transforms(pylink_qmc_transforms)
 
     # prepare coefficients
     empty_coefficient = Coefficient((), (), regulators, ())
@@ -340,19 +354,39 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     # define required listings of contributing integrals
     sub_integral_names = []
     integral_initialization = []
+    integral_initialization_with_contour_deformation = []
     weighted_integral_includes = []
     weighted_integral_sum_initialization = []
     for package_generator,generator_args in zip(package_generators,generators_args):
         sub_name = generator_args["name"]
         sub_integral_names.append(sub_name)
-        integral_initialization.append( 'std::vector<nested_series_t<sum_t>> integral_' + sub_name + ' = ' + sub_name + '::make_integral(real_parameters,complex_parameters);' )
+        integral_initialization.append( 'std::vector<nested_series_t<sum_t>> integral_' + sub_name + ' = ' + sub_name + '::make_integral(real_parameters,complex_parameters,integrator);' )
+        integral_initialization_with_contour_deformation.append( 'std::vector<nested_series_t<sum_t>> integral_' + sub_name + ' = ' + sub_name + '::make_integral(real_parameters,complex_parameters,integrator,number_of_presamples,deformation_parameters_maximum,deformation_parameters_minimum,deformation_parameters_decrease_factor);' )
         weighted_integral_includes.append( '#include "' + sub_name + '_weighted_integral.hpp"')
         weighted_integral_sum_initialization.append( 'amplitude += ' + sub_name + '::make_weighted_integral(real_parameters, complex_parameters, integral_' + sub_name + ', amp_idx);' )
     sub_integral_names = ' '.join(sub_integral_names)
     integral_initialization = '\n        '.join(integral_initialization)
+    integral_initialization_with_contour_deformation = '\n        '.join(integral_initialization_with_contour_deformation)
     weighted_integral_includes = '\n'.join(weighted_integral_includes)
     weighted_integral_sum_initialization[0] = weighted_integral_sum_initialization[0].replace('+',' ',1)
     weighted_integral_sum_initialization = '\n            '.join(weighted_integral_sum_initialization)
+
+    # generate translation from transform short names 'korobov#x#' and 'sidi#' to C++ macros
+    pylink_qmc_dynamic_cast_integrator = generate_pylink_qmc_macro_dict('DYNAMIC_CAST_INTEGRATOR')
+    pylink_qmc_instantiate_make_amplitudes = generate_pylink_qmc_macro_dict('INSTANTIATE_MAKE_AMPLITUDES')
+    pylink_qmc_instantiate_make_integral = generate_pylink_qmc_macro_dict('INSTANTIATE_MAKE_INTEGRAL')
+    pylink_qmc_instantiate_amplitude_integral = generate_pylink_qmc_macro_dict('INSTANTIATE_AMPLITUDE_INTEGRAL')
+
+    # parse the required pylink templates and generate a list of files to write
+    pylink_qmc_dynamic_cast_integrator_rules = []
+    pylink_qmc_instantiate_make_amplitudes_rules = []
+    pylink_qmc_instantiate_make_integral_rules = []
+    pylink_qmc_instantiate_amplitude_integral_rules = []
+    for pylink_qmc_transform in pylink_qmc_transforms:
+        pylink_qmc_dynamic_cast_integrator_rules.append(pylink_qmc_dynamic_cast_integrator[pylink_qmc_transform])
+        pylink_qmc_instantiate_make_amplitudes_rules.append(pylink_qmc_instantiate_make_amplitudes[pylink_qmc_transform])
+        pylink_qmc_instantiate_make_integral_rules.append(pylink_qmc_instantiate_make_integral[pylink_qmc_transform])
+        pylink_qmc_instantiate_amplitude_integral_rules.append(pylink_qmc_instantiate_amplitude_integral[pylink_qmc_transform])
 
     replacements_in_files = {
                                 'name' : name,
@@ -364,6 +398,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                                 'number_of_amplitudes' : len(coefficients),
                                 'integral_names' : sub_integral_names,
                                 'integral_initialization' : integral_initialization,
+                                'integral_initialization_with_contour_deformation': integral_initialization_with_contour_deformation,
                                 'weighted_integral_includes' : weighted_integral_includes,
                                 'weighted_integral_sum_initialization' : weighted_integral_sum_initialization,
                                 'number_of_regulators' : len(regulators),
@@ -373,16 +408,22 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                                 'python_version' : sys.version,
                                 'pySecDec_git_id' : git_id,
                                 'date_time' : strftime("%a %d %b %Y %H:%M"),
-                                'nested_series_type' : nested_series_type
-                            }
+                                'nested_series_type' : nested_series_type,
+                                'pylink_qmc_dynamic_cast_integrator' : '\n        '.join(pylink_qmc_dynamic_cast_integrator_rules),
+                                'pylink_qmc_instantiate_make_amplitudes': '\n    '.join(pylink_qmc_instantiate_make_amplitudes_rules),
+                                'pylink_qmc_instantiate_make_integral': '\n        '.join(pylink_qmc_instantiate_make_integral_rules),
+                                'pylink_qmc_instantiate_amplitude_integral': '\n        '.join(pylink_qmc_instantiate_amplitude_integral_rules)
+    }
     filesystem_replacements = {
                                   'integrate_name.cpp' : 'integrate_' + name + '.cpp',
-                                  'name.hpp' : name + '.hpp',
 
                                   # the following files are integral specific
                                   'name_weighted_integral.cpp' : None,
-                                  'name_weighted_integral.hpp' : None
-                              }
+                                  'name_weighted_integral.hpp' : None,
+
+                                  # the following file is parsed separately (after integrals)
+                                  'name.hpp': None
+    }
 
     # get path to the directory with the template files (path relative to directory with this file: "./templates/")
     template_sources = os.path.join(os.path.split(os.path.abspath(__file__))[0],'templates','sum_package')
@@ -396,6 +437,8 @@ def sum_package(name, package_generators, generators_args, regulators, requested
             f.write(name+"\n\n"+"\n".join(sub_integral_names.split()))
 
         # call package generator for every integral
+        number_of_integration_variables = 0
+        contour_deformation = 0
         for j, (package_generator, generator_args) in enumerate(zip(package_generators, generators_args)):
             sub_name = generator_args['name']
             replacements_in_files['sub_integral_name'] = sub_name
@@ -427,7 +470,22 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                                     os.path.join('src', sub_name + suffix), # dest
                                     replacements_in_files)
 
-            package_generator(**generator_args)
+            template_replacements = package_generator(**generator_args)
+
+            # Compute maximal number of integration variables
+            number_of_integration_variables = max(number_of_integration_variables,template_replacements['number_of_integration_variables'])
+
+            # Enable contour deformation if any integral requires it
+            if template_replacements['contour_deformation']:
+                contour_deformation = 1
+
+        replacements_in_files['number_of_integration_variables'] = number_of_integration_variables
+        replacements_in_files['contour_deformation'] = contour_deformation
 
     finally:
         os.chdir(original_working_directory)
+
+    # Parse sum_package header file
+    parse_template_file(os.path.join(template_sources, 'name.hpp'),  # source
+                        os.path.join(name, name + '.hpp'),  # dest
+                        replacements_in_files)

@@ -111,6 +111,7 @@ namespace secdecutil
       public:
         int flags;
         cubareal zero_border;
+        static constexpr bool cuda_compliant_integrator = false;
       };
 
       // real version specialized for cubareal
@@ -160,6 +161,7 @@ namespace secdecutil
       public:
         int flags;
         cubareal zero_border;
+        static constexpr bool cuda_compliant_integrator = false;
       };
 
 
@@ -220,6 +222,7 @@ namespace secdecutil
       public: \
         int flags; \
         cubareal zero_border; \
+        static constexpr bool cuda_compliant_integrator = false; \
       };
       COMPLEX_CUBA_INTEGRATOR(std::complex)
       #ifdef SECDEC_WITH_CUDA
@@ -280,6 +283,7 @@ namespace secdecutil
       public: \
         int flags; \
         cubareal zero_border; \
+        static constexpr bool cuda_compliant_integrator = false; \
       };
       COMPLEX_CUBAREAL_INTEGRATOR(std::complex)
       #ifdef SECDEC_WITH_CUDA

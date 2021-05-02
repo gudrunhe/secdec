@@ -8,6 +8,9 @@
 
 namespace %(name)s
 {
+    // whether or not to use contour deformation
+    #define %(name)s_contour_deformation %(contour_deformation)i
+    
     // basic data types
     // --{
     typedef double real_t;
@@ -16,10 +19,13 @@ namespace %(name)s
     #else
         typedef std::complex<real_t> complex_t;
     #endif
+    
+    const unsigned int maximal_number_of_integration_variables = %(number_of_integration_variables)i;
 
     // all integrals must have the same return type, assume complex
     typedef complex_t integrand_return_t;
     template<typename T> using nested_series_t = %(nested_series_type)s;
+    typedef secdecutil::IntegrandContainer<integrand_return_t, real_t const * const, real_t> integrand_t;
     // --}
 
     // amplitude-related data types
@@ -32,10 +38,18 @@ namespace %(name)s
 
     // amplitude getter functions
     // --{
+    template<typename integrator_t>
     std::vector<nested_series_t<sum_t>> make_amplitudes
     (
         const std::vector<real_t>& real_parameters,
-        const std::vector<complex_t>& complex_parameters
+        const std::vector<complex_t>& complex_parameters,
+        const integrator_t integrator
+        #if %(name)s_contour_deformation
+            ,unsigned number_of_presamples = 100000,
+            real_t deformation_parameters_maximum = 1.,
+            real_t deformation_parameters_minimum = 1.e-5,
+            real_t deformation_parameters_decrease_factor = 0.9
+        #endif
     );
     // --}
 

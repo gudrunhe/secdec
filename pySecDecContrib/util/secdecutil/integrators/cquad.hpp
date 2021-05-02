@@ -29,7 +29,7 @@ namespace secdecutil
       // this error is thrown if an error with the gsl occurs
       struct gsl_error : public std::runtime_error { using std::runtime_error::runtime_error; };
 
-      void custom_gsl_error_handler(const char * reason, const char * file, int line, int gsl_errno)
+      static void custom_gsl_error_handler(const char * reason, const char * file, int line, int gsl_errno)
       {
           throw gsl_error( std::string(gsl_strerror(gsl_errno)) + std::string(": ") + std::string(reason));
       };
@@ -82,6 +82,7 @@ namespace secdecutil
         const size_t n;
         bool verbose;
         double zero_border;
+        static constexpr bool cuda_compliant_integrator = false;
 
         const std::shared_ptr<gsl_integration_cquad_workspace>& get_workspace() const
         {

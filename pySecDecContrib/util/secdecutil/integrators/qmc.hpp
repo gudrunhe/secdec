@@ -48,6 +48,7 @@ namespace secdecutil
         public:
 
             using Integrator<return_t,return_t,container_t>::integrate;
+            static constexpr bool cuda_compliant_integrator = true;
 
         };
         template<typename return_t, U maxdim, template<typename,typename,U> class transform_t, typename container_t, template<typename,typename,U> class fitfunction_t>
@@ -74,6 +75,7 @@ namespace secdecutil
         public:
 
             using Integrator<return_t,return_t,container_t>::integrate;
+            static constexpr bool cuda_compliant_integrator = true;
 
         };
         template<typename return_t, U maxdim, template<typename,typename,U> class transform_t, typename container_t>
@@ -100,6 +102,7 @@ namespace secdecutil
                 std::function<secdecutil::UncorrelatedDeviation<complex_template<return_t>>(const container_t&)> get_together_integrate(); \
             public: \
                 using Integrator<complex_template<return_t>, return_t, container_t>::integrate; \
+                static constexpr bool cuda_compliant_integrator = true; \
                 Qmc() { this->together = true; };
 
         #define COMPLEX_QMC_GET_TOGETHER_INTEGRATE_WITH_FITFUNCTION(complex_template) \

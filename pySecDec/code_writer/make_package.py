@@ -15,7 +15,7 @@ from ..matrix_sort import iterative_sort, Pak_sort, light_Pak_sort
 from ..subtraction import integrate_pole_part, integrate_by_parts, pole_structure as compute_pole_structure
 from ..expansion import expand_singular, expand_Taylor, expand_sympy, OrderError
 from ..misc import lowest_order, parallel_det, det
-from .template_parser import parse_template_file, parse_template_tree
+from .template_parser import validate_pylink_qmc_transforms, generate_pylink_qmc_macro_dict, parse_template_file, parse_template_tree
 from itertools import chain, repeat
 from multiprocessing import Pool
 from time import strftime
@@ -276,23 +276,7 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
         if str_error in str_poly:
             raise ValueError('The `polynomial_names` %s cannot be used in the `polynomials_to_decompose`.' % polynomial_names)
 
-    # check pylink_qmc_transforms are valid options and remove duplicates
-    pylink_qmc_transforms_available_options = set(
-        ['korobov'+str(i)+'x'+str(j) for i in range(1,7) for j in range(1,7)] +
-        ['sidi'+str(i) for i in range(1,7)]
-    )
-    if pylink_qmc_transforms != None:
-        # korobov%i -> korobov%ix%i
-        korobov_symmetric_transforms = ['korobov%i' % i for i in range(1,7)]
-        pylink_qmc_transforms = [ x if x not in korobov_symmetric_transforms else 'korobov'+x[7:]+'x'+x[7:] for x in pylink_qmc_transforms]
-        # remove duplicates
-        pylink_qmc_transforms = set(pylink_qmc_transforms)
-    else:
-        pylink_qmc_transforms = pylink_qmc_transforms_available_options
-    assert pylink_qmc_transforms.issubset(pylink_qmc_transforms_available_options), \
-        '"%s" found in `pylink_qmc_transforms` but not in `pylink_qmc_transforms_available_options`' % \
-        pylink_qmc_transforms.difference(pylink_qmc_transforms_available_options)
-    pylink_qmc_transforms = sorted(pylink_qmc_transforms)
+    pylink_qmc_transforms = validate_pylink_qmc_transforms(pylink_qmc_transforms)
 
     return (name, integration_variables, ibp_power_goal, regulators,
             requested_orders, polynomials_to_decompose, polynomial_names,
@@ -2141,18 +2125,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                '>' * (len(regulators) + 2)
 
     # generate translation from transform short names 'korobov#x#' and 'sidi#' to C++ macros
-    pylink_qmc_instantiations_translation = {}
-    pylink_qmc_extern_translation = {}
-    pylink_qmc_case_translation = {}
-    for i in range(1,7):
-        for j in range(1,7):
-            pylink_qmc_instantiations_translation['korobov'+str(i)+'x'+str(j)] = 'INSTANTIATE_KOROBOV_QMC(%i,%i)' % (i,j)
-            pylink_qmc_extern_translation['korobov'+str(i)+'x'+str(j)] = 'EXTERN_KOROBOV_QMC(%i,%i)' % (i,j)
-            pylink_qmc_case_translation['korobov'+str(i)+'x'+str(j)] = 'CASE_KOROBOV(%i,%i)' % (i,j)
-    for i in range(1,7):
-        pylink_qmc_instantiations_translation['sidi'+str(i)] = 'INSTANTIATE_SIDI_QMC(%i)' % i
-        pylink_qmc_extern_translation['sidi'+str(i)] = 'EXTERN_SIDI_QMC(%i)' % i
-        pylink_qmc_case_translation['sidi'+str(i)] = 'CASE_SIDI(%i)' % i
+    pylink_qmc_instantiations_translation = generate_pylink_qmc_macro_dict('INSTANTIATE')
+    pylink_qmc_extern_translation = generate_pylink_qmc_macro_dict('EXTERN')
+    pylink_qmc_case_translation = generate_pylink_qmc_macro_dict('CASE')
 
     # parse the required pylink templates and generate a list of files to write
     pylink_qmc_transform_instantiation_rules = []

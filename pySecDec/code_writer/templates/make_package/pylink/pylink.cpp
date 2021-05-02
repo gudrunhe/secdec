@@ -14,6 +14,7 @@
 #define integral_enforce_complex_return_type %(enforce_complex_return_type)i
 
 #include <secdecutil/pylink.hpp> // The python-C binding is general and therefore contained in the util
+#include <secdecutil/pylink_integral.hpp>
 
 // delegate some template instatiations to separate translation units
 #ifdef SECDEC_WITH_CUDA
@@ -272,7 +273,7 @@ enum qmc_generatingvectors_t : int
     cbcpt_cfftw1_6 = 3
 };
 
-#define CASE_KOROBOV(KOROBOVDEGREE1,KOROBOVDEGREE2) \
+#define CASE_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
     } else if (transform_id == korobov##KOROBOVDEGREE1##x##KOROBOVDEGREE2) { \
         if (fitfunction_id == default_fitfunction) { \
             auto integrator = new secdecutil::integrators::Qmc< \
@@ -304,7 +305,7 @@ enum qmc_generatingvectors_t : int
             throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
         }
 
-#define CASE_SIDI(SIDIDEGREE) \
+#define CASE_SIDI_QMC(SIDIDEGREE) \
     } else if (transform_id == sidi##SIDIDEGREE) { \
         if (fitfunction_id == default_fitfunction) { \
             auto integrator = new secdecutil::integrators::Qmc< \
