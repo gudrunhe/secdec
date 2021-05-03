@@ -62,14 +62,83 @@ def _parse_series(text):
         order = maxpower+1 if order is None else max(order, maxpower+1)
     return terms, variable, order
 
+def series_to_ginac(series):
+    """
+    Convert a textual representation of a series into GiNaC format.
+
+    :param series:
+        Any of the series obtained by calling an :class:`.IntegralLibrary` object.
+    :type series: str
+    :returns:
+        Two strings: the series of mean values, and the series of standard deviations.
+        The format of each returned value may look like this::
+
+            (0+0.012665*I)/eps + (0+0.028632*I) + Order(eps)
+
+    """
+    def num(val):
+        if isinstance(val, complex):
+            return ("(%.18g%+.18g*I)" % (val.real, val.imag))
+        else:
+            return ("%.18g" % val)
+    def term(val, var, exp):
+        val = num(val)
+        return "%s" % val if exp == 0 else \
+               "%s*%s" % (val, var) if exp == 1 else \
+               "%s/%s" % (val, var) if exp == -1 else \
+               "%s/%s^%d" % (val, var, -exp) if exp < 0 else \
+               "%s*%s^%d" % (val, var, exp)
+    terms, variable, order = _parse_series(series)
+    mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
+    stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
+    order = " + Order(%s)" % (variable) if order == 0 else \
+            " + Order(%s^%d)" % (variable, order)
+    return mean + order, stdev + order
+
+def series_to_sympy(series):
+    """
+    Convert a textual representation of a series into SymPy format.
+
+    :param series:
+        Any of the series obtained by calling an :class:`.IntegralLibrary` object.
+    :type series: str
+    :returns:
+        Two strings: the series of mean values, and the series of standard deviations.
+        The format of each returned value may look like this::
+
+            (0+0.012665*I)/eps + (0+0.028632*I) + O(eps)
+    """
+    def num(val):
+        if isinstance(val, complex):
+            return ("(%.18g%+.18g*I)" % (val.real, val.imag))
+        else:
+            return ("%.18g" % val)
+    def term(val, var, exp):
+        val = num(val)
+        return "%s" % val if exp == 0 else \
+               "%s*%s" % (val, var) if exp == 1 else \
+               "%s/%s" % (val, var) if exp == -1 else \
+               "%s/%s**%d" % (val, var, -exp) if exp < 0 else \
+               "%s*%s**%d" % (val, var, exp)
+    terms, variable, order = _parse_series(series)
+    mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
+    stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
+    order = " + O(%s)" % (variable) if order == 0 else \
+            " + O(%s**%d)" % (variable, order)
+    return mean + order, stdev + order
+
 def series_to_mathematica(series):
     """
     Convert a textual representation of a series into Mathematica format.
-    Return two strings: the series of mean values, and the series of standard deviations.
 
     :param series:
-        str;
         Any of the series obtained by calling an :class:`.IntegralLibrary` object.
+    :type series: str
+    :returns:
+        Two strings: the series of mean values, and the series of standard deviations.
+        The format of each returned value may look like this::
+
+            (0+0.012665*I)/eps + (0+0.028632*I) + O[eps]
     """
     def num(val):
         if isinstance(val, complex):
@@ -94,11 +163,15 @@ def series_to_mathematica(series):
 def series_to_maple(series):
     """
     Convert a textual representation of a series into Maple format.
-    Return two strings: the series of mean values, and the series of standard deviations.
 
     :param series:
-        str;
         Any of the series obtained by calling an :class:`.IntegralLibrary` object.
+    :type series: str
+    :returns:
+        Two strings: the series of mean values, and the series of standard deviations.
+        The format of each returned value may look like this::
+
+            series((0+0.012665*I)/eps + (0+0.028632*I) + O(eps), eps, 1)
     """
     def num(val):
         if isinstance(val, complex):
@@ -116,8 +189,8 @@ def series_to_maple(series):
     mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
     stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
     O = " + O(%s)" % (variable) if order == 0 else \
-            " + O(%s^%d)" % (variable, order) if order > 0 else \
-            " + O(%s^(%d))" % (variable, variable, order)
+        " + O(%s^%d)" % (variable, order) if order > 0 else \
+        " + O(%s^(%d))" % (variable, variable, order)
     return (
         "series(%s%s, %s, %d)" % (mean, O, variable, order),
         "series(%s%s, %s, %d)" % (stdev, O, variable, order)
