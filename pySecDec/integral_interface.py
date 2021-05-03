@@ -35,7 +35,7 @@ def _parse_series(text):
     according to the format of secdecutil/series.hpp.
     """
     import re
-    rx_term = re.compile(r"[(](.*)[)]([*][^^]+(?:\^([0-9+-]+))?)?")
+    rx_term = re.compile(r"[(](.*)[)]([*]([^^]+)(?:\^([0-9+-]+))?)?")
     rx_order = re.compile(r"O[(]([^^]+)(?:\^([0-9+-]+))?[)]")
     terms = []
     order = None
@@ -46,9 +46,10 @@ def _parse_series(text):
         m = rx_term.fullmatch(part)
         if m is not None:
             value = _parse_series_coefficient(m.group(1))
+            if m.group(3): variable = m.group(3)
             power = 0 if m.group(2) is None else \
-                    1 if m.group(3) is None else \
-                    int(m.group(3))
+                    1 if m.group(4) is None else \
+                    int(m.group(4))
             terms.append((value, power))
             continue
         m = rx_order.fullmatch(part)
@@ -57,9 +58,6 @@ def _parse_series(text):
             order = 1 if m.group(2) is None else int(m.group(2))
             continue
         raise ValueError("Can't parse this term: " + part)
-    if terms:
-        maxpower = max(power for val, power in terms)
-        order = maxpower+1 if order is None else max(order, maxpower+1)
     return terms, variable, order
 
 def series_to_ginac(series):
@@ -78,9 +76,9 @@ def series_to_ginac(series):
     """
     def num(val):
         if isinstance(val, complex):
-            return ("(%.18g%+.18g*I)" % (val.real, val.imag))
+            return "(%.18g%+.18g*I)" % (val.real, val.imag)
         else:
-            return ("%.18g" % val)
+            return "%.18g" % val
     def term(val, var, exp):
         val = num(val)
         return "%s" % val if exp == 0 else \
@@ -91,7 +89,8 @@ def series_to_ginac(series):
     terms, variable, order = _parse_series(series)
     mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
     stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
-    order = " + Order(%s)" % (variable) if order == 0 else \
+    order = "" if order is None else \
+            " + Order(%s)" % (variable,) if order == 0 else \
             " + Order(%s^%d)" % (variable, order)
     return mean + order, stdev + order
 
@@ -110,9 +109,9 @@ def series_to_sympy(series):
     """
     def num(val):
         if isinstance(val, complex):
-            return ("(%.18g%+.18g*I)" % (val.real, val.imag))
+            return "(%.18g%+.18g*I)" % (val.real, val.imag)
         else:
-            return ("%.18g" % val)
+            return "%.18g" % val
     def term(val, var, exp):
         val = num(val)
         return "%s" % val if exp == 0 else \
@@ -123,7 +122,8 @@ def series_to_sympy(series):
     terms, variable, order = _parse_series(series)
     mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
     stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
-    order = " + O(%s)" % (variable) if order == 0 else \
+    order = "" if order is None else \
+            " + O(%s)" % (variable,) if order == 0 else \
             " + O(%s**%d)" % (variable, order)
     return mean + order, stdev + order
 
@@ -155,7 +155,8 @@ def series_to_mathematica(series):
     terms, variable, order = _parse_series(series)
     mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
     stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
-    order = " + O[%s]" % (variable) if order == 0 else \
+    order = "" if order is None else \
+            " + O[%s]" % (variable,) if order == 0 else \
             " + O[%s]^%d" % (variable, order) if order > 0 else \
             " + O[%s]/%s^%d" % (variable, variable, 1-order)
     return mean + order, stdev + order
@@ -171,13 +172,13 @@ def series_to_maple(series):
         Two strings: the series of mean values, and the series of standard deviations.
         The format of each returned value may look like this::
 
-            series((0+0.012665*I)/eps + (0+0.028632*I) + O(eps), eps, 1)
+            (0+0.012665*I)/eps + (0+0.028632*I) + O(eps)
     """
     def num(val):
         if isinstance(val, complex):
-            return ("(%.18g%+.18g*I)" % (val.real, val.imag))
+            return "(%.18g%+.18g*I)" % (val.real, val.imag)
         else:
-            return ("%.18g" % val)
+            return "%.18g" % val
     def term(val, var, exp):
         val = num(val)
         return "%s" % val if exp == 0 else \
@@ -188,13 +189,11 @@ def series_to_maple(series):
     terms, variable, order = _parse_series(series)
     mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
     stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
-    O = " + O(%s)" % (variable) if order == 0 else \
-        " + O(%s^%d)" % (variable, order) if order > 0 else \
-        " + O(%s^(%d))" % (variable, variable, order)
-    return (
-        "series(%s%s, %s, %d)" % (mean, O, variable, order),
-        "series(%s%s, %s, %d)" % (stdev, O, variable, order)
-    )
+    order = "" if order is None else \
+            " + O(%s)" % (variable) if order == 0 else \
+            " + O(%s^%d)" % (variable, order) if order > 0 else \
+            " + O(%s^(%d))" % (variable, variable, order)
+    return mean + order, stdev + order
 
 # assuming
 # enum qmc_transform_t : int
