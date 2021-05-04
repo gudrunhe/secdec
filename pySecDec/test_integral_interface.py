@@ -100,8 +100,8 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(
             ii.series_to_mathematica(" + ( + (-1 +/- 2)*eps^-1 + (-10 +/- 8) + O(eps))*alpha^-1 + ( + (5 +/- 1)*eps^-2 + (-19 +/- 9) + O(eps)) + O(alpha)"),
             (
-                "(-1/eps + -10 + O[eps])/alpha + (5/eps^2 + -19 + O[eps]) + O[alpha]",
-                "(2/eps + 8 + O[eps])/alpha + (1/eps^2 + 9 + O[eps]) + O[alpha]"
+                "SeriesData[alpha, 0, {-1/eps + -10 + O[eps], 5/eps^2 + -19 + O[eps]}, -1, 1, 1]",
+                "SeriesData[alpha, 0, {2/eps + 8 + O[eps], 1/eps^2 + 9 + O[eps]}, -1, 1, 1]"
             )
         )
 

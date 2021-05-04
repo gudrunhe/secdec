@@ -80,47 +80,33 @@ def _parse_series(text):
             raise ValueError("Can't parse this term: " + part)
         return terms, variable, order
     return series(text)
-    for part in text.split(" + "):
-        part = part.strip()
-        if part == "": continue
-        m = rx_term.fullmatch(part)
-        if m is not None:
-            value = _parse_series_coefficient(m.group(1))
-            if m.group(3): variable = m.group(3)
-            power = 0 if m.group(2) is None else \
-                    1 if m.group(4) is None else \
-                    int(m.group(4))
-            terms.append((value, power))
-            continue
-        m = rx_order.fullmatch(part)
-        if m is not None:
-            variable = m.group(1)
-            order = 1 if m.group(2) is None else int(m.group(2))
-            continue
-        raise ValueError("Can't parse this term: " + part)
-    return terms, variable, order
 
-def _convert_series(series, power, fmt_number, fmt_order):
-    def fmt_value(val, i):
+def _convert_series(series, power, Order):
+    def fmt_value(val, mean):
+        if isinstance(val, complex):
+            return "(%.18g%+.18g*I)" % (val.real, val.imag) if mean else "0"
         if isinstance(val, complex) or isinstance(val, float):
-            return fmt_number(val) if i == 0 else "0"
+            return "%.18g" % val  if mean else "0"
         if isinstance(val, tuple) and len(val) == 2:
-            return fmt_value(val[i], 0)
+            return fmt_value(val[0] if mean else val[1], True)
         if isinstance(val, tuple) and len(val) == 3:
-            return "(" + fmt_series(*val, i) + ")"
-        raise ValueError(val)
-    def fmt_term(val, var, exp, i):
-        val = fmt_value(val, i)
+            return "(" + fmt_series(*val, mean) + ")"
+        raise ValueError(f"Can't convert value: {val}")
+    def fmt_term(val, var, exp, mean):
+        val = fmt_value(val, mean)
         return "%s" % val if exp == 0 else \
                "%s*%s" % (val, var) if exp == 1 else \
                "%s/%s" % (val, var) if exp == -1 else \
                "%s/%s%s%d" % (val, var, power, -exp) if exp < 0 else \
                "%s*%s%s%d" % (val, var, power, exp)
-    def fmt_series(terms, var, order, i):
-        order = "" if order is None else fmt_order(var, order)
-        return " + ".join(fmt_term(val, var, exp, i) for val, exp in terms) + order
+    def fmt_series(terms, var, order, mean):
+        order = "" if order is None else \
+                " + %s(%s)" % (Order, var,) if order == 1 else \
+                " + %s(%s%s%d)" % (Order, var, power, order) if order > 0 else \
+                " + %s(%s%s(%d))" % (Order, var, power, order)
+        return " + ".join(fmt_term(val, var, exp, mean) for val, exp in terms) + order
     terms, variable, order = _parse_series(series)
-    return fmt_series(terms, variable, order, 0), fmt_series(terms, variable, order, 1)
+    return fmt_series(terms, variable, order, True), fmt_series(terms, variable, order, False)
 
 def series_to_ginac(series):
     """
@@ -135,13 +121,10 @@ def series_to_ginac(series):
 
             (0+0.012665*I)/eps + (0+0.028632*I) + Order(eps)
     """
-    def fmt_number(val):
-        return "%.18g" % val if not isinstance(val, complex) else \
-               "(%.18g%+.18g*I)" % (val.real, val.imag)
     def fmt_order(var, order):
         return " + Order(%s)" % (var,) if order == 1 else \
                " + Order(%s^%d)" % (var, order)
-    return _convert_series(series, "^", fmt_number, fmt_order)
+    return _convert_series(series, "^", "Order")
 
 def series_to_sympy(series):
     """
@@ -156,13 +139,7 @@ def series_to_sympy(series):
 
             (0+0.012665*I)/eps + (0+0.028632*I) + O(eps)
     """
-    def fmt_number(val):
-        return "%.18g" % val if not isinstance(val, complex) else \
-               "(%.18g%+.18g*I)" % (val.real, val.imag)
-    def fmt_order(var, order):
-        return " + O(%s)" % (var,) if order == 1 else \
-               " + O(%s**%d)" % (var, order)
-    return _convert_series(series, "**", fmt_number, fmt_order)
+    return _convert_series(series, "**", "O")
 
 def series_to_mathematica(series):
     """
@@ -177,14 +154,41 @@ def series_to_mathematica(series):
 
             (0+0.012665*I)/eps + (0+0.028632*I) + O[eps]
     """
-    def fmt_number(val):
-        return ("%.18g" % val).replace("e", "*10^") if not isinstance(val, complex) else \
-               ("(%.18g%+.18g*I)" % (val.real, val.imag)).replace("e", "*10^")
-    def fmt_order(var, order):
-        return " + O[%s]" % (var,) if order == 1 else \
-               " + O[%s]^%d" % (var, order) if order > 0 else \
-               " + O[%s]/%s^%d" % (var, var, 1-order)
-    return _convert_series(series, "^", fmt_number, fmt_order)
+    def fmt_value(val, mean):
+        if isinstance(val, float):
+            return ("%.18g" % val).replace("e", "*10^") if mean else "0"
+        if isinstance(val, complex):
+            return ("(%.18g%+.18g*I)" % (val.real, val.imag)).replace("e", "*10^") if mean else "0"
+        if isinstance(val, tuple) and len(val) == 2:
+            return fmt_value(val[0] if mean else val[1], True)
+        if isinstance(val, tuple) and len(val) == 3:
+            return fmt_series(*val, mean)
+        raise ValueError(f"Can't convert value: {val}")
+    def fmt_term(val, var, exp, mean):
+        val = fmt_value(val, mean)
+        return "%s" % val if exp == 0 else \
+               "%s*%s" % (val, var) if exp == 1 else \
+               "%s/%s" % (val, var) if exp == -1 else \
+               "%s/%s^%d" % (val, var, -exp) if exp < 0 else \
+               "%s*%s^%d" % (val, var, exp)
+    def fmt_series(terms, var, order, mean):
+        if order is None:
+            return " + ".join(fmt_term(val, var, exp, mean) for val, exp in terms)
+        if any(isinstance(val, tuple) and len(val) == 3 for val, exp in terms):
+            minexp = min(exp for val, exp in terms)
+            if [exp for val, exp in terms] != list(range(minexp, order)):
+                raise ValueError(f"Gaps in the series: {terms} + O({var}^{order})")
+            return f"SeriesData[{var}, 0, {{" + \
+                   ", ".join(fmt_term(val, var, 0, mean) for val, exp in terms) + \
+                   f"}}, {minexp}, {order}, 1]"
+        else:
+            order = "" if order is None else \
+                    " + O[%s]" % (var,) if order == 1 else \
+                    " + O[%s]^%d" % (var, order) if order > 0 else \
+                    " + O[%s]/%s^%d" % (var, var, 1-order)
+            return " + ".join(fmt_term(val, var, exp, mean) for val, exp in terms) + order
+    terms, variable, order = _parse_series(series)
+    return fmt_series(terms, variable, order, True), fmt_series(terms, variable, order, False)
 
 def series_to_maple(series):
     """
@@ -199,14 +203,7 @@ def series_to_maple(series):
 
             (0+0.012665*I)/eps + (0+0.028632*I) + O(eps)
     """
-    def fmt_number(val):
-        return "%.18g" % val if not isinstance(val, complex) else \
-               "(%.18g%+.18g*I)" % (val.real, val.imag)
-    def fmt_order(var, order):
-        return " + O(%s)" % (var,) if order == 1 else \
-               " + O(%s^%d)" % (var, order) if order > 0 else \
-               " + O(%s^(%d))" % (var, order)
-    return _convert_series(series, "^", fmt_number, fmt_order)
+    return _convert_series(series, "^", "O")
 
 # assuming
 # enum qmc_transform_t : int
