@@ -47,6 +47,13 @@ class TestParsing(unittest.TestCase):
             ii.series_to_ginac(" + (8)"),
             ("8", "0")
         )
+        self.assertEqual(
+            ii.series_to_ginac(" + ( + (-1 +/- 2)*eps^-1 + (-10 +/- 8) + O(eps))*alpha^-1 + ( + (5 +/- 1)*eps^-2 + (-19 +/- 9) + O(eps)) + O(alpha)"),
+            (
+                "(-1/eps + -10 + Order(eps))/alpha + (5/eps^2 + -19 + Order(eps)) + Order(alpha)",
+                "(2/eps + 8 + Order(eps))/alpha + (1/eps^2 + 9 + Order(eps)) + Order(alpha)"
+            )
+        )
 
     def test_series_to_sympy(self):
         self.assertEqual(
@@ -60,6 +67,13 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(
             ii.series_to_sympy(" + (8)"),
             ("8", "0")
+        )
+        self.assertEqual(
+            ii.series_to_sympy(" + ( + (-1 +/- 2)*eps^-1 + (-10 +/- 8) + O(eps))*alpha^-1 + ( + (5 +/- 1)*eps^-2 + (-19 +/- 9) + O(eps)) + O(alpha)"),
+            (
+                "(-1/eps + -10 + O(eps))/alpha + (5/eps**2 + -19 + O(eps)) + O(alpha)",
+                "(2/eps + 8 + O(eps))/alpha + (1/eps**2 + 9 + O(eps)) + O(alpha)"
+            )
         )
 
     def test_series_to_mathematica(self):
@@ -75,6 +89,21 @@ class TestParsing(unittest.TestCase):
             ii.series_to_mathematica(" + (8)"),
             ("8", "0")
         )
+        self.assertEqual(
+            ii.series_to_mathematica(" + (1e-10 +/- 2e+20)"),
+            ("1.00000000000000004*10^-10", "2*10^+20")
+        )
+        self.assertEqual(
+            ii.series_to_mathematica(" + ((5e-01,10e-01) +/- (20e-01,3e-00))*ep^-1 + ((4,5) +/- (6,7))*ep + O(ep^2)"),
+            ("(0.5+1*I)/ep + (4+5*I)*ep + O[ep]^2", "(2+3*I)/ep + (6+7*I)*ep + O[ep]^2")
+        )
+        self.assertEqual(
+            ii.series_to_mathematica(" + ( + (-1 +/- 2)*eps^-1 + (-10 +/- 8) + O(eps))*alpha^-1 + ( + (5 +/- 1)*eps^-2 + (-19 +/- 9) + O(eps)) + O(alpha)"),
+            (
+                "(-1/eps + -10 + O[eps])/alpha + (5/eps^2 + -19 + O[eps]) + O[alpha]",
+                "(2/eps + 8 + O[eps])/alpha + (1/eps^2 + 9 + O[eps]) + O[alpha]"
+            )
+        )
 
     def test_series_to_maple(self):
         self.assertEqual(
@@ -88,4 +117,11 @@ class TestParsing(unittest.TestCase):
         self.assertEqual(
             ii.series_to_maple(" + (8)"),
             ("8", "0")
+        )
+        self.assertEqual(
+            ii.series_to_maple(" + ( + (-1 +/- 2)*eps^-1 + (-10 +/- 8) + O(eps))*alpha^-1 + ( + (5 +/- 1)*eps^-2 + (-19 +/- 9) + O(eps)) + O(alpha)"),
+            (
+                "(-1/eps + -10 + O(eps))/alpha + (5/eps^2 + -19 + O(eps)) + O(alpha)",
+                "(2/eps + 8 + O(eps))/alpha + (1/eps^2 + 9 + O(eps)) + O(alpha)"
+            )
         )

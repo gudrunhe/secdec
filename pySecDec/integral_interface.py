@@ -17,10 +17,14 @@ except ImportError:
 
 def _parse_series_coefficient(text):
     """
-    Parse a textual representation of a single coefficient in a series.
-    Return a pair of values if both the mean and the deviation are give.
-    Otherwise return a float or a complex number.
+    Parse a textual representation of a single coefficient
+    in a series. Retrun a float, a complex number, a tuple
+    consisting of the mean and the standard deviation if it
+    is given, or a tuple of three elements (via _parse_series)
+    if the coefficient is a nested series.
     """
+    if text.startswith(" + "):
+        return _parse_series(text)
     if "+/-" in text:
         mean, stdev = text.split("+/-")
         return _parse_series_coefficient(mean.strip()), _parse_series_coefficient(stdev.strip())
@@ -32,14 +36,50 @@ def _parse_series_coefficient(text):
 def _parse_series(text):
     """
     Parse a textual representation of a series of complex numbers,
-    according to the format of secdecutil/series.hpp.
+    according to the format of secdecutil/series.hpp. Return
+    a list of terms, the variable name, and the truncation
+    order. The last two can be None.
     """
+    def iter_terms(text):
+        i = j = 0
+        while True:
+            j = text.find(" + ", j)
+            if j == -1: break
+            if text.count("(", i, j) != text.count(")", i, j):
+                j = j + 3
+                continue
+            yield text[i:j]
+            i = j = j + 3
+        yield text[i:]
     import re
     rx_term = re.compile(r"[(](.*)[)]([*]([^^]+)(?:\^([0-9+-]+))?)?")
     rx_order = re.compile(r"O[(]([^^]+)(?:\^([0-9+-]+))?[)]")
-    terms = []
-    order = None
-    variable = None
+    def series(text):
+        terms = []
+        order = None
+        variable = None
+        for part in iter_terms(text):
+            part = part.strip()
+            if part == "": continue
+            m = rx_term.fullmatch(part)
+            if m is not None:
+                value = _parse_series_coefficient(m.group(1))
+                if m.group(3): variable = m.group(3)
+                power = 0 if m.group(2) is None else \
+                        1 if m.group(4) is None else \
+                        int(m.group(4))
+                terms.append((value, power))
+                continue
+            m = rx_order.fullmatch(part)
+            if m is not None:
+                variable = m.group(1)
+                order = 1 if m.group(2) is None else int(m.group(2))
+                continue
+            if part.startswith("( + ") and part.endswith(")"):
+                return series(part[1:-1])
+            raise ValueError("Can't parse this term: " + part)
+        return terms, variable, order
+    return series(text)
     for part in text.split(" + "):
         part = part.strip()
         if part == "": continue
@@ -60,6 +100,28 @@ def _parse_series(text):
         raise ValueError("Can't parse this term: " + part)
     return terms, variable, order
 
+def _convert_series(series, power, fmt_number, fmt_order):
+    def fmt_value(val, i):
+        if isinstance(val, complex) or isinstance(val, float):
+            return fmt_number(val) if i == 0 else "0"
+        if isinstance(val, tuple) and len(val) == 2:
+            return fmt_value(val[i], 0)
+        if isinstance(val, tuple) and len(val) == 3:
+            return "(" + fmt_series(*val, i) + ")"
+        raise ValueError(val)
+    def fmt_term(val, var, exp, i):
+        val = fmt_value(val, i)
+        return "%s" % val if exp == 0 else \
+               "%s*%s" % (val, var) if exp == 1 else \
+               "%s/%s" % (val, var) if exp == -1 else \
+               "%s/%s%s%d" % (val, var, power, -exp) if exp < 0 else \
+               "%s*%s%s%d" % (val, var, power, exp)
+    def fmt_series(terms, var, order, i):
+        order = "" if order is None else fmt_order(var, order)
+        return " + ".join(fmt_term(val, var, exp, i) for val, exp in terms) + order
+    terms, variable, order = _parse_series(series)
+    return fmt_series(terms, variable, order, 0), fmt_series(terms, variable, order, 1)
+
 def series_to_ginac(series):
     """
     Convert a textual representation of a series into GiNaC format.
@@ -72,27 +134,14 @@ def series_to_ginac(series):
         The format of each returned value may look like this::
 
             (0+0.012665*I)/eps + (0+0.028632*I) + Order(eps)
-
     """
-    def num(val):
-        if isinstance(val, complex):
-            return "(%.18g%+.18g*I)" % (val.real, val.imag)
-        else:
-            return "%.18g" % val
-    def term(val, var, exp):
-        val = num(val)
-        return "%s" % val if exp == 0 else \
-               "%s*%s" % (val, var) if exp == 1 else \
-               "%s/%s" % (val, var) if exp == -1 else \
-               "%s/%s^%d" % (val, var, -exp) if exp < 0 else \
-               "%s*%s^%d" % (val, var, exp)
-    terms, variable, order = _parse_series(series)
-    mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
-    stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
-    order = "" if order is None else \
-            " + Order(%s)" % (variable,) if order == 0 else \
-            " + Order(%s^%d)" % (variable, order)
-    return mean + order, stdev + order
+    def fmt_number(val):
+        return "%.18g" % val if not isinstance(val, complex) else \
+               "(%.18g%+.18g*I)" % (val.real, val.imag)
+    def fmt_order(var, order):
+        return " + Order(%s)" % (var,) if order == 1 else \
+               " + Order(%s^%d)" % (var, order)
+    return _convert_series(series, "^", fmt_number, fmt_order)
 
 def series_to_sympy(series):
     """
@@ -107,25 +156,13 @@ def series_to_sympy(series):
 
             (0+0.012665*I)/eps + (0+0.028632*I) + O(eps)
     """
-    def num(val):
-        if isinstance(val, complex):
-            return "(%.18g%+.18g*I)" % (val.real, val.imag)
-        else:
-            return "%.18g" % val
-    def term(val, var, exp):
-        val = num(val)
-        return "%s" % val if exp == 0 else \
-               "%s*%s" % (val, var) if exp == 1 else \
-               "%s/%s" % (val, var) if exp == -1 else \
-               "%s/%s**%d" % (val, var, -exp) if exp < 0 else \
-               "%s*%s**%d" % (val, var, exp)
-    terms, variable, order = _parse_series(series)
-    mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
-    stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
-    order = "" if order is None else \
-            " + O(%s)" % (variable,) if order == 0 else \
-            " + O(%s**%d)" % (variable, order)
-    return mean + order, stdev + order
+    def fmt_number(val):
+        return "%.18g" % val if not isinstance(val, complex) else \
+               "(%.18g%+.18g*I)" % (val.real, val.imag)
+    def fmt_order(var, order):
+        return " + O(%s)" % (var,) if order == 1 else \
+               " + O(%s**%d)" % (var, order)
+    return _convert_series(series, "**", fmt_number, fmt_order)
 
 def series_to_mathematica(series):
     """
@@ -140,26 +177,14 @@ def series_to_mathematica(series):
 
             (0+0.012665*I)/eps + (0+0.028632*I) + O[eps]
     """
-    def num(val):
-        if isinstance(val, complex):
-            return ("(%.18g%+.18g*I)" % (val.real, val.imag)).replace("e", "*10^")
-        else:
-            return ("%.18g" % val).replace("e", "*10^")
-    def term(val, var, exp):
-        val = num(val)
-        return "%s" % val if exp == 0 else \
-               "%s*%s" % (val, var) if exp == 1 else \
-               "%s/%s" % (val, var) if exp == -1 else \
-               "%s/%s^%d" % (val, var, -exp) if exp < 0 else \
-               "%s*%s^%d" % (val, var, exp)
-    terms, variable, order = _parse_series(series)
-    mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
-    stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
-    order = "" if order is None else \
-            " + O[%s]" % (variable,) if order == 0 else \
-            " + O[%s]^%d" % (variable, order) if order > 0 else \
-            " + O[%s]/%s^%d" % (variable, variable, 1-order)
-    return mean + order, stdev + order
+    def fmt_number(val):
+        return ("%.18g" % val).replace("e", "*10^") if not isinstance(val, complex) else \
+               ("(%.18g%+.18g*I)" % (val.real, val.imag)).replace("e", "*10^")
+    def fmt_order(var, order):
+        return " + O[%s]" % (var,) if order == 1 else \
+               " + O[%s]^%d" % (var, order) if order > 0 else \
+               " + O[%s]/%s^%d" % (var, var, 1-order)
+    return _convert_series(series, "^", fmt_number, fmt_order)
 
 def series_to_maple(series):
     """
@@ -174,26 +199,14 @@ def series_to_maple(series):
 
             (0+0.012665*I)/eps + (0+0.028632*I) + O(eps)
     """
-    def num(val):
-        if isinstance(val, complex):
-            return "(%.18g%+.18g*I)" % (val.real, val.imag)
-        else:
-            return "%.18g" % val
-    def term(val, var, exp):
-        val = num(val)
-        return "%s" % val if exp == 0 else \
-               "%s*%s" % (val, var) if exp == 1 else \
-               "%s/%s" % (val, var) if exp == -1 else \
-               "%s/%s^%d" % (val, var, -exp) if exp < 0 else \
-               "%s*%s^%d" % (val, var, exp)
-    terms, variable, order = _parse_series(series)
-    mean = " + ".join(term(val[0] if isinstance(val, tuple) else val, variable, exp) for val, exp in terms)
-    stdev = " + ".join(term(val[1] if isinstance(val, tuple) else 0, variable, exp) for val, exp in terms)
-    order = "" if order is None else \
-            " + O(%s)" % (variable) if order == 0 else \
-            " + O(%s^%d)" % (variable, order) if order > 0 else \
-            " + O(%s^(%d))" % (variable, variable, order)
-    return mean + order, stdev + order
+    def fmt_number(val):
+        return "%.18g" % val if not isinstance(val, complex) else \
+               "(%.18g%+.18g*I)" % (val.real, val.imag)
+    def fmt_order(var, order):
+        return " + O(%s)" % (var,) if order == 1 else \
+               " + O(%s^%d)" % (var, order) if order > 0 else \
+               " + O(%s^(%d))" % (var, order)
+    return _convert_series(series, "^", fmt_number, fmt_order)
 
 # assuming
 # enum qmc_transform_t : int
