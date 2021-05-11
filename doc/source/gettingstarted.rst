@@ -19,9 +19,9 @@ We first show how to compute a simple dimensionally regulated integral:
 
 To run the example change to the `easy` directory and run the commands::
 
-    $ python generate_easy.py
+    $ python3 generate_easy.py
     $ make -C easy
-    $ python integrate_easy.py
+    $ python3 integrate_easy.py
 
 Additional build options are discussed in the :ref:`next section <building_the_cpp_lib>`. This will evaluate and print the result of the integral::
 
@@ -74,9 +74,9 @@ This example computes a one-loop box with one off-shell leg (with off-shellness 
 
 To run the example change to the `box1L` directory and run the commands::
 
-    $ python generate_box1L.py
+    $ python3 generate_box1L.py
     $ make -C box1L
-    $ python integrate_box1L.py
+    $ python3 integrate_box1L.py
 
 This will print the result of the integral evaluated with Mandelstam invariants ``s=4.0``, ``t=-0.75`` and ``s1=1.25``, ``msq=1.0``::
 

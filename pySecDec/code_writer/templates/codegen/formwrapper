@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script will run the command given to it as arguments (a FORM
 # invocation normally), detect if FORM has complained about WorkSpace

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 import pySecDec as psd
 from pySecDec.loop_integral import loop_package
 

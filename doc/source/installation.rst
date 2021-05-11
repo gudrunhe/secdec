@@ -4,38 +4,16 @@ Installation
 Download the Program and Install
 --------------------------------
 
-`pySecDec` should run fine with both, `python` 2.7 and `python` 3
-on unix-like systems.
+`pySecDec` workd under `python` version 3.6 or newer on unix-like
+systems.
 
-Before you install `pySecDec`, make sure that you have
-recent versions of `numpy` (http://www.numpy.org/) and
-`sympy` (http://www.sympy.org/) installed. The version of `sympy`
-should be 0.7.6 or higher, the version of `numpy` should be 1.6 or higher.
-Type
+The latest release can be installed from `PyPI`_ by running:
 
 .. code::
 
-   $ python -c "import numpy"
-   $ python -c "import sympy"
+   $ pip3 install --user pySecDec
 
-to check for their availability.
-
-In case either `numpy` or `sympy` are missing on your machine,
-it is easiest to install them from your package repository. Alternatively,
-and in particular if you do not have administrator rights,
-`pip` (https://pip.pypa.io/en/stable/) may be used to perform
-the installation.
-
-To install `pySecDec` download and upack the tarball from http://secdec.hepforge.org/.
-The tarball contains a distribution of `pySecDec` and the additional dependencies
-listed :ref:`below <additional_cpp_dependencies>`. Typing
-
-.. code::
-
-    $ make
-
-should build all redistributed packages and display two commands
-to be added to your ``.bashrc`` or ``.profile``.
+.. _PyPI: https://pypi.org/project/pySecDec/
 
 .. _installation_normaliz:
 
@@ -87,7 +65,7 @@ Additional Dependencies for Generated c++ Packages
 The intended main usage of `pySecDec` is to make it write c++ packages using the functions
 :func:`pySecDec.code_writer.make_package` and :func:`pySecDec.loop_integral.loop_package`.
 In order to build these c++ packages, the following additional non-python-based libraries
-and programs are required:
+and programs are used:
 
  * CUBA (http://www.feynarts.de/cuba/)
  * QMC (https://github.com/mppmu/qmc)
@@ -103,3 +81,5 @@ sectors:
 
  * NAUTY (http://pallini.di.uniroma1.it/)
 
+These packages are redistributed along with pySecDec itself,
+and will be built automatically during pySecDec installation.

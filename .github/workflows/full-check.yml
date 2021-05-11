@@ -28,7 +28,7 @@ jobs:
         make build
     - name: Nose Check
       run: |
-        python -m nose --processes=2 --process-timeout=600 pySecDec
+        python3 -m nose --processes=2 --process-timeout=600 pySecDec
     - name: Build HTML documentation
       run: |
         make doc-html

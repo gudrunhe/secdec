@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 import numpy as np
 from pySecDec.loop_integral import LoopIntegralFromGraph
 from pySecDec.matrix_sort import Pak_sort

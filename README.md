@@ -154,8 +154,15 @@ If `sphinx` is installed, the command
 
     $ make doc
 
-generates the documentaion in `html` and in `pdf` format. Developers should inline-document
-python functions and also keep the C++ part up to date.
+generates the documentaion in `html` and in `pdf` format. Developers
+should inline-document python functions and also keep the C++
+part up to date. To generate HTML and PDF separately, use
+
+    $ make doc-html
+
+and
+
+    $ make doc-pdf
 
 Building the documentaion in pdf format requires an up-to-date installation of a latex
 implementation. If you get an error about missing ".sty" file, do the following:
