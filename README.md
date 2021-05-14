@@ -22,15 +22,20 @@ Installation
 pySecDec should work under Python version 3.6 or newer on the
 usual Unix-like systems.
 
-The latest release can be installed from [PyPI](https://pypi.org/project/pySecDec/) by running:
+The latest release can be installed from [PyPI](https://pypi.org/project/pySecDec/)
+by first (optionally) upgrading [pip](https://pypi.org/project/pip/):
 
-    $ pip3 install --user pySecDec
+    $ python3 -m pip install --user 'pip>=20.1'
 
-To install the latest development version, run:
+and then running:
+
+    $ python3 -m pip install --user pySecDec
+
+To install the latest development version on the other hand, run:
 
     $ git clone https://github.com/gudrunhe/secdec secdec
     $ cd secdec
-    $ pip3 install --user .
+    $ python3 -m pip install --user .
 
 ## The geometric method and Normaliz
 

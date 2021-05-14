@@ -75,7 +75,6 @@ if os.path.exists(".git"):
         f'__authors__ = authors = "{pyproject["project"]["author"]}"',
         f'__commit__ = git_id = "{git_id}"'
     ])
-    Clean(generated_source, "pySecDec/metadata.pyc")
     AlwaysBuild(generated_source)
 else:
     # We are in a giless sdist. Lets hope that metadata.py was

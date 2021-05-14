@@ -4,7 +4,7 @@ INTEGRAL = easy
 export CXX = nvcc
 
 # cuda architecture
-export SECDEC_WITH_CUDA = compute_30
+export SECDEC_WITH_CUDA = sm_52
 
 # CXXFLAGS
 SECDEC_CONTRIB = $(shell python3 -m pySecDecContrib --dirname)

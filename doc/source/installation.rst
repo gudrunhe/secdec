@@ -4,16 +4,22 @@ Installation
 Download the Program and Install
 --------------------------------
 
-`pySecDec` workd under `python` version 3.6 or newer on unix-like
-systems.
-
-The latest release can be installed from `PyPI`_ by running:
+`pySecDec` works under Python version 3.6 or newer on
+unix-like systems.  The latest release can be installed from
+`PyPI`_ by first (optionally) upgrading `pip`_:
 
 .. code::
 
-   $ pip3 install --user pySecDec
+    $ python3 -m pip install --user 'pip>=20.1'
+
+and then running:
+
+.. code::
+
+   $ python3 -m pip install --user pySecDec
 
 .. _PyPI: https://pypi.org/project/pySecDec/
+.. _pip: https://pypi.org/project/pip/
 
 .. _installation_normaliz:
 
