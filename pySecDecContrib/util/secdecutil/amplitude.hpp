@@ -75,13 +75,12 @@ namespace secdecutil {
                 /*
                  * setter functions
                  */
-                void set_next_number_of_function_evaluations(unsigned long long int new_number_of_function_evaluations)
+                void set_next_number_of_function_evaluations(unsigned long long int new_number_of_function_evaluations, bool allow_decrease=false)
                 {
-                    if(new_number_of_function_evaluations > number_of_function_evaluations) {
-                        next_number_of_function_evaluations = new_number_of_function_evaluations;
-                    } else {
-                        next_number_of_function_evaluations = number_of_function_evaluations;
-                    }
+                    if(allow_decrease)
+                        next_number_of_function_evaluations = std::max({new_number_of_function_evaluations, number_of_function_evaluations});
+                    else
+                        next_number_of_function_evaluations = std::max({next_number_of_function_evaluations, new_number_of_function_evaluations, number_of_function_evaluations});
                 };
 
                 /*
@@ -224,8 +223,22 @@ namespace secdecutil {
             std::vector<WeightedIntegral<integral_t,coefficient_t>>& a,
             const std::vector<WeightedIntegral<integral_t,coefficient_t>>& b
         )
-        {
-            a.insert(a.end(), b.begin(), b.end());
+        {   // for integrals appearing in both arguments, sum the coefficients; add new integrals from b to a
+            for (const auto & y: b)
+            {
+                bool found=false;
+                for (auto & x: a)
+                {
+                    if(x.integral==y.integral)
+                    {
+                        found=true;
+                        x.coefficient += y.coefficient;
+                        break;
+                    }
+                }
+                if(not found)
+                    a.push_back(y);
+            }
             return a;
         };
         template<typename integral_t, typename coefficient_t>
@@ -235,41 +248,92 @@ namespace secdecutil {
             const std::vector<WeightedIntegral<integral_t,coefficient_t>>& b
         )
         {
-            a.insert(a.end(), b.begin(), b.end());
+            a+=b;
             return a;
         };
-        template<typename integral_t, typename coefficient_t>
+        template<typename integral_t, typename coefficient_t, typename factor_t>
         std::vector<WeightedIntegral<integral_t,coefficient_t>>& operator*=
         (
             std::vector<WeightedIntegral<integral_t,coefficient_t>>& a,
-            const coefficient_t& b
+            const factor_t& b
         )
         {
             for(WeightedIntegral<integral_t,coefficient_t>& i : a)
                 i.coefficient *= b;
             return a;
         };
-        template<typename integral_t, typename coefficient_t>
+        template<typename integral_t, typename coefficient_t, typename factor_t>
         std::vector<WeightedIntegral<integral_t,coefficient_t>> operator*
         (
             std::vector<WeightedIntegral<integral_t,coefficient_t>> a,
-            const coefficient_t& b
+            const factor_t& b
         )
         {
             for(WeightedIntegral<integral_t,coefficient_t>& i : a)
                 i.coefficient *= b;
             return a;
         };
-        template<typename integral_t, typename coefficient_t>
+        template<typename integral_t, typename coefficient_t, typename factor_t>
         std::vector<WeightedIntegral<integral_t,coefficient_t>> operator*
         (
-            const coefficient_t& a,
+            const factor_t& a,
             std::vector<WeightedIntegral<integral_t,coefficient_t>> b
         )
         {
             for(WeightedIntegral<integral_t,coefficient_t>& i : b)
                 i.coefficient *= a;
             return b;
+        };
+        template<typename integral_t, typename coefficient_t, typename divisor_t>
+        std::vector<WeightedIntegral<integral_t,coefficient_t>>& operator/=
+        (
+            std::vector<WeightedIntegral<integral_t,coefficient_t>>& a,
+            const divisor_t& b
+        )
+        {
+            for(WeightedIntegral<integral_t,coefficient_t>& i : a)
+                i.coefficient /= b;
+            return a;
+        };
+        template<typename integral_t, typename coefficient_t, typename divisor_t>
+        std::vector<WeightedIntegral<integral_t,coefficient_t>> operator/
+        (
+            std::vector<WeightedIntegral<integral_t,coefficient_t>> a,
+            const divisor_t& b
+        )
+        {
+            for(WeightedIntegral<integral_t,coefficient_t>& i : a)
+                i.coefficient /=b;
+            return a;
+        };
+        template<typename integral_t, typename coefficient_t>
+        std::vector<WeightedIntegral<integral_t,coefficient_t>> operator-
+        (
+            std::vector<WeightedIntegral<integral_t,coefficient_t>> a
+        )
+        {
+            a*=-1;
+            return a;
+        };
+        template<typename integral_t, typename coefficient_t>
+        std::vector<WeightedIntegral<integral_t,coefficient_t>> operator-
+        (
+            std::vector<WeightedIntegral<integral_t,coefficient_t>> a,
+            const std::vector<WeightedIntegral<integral_t,coefficient_t>>& b
+        )
+        {
+            a+=-b;
+            return a;
+        };
+        template<typename integral_t, typename coefficient_t>
+        std::vector<WeightedIntegral<integral_t,coefficient_t>> operator-=
+        (
+            std::vector<WeightedIntegral<integral_t,coefficient_t>> &a,
+            const std::vector<WeightedIntegral<integral_t,coefficient_t>>& b
+        )
+        {
+            a+=-b;
+            return a;
         };
 
         void write_map_to_file(std::map<std::string, std::vector<std::vector<double>>> map, std::string filename="changed_deformation_parameters.txt"){
@@ -397,20 +461,14 @@ namespace secdecutil {
                         }
                     }
 
-                    if(verbose)
+                    if(verbose and (next_n > curr_n))
                     {
                         std::cout << "integral " << integral->id << "/" << integrals.size() << ": " << integral->display_name << ", time: ";
                         std::printf("%.1f", integral->get_integration_time());
                         std::cout << " s, ";
                         print_datetime();
-                        if(next_n > curr_n){
-                            std::cout << "res: " << old_result << " -> " << integral->get_integral_result()
+                        std::cout << "res: " << old_result << " -> " << integral->get_integral_result()
                                       << ", n: " << curr_n << " -> " << std::dec << integral->get_number_of_function_evaluations() << std::endl;
-                        }
-                        else{
-                            std::cout << "res: " << integral->get_integral_result()
-                                      << ", n: " << std::dec << next_n << std::endl;
-                        }
                         std::cout << std::endl;
                     }
                 };
@@ -669,7 +727,7 @@ namespace secdecutil {
                             if(next_n > curr_n) {
                                 const real_t n_increase_fac = static_cast<real_t>(next_n)/static_cast<real_t>(curr_n) * decrease_factor;
                                 unsigned long long int reduced_next_n = n_increase_fac * curr_n;
-                                integral->set_next_number_of_function_evaluations( reduced_next_n );
+                                integral->set_next_number_of_function_evaluations( reduced_next_n, true );
 
                                 if(reduced_next_n > curr_n) {
                                     can_improve_in_time = true;
@@ -727,9 +785,6 @@ namespace secdecutil {
                             {
                                 auto result = term.integral->get_integral_result();
                                 real_t abserr = abs(result.uncertainty);
-                                if(verbose)
-                                    std::cout << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
-                                                term.integral->display_name << ", current integral result: " << result << std::endl;
                                 if(abserr > sum.min_epsabs)
                                 {
                                     real_t relerr = abserr / abs( result.value );
@@ -741,6 +796,9 @@ namespace secdecutil {
                                         {
                                             repeat = true;
                                             term.integral->set_next_number_of_function_evaluations( new_n > sum.maxeval ? sum.maxeval : static_cast<unsigned long long int>(new_n) );
+                                            if(verbose)
+                                                std::cout << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                                        term.integral->display_name << ", current integral result: " << result << ", increase n: " << old_n << " -> " <<new_n << std::endl;
                                         }
                                     }
                                 }
@@ -771,10 +829,14 @@ namespace secdecutil {
                         auto abs_error_goal = sum.epsrel * abs(current_sum_value);
                         abs_error_goal = max(abs_error_goal, abs_error*sum.epsrel); // If current error larger than current result set goal based on error
                         abs_error_goal = max(abs_error_goal, sum.epsabs); // Do not request an error smaller than epsabs
-                        abs_error_goal *= abs_error_goal; // require variance rather than standard deviation
 
                         if(verbose)
-                            std::cout << std::endl << "sum: " << sum.display_name << ", current sum result: " << current_sum << std::endl;
+                            std::cout << std::endl << "sum: " << sum.display_name << ", current sum result: " << current_sum << ",  error goal: " << abs_error_goal<<std::endl;
+                        if(abs_error < abs_error_goal)
+                            return;
+
+                        abs_error_goal *= abs_error_goal; // require variance rather than standard deviation in the following
+
 
                         // compute the C_i
                         std::vector<real_t> c; c.reserve( sum.summands.size() );
@@ -786,9 +848,6 @@ namespace secdecutil {
                             real_t relerr = abserr / abs( integral.value );
                             abserr *= abs(term.coefficient); // contribution to total error of the sum
 
-                            if(verbose)
-                                std::cout << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
-                                     term.integral->display_name << ", contribution to sum error: " << abserr << std::endl;
 
                             if(relerr < sum.max_epsrel || abserr < sum.max_epsabs)
                                 c.push_back(  -1  );
@@ -859,7 +918,14 @@ namespace secdecutil {
 
                                 // run again if the accuracy of an integral is increased
                                 if(proposed_next_n > curr_n)
+                                {
                                     repeat = true;
+                                    if (verbose)
+                                        std::cout << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                                term.integral->display_name << ", current integral result: " << term.integral->get_integral_result() << 
+                                                ", contribution to sum error: " << abs(term.integral->get_integral_result().uncertainty*term.coefficient) << 
+                                                ", increase n: " << curr_n << " -> " <<proposed_next_n << std::endl;
+                                }
                             }
 
                         }
@@ -877,7 +943,7 @@ namespace secdecutil {
                             const unsigned long long int max_next_n = curr_n * sum.maxincreasefac; // implicit cast to unsigned long long int
 
                             if( next_n > max_next_n )
-                                term.integral->set_next_number_of_function_evaluations( max_next_n );
+                                term.integral->set_next_number_of_function_evaluations( max_next_n, true );
                         }
                     };
 
@@ -901,20 +967,20 @@ namespace secdecutil {
                 integrals.shrink_to_fit();
 
                 // read in changed deformation parameters from file
-                for(int i = 0; i < integrals.size(); i++){
-                    integrals[i]->id = i+1;
-                    auto element = changed_deformation_parameters_map.find(integrals[i]->display_name);
-                    if(element != changed_deformation_parameters_map.end()){
-                        auto new_parameters = element->second;
-                        auto old_parameters = integrals[i]->get_parameters();
-                        for(int k = 0; k < new_parameters.size(); k++){
-                            for(int j = 0; j < new_parameters[k].size(); j++){
-                                *old_parameters[k][j] = new_parameters[k][j];
-                                if(verbose)
-                                    std::cout << "read in changed parameter " << k << "," << j << " for " << integrals[i]->display_name << ": " << *old_parameters[k][j] << std::endl;
-                            }
-                        }
-                    }
+               for(int i = 0; i < integrals.size(); i++){
+                   integrals[i]->id = i+1;
+                //    auto element = changed_deformation_parameters_map.find(integrals[i]->display_name);
+                //    if(element != changed_deformation_parameters_map.end()){
+                //        auto new_parameters = element->second;
+                //        auto old_parameters = integrals[i]->get_parameters();
+                //        for(int k = 0; k < new_parameters.size(); k++){
+                //            for(int j = 0; j < new_parameters[k].size(); j++){
+                //                *old_parameters[k][j] = new_parameters[k][j];
+                //                if(verbose)
+                //                    std::cout << "read in changed parameter " << k << "," << j << " for " << integrals[i]->display_name << ": " << *old_parameters[k][j] << std::endl;
+                //            }
+                //        }
+                //    }
                 }
 
                 // initialize with minimal number of sampling points
