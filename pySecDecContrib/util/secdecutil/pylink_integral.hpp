@@ -106,7 +106,25 @@ extern "C"
         const unsigned number_of_presamples,
         const real_t deformation_parameters_maximum,
         const real_t deformation_parameters_minimum,
-        const real_t deformation_parameters_decrease_factor
+        const real_t deformation_parameters_decrease_factor,
+     
+        // following parameters unused (required for compatibility with pylink_amplitude)
+        const real_t epsrel,
+        const real_t epsabs,
+        const unsigned long long int maxeval,
+        const unsigned long long int mineval, 
+        const real_t maxincreasefac,
+        const real_t min_epsrel,
+        const real_t min_epsabs,
+        const real_t max_epsrel,
+        const real_t max_epsabs,
+        const real_t min_decrease_factor,
+        const real_t decrease_to_percentage, // of remaining time
+        const real_t soft_wall_clock_limit,
+        const real_t hard_wall_clock_limit,
+        const size_t number_of_threads,
+        const size_t reset_cuda_after,
+        const int verbose
     )
     {
         size_t i;
@@ -207,7 +225,25 @@ extern "C"
             const unsigned number_of_presamples,
             const real_t deformation_parameters_maximum,
             const real_t deformation_parameters_minimum,
-            const real_t deformation_parameters_decrease_factor
+            const real_t deformation_parameters_decrease_factor,
+         
+            // following parameters unused (required for compatibility with pylink_amplitude)
+            const real_t epsrel,
+            const real_t epsabs,
+            const unsigned long long int maxeval,
+            const unsigned long long int mineval,
+            const real_t maxincreasefac,
+            const real_t min_epsrel,
+            const real_t min_epsabs,
+            const real_t max_epsrel,
+            const real_t max_epsabs,
+            const real_t min_decrease_factor,
+            const real_t decrease_to_percentage, // of remaining time
+            const real_t soft_wall_clock_limit,
+            const real_t hard_wall_clock_limit,
+            const size_t number_of_threads,
+            const size_t reset_cuda_after,
+            const int verbose
         )
         {
             size_t i;

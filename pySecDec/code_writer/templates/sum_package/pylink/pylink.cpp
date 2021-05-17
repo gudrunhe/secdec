@@ -29,7 +29,22 @@ extern "C"
         const real_t deformation_parameters_maximum,
         const real_t deformation_parameters_minimum,
         const real_t deformation_parameters_decrease_factor,
-        const int verbose = 1
+        const real_t epsrel,
+        const real_t epsabs,
+        const unsigned long long int maxeval,
+        const unsigned long long int mineval,
+        const real_t maxincreasefac,
+        const real_t min_epsrel,
+        const real_t min_epsabs,
+        const real_t max_epsrel,
+        const real_t max_epsabs,
+        const real_t min_decrease_factor,
+        const real_t decrease_to_percentage, // of remaining time
+        const real_t soft_wall_clock_limit,
+        const real_t hard_wall_clock_limit,
+        const size_t number_of_threads,
+        const size_t reset_cuda_after,
+        const int verbose
     )
     {
         size_t i;
@@ -52,14 +67,18 @@ extern "C"
         // Construct the amplitudes
         std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(real_parameters, complex_parameters, integrator);
 
-        // TODO
-        // - find a way to pack epsrel, epsabs etc parameters in here...
         // pack amplitude into handler
         handler_t<amplitudes_t> amplitudes
         (
-            unwrapped_amplitudes
-            // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+            unwrapped_amplitudes,
+            epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
         );
+        amplitudes.min_decrease_factor = min_decrease_factor;
+        amplitudes.decrease_to_percentage = decrease_to_percentage;
+        amplitudes.soft_wall_clock_limit = soft_wall_clock_limit;
+        amplitudes.hard_wall_clock_limit = hard_wall_clock_limit;
+        amplitudes.number_of_threads = number_of_threads;
+        amplitudes.reset_cuda_after = reset_cuda_after;
         amplitudes.verbose = verbose;
 
         // compute the amplitude
