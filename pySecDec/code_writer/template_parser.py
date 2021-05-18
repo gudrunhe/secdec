@@ -32,7 +32,7 @@ def validate_pylink_qmc_transforms(pylink_qmc_transforms):
         # remove duplicates
         pylink_qmc_transforms = set(pylink_qmc_transforms)
     else:
-        pylink_qmc_transforms = pylink_qmc_transforms_available_options
+        pylink_qmc_transforms = set(['korobov3x3']) # Default
     assert pylink_qmc_transforms.issubset(pylink_qmc_transforms_available_options), \
         '"%s" found in `pylink_qmc_transforms` but not in `pylink_qmc_transforms_available_options`' % \
         pylink_qmc_transforms.difference(pylink_qmc_transforms_available_options)
