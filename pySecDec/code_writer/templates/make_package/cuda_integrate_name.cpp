@@ -76,7 +76,7 @@ int main()
     secdecutil::integrators::Qmc<
                                     %(name)s::integrand_return_t,
                                     %(name)s::maximal_number_of_integration_variables,
-                                    integrators::transforms::/* EDIT: insert transform here */::type,
+                                    integrators::transforms::Korobov<3>::type,
                                     %(name)s::cuda_together_integrand_t
                                 > integrator;
     integrator.verbosity = 1;
