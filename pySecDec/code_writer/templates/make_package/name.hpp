@@ -21,7 +21,7 @@ namespace %(name)s
     // whether or not complex parameters are present
     #define %(name)s_has_complex_parameters %(have_complex_parameters)i
 
-    // whether or no the return type should be complex in any case
+    // whether or not the return type should be complex in any case
     #define %(name)s_enforce_complex_return_type %(enforce_complex_return_type)i
 
     // basic data types
