@@ -6,13 +6,13 @@ CU_TESTS := $(patsubst %.cu,%,$(wildcard *.cu))
 TOPDIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # python executable
-PYTHON ?= python
+PYTHON ?= python3
 
 # c++ compiler
 CXX ?= g++
 
 # c++ compiler flags
-SECDEC_CONTRIB = $(shell python3 -m pySecDecContrib --dirname)
+SECDEC_CONTRIB = $(shell ${PYTHON} -m pySecDecContrib --dirname)
 CXXFLAGS = -std=c++14 -O2 -I. -I$(TOPDIR) -I$(SECDEC_CONTRIB)/include
 
 # linker flags
