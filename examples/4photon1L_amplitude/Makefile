@@ -2,7 +2,7 @@ INTEGRALS = $(patsubst %.py,%,$(wildcard *.py))
 
 # CXXFLAGS
 SECDEC_CONTRIB = $(shell python3 -m pySecDecContrib --dirname)
-CXXFLAGS = -I"$(SECDEC_CONTRIB)/include" -c -std=c++11 -O2 -I.
+CXXFLAGS = -I"$(SECDEC_CONTRIB)/include" -c -std=c++14 -O2 -I.
 
 # LDFLAGS
 LDFLAGS = -L"$(SECDEC_CONTRIB)/lib" $(patsubst %,-L%,$(INTEGRALS)) $(patsubst %,-l%,$(INTEGRALS)) -lgsl -lgslcblas -lcuba -lm

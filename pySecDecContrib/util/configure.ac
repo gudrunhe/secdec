@@ -15,7 +15,7 @@ AC_ARG_ENABLE([cuda],
     ]
 )
 
-dnl define AX_CXX_COMPILE_STDCXX_11 macro (sometimes required for mac)
+dnl define AX_CXX_COMPILE_STDCXX_14 macro (sometimes required for mac)
 AC_CONFIG_MACRO_DIR([acinclude.d])
 
 AC_PROG_CXX

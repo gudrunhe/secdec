@@ -10,25 +10,27 @@
 # In short:
 #
 # 1. A source distribution (sdist) is a specially named .tar.gz
-#    archive with a special 3-line file PKG-INFO; it can otherwise
+#    archive with a special file PKG-INFO; it can otherwise
 #    contain anything.
 #
-#    This file will be extracted into a temporary location, where
-#    it must be able to produce a built distribution.
+#    Upon installation (by pip) this file will be extracted into
+#    a temporary location, where it must be able to produce a
+#    "built distribution".
 #
 # 2. A build distribution (bdist, aka a wheel) is a specially named
-#    .whl (zip) archive with three special files:
+#    zip archive with an extension .whl and three special files:
 #    * <package name>-<package version>.dist-info/WHEEL
 #    * <package name>-<package version>.dist-info/METADATA
 #    * <package name>-<package version>.dist-info/RECORD
 #
-#    This whole file will be extracted into site-packages,
-#    and the dist-info/RECORD file will be used to keep
-#    track of which files belong to which packages.
+#    Upon installation this whole archive will be extracted into
+#    site-packages, and the RECORD file will be used to keep track
+#    of which files belong to which package.
 #
 # Therefore, in this SConstruct file we must list every source
 # for the sdist, and every binary needed in the bdist. Then,
-# SCons will do the rest for us.
+# enscons will handle constructing the special files and the
+# archives.
 
 import enscons
 import enscons.tags

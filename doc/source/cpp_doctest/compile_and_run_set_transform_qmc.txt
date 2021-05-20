@@ -1,1 +1,1 @@
-c++ -I${SECDEC_CONTRIB}/include -pthread -L${SECDEC_CONTRIB}/lib -std=c++11 example.cpp -o example -lm && ./example
+c++ -I${SECDEC_CONTRIB}/include -pthread -L${SECDEC_CONTRIB}/lib -std=c++14 example.cpp -o example -lm && ./example

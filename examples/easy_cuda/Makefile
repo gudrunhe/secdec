@@ -8,7 +8,7 @@ export SECDEC_WITH_CUDA = sm_52
 
 # CXXFLAGS
 SECDEC_CONTRIB = $(shell python3 -m pySecDecContrib --dirname)
-CXXFLAGS = -I"$(SECDEC_CONTRIB)/include" -dc -x cu -std=c++11 -O2 -I$(INTEGRAL) -DSECDEC_WITH_CUDA=$(SECDEC_WITH_CUDA)
+CXXFLAGS = -I"$(SECDEC_CONTRIB)/include" -dc -x cu -std=c++14 -O2 -I$(INTEGRAL) -DSECDEC_WITH_CUDA=$(SECDEC_WITH_CUDA)
 
 # LDFLAGS
 LDFLAGS = -L"$(SECDEC_CONTRIB)/lib" -L$(INTEGRAL) -l$(INTEGRAL) -lgsl -lgslcblas -lm
