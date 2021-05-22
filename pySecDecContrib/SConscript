@@ -22,18 +22,18 @@ contrib += \
     Install("include/secdecutil", Glob("util/secdecutil/*hpp")) + \
     Install("include/secdecutil/integrators", Glob("util/secdecutil/integrators/*hpp"))
 
-def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", configure_extra_args=""):
+def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", extra_commands="", extra_configure_args=""):
     return env.Command(target, [f"{packagename}{extension}"], f"""
         cd pySecDecContrib && \
         tar -xf {packagename}{extension} && \
         cd {packagename} && \
-        sed -i 's/mcc/false/g' configure && \
+        {extra_commands} \
         ./configure \
             --prefix="$$PWD/../install" \
             --libdir="$$PWD/../lib" \
             --includedir="$$PWD/../include" \
             --bindir="$$PWD/../bin" \
-            {configure_extra_args} && \
+            {extra_configure_args} && \
         make && \
         make install && \
         cd .. && \
@@ -43,17 +43,22 @@ def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", configure
 cuba_files = ["lib/libcuba.a", "include/cuba.h"]
 contrib += \
     ConfigureAndInstall(env, cuba_files, cuba,
-        configure_extra_args="CFLAGS='-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'")
+        extra_commands="""\
+            sed -i 's/mcc/false/g' configure && \
+            sed -i -e 's/puts(s)/fputs(s,stderr); putc(10,stderr)/' \
+                   -e 's/stdout/stderr/g' src/common/stddecl.h && \
+        """,
+        extra_configure_args="CFLAGS='-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'")
 
 form_files = ["bin/form", "bin/tform"]
 contrib += \
     ConfigureAndInstall(env, form_files, form,
-        configure_extra_args="--without-gmp --without-zlib")
+        extra_configure_args="--without-gmp --without-zlib")
 
 gsl_files = open(f"{gsl}.list").read().splitlines()
 contrib += \
     ConfigureAndInstall(env, gsl_files, gsl,
-        configure_extra_args="--disable-shared --enable-static --with-pic")
+        extra_configure_args="--disable-shared --enable-static --with-pic")
 
 nauty_files = ["bin/dreadnaut"]
 contrib += \
