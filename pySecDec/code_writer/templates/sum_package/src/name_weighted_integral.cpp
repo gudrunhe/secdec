@@ -63,6 +63,9 @@ namespace %(name)s
         {
             using integrand_t = ::%(sub_integral_name)s::integrand_t;
 
+            // Note: we define make_integrands with %(name)s_contour_deformation
+            // but call ::sub_integral_name::make_integrands with %(sub_integral_name)s_contour_deformation
+            // i.e we drop contour deformation parameters not relevant for this integral
             static std::vector<nested_series_t<integrand_t>> make_integrands
             (
                 const std::vector<real_t>& real_parameters,
@@ -79,7 +82,7 @@ namespace %(name)s
                     (
                         real_parameters,
                         complex_parameters
-                        #if %(name)s_contour_deformation
+                        #if %(sub_integral_name)s_contour_deformation
                             ,number_of_presamples,
                             deformation_parameters_maximum,
                             deformation_parameters_minimum,
@@ -95,6 +98,9 @@ namespace %(name)s
             {
                 using integrand_t = ::%(sub_integral_name)s::cuda_integrand_t;
 
+                // Note: we define make_integrands with %(name)s_contour_deformation
+                // but call ::sub_integral_name::make_integrands with %(sub_integral_name)s_contour_deformation
+                // i.e we drop contour deformation parameters not relevant for this integral
                 static std::vector<nested_series_t<integrand_t>> make_integrands
                 (
                     const std::vector<real_t>& real_parameters,
@@ -111,7 +117,7 @@ namespace %(name)s
                         (
                             real_parameters,
                             complex_parameters
-                            #if %(name)s_contour_deformation
+                            #if %(sub_integral_name)s_contour_deformation
                                 ,number_of_presamples,
                                 deformation_parameters_maximum,
                                 deformation_parameters_minimum,
@@ -258,6 +264,9 @@ namespace %(name)s
         // secdecutil::integrators::Qmc
         %(pylink_qmc_instantiate_amplitude_integral)s
         
+        // Note: we define make_integrands with %(name)s_contour_deformation
+        // but call ::sub_integral_name::make_integrands with %(sub_integral_name)s_contour_deformation
+        // i.e we drop contour deformation parameters not relevant for this integral
         template<typename integrator_t>
         std::vector<nested_series_t<sum_t>> make_integral
         (
@@ -282,7 +291,7 @@ namespace %(name)s
             (
                 real_parameters,
                 complex_parameters
-                #if %(name)s_contour_deformation
+                #if %(sub_integral_name)s_contour_deformation
                     ,number_of_presamples,
                     deformation_parameters_maximum,
                     deformation_parameters_minimum,
@@ -321,7 +330,7 @@ namespace %(name)s
             return amplitude;
         }
         
-        #if %(name)s_contour_deformation
+        #if %(sub_integral_name)s_contour_deformation
         
             #define INSTANTIATE_MAKE_INTEGRAL(INTEGRATOR) \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, INTEGRATOR, unsigned, real_t, real_t, real_t);
