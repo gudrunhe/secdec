@@ -453,6 +453,29 @@ TEST_CASE( "Explicit conversion", "[UncorrelatedDeviation]" ) {
 
 };
 
+TEST_CASE( "Construct complex from real", "[UncorrelatedDeviation]" ) {
+    
+    auto gu = secdecutil::UncorrelatedDeviation<std::complex<double>>(1.0,2.0);
+    
+    auto gureal = secdecutil::UncorrelatedDeviation<double>(1.0,2.0);
+    auto gucomplex = secdecutil::UncorrelatedDeviation<std::complex<double>>({0.0,0.0},{0.0,0.0});
+    gucomplex = gureal;
+    
+    REQUIRE( gu.value.real() == Approx(1.) );
+    REQUIRE( gu.value.imag() == Approx(0.) );
+    REQUIRE( gu.uncertainty.real() == Approx(2.) );
+    REQUIRE( gu.uncertainty.imag() == Approx(0.) );
+    
+    REQUIRE( gucomplex.value.real() == Approx(1.) );
+    REQUIRE( gucomplex.value.imag() == Approx(0.) );
+    REQUIRE( gucomplex.uncertainty.real() == Approx(2.) );
+    REQUIRE( gucomplex.uncertainty.imag() == Approx(0.) );
+    
+    // Downcast forbidden (compile error)
+    // gureal = gucomplex
+
+};
+
 TEST_CASE( "Binary Operators complex", "[UncorrelatedDeviation]" ) {
 
     auto gu1 = secdecutil::UncorrelatedDeviation<dcmplx>({-1.,2.},{4.,6.});
