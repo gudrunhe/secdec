@@ -250,3 +250,60 @@ TEST_CASE( "complex_to_real", "[IntegrandContainer]" ) {
   };
 
 };
+
+TEST_CASE( "Construct complex from real", "[IntegrandContainer]" ) {
+    
+    #ifdef SECDEC_WITH_CUDA
+        using dcmplx = thrust::complex<double>;
+    #else
+        using dcmplx = std::complex<double>;
+    #endif
+
+    std::function<double(double, secdecutil::ResultInfo*)> func = [] (double i, secdecutil::ResultInfo* result_info) { return i+2.; };
+    std::function<double(double, secdecutil::ResultInfo*)> func_unused = [] (double i, secdecutil::ResultInfo* result_info) { return -100.; };
+
+    auto icreal = secdecutil::IntegrandContainer<double, int>(3,func);
+    auto iccomplex = secdecutil::IntegrandContainer<dcmplx, int>(3,func);
+    
+    auto iccomplex_equals_iccomplex = secdecutil::IntegrandContainer<dcmplx, int>(3,func_unused);
+    auto iccomplex_equals_icreal = secdecutil::IntegrandContainer<dcmplx, int>(3,func_unused);
+    
+    //auto icreal_equals_iccomplex = secdecutil::IntegrandContainer<double, int>(3,func_unused);
+    auto icreal_equals_icreal = secdecutil::IntegrandContainer<double, int>(3,func_unused);
+
+    // Construct complex from complex/real integrand container
+    iccomplex_equals_iccomplex = iccomplex;
+    iccomplex_equals_icreal = icreal;
+    
+    // Construct real from complex integrand container
+    //icreal_equals_iccomplex = iccomplex; // Downcast forbidden (compile error)
+    icreal_equals_icreal = icreal;
+    
+    SECTION( "Accessing fields" ) {
+
+        REQUIRE( icreal.number_of_integration_variables == 3 );
+        REQUIRE( iccomplex.number_of_integration_variables == 3 );
+        REQUIRE( iccomplex_equals_iccomplex.number_of_integration_variables == 3 );
+        REQUIRE( iccomplex_equals_icreal.number_of_integration_variables == 3 );
+        REQUIRE( icreal_equals_icreal.number_of_integration_variables == 3 );
+
+    };
+
+    SECTION( "Call operator" ) {
+
+        REQUIRE( icreal(10.) == Approx(10.+2.) );
+        
+        REQUIRE( iccomplex(10.).real() == Approx(10.+2.) );
+        REQUIRE( iccomplex(10.).imag() == Approx(0) );
+        
+        REQUIRE( iccomplex_equals_iccomplex(10.).real() == Approx(10.+2.) );
+        REQUIRE( iccomplex_equals_iccomplex(10.).imag() == Approx(0) );
+        
+        REQUIRE( iccomplex_equals_icreal(10.).real() == Approx(10.+2.) );
+        REQUIRE( iccomplex_equals_icreal(10.).imag() == Approx(0) );
+        
+        REQUIRE( icreal_equals_icreal(10.) == Approx(10.+2.) );
+
+    };
+
+};

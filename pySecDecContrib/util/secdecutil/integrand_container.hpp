@@ -57,6 +57,13 @@ namespace secdecutil {
 
     template<typename T, typename Args, typename Pars=double, typename Pars_extra=Pars>
     struct IntegrandContainer {
+        
+        template<typename T_real> struct remove_complex { using type = T_real; };
+        template<typename T_real> struct remove_complex<std::complex<T_real>> { using type = T_real; };
+        #ifdef SECDEC_WITH_CUDA
+            template<typename T_real> struct remove_complex<thrust::complex<T_real>> { using type = T_real; };
+        #endif
+        
         enum Operation { add, subtract, multiply, divide };
         int number_of_integration_variables;
         std::string display_name = "INTEGRAND";
@@ -102,15 +109,24 @@ namespace secdecutil {
             extra_parameters = other.extra_parameters;
             display_name = other.display_name;
         }
-
-        template<typename other_T>
-        IntegrandContainer(const IntegrandContainer<other_T,Args,Pars,Pars_extra>& other):
-        IntegrandContainer(other.number_of_integration_variables, [](Args x, const Pars* p, ResultInfo* result_info){return 0;}, other.parameters){
-            result_info = other.result_info;
-            extra_parameters = other.extra_parameters;
+        
+        // Constructor of complex IntegrandContainer from real IntegrandContainer
+        #ifdef SECDEC_WITH_CUDA
+            template<typename Tc = T, typename = typename std::enable_if<std::is_same<thrust::complex<typename remove_complex<Tc>::type>,Tc>::value>::type>
+        #else
+            template<typename Tc = T, typename = typename std::enable_if<std::is_same<std::complex<typename remove_complex<Tc>::type>,Tc>::value>::type>
+        #endif
+        IntegrandContainer(const IntegrandContainer<typename remove_complex<Tc>::type,Args,Pars,Pars_extra>& other)
+        {
+            number_of_integration_variables = other.number_of_integration_variables;
             display_name = other.display_name;
+            parameters = other.parameters;
+            parameters_ptr = other.parameters_ptr;
+            extra_parameters = other.extra_parameters;
+            integrand_with_parameters = [other] (Args x, const Pars* p, ResultInfo* r){ return other.integrand_with_parameters(x,p,r); }; // returns T rather than remove_complex<T>
+            result_info = other.result_info;
         }
-
+        
         T operator()(Args x) const
         {
             const Pars* dataptr = parameters.size() ? parameters[0].data() : nullptr;
@@ -221,18 +237,28 @@ namespace secdecutil {
 
     namespace complex_to_real {
 
-        #define COMPLEX_INTEGRAND_CONTAINER_TO_REAL(OPERATION) \
-        template<template<typename ...> class complex_template, typename T, typename Args, typename Pars> \
-        IntegrandContainer<T, Args, Pars> OPERATION(const IntegrandContainer<complex_template<T>, Args, Pars>& ic) \
+        #define COMPLEX_INTEGRAND_CONTAINER_TO_REAL(complex_template, OPERATION) \
+        template<typename T, typename Args, typename Pars> \
+        IntegrandContainer<T, Args, Pars> OPERATION(const IntegrandContainer<complex_template<T>, Args, Pars>& other) \
         { \
-            std::function<T(Args,const Pars*,ResultInfo*)> new_integrand = [ic] (Args x, const Pars* p, ResultInfo* r){ return ic.integrand_with_parameters(x,p,r).OPERATION(); }; \
-            IntegrandContainer<T, Args, Pars> new_container = ic; \
-            new_container.integrand_with_parameters = new_integrand; \
-            return new_container; \
+            IntegrandContainer<T, Args, Pars> ic; \
+            ic.number_of_integration_variables = other.number_of_integration_variables; \
+            ic.display_name = other.display_name; \
+            ic.parameters = other.parameters; \
+            ic.parameters_ptr = other.parameters_ptr; \
+            ic.extra_parameters = other.extra_parameters; \
+            ic.integrand_with_parameters = [other] (Args x, const Pars* p, ResultInfo* r){ return other.integrand_with_parameters(x,p,r).OPERATION(); }; \
+            ic.result_info = other.result_info; \
+            return ic; \
         }
-
-        COMPLEX_INTEGRAND_CONTAINER_TO_REAL(real)
-        COMPLEX_INTEGRAND_CONTAINER_TO_REAL(imag)
+        
+        COMPLEX_INTEGRAND_CONTAINER_TO_REAL(std::complex,real)
+        COMPLEX_INTEGRAND_CONTAINER_TO_REAL(std::complex,imag)
+        #ifdef SECDEC_WITH_CUDA
+          COMPLEX_INTEGRAND_CONTAINER_TO_REAL(thrust::complex,real)
+          COMPLEX_INTEGRAND_CONTAINER_TO_REAL(thrust::complex,imag)
+        #endif
+        
         #undef COMPLEX_INTEGRAND_CONTAINER_TO_REAL
 
     }
