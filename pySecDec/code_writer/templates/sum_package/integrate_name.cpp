@@ -23,12 +23,11 @@ int main()
                                 > integrator;
     integrator.verbosity = 1;
 
-    // Construct the amplitudes. Further options for the individual integrals can be set in the
-    // corresponding "<integral_name>_weighted_integral.cpp" file in the "src/" directory
+    // Construct the amplitudes
     std::vector<%(name)s::nested_series_t<%(name)s::sum_t>> unwrapped_amplitudes =
         %(name)s::make_amplitudes(real_parameters, complex_parameters, integrator);
 
-    // pack amplitudes into handler
+    // Pack amplitudes into handler
     %(name)s::handler_t<amplitudes_t> amplitudes
     (
         unwrapped_amplitudes
