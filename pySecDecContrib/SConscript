@@ -44,9 +44,10 @@ cuba_files = ["lib/libcuba.a", "include/cuba.h"]
 contrib += \
     ConfigureAndInstall(env, cuba_files, cuba,
         extra_commands="""\
-            sed -i 's/mcc/false/g' configure && \
-            sed -i -e 's/puts(s)/fputs(s,stderr); putc(10,stderr)/' \
-                   -e 's/stdout/stderr/g' src/common/stddecl.h && \
+            sed -i.bak 's/mcc/false/g' configure && \
+            sed -i.bak \
+                -e 's/puts(s)/fputs(s,stderr); putc(10,stderr)/' \
+                -e 's/stdout/stderr/g' src/common/stddecl.h && \
         """,
         extra_configure_args="CFLAGS='-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'")
 
