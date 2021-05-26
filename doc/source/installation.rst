@@ -16,7 +16,7 @@ and then running:
 
 .. code::
 
-   $ python3 -m pip install --user pySecDec
+   $ python3 -m pip install --user --upgrade pySecDec
 
 .. _PyPI: https://pypi.org/project/pySecDec/
 .. _pip: https://pypi.org/project/pip/

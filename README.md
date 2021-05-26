@@ -29,7 +29,7 @@ by first (optionally) upgrading [pip](https://pypi.org/project/pip/):
 
 and then running:
 
-    $ python3 -m pip install --user pySecDec
+    $ python3 -m pip install --user --upgrade pySecDec
 
 To install the latest development version on the other hand, run:
 
