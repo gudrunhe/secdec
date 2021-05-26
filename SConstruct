@@ -33,14 +33,14 @@
 # archives.
 
 import enscons
-import enscons.tags
 import os
+import packaging.tags
 import subprocess
 import toml
 
 def get_universal_platform_tag():
     """Return the wheel tag for universal Python 3, but specific platform."""
-    tag = list(enscons.tags.sys_tags())[0]
+    tag = next(packaging.tags.sys_tags())
     return f"py3-none-{tag.platform}"
 
 def DirectoryFiles(dir):

@@ -1,6 +1,6 @@
 [project]
 name = "pySecDec"
-version = "1.4.5a1.dev5"
+version = "1.4.5a1.dev6"
 
 author = "Sophia Borowka, Gudrun Heinrich, Stephan Jahn, Stephen Jones, Matthias Kerner, Vitaly Magerya, Andres Poldaru, Johannes Schlenk, Tom Zirke"
 classifiers = [
@@ -24,5 +24,5 @@ testing = ["nose"]
 documentation = ["sphinx>=1.6.3"]
 
 [build-system]
-requires = ["enscons>=0.26", "toml>=0.10"]
+requires = ["enscons>=0.26", "toml>=0.10", "packaging>=20.5"]
 build-backend = "enscons.api"
