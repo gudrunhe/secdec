@@ -304,11 +304,11 @@ namespace %(name)s
             const std::function<sum_t(const integrand_t& integrand)> convert_integrands =
                 [ integrator_ptr ] (const integrand_t& integrand) -> sum_t
                 {
-                    const std::shared_ptr<integral_t> integral_pointer = std::make_shared<integral_t>(integrator_ptr, integrand);
-                    integral_pointer->display_name = ::%(sub_integral_name)s::package_name + "_" + integrand.display_name;
+                    const std::shared_ptr<integral_t> integral_ptr = std::make_shared<integral_t>(integrator_ptr, integrand);
+                    integral_ptr->display_name = ::%(sub_integral_name)s::package_name + "_" + integrand.display_name;
                     return { /* constructor of std::vector */
                                 { /* constructor of WeightedIntegral */
-                                    integral_pointer
+                                    integral_ptr
                                 }
                         };
                 };
