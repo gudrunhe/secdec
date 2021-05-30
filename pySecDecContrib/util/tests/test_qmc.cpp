@@ -15,26 +15,76 @@
 #include <cuba.h>
 #include <string>
 
-  TEST_CASE( "Test result_info contour deformation sign check error with qmc", "[IntegrandContainer]" ) {
-    const int dimensionality = 1;
-    const std::function<double(double const * const, secdecutil::ResultInfo*)> integrand = [] (double const * const variables, secdecutil::ResultInfo* result_info)
-        { result_info->return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_contour_deformation; return 0; };
-    const auto integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,integrand);
+#ifdef SECDEC_WITH_CUDA
+    #define HOSTDEVICE __host__ __device__
+#else
+    #define HOSTDEVICE
+#endif
 
-    auto integrator = secdecutil::integrators::Qmc<double,dimensionality,integrators::transforms::Korobov<3>::type, decltype(integrand_container)>();
+struct sign_check_error_integrand_t
+{
+
+    const static unsigned number_of_integration_variables = 4;
+
+    HOSTDEVICE double operator()(double const * const variables, secdecutil::ResultInfo* result_info)
+    {
+        result_info->return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_contour_deformation;
+        return 0;
+    };
+
+
+} sign_check_error_integrand;
+
+struct sign_check_error_contour_deformation_integrand_t
+{
+
+    const static unsigned number_of_integration_variables = 4;
+
+    HOSTDEVICE double operator()(double const * const variables, secdecutil::ResultInfo* result_info)
+    {
+        result_info->return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_contour_deformation;
+        return 0;
+    };
+
+
+} sign_check_error_contour_deformation_integrand;
+
+struct sign_check_error_positive_polynomial_integrand_t
+{
+
+    const static unsigned number_of_integration_variables = 4;
+
+    HOSTDEVICE double operator()(double const * const variables, secdecutil::ResultInfo* result_info)
+    {
+        result_info->return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_positive_polynomial;
+        return 0;
+    };
+
+
+} sign_check_error_positive_polynomial_integrand;
+
+
+TEST_CASE( "Test result_info contour deformation sign check error with qmc", "[IntegrandContainer]" ) {
+  
+    using integrand_t = secdecutil::IntegrandContainer</*integrand_return_t*/ double,/*x*/ double const * const,/*parameters*/ double>;
+  
+    const int dimensionality = 1;
+    const integrand_t integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,sign_check_error_contour_deformation_integrand);
+    auto integrator = secdecutil::integrators::Qmc<double,dimensionality,integrators::transforms::Korobov<3>::type, integrand_t>();
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
     REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::Contains( "contour deformation" ) );
-  };
+};
 
-  TEST_CASE( "Test result_info positive polynomial sign check error with qmc", "[IntegrandContainer]" ) {
+TEST_CASE( "Test result_info positive polynomial sign check error with qmc", "[IntegrandContainer]" ) {
+    
+    using integrand_t = secdecutil::IntegrandContainer</*integrand_return_t*/ double,/*x*/ double const * const,/*parameters*/ double>;
+
     const int dimensionality = 1;
-    const std::function<double(double const * const, secdecutil::ResultInfo*)> integrand = [] (double const * const variables, secdecutil::ResultInfo* result_info)
-        { result_info->return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_positive_polynomial; return 0; };
-    const auto integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,integrand);
-
+    const integrand_t integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,sign_check_error_positive_polynomial_integrand);
     auto integrator = secdecutil::integrators::Qmc<double,dimensionality,integrators::transforms::Korobov<3>::type, decltype(integrand_container)>();
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
     REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::Contains( "positive polynomial" ) );
-  };
+};
+
