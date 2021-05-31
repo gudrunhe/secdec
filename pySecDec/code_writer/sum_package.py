@@ -1,7 +1,6 @@
 from ..metadata import version, git_id
 from .template_parser import validate_pylink_qmc_transforms, generate_pylink_qmc_macro_dict, parse_template_file, parse_template_tree
 from ..misc import sympify_symbols, make_cpp_list
-from ..loop_integral.loop_package import loop_package
 
 from time import strftime
 import os, sys, shutil, subprocess
@@ -344,7 +343,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     # "secdecutil::Series<secdecutil::Series<T>>"
     nested_series_type = 'secdecutil::Series<' * len(requested_orders) + 'T' + '>' * len(requested_orders)
     for package_generator in package_generators:
-        if package_generator is loop_package:
+        if package_generator.__name__ == 'loop_package':
             assert all(len(requested_orders) == len(args["loop_integral"].regulators) for args in generators_args), \
                 "The `requested_orders` must match the number of regulators"
         else:
@@ -458,7 +457,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
             replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
 
             minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
-            if package_generator is loop_package:
+            if package_generator.__name__ == 'loop_package' :
                 pass
             else:
                 generator_args['regulators'] = regulators

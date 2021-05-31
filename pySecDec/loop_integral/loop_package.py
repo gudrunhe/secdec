@@ -1,7 +1,7 @@
 """
 This module implements a wrapper for loop integrals
 around the main program
-:func:`pySecDec.code_writer.make_package` - the
+:func:`pySecDec.make_package` - the
 function :func:`.loop_package`.
 
 """
@@ -9,7 +9,7 @@ function :func:`.loop_package`.
 from .from_graph import LoopIntegralFromGraph
 from .draw import plot_diagram
 from ..algebra import Polynomial
-from ..code_writer.make_package import make_package
+from ..make_package import make_package
 from ..misc import flatten, sympify_expression
 from itertools import chain
 import numpy as np
@@ -37,7 +37,7 @@ def loop_package(name, loop_integral, requested_orders,
 
     .. seealso::
         This function is a wrapper around
-        :func:`pySecDec.code_writer.make_package`.
+        :func:`pySecDec.make_package`.
 
     .. seealso::
         The generated library is described in
