@@ -136,9 +136,10 @@ namespace %(name)s
         #endif
     #endif
 
-    #undef %(name)s_contour_deformation
-    #undef %(name)s_has_complex_parameters
-    #undef %(name)s_enforce_complex_return_type
+    // Do not undefine integral specific variables
+    //#undef %(name)s_contour_deformation
+    //#undef %(name)s_has_complex_parameters
+    //#undef %(name)s_enforce_complex_return_type
 
 };
 #endif

@@ -330,7 +330,7 @@ namespace %(name)s
             return amplitude;
         }
         
-        #if %(sub_integral_name)s_contour_deformation
+        #if %(name)s_contour_deformation
         
             #define INSTANTIATE_MAKE_INTEGRAL(INTEGRATOR) \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, INTEGRATOR, unsigned, real_t, real_t, real_t);
