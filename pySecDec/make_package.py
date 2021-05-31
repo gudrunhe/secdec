@@ -5,11 +5,11 @@ This module provides a make_package like interface to code_writer.sum_package
 """
 
 from __future__ import print_function
-from .code_writer.make_package import make_package
+from .code_writer.make_package import make_package as code_writer_make_package
 from .code_writer.sum_package import sum_package, Coefficient
 
 # ---------------------------------- main function ----------------------------------
-def make_sum_package(name, integration_variables, regulators, requested_orders,
+def make_package(name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
                  complex_parameters=[], form_optimization_level=2, form_work_space='500M',
@@ -30,6 +30,9 @@ def make_sum_package(name, integration_variables, regulators, requested_orders,
     .. seealso::
         The generated library is described in
         :ref:`generated_cpp_libs`.
+
+    .. seealso::
+        :func:`pySecDec.code_writer.make_package`
 
     :param name:
         string;
@@ -336,6 +339,6 @@ def make_sum_package(name, integration_variables, regulators, requested_orders,
         'pylink_qmc_transforms' : pylink_qmc_transforms
     }
 
-    sum_package(name, [make_package], [generators_args], regulators, requested_orders,
+    sum_package(name, [code_writer_make_package], [generators_args], regulators, requested_orders,
                     real_parameters, complex_parameters, None,
                     form_executable, pylink_qmc_transforms)
