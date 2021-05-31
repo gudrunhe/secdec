@@ -439,6 +439,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         # call package generator for every integral
         number_of_integration_variables = 0
         contour_deformation = 0
+        template_replacements = {}
         for j, (package_generator, generator_args) in enumerate(zip(package_generators, generators_args)):
             sub_name = generator_args['name']
             replacements_in_files['sub_integral_name'] = sub_name
@@ -489,3 +490,6 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     parse_template_file(os.path.join(template_sources, 'name.hpp'),  # source
                         os.path.join(name, name + '.hpp'),  # dest
                         replacements_in_files)
+
+    # Return template replacements of last integral processed (for 1 integral case this emulates what code_writer.make_package does)
+    return template_replacements
