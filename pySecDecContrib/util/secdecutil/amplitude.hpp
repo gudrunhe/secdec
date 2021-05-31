@@ -1037,6 +1037,7 @@ namespace secdecutil {
 
                     secdecutil::deep_apply(expression, ensure_min_prec);
                     secdecutil::deep_apply(expression, ensure_maxincreasefac);
+                    ensure_wall_clock_limit(repeat, integrals);
 
                     if(verbose)
                         std::cout << std::endl << "computing integrals to satisfy min_epsrel " << this->min_epsrel << " or min_epsabs " << this->min_epsabs << std::endl;
