@@ -4,7 +4,7 @@
 #include <algorithm> // std::max, std::min, std::sort
 #include <cassert> // assert
 #include <chrono> // std::chrono::steady_clock
-#include <iostream> // std::cout, std::dec
+#include <iostream> // std::cerr, std::dec
 #include <limits> // std::numeric_limits
 #include <memory> // std::shared_ptr
 #include <string> // std::to_string
@@ -417,7 +417,7 @@ namespace secdecutil {
 
         static inline void print_datetime(std::string prefix = "Current time: "){
             auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-            std::cout << prefix << std::ctime(&t);
+            std::cerr << prefix << std::ctime(&t);
         }
 
         /*
@@ -447,29 +447,29 @@ namespace secdecutil {
                             integral->compute();
                         } catch(secdecutil::sign_check_error& e){
                             failed = true;
-                            std::cout << "Exception: " << e.what() << std::endl;
+                            std::cerr << "Exception: " << e.what() << std::endl;
                             integral->clear_errors();
 
-                            std::cout << "Integral " << integral->display_name << " failed, reducing deformation parameters." << std::endl;
+                            std::cerr << "Integral " << integral->display_name << " failed, reducing deformation parameters." << std::endl;
                             std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type*>> pars = integral->get_parameters();
                             std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type>> extra_pars = integral->get_extra_parameters();
                             failed_atleast_once = true;
                             bool changed_deformation_parameters = false;
                             for(int k = 0; k < pars.size(); k++){
                                 for(int i = 0; i < pars[k].size(); i++){
-                                    std::cout << "par " << k << "," << i << ": " << *pars[k][i];
+                                    std::cerr << "par " << k << "," << i << ": " << *pars[k][i];
                                     if(*pars[k][i] > extra_pars[k][0]){
                                         *pars[k][i] *= extra_pars[k][1];
                                         if(*pars[k][i] < extra_pars[k][0]){
                                             *pars[k][i] = extra_pars[k][0];
                                         }
                                         changed_deformation_parameters = true;
-                                        std::cout << " -> " << *pars[k][i];
+                                        std::cerr << " -> " << *pars[k][i];
                                     }
                                     if(i == pars[k].size()-1 and k == pars.size()-1)
-                                        std::cout << std::endl;
+                                        std::cerr << std::endl;
                                     else
-                                        std::cout << ", ";
+                                        std::cerr << ", ";
                                 }
                             }
                             if(not changed_deformation_parameters){
@@ -494,13 +494,13 @@ namespace secdecutil {
 
                     if(verbose and (next_n > curr_n))
                     {
-                        std::cout << "integral " << integral->id << "/" << integrals.size() << ": " << integral->display_name << ", time: ";
+                        std::cerr << "integral " << integral->id << "/" << integrals.size() << ": " << integral->display_name << ", time: ";
                         std::printf("%.1f", integral->get_integration_time());
-                        std::cout << " s, ";
+                        std::cerr << " s, ";
                         print_datetime();
-                        std::cout << "res: " << old_result << " -> " << integral->get_integral_result()
+                        std::cerr << "res: " << old_result << " -> " << integral->get_integral_result()
                                       << ", n: " << curr_n << " -> " << std::dec << integral->get_number_of_function_evaluations() << std::endl;
-                        std::cout << std::endl;
+                        std::cerr << std::endl;
                     }
                 };
 
@@ -687,10 +687,10 @@ namespace secdecutil {
                 };
 
                 void print_result(){
-                    std::cout << "Current result:" << std::endl;
+                    std::cerr << "Current result:" << std::endl;
                     container_t<sum_return_t> result = evaluate_expression();
                     for (unsigned int amp_idx = 0; amp_idx < result.size(); ++amp_idx)
-                        std::cout << "amplitude" << amp_idx << " = " << result.at(amp_idx) << std::endl;
+                        std::cerr << "amplitude" << amp_idx << " = " << result.at(amp_idx) << std::endl;
                 }
 
                 /*
@@ -705,10 +705,10 @@ namespace secdecutil {
                     {
                         if(verbose)
                         {
-                            std::cout << std::endl;
-                            std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
-                            std::cout << "remaining time: " << remaining_time << " s = " << remaining_time/60 << " min = " << remaining_time/60/60 << " hr" << std::endl;
-                            std::cout << "stopping due to time constraint" << std::endl;
+                            std::cerr << std::endl;
+                            std::cerr << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                            std::cerr << "remaining time: " << remaining_time << " s = " << remaining_time/60 << " min = " << remaining_time/60/60 << " hr" << std::endl;
+                            std::cerr << "stopping due to time constraint" << std::endl;
                         }
                         return;
                     }
@@ -730,19 +730,19 @@ namespace secdecutil {
 
                     if(verbose)
                     {
-                        std::cout << std::endl;
-                        std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
-                        std::cout << "estimated time for integrations: " << time_for_next_iteration << " s = " << time_for_next_iteration/60 << " min = " << time_for_next_iteration/60/60 << " hr" << std::endl;
-                        std::cout << "remaining time: " << remaining_time << " s = " << remaining_time/60 << " min = " << remaining_time/60/60 << " hr" << std::endl;
-                        std::cout << "soft wall clock limit: " << soft_wall_clock_limit << " s = " << soft_wall_clock_limit/60 << " min = " << soft_wall_clock_limit/60/60 << " hr" << std::endl;
-                        std::cout << "hard wall clock limit: " << hard_wall_clock_limit << " s = " << hard_wall_clock_limit/60 << " min = " << hard_wall_clock_limit/60/60 << " hr" << std::endl;
+                        std::cerr << std::endl;
+                        std::cerr << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                        std::cerr << "estimated time for integrations: " << time_for_next_iteration << " s = " << time_for_next_iteration/60 << " min = " << time_for_next_iteration/60/60 << " hr" << std::endl;
+                        std::cerr << "remaining time: " << remaining_time << " s = " << remaining_time/60 << " min = " << remaining_time/60/60 << " hr" << std::endl;
+                        std::cerr << "soft wall clock limit: " << soft_wall_clock_limit << " s = " << soft_wall_clock_limit/60 << " min = " << soft_wall_clock_limit/60/60 << " hr" << std::endl;
+                        std::cerr << "hard wall clock limit: " << hard_wall_clock_limit << " s = " << hard_wall_clock_limit/60 << " min = " << hard_wall_clock_limit/60/60 << " hr" << std::endl;
                     }
 
                     // decrease number of sampling points if sampling would run out of time
                     while(remaining_time * decrease_to_percentage < time_for_next_iteration)
                     {
                         if(verbose)
-                            std::cout << "reducing number of samples due to time constraint ..." << std::endl;
+                            std::cerr << "reducing number of samples due to time constraint ..." << std::endl;
 
                         decrease_factor = remaining_time * decrease_to_percentage / time_for_next_iteration ;
                         if(decrease_factor > min_decrease_factor)
@@ -777,14 +777,14 @@ namespace secdecutil {
 
                         if(verbose)
                         {
-                            std::cout << "estimated time for integrations (after reduction of samples): " << time_for_next_iteration << " s = " <<
+                            std::cerr << "estimated time for integrations (after reduction of samples): " << time_for_next_iteration << " s = " <<
                                     time_for_next_iteration/60 << " min = " << time_for_next_iteration/60/60 << " hr" << std::endl;
-                            std::cout << "can improve in time: " << (can_improve_in_time ? "true" : "false") << std::endl;
+                            std::cerr << "can improve in time: " << (can_improve_in_time ? "true" : "false") << std::endl;
                         }
                     }
 
                     if(verbose)
-                        std::cout << "run further refinements: " << (repeat ? "true" : "false") << std::endl;
+                        std::cerr << "run further refinements: " << (repeat ? "true" : "false") << std::endl;
 
                 };
 
@@ -829,7 +829,7 @@ namespace secdecutil {
                                             repeat = true;
                                             term.integral->set_next_number_of_function_evaluations( new_n > sum.maxeval ? sum.maxeval : static_cast<unsigned long long int>(new_n) );
                                             if(verbose)
-                                                std::cout << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                                std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
                                                         term.integral->display_name << ", current integral result: " << result << ", increase n: " << old_n << " -> " <<new_n << std::endl;
                                         }
                                     }
@@ -863,7 +863,7 @@ namespace secdecutil {
                         abs_error_goal = max(abs_error_goal, sum.epsabs); // Do not request an error smaller than epsabs
 
                         if(verbose)
-                            std::cout << std::endl << "sum: " << sum.display_name << ", current sum result: " << current_sum << ",  error goal: " << abs_error_goal<<std::endl;
+                            std::cerr << std::endl << "sum: " << sum.display_name << ", current sum result: " << current_sum << ",  error goal: " << abs_error_goal<<std::endl;
                         if(abs_error < abs_error_goal)
                             return;
 
@@ -953,7 +953,7 @@ namespace secdecutil {
                                 {
                                     repeat = true;
                                     if (verbose)
-                                        std::cout << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                        std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
                                                 term.integral->display_name << ", current integral result: " << term.integral->get_integral_result() << 
                                                 ", contribution to sum error: " << abs(term.integral->get_integral_result().uncertainty*term.coefficient) << 
                                                 ", increase n: " << curr_n << " -> " <<proposed_next_n << std::endl;
@@ -1009,7 +1009,7 @@ namespace secdecutil {
                 //            for(int j = 0; j < new_parameters[k].size(); j++){
                 //                *old_parameters[k][j] = new_parameters[k][j];
                 //                if(verbose)
-                //                    std::cout << "read in changed parameter " << k << "," << j << " for " << integrals[i]->display_name << ": " << *old_parameters[k][j] << std::endl;
+                //                    std::cerr << "read in changed parameter " << k << "," << j << " for " << integrals[i]->display_name << ": " << *old_parameters[k][j] << std::endl;
                 //            }
                 //        }
                 //    }
@@ -1019,16 +1019,16 @@ namespace secdecutil {
                 secdecutil::deep_apply(expression, ensure_mineval);
                 if(verbose){
                     print_datetime("Starting calculations: ");
-                    std::cout << "computing integrals to satisfy mineval " << this->mineval << std::endl;
+                    std::cerr << "computing integrals to satisfy mineval " << this->mineval << std::endl;
                 }
                 evaluate_integrals<integrand_return_t>(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                 if(verbose){
-                    std::cout << "---------------------" << std::endl << std::endl;
+                    std::cerr << "---------------------" << std::endl << std::endl;
                     auto elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
-                    std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                    std::cerr << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
                     print_datetime();
                     print_result();
-                    std::cout << std::endl;
+                    std::cerr << std::endl;
                 }
 
                 // ensure each integral is at least known to min_epsrel and min_epsabs
@@ -1040,15 +1040,15 @@ namespace secdecutil {
                     ensure_wall_clock_limit(repeat, integrals);
 
                     if(verbose)
-                        std::cout << std::endl << "computing integrals to satisfy min_epsrel " << this->min_epsrel << " or min_epsabs " << this->min_epsabs << std::endl;
+                        std::cerr << std::endl << "computing integrals to satisfy min_epsrel " << this->min_epsrel << " or min_epsabs " << this->min_epsabs << std::endl;
                     evaluate_integrals<integrand_return_t>(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
-                        std::cout << "---------------------" << std::endl << std::endl;
+                        std::cerr << "---------------------" << std::endl << std::endl;
                         auto elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
-                        std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                        std::cerr << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
                         print_datetime();
                         print_result();
-                        std::cout << std::endl;
+                        std::cerr << std::endl;
                     }
                 } while(repeat);
 
@@ -1061,18 +1061,18 @@ namespace secdecutil {
                     ensure_wall_clock_limit(repeat, integrals);
 
                     if(verbose)
-                        std::cout << std::endl << "computing integrals to satisfy error goals on sums: epsrel " << this->epsrel << ", epsabs " << this->epsabs << std::endl;
+                        std::cerr << std::endl << "computing integrals to satisfy error goals on sums: epsrel " << this->epsrel << ", epsabs " << this->epsabs << std::endl;
                     evaluate_integrals<integrand_return_t>(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
-                        std::cout << "---------------------" << std::endl << std::endl;
+                        std::cerr << "---------------------" << std::endl << std::endl;
                         print_datetime();
                         print_result();
-                        std::cout << std::endl;
+                        std::cerr << std::endl;
                     }
                 } while(repeat);
                 if(verbose){
                         auto elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
-                        std::cout << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
+                        std::cerr << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
                         print_datetime();
                 }
 
