@@ -14,6 +14,7 @@ try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
+from os import chdir
 
 def _parse_series_coefficient(text):
     """
@@ -993,3 +994,104 @@ class IntegralLibrary(object):
         else:
             self._cuda = True
             self.integrator = CudaQmc(self,*args,**kwargs)
+
+class RegionsInterface:
+    """
+    Interfaces the integrations produced by the make_regions package
+    to Python
+    """
+    def __init__(self, shared_object_path):
+        self._cuda = False
+
+        c_lib = self.c_lib = CDLL(shared_object_path)
+        self.integrator = 0
+        self.verbose = False
+
+        chdir(shared_object_path.rsplit("/",1)[0])
+
+        self.c_lib.allocate_string.argtypes = []
+        self.c_lib.allocate_string.restype = c_void_p
+        
+        self.c_lib.get_integral_info.restype = c_void_p
+        self.c_lib.get_integral_info.argtypes = [c_void_p]
+
+        self.c_lib.string2charptr.argtypes = [c_void_p]
+        self.c_lib.string2charptr.restype = c_char_p
+
+        self.c_lib.free_string.argtypes = [c_void_p]
+        self.c_lib.free_string.restype = None
+
+        self.c_lib.compute_integral.argtypes = [c_void_p, c_void_p, c_void_p, c_int, c_int]
+        self.c_lib.compute_integral.restype = None
+
+        # get integral info
+        cpp_str_integral_info = c_lib.allocate_string()
+        c_lib.get_integral_info(cpp_str_integral_info)
+        str_integral_info = c_lib.string2charptr(cpp_str_integral_info)
+        c_lib.free_string(cpp_str_integral_info)
+        if not isinstance(str_integral_info, str):
+            str_integral_info = str_integral_info.decode('ASCII')
+
+        # store the integral info in a dictionary
+        integral_info = self.info = dict()
+        for line in str_integral_info.split('\n'):
+            key, value = line.split('=')
+            integral_info[key.strip()] = value.strip(' ,')
+
+    def __call__(self, real_parameters=[], complex_parameters=[]):
+        # Initialize and launch the underlying c routines in a subprocess
+        # to enable KeyboardInterrupt and avoid crashing the primary python
+        # interpreter on error.
+        queue = Queue()
+        integration_thread = Thread(
+                                         target=self._call_implementation,
+                                         args=(
+                                                queue,
+                                                real_parameters,
+                                                complex_parameters
+                                              )
+                                     )
+        integration_thread.daemon = True # daemonize worker to have it killed when the main thread is killed
+        integration_thread.start()
+        while integration_thread.is_alive(): # keep joining worker until it is finished
+            integration_thread.join(5) # call `join` with `timeout` to keep the main thread interruptable
+        return queue.get()
+
+    def _call_implementation(self, queue, real_parameters=[], complex_parameters=[]):
+        # Passed in correct number of parameters?
+        assert len(real_parameters) == int(self.info['number_of_real_parameters']), \
+            'Passed %i `real_parameters` but %s needs %i.' % (len(real_parameters),self.info['name'],int(self.info['number_of_real_parameters']))
+        assert len(complex_parameters) == int(self.info['number_of_complex_parameters']), \
+            'Passed %i `complex_parameters` but `%s` needs %i.' % (len(complex_parameters),self.info['name'],int(self.info['number_of_complex_parameters']))
+
+        c_real_parameters = (c_double * len(real_parameters)) (*real_parameters)
+
+        #   - complex parameters
+        flattened_complex_parameters = []
+        for c in complex_parameters:
+            flattened_complex_parameters.append(c.real)
+            flattened_complex_parameters.append(c.imag)
+        c_complex_parameters = (c_double*2*len(complex_parameters))(*flattened_complex_parameters)
+
+        cpp_str_integral_result = self.c_lib.allocate_string()
+
+        self.c_lib.compute_integral(cpp_str_integral_result, c_real_parameters, c_complex_parameters, self.integrator, int(self.verbose))
+
+        str_integral_result = self.c_lib.string2charptr(cpp_str_integral_result)
+
+        self.c_lib.free_string(cpp_str_integral_result)
+
+        if not isinstance(str_integral_result , str):
+            str_integral_result = str_integral_result.decode('ASCII')
+
+        queue.put(str_integral_result)
+
+    IntegratorNames = {"Qmc": 0, "Vegas": 1}
+    def use_Vegas(self, *args, **kwargs):
+        self.integrator = RegionsInterface.IntegratorNames["Vegas"]
+
+    def use_Qmc(self, *args, **kwargs):
+        self.integrator = RegionsInterface.IntegratorNames["Qmc"]
+
+    def set_verbose(self, verbose):
+        self.verbose = verbose

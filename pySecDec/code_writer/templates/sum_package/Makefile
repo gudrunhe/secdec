@@ -10,6 +10,12 @@ source:
 libs:
 	$(MAKE) -C src $@
 
+pylink: libs $(NAME)_pylink.so
+
+# build the python shared library
+$(NAME)_pylink.so: pylink/pylink.o
+	$(CXX) -shared -o $@ $< src/*.o $(foreach INTEGRAL,$(INTEGRALS),$(INTEGRAL)/src/*.o) $(LDFLAGS)
+
 # build the example executable
 ifdef SECDEC_WITH_CUDA_FLAGS
 ifneq (x$(SECDEC_CONTRIB), x)
