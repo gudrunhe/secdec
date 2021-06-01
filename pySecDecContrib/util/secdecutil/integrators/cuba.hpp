@@ -47,15 +47,15 @@ namespace secdecutil
         typed_userdata.integrand_container = &integrand_container; \
         if (flags & 3 and zero_border != 0) \
         { \
-              std::cout << "integrating with zero_border = " << zero_border << std::endl; \
+              std::cerr << "integrating with zero_border = " << zero_border << std::endl; \
         } \
         call_cuba(); \
         if (flags & 3) \
         { \
-              std::cout << std::endl << "Cuba chi2-probability:" << std::endl; \
+              std::cerr << std::endl << "Cuba chi2-probability:" << std::endl; \
               for ( int i=0; i<ncomp; i++) \
-                std::cout << "[" << i+1 << "] " << prob[i] << std::endl; \
-              std::cout << std::endl << std::endl; \
+                std::cerr << "[" << i+1 << "] " << prob[i] << std::endl; \
+              std::cerr << std::endl << std::endl; \
         }
 
       // real version for general type
