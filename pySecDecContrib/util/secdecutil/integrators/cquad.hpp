@@ -144,12 +144,12 @@ namespace secdecutil
 
               if (verbose)
               {
-                  std::cout << "CQuad input parameters:" << std::endl;
-                  std::cout << "  epsrel " << epsrel << std::endl;
-                  std::cout << "  epsabs " << epsabs << std::endl;
-                  std::cout << "  n " << n << std::endl;
-                  std::cout << "  zero_border " << zero_border << std::endl;
-                  std::cout << std::endl;
+                  std::cerr << "CQuad input parameters:" << std::endl;
+                  std::cerr << "  epsrel " << epsrel << std::endl;
+                  std::cerr << "  epsabs " << epsabs << std::endl;
+                  std::cerr << "  n " << n << std::endl;
+                  std::cerr << "  zero_border " << zero_border << std::endl;
+                  std::cerr << std::endl;
               }
 
               typed_params.integrand_container = &integrand_container;
@@ -167,8 +167,8 @@ namespace secdecutil
 
               if (verbose)
               {
-                  std::cout << "CQuad result:" << std::endl;
-                  std::cout << "  " << result << std::endl << std::endl;
+                  std::cerr << "CQuad result:" << std::endl;
+                  std::cerr << "  " << result << std::endl << std::endl;
               }
 
               return result;
