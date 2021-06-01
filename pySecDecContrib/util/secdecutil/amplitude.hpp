@@ -423,18 +423,18 @@ namespace secdecutil {
         /*
          * evaluate a vector of integrals
          */
-        template<typename integral_t>
+        template<typename integrand_return_t, typename integral_t>
         void evaluate_integrals(std::vector<integral_t*>& integrals, const bool& verbose, size_t number_of_threads, size_t reset_cuda_after,
                     std::map<std::string, std::vector<std::vector<double>>> changed_deformation_parameters_map)
         {
             if(number_of_threads == 0)
                 ++number_of_threads;
 
-            auto compute_integral = [ &verbose, &integrals, &changed_deformation_parameters_map ] (integral_t* integral)
+            std::function<void(integral_t*)> compute_integral = [ &verbose, &integrals, &changed_deformation_parameters_map ] (integral_t* integral)
                 {
                     const unsigned long long int curr_n = integral->get_number_of_function_evaluations();
                     const unsigned long long int next_n = integral->get_next_number_of_function_evaluations();
-                    /*secdecutil::UncorrelatedDeviation<integrand_return_t>*/ decltype(integral->get_integral_result()) old_result;
+                    secdecutil::UncorrelatedDeviation<integrand_return_t> old_result;
                     if(verbose)
                         try {
                             old_result = integral->get_integral_result();
@@ -548,6 +548,7 @@ namespace secdecutil {
 
                 using integral_t = Integral<integrand_return_t,real_t>;
                 using term_t = WeightedIntegral<integral_t,coefficient_t>;
+                using sum_base_t = decltype(std::declval<coefficient_t>()*std::declval<integrand_return_t>());
                 using sum_return_t = decltype(std::declval<coefficient_t>()*std::declval<integral_t>().get_integral_result());
 
                 struct sum_t
@@ -687,7 +688,7 @@ namespace secdecutil {
 
                 void print_result(){
                     std::cout << "Current result:" << std::endl;
-                    auto result = evaluate_expression();
+                    container_t<sum_return_t> result = evaluate_expression();
                     for (unsigned int amp_idx = 0; amp_idx < result.size(); ++amp_idx)
                         std::cout << "amplitude" << amp_idx << " = " << result.at(amp_idx) << std::endl;
                 }
@@ -801,7 +802,7 @@ namespace secdecutil {
 
                 // Ensure each integral is known to at least min_epsrel and min_epsabs
                 std::function<void(sum_t&)> ensure_mineval =
-                    [ &repeat ] (sum_t& sum)
+                    [ ] (sum_t& sum)
                     {
                         for (term_t& term : sum.summands)
                             term.integral->set_next_number_of_function_evaluations( sum.mineval );
@@ -814,7 +815,7 @@ namespace secdecutil {
                         {
                             if(term.integral->get_number_of_function_evaluations() < sum.maxeval)
                             {
-                                auto result = term.integral->get_integral_result();
+                                secdecutil::UncorrelatedDeviation<integrand_return_t> result = term.integral->get_integral_result();
                                 real_t abserr = abs(result.uncertainty);
                                 if(abserr > sum.min_epsabs)
                                 {
@@ -854,10 +855,10 @@ namespace secdecutil {
                     {
                         // compute absolute error goal
                         sum_return_t current_sum = compute_sum(sum);
-                        integrand_return_t current_sum_value = current_sum.value;
-                        integrand_return_t current_sum_error = current_sum.uncertainty;
-                        auto abs_error = abs(current_sum_error);
-                        auto abs_error_goal = sum.epsrel * abs(current_sum_value);
+                        sum_base_t current_sum_value = current_sum.value;
+                        sum_base_t current_sum_error = current_sum.uncertainty;
+                        real_t abs_error = abs(current_sum_error);
+                        real_t abs_error_goal = sum.epsrel * abs(current_sum_value);
                         abs_error_goal = max(abs_error_goal, abs_error*sum.epsrel); // If current error larger than current result set goal based on error
                         abs_error_goal = max(abs_error_goal, sum.epsabs); // Do not request an error smaller than epsabs
 
@@ -874,7 +875,7 @@ namespace secdecutil {
                         for(auto& term : sum.summands)
                         {
                             auto time = term.integral->get_integration_time();
-                            auto integral = term.integral->get_integral_result();
+                            secdecutil::UncorrelatedDeviation<integrand_return_t> integral = term.integral->get_integral_result();
                             real_t abserr = abs(integral.uncertainty);
                             real_t relerr = abserr / abs( integral.value );
                             abserr *= abs(term.coefficient); // contribution to total error of the sum
@@ -898,14 +899,14 @@ namespace secdecutil {
                             {
                                 real_t& c_i = c.at(i);
                                 term_t& term = sum.summands.at(i);
-                                auto result = term.integral->get_integral_result();
+                                secdecutil::UncorrelatedDeviation<integrand_return_t> result = term.integral->get_integral_result();
                                 real_t abserr = abs(result.uncertainty) * abs(term.coefficient); // contribution to total error of the sum
                                 real_t absvar = abserr * abserr;
                                 if(c_i > 0)
                                 {
-                                    const auto scaleexpo = term.integral->get_scaleexpo();
-                                    const auto beta = 2./(2.*scaleexpo+1.);
-                                    const auto beta_times_scaleexpo = beta*scaleexpo;
+                                    const real_t scaleexpo = term.integral->get_scaleexpo();
+                                    const real_t beta = 2./(2.*scaleexpo+1.);
+                                    const real_t beta_times_scaleexpo = beta*scaleexpo;
 
                                     // use all terms to obtain initial estimate of fac
                                     if( firstiter )
@@ -935,8 +936,8 @@ namespace secdecutil {
                             {
                                 const unsigned long long int& curr_n = term.integral->get_number_of_function_evaluations();
                                 const unsigned long long int& next_n = term.integral->get_next_number_of_function_evaluations();
-                                const auto scaleexpo = term.integral->get_scaleexpo();
-                                const auto beta = 2./(2.*scaleexpo+1.);
+                                const real_t scaleexpo = term.integral->get_scaleexpo();
+                                const real_t beta = 2./(2.*scaleexpo+1.);
 
                                 unsigned long long int proposed_next_n =
                                     max(
@@ -1020,7 +1021,7 @@ namespace secdecutil {
                     print_datetime("Starting calculations: ");
                     std::cout << "computing integrals to satisfy mineval " << this->mineval << std::endl;
                 }
-                evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
+                evaluate_integrals<integrand_return_t>(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                 if(verbose){
                     std::cout << "---------------------" << std::endl << std::endl;
                     auto elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
@@ -1039,7 +1040,7 @@ namespace secdecutil {
 
                     if(verbose)
                         std::cout << std::endl << "computing integrals to satisfy min_epsrel " << this->min_epsrel << " or min_epsabs " << this->min_epsabs << std::endl;
-                    evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
+                    evaluate_integrals<integrand_return_t>(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
                         std::cout << "---------------------" << std::endl << std::endl;
                         auto elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
@@ -1060,7 +1061,7 @@ namespace secdecutil {
 
                     if(verbose)
                         std::cout << std::endl << "computing integrals to satisfy error goals on sums: epsrel " << this->epsrel << ", epsabs " << this->epsabs << std::endl;
-                    evaluate_integrals(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
+                    evaluate_integrals<integrand_return_t>(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
                         std::cout << "---------------------" << std::endl << std::endl;
                         print_datetime();
