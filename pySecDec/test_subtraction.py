@@ -1,5 +1,6 @@
 from .subtraction import *
 from .algebra import *
+from .misc import sympify_expression
 import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
@@ -90,7 +91,7 @@ class TestIntegratePolePart(unittest.TestCase):
     def test_integrate_multiple_pole_parts(self):
         I_j_before = Product(self.monomial_product1,self.regulator_poles,self.cal_I)
         I_j_after = Sum(*integrate_pole_part(I_j_before,0,1))
-        # expected_after_0 = sp.sympify('''
+        # expected_after_0 = sympify_expression('''
         #                                    1/(-2 + 0 + 1 - eps0 - 3*eps1) * (A + D*x1) * (x1)**(-4 - 2*eps0 - 6*eps1) +
         #                                    1/(-2 + 1 + 1 - eps0 - 3*eps1) * (B) * (x1)**(-4 - 2*eps0 - 6*eps1) +
         #                                    C*x0**2*x0**(-eps0 - 3*eps1 - 2) * (x1)**(-2*eps0 - 6*eps1 - 3)

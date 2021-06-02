@@ -1,5 +1,6 @@
 import numpy as np
 import sympy as sp
+from ..misc import sympify_expression
 from pySecDec.algebra import Polynomial, ExponentiatedPolynomial
 
 def loop_regions(name, loop_integral, smallness_parameter,
@@ -35,7 +36,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
     
     # add regulators of the form x_i**(n/p_i), where n is a regulator
     if add_monomial_regulator_power is not None:
-        regulator = sp.sympify(add_monomial_regulator_power)
+        regulator = sympify_expression(add_monomial_regulator_power)
         loop_integral.regulators.insert(1,regulator)
         primes = [sp.prime(n+1) for n in range(len(loop_integral.integration_variables)-1)]
         monomial_factors = []

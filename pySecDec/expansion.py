@@ -317,20 +317,20 @@ def expand_sympy_func(expression, variables, orders):
     expanded_argument = function.args[0]
     # expand the arugment into a polynomial
     for var, order in zip(variables,orders):
-        expanded_argument = sp.series(expanded_argument, sp.sympify(var), 0, max(2,order+1)).removeO().simplify()
+        expanded_argument = sp.series(expanded_argument, sympify_expression(var), 0, max(2,order+1)).removeO().simplify()
     argument_lowest_order = min(_lowest_order(expanded_argument,variable) for variable in variables)
     # get the argument when the variables are all zero
     zero_argument = expanded_argument.subs((variable,0) for variable in variables).simplify()
     # and the non-constant part of the argument
     if zero_argument.has(-sp.oo,sp.oo,sp.zoo):
-        zero_argument = sp.sympify("0")
+        zero_argument = sympify_expression("0")
     x_argument = (expanded_argument-zero_argument).simplify()
     # find all the regulators that are used in the expanded argument
     if_used_regulators = np.isin(variables, list(expanded_argument.free_symbols))
     # calculate the required order that the
     order = np.sum(orders[if_used_regulators])
     # pick a temporary variable to expand the function in one variable only
-    x = sp.sympify(variables[0])
+    x = sympify_expression(variables[0])
     to_expand = function.__class__(zero_argument+x)
     expanded_x = sp.series(to_expand, x, 0, order+1).removeO()#.evalf(20)
     if power != 1:
@@ -340,7 +340,7 @@ def expand_sympy_func(expression, variables, orders):
     lowest_order = _lowest_order(expanded_x,x)
     # insert the original argument into the expansion
     expanded = expanded_x.subs(x,x_argument)
-    if lowest_order < 0 or argument_lowest_order < 0 or zero_argument == sp.sympify("0"):
+    if lowest_order < 0 or argument_lowest_order < 0 or zero_argument == sympify_expression("0"):
         return expanded
     # convert it to a polynomial and remove higher order terms
     poly = sp.poly(expanded, variables, domain="CC")
@@ -375,7 +375,7 @@ def _preexpand(expression, variables, orders):
                 allpolys=False
             polys.append(poly)
         elif factor.is_constant():
-            polys.append(sp.sympify(factor))
+            polys.append(sympify_expression(factor))
         else:
             polys.append(factor)
             allpolys = False

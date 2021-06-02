@@ -1310,7 +1310,7 @@ class TestPowerlist(unittest.TestCase):
         # print "number_of_derivatives: ", li.number_of_derivatives
         # print "result_Nu = ", result_Nu
         # print "target_Nu = ", target_Nu[power]
-        # print "ratio = ", (result_Nu/sp.sympify(target_Nu[power])).simplify()
+        # print "ratio = ", (result_Nu/sympify_expression(target_Nu[power])).simplify()
 
         self.assertEqual( (result_U  - sympify_expression(target_U) ).simplify() , 0 )
         self.assertEqual( (result_F  - sympify_expression(target_F) ).simplify() , 0 )
@@ -1916,11 +1916,11 @@ class TestPowerlist(unittest.TestCase):
         # uf_from_graph_generic(self, internal_lines, external_lines, 1, result_U, result_F, regulators=regulators, powerlist=powerlist)
 
         self.assertEqual(loop_integral.L,1)
-        self.assertEqual((sp.sympify(loop_integral.U)-sp.sympify(result_U)).simplify(),0)
-        self.assertEqual((sp.sympify(loop_integral.exponent_U)-sp.sympify(result_exponent_U)).simplify(),0)
-        self.assertEqual((sp.sympify(loop_integral.F)-sp.sympify(result_F)).simplify(),0)
-        self.assertEqual((sp.sympify(loop_integral.exponent_F)-sp.sympify(result_exponent_F)).simplify(),0)
-        self.assertEqual((sp.sympify(loop_integral.measure)-sp.sympify(result_measure)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.U)-sympify_expression(result_U)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.exponent_U)-sympify_expression(result_exponent_U)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.F)-sympify_expression(result_F)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.exponent_F)-sympify_expression(result_exponent_F)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.measure)-sympify_expression(result_measure)).simplify(),0)
 
     #@attr('active')
     def test_powerlist_regulators_bubble_1L_from_propagators(self):
@@ -1941,11 +1941,11 @@ class TestPowerlist(unittest.TestCase):
         # uf_from_graph_generic(self, internal_lines, external_lines, 1, result_U, result_F, regulators=regulators, powerlist=powerlist)
 
         self.assertEqual(loop_integral.L,1)
-        self.assertEqual((sp.sympify(loop_integral.U)-sp.sympify(result_U)).simplify(),0)
-        self.assertEqual((sp.sympify(loop_integral.exponent_U)-sp.sympify(result_exponent_U)).simplify(),0)
-        self.assertEqual((sp.sympify(loop_integral.F)-sp.sympify(result_F)).simplify(),0)
-        self.assertEqual((sp.sympify(loop_integral.exponent_F)-sp.sympify(result_exponent_F)).simplify(),0)
-        self.assertEqual((sp.sympify(loop_integral.measure)-sp.sympify(result_measure)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.U)-sympify_expression(result_U)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.exponent_U)-sympify_expression(result_exponent_U)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.F)-sympify_expression(result_F)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.exponent_F)-sympify_expression(result_exponent_F)).simplify(),0)
+        self.assertEqual((sympify_expression(loop_integral.measure)-sympify_expression(result_measure)).simplify(),0)
 
 class TestUF_LoopPackage(unittest.TestCase):
     def test_loop_package_twice(self):

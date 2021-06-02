@@ -314,7 +314,7 @@ def loop_package(name, loop_integral, requested_orders,
             # set regulators zero in the powerlist for the drawing
             powerlist = []
             for power in loop_integral.powerlist:
-                power0 = sp.sympify(power)
+                power0 = sympify_expression(power)
                 for regulator in loop_integral.regulators:
                     power0 = power0.subs(regulator,0)
                 assert power0.is_Number, "The propagator powers must be numbers for vanishing regulators."

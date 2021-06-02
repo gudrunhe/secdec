@@ -1,5 +1,6 @@
 from .algebra import *
 from .algebra import _Expression
+from .misc import sympify_expression
 import sympy as sp
 import unittest
 from nose.plugins.attrib import attr
@@ -393,14 +394,14 @@ class TestPolynomial(unittest.TestCase):
         copy1 = copy1.refactorize(0) # refactorize parameter 0 -> should find a factorization
         copy2 = copy2.refactorize(1) # refactorize parameter 1 -> should NOT find the factorization of parameter 0
 
-        self.assertEqual(sp.sympify(copy0.factors[0] - copy1.factors[0]).simplify(), 0)
-        self.assertEqual(sp.sympify(copy0.factors[1] - copy1.factors[1]).simplify(), 0)
+        self.assertEqual(sympify_expression(copy0.factors[0] - copy1.factors[0]).simplify(), 0)
+        self.assertEqual(sympify_expression(copy0.factors[1] - copy1.factors[1]).simplify(), 0)
 
-        self.assertEqual(sp.sympify(str(copy1.factors[0])+ ' - ' + ' (+(1)*t0)**(3)').simplify(), 0)
-        self.assertEqual(sp.sympify(str(copy1.factors[1])+ ' - ' + ' + ((-s12)*t1 + (-s23)*t2)**3').simplify(), 0)
+        self.assertEqual(sympify_expression(str(copy1.factors[0])+ ' - ' + ' (+(1)*t0)**(3)').simplify(), 0)
+        self.assertEqual(sympify_expression(str(copy1.factors[1])+ ' - ' + ' + ((-s12)*t1 + (-s23)*t2)**3').simplify(), 0)
 
-        self.assertEqual(sp.sympify(str(copy2.factors[0])+ ' - ' + ' 1').simplify(), 0)
-        self.assertEqual(sp.sympify(str(copy2.factors[1])+ ' - ' + ' ((-s12)*t0*t1 + (-s23)*t0*t2)**3').simplify(), 0)
+        self.assertEqual(sympify_expression(str(copy2.factors[0])+ ' - ' + ' 1').simplify(), 0)
+        self.assertEqual(sympify_expression(str(copy2.factors[1])+ ' - ' + ' ((-s12)*t0*t1 + (-s23)*t0*t2)**3').simplify(), 0)
 
     #@attr('active')
     def test_simplify_to_zero(self):

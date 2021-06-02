@@ -11,9 +11,10 @@ from .polytope import Polytope
 from .algebra import Polynomial, ExponentiatedPolynomial, Product
 from .code_writer.make_package import make_package
 from .code_writer.sum_package import sum_package, Coefficient
+from .misc import sympify_expression
 import numpy as np, sympy as sp
 
-_sympy_one = sp.sympify(1)
+_sympy_one = sympify_expression(1)
 
 def _poly_variable_transform(poly, new_variables, add_missing_var_to_coeff = True):
     """
@@ -23,7 +24,7 @@ def _poly_variable_transform(poly, new_variables, add_missing_var_to_coeff = Tru
     is True, the missing variables will be added to the coefficients, otherwise
     ignored (i.e. set to 1).
     """
-    new_variables = list(map(sp.sympify,new_variables))
+    new_variables = list(map(sympify_expression,new_variables))
 
     extra_variables = [variable for variable in new_variables if variable not in poly.polysymbols]
     old_variables = poly.polysymbols + extra_variables
@@ -40,7 +41,7 @@ def _poly_variable_transform(poly, new_variables, add_missing_var_to_coeff = Tru
         else:
             coeff_poly = Polynomial([[0]],[coeff])
         if add_missing_var_to_coeff:
-            missing_variable_coeff = sp.sympify("1")
+            missing_variable_coeff = sympify_expression("1")
             for m in missing_variable_indexes:
                 missing_variable_coeff *= old_variables[m]**poly.expolist[n][m]
             for k in range(len(coeff_poly.coeffs)):
@@ -67,20 +68,20 @@ def _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompos
             poly = poly.copy()
             _poly_variable_transform(poly, symbols_polynomials_to_decompose)
             poly.exponent = Polynomial.from_expression(poly.exponent, symbols_polynomials_to_decompose)
-            poly.coeffs = np.array([ sp.sympify(str(coeff)) for coeff in poly.coeffs ])
+            poly.coeffs = np.array([ sympify_expression(str(coeff)) for coeff in poly.coeffs ])
         elif type(poly) is Polynomial:
             poly = poly.copy()
             _poly_variable_transform(poly, symbols_polynomials_to_decompose)
             poly = ExponentiatedPolynomial(poly.expolist,
-                                            np.array([ sp.sympify(str(coeff)) for coeff in poly.coeffs ]),
+                                            np.array([ sympify_expression(str(coeff)) for coeff in poly.coeffs ]),
                                             Polynomial.from_expression(_sympy_one, symbols_polynomials_to_decompose), # exponent
                                             symbols_polynomials_to_decompose, copy=False)
         else:
-            poly = sp.sympify(str(poly))
+            poly = sympify_expression(str(poly))
             if poly.is_Pow:
                 assert len(poly.args) == 2
                 poly_base = Polynomial.from_expression(poly.args[0], symbols_polynomials_to_decompose)
-                poly_exponent = sp.sympify(str(poly.args[1]))
+                poly_exponent = sympify_expression(str(poly.args[1]))
                 poly = ExponentiatedPolynomial(poly_base.expolist,
                                                 poly_base.coeffs,
                                                 Polynomial.from_expression(poly_exponent, symbols_polynomials_to_decompose),
@@ -328,7 +329,7 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
         # calculate higher order terms
         derivative = derive_prod(poly_list,numerator,index,polynomial_name_indices)
 
-        inverse_i_factorial = sp.sympify(1)
+        inverse_i_factorial = sympify_expression(1)
         while i <= order:
 
             inverse_i_factorial /= i
@@ -340,7 +341,7 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
                     # make sure we don't simplify poly**0 to 1
                     if hasattr(factor.exponent, "simplify"):
                         factor.exponent = factor.exponent.simplify()
-                    if type(factor.exponent) is not Polynomial and sp.sympify(factor.exponent).simplify() or \
+                    if type(factor.exponent) is not Polynomial and sympify_expression(factor.exponent).simplify() or \
                         type(factor.exponent) is Polynomial and (factor.exponent.expolist != 0).any():
                         factor.simplify()
                 else:
@@ -431,7 +432,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     else:
         polynomial_names = make_package_args['polynomial_names']
 
-    symbols_polynomials_to_decompose = list(map(sp.sympify, integration_variables + regulators + polynomial_names + [smallness_parameter]))
+    symbols_polynomials_to_decompose = list(map(sympify_expression, integration_variables + regulators + polynomial_names + [smallness_parameter]))
     polynomial_name_indices = np.arange(len(polynomial_names)) + ( len(integration_variables) + len(regulators) )
     smallness_parameter_index = -1
     # only integration variables and the expansion parameter should be included in the calculation of the regions
@@ -480,7 +481,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
                 polynomials_refactorized.append(factor1)
 
             # compute overall power of smallness_parameter with all regulators -> 0
-            power_overall_smallness_parameter_no_regulators = sp.sympify(power_overall_smallness_parameter)
+            power_overall_smallness_parameter_no_regulators = sympify_expression(power_overall_smallness_parameter)
             for regulator in regulators:
                 power_overall_smallness_parameter_no_regulators = power_overall_smallness_parameter_no_regulators.subs(regulator,0)
 
@@ -491,7 +492,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
             power_smallness_parameter_measure = np.sum(region[:-1])
 
             print("Region ({}), smallness parameter lowest order is {}".format(
-                ",".join(map(lambda x: str(sp.sympify(x)/region[smallness_parameter_index]),region[region_variable_indices])),
+                ",".join(map(lambda x: str(sympify_expression(x)/region[smallness_parameter_index]),region[region_variable_indices])),
                 (power_overall_smallness_parameter_no_regulators+power_smallness_parameter_measure)/region[smallness_parameter_index]))
 
             # TODO: ensure expansion_by_regions_order, power_overall_smallness_parameter_no_regulators, power_smallness_parameter_measure are integer
@@ -509,9 +510,9 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
 
                 package_args['other_polynomials'] = [term.factors.pop()]
                 package_args['polynomials_to_decompose'] = term.factors
-                prefactor = sp.sympify(smallness_parameter)**((power_overall_smallness_parameter+ power_smallness_parameter_measure +i)*(sp.sympify(1)/region[smallness_parameter_index]))
+                prefactor = sympify_expression(smallness_parameter)**((power_overall_smallness_parameter+ power_smallness_parameter_measure +i)*(sympify_expression(1)/region[smallness_parameter_index]))
                 if 'prefactor' in package_args:
-                    prefactor *= sp.sympify(package_args['prefactor'])
+                    prefactor *= sympify_expression(package_args['prefactor'])
                 package_args['prefactor'] = prefactor
 
                 package_args.update(package_args_common)

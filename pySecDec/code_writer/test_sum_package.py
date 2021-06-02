@@ -1,5 +1,6 @@
 from .sum_package import *
 from ..algebra import Polynomial, ExponentiatedPolynomial
+from ..misc import sympify_expression
 from nose.plugins.attrib import attr
 import sys
 import numpy as np
@@ -41,7 +42,7 @@ class TestSumPackage(unittest.TestCase):
             2*(512*s - 624*s^2 + 232*s^3 - 31*s^4 + s^5)*t^5 +
             (-512 + 448*s - 144*s^2 + 20*s^3 - s^4)*t^6))
         '''
-        self.sympified_numerator = sp.sympify(self.numerator)
+        self.sympified_numerator = sympify_expression(self.numerator)
 
         self.denominator = '''
             2048*s^6*t - 3072*(-4*s^5 + s^6)*t^2 + 1792*(16*s^4 - 8*s^5 + s^6)*t^3 +
@@ -53,7 +54,7 @@ class TestSumPackage(unittest.TestCase):
             18*(-256*s^2 + 256*s^3 - 96*s^4 + 16*s^5 - s^6)*t^5 +
             (1024*s - 1280*s^2 + 640*s^3 - 160*s^4 + 20*s^5 - s^6)*t^6)
         '''
-        self.sympified_denominator = sp.sympify(self.denominator)
+        self.sympified_denominator = sympify_expression(self.denominator)
 
     #@attr('active')
     @attr('slow')
@@ -66,9 +67,9 @@ class TestSumPackage(unittest.TestCase):
 
         # check coefficient_definition
         processed_expressions = coefficient_definition.split(';')
-        processed_numerator = sp.sympify( processed_expressions[0].split('=')[1] )
-        processed_denominator = sp.sympify( processed_expressions[1].split('=')[1] )
-        processed_regulator_factor = sp.sympify( processed_expressions[2].split('=')[1] )
+        processed_numerator = sympify_expression( processed_expressions[0].split('=')[1] )
+        processed_denominator = sympify_expression( processed_expressions[1].split('=')[1] )
+        processed_regulator_factor = sympify_expression( processed_expressions[2].split('=')[1] )
         self.assertEqual(
             (
                 (self.sympified_numerator / self.sympified_denominator) / \
@@ -88,9 +89,9 @@ class TestSumPackage(unittest.TestCase):
 
         # check coefficient_definition
         processed_expressions = coefficient_definition.split(';')
-        processed_numerator = sp.sympify( processed_expressions[0].split('=')[1] )
-        processed_denominator = sp.sympify( processed_expressions[1].split('=')[1] )
-        processed_regulator_factor = sp.sympify( processed_expressions[2].split('=')[1] )
+        processed_numerator = sympify_expression( processed_expressions[0].split('=')[1] )
+        processed_denominator = sympify_expression( processed_expressions[1].split('=')[1] )
+        processed_regulator_factor = sympify_expression( processed_expressions[2].split('=')[1] )
         for item in (processed_numerator, processed_denominator, processed_regulator_factor):
             self.assertEqual(item, 1)
 
@@ -105,12 +106,12 @@ class TestSumPackage(unittest.TestCase):
 
         # check coefficient_definition
         processed_expressions = coefficient_definition.split(';')
-        processed_numerator = sp.sympify( processed_expressions[0].split('=')[1] )
-        processed_denominator = sp.sympify( processed_expressions[1].split('=')[1] )
-        processed_regulator_factor = sp.sympify( processed_expressions[2].split('=')[1] )
+        processed_numerator = sympify_expression( processed_expressions[0].split('=')[1] )
+        processed_denominator = sympify_expression( processed_expressions[1].split('=')[1] )
+        processed_regulator_factor = sympify_expression( processed_expressions[2].split('=')[1] )
         self.assertEqual(
             (
-                (1 / self.sympified_denominator / sp.sympify('eps^2')) / \
+                (1 / self.sympified_denominator / sympify_expression('eps^2')) / \
                 (processed_numerator / processed_denominator * processed_regulator_factor)
             ).simplify()
             , 1
@@ -127,12 +128,12 @@ class TestSumPackage(unittest.TestCase):
 
         # check coefficient_definition
         processed_expressions = coefficient_definition.split(';')
-        processed_numerator = sp.sympify( processed_expressions[0].split('=')[1] )
-        processed_denominator = sp.sympify( processed_expressions[1].split('=')[1] )
-        processed_regulator_factor = sp.sympify( processed_expressions[2].split('=')[1] )
+        processed_numerator = sympify_expression( processed_expressions[0].split('=')[1] )
+        processed_denominator = sympify_expression( processed_expressions[1].split('=')[1] )
+        processed_regulator_factor = sympify_expression( processed_expressions[2].split('=')[1] )
         self.assertEqual(
             (
-                (self.sympified_numerator * sp.sympify('eps^2')) / \
+                (self.sympified_numerator * sympify_expression('eps^2')) / \
                 (processed_numerator / processed_denominator * processed_regulator_factor)
             ).simplify()
             , 1
@@ -154,6 +155,6 @@ class TestSumPackage(unittest.TestCase):
 
         self.assertFalse( '^2' in processed_numerator )
 
-        self.assertEqual( sp.sympify(processed_numerator) - sp.sympify('5*I-8') , 0)
-        self.assertEqual( sp.sympify(processed_denominator) - sp.sympify('1') , 0)
-        self.assertEqual( sp.sympify(processed_regulator_factor) - sp.sympify('1') , 0)
+        self.assertEqual( sympify_expression(processed_numerator) - sympify_expression('5*I-8') , 0)
+        self.assertEqual( sympify_expression(processed_denominator) - sympify_expression('1') , 0)
+        self.assertEqual( sympify_expression(processed_regulator_factor) - sympify_expression('1') , 0)
