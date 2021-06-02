@@ -29,3 +29,15 @@ pySecDec-*/
 *.log
 high_level_tests/*/*/
 !high_level_tests/*/test
+
+# built pySecDecContrib
+pySecDecContrib/bin
+pySecDecContrib/include
+pySecDecContrib/install
+pySecDecContrib/lib
+pySecDecContrib/libexec
+
+# Scons
+.sconsign.dblite
+config.log
+.sconf_temp
