@@ -228,7 +228,38 @@ namespace secdecutil {
                 this->integral_result = integrator->integrate(this->integrand); // run the numerical integration
             }
         };
+    
+        template<typename integrand_return_t, typename real_t, typename integrator_t, typename integrand_t>
+        struct MultiIntegratorIntegral : public Integral<integrand_return_t,real_t>
+        {
+            std::shared_ptr<integrator_t> integrator;
+            integrand_t integrand;
+            real_t scaleexpo;
 
+            real_t get_scaleexpo() const override { return scaleexpo; }
+
+            std::vector<std::vector<real_t*>> get_parameters() override {return integrand.get_parameters();}
+            std::vector<std::vector<real_t>> get_extra_parameters() override {return integrand.get_extra_parameters();}
+            void clear_errors() override {integrand.clear_errors();}
+
+            /*
+             * constructor
+             */
+            MultiIntegratorIntegral(const std::shared_ptr<integrator_t>& integrator, const integrand_t& integrand) :
+                Integral<integrand_return_t,real_t>(),
+                integrator(integrator),
+                integrand(integrand),
+                scaleexpo(0.5)
+                {};
+
+            void compute_impl() override
+            {
+                unsigned long long int next_n = this->get_next_number_of_function_evaluations();
+
+                this->integral_result = integrator->integrate(this->integrand); // run the numerical integration
+            }
+        };
+    
         template<typename integral_t, typename coefficient_t>
         struct WeightedIntegral
         {

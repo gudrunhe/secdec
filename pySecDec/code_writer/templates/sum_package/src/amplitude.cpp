@@ -17,6 +17,8 @@ namespace %(name)s
 {
     #define INTEGRAL_NAME %(name)s
     
+    typedef secdecutil::MultiIntegrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t,INTEGRAL_NAME::integrand_t> multiintegrator_t;
+    
     template<typename integrator_t>
     std::vector<nested_series_t<sum_t>> make_amplitudes
     (
@@ -377,6 +379,9 @@ namespace %(name)s
         DYNAMIC_CAST_INTEGRATOR(secdecutil::cuba::Cuhre<INTEGRAL_NAME::integrand_return_t>)
         DYNAMIC_CAST_INTEGRATOR(secdecutil::cuba::Divonne<INTEGRAL_NAME::integrand_return_t>)
         
+        // secdecutil::MultiIntegrator
+        DYNAMIC_CAST_INTEGRATOR(multiintegrator_t)
+        
         // secdecutil::integrators::Qmc
         %(pylink_qmc_dynamic_cast_integrator)s
         
@@ -512,6 +517,9 @@ namespace %(name)s
     INSTANTIATE_MAKE_AMPLITUDES(secdecutil::cuba::Suave<INTEGRAL_NAME::integrand_return_t>)
     INSTANTIATE_MAKE_AMPLITUDES(secdecutil::cuba::Cuhre<INTEGRAL_NAME::integrand_return_t>)
     INSTANTIATE_MAKE_AMPLITUDES(secdecutil::cuba::Divonne<INTEGRAL_NAME::integrand_return_t>)
+    
+    // secdecutil::MultiIntegrator
+    INSTANTIATE_MAKE_AMPLITUDES(multiintegrator_t)
     
     // secdecutil::integrators::Qmc
     %(pylink_qmc_instantiate_make_amplitudes)s

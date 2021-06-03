@@ -57,6 +57,8 @@ namespace %(name)s
     namespace %(sub_integral_name)s
     {
         #define INTEGRAL_NAME %(name)s
+        typedef secdecutil::MultiIntegrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t,INTEGRAL_NAME::integrand_t> multiintegrator_t;
+
 
         template<bool with_cuda>
         struct WithCuda
@@ -141,6 +143,14 @@ namespace %(name)s
         {
             using integrator_t = secdecutil::gsl::CQuad<INTEGRAL_NAME::integrand_return_t>;
             using integral_t = secdecutil::amplitude::CQuadIntegral<integrand_return_t,real_t,integrator_t,integrand_t>;
+        };
+        
+        // secdecutil::MultiIntegrator
+        template<typename integrand_return_t, typename real_t, typename integrand_t>
+        struct AmplitudeIntegral<integrand_return_t, real_t, multiintegrator_t, integrand_t>
+        {
+            using integrator_t = multiintegrator_t;
+            using integral_t = secdecutil::amplitude::MultiIntegratorIntegral<integrand_return_t,real_t,integrator_t,integrand_t>;
         };
         
         #define INSTANTIATE_AMPLITUDE_INTEGRAL_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
@@ -458,6 +468,9 @@ namespace %(name)s
         INSTANTIATE_MAKE_INTEGRAL(secdecutil::cuba::Suave<INTEGRAL_NAME::integrand_return_t>)
         INSTANTIATE_MAKE_INTEGRAL(secdecutil::cuba::Cuhre<INTEGRAL_NAME::integrand_return_t>)
         INSTANTIATE_MAKE_INTEGRAL(secdecutil::cuba::Divonne<INTEGRAL_NAME::integrand_return_t>)
+        
+        // secdecutil::MultiIntegrator
+        INSTANTIATE_MAKE_INTEGRAL(multiintegrator_t)
         
         // secdecutil::integrators::Qmc
         %(pylink_qmc_instantiate_make_integral)s

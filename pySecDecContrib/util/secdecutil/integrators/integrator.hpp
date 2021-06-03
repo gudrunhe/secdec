@@ -239,6 +239,7 @@ namespace secdecutil
     Integrator<return_t,input_t,container_t>& low_dim_integrator;
     Integrator<return_t,input_t,container_t>& high_dim_integrator;
     int critical_dim;
+    static constexpr bool cuda_compliant_integrator = false;
 
     /* Constructor */
     MultiIntegrator
@@ -274,6 +275,7 @@ namespace secdecutil
     Integrator<complex_template<return_t>,input_t,container_t>& low_dim_integrator; \
     Integrator<complex_template<return_t>,input_t,container_t>& high_dim_integrator; \
     int critical_dim; \
+    static constexpr bool cuda_compliant_integrator = false; \
  \
     std::function<secdecutil::UncorrelatedDeviation<complex_template<return_t>> \
       (const container_t&)> \
