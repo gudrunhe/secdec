@@ -1,10 +1,18 @@
 #ifndef %(name)s_hpp_included
 #define %(name)s_hpp_included
 
-#include <vector> // std::vector
+#ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
+#else
+    #include <complex>
+#endif
+#include <string>
+#include <vector>
 
+#include <secdecutil/integrand_container.hpp>
+#include <secdecutil/series.hpp>
+#include <secdecutil/uncertainties.hpp>
 #include <secdecutil/amplitude.hpp> // secdecutil::amplitude::Integral, secdecutil::amplitude::WeightedIntegral, secdecutil::amplitude::WeightedIntegralHandler
-#include <secdecutil/series.hpp> // secdecutil::Series
 
 namespace %(name)s
 {

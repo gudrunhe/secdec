@@ -1,6 +1,9 @@
 #include <iostream> // std::cout
 #include <vector> // std::vector
 
+#include <secdecutil/integrators/cuba.hpp> // secdecutil::cuba::Vegas, secdecutil::cuba::Suave, secdecutil::cuba::Cuhre, secdecutil::cuba::Divonne
+#include <secdecutil/integrators/qmc.hpp> // secdecutil::integrators::Qmc
+#include <secdecutil/series.hpp> // secdecutil::Series
 #include <secdecutil/uncertainties.hpp> // secdecutil::UncorrelatedDeviation
 
 #include "%(name)s.hpp"
