@@ -1,6 +1,3 @@
-bin/ginsh
-bin/viewgar
-libexec/ginac-excompiler
 include/ginac/clifford.h
 include/ginac/power.h
 include/ginac/archive.h
@@ -48,6 +45,4 @@ include/ginac/tensor.h
 include/ginac/function.h
 include/ginac/fail.h
 include/ginac/symmetry.h
-lib/pkgconfig/ginac.pc
-lib/libginac.la
-lib/libginac.6.dylib
+lib/libginac.a

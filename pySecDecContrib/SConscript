@@ -24,8 +24,8 @@ contrib += \
     Install("include/secdecutil", Glob("util/secdecutil/*hpp")) + \
     Install("include/secdecutil/integrators", Glob("util/secdecutil/integrators/*hpp"))
 
-def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", extra_commands="", extra_configure_args=""):
-    return env.Command(target, [f"{packagename}{extension}"], f"""
+def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", extra_sources=[], extra_commands="", extra_configure_args=""):
+    return env.Command(target, [f"{packagename}{extension}"] + extra_sources, f"""
         cd pySecDecContrib && \
         tar -xf {packagename}{extension} && \
         cd {packagename} && \
@@ -80,11 +80,12 @@ contrib += \
 cln_files = open(f"{cln}.list").read().splitlines()
 contrib += \
     ConfigureAndInstall(env, cln_files, cln, extension=".tar.bz2",
-        extra_configure_args="--enable-shared --disable-static --with-pic")
+        extra_configure_args="--disable-shared --enable-static --with-pic")
 
 ginac_files = open(f"{ginac}.list").read().splitlines()
 contrib += \
     ConfigureAndInstall(env, ginac_files, ginac, extension=".tar.bz2",
-        extra_configure_args="--enable-shared --disable-static --with-pic")
+        extra_sources = cln_files,
+        extra_configure_args="--disable-shared --enable-static --with-pic")
 
 Return("contrib")
