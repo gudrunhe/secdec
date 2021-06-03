@@ -505,7 +505,7 @@ class Qmc(CPPIntegrator):
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform,fitfunction='default',generatingvectors='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
                       minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
@@ -602,7 +602,7 @@ class CudaQmc(object):
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform,fitfunction='default',generatingvectors='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
                       minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
