@@ -23,19 +23,11 @@ $(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRAL
 
 # build the example executable
 ifdef SECDEC_WITH_CUDA_FLAGS
-ifneq (x$(SECDEC_CONTRIB), x)
 CONTRIB_RPATH := -Xlinker "-rpath $(SECDEC_CONTRIB)/lib"
-else
-CONTRIB_RPATH :=
-endif
 integrate_$(NAME) : integrate_$(NAME).o $(INTEGRALS_SO) lib/lib$(NAME).so
 	$(CXX) -o $@ $< $(LDFLAGS) -Xlinker '-rpath lib' $(CONTRIB_RPATH) -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS))
 else
-ifneq (x$(SECDEC_CONTRIB), x)
 CONTRIB_RPATH := -Wl,-rpath,$(SECDEC_CONTRIB)/lib
-else
-CONTRIB_RPATH :=
-endif
 integrate_$(NAME) : integrate_$(NAME).o $(INTEGRALS_SO) lib/lib$(NAME).so
 	$(CXX) -o $@ $< $(LDFLAGS) -Wl,-rpath,lib $(CONTRIB_RPATH) -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS))
 endif

@@ -1,6 +1,7 @@
 from ..metadata import version, git_id
 from .template_parser import validate_pylink_qmc_transforms, generate_pylink_qmc_macro_dict, parse_template_file, parse_template_tree
 from ..misc import sympify_symbols, make_cpp_list
+import pySecDecContrib
 
 from time import strftime
 import os, sys, shutil, subprocess
@@ -406,6 +407,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                                 'pySecDec_version' : version,
                                 'python_version' : sys.version,
                                 'pySecDec_git_id' : git_id,
+                                'contrib_dirname' : pySecDecContrib.dirname,
                                 'date_time' : strftime("%a %d %b %Y %H:%M"),
                                 'nested_series_type' : nested_series_type,
                                 'pylink_qmc_dynamic_cast_integrator' : '\n        '.join(pylink_qmc_dynamic_cast_integrator_rules),
