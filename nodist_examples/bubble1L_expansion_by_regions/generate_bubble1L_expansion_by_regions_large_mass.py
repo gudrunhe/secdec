@@ -1,4 +1,5 @@
 import pySecDec as psd
+import pySecDec.code_writer
 
 # this object represents the Feynman graph
 li = psd.loop_integral.LoopIntegralFromGraph(
@@ -21,10 +22,7 @@ regions_generator_args = psd.loop_integral.loop_regions(
 # generate code that will calculate the sum of all regions and all orders in
 # the smallness parameter
 psd.code_writer.sum_package('bubble1L_expansion_by_regions_large_mass',
-    [psd.make_package]*len(regions_generator_args),
+    [psd.code_writer.make_package]*len(regions_generator_args),
     regions_generator_args, regulators = ['eps'],requested_orders = [0],
     real_parameters = ['s','msq'],
     complex_parameters = [],)
-
-# the following Python script will set the integrator, see the file for more
-import configure
