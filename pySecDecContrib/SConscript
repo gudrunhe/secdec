@@ -80,12 +80,12 @@ contrib += \
 cln_files = open(f"{cln}.list").read().splitlines()
 contrib += \
     ConfigureAndInstall(env, cln_files, cln, extension=".tar.bz2",
-        extra_configure_args="--disable-shared --enable-static --with-pic")
+        extra_configure_args="--disable-shared --enable-static --with-pic --without-gmp")
 
 ginac_files = open(f"{ginac}.list").read().splitlines()
 contrib += \
     ConfigureAndInstall(env, ginac_files, ginac, extension=".tar.bz2",
         extra_sources = cln_files,
-        extra_configure_args="--disable-shared --enable-static --with-pic")
+        extra_configure_args="--disable-shared --enable-static --with-pic --enable-excompiler=no")
 
 Return("contrib")
