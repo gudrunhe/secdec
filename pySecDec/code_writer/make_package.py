@@ -6,7 +6,7 @@ This module implements the main program - the function
 
 from __future__ import print_function
 from ..metadata import version, git_id
-from ..misc import sympify_symbols, rangecomb, make_cpp_list
+from ..misc import sympify_symbols, rangecomb, make_cpp_list, chunks
 from ..algebra import _Expression, Expression, Polynomial, \
                       ExponentiatedPolynomial, Pow, Product, \
                       ProductRule, Function, Sum, sympify_expression
@@ -2136,12 +2136,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
     for pylink_qmc_transform in pylink_qmc_transforms:
         pylink_qmc_extern_rules.append(pylink_qmc_extern_translation[pylink_qmc_transform])
         pylink_qmc_case_rules.append(pylink_qmc_case_translation[pylink_qmc_transform])
-    def chunks(lst, n):
-        """Yield successive n-sized chunks from lst."""
-        if n == 0:
-            n = n + 1
-        for i in range(0, len(lst), n):
-            yield lst[i:i + n]
     for i, pylink_qmc_transform in enumerate(chunks(pylink_qmc_transforms, 5)):
         pylink_qmc_transform_instantiation_rules.append(
             {

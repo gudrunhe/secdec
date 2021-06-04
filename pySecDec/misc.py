@@ -505,3 +505,24 @@ def lowest_order(expression, variable):
         # pole --> convert the inverse to polynomial
         highest_pole = sp.poly(lowest_expansion_term**-1, variable)
         return - highest_pole.monoms()[0][0]
+
+def chunks(lst, n):
+    '''
+    Yield successive n-sized chunks from lst.
+
+    :param lst:
+        list;
+        The list from which to produce chunks.
+
+    :param n:
+        integer;
+        The size of the chunks to produce.
+
+    :return:
+        A list of at most length n.
+
+    '''
+    if n == 0:
+        n = n + 1
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
