@@ -1,6 +1,6 @@
 Import("env")
 
-cuba = "Cuba-4.2"
+cuba = "Cuba-4.2.1"
 form = "form-4.2.1"
 gsl = "gsl-2.5"
 nauty = "nauty26r7"
