@@ -1,6 +1,6 @@
 from ..metadata import version, git_id
 from .template_parser import validate_pylink_qmc_transforms, generate_pylink_qmc_macro_dict, parse_template_file, parse_template_tree
-from ..misc import sympify_symbols, make_cpp_list
+from ..misc import sympify_symbols, make_cpp_list, chunks
 import pySecDecContrib
 
 from time import strftime
@@ -376,17 +376,35 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     pylink_qmc_instantiate_make_amplitudes = generate_pylink_qmc_macro_dict('INSTANTIATE_MAKE_AMPLITUDES')
     pylink_qmc_instantiate_make_integral = generate_pylink_qmc_macro_dict('INSTANTIATE_MAKE_INTEGRAL')
     pylink_qmc_instantiate_amplitude_integral = generate_pylink_qmc_macro_dict('INSTANTIATE_AMPLITUDE_INTEGRAL')
+    pylink_qmc_instantiations_translation = generate_pylink_qmc_macro_dict('INSTANTIATE')
+    pylink_qmc_extern_translation = generate_pylink_qmc_macro_dict('EXTERN')
+    pylink_qmc_case_translation = generate_pylink_qmc_macro_dict('CASE')
 
     # parse the required pylink templates and generate a list of files to write
     pylink_qmc_dynamic_cast_integrator_rules = []
     pylink_qmc_instantiate_make_amplitudes_rules = []
     pylink_qmc_instantiate_make_integral_rules = []
     pylink_qmc_instantiate_amplitude_integral_rules = []
+    pylink_qmc_transform_instantiation_rules = []
+    pylink_qmc_extern_rules = []
+    pylink_qmc_case_rules = []
     for pylink_qmc_transform in pylink_qmc_transforms:
         pylink_qmc_dynamic_cast_integrator_rules.append(pylink_qmc_dynamic_cast_integrator[pylink_qmc_transform])
         pylink_qmc_instantiate_make_amplitudes_rules.append(pylink_qmc_instantiate_make_amplitudes[pylink_qmc_transform])
         pylink_qmc_instantiate_make_integral_rules.append(pylink_qmc_instantiate_make_integral[pylink_qmc_transform])
         pylink_qmc_instantiate_amplitude_integral_rules.append(pylink_qmc_instantiate_amplitude_integral[pylink_qmc_transform])
+        pylink_qmc_extern_rules.append(pylink_qmc_extern_translation[pylink_qmc_transform])
+        pylink_qmc_case_rules.append(pylink_qmc_case_translation[pylink_qmc_transform])
+    for i, pylink_qmc_transform in enumerate(chunks(pylink_qmc_transforms, 5)):
+        pylink_qmc_transform_instantiation_rules.append(
+            {
+                'src': 'qmc_template_instantiations.cpp',
+                'dest': 'qmc_template_instantiations_%i.cpp' % i,
+                'replacements': {
+                    'pylink_qmc_transforms': ' '.join([pylink_qmc_instantiations_translation[x] for x in pylink_qmc_transform])
+                }
+            }
+        )
 
     replacements_in_files = {
                                 'name' : name,
@@ -413,7 +431,9 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                                 'pylink_qmc_dynamic_cast_integrator' : '\n        '.join(pylink_qmc_dynamic_cast_integrator_rules),
                                 'pylink_qmc_instantiate_make_amplitudes': '\n    '.join(pylink_qmc_instantiate_make_amplitudes_rules),
                                 'pylink_qmc_instantiate_make_integral': '\n        '.join(pylink_qmc_instantiate_make_integral_rules),
-                                'pylink_qmc_instantiate_amplitude_integral': '\n        '.join(pylink_qmc_instantiate_amplitude_integral_rules)
+                                'pylink_qmc_instantiate_amplitude_integral': '\n        '.join(pylink_qmc_instantiate_amplitude_integral_rules),
+                                'pylink_qmc_externs': ' '.join(pylink_qmc_extern_rules),
+                                'pylink_qmc_cases': ' '.join(pylink_qmc_case_rules)
     }
     filesystem_replacements = {
                                   'integrate_name.cpp' : 'integrate_' + name + '.cpp',
@@ -422,13 +442,22 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                                   'name_weighted_integral.cpp' : None,
                                   'name_weighted_integral.hpp' : None,
 
-                                  # the following file is parsed separately (after integrals)
-                                  'name.hpp': None
+                                  # the following files are parsed separately
+                                  'name.hpp': None,
+                                  'qmc_template_instantiations.cpp': None
     }
 
     # get path to the directory with the template files (path relative to directory with this file: "./templates/")
     template_sources = os.path.join(os.path.split(os.path.abspath(__file__))[0],'templates','sum_package')
     parse_template_tree(template_sources, name, replacements_in_files, filesystem_replacements)
+
+    # Parse pylink files
+    for pylink_qmc_transform in pylink_qmc_transform_instantiation_rules:
+        pylink_qmc_transform_replacements = replacements_in_files.copy()
+        pylink_qmc_transform_replacements.update(pylink_qmc_transform['replacements'])
+        parse_template_file(os.path.join(template_sources, 'pylink', pylink_qmc_transform['src']),
+                            os.path.join(name,             'pylink', pylink_qmc_transform['dest']),
+                            pylink_qmc_transform_replacements)
 
     original_working_directory = os.getcwd()
 

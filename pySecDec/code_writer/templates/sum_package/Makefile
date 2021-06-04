@@ -3,6 +3,7 @@ include Makefile.conf
 WINTEGRALS_OBJS = $(foreach INTEGRAL,$(INTEGRALS),src/$(INTEGRAL)_weighted_integral.o)
 INTEGRALS_SO = $(foreach INTEGRAL,$(INTEGRALS),lib/lib$(INTEGRAL).so)
 INTEGRALS_A = $(foreach INTEGRAL,$(INTEGRALS),$(INTEGRAL)/lib$(INTEGRAL).a)
+QMC_TEMPLATE_OBJECTS = $(patsubst %%.cpp,%%.o,$(wildcard pylink/qmc_template_instantiations_*.cpp))
 
 source:
 	for INTEGRAL in $(INTEGRALS); do $(MAKE) -C $${INTEGRAL} $@& done; wait
@@ -18,7 +19,7 @@ $(INTEGRALS_A) :
 	for INTEGRAL in $(INTEGRALS); do $(MAKE) -C $${INTEGRAL} static& done; wait
 
 # build the python shared library
-$(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A)
+$(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(QMC_TEMPLATE_OBJECTS)
 	$(CXX) -shared -o $@ pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(foreach INTEGRAL,$(INTEGRALS),$(INTEGRAL)/src/*.o) $(LDFLAGS)
 
 # build the example executable

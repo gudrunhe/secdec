@@ -1,13 +1,15 @@
 include ../Makefile.conf
 
-../$(NAME)_pylink.so : pylink.o $(foreach INTEGRAL,$(INTEGRALS),../lib/lib$(INTEGRAL).a) ../lib$(NAME).a
+QMC_TEMPLATE_OBJECTS = $(patsubst %%.cpp,%%.o,$(wildcard qmc_template_instantiations_*.cpp))
+
+../$(NAME)_pylink.so : pylink.o $(foreach INTEGRAL,$(INTEGRALS),../lib/lib$(INTEGRAL).a) ../lib$(NAME).a $(QMC_TEMPLATE_OBJECTS)
 	$(CXX) -shared -o $@ $+ $(LDFLAGS)
 
 clean:
 	rm -f *.o lib$(NAME).a lib$(NAME).so
 
 # implicit rule to build object files
-ifdef SECDEC_WITH_CUDA
+ifdef SECDEC_WITH_CUDA_FLAGS
 %%.o : %%.cpp
 	$(CXX) -dc $(CXXFLAGS) -Xcompiler -fPIC $< -o $@
 else
