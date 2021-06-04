@@ -23,6 +23,10 @@ pySecDec-*/
 # Ignore PyCharm Cache
 .idea
 
+# ignore built examples (i.e. folders within examples/nodist_examples folders)
+examples/*/*/
+nodist_examples/*/*/
+
 # built high level tests
 *.o
 *.exe
