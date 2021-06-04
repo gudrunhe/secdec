@@ -14,7 +14,7 @@ pySecDec.egg-info
 pySecDec/metadata.py
 
 *.tar.gz
-!dist_template/*.tar.gz
+!pySecDecContrib/*.tar.gz
 
 build/
 dist/
