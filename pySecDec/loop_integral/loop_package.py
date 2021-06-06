@@ -1,7 +1,7 @@
 """
 This module implements a wrapper for loop integrals
 around the main program
-:func:`pySecDec.make_package` - the
+:func:`pySecDec.make_package` (default) - the
 function :func:`.loop_package`.
 
 """
@@ -29,7 +29,7 @@ def loop_package(name, loop_integral, requested_orders,
                  split=False, ibp_power_goal=-1,
                  use_iterative_sort=True, use_light_Pak=True,
                  use_dreadnaut=False, use_Pak=True,
-                 processes=None, pylink_qmc_transforms=None):
+                 processes=None, pylink_qmc_transforms=None, package_generator=make_package):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -37,7 +37,7 @@ def loop_package(name, loop_integral, requested_orders,
 
     .. seealso::
         This function is a wrapper around
-        :func:`pySecDec.make_package`.
+        :func:`pySecDec.make_package` (default).
 
     .. seealso::
         The generated library is described in
@@ -232,6 +232,16 @@ def loop_package(name, loop_integral, requested_orders,
         `New in version 1.5`.
         Default: ``None``
         (which compiles all available templates)
+
+    :param package_generator:
+        function;
+        The generator function for the integral.
+
+        .. seealso::
+            :func:`pySecDec.make_package` and
+            :func:`pySecDec.code_writer.make_package`.
+
+        Default: `pySecDec.make_package`.
     '''
     print('running "loop_package" for "' + name + '"')
 
@@ -268,7 +278,7 @@ def loop_package(name, loop_integral, requested_orders,
         # need ``loop_integral.measure`` only if it is nontrivial
         polynomials_to_decompose += measure.factors
 
-    make_package_return_value = make_package(
+    make_package_return_value = package_generator(
         name = name,
 
         integration_variables = loop_integral.integration_variables,
