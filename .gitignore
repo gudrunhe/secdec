@@ -8,6 +8,7 @@ doc/source/cpp_doctest/*
 !doc/source/cpp_doctest/Makefile
 .coverage
 coverage
+*.swp
 
 PKG-INFO
 pySecDec.egg-info
