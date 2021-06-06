@@ -1947,6 +1947,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual((sympify_expression(loop_integral.exponent_F)-sympify_expression(result_exponent_F)).simplify(),0)
         self.assertEqual((sympify_expression(loop_integral.measure)-sympify_expression(result_measure)).simplify(),0)
 
+#@attr('active')
 class TestUF_LoopPackage(unittest.TestCase):
     def test_loop_package_twice(self):
         cwd = os.getcwd()
@@ -1959,8 +1960,8 @@ class TestUF_LoopPackage(unittest.TestCase):
                 external_momenta=["q"],
                 replacement_rules=[("q**2", "1")]
             )
-            loop_package("bubble1", li, 0)
-            loop_package("bubble2", li, 0)
+            loop_package("bubble1", li, [0])
+            loop_package("bubble2", li, [0])
             # The test is that no exceptions are thrown up to
             # this point.
         finally:
