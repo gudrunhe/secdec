@@ -27,6 +27,9 @@ pySecDec-*/
 examples/*/*/
 nodist_examples/*/*/
 
+# ignore running checks
+tmpdir_*
+
 # built high level tests
 *.o
 *.exe
