@@ -6,15 +6,16 @@ pySecDec
 pySecDec is a toolbox for the calculation of dimensionally
 regulated parameter integrals using the sector decomposition approach.
 
-See [1811.11720](https://arxiv.org/abs/1811.11720)
-and [1703.09692](https://arxiv.org/abs/1703.09692)
-for description of the implementation;
-[0803.4177](http://arxiv.org/abs/0803.4177)
-and [hep-ph/0004013](http://arxiv.org/abs/hep-ph/0004013)
-for description of sector decomposition; and
-[1502.06595](http://arxiv.org/abs/1502.06595) for SecDec,
-the predecessor of pySecDec.
+See [1811.11720] and [1703.09692] for description of the
+implementation; [0803.4177] and [hep-ph/0004013] for description
+of sector decomposition; and [1502.06595] for SecDec, the
+predecessor of pySecDec.
 
+[1811.11720]: https://arxiv.org/abs/1811.11720
+[1703.09692]: https://arxiv.org/abs/1703.09692
+[0803.4177]: http://arxiv.org/abs/0803.4177
+[hep-ph/0004013]: http://arxiv.org/abs/hep-ph/0004013
+[1502.06595]: http://arxiv.org/abs/1502.06595
 
 Installation
 ============
@@ -22,8 +23,8 @@ Installation
 pySecDec should work under Python version 3.6 or newer on the
 usual Unix-like systems.
 
-The latest release can be installed from [PyPI](https://pypi.org/project/pySecDec/)
-by first (optionally) upgrading [pip](https://pypi.org/project/pip/):
+The latest release can be installed from [PyPI] by first
+upgrading [pip]:
 
     $ python3 -m pip install --user 'pip>=20.1'
 
@@ -31,11 +32,8 @@ and then running:
 
     $ python3 -m pip install --user --upgrade pySecDec
 
-To install the latest development version on the other hand, run:
-
-    $ git clone https://github.com/gudrunhe/secdec secdec
-    $ cd secdec
-    $ python3 -m pip install --user .
+[pypi]: https://pypi.org/project/pySecDec/
+[pip]: https://pypi.org/project/pip/
 
 ## The geometric method and Normaliz
 
@@ -126,15 +124,14 @@ Development
 ===========
 
 During development instead of full installation it is more
-convenient to work directly from the checked out repository.
-To make this work, first install the Python dependencies and
-build the contributed software by running
+convenient to work directly from the checked out repository. To
+make this work, one needs to install the Python dependencies,
+build the contributed software, and setup PYTHONPATH to point
+to the sources; do this by running
 
     $ make dependencies
     $ make build
-
-Then, define PYTHONPATH environment variable to point at the
-root of the pySecDec sources.
+    $ export PYTHONPATH=$PWD
 
 The ``Makefile`` in the package's root directory also implements
 other common development tasks.  You can list all available
@@ -142,9 +139,10 @@ targets with the command
 
     $ make help
 
-`pySecDec` comes with a self test suite written in the `python unittest` framework.
-The most convenient way to run all test is using `nose` (http://nose.readthedocs.org).
-If `nose` is installed, type
+`pySecDec` comes with a self test suite written in the `python
+unittest` framework. The most convenient way to run all test is
+using [Nose]. If Nose is installed (as it would be after `make
+dependencies`), type
 
     $ make check
 
@@ -152,10 +150,13 @@ in the source repository to run all tests. Developers should write test cases fo
 ALL functions they implement and make sure that ALL tests pass before uploading a
 commit.
 
+[nose]: http://nose.readthedocs.org
+
 ## Building the Documentation
 
-To build the documentation of `pySecDec`, you need `sphinx` (http://www.sphinx-doc.org).
-If `sphinx` is installed, the command
+To build the documentation of `pySecDec`, you need [Sphinx] If
+Sphinx is installed (as it would be after `make dependencies`),
+the command
 
     $ make doc
 
@@ -169,6 +170,8 @@ and
 
     $ make doc-pdf
 
+[sphinx]: http://www.sphinx-doc.org
+
 Building the documentaion in pdf format requires an up-to-date installation of a latex
 implementation. If you get an error about missing ".sty" file, do the following:
 
@@ -176,49 +179,46 @@ implementation. If you get an error about missing ".sty" file, do the following:
     with your favorite package manager. The MiKTeX or TeXLive implementations should contain
     all required packages.
 
- 2. If you are not an administrator, first get the missing packages, e.g. from
-    "http://www.ctan.org/". Collect the missing files in one or more directories
-    and set the environment variable TEXINPUTS to these directories in the same
-    way as the PATH variable is typically set.
+ 2. If you are not an administrator, first get the missing
+    packages, e.g. from [CTAN]. Collect the missing files in
+    one or more directories and set the environment variable
+    TEXINPUTS to these directories in the same way as the PATH
+    variable is typically set.
+
+[ctan]: http://www.ctan.org/
 
 ## Making a PyPI release
 
-To create a release on PyPI, first increment the version number
+To create a release on [PyPI], first increment the version number
 of pySecDec in `pyproject.toml`, and update `ChangeLog`. Then
-create source distribution archive suitable for PyPI by running
+make sure you have a recent [Singularity] installed, and run
+
+    ./build-release.sh
+
+This will create a source distribuion file (`dist/*.tar.gz`)
+and several prebuild distribution files (`dist/*.whl`); it will
+also print the instructions on how to double-check the files
+with [auditwheel] and upload them to PyPI using [Twine].
+
+Note that an account with PyPI is needed for this. Please see
+the [packaging python projects] guide for details.
+
+The reason for using Singularity here is because prebuilt
+distributions must be built inside one of the [manylinux] Docker
+images: this guarantees that the prebuilt libraries and programs
+will work on a wide range of Linux systems. If it wasn't for
+this requirement, then making a distibution would be as simple
+as running
 
     $ make dist
 
-The archive will appear in `dist/pySecDec-<version>.tar.gz`. To
-double-check it, list its contents:
+and then uploading the distfiles in `dist/`:
 
-    $ tar tzf dist/pySecDec-*.tar.gz
-
-To upload this archive to PyPI follow the steps described in the
-[Packaging Python Projects](https://packaging.python.org/tutorials/packaging-projects/) reference.
-In short: once you've registered an account on pypi.org
-and obtained a key, publishing a new release is done via
-[Twine](https://pypi.org/project/twine/):
-
-    $ twine check dist/pySecDec-<version>.tar.gz
     $ twine upload dist/pySecDec-<version>.tar.gz
-
-### Uploading prebuilt releases
-
-Note that along with source distribution (*.tar.gz) it is useful
-to upload prebuilt version of it too, so that users would
-not have to wait for the contributed software to build. To
-this end, one should upload `dist/pySecDec-*.whl` files
-too. The caveat is that these must be built inside one of the
-[manylinux](https://github.com/pypa/manylinux) Docker images:
-this guarantees that the prebuilt libraries and programs will
-work on a wide range of Linux systems. Once this is done, double
-check that the built distribution has the correct platform tag
-by using [auditwheel](https://pypi.org/project/auditwheel/):
-
-    $ auditwheel show dist/pySecDec-<version>-<tag>.whl
-    
-And then upload:
-
-    $ twine check dist/pySecDec-<version>-<tag>.whl
     $ twine upload dist/pySecDec-<version>-<tag>.whl
+
+[packaging python projects]: https://packaging.python.org/tutorials/packaging-projects/
+[twine]: https://pypi.org/project/twine/
+[manylinux]: https://github.com/pypa/manylinux
+[auditwheel]: https://pypi.org/project/auditwheel/
+[singularity]: https://github.com/sylabs/singularity
