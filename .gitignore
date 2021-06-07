@@ -21,6 +21,9 @@ build/
 dist/
 pySecDec-*/
 
+# Coverage reports
+htmlcov/
+
 # Ignore PyCharm Cache
 .idea
 
