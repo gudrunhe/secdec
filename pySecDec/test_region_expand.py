@@ -23,7 +23,7 @@ class  TestFindRegions(unittest.TestCase):
         exp_param_index = 0
         target_regions = sort_2D_array(np.array([[1,0,0], [1,0,-1], [1,-1,0]]))
 
-        regions = find_regions( exp_param_index, [poly_u, poly_f], workdir = 'tmpdir_test_find_regions_1L_python' + python_major_version )
+        regions = find_regions( exp_param_index, poly_u + poly_f, workdir = 'tmpdir_test_find_regions_1L_python' + python_major_version )
 
         np.testing.assert_array_equal(sort_2D_array(regions), target_regions)
 
@@ -34,7 +34,7 @@ class  TestFindRegions(unittest.TestCase):
         exp_param_index = 0
         target_regions = sort_2D_array(np.array([[1,0,-2,-2,-2,-2,-4], [1,0,0,-2,-2,-2,-2], [1,0,0,-2,0,0,0],[1,0,0,0,-2,0,-2],[1,0,0,0,0,0,0]]))
 
-        regions = find_regions( exp_param_index, [poly_u, poly_f], workdir = 'tmpdir_test_find_regions_2L_python' + python_major_version )
+        regions = find_regions( exp_param_index, poly_u + poly_f, workdir = 'tmpdir_test_find_regions_2L_python' + python_major_version )
 
         np.testing.assert_array_equal(sort_2D_array(regions), target_regions)
 
@@ -44,7 +44,7 @@ class  TestFindRegions(unittest.TestCase):
         exp_param_index = 0
         target_regions = sort_2D_array(np.array([[1,0], [1,1]]))
 
-        regions = find_regions( exp_param_index, [ poly], workdir = 'tmpdir_test_find_regions_small_python' + python_major_version )
+        regions = find_regions( exp_param_index, poly, workdir = 'tmpdir_test_find_regions_small_python' + python_major_version )
 
         np.testing.assert_array_equal(sort_2D_array(regions), target_regions)
 
