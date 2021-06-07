@@ -81,11 +81,9 @@ class Coefficient(object):
         # get the name of FORM command-line executable
         if form is None:
             form_var = os.environ.get('FORM', None)
-            contrib_var = os.environ.get('SECDEC_CONTRIB', None)
             form = \
                 form_var if form_var else \
-                os.path.join(contrib_var, 'bin', 'form') if contrib_var else \
-                'form'
+                os.path.join(pySecDecContrib.dirname, 'bin', 'form')
         else:
             assert isinstance(form, str), "`form` must be a string."
 
