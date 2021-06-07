@@ -154,7 +154,7 @@ commit.
 
 ## Building the Documentation
 
-To build the documentation of `pySecDec`, you need [Sphinx] If
+To build the documentation of `pySecDec`, you need [Sphinx]. If
 Sphinx is installed (as it would be after `make dependencies`),
 the command
 
@@ -172,12 +172,14 @@ and
 
 [sphinx]: http://www.sphinx-doc.org
 
-Building the documentaion in pdf format requires an up-to-date installation of a latex
-implementation. If you get an error about missing ".sty" file, do the following:
+Building the documentaion in pdf format requires an up-to-date
+installation of a latex implementation. If you get an error about
+missing `.sty` file, do the following:
 
- 1. If you are an administrator on your computer, try to install the missing latex packages
-    with your favorite package manager. The MiKTeX or TeXLive implementations should contain
-    all required packages.
+ 1. If you are an administrator on your computer, try to install
+    the missing latex packages with your favorite package manager.
+    The [TeXLive] or [MiKTeX] implementations should contain all
+    required packages.
 
  2. If you are not an administrator, first get the missing
     packages, e.g. from [CTAN]. Collect the missing files in
@@ -186,6 +188,8 @@ implementation. If you get an error about missing ".sty" file, do the following:
     variable is typically set.
 
 [ctan]: http://www.ctan.org/
+[miktex]: https://miktex.org/
+[texlive]: http://tug.org/texlive/
 
 ## Making a PyPI release
 
