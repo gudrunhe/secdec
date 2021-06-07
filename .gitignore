@@ -30,6 +30,7 @@ nodist_examples/*/*/
 
 # ignore running checks
 tmpdir_*
+tmpfile_*
 
 # built high level tests
 *.o
