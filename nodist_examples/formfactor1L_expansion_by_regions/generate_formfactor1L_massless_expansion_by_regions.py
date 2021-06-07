@@ -1,4 +1,4 @@
-from pySecDec.region_expand import make_regions
+from pySecDec.make_regions import make_regions
 import pySecDec as psd
 
 # Section 3.1 (Method of Regions for the Sudakov form factor) of Thomas Becher (arXiv:1803.04310)

@@ -51,7 +51,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
     polynomial_names = ["U","F"] + ['Poly%i' % i for i in range(len(polynomials_to_decompose)-2)]
 
     if "make_regions" not in dir():
-        from ..region_expand import make_regions
+        from ..make_regions import make_regions
 
     return make_regions(
         # make_regions_args

@@ -1,4 +1,4 @@
-from .region_expand import *
+from .make_regions import *
 from .decomposition.common import Sector
 from .algebra import Polynomial, ExponentiatedPolynomial
 from .misc import argsort_2D_array, sympify_expression

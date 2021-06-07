@@ -1,4 +1,4 @@
-from pySecDec.region_expand import make_regions
+from pySecDec.make_regions import make_regions
 import pySecDec as psd
 
 # Example 6 of Bernd Jantzen (arXiv:1111.2589)
