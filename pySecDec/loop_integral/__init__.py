@@ -32,7 +32,7 @@ Use the following function to draw Feynman diagrams.
 Loop Regions
 ~~~~~~~~~~~~
 
-Applies the expand by regions method to a loop integral.
+Applies the expansion by regions method to a loop integral.
 
 .. autofunction:: pySecDec.loop_integral.loop_regions
 
