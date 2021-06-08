@@ -17,19 +17,179 @@ def loop_regions(name, loop_integral, smallness_parameter,
                 use_dreadnaut=False, use_Pak=True,
                 processes=None):
     """
-    Apply expansion of regions method to the loop integral using the function
-    :func:`pySecDec.region_expand.make_regions`. See that function for the
-    meaning of the parameters.
+    Apply expansion by regions method to the loop integral using the function.
+
+    .. seealso::
+        This function is a wrapper around
+        :func:`pySecDec.make_regions`.
+
+    .. seealso::
+        The generated library is described in
+        :ref:`generated_cpp_libs`.
+
+    :param name:
+        string;
+        The name of the c++ namespace and the output
+        directory.
 
     :param loop_integral:
         :class:`pySecDec.loop_integral`;
         The loop integral to which the expansion by regions method is applied.
+
+    :param smallness_parameter:
+        string or sympy symbol;
+        The symbol of the variable in which the
+        expression is expanded.
+
+    :param expansion_by_regions_order:
+        integer;
+        The order up to which the expression is expanded
+        in the `smallness_parameter`.
+        Default: 0
+
+    :param contour_deformation:
+        bool, optional;
+        Whether or not to produce code for contour
+        deformation.
+        Default: ``True``.
+
+    :param additional_prefactor:
+        string or sympy expression, optional;
+        An additional factor to be multiplied to the loop
+        integral. It may depend on the regulators, the
+        `real_parameters`, and the `complex_parameters`.
+
+    :param form_optimization_level:
+        integer out of the interval [0,4], optional;
+        The optimization level to be used in FORM.
+        Default: ``2``.
+
+    :param form_work_space:
+        string, optional;
+        The FORM WorkSpace. Default: ``'50M'``.
+
+        Setting this to smaller values will reduce FORM memory
+        usage (without affecting performance), but each problem
+        has some minimum value below which FORM will refuse to
+        work: it will fail with error message indicating that
+        larger WorkSpace is needed, at which point WorkSpace
+        will be adjusted and FORM will be re-run.
 
     :param add_monomial_regulator_power:
         string or sympy symbol;
         Name of the regulator, using which monomial factors of the form
         $x_i**(n/p_i)$ are added, to regulate the integrals arising from
         the expansion by regions.
+
+    :param decomposition_method:
+        string, optional;
+        The strategy for decomposing the polynomials. The
+        following strategies are available:
+
+        * 'iterative' (default)
+        * 'geometric'
+        * 'geometric_ku'
+
+        .. note::
+            For 'geometric' and 'geometric_ku', the
+            third-party program "normaliz" is needed.
+            See :ref:`installation_normaliz`.
+
+    :param normaliz_executable:
+        string, optional;
+        The command to run `normaliz`. `normaliz` is only
+        required if `decomposition_method` is set to
+        'geometric' or 'geometric_ku'.
+        Default: 'normaliz'
+
+    :param enforce_complex:
+        bool, optional;
+        Whether or not the generated integrand functions
+        should have a complex return type even though
+        they might be purely real.
+        The return type of the integrands is automatically
+        complex if `contour_deformation` is ``True`` or
+        if there are `complex_parameters`. In other cases,
+        the calculation can typically be kept purely real.
+        Most commonly, this flag is needed if
+        ``log(<negative real>)`` occurs in one of the
+        integrand functions. However, `pySecDec` will suggest
+        setting this flag to ``True`` in that case.
+        Default: ``False``
+
+    :param split:
+        bool, optional;
+        Whether or not to split the integration domain in
+        order to map singularities from :math:`1` to
+        :math:`0`. Set this option to ``True`` if you have
+        singularties when one or more integration variables
+        are one.
+        Default: ``False``
+
+    :param ibp_power_goal:
+        number or iterable of number, optional;
+        The `power_goal` that is forwarded to
+        :func:`.integrate_by_parts`.
+
+        This option controls how the subtraction terms are
+        generated. Setting it to ``-numpy.inf`` disables
+        :func:`.integrate_by_parts`, while ``0`` disables
+        :func:`.integrate_pole_part`.
+
+        .. versionadded: 1.4
+            A separate power_goal for each of the
+            `integration_variables` can be set by passing an
+            iterable.
+
+        .. seealso::
+            To generate the subtraction terms, this function
+            first calls :func:`.integrate_by_parts` for each
+            integration variable with the give `ibp_power_goal`.
+            Then :func:`.integrate_pole_part` is called.
+
+        Default: ``-1``
+
+    :param use_iterative_sort:
+        bool;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_sort`
+        with :func:`.iterative_sort` to find sector symmetries.
+        Default: ``True``
+
+    :param use_light_Pak:
+        bool;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_sort`
+        with :func:`.light_Pak_sort` to find sector symmetries.
+        Default: ``True``
+
+    :param use_dreadnaut:
+        bool or string, optional;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_dreadnaut`
+        to find sector symmetries.
+        If given a string, interpret that string as the command
+        line executable `dreadnaut`. If ``True``, try
+        ``$SECDEC_CONTRIB/bin/dreadnaut`` and, if the
+        environment variable ``$SECDEC_CONTRIB`` is not set,
+        ``dreadnaut``.
+        Default: ``False``
+
+    :param use_Pak:
+        bool;
+        Whether or not to use
+        :func:`.squash_symmetry_redundant_sectors_sort`
+        with :func:`.Pak_sort` to find sector symmetries.
+        Default: ``True``
+
+    :param processes:
+        integer or None, optional;
+        The maximal number of processes to be used. If ``None``,
+        the number of CPUs :func:`multiprocessing.cpu_count()` is
+        used.
+        `New in version 1.3`.
+        Default: ``None``
+
 
     """
     polynomials_to_decompose = [loop_integral.exponentiated_U, loop_integral.exponentiated_F] + loop_integral.measure.factors + [loop_integral.numerator]
