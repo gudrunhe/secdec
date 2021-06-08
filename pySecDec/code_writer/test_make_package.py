@@ -115,7 +115,7 @@ class TestConvertInput(TestMakePackage):
                                       contour_deformation_polynomial=None,
                                       positive_polynomials=[],
                                       decomposition_method='iterative_no_primary',
-                                      pylink_qmc_transforms=None
+                                      pylink_qmc_transforms=['korobov3x3']
                                  )
 
     #@attr('active')

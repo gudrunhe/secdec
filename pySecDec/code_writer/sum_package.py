@@ -226,7 +226,7 @@ class Coefficient(object):
 # TODO: high-level test
 def sum_package(name, package_generators, generators_args, regulators, requested_orders,
                 real_parameters=[], complex_parameters=[], coefficients=None,
-                form_executable=None, pylink_qmc_transforms=None):
+                form_executable=None, pylink_qmc_transforms=['korobov3x3']):
     r'''
     Decompose, subtract and expand a list of expressions
     of the form
@@ -302,8 +302,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         * ``sidi<i>`` for 1 <= i <= 6
 
         `New in version 1.5`.
-        Default: ``None``
-        (which compiles all available templates)
+        Default: ``['korobov3x3']``
 
     '''
     print('running "sum_package" for ' + name)

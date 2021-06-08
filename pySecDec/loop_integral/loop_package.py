@@ -29,7 +29,7 @@ def loop_package(name, loop_integral, requested_orders,
                  split=False, ibp_power_goal=-1,
                  use_iterative_sort=True, use_light_Pak=True,
                  use_dreadnaut=False, use_Pak=True,
-                 processes=None, pylink_qmc_transforms=None, package_generator=make_package):
+                 processes=None, pylink_qmc_transforms=['korobov3x3'], package_generator=make_package):
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -230,8 +230,7 @@ def loop_package(name, loop_integral, requested_orders,
         * ``sidi<i>`` for 1 <= i <= 6
 
         `New in version 1.5`.
-        Default: ``None``
-        (which compiles all available templates)
+        Default: ``['korobov3x3']``
 
     :param package_generator:
         function;

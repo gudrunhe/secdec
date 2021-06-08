@@ -1438,7 +1438,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
                  enforce_complex=False, split=False, ibp_power_goal=-1, use_iterative_sort=True,
-                 use_light_Pak=True, use_dreadnaut=False, use_Pak=True, processes=None, pylink_qmc_transforms=None):
+                 use_light_Pak=True, use_dreadnaut=False, use_Pak=True, processes=None, pylink_qmc_transforms=['korobov3x3']):
     r'''
     Decompose, subtract and expand an expression.
     Return it as c++ package.
@@ -1735,8 +1735,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         * ``sidi<i>`` for 1 <= i <= 6
 
         `New in version 1.5`.
-        Default: ``None``
-        (which compiles all available templates)
+        Default: ``['korobov3x3']``
     '''
     print('running "make_package" for "' + name + '"')
 
