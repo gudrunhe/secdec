@@ -757,6 +757,146 @@ class IntegralLibrary(object):
         library was created without deformation.
         Default: ``0.9``.
 
+    :param epsrel:
+        float, optional;
+        The desired relative accuracy for the numerical
+        evaluation of the weighted sum of the sectors.
+        Default: ``1.e-2``.
+
+    :param epsabs:
+        float, optional;
+        The desired absolute accuracy for the numerical
+        evaluation of the weighted sum of the sectors.
+        Default: ``1.e-7``.
+
+    :param maxeval:
+        unsigned int, optional;
+        The maximal number of integrand evaluations for
+        each sector.
+        Default: ``ULLONG_MAX (18446744073709551615)``.
+
+    :param mineval:
+        unsigned int, optional;
+        The minimal number of integrand evaluations for
+        each sector.
+        Default: ``50000``.
+
+    :param maxincreasefac:
+        float, optional;
+        The maximum factor by which the number of
+        integrand evaluations will be increased in a
+        single refinement
+        iteration.
+        Default: ``20``.
+
+    :param min_epsrel:
+        float, optional;
+        The minimum relative accuracy required for
+        each individual sector.
+        Default: ``0.2``
+
+    :param min_epsabs:
+        float, optional;
+        The minimum absolute accuracy required for
+        each individual sector.
+        Default: ``1.e-4``.
+
+    :param max_epsrel:
+        float, optional;
+        The maximum relative accuracy assumed possible
+        for each individual sector. Any sector known to
+        this precision will not be refined further.
+        Note: if this condition is met this means that
+        the expected precision will not match the
+        desired precision.
+        Default: ``1.e-14``.
+
+    :param max_epsabs:
+        float, optional;
+        The maximum absolute accuracy assumed possible
+        for each individual sector. Any sector known to
+        this precision will not be refined further. Note:
+        if this condition is met this means that the
+        expected precision will not match the desired
+        precision.
+        Default: ``1.e-20``.
+
+    :param min_decrease_factor:
+        float, optional;
+        If the next refinement iteration is expected to
+        make the total time taken for the code to run
+        longer than ``hard_wall_clock_limit`` then the
+        number of points to be requested in the next
+        iteration will be reduced by
+        at least ``min_decrease_factor``.
+        Default: ``0.9``.
+
+    :param decrease_to_percentage:
+        float, optional;
+        If
+        ``remaining_time * decrease_to_percentage > time_for_next_iteration``
+        then the number of points requested in
+        the next refinement iteration will be reduced.
+        Here: ``remaining_time = hard_wall_clock_limit - elapsed_time``
+        and ``time_for_next_iteration`` is the estimated
+        time required for the next refinement iteration.
+        Note: if this condition is met this means that
+        the expected precision will not match the desired
+        precision.
+        Default: ``0.7``.
+
+    :param soft_wall_clock_limit:
+        float, optional;
+        If the current elapsed time has passed
+        ``soft_wall_clock`` limit and a refinement
+        iteration finishes then a new refinement iteration
+        will not be started. Instead, the code will return
+        the current result and exit.
+        Default: ``DBL_MAX (1.7976931348623158e+308)``.
+
+    :param hard_wall_clock_limit:
+        float, optional;
+        If the next refinement iteration is expected to
+        make the total time taken for the code to run
+        longer than ``hard_wall_clock_limit`` then the
+        number of points in the next iteration will be
+        reduced such that the code is expected to finish
+        before the elapsed time reaches
+        ``hard_wall_clock_limit``. Note that this means
+        that the expected precision will not match the
+        desired precision.
+        Default: ``DBL_MAX (1.7976931348623158e+308)``.
+
+    :param number_of_threads:
+        int, optional;
+        The number of threads used to compute integrals
+        concurrently. Note: The integrals themselves may
+        also be computed with multiple threads
+        irrespective of this option.
+        Default: ``0``.
+
+    :param reset_cuda_after:
+        int, optional;
+        The cuda driver does not automatically remove
+        unnecessary functions from the device memory
+        such that the device may run out of memory after
+        some time. This option controls after how many
+        integrals ``cudaDeviceReset()`` is called to clear
+        the memory. With the default ``0``,
+        ``cudaDeviceReset()`` is never called. This option
+        is ignored if compiled without cuda.
+        Default: ``0 (never)``.
+
+    :param verbose:
+        bool, optional;
+        Controls the verbosity of the output of the amplitude.
+        Default: ``False``.
+
+    .. seealso::
+        A more detailed description of these parameters and
+        how they affect timing/precision is given in
+        :numref:`chapter_cpp_amplitude`.
+
     The call operator returns three strings:
     * The integral without its prefactor
     * The prefactor
