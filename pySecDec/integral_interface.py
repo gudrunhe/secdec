@@ -852,7 +852,7 @@ class IntegralLibrary(object):
                                                c_double, # hard_wall_clock_limit
                                                c_size_t, # number_of_threads
                                                c_size_t, # reset_cuda_after
-                                               c_int  # verbose
+                                               c_bool  # verbose
         ]
 
         # set cuda integrate types if applicable
@@ -884,7 +884,7 @@ class IntegralLibrary(object):
                                                         c_double,  # hard_wall_clock_limit
                                                         c_size_t,  # number_of_threads
                                                         c_size_t,  # reset_cuda_after
-                                                        c_int  # verbose
+                                                        c_bool  # verbose
                                                    ]
         except AttributeError:
             # c_lib has been compiled without cuda
@@ -903,7 +903,7 @@ class IntegralLibrary(object):
                      mineval=50000, maxincreasefac=20., min_epsrel=0.2, min_epsabs=1.e-4,
                      max_epsrel=1.e-14, max_epsabs=1.e-20, min_decrease_factor=0.9,
                      decrease_to_percentage=0.7, soft_wall_clock_limit=1.7976931348623158e+308, # 1.7976931348623158e+308 max double
-                     hard_wall_clock_limit=1.7976931348623158e+308, number_of_threads=0, reset_cuda_after=0, verbose=1
+                     hard_wall_clock_limit=1.7976931348623158e+308, number_of_threads=0, reset_cuda_after=0, verbose=False
                 ):
         # Initialize and launch the underlying c routines in a subprocess
         # to enable KeyboardInterrupt and avoid crashing the primary python

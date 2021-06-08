@@ -89,7 +89,7 @@ extern "C"
         const real_t hard_wall_clock_limit,
         const size_t number_of_threads,
         const size_t reset_cuda_after,
-        const int verbose
+        const bool verbose
     )
     {
         size_t i;
