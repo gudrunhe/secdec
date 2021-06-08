@@ -4,9 +4,6 @@
 # timeout (in seconds) for all test cases
 TIMEOUT=600
 
-# get the pySecDec version number
-PYSECDECVERSION=$(shell python3 -c 'import pySecDec; print(pySecDec.__version__)')
-
 # Auto detect nvcc
 ifeq ($(CXX), nvcc)
 SECDEC_WITH_CUDA = 1
@@ -55,7 +52,7 @@ clean:
 	if [ -f util/Makefile ] ; then $(MAKE) -C ./util clean ; fi
 
 	# remove .pyc files created by python 3
-	rm -rf ./__pycache__
+	find -P . -name '*.pyc' -delete
 	find -P . -name __pycache__ -delete
 
 	# remove backup files
@@ -73,9 +70,6 @@ clean:
 
 	# remove build/ und dist/
 	rm -rf build/ dist/
-
-	# remove tarball and the directory it is created from
-	rm -rf pySecDec-$(PYSECDECVERSION)/ pySecDec-$(PYSECDECVERSION).tar.gz
 
 	# remove the SecDecUtil tarball
 	rm -f util/secdecutil-*.tar.gz
