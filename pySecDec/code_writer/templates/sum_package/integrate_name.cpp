@@ -48,13 +48,13 @@ int main()
     // amplitudes.hard_wall_clock_limit = 60 * 10;
 
     // optionally compute multiple integrals concurrently
-    // Note: The integrals themselves may also be computed in parallel irresprective of this option.
+    // Note: The integrals themselves may also be computed in parallel irrespective of this option.
     // amplitudes.number_of_threads = 12;
 
-    // The cuda driver does not automatically remove unneccessary functions from the device memory
-    // such that the device may run out of memry after some time. This option controls how many
-    // after how many integrals "cudaDeviceReset()" is called to clear the memory. With the default
-    // "0", "cudaDeviceReset()" is never called. This option is ignored if compiled without cuda.
+    // The cuda driver does not automatically remove unnecessary functions from the device memory
+    // such that the device may run out of memory after some time. This option controls after how many
+    // integrals "cudaDeviceReset()" is called to clear the memory. With the default "0", "cudaDeviceReset()"
+    // is never called. This option is ignored if compiled without cuda.
     // amplitudes.reset_cuda_after = 2000;
 
     // compute the amplitudes
