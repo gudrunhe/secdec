@@ -899,7 +899,7 @@ class IntegralLibrary(object):
                      number_of_presamples=100000, deformation_parameters_maximum=1.,
                      deformation_parameters_minimum=1.e-5,
                      deformation_parameters_decrease_factor=0.9,
-                     epsrel=1.e-2, epsabs=1.e-7, maxeval=2147483647,
+                     epsrel=1.e-2, epsabs=1.e-7, maxeval=18446744073709551615,
                      mineval=50000, maxincreasefac=20., min_epsrel=0.2, min_epsabs=1.e-4,
                      max_epsrel=1.e-14, max_epsabs=1.e-20, min_decrease_factor=0.9,
                      decrease_to_percentage=0.7, soft_wall_clock_limit=1.7976931348623158e+308, # 1.7976931348623158e+308 max double
