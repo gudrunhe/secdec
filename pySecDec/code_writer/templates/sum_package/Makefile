@@ -8,18 +8,29 @@ QMC_TEMPLATE_OBJECTS = $(patsubst %%.cpp,%%.o,$(wildcard pylink/qmc_template_ins
 source:
 	for INTEGRAL in $(INTEGRALS); do $(MAKE) -C $${INTEGRAL} $@& done; wait
 
-# rule to build the integral libraries
+# rule to build all dynamic integral libraries
 libs:
 	$(MAKE) -C src $@
 
-pylink: libs $(NAME)_pylink.so
+# rule to build pylink library
+pylink: $(NAME)_pylink.so
 
+# build $(INTEGRALS_A)
+define build_integrals_a_rule
+$1/lib$1.a :
+	$(MAKE) -C $1 static
+endef
+$(foreach static_library,$(INTEGRALS),$(eval $(call build_integrals_a_rule,$(static_library))))
 
-$(INTEGRALS_A) :
-	for INTEGRAL in $(INTEGRALS); do $(MAKE) -C $${INTEGRAL} static& done; wait
+# build $(INTEGRALS_SO)
+$(INTEGRALS_SO) : lib/lib%%.so :
+	$(MAKE) -C src ../lib/lib$*.so
+
+lib/lib$(NAME).so :
+	$(MAKE) -C src ../lib/lib$(NAME).so
 
 # build the python shared library
-$(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(QMC_TEMPLATE_OBJECTS)
+$(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_SO) $(QMC_TEMPLATE_OBJECTS)
 	$(CXX) -shared -o $@ pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(foreach INTEGRAL,$(INTEGRALS),$(INTEGRAL)/src/*.o) $(LDFLAGS)
 
 # build the example executable
