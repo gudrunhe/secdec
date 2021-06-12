@@ -49,6 +49,9 @@ if __name__ == "__main__":
     # whether or not to produce code to perform the contour deformation
     # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
     contour_deformation = True,
+    
+    # list of qmc integral transforms for which to build code
+    pylink_qmc_transforms = ['korobov2x2']
 
     )
 
