@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: 1c23af6123297489708cd5fc5828d295f11ab366
- * Generated: 19-07-2020 17:57:43
+ * Commit: 8b80573179e2da21a9359f13d1e7a7c810eb0599
+ * Generated: 12-06-2021 23:09:32
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -166,7 +166,7 @@ namespace integrators
         struct NoneFunction
         {
             static const int num_parameters = 0;
-            const std::vector<std::vector<D>> initial_parameters;
+            const std::vector<std::vector<D>> initial_parameters = {};
 
             D operator()(const D x, const double* p) const
             {
