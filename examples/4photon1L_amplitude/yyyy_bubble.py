@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import pySecDec as psd
+from pySecDec.code_writer.make_package import make_package
 from pySecDec.loop_integral import loop_package
 
 if __name__ == "__main__":
@@ -34,5 +35,8 @@ if __name__ == "__main__":
     # the method to be used for the sector decomposition
     # valid values are ``iterative`` and ``geometric``
     decomposition_method = 'iterative',
+
+    # pass code_writer.make_package to generate the old style pySecDec output
+    package_generator=make_package
 
     )
