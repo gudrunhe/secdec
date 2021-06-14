@@ -5,5 +5,5 @@ if __name__ == "__main__":
     if argv == ["--dirname"]:
         print(dirname)
     else:
-        print("Usage: python3 -m pySecDecContrib --dirname\n", file=sys.stderr)
+        print("Usage: python3 -m pySecDecContrib --dirname", file=sys.stderr)
         exit(1)
