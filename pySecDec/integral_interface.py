@@ -14,7 +14,7 @@ try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
-from os import chdir
+import os.path
 
 def _parse_series_coefficient(text):
     """
@@ -347,6 +347,7 @@ class MultiIntegrator(CPPIntegrator):
         self.low_dim_integrator = low_dim_integrator # keep reference to avoid deallocation
         self.high_dim_integrator = high_dim_integrator # keep reference to avoid deallocation
         self.c_lib = integral_library.c_lib
+        self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_MultiIntegrator.restype = c_void_p
         self.c_lib.allocate_MultiIntegrator.argtypes = [c_void_p, c_void_p, c_int]
         self.c_integrator_ptr = self.c_lib.allocate_MultiIntegrator(low_dim_integrator.c_integrator_ptr,high_dim_integrator.c_integrator_ptr,critical_dim)
@@ -366,6 +367,7 @@ class CQuad(CPPIntegrator):
     '''
     def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,n=100,verbose=False,zero_border=0.0):
         self.c_lib = integral_library.c_lib
+        self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_gsl_cquad.restype = c_void_p
         self.c_lib.allocate_gsl_cquad.argtypes = [c_double, c_double, c_uint, c_bool, c_double]
         self.c_integrator_ptr = self.c_lib.allocate_gsl_cquad(epsrel,epsabs,n,verbose,zero_border)
@@ -385,6 +387,7 @@ class Vegas(CPPIntegrator):
     '''
     def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,zero_border=0.0,nstart=10000,nincrease=5000,nbatch=1000,real_complex_together=False):
         self.c_lib = integral_library.c_lib
+        self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Vegas.restype = c_void_p
         self.c_lib.allocate_cuba_Vegas.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong, c_double, c_longlong, c_longlong, c_longlong, c_bool]
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Vegas(epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nstart,nincrease,nbatch,real_complex_together)
@@ -404,6 +407,7 @@ class Suave(CPPIntegrator):
     '''
     def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,zero_border=0.0,nnew=1000,nmin=10,flatness=25.,real_complex_together=False):
         self.c_lib = integral_library.c_lib
+        self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Suave.restype = c_void_p
         self.c_lib.allocate_cuba_Suave.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong, c_double, c_longlong, c_longlong, c_double, c_bool]
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Suave(epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nnew,nmin,flatness,real_complex_together)
@@ -425,6 +429,7 @@ class Divonne(CPPIntegrator):
                                          key1=2000, key2=1, key3=1, maxpass=4, border=0., maxchisq=1.,
                                          mindeviation=.15, real_complex_together=False):
         self.c_lib = integral_library.c_lib
+        self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Divonne.restype = c_void_p
         self.c_lib.allocate_cuba_Divonne.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong,
                                                      c_double, c_int, c_int, c_int, c_int, c_double, c_double,
@@ -448,6 +453,7 @@ class Cuhre(CPPIntegrator):
     '''
     def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,mineval=0,maxeval=10**6,zero_border=0.0,key=0,real_complex_together=False):
         self.c_lib = integral_library.c_lib
+        self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Cuhre.restype = c_void_p
         self.c_lib.allocate_cuba_Cuhre.argtypes = [c_double, c_double, c_int, c_longlong, c_longlong, c_double, c_int, c_bool]
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Cuhre(epsrel,epsabs,flags,mineval,maxeval,zero_border,key,real_complex_together)
@@ -509,6 +515,7 @@ class Qmc(CPPIntegrator):
                       minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
+        self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_integrators_Qmc.restype = c_void_p
         self.c_lib.allocate_integrators_Qmc.argtypes = [
                                                             c_double, # epsrel
@@ -627,6 +634,7 @@ class CudaQmc(object):
                         devices_t # devices[]
                    ]
         self.c_lib = integral_library.c_lib
+        self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuda_integrators_Qmc_together.restype = self.c_lib.allocate_cuda_integrators_Qmc_separate.restype = c_void_p
         self.c_lib.allocate_cuda_integrators_Qmc_together.argtypes = self.c_lib.allocate_cuda_integrators_Qmc_separate.argtypes = argtypes
 
@@ -928,9 +936,10 @@ class IntegralLibrary(object):
 
         # import c++ library
         c_lib = self.c_lib = CDLL(shared_object_path)
-
-        # TODO - remove this
-        chdir(shared_object_path.rsplit("/",1)[0])
+        basename, ext = os.path.splitext(shared_object_path)
+        self.c_lib_path = \
+                basename[:-7] + "_coefficients" if basename.endswith("_pylink") else \
+                basename + "_coefficients"
 
         # set c prototypes
         c_lib.allocate_string.restype = c_void_p
@@ -992,7 +1001,8 @@ class IntegralLibrary(object):
                                                c_double, # hard_wall_clock_limit
                                                c_size_t, # number_of_threads
                                                c_size_t, # reset_cuda_after
-                                               c_bool  # verbose
+                                               c_bool, # verbose
+                                               c_char_p  # lib_path
         ]
 
         # set cuda integrate types if applicable
@@ -1024,7 +1034,8 @@ class IntegralLibrary(object):
                                                         c_double,  # hard_wall_clock_limit
                                                         c_size_t,  # number_of_threads
                                                         c_size_t,  # reset_cuda_after
-                                                        c_bool  # verbose
+                                                        c_bool, # verbose
+                                                        c_char_p  # lib_path
                                                    ]
         except AttributeError:
             # c_lib has been compiled without cuda
@@ -1124,7 +1135,8 @@ class IntegralLibrary(object):
                                                  mineval, maxincreasefac, min_epsrel, min_epsabs,
                                                  max_epsrel, max_epsabs, min_decrease_factor,
                                                  decrease_to_percentage, soft_wall_clock_limit, hard_wall_clock_limit,
-                                                 number_of_threads, reset_cuda_after, verbose
+                                                 number_of_threads, reset_cuda_after, verbose,
+                                                 self.c_lib_path.encode("utf-8")
                                             )
         else:
             compute_integral_return_value = self.c_lib.compute_integral(
@@ -1139,7 +1151,8 @@ class IntegralLibrary(object):
                                             mineval, maxincreasefac, min_epsrel, min_epsabs,
                                             max_epsrel, max_epsabs, min_decrease_factor,
                                             decrease_to_percentage, soft_wall_clock_limit, hard_wall_clock_limit,
-                                            number_of_threads, reset_cuda_after, verbose
+                                            number_of_threads, reset_cuda_after, verbose,
+                                            self.c_lib_path.encode("utf-8")
                                     )
         return_value_queue.put(compute_integral_return_value)
         if compute_integral_return_value != 0:

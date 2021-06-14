@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from __future__ import print_function
 from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp

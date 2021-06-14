@@ -8,6 +8,7 @@
 #endif
 #include <string>
 #include <vector>
+#include <string>
 
 #include <secdecutil/integrand_container.hpp>
 #include <secdecutil/series.hpp>
@@ -51,6 +52,7 @@ namespace %(name)s
     (
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters,
+        const std::string& lib_path,
         const integrator_t integrator
         #if %(name)s_contour_deformation
             ,unsigned number_of_presamples = 100000,

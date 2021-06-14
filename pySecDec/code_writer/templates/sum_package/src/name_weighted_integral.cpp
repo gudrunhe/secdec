@@ -2,7 +2,7 @@
 #include <fstream> // std::ifstream
 #include <memory> // std::shared_ptr, std::make_shared
 #include <numeric> // std::accumulate
-#include <string> // std::to_string
+#include <string> // std::string, std::to_string
 #include <vector> // std::vector
 
 #include <secdecutil/amplitude.hpp> // secdecutil::amplitude::Integral, secdecutil::amplitude::CubaIntegral, secdecutil::amplitude::QmcIntegral
@@ -39,9 +39,9 @@ namespace %(sub_integral_name)s
         return orders;
     }
 
-    nested_series_t<complex_t> coefficient(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters, const unsigned int amp_idx)
+    nested_series_t<complex_t> coefficient(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters, const unsigned int amp_idx, const std::string& lib_path)
     {
-        std::ifstream coeffile("lib/%(sub_integral_name)s_coefficient" + std::to_string(amp_idx) + ".txt");
+        std::ifstream coeffile(lib_path + "/%(sub_integral_name)s_coefficient" + std::to_string(amp_idx) + ".txt");
         assert( coeffile.is_open() );
         return secdecutil::ginac::read_coefficient<nested_series_t>
                (
@@ -331,19 +331,21 @@ namespace %(name)s
             const std::vector<real_t>& real_parameters,
             const std::vector<complex_t>& complex_parameters,
             const std::vector<nested_series_t<sum_t>>& integrals,
-            const unsigned int amp_idx
+            const unsigned int amp_idx,
+            const std::string& lib_path
         )
         {
             nested_series_t<sum_t> amplitude = std::accumulate(++integrals.begin(), integrals.end(), *integrals.begin() );
             amplitude *= ::%(sub_integral_name)s::prefactor(real_parameters,complex_parameters)
-                       * ::%(sub_integral_name)s::coefficient(real_parameters,complex_parameters,amp_idx);
+                       * ::%(sub_integral_name)s::coefficient(real_parameters,complex_parameters,amp_idx,lib_path);
             return amplitude;
         }
         
         #if %(name)s_contour_deformation
         
             #define INSTANTIATE_MAKE_INTEGRAL(INTEGRATOR) \
-                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, INTEGRATOR, unsigned, real_t, real_t, real_t);
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                        INTEGRATOR, unsigned, real_t, real_t, real_t);
         
             #define INSTANTIATE_MAKE_INTEGRAL_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \

@@ -360,7 +360,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         integral_initialization.append( 'std::vector<nested_series_t<sum_t>> integral_' + sub_name + ' = ' + sub_name + '::make_integral(real_parameters,complex_parameters,integrator);' )
         integral_initialization_with_contour_deformation.append( 'std::vector<nested_series_t<sum_t>> integral_' + sub_name + ' = ' + sub_name + '::make_integral(real_parameters,complex_parameters,integrator,number_of_presamples,deformation_parameters_maximum,deformation_parameters_minimum,deformation_parameters_decrease_factor);' )
         weighted_integral_includes.append( '#include "' + sub_name + '_weighted_integral.hpp"')
-        weighted_integral_sum_initialization.append( 'amplitude += ' + sub_name + '::make_weighted_integral(real_parameters, complex_parameters, integral_' + sub_name + ', amp_idx);' )
+        weighted_integral_sum_initialization.append( 'amplitude += ' + sub_name + '::make_weighted_integral(real_parameters, complex_parameters, integral_' + sub_name + ', amp_idx, lib_path);' )
     sub_integral_names = ' '.join(sub_integral_names)
     integral_initialization = '\n        '.join(integral_initialization)
     integral_initialization_with_contour_deformation = '\n        '.join(integral_initialization_with_contour_deformation)
@@ -476,11 +476,13 @@ def sum_package(name, package_generators, generators_args, regulators, requested
 
             # process coefficients
             lowest_coefficient_orders = []
+            coeffsdir = name + '_coefficients'
+            os.makedirs(coeffsdir, exist_ok=True)
             for i in range(len(coefficients)):
                 coefficient = coefficients[i][j]
                 this_coefficients_lowest_coefficient_orders, coefficient_expressions = coefficient.process(form=form_executable)
                 lowest_coefficient_orders.append(this_coefficients_lowest_coefficient_orders)
-                with open(os.path.join('lib', sub_name+'_coefficient%i.txt'%i),'w') as coeffile:
+                with open(os.path.join(coeffsdir, sub_name+'_coefficient%i.txt'%i),'w') as coeffile:
                     coeffile.write(coefficient_expressions)
             replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
 

@@ -16,7 +16,6 @@ try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
-from os import chdir
 import os.path
 import collections
 import pySecDec

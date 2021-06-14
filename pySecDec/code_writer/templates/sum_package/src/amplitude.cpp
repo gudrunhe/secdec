@@ -1,6 +1,6 @@
 #include <vector> // std::vector
 #include <stdexcept> // std::invalid_argument
-#include <string> // std::to_string
+#include <string> // std::string
 
 #include <secdecutil/integrators/cquad.hpp> // secdecutil::gsl::CQuad
 #include <secdecutil/integrators/cuba.hpp> // secdecutil::cuba::Vegas, secdecutil::cuba::Suave, secdecutil::cuba::Cuhre, secdecutil::cuba::Divonne
@@ -24,6 +24,7 @@ namespace %(name)s
     (
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters,
+        const std::string& lib_path,
         const integrator_t integrator
         #if %(name)s_contour_deformation
             ,unsigned number_of_presamples,
@@ -69,6 +70,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -93,6 +95,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -117,6 +120,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -143,6 +147,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -167,6 +172,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -191,6 +197,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -211,6 +218,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const INTEGRATOR&>(*integrator) \
                     ,number_of_presamples, \
                     deformation_parameters_maximum, \
@@ -233,6 +241,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -253,6 +262,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -273,6 +283,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -295,6 +306,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -315,6 +327,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -335,6 +348,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const secdecutil::integrators::Qmc< \
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -351,6 +365,7 @@ namespace %(name)s
                 return make_amplitudes( \
                     real_parameters, \
                     complex_parameters, \
+                    lib_path, \
                     dynamic_cast<const INTEGRATOR&>(*integrator) \
                 ); \
             }
@@ -362,6 +377,7 @@ namespace %(name)s
     (
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters,
+        const std::string& lib_path,
         const secdecutil::Integrator<integrand_return_t,real_t> * integrator
         #if %(name)s_contour_deformation
             ,unsigned number_of_presamples,
@@ -392,10 +408,11 @@ namespace %(name)s
     #if %(name)s_contour_deformation
     
         #define INSTANTIATE_MAKE_AMPLITUDES(INTEGRATOR) \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, INTEGRATOR, unsigned, real_t, real_t, real_t);
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
+                    INTEGRATOR, unsigned, real_t, real_t, real_t);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -404,7 +421,7 @@ namespace %(name)s
                      secdecutil::integrators::void_template \
                 >, \
                 unsigned, real_t, real_t, real_t); \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -413,7 +430,7 @@ namespace %(name)s
                      ::integrators::fitfunctions::None::type \
                 >, \
                 unsigned, real_t, real_t, real_t); \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                     INTEGRAL_NAME::integrand_return_t, \
                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -424,7 +441,7 @@ namespace %(name)s
                 unsigned, real_t, real_t, real_t);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_SIDI_QMC(SIDIDEGREE) \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -433,7 +450,7 @@ namespace %(name)s
                      secdecutil::integrators::void_template \
                 >, \
                 unsigned, real_t, real_t, real_t); \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -442,7 +459,7 @@ namespace %(name)s
                      ::integrators::fitfunctions::None::type \
                 >, \
                 unsigned, real_t, real_t, real_t); \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                     INTEGRAL_NAME::integrand_return_t, \
                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -455,10 +472,10 @@ namespace %(name)s
     #else
     
         #define INSTANTIATE_MAKE_AMPLITUDES(INTEGRATOR) \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, INTEGRATOR);
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, INTEGRATOR);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -466,7 +483,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_t, \
                      secdecutil::integrators::void_template \
                 >); \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -474,7 +491,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_t, \
                      ::integrators::fitfunctions::None::type \
                 >); \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                     INTEGRAL_NAME::integrand_return_t, \
                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -484,7 +501,7 @@ namespace %(name)s
                 >);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_SIDI_QMC(SIDIDEGREE) \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -492,7 +509,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_t, \
                      secdecutil::integrators::void_template \
                 >); \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -500,7 +517,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_t, \
                      ::integrators::fitfunctions::None::type \
                 >); \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, \
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                     INTEGRAL_NAME::integrand_return_t, \
                     INTEGRAL_NAME::maximal_number_of_integration_variables, \

@@ -2,6 +2,7 @@
 #define %(sub_integral_name)s_weighted_integral_hpp_included
 
 #include <vector> // std::vector
+#include <string> // std::string
 
 #include "%(name)s.hpp"
 #include "%(sub_integral_name)s/%(sub_integral_name)s.hpp"
@@ -28,7 +29,8 @@ namespace %(name)s
             const std::vector<real_t>& real_parameters,
             const std::vector<complex_t>& complex_parameters,
             const std::vector<nested_series_t<sum_t>>& integrals,
-            const unsigned int amp_idx
+            const unsigned int amp_idx,
+            const std::string& lib_path
         );
     }
 };

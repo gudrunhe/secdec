@@ -89,7 +89,8 @@ extern "C"
         const real_t hard_wall_clock_limit,
         const size_t number_of_threads,
         const size_t reset_cuda_after,
-        const bool verbose
+        const bool verbose,
+        const char *lib_path
     )
     {
         size_t i;
@@ -110,7 +111,7 @@ extern "C"
             complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
 
         // Construct the amplitudes
-        std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(real_parameters, complex_parameters, integrator);
+        std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(real_parameters, complex_parameters, std::string(lib_path), integrator);
 
         // pack amplitude into handler
         handler_t<amplitudes_t> amplitudes
