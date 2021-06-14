@@ -79,5 +79,29 @@ namespace %(name)s
 
     const std::vector<int> requested_orders = {%(requested_orders)s};
     // --}
+    
+    #ifdef SECDEC_WITH_CUDA
+        #if %(name)s_contour_deformation
+            typedef secdecutil::CudaIntegrandContainerWithDeformation
+                    <
+                        real_t,complex_t,1/*maximal_number_of_functions*/,
+                        maximal_number_of_integration_variables,
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
+                    >
+                    cuda_integrand_t;
+            typedef cuda_integrand_t cuda_together_integrand_t;
+        #else
+            typedef secdecutil::CudaIntegrandContainerWithoutDeformation
+                    <
+                        real_t,complex_t,integrand_return_t,
+                        1/*maximal_number_of_functions*/,
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
+                    >
+                    cuda_integrand_t;
+            typedef cuda_integrand_t cuda_together_integrand_t;
+        #endif
+    #endif
 };
 #endif

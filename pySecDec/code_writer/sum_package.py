@@ -405,6 +405,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
 
     replacements_in_files = {
                                 'name' : name,
+                                'name_as_char_pack' : ','.join([("'" + char + "'") for char in name]),
                                 'number_of_integrals' : len(package_generators),
                                 'number_of_real_parameters' : len(real_parameters),
                                 'names_of_real_parameters' : make_cpp_list(real_parameters),

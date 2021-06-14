@@ -1,6 +1,7 @@
 #include <vector> // std::vector
 #include <stdexcept> // std::invalid_argument
 #include <string> // std::string
+#include <typeinfo> // typeid
 
 #include <secdecutil/integrators/cquad.hpp> // secdecutil::gsl::CQuad
 #include <secdecutil/integrators/cuba.hpp> // secdecutil::cuba::Vegas, secdecutil::cuba::Suave, secdecutil::cuba::Cuhre, secdecutil::cuba::Divonne
@@ -13,10 +14,15 @@
 #define EXPAND_STRINGIFY(item) STRINGIFY(item)
 #define STRINGIFY(item) #item
 
+#define INTEGRAL_NAME %(name)s
+#ifdef SECDEC_WITH_CUDA
+    #define INTEGRAND_TYPE cuda_integrand_t
+#else
+    #define INTEGRAND_TYPE integrand_t
+#endif
+
 namespace %(name)s
 {
-    #define INTEGRAL_NAME %(name)s
-    
     typedef secdecutil::MultiIntegrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t,INTEGRAL_NAME::integrand_t> multiintegrator_t;
     
     template<typename integrator_t>
@@ -63,7 +69,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 secdecutil::integrators::void_template \
             >*>(integrator)) \
             { \
@@ -75,7 +81,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         secdecutil::integrators::void_template \
                     >&>(*integrator) \
                     ,number_of_presamples, \
@@ -88,7 +94,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 ::integrators::fitfunctions::None::type \
             >*>(integrator)) \
             { \
@@ -100,7 +106,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         ::integrators::fitfunctions::None::type \
                     >&>(*integrator) \
                     ,number_of_presamples, \
@@ -113,7 +119,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 ::integrators::fitfunctions::PolySingular::type \
             >*>(integrator)) \
             { \
@@ -125,7 +131,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         ::integrators::fitfunctions::PolySingular::type \
                     >&>(*integrator) \
                     ,number_of_presamples, \
@@ -140,7 +146,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 secdecutil::integrators::void_template \
             >*>(integrator)) \
             { \
@@ -152,7 +158,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         secdecutil::integrators::void_template \
                     >&>(*integrator) \
                     ,number_of_presamples, \
@@ -165,7 +171,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 ::integrators::fitfunctions::None::type \
             >*>(integrator)) \
             { \
@@ -177,7 +183,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         ::integrators::fitfunctions::None::type \
                     >&>(*integrator) \
                     ,number_of_presamples, \
@@ -190,7 +196,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 ::integrators::fitfunctions::PolySingular::type \
             >*>(integrator)) \
             { \
@@ -202,7 +208,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         ::integrators::fitfunctions::PolySingular::type \
                     >&>(*integrator) \
                     ,number_of_presamples, \
@@ -234,7 +240,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 secdecutil::integrators::void_template \
             >*>(integrator)) \
             { \
@@ -246,7 +252,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         secdecutil::integrators::void_template \
                     >&>(*integrator) \
                 ); \
@@ -255,7 +261,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 ::integrators::fitfunctions::None::type \
             >*>(integrator)) \
             { \
@@ -267,7 +273,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         ::integrators::fitfunctions::None::type \
                     >&>(*integrator) \
                 ); \
@@ -276,7 +282,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 ::integrators::fitfunctions::PolySingular::type \
             >*>(integrator)) \
             { \
@@ -288,7 +294,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         ::integrators::fitfunctions::PolySingular::type \
                     >&>(*integrator) \
                 ); \
@@ -299,7 +305,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 secdecutil::integrators::void_template \
             >*>(integrator)) \
             { \
@@ -311,7 +317,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         secdecutil::integrators::void_template \
                     >&>(*integrator) \
                 ); \
@@ -320,7 +326,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 ::integrators::fitfunctions::None::type \
             >*>(integrator)) \
             { \
@@ -332,7 +338,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         ::integrators::fitfunctions::None::type \
                     >&>(*integrator) \
                 ); \
@@ -341,7 +347,7 @@ namespace %(name)s
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
                 ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                INTEGRAL_NAME::integrand_t, \
+                INTEGRAL_NAME::INTEGRAND_TYPE, \
                 ::integrators::fitfunctions::PolySingular::type \
             >*>(integrator)) \
             { \
@@ -353,7 +359,7 @@ namespace %(name)s
                         INTEGRAL_NAME::integrand_return_t, \
                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
                         ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                        INTEGRAL_NAME::integrand_t, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
                         ::integrators::fitfunctions::PolySingular::type \
                     >&>(*integrator) \
                 ); \
@@ -402,7 +408,7 @@ namespace %(name)s
         %(pylink_qmc_dynamic_cast_integrator)s
         
         // None of the above dynamic_casts succeeded, throw and give up
-        throw std::invalid_argument("Trying to call \"" EXPAND_STRINGIFY(INTEGRAL_NAME) "::make_amplitudes\" with unknown \"secdecutil::Integrator\" derived type.");
+        throw std::invalid_argument("Trying to call \"" EXPAND_STRINGIFY(INTEGRAL_NAME) "::make_amplitudes\" with unknown \"secdecutil::Integrator\" derived type: " + std::string(typeid(*integrator).name()));
     }
             
     #if %(name)s_contour_deformation
@@ -417,7 +423,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
                      ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                     INTEGRAL_NAME::integrand_t, \
+                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
                 >, \
                 unsigned, real_t, real_t, real_t); \
@@ -426,7 +432,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
                      ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                     INTEGRAL_NAME::integrand_t, \
+                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
                 >, \
                 unsigned, real_t, real_t, real_t); \
@@ -435,7 +441,7 @@ namespace %(name)s
                     INTEGRAL_NAME::integrand_return_t, \
                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
                     ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                    INTEGRAL_NAME::integrand_t, \
+                    INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
                 >, \
                 unsigned, real_t, real_t, real_t);
@@ -446,7 +452,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
                      ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                     INTEGRAL_NAME::integrand_t, \
+                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
                 >, \
                 unsigned, real_t, real_t, real_t); \
@@ -455,7 +461,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
                      ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                     INTEGRAL_NAME::integrand_t, \
+                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
                 >, \
                 unsigned, real_t, real_t, real_t); \
@@ -464,7 +470,7 @@ namespace %(name)s
                     INTEGRAL_NAME::integrand_return_t, \
                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
                     ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                    INTEGRAL_NAME::integrand_t, \
+                    INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
                 >, \
                 unsigned, real_t, real_t, real_t);
@@ -480,7 +486,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
                      ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                     INTEGRAL_NAME::integrand_t, \
+                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
                 >); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
@@ -488,7 +494,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
                      ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                     INTEGRAL_NAME::integrand_t, \
+                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
                 >); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
@@ -496,7 +502,7 @@ namespace %(name)s
                     INTEGRAL_NAME::integrand_return_t, \
                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
                     ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                    INTEGRAL_NAME::integrand_t, \
+                    INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
                 >);
     
@@ -506,7 +512,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
                      ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                     INTEGRAL_NAME::integrand_t, \
+                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
                 >); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
@@ -514,7 +520,7 @@ namespace %(name)s
                      INTEGRAL_NAME::integrand_return_t, \
                      INTEGRAL_NAME::maximal_number_of_integration_variables, \
                      ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                     INTEGRAL_NAME::integrand_t, \
+                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
                 >); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
@@ -522,7 +528,7 @@ namespace %(name)s
                     INTEGRAL_NAME::integrand_return_t, \
                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
                     ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                    INTEGRAL_NAME::integrand_t, \
+                    INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
                 >);
     #endif
@@ -542,6 +548,7 @@ namespace %(name)s
     %(pylink_qmc_instantiate_make_amplitudes)s
     
     #undef INTEGRAL_NAME
+    #undef INTEGRAND_TYPE
     #undef DYNAMIC_CAST_INTEGRATOR_KOROBOV_QMC
     #undef DYNAMIC_CAST_INTEGRATOR_SIDI_QMC
     #undef DYNAMIC_CAST_INTEGRATOR

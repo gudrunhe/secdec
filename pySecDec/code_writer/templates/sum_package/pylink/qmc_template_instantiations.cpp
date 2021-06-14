@@ -4,49 +4,26 @@
 #define INTEGRAL_NAME %(name)s
 
 #ifdef SECDEC_WITH_CUDA
-    #define INSTANTIATE_KOROBOV_QMC_SEPARATE(KOROBOVDEGREE1,KOROBOVDEGREE2) \
-        template class secdecutil::integrators::Qmc< \
-                                                        INTEGRAL_NAME::integrand_return_t, \
-                                                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
-                                                        ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                                                        INTEGRAL_NAME::cuda_integrand_t, \
-                                                        secdecutil::integrators::void_template \
-                                                   >; \
-        template class secdecutil::integrators::Qmc< \
-                                                        INTEGRAL_NAME::integrand_return_t, \
-                                                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
-                                                        ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                                                        INTEGRAL_NAME::cuda_integrand_t, \
-                                                        ::integrators::fitfunctions::None::type \
-                                                   >; \
-        template class secdecutil::integrators::Qmc< \
-                                                        INTEGRAL_NAME::integrand_return_t, \
-                                                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
-                                                        ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                                                        INTEGRAL_NAME::cuda_integrand_t, \
-                                                        ::integrators::fitfunctions::PolySingular::type \
-                                                   >;
     #define INSTANTIATE_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
-            INSTANTIATE_KOROBOV_QMC_SEPARATE(KOROBOVDEGREE1,KOROBOVDEGREE2) \
             template class secdecutil::integrators::Qmc< \
                                                             INTEGRAL_NAME::integrand_return_t, \
                                                             INTEGRAL_NAME::maximal_number_of_integration_variables, \
                                                             ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                                                            INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                            INTEGRAL_NAME::cuda_integrand_t, \
                                                             secdecutil::integrators::void_template \
                                                        >; \
             template class secdecutil::integrators::Qmc< \
                                                             INTEGRAL_NAME::integrand_return_t, \
                                                             INTEGRAL_NAME::maximal_number_of_integration_variables, \
                                                             ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                                                            INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                            INTEGRAL_NAME::cuda_integrand_t, \
                                                             ::integrators::fitfunctions::None::type \
                                                        >; \
             template class secdecutil::integrators::Qmc< \
                                                             INTEGRAL_NAME::integrand_return_t, \
                                                             INTEGRAL_NAME::maximal_number_of_integration_variables, \
                                                             ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
-                                                            INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                            INTEGRAL_NAME::cuda_integrand_t, \
                                                             ::integrators::fitfunctions::PolySingular::type \
                                                        >;
 #else
@@ -75,49 +52,26 @@
 #endif
 
 #ifdef SECDEC_WITH_CUDA
-    #define INSTANTIATE_SIDI_QMC_SEPARATE(SIDIDEGREE) \
-        template class secdecutil::integrators::Qmc< \
-                                                        INTEGRAL_NAME::integrand_return_t, \
-                                                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
-                                                        ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                                                        INTEGRAL_NAME::cuda_integrand_t, \
-                                                        secdecutil::integrators::void_template \
-                                                   >; \
-        template class secdecutil::integrators::Qmc< \
-                                                        INTEGRAL_NAME::integrand_return_t, \
-                                                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
-                                                        ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                                                        INTEGRAL_NAME::cuda_integrand_t, \
-                                                        ::integrators::fitfunctions::None::type \
-                                                   >; \
-        template class secdecutil::integrators::Qmc< \
-                                                        INTEGRAL_NAME::integrand_return_t, \
-                                                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
-                                                        ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                                                        INTEGRAL_NAME::cuda_integrand_t, \
-                                                        ::integrators::fitfunctions::PolySingular::type \
-                                                   >;
     #define INSTANTIATE_SIDI_QMC(SIDIDEGREE) \
-            INSTANTIATE_SIDI_QMC_SEPARATE(SIDIDEGREE) \
             template class secdecutil::integrators::Qmc< \
                                                             INTEGRAL_NAME::integrand_return_t, \
                                                             INTEGRAL_NAME::maximal_number_of_integration_variables, \
                                                             ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                                                            INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                            INTEGRAL_NAME::cuda_integrand_t, \
                                                             secdecutil::integrators::void_template \
                                                        >; \
             template class secdecutil::integrators::Qmc< \
                                                             INTEGRAL_NAME::integrand_return_t, \
                                                             INTEGRAL_NAME::maximal_number_of_integration_variables, \
                                                             ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                                                            INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                            INTEGRAL_NAME::cuda_integrand_t, \
                                                             ::integrators::fitfunctions::None::type \
                                                        >; \
             template class secdecutil::integrators::Qmc< \
                                                             INTEGRAL_NAME::integrand_return_t, \
                                                             INTEGRAL_NAME::maximal_number_of_integration_variables, \
                                                             ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
-                                                            INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                            INTEGRAL_NAME::cuda_integrand_t, \
                                                             ::integrators::fitfunctions::PolySingular::type \
                                                        >;
 #else

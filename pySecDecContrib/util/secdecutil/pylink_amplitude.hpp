@@ -158,6 +158,74 @@ extern "C"
         return 0;
     }
 
+    /*
+     * function to compute the integral using cuda
+     */
+    #ifdef SECDEC_WITH_CUDA
+        int cuda_compute_integral
+        (
+            std::string * integral_without_prefactor_strptr, std::string * prefactor_strptr, std::string * integral_with_prefactor_strptr, // output
+            const secdecutil::Integrator<integrand_return_t,real_t> * together_integrator, // pointer to the integrator for together=true (not used)
+            const secdecutil::Integrator<integrand_return_t,real_t> * separate_integrator, // pointer to the integrator for together=false
+            const double real_parameters_input[], // real parameters
+            const double complex_parameters_input[], // complex parameters serialized as real(x0), imag(x0), real(x1), imag(x1), ...
+            const bool together, // integrate sectors together
+            const unsigned number_of_presamples,
+            const real_t deformation_parameters_maximum,
+            const real_t deformation_parameters_minimum,
+            const real_t deformation_parameters_decrease_factor,
+            const real_t epsrel,
+            const real_t epsabs,
+            const unsigned long long int maxeval,
+            const unsigned long long int mineval,
+            const real_t maxincreasefac,
+            const real_t min_epsrel,
+            const real_t min_epsabs,
+            const real_t max_epsrel,
+            const real_t max_epsabs,
+            const real_t min_decrease_factor,
+            const real_t decrease_to_percentage, // of remaining time
+            const real_t soft_wall_clock_limit,
+            const real_t hard_wall_clock_limit,
+            const size_t number_of_threads,
+            const size_t reset_cuda_after,
+            const bool verbose,
+            const char *lib_path
+        )
+        {
+            return compute_integral
+            (
+                integral_without_prefactor_strptr, prefactor_strptr, integral_with_prefactor_strptr, // output
+                // no need for pointer to together_integrator
+                separate_integrator, // pointer to integrator_separate
+                real_parameters_input, // real parameters
+                complex_parameters_input, // complex parameters serialized as real(x0), imag(x0), real(x1), imag(x1), ...
+                together, // integrate sectors together
+                number_of_presamples,
+                deformation_parameters_maximum,
+                deformation_parameters_minimum,
+                deformation_parameters_decrease_factor,
+                epsrel,
+                epsabs,
+                maxeval,
+                mineval,
+                maxincreasefac,
+                min_epsrel,
+                min_epsabs,
+                max_epsrel,
+                max_epsabs,
+                min_decrease_factor,
+                decrease_to_percentage, // of remaining time
+                soft_wall_clock_limit,
+                hard_wall_clock_limit,
+                number_of_threads,
+                reset_cuda_after,
+                verbose,
+                lib_path
+            );
+        }
+    #endif
+
     #undef EXPAND_STRINGIFY
     #undef STRINGIFY
 

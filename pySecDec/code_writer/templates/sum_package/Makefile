@@ -31,7 +31,7 @@ lib/lib$(NAME).so :
 
 # build the python shared library
 $(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_SO) $(QMC_TEMPLATE_OBJECTS)
-	$(CXX) -shared -o $@ pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(foreach INTEGRAL,$(INTEGRALS),$(INTEGRAL)/src/*.o) $(LDFLAGS)
+	$(CXX) -shared -o $@ pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(foreach INTEGRAL,$(INTEGRALS),$(INTEGRAL)/src/*.o) $(QMC_TEMPLATE_OBJECTS) $(LDFLAGS)
 
 # build the example executable
 ifdef SECDEC_WITH_CUDA_FLAGS
