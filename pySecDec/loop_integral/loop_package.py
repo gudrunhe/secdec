@@ -16,7 +16,8 @@ import numpy as np
 import sympy as sp
 import os
 
-def loop_package(name, loop_integral, requested_orders,
+def loop_package(name, loop_integral, requested_orders=None,
+                 requested_order=None,
                  real_parameters=[], complex_parameters=[],
                  contour_deformation=True,
                  additional_prefactor=1, form_optimization_level=2,
@@ -56,6 +57,11 @@ def loop_package(name, loop_integral, requested_orders,
         iterable of integers;
         Compute the expansion in the regulators to these
         orders.
+
+    :param requested_order:
+        integer;
+        Deprecated; same as `requested_orders` set to
+        a list of one item.
 
     :param real_parameters:
         iterable of strings or sympy symbols, optional;
@@ -276,6 +282,14 @@ def loop_package(name, loop_integral, requested_orders,
     if sympify_expression( measure ) != 1:
         # need ``loop_integral.measure`` only if it is nontrivial
         polynomials_to_decompose += measure.factors
+
+    if requested_orders is None:
+        if requested_order is None:
+            raise ValueError("loop_package() requires requested_orders xor requested_order")
+        requested_orders = [requested_order]
+    else:
+        if requested_order is not None:
+            raise ValueError("loop_package() requires requested_orders xor requested_order")
 
     make_package_return_value = package_generator(
         name = name,
