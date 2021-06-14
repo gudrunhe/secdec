@@ -3,14 +3,12 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-name = "bubble1L_expansion_by_regions_large_mass"
-bubble1L = IntegralLibrary(f"{name}/{name}_pylink.so")
-bubble1L.use_Qmc(transform="korobov3", fitfunction="polysingular")
+name = "bubble2L_largeM"
+intlib = IntegralLibrary(f"{name}/{name}_pylink.so")
+intlib.use_Qmc(transform="korobov3", fitfunction="polysingular")
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = bubble1L(real_parameters=[0.2,4])
-
-print("Raw result:\n{}\n".format(str_integral_with_prefactor))
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[0.002,4,1])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
@@ -21,7 +19,7 @@ integral_result_err = sp.sympify(str_integral_with_prefactor.replace('+/-','*val
 
 # examples how to access individual orders
 print('Numerical Result')
-for power in [-2, -1, 0]:
+for power in [0]:
     valreal, valimg = integral_result.coeff('eps',power).coeff('value').as_real_imag()
     errreal, errimg = integral_result.coeff('eps',power).coeff('error').as_real_imag()
     print("eps^{:<2} {: .5f}{:+.5f}*I +/- {: .5f}{:+.5f}*I".format(power,float(valreal),float(valimg),float(errreal),float(errimg)))

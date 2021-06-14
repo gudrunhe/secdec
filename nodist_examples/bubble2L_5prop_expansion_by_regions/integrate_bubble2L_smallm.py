@@ -3,14 +3,12 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-name = "bubble1L_expansion_by_regions_large_mass"
-bubble1L = IntegralLibrary(f"{name}/{name}_pylink.so")
-bubble1L.use_Qmc(transform="korobov3", fitfunction="polysingular")
+name = "bubble2L_smallm"
+intlib = IntegralLibrary(f"{name}/{name}_pylink.so")
+intlib.use_Qmc(transform="korobov3", fitfunction="polysingular")
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = bubble1L(real_parameters=[0.2,4])
-
-print("Raw result:\n{}\n".format(str_integral_with_prefactor))
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[4,0.002,1])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

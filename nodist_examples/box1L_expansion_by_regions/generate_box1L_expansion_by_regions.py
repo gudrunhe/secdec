@@ -1,6 +1,5 @@
-# This example is the first one loop box example in the Go Mishima paper arXiv:1812.04373
-
-from pySecDec.loop_integral.loop_regions import loop_regions
+from pySecDec.loop_integral import loop_regions
+from pySecDec.code_writer import sum_package, make_package
 from shutil import rmtree
 from os.path import isdir
 from os import chdir
@@ -11,6 +10,8 @@ import sympy as sp
 import numpy as np
 from pprint import pprint
 from pySecDec.expansion import expand_sympy
+
+# This example is the first one loop box example in the Go Mishima paper arXiv:1812.04373
 
 # here we define the Feynman diagram
 li = psd.loop_integral.LoopIntegralFromGraph(
@@ -82,16 +83,13 @@ print("The expected result is: {:.5f}".format(f(s,t,u,mtsq)))
 print()
 
 # find the regions
-generators_args = psd.loop_integral.loop_regions(
+generators_args = loop_regions(
     name = "box1L_expansion_by_regions",
     loop_integral=li,
     smallness_parameter = "mtsq",
     expansion_by_regions_order=0)
 
 # write the code to sum up the regions
-psd.code_writer.sum_package("box1L_expansion_by_regions", [psd.make_package]*len(generators_args), generators_args, li.regulators,
+sum_package("box1L_expansion_by_regions", [make_package]*len(generators_args), generators_args, li.regulators,
             requested_orders = [0,0],
             real_parameters = ['s','t','u','mtsq'], complex_parameters = [])
-
-# set the integrator
-import configure

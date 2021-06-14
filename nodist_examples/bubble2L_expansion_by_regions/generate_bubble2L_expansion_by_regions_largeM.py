@@ -1,3 +1,4 @@
+from pySecDec.code_writer import make_package, sum_package
 from pySecDec.make_regions import make_regions
 from pySecDec.algebra import Polynomial
 
@@ -25,10 +26,8 @@ decomposition_method = 'iterative',
 polytope_from_sum_of=[0,1]
 )
 
-psd.code_writer.sum_package('bubble2L_largeM',
-    [psd.make_package]*len(regions_generator_args),
+sum_package('bubble2L_largeM',
+    [make_package]*len(regions_generator_args),
     regions_generator_args, regulators = ['eps'],requested_orders = [0],
     real_parameters = ['psq','msq','z'],
-    complex_parameters = [],)
-
-import configure
+    complex_parameters = [])

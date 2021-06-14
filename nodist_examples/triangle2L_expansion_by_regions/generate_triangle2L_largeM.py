@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from pySecDec.code_writer import sum_package, make_package
 from pySecDec.make_regions import make_regions
 from pySecDec.algebra import Polynomial
 
@@ -28,10 +29,8 @@ decomposition_method = 'geometric',
 polytope_from_sum_of=[0,1]
 )
 
-psd.code_writer.sum_package('triangle2L_case8_largeM',
-    [psd.make_package]*len(regions_generator_args),
+sum_package('triangle2L_case8_largeM',
+    [make_package]*len(regions_generator_args),
     regions_generator_args, regulators = ['eps'],requested_orders = [0],
     real_parameters = ['s','msq','z'],
-    complex_parameters = [],)
-
-import configure
+    complex_parameters = [])
