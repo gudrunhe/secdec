@@ -22,7 +22,7 @@ int main()
                                     %(name)s::integrand_return_t,
                                     %(name)s::maximal_number_of_integration_variables,
                                     integrators::transforms::Korobov<3>::type,
-                                    %(name)s::integrand_t
+                                    %(name)s::user_integrand_t
                                 > integrator;
     integrator.verbosity = 1;
 

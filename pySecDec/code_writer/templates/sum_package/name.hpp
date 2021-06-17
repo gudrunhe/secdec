@@ -102,6 +102,9 @@ namespace %(name)s
                     cuda_integrand_t;
             typedef cuda_integrand_t cuda_together_integrand_t;
         #endif
+        typedef cuda_integrand_t user_integrand_t;
+    #else
+        typedef integrand_t user_integrand_t;
     #endif
 };
 #endif
