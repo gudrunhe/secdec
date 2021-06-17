@@ -329,7 +329,18 @@ namespace secdecutil
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
-            };
+            }; \
+            Vegas \
+            ( \
+             const Vegas& original \
+            ) : \
+                Vegas(original.epsrel,original.epsabs,original.flags, \
+                original.seed,original.mineval,original.maxeval, \
+                original.zero_border,original.nstart, \
+                original.nincrease,original.nbatch) \
+            {};
+
+
 
         #define VEGAS_CALL(HAVE_ZERO_BORDER) \
         ::llVegas \
@@ -440,7 +451,17 @@ namespace secdecutil
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
-            };
+            }; \
+            \
+            Suave \
+            ( \
+                const Suave& original \
+            ) : \
+                Suave(original.epsrel,original.epsabs, \
+                original.flags,original.seed,original.mineval, \
+                original.maxeval,original.zero_border,original.nnew, \
+                original.nmin,original.flatness) \
+            {};
 
         #define SUAVE_CALL(HAVE_ZERO_BORDER) \
         ::llSuave \
@@ -565,7 +586,18 @@ namespace secdecutil
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
-            };
+            }; \
+            \
+            Divonne \
+            ( \
+                const Divonne& original \
+            ) : \
+                Divonne(original.epsrel,original.epsabs,original.flags,\
+                original.seed,original.mineval,original.maxeval, \
+                original.zero_border,original.key1,original.key2, \
+                original.key3,original.maxpass,original.border, \
+                original.maxchisq,original.mindeviation) \
+            {};
 
         #define DIVNONNE_CALL(HAVE_ZERO_BORDER) \
         ::llDivonne \
@@ -679,7 +711,15 @@ namespace secdecutil
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
-            };
+            }; \
+            \
+            Cuhre \
+            ( \
+                const Cuhre& original \
+            ) : \
+                Cuhre(original.epsrel,original.epsabs,original.flags, \
+                original.mineval,original.maxeval,original.zero_border) \
+            {};
 
         #define CUHRE_CALL(HAVE_ZERO_BORDER) \
         ::llCuhre \

@@ -50,6 +50,12 @@ namespace secdecutil
             using Integrator<return_t,return_t,container_t>::integrate;
             static constexpr bool cuda_compliant_integrator = true;
 
+            Qmc(){};
+
+            template<typename original_container_t>
+            Qmc( const Qmc<return_t,maxdim,transform_t,original_container_t,fitfunction_t>& original) : Integrator<return_t,return_t,container_t>(), ::integrators::Qmc<return_t,return_t,maxdim,transform_t,fitfunction_t>(original)
+            {};
+
         };
         template<typename return_t, U maxdim, template<typename,typename,U> class transform_t, typename container_t, template<typename,typename,U> class fitfunction_t>
         std::function<secdecutil::UncorrelatedDeviation<return_t>(const container_t&)> Qmc<return_t,maxdim,transform_t,container_t,fitfunction_t>::get_integrate()
@@ -77,6 +83,12 @@ namespace secdecutil
             using Integrator<return_t,return_t,container_t>::integrate;
             static constexpr bool cuda_compliant_integrator = true;
 
+            Qmc(){};
+
+            template<typename original_container_t>
+            Qmc( const Qmc<return_t,maxdim,transform_t,original_container_t>& original) : Integrator<return_t,return_t,container_t>(), ::integrators::Qmc<return_t,return_t,maxdim,transform_t>(original)
+            {};
+
         };
         template<typename return_t, U maxdim, template<typename,typename,U> class transform_t, typename container_t>
         std::function<secdecutil::UncorrelatedDeviation<return_t>(const container_t&)> Qmc<return_t,maxdim,transform_t,container_t>::get_integrate()
@@ -103,7 +115,26 @@ namespace secdecutil
             public: \
                 using Integrator<complex_template<return_t>, return_t, container_t>::integrate; \
                 static constexpr bool cuda_compliant_integrator = true; \
-                Qmc() { this->together = true; };
+                Qmc() { this->together = true; }; \
+                template<typename original_container_t> \
+                Qmc( const Qmc<complex_template<return_t>,maxdim,transform_t,original_container_t,fitfunction_t>& original) : \
+                    Integrator<complex_template<return_t>,return_t,container_t>(), \
+                    ::integrators::Qmc<complex_template<return_t>,return_t,maxdim,transform_t,fitfunction_t>(original) \
+                { this->together = true; };
+
+        #define COMPLEX_QMC_BODY_WITHOUT_FITFUNCTION(complex_template) \
+            protected: \
+                /* define outside of the class to prevent inline */ \
+                std::function<secdecutil::UncorrelatedDeviation<complex_template<return_t>>(const container_t&)> get_together_integrate(); \
+            public: \
+                using Integrator<complex_template<return_t>, return_t, container_t>::integrate; \
+                static constexpr bool cuda_compliant_integrator = true; \
+                Qmc() { this->together = true; }; \
+                template<typename original_container_t> \
+                Qmc( const Qmc<complex_template<return_t>,maxdim,transform_t,original_container_t>& original) : \
+                    Integrator<complex_template<return_t>,return_t,container_t>(), \
+                    ::integrators::Qmc<complex_template<return_t>,return_t,maxdim,transform_t>(original) \
+                { this->together = true; };
 
         #define COMPLEX_QMC_GET_TOGETHER_INTEGRATE_WITH_FITFUNCTION(complex_template) \
             template<typename return_t, U maxdim, template<typename,typename,U> class transform_t, typename container_t, template<typename,typename,U> class fitfunction_t> \
@@ -146,7 +177,7 @@ namespace secdecutil
         struct Qmc<std::complex<return_t>,maxdim,transform_t,container_t> : Integrator<std::complex<return_t>,return_t,container_t>,
             public ::integrators::Qmc<std::complex<return_t>,return_t,maxdim,transform_t>
         {
-            COMPLEX_QMC_BODY(std::complex)
+            COMPLEX_QMC_BODY_WITHOUT_FITFUNCTION(std::complex)
         };
         COMPLEX_QMC_GET_TOGETHER_INTEGRATE_WITHOUT_FITFUNCTION(std::complex)
 
@@ -163,7 +194,7 @@ namespace secdecutil
             struct Qmc<thrust::complex<return_t>,maxdim,transform_t,container_t> : Integrator<thrust::complex<return_t>, return_t, container_t>,
                 public ::integrators::Qmc<thrust::complex<return_t>,return_t,maxdim,transform_t>
             {
-                COMPLEX_QMC_BODY(thrust::complex)
+                COMPLEX_QMC_BODY_WITHOUT_FITFUNCTION(thrust::complex)
             };
             COMPLEX_QMC_GET_TOGETHER_INTEGRATE_WITHOUT_FITFUNCTION(thrust::complex)
         #endif

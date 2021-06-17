@@ -252,6 +252,14 @@ namespace secdecutil
       high_dim_integrator(high_dim_integrator),
       critical_dim(critical_dim)
     {};
+    
+    /* Copy Constructor */
+    MultiIntegrator
+    (
+        const MultiIntegrator& original
+    ) :
+      MultiIntegrator(original.low_dim_integrator,original.high_dim_integrator,original.critical_dim)
+    {};
 
     std::function<secdecutil::UncorrelatedDeviation<return_t>
       (const container_t&)>
@@ -301,6 +309,13 @@ namespace secdecutil
       high_dim_integrator(high_dim_integrator), \
       critical_dim(critical_dim) \
     { this->together = true; }; \
+    /* Copy Constructor */ \
+    MultiIntegrator \
+    ( \
+        const MultiIntegrator& original \
+    ) : \
+      MultiIntegrator(original.low_dim_integrator,original.high_dim_integrator,original.critical_dim) \
+    {}; \
  \
   };
 
