@@ -102,6 +102,11 @@ class LoopIntegral(object):
             If you change the dimensional regulator symbol,
             you have to adapt the `dimensionality` accordingly.
 
+    :param regulator:
+        a string or a sympy symbol, optional;
+        Deprecated; same as setting `regulators` to a list
+        of a single element.
+
     :param dimensionality:
         string or sympy expression, optional;
         The dimensionality; typically :math:`4-2\epsilon`,
