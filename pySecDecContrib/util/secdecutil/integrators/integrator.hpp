@@ -160,7 +160,7 @@ namespace secdecutil
  \
             } else { \
  \
-              throw std::runtime_error("Simultaneous integration of real and imaginary part is not implemented for this integrator. Try \"together = false\"."); \
+              throw std::runtime_error("Separate integration of real and imaginary part is not available for this integrator. Try \"together = true\"."); \
  \
             } \
           }; \
@@ -182,7 +182,7 @@ namespace secdecutil
  \
             } else { \
  \
-              throw std::runtime_error("Simultaneous integration of real and imaginary part is not implemented for this integrator. Try \"together = false\"."); \
+              throw std::runtime_error("Separate integration of real and imaginary part is not available for this integrator. Try \"together = true\"."); \
  \
             } \
           }; \
