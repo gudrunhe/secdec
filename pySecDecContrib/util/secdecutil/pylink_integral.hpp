@@ -219,7 +219,7 @@ extern "C"
         (
             std::string * integral_without_prefactor_strptr, std::string * prefactor_strptr, std::string * integral_with_prefactor_strptr, // output
             const secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> * together_integrator, // pointer to the integrator if together=true
-            const secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> * separate_integrator, // pointer to the integrator if togethre=false
+            const secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> * separate_integrator, // pointer to the integrator if together=false
             const double real_parameters_input[], // real parameters
             const double complex_parameters_input[], // complex parameters serialized as real(x0), imag(x0), real(x1), imag(x1), ...
             const bool together, // integrate sectors together
