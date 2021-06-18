@@ -10,7 +10,7 @@ int main()
     using return_t = std::complex<double>;
 
     secdecutil::cuba::Vegas<return_t> integrator;
-    std::function<return_t(input_t)> f = [] (input_t x) { return return_t{x[0],x[1]}; };
+    const std::function<return_t(input_t, secdecutil::ResultInfo*)> f = [] (input_t x, secdecutil::ResultInfo* result_info) { return return_t{x[0],x[1]}; };
     secdecutil::IntegrandContainer<return_t,input_t> c(2,f);
 
     integrator.together = false; // integrate real and imaginary part separately (default)

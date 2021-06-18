@@ -21,8 +21,8 @@ int main()
 
     secdecutil::MultiIntegrator<return_t,input_base_t> integrator(cquad,vegas,2);
 
-    secdecutil::IntegrandContainer<return_t,input_t> one_dimensional(1, [] (input_t x) { return x[0]; });
-    secdecutil::IntegrandContainer<return_t,input_t> two_dimensional(2, [] (input_t x) { return x[0]*x[1]; });
+    secdecutil::IntegrandContainer<return_t,input_t> one_dimensional(1, [] (input_t x, secdecutil::ResultInfo* result_info) { return x[0]; });
+    secdecutil::IntegrandContainer<return_t,input_t> two_dimensional(2, [] (input_t x, secdecutil::ResultInfo* result_info) { return x[0]*x[1]; });
 
     secdecutil::UncorrelatedDeviation<return_t> result_1d = integrator.integrate(one_dimensional); // uses cquad
     secdecutil::UncorrelatedDeviation<return_t> result_2d = integrator.integrate(two_dimensional); // uses vegas

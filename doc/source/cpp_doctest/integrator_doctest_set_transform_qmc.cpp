@@ -53,7 +53,7 @@ int main()
     // define the integrand as a functor
     container_t integrand(
                              4, // dimension
-                             [] (input_t x) { return x[0]*x[1]*x[2]*x[3]; } // integrand function
+                             [] (input_t x, secdecutil::ResultInfo* result_info) { return x[0]*x[1]*x[2]*x[3]; } // integrand function
                          );
 
     // compute the integral with different settings

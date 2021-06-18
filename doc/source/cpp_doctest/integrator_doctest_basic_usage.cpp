@@ -12,7 +12,7 @@ int main()
     integrator.epsrel = 1e-4;
     integrator.maxeval = 1e7;
 
-    secdecutil::IntegrandContainer<return_t,input_t> c(2, [] (input_t x) { return x[0]*x[1]; });
+    secdecutil::IntegrandContainer<return_t,input_t> c(2, [] (input_t x, secdecutil::ResultInfo* result_info) { return x[0]*x[1]; });
     secdecutil::UncorrelatedDeviation<return_t> result = integrator.integrate(c);
 
     std::cout << "result: " << result << std::endl;

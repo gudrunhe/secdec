@@ -14,7 +14,7 @@ using result_t = secdecutil::UncorrelatedDeviation<return_t>;
  */
 struct cuda_integrand_t
 {
-    const int number_of_integration_variables = 4;
+    const static unsigned number_of_integration_variables = 4;
 
     // integrand function
     #ifdef __CUDACC__
@@ -24,6 +24,8 @@ struct cuda_integrand_t
     {
         return x[0]*x[1]*x[2]*x[3];
     };
+
+    void process_errors() const{ /* error handling */}
 } cuda_integrand;
 
 const int seed = 12345, maxdim = 4;
