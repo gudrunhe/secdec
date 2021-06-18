@@ -9,6 +9,7 @@
 #include <memory>
 #include <sys/mman.h>
 #include <atomic>
+#include <vector>
 
 namespace secdecutil {
 
