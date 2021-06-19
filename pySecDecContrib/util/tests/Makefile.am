@@ -7,6 +7,8 @@ else
 AM_LDFLAGS = -pthread
 endif
 
+SECDEC_CONTRIB = `python3 -m pySecDecContrib --dirname`
+
 test_integrator_SOURCES = main.cpp test_integrator.cpp catch.hpp
 test_cuba_integrators_SOURCES = main.cpp test_cuba_integrators.cpp catch.hpp
 test_cquad_SOURCES = main.cpp test_cquad.cpp catch.hpp
@@ -19,33 +21,23 @@ test_amplitude_SOURCES = main.cpp test_amplitude.cpp catch.hpp
 test_ginac_coefficient_parser_SOURCES = main.cpp test_ginac_coefficient_parser.cpp catch.hpp
 
 test_cuba_integrators_LDADD = -lcuba
-if HAVE_SECDEC_CONTRIB
 test_cuba_integrators_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
 test_cuba_integrators_LDADD += -L$(SECDEC_CONTRIB)/lib
-endif
 
 test_qmc_LDADD = -lgsl -lgslcblas
 test_qmc_LDFLAGS = -pthread
-if HAVE_SECDEC_CONTRIB
 test_qmc_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
-endif
 
 test_cquad_LDADD = -lgsl -lgslcblas
-if HAVE_SECDEC_CONTRIB
 test_cquad_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
 test_cquad_LDADD += -L$(SECDEC_CONTRIB)/lib
-endif
 
 test_amplitude_LDADD = -lgsl -lgslcblas -lcuba
-if HAVE_SECDEC_CONTRIB
 test_amplitude_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
 test_amplitude_LDADD += -L$(SECDEC_CONTRIB)/lib
-endif
 
 test_ginac_coefficient_parser_LDADD = -lginac -lcln
-if HAVE_SECDEC_CONTRIB
 test_ginac_coefficient_parser_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
 test_ginac_coefficient_parser_LDADD += -L$(SECDEC_CONTRIB)/lib
-endif
 
 TESTS = $(check_PROGRAMS)

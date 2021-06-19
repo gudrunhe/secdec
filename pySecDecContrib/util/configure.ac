@@ -20,8 +20,6 @@ AC_CONFIG_MACRO_DIR([acinclude.d])
 
 AC_PROG_CXX
 
-
-AM_CONDITIONAL([HAVE_SECDEC_CONTRIB], [test x$SECDEC_CONTRIB != x])
 dnl noext: use -std=c++14 rather than -std=gnu++14
 AX_CXX_COMPILE_STDCXX_14([noext])
 
