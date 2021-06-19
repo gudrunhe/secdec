@@ -82,8 +82,8 @@ TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
 
     SECTION("setting next number of function evaluations, compute(), and getter function after compute()") {
 
-        integral_ptr->set_next_number_of_function_evaluations(10);
-        REQUIRE(integral_ptr->get_next_number_of_function_evaluations() == 10);
+        integral_ptr->set_next_number_of_function_evaluations(9000); // Note: number must be above qmc->minn
+        REQUIRE(integral_ptr->get_next_number_of_function_evaluations() == 9000);
 
         integral_ptr->compute();
 
@@ -95,7 +95,7 @@ TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
         const double uncertainty_first_estimate = integral_ptr->get_integral_result().uncertainty;
         REQUIRE(uncertainty_first_estimate < 1e-8);
         REQUIRE(uncertainty_first_estimate > 1e-15);
-        REQUIRE(value_first_estimate == Approx(1./24.).epsilon(3.*uncertainty_first_estimate)); // 3 sigma
+        REQUIRE(value_first_estimate == Approx(1./24.).epsilon(3.*uncertainty_first_estimate)); // expect 3 sigma agreeement 99.7% of the time
 
         auto integration_time = integral_ptr->get_integration_time(); // should not throw
         REQUIRE(typeid(integration_time) == typeid(double));
@@ -118,7 +118,7 @@ TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
         const double value_second_estimate = integral_ptr->get_integral_result().value;
         const double uncertainty_second_estimate = integral_ptr->get_integral_result().uncertainty;
         REQUIRE(uncertainty_second_estimate < 5e-10);
-        REQUIRE(value_second_estimate == Approx(1./24.).epsilon(3.*uncertainty_second_estimate)); // 3 sigma
+        REQUIRE(value_second_estimate == Approx(1./24.).epsilon(3.*uncertainty_second_estimate)); // expect 3 sigma agreeement 99.7% of the time
 
         // exceeding largest available QMC lattice
         integral_ptr->set_next_number_of_function_evaluations(400000);
@@ -177,7 +177,7 @@ TEST_CASE( "Integration with CubaIntegral", "[Integral][CubaIntegral]" ) {
         const double uncertainty_first_estimate = integral_ptr->get_integral_result().uncertainty;
         REQUIRE(uncertainty_first_estimate < 1e-3);
         REQUIRE(uncertainty_first_estimate > 1e-5);
-        REQUIRE(value_first_estimate == Approx(1./24.).epsilon(uncertainty_first_estimate));
+        REQUIRE(value_first_estimate == Approx(1./24.).epsilon(3.*uncertainty_first_estimate)); // expect 3 sigma agreeement 99.7% of the time
 
         auto integration_time = integral_ptr->get_integration_time(); // should not throw
         REQUIRE(typeid(integration_time) == typeid(double));
@@ -200,7 +200,7 @@ TEST_CASE( "Integration with CubaIntegral", "[Integral][CubaIntegral]" ) {
         const double value_second_estimate = integral_ptr->get_integral_result().value;
         const double uncertainty_second_estimate = integral_ptr->get_integral_result().uncertainty;
         REQUIRE(uncertainty_second_estimate < 5e-6);
-        REQUIRE(value_second_estimate == Approx(1./24.).epsilon(uncertainty_second_estimate));
+        REQUIRE(value_second_estimate == Approx(1./24.).epsilon(3.*uncertainty_second_estimate)); // expect 3 sigma agreeement 99.7% of the time
 
     };
 
@@ -422,14 +422,14 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
             1e-18 // max_epsabs
         );
 
-        sum_handler.verbose = false;
+        sum_handler.verbose = true;
         auto sum_results = sum_handler.evaluate();
 
         REQUIRE( typeid(sum_results) == typeid(std::vector<secdecutil::UncorrelatedDeviation<double>>) );
         for(size_t i = 0; i < sum_handler.expression.size(); ++i)
         {
             std::cout << "sum_results[" << i << "] = " << sum_results.at(i) << std::endl;
-            REQUIRE( sum_results.at(i).value == Approx(integral_sum_solutions.at(i)).epsilon(epsrel) );
+            REQUIRE( sum_results.at(i).value == Approx(integral_sum_solutions.at(i)).epsilon(3.*epsrel) ); // expect 3 sigma agreeement 99.7% of the time
         }
 
     };
