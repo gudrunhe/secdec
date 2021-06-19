@@ -377,7 +377,7 @@ enum qmc_generatingvectors_t : int
         #undef QMC_INTEGRAND_TYPENAME
             
         } else {
-            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + ").");
+            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + "). The transform you requested in the call to IntegralLibrary (transform='...') must match a transform requested in the generate script (pylink_qmc_transforms=['...']). You may wish to regenerate the library with pylink_qmc_transforms set.");
         }
     }
     secdecutil::Integrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t,INTEGRAL_NAME::cuda_integrand_t> *
@@ -422,7 +422,7 @@ enum qmc_generatingvectors_t : int
         #undef QMC_INTEGRAND_TYPENAME
 
         } else {
-            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + ").");
+            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + "). The transform you requested in the call to IntegralLibrary (transform='...') must match a transform requested in the generate script (pylink_qmc_transforms=['...']). You may wish to regenerate the library with pylink_qmc_transforms set.");
         }
     }
 #else
@@ -470,7 +470,7 @@ enum qmc_generatingvectors_t : int
         #undef QMC_INTEGRAND_TYPENAME
 
         } else {
-            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + ").");
+            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + "). The transform you requested in the call to IntegralLibrary (transform='...') must match a transform requested in the generate script (pylink_qmc_transforms=['...']). You may wish to regenerate the library with pylink_qmc_transforms set.");
         }
     }
 #endif
