@@ -2211,9 +2211,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
 
 # namedtuple representing a make_package type package_generator (for use with sum_package)
-MakePackage = namedtuple('MakePackage',
-                         list(inspect.signature(make_package).parameters) + ['sum_package_generator'],
-                         defaults=
-                         [v.default for k,v in inspect.signature(make_package).parameters.items()
-                          if v.default != inspect._empty] + [make_package]
-                         )
+MakePackage = namedtuple('MakePackage', list(inspect.signature(make_package).parameters) + ['sum_package_generator'])
+# python <3.7 compatibility
+MakePackage.__new__.__defaults__ = tuple([v.default for k,v in inspect.signature(make_package).parameters.items()
+                                    if v.default != inspect._empty] + [make_package])

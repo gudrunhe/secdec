@@ -354,10 +354,8 @@ def loop_package(name, loop_integral, requested_orders=None,
 
 
 # namedtuple representing a loop_package type package_generator (for use with sum_package)
-LoopPackage = namedtuple('LoopPackage',
-                         list(inspect.signature(loop_package).parameters) + ['sum_package_generator'],
-                         defaults=
-                         [v.default for k, v in inspect.signature(loop_package).parameters.items()
-                          if (v.default != inspect._empty and k != 'package_generator')]
-                         + [code_writer_make_package, loop_package]
-                         )
+LoopPackage = namedtuple('LoopPackage', list(inspect.signature(loop_package).parameters) + ['sum_package_generator'])
+# python <3.7 compatibility
+LoopPackage.__new__.__defaults__ = tuple([v.default for k, v in inspect.signature(loop_package).parameters.items()
+                                            if (v.default != inspect._empty and k != 'package_generator')]
+                                            + [code_writer_make_package, loop_package])
