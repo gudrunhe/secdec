@@ -338,7 +338,9 @@ namespace secdecutil
                 original.seed,original.mineval,original.maxeval, \
                 original.zero_border,original.nstart, \
                 original.nincrease,original.nbatch) \
-            {};
+            { \
+                this->copy_together_flag(original); \
+            };
 
 
 
@@ -461,7 +463,9 @@ namespace secdecutil
                 original.flags,original.seed,original.mineval, \
                 original.maxeval,original.zero_border,original.nnew, \
                 original.nmin,original.flatness) \
-            {};
+            { \
+                this->copy_together_flag(original); \
+            };
 
         #define SUAVE_CALL(HAVE_ZERO_BORDER) \
         ::llSuave \
@@ -597,7 +601,9 @@ namespace secdecutil
                 original.zero_border,original.key1,original.key2, \
                 original.key3,original.maxpass,original.border, \
                 original.maxchisq,original.mindeviation) \
-            {};
+            { \
+                this->copy_together_flag(original); \
+            };
 
         #define DIVNONNE_CALL(HAVE_ZERO_BORDER) \
         ::llDivonne \
@@ -719,7 +725,9 @@ namespace secdecutil
             ) : \
                 Cuhre(original.epsrel,original.epsabs,original.flags, \
                 original.mineval,original.maxeval,original.zero_border) \
-            {};
+            { \
+                this->copy_together_flag(original); \
+            };
 
         #define CUHRE_CALL(HAVE_ZERO_BORDER) \
         ::llCuhre \

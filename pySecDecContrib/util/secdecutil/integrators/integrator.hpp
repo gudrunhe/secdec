@@ -67,6 +67,7 @@ namespace secdecutil
     virtual std::function<secdecutil::UncorrelatedDeviation<return_t>
       (const container_t&)>
       get_integrate() = 0;
+      void copy_together_flag(const Integrator &original) {}
 
   public:
     const std::function<secdecutil::UncorrelatedDeviation<return_t>
@@ -99,6 +100,7 @@ namespace secdecutil
     { \
       throw std::runtime_error("Simultaneous integration of real and imaginary part is not implemented for this integrator. Try \"together = false\"."); \
     } \
+    void copy_together_flag(const Integrator &original) {together=original.together;} \
  \
   public: \
  \
@@ -195,6 +197,7 @@ namespace secdecutil
     { \
       throw std::runtime_error("Simultaneous integration of real and imaginary part is not implemented for this integrator. Try \"together = false\"."); \
     } \
+    void copy_together_flag(Integrator &original) {together=original.together;} \
  \
   public: \
  \

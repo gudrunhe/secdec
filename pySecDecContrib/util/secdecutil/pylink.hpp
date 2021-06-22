@@ -11,7 +11,7 @@
 #include <secdecutil/integrators/qmc.hpp> // Qmc
 #include <secdecutil/integrators/cuba.hpp> // Vegas, Suave, Divonne, Cuhre
 
-#if integral_has_complex_parameters || integral_contour_deformation || integral_enforce_complex_return_type
+#if integral_need_complex 
     #define SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX(NOARGS) do {integrator->together = real_complex_together;} while (false)
 #else
     #define SET_INTEGRATOR_TOGETHER_OPTION_IF_COMPLEX(NOARGS)

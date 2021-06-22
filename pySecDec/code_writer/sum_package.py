@@ -394,6 +394,10 @@ def sum_package(name, package_generators, regulators, requested_orders,
             }
         )
 
+    # check if complex return type required
+    need_complex = len(complex_parameters) > 0 or any([(package_generator.enforce_complex or package_generator.contour_deformation_polynomial) for package_generator in package_generators])
+
+
     replacements_in_files = {
                                 'name' : name,
                                 'name_as_char_pack' : ','.join([("'" + char + "'") for char in name]),
@@ -422,7 +426,8 @@ def sum_package(name, package_generators, regulators, requested_orders,
                                 'pylink_qmc_instantiate_make_integral': '\n        '.join(pylink_qmc_instantiate_make_integral_rules),
                                 'pylink_qmc_instantiate_amplitude_integral': '\n        '.join(pylink_qmc_instantiate_amplitude_integral_rules),
                                 'pylink_qmc_externs': ' '.join(pylink_qmc_extern_rules),
-                                'pylink_qmc_cases': ' '.join(pylink_qmc_case_rules)
+                                'pylink_qmc_cases': ' '.join(pylink_qmc_case_rules),
+                                'need_complex': int(bool(need_complex))
     }
     filesystem_replacements = {
                                   'integrate_name.cpp' : 'integrate_' + name + '.cpp',

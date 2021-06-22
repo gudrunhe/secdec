@@ -9,6 +9,8 @@
 
 #define INTEGRAL_NAME %(name)s
 
+#define integral_need_complex %(need_complex)i 
+
 #include <secdecutil/pylink.hpp> // The python-C binding is general and therefore contained in the util
 #include <secdecutil/pylink_amplitude.hpp>
 
@@ -478,6 +480,4 @@ enum qmc_generatingvectors_t : int
 #undef SET_COMMON_QMC_ARGS
 #undef SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
 
-#undef integral_contour_deformation
-#undef integral_has_complex_parameters
-#undef integral_enforce_complex_return_type
+#undef integral_need_complex
