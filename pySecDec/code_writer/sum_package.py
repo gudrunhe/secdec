@@ -224,7 +224,7 @@ class Coefficient(object):
         return lowest_orders, form_output
 
 # TODO: high-level test
-def sum_package(name, package_generators, generators_args, regulators, requested_orders,
+def sum_package(name, package_generators, regulators, requested_orders,
                 real_parameters=[], complex_parameters=[], coefficients=None,
                 form_executable=None, pylink_qmc_transforms=['korobov3x3']):
     r'''
@@ -245,22 +245,18 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         directory.
 
     :param package_generators:
-        iterable of functions;
-        The generators functions for the integrals
+        iterable of `pySecDec.code_writer.MakePackage` and/or
+        `pySecDec.loop_integral.LoopPackage` `namedtuples`;
+        The generator functions for the integrals
         :math:`\int f_i`
-
-        .. seealso::
-            :func:`pySecDec.code_writer.make_package` and
-            :func:`pySecDec.loop_integral.loop_package`
-
-    :param generators_args:
-        iterable of dictionaries;
-        The keyword arguments that are passed to the
-        `package_generators`.
-
-        .. seealso::
-            :func:`pySecDec.code_writer.make_package` and
-            :func:`pySecDec.loop_integral.loop_package`
+        
+        .. note::
+            The `pySecDec.code_writer.MakePackage` and
+            `pySecDec.loop_integral.LoopPackage` objects
+            have the same argument list as their respective
+            parent functions
+            :func:`pySecDec.code_writer.make_package`
+            and :func:`pySecDec.loop_integral.loop_package`.
 
     :param regulators:
         iterable of strings or sympy symbols;
@@ -309,7 +305,6 @@ def sum_package(name, package_generators, generators_args, regulators, requested
 
     # convert input iterables to lists
     package_generators = list(package_generators)
-    generators_args = list(generators_args)
     regulators = list(regulators)
     requested_orders = list(requested_orders)
     real_parameters = list(real_parameters)
@@ -317,7 +312,7 @@ def sum_package(name, package_generators, generators_args, regulators, requested
 
     # check that the names of all integrals and the sum itself
     # do not clash
-    assert len(set([args["name"] for args in generators_args] + [name])) == len(generators_args) + 1, \
+    assert len(set([package_generator.name for package_generator in package_generators] + [name])) == len(package_generators) + 1, \
         "The `name` parameter, and the names of all integrals must all be distinct."
 
     pylink_qmc_transforms = validate_pylink_qmc_transforms(pylink_qmc_transforms)
@@ -332,20 +327,16 @@ def sum_package(name, package_generators, generators_args, regulators, requested
             assert len(c_i) == len(package_generators), \
                 "`coefficients` must either be ``None`` be a list of lists which all have the same length as `package_generators`."
 
-    assert len(package_generators) == len(generators_args), \
-        "`package_generators` (%i) and `generators_args` (%i) must have the same length." % \
-        (len(package_generators), len(generators_args))
-
     # construct the c++ type "nested_series_t"
     # for two regulators, the resulting code should read:
     # "secdecutil::Series<secdecutil::Series<T>>"
     nested_series_type = 'secdecutil::Series<' * len(requested_orders) + 'T' + '>' * len(requested_orders)
     for package_generator in package_generators:
-        if package_generator.__name__ == 'loop_package':
-            assert all(len(requested_orders) == len(args["loop_integral"].regulators) for args in generators_args), \
+        if type(package_generator).__name__ == 'LoopPackage':
+            assert len(requested_orders) == len(package_generator.loop_integral.regulators), \
                 "The `requested_orders` must match the number of regulators"
         else:
-            assert all(len(requested_orders) == len(args["regulators"]) for args in generators_args), \
+            assert len(requested_orders) == len(package_generator.regulators), \
                 "The `requested_orders` must match the number of regulators"
 
     # define required listings of contributing integrals
@@ -354,8 +345,8 @@ def sum_package(name, package_generators, generators_args, regulators, requested
     integral_initialization_with_contour_deformation = []
     weighted_integral_includes = []
     weighted_integral_sum_initialization = []
-    for package_generator,generator_args in zip(package_generators,generators_args):
-        sub_name = generator_args["name"]
+    for package_generator in package_generators:
+        sub_name = package_generator.name
         sub_integral_names.append(sub_name)
         integral_initialization.append( 'std::vector<nested_series_t<sum_t>> integral_' + sub_name + ' = ' + sub_name + '::make_integral(real_parameters,complex_parameters,integrator);' )
         integral_initialization_with_contour_deformation.append( 'std::vector<nested_series_t<sum_t>> integral_' + sub_name + ' = ' + sub_name + '::make_integral(real_parameters,complex_parameters,integrator,number_of_presamples,deformation_parameters_maximum,deformation_parameters_minimum,deformation_parameters_decrease_factor);' )
@@ -468,12 +459,13 @@ def sum_package(name, package_generators, generators_args, regulators, requested
         number_of_integration_variables = 0
         contour_deformation = 0
         template_replacements = {}
-        for j, (package_generator, generator_args) in enumerate(zip(package_generators, generators_args)):
-            sub_name = generator_args['name']
+        for j, package_generator in enumerate(package_generators):
+            sub_name = package_generator.name
             replacements_in_files['sub_integral_name'] = sub_name
 
-            generator_args['real_parameters'] = real_parameters
-            generator_args['complex_parameters'] = complex_parameters
+            package_generator = package_generator._replace(real_parameters = real_parameters,
+                                                           complex_parameters = complex_parameters,
+                                                           pylink_qmc_transforms = pylink_qmc_transforms)
 
             # process coefficients
             lowest_coefficient_orders = []
@@ -488,11 +480,11 @@ def sum_package(name, package_generators, generators_args, regulators, requested
             replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
 
             minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
-            if package_generator.__name__ == 'loop_package' :
+            if type(package_generator).__name__ == 'LoopPackage':
                 pass
             else:
-                generator_args['regulators'] = regulators
-            generator_args['requested_orders'] = np.asarray(requested_orders) - minimal_lowest_coefficient_orders
+                package_generator = package_generator._replace(regulators = regulators)
+            package_generator = package_generator._replace(requested_orders = np.asarray(requested_orders) - minimal_lowest_coefficient_orders)
 
             # parse integral specific files
             for ch in 'ch':
@@ -501,7 +493,12 @@ def sum_package(name, package_generators, generators_args, regulators, requested
                                     os.path.join('src', sub_name + suffix), # dest
                                     replacements_in_files)
 
-            template_replacements = package_generator(**generator_args)
+            # Unpack package_generator to call
+            package_generator_dict = package_generator._asdict()
+            sum_package_generator = package_generator_dict.pop('sum_package_generator')
+
+            # Call package_generator with remaining arguments
+            template_replacements = sum_package_generator(**package_generator_dict)
 
             # Compute maximal number of integration variables
             number_of_integration_variables = max(number_of_integration_variables,template_replacements['number_of_integration_variables'])

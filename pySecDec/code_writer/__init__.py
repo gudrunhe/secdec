@@ -30,5 +30,5 @@ Template Parser
 """
 
 from . import template_parser
-from .make_package import make_package
+from .make_package import make_package, MakePackage
 from .sum_package import sum_package

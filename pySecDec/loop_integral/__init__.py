@@ -41,6 +41,6 @@ Applies the expansion by regions method to a loop integral.
 from .common import LoopIntegral
 from .from_graph import LoopIntegralFromGraph
 from .from_propagators import LoopIntegralFromPropagators
-from .loop_package import loop_package
+from .loop_package import loop_package, LoopPackage
 from .draw import plot_diagram
 from .loop_regions import loop_regions

@@ -21,6 +21,8 @@ from multiprocessing import Pool
 from time import strftime
 from re import match
 from .. import formset
+from collections import namedtuple
+import inspect
 import numpy as np
 import sympy as sp
 import sys, os
@@ -2206,3 +2208,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # return the replacements in the template files
     return template_replacements
+
+
+# namedtuple representing a make_package type package_generator (for use with sum_package)
+MakePackage = namedtuple('MakePackage',
+                         list(inspect.signature(make_package).parameters) + ['sum_package_generator'],
+                         defaults=
+                         [v.default for k,v in inspect.signature(make_package).parameters.items()
+                          if v.default != inspect._empty] + [make_package]
+                         )

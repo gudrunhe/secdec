@@ -9,8 +9,7 @@ Routines to perform an expansion by regions, see e.g. [PS11]_.
 from .decomposition.common import Sector, refactorize
 from .polytope import Polytope
 from .algebra import Polynomial, ExponentiatedPolynomial, Product
-from .code_writer.make_package import make_package
-from .code_writer.sum_package import sum_package, Coefficient
+from .code_writer.make_package import MakePackage
 from .misc import sympify_expression
 import numpy as np, sympy as sp
 
@@ -518,4 +517,4 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
         package_args.update(package_args_common)
         generators_args.append(package_args)
 
-    return generators_args
+    return [MakePackage(**generator_args) for generator_args in generators_args]

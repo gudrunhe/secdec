@@ -5,7 +5,7 @@ This module provides a make_package like interface to code_writer.sum_package
 """
 
 from __future__ import print_function
-from .code_writer.make_package import make_package as code_writer_make_package
+from .code_writer.make_package import MakePackage
 from .code_writer.sum_package import sum_package, Coefficient
 
 # ---------------------------------- main function ----------------------------------
@@ -364,6 +364,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
         'pylink_qmc_transforms' : pylink_qmc_transforms
     }
 
-    sum_package(name, [code_writer_make_package], [generators_args], regulators, requested_orders,
-                    real_parameters, complex_parameters, None,
-                    form_executable, pylink_qmc_transforms)
+    sum_package(
+                name,
+                [MakePackage(**generators_args)],
+                regulators,
+                requested_orders,
+                real_parameters,
+                complex_parameters,
+                form_executable=form_executable,
+                pylink_qmc_transforms=pylink_qmc_transforms
+                )

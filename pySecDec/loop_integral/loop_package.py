@@ -9,9 +9,12 @@ function :func:`.loop_package`.
 from .from_graph import LoopIntegralFromGraph
 from .draw import plot_diagram
 from ..algebra import Polynomial
+from ..code_writer import make_package as code_writer_make_package
 from ..make_package import make_package
 from ..misc import flatten, sympify_expression
 from itertools import chain
+from collections import namedtuple
+import inspect
 import numpy as np
 import sympy as sp
 import os
@@ -30,7 +33,7 @@ def loop_package(name, loop_integral, requested_orders=None,
                  split=False, ibp_power_goal=-1,
                  use_iterative_sort=True, use_light_Pak=True,
                  use_dreadnaut=False, use_Pak=True,
-                 processes=None, pylink_qmc_transforms=['korobov3x3'], package_generator=make_package):
+                 processes=None, pylink_qmc_transforms=['korobov3x3'], package_generator=make_package): # Note package_generator must be last arg (required for LoopPackage initialisation)
     '''
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
@@ -38,7 +41,7 @@ def loop_package(name, loop_integral, requested_orders=None,
 
     .. seealso::
         This function is a wrapper around
-        :func:`pySecDec.make_package` (default).
+        :func:`pySecDec.make_package.make_package` (default).
 
     .. seealso::
         The generated library is described in
@@ -348,3 +351,13 @@ def loop_package(name, loop_integral, requested_orders=None,
             print('WARNING: Could not draw the Feynman diagram "%s". Reason: %s' % (name,error))
 
     return make_package_return_value
+
+
+# namedtuple representing a loop_package type package_generator (for use with sum_package)
+LoopPackage = namedtuple('LoopPackage',
+                         list(inspect.signature(loop_package).parameters) + ['sum_package_generator'],
+                         defaults=
+                         [v.default for k, v in inspect.signature(loop_package).parameters.items()
+                          if (v.default != inspect._empty and k != 'package_generator')]
+                         + [code_writer_make_package, loop_package]
+                         )
