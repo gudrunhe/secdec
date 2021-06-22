@@ -1,6 +1,8 @@
 from .sum_package import *
 from ..algebra import Polynomial, ExponentiatedPolynomial
 from ..misc import sympify_expression
+from ..make_package import MakePackage
+from ..loop_integral import LoopIntegralFromGraph, LoopPackage
 from nose.plugins.attrib import attr
 import sys
 import numpy as np
@@ -10,7 +12,7 @@ import unittest
 python_major_version = sys.version[0]
 
 #@attr('active')
-class TestSumPackage(unittest.TestCase):
+class TestCoefficient(unittest.TestCase):
     def setUp(self):
         self.regulators = ['eps']
         self.parameters = ['s','t']
@@ -158,3 +160,151 @@ class TestSumPackage(unittest.TestCase):
         self.assertEqual( sympify_expression(processed_numerator) - sympify_expression('5*I-8') , 0)
         self.assertEqual( sympify_expression(processed_denominator) - sympify_expression('1') , 0)
         self.assertEqual( sympify_expression(processed_regulator_factor) - sympify_expression('1') , 0)
+
+# --------------------------------- mid-level tests ---------------------------------
+class TestSumPackage(unittest.TestCase):
+    'Base class to define the tearDown method.'
+    def tearDown(self):
+        for tmpdir in self.tmpdirs:
+            try:
+                shutil.rmtree(tmpdir)
+            except OSError as error:
+                if error.errno == 2: # no such file or directory --> this is what we want anyway
+                    pass
+                else: # reraise error otherwise
+                    raise
+
+#@attr('active')
+class TestSumPackageCall(TestSumPackage):
+    def setUp(self):
+        self.tmpdirs = ['tmpdir_test_sum_package_python' + python_major_version + '_0',
+                        'tmpdir_test_sum_package_python' + python_major_version + '_1',
+                        'tmpdir_test_sum_package_python' + python_major_version + '_2',
+                        'tmpdir_test_sum_package_python' + python_major_version + '_3']
+
+        self.make_package_input_one = MakePackage(
+                                            name='make_package_1',
+                                            integration_variables=['z0','z1','z2'],
+                                            ibp_power_goal=-1,
+                                            regulators=['eps','alpha'],
+                                            requested_orders=[1,2],
+                                            polynomials_to_decompose=[1,Polynomial([[0,0,0,0,0,0,0],[1,1,1,0,0,0,0]],['-s','-t'],['z0','z1','z2','eps','alpha','U','F'])],
+                                            polynomial_names=['U','F'],
+                                            other_polynomials=['U*z1 + F'],
+                                            prefactor=1,
+                                            remainder_expression='DummyFunction(z0,eps)',
+                                            functions=['DummyFunction'],
+                                            real_parameters=['s','t'],
+                                            complex_parameters=[sympify_expression('msq')],
+                                            form_optimization_level=2,
+                                            form_work_space='500M',
+                                            form_memory_use=None,
+                                            form_threads=2,
+                                            form_insertion_depth=0,
+                                            contour_deformation_polynomial=None,
+                                            positive_polynomials=[],
+                                            decomposition_method='iterative_no_primary'
+                                        )
+        self.make_package_input_two = MakePackage(
+                                            name='make_package_2',
+                                            integration_variables=['z0','z1'],
+                                            ibp_power_goal=-1,
+                                            regulators=['eps','alpha'],
+                                            requested_orders=[1,2],
+                                            polynomials_to_decompose=[1,Polynomial([[0,0,0,0,0,0],[1,1,0,0,0,0]],['-s','-t'],['z0','z1','eps','alpha','U','F'])],
+                                            polynomial_names=['U','F'],
+                                            other_polynomials=['U*z0 + F'],
+                                            prefactor=1,
+                                            remainder_expression='DummyFunction(z0,eps)',
+                                            functions=['DummyFunction'],
+                                            real_parameters=['s','t'],
+                                            complex_parameters=[sympify_expression('msq')],
+                                            form_optimization_level=2,
+                                            form_work_space='500M',
+                                            form_memory_use=None,
+                                            form_threads=2,
+                                            form_insertion_depth=0,
+                                            contour_deformation_polynomial=None,
+                                            positive_polynomials=[],
+                                            decomposition_method='iterative_no_primary'
+                                        )
+        self.make_package_input_three = MakePackage(
+                                            name='make_package_3',
+                                            integration_variables=['z0','z1'],
+                                            regulators=['eps'],
+                                            requested_orders=[0],
+                                            polynomials_to_decompose=[1,Polynomial([[0,0,0],[1,1,0]],['-s','-t'],['z0','z1','eps'])],
+                                            real_parameters=['s','t'],
+                                            form_optimization_level=2,
+                                            form_work_space='500M',
+                                            form_memory_use=None,
+                                            form_threads=2,
+                                            form_insertion_depth=0,
+                                            decomposition_method='iterative_no_primary'
+                                        )
+
+        li1 = LoopIntegralFromGraph(
+                  internal_lines=[[0, [1, 2]], [0, [2, 1]]],
+                  external_lines=[['p1', 1], ['p2', 2]],
+                  replacement_rules=[('p1*p1', 's'), ('p2*p2', 's'), ('p1*p2', 's')]
+              )
+
+        self.loop_package_input_one = LoopPackage(
+                                          name='loop_package_1',
+                                          loop_integral=li1,
+                                          requested_orders=[0]
+                                      )
+
+    #@attr('active')
+    def test_sum_package_one_make_package(self):
+        result = sum_package(
+            self.tmpdirs[0],
+            [self.make_package_input_one],
+            regulators=['eps','alpha'],
+            requested_orders=[1,2],
+            real_parameters=['s','t'],
+            complex_parameters=[sympify_expression('msq')],
+            coefficients=None,
+            pylink_qmc_transforms=['korobov3x3']
+        )
+        self.assertEqual(result['name'], 'make_package_1') # Should match name of last package_generator
+
+    #@attr('active')
+    def test_sum_package_two_make_package(self):
+        result = sum_package(
+            self.tmpdirs[1],
+            [self.make_package_input_one, self.make_package_input_two],
+            regulators=['eps','alpha'],
+            requested_orders=[1,2],
+            real_parameters=['s','t'],
+            complex_parameters=[sympify_expression('msq')],
+            coefficients=None,
+            pylink_qmc_transforms=['korobov3x3']
+        )
+        self.assertEqual(result['name'], 'make_package_2') # Should match name of last package_generator
+
+    #@attr('active')
+    def test_sum_package_one_loop_package(self):
+        result = sum_package(
+            self.tmpdirs[2],
+            [self.loop_package_input_one],
+            regulators=['eps'],
+            requested_orders=[0],
+            real_parameters=['s'],
+            coefficients=None,
+            pylink_qmc_transforms=['korobov3x3']
+        )
+        self.assertEqual(result['name'], 'loop_package_1')  # Should match name of last package_generator
+
+    #@attr('active')
+    def test_sum_package_mixed_package(self):
+        result = sum_package(
+            self.tmpdirs[3],
+            [self.loop_package_input_one, self.make_package_input_three],
+            regulators=['eps'],
+            requested_orders=[0],
+            real_parameters=['s','t'],
+            coefficients=None,
+            pylink_qmc_transforms=['korobov3x3']
+        )
+        self.assertEqual(result['name'], 'make_package_3')  # Should match name of last package_generator
