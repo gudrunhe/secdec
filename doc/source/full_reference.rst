@@ -33,8 +33,11 @@ This section describes all public functions and classes in `pySecDec`.
 .. automodule:: pySecDec.integral_interface
     :members:
 
-.. automodule:: pySecDec.amplitude_interface
+.. automodule:: pySecDec.misc
     :members:
 
-.. automodule:: pySecDec.misc
+.. automodule:: pySecDec.make_package
+    :members:
+
+.. automodule:: pySecDec.make_regions
     :members:
