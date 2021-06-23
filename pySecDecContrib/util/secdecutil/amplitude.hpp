@@ -13,6 +13,8 @@
 #include <utility> // std::declval, std::move
 #include <vector> // std::vector
 #include <fstream> // for writing changed deformation parameters to file
+#include <sstream> // std::ostringstream 
+#include <cstdio> // std::remove 
 
 #include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
 #include <secdecutil/uncertainties.hpp> // secdecutil::UncorrelatedDeviation
@@ -172,6 +174,7 @@ namespace secdecutil {
             std::shared_ptr<integrator_t> integrator;
             integrand_t integrand;
             real_t scaleexpo;
+            std::string statefile;
 
             real_t get_scaleexpo() const override { return scaleexpo; }
 
@@ -187,14 +190,47 @@ namespace secdecutil {
                 integrator(integrator),
                 integrand(integrand),
                 scaleexpo(0.5)
-                {};
+                {
+                  // set statefile path`
+                  std::ostringstream filename;
+                  if(const char* env_p = std::getenv("SECDEC_TMPDIR"))
+                      filename << env_p;
+                  else if(const char* env_p = std::getenv("TMPDIR"))
+                      filename << env_p;
+                  else 
+                      filename << "/tmp";
+                  std::ofstream f(filename.str()+"/pySecDecTest");
+                  if (!f)
+                    throw std::runtime_error("Can't write temporary files to directory "+filename.str());
+                  f.close();
+                  filename  << "/pySecDec" << (void const *)&integrand;
+                  //filename  << std::tmpnam(nullptr);
+                  statefile=filename.str();
+                };
 
             void compute_impl() override
             {
-                unsigned long long int next_n = this->get_next_number_of_function_evaluations();
-                integrator->mineval = integrator->maxeval = next_n; // set number of sampling points
+                integrator->statefile = statefile.c_str();
 
+                if(integrator->integrator_type != 3) // Divonne
+                {
+                  unsigned long long int next_n = this->get_next_number_of_function_evaluations();
+                  
+                  integrator->mineval = integrator->maxeval = next_n; // set number of sampling points
+
+
+                  integrator->epsrel = 0.;
+                  integrator->epsabs = 0.;
+                }
                 this->integral_result = integrator->integrate(this->integrand); // run the numerical integration
+                this->set_next_number_of_function_evaluations( *integrator->neval, true ); // set number of function evluations to the next larger lattice
+            }
+
+            ~CubaIntegral()
+            {
+                remove((statefile+"0").c_str());
+                remove((statefile+"1").c_str()); // statefile for real part
+                remove((statefile+"2").c_str()); // statefile for imag part
             }
         };
   

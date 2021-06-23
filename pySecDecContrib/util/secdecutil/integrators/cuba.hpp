@@ -18,6 +18,8 @@
 #include <secdecutil/integrators/integrator.hpp>
 #include <secdecutil/uncertainties.hpp>
 #include <vector>
+#include <algorithm> // std::max
+#include <string> 
 
 namespace secdecutil
 {
@@ -37,7 +39,7 @@ namespace secdecutil
         virtual void call_cuba() = 0; \
         std::array<cubareal,ncomp> integral; \
         std::array<cubareal,ncomp> error; \
-        std::array<cubareal,ncomp> prob;
+        std::array<cubareal,ncomp> prob; 
 
       #define CUBA_INTEGRATE_BODY \
         ndim = integrand_container.number_of_integration_variables; \
@@ -307,8 +309,11 @@ namespace secdecutil
             long long int nincrease; \
             long long int nbatch; \
             constexpr static int gridno = 0; \
-            constexpr static char * statefile = nullptr; \
+            const char * statefile = nullptr; \
             constexpr static void* spin = nullptr; \
+            constexpr static int integrator_type = 1; \
+            std::shared_ptr<long long int> neval; \
+            int togethermode = 0; \
             \
             Vegas \
             ( \
@@ -321,11 +326,14 @@ namespace secdecutil
                 cubareal zero_border = 0., \
                 long long int nstart = 10000, \
                 long long int nincrease = 5000, \
-                long long int nbatch = 1000 \
+                long long int nbatch = 1000, \
+                std::shared_ptr<long long int> neval = std::make_shared<long long int>(0), \
+                const char * statefile = nullptr, \
+                int togethermode = 0 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 seed(seed),mineval(mineval),maxeval(maxeval), \
-                nstart(nstart),nincrease(nincrease),nbatch(nbatch) \
+                nstart(nstart),nincrease(nincrease),nbatch(nbatch),neval(neval),statefile(statefile),togethermode(togethermode) \
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
@@ -337,7 +345,7 @@ namespace secdecutil
                 Vegas(original.epsrel,original.epsabs,original.flags, \
                 original.seed,original.mineval,original.maxeval, \
                 original.zero_border,original.nstart, \
-                original.nincrease,original.nbatch) \
+                original.nincrease,original.nbatch,original.neval,original.statefile,original.togethermode) \
             { \
                 this->copy_together_flag(original); \
             };
@@ -362,9 +370,9 @@ namespace secdecutil
             nincrease, \
             nbatch, \
             gridno, \
-            statefile, \
+            filename.c_str(), \
             spin, \
-            &neval, \
+            neval.get(), \
             &fail, \
             this->integral.data(), \
             this->error.data(), \
@@ -374,13 +382,16 @@ namespace secdecutil
         #define VEGAS_INTEGRATE_BODY \
         /* Cuba output values */ \
         int fail; \
-        long long int neval; \
+        std::string filename(statefile ? statefile+std::to_string(togethermode) : "");\
         \
         /* Cuba call */ \
         if (this->zero_border == 0) /* no zero_border */ \
             VEGAS_CALL(false); \
         else \
-            VEGAS_CALL(true);
+            VEGAS_CALL(true); \
+        if(togethermode !=0 ) \
+            togethermode++;
+        
 
       template <typename T>
       struct Vegas : CubaIntegrator<T> {
@@ -398,7 +409,7 @@ namespace secdecutil
                                                      new Vegas<T>( \
                                                                      epsrel,epsabs,this->flags, \
                                                                      seed,mineval,maxeval,this->zero_border, \
-                                                                     nstart,nincrease,nbatch \
+                                                                     nstart,nincrease,nbatch,neval,statefile,1 \
                                                                  ) \
                                                  ); \
         }; \
@@ -431,8 +442,11 @@ namespace secdecutil
             long long int nnew; \
             long long int nmin; \
             cubareal flatness; \
-            constexpr static char * statefile = nullptr; \
+            const char * statefile = nullptr; \
             constexpr static void* spin = nullptr; \
+            constexpr static int integrator_type = 2; \
+            std::shared_ptr<long long int> neval; \
+            int togethermode = 0; \
             \
             Suave \
             ( \
@@ -445,11 +459,15 @@ namespace secdecutil
                 cubareal zero_border = 0., \
                 long long int nnew = 1000, \
                 long long int nmin = 10, \
-                cubareal flatness = 25. \
+                cubareal flatness = 25., \
+                std::shared_ptr<long long int> neval = std::make_shared<long long int>(0), \
+                const char * statefile = nullptr, \
+                int togethermode = 0 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 seed(seed),mineval(mineval),maxeval(maxeval), \
-                nnew(nnew),nmin(nmin),flatness(flatness) \
+                nnew(nnew),nmin(nmin),flatness(flatness),neval(neval), \
+                statefile(statefile),togethermode(togethermode) \
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
@@ -462,7 +480,8 @@ namespace secdecutil
                 Suave(original.epsrel,original.epsabs, \
                 original.flags,original.seed,original.mineval, \
                 original.maxeval,original.zero_border,original.nnew, \
-                original.nmin,original.flatness) \
+                original.nmin,original.flatness,original.neval, \
+                original.statefile,original.togethermode) \
             { \
                 this->copy_together_flag(original); \
             };
@@ -484,10 +503,10 @@ namespace secdecutil
             nnew, \
             nmin, \
             flatness, \
-            statefile, \
+            filename.c_str(), \
             spin, \
             &nregions, \
-            &neval, \
+            neval.get(), \
             &fail, \
             this->integral.data(), \
             this->error.data(), \
@@ -497,14 +516,16 @@ namespace secdecutil
         #define SUAVE_INTEGRATE_BODY \
         /* Cuba output values */ \
         int fail; \
-        long long int neval; \
         int nregions; \
+        std::string filename(statefile ? statefile+std::to_string(togethermode) : "");\
         \
         /* Cuba call */ \
         if (this->zero_border == 0) /* no zero_border */ \
             SUAVE_CALL(false); \
         else \
-            SUAVE_CALL(true);
+            SUAVE_CALL(true); \
+        if(togethermode !=0 ) \
+            togethermode++;
 
       template <typename T>
       struct Suave : CubaIntegrator<T> {
@@ -522,7 +543,7 @@ namespace secdecutil
                                                      new Suave<T>( \
                                                                      epsrel,epsabs,this->flags, \
                                                                      seed,mineval,maxeval,this->zero_border, \
-                                                                     nnew,nmin,flatness \
+                                                                     nnew,nmin,flatness,neval,statefile,1 \
                                                                  ) \
                                                  ); \
         }; \
@@ -563,8 +584,11 @@ namespace secdecutil
             constexpr static cubareal * xgiven = nullptr; \
             constexpr static long long int nextra = 0; \
             constexpr static peakfinder_t peakfinder = nullptr; \
-            constexpr static char * statefile = nullptr; \
+            const char * statefile = nullptr; \
             constexpr static void * spin = nullptr; \
+            constexpr static int integrator_type = 3; \
+            std::shared_ptr<long long int> neval; \
+            int togethermode = 0; \
             \
             Divonne \
             ( \
@@ -581,12 +605,16 @@ namespace secdecutil
                 int maxpass = 4, \
                 cubareal border = 0., \
                 cubareal maxchisq = 1., \
-                cubareal mindeviation = .15 \
+                cubareal mindeviation = .15, \
+                std::shared_ptr<long long int> neval = std::make_shared<long long int>(0), \
+                const char * statefile = nullptr, \
+                int togethermode = 0 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 seed(seed),mineval(mineval),maxeval(maxeval), \
                 key1(key1), key2(key2), key3(key3), maxpass(maxpass), \
-                border(border), maxchisq(maxchisq), mindeviation(mindeviation) \
+                border(border), maxchisq(maxchisq), mindeviation(mindeviation),neval(neval), \
+                statefile(statefile),togethermode(togethermode) \
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
@@ -600,7 +628,8 @@ namespace secdecutil
                 original.seed,original.mineval,original.maxeval, \
                 original.zero_border,original.key1,original.key2, \
                 original.key3,original.maxpass,original.border, \
-                original.maxchisq,original.mindeviation) \
+                original.maxchisq,original.mindeviation,original.neval, \
+                original.statefile,original.togethermode) \
             { \
                 this->copy_together_flag(original); \
             };
@@ -631,10 +660,10 @@ namespace secdecutil
             xgiven, \
             nextra, \
             peakfinder, \
-            statefile, \
+            filename.c_str(), \
             spin, \
             &nregions, \
-            &neval, \
+            neval.get(), \
             &fail, \
             this->integral.data(), \
             this->error.data(), \
@@ -644,14 +673,16 @@ namespace secdecutil
         #define DIVONNE_INTEGRATE_BODY \
         /* Cuba output values */ \
         int nregions; \
-        long long int neval; \
         int fail; \
+        std::string filename(statefile ? statefile+std::to_string(togethermode) : "");\
         \
         /* Cuba call */ \
         if (this->zero_border == 0) /* no zero_border */ \
             DIVNONNE_CALL(false); \
         else \
-            DIVNONNE_CALL(true);
+            DIVNONNE_CALL(true); \
+        if(togethermode !=0 ) \
+            togethermode++;
 
       template <typename T>
       struct Divonne : CubaIntegrator<T> {
@@ -670,7 +701,7 @@ namespace secdecutil
                                                                        epsrel,epsabs,this->flags, \
                                                                        seed,mineval,maxeval,this->zero_border, \
                                                                        key1, key2, key3, maxpass, \
-                                                                       border, maxchisq, mindeviation \
+                                                                       border, maxchisq, mindeviation,neval,statefile,1 \
                                                                    ) \
                                                  ); \
         }; \
@@ -699,8 +730,11 @@ namespace secdecutil
             long long int mineval; \
             long long int maxeval; \
             int key; \
-            constexpr static char * statefile = nullptr; \
+            const char * statefile = nullptr; \
             constexpr static void* spin = nullptr; \
+            constexpr static int integrator_type = 4; \
+            std::shared_ptr<long long int> neval; \
+            int togethermode = 0; \
             \
             Cuhre \
             ( \
@@ -710,10 +744,14 @@ namespace secdecutil
                 long long int mineval = 0, \
                 long long int maxeval = 1e6, \
                 cubareal zero_border = 0., \
-                int key = 0 \
+                int key = 0, \
+                std::shared_ptr<long long int> neval = std::make_shared<long long int>(0), \
+                const char * statefile = nullptr, \
+                int togethermode = 0 \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
-                mineval(mineval),maxeval(maxeval),key(key) \
+                mineval(mineval),maxeval(maxeval),key(key),neval(neval), \
+                statefile(statefile),togethermode(togethermode) \
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
@@ -724,7 +762,8 @@ namespace secdecutil
                 const Cuhre& original \
             ) : \
                 Cuhre(original.epsrel,original.epsabs,original.flags, \
-                original.mineval,original.maxeval,original.zero_border) \
+                original.mineval,original.maxeval,original.zero_border,original.key,original.neval, \
+                original.statefile,original.togethermode) \
             { \
                 this->copy_together_flag(original); \
             };
@@ -743,10 +782,10 @@ namespace secdecutil
             mineval, \
             maxeval, \
             key, \
-            statefile, \
+            filename.c_str(), \
             spin, \
             &nregions, \
-            &neval, \
+            neval.get(), \
             &fail, \
             this->integral.data(), \
             this->error.data(), \
@@ -756,14 +795,16 @@ namespace secdecutil
         #define CUHRE_INTEGRATE_BODY \
         /* Cuba output values */ \
         int nregions; \
-        long long int neval; \
         int fail; \
+        std::string filename(statefile ? statefile+std::to_string(togethermode) : "");\
         \
         /* Cuba call */ \
         if (this->zero_border == 0) /* no zero_border */ \
             CUHRE_CALL(false); \
         else \
-            CUHRE_CALL(true);
+            CUHRE_CALL(true); \
+        if(togethermode !=0 ) \
+            togethermode++;
 
       template <typename T>
       struct Cuhre : CubaIntegrator<T> {
@@ -781,7 +822,7 @@ namespace secdecutil
                                                      new Cuhre<T>( \
                                                                      epsrel,epsabs,this->flags, \
                                                                      mineval,maxeval,this->zero_border, \
-                                                                     key \
+                                                                     key,neval,statefile,1 \
                                                                  ) \
                                                  ); \
         }; \
