@@ -27,6 +27,7 @@ test_cuba_integrators_LDADD += -L$(SECDEC_CONTRIB)/lib
 test_qmc_LDADD = -lgsl -lgslcblas
 test_qmc_LDFLAGS = -pthread
 test_qmc_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
+test_qmc_LDADD += -L$(SECDEC_CONTRIB)/lib
 
 test_cquad_LDADD = -lgsl -lgslcblas
 test_cquad_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
