@@ -33,11 +33,11 @@ struct simple_integrand_t
 struct other_integrand_t
 {
 
-    const static unsigned number_of_integration_variables = 3;
+    const static unsigned number_of_integration_variables = 5;
 
     HOSTDEVICE double operator()(double const * const x)
     {
-        return 10. * (1. + x[0] * x[1] * x[2]); // integrates to 45/4 = 11.25
+        return 10. * (1. + x[0] * x[1] * x[2]) * x[3]*exp(x[3]) * x[4]*exp(x[4]); // integrates to 45/4 = 11.25
     };
 
 } other_integrand;
@@ -288,22 +288,28 @@ TEST_CASE( "Operator overloads of WeightedIntegral", "[WeightedIntegral]" ) {
 };
 
 TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedIntegralHandler]" ) {
-
-        using integrand_t = secdecutil::IntegrandContainer</*integrand_return_t*/ double,/*x*/ double const * const,/*parameters*/ double>;
-    using qmc_integrator_t = secdecutil::integrators::Qmc</*integrand_return_t*/ double,/*maxdim*/4,integrators::transforms::Korobov<3>::type,integrand_t>;
-    using cuba_integrator_t = secdecutil::cuba::Vegas<double>;
+    
+    using integrand_t = secdecutil::IntegrandContainer</*integrand_return_t*/ double,/*x*/ double const * const,/*parameters*/ double>;
+    using qmc_integrator_t = secdecutil::integrators::Qmc</*integrand_return_t*/ double,/*maxdim*/4,integrators::transforms::Korobov<6>::type,integrand_t>;
+    using cuba_integrator_t = secdecutil::cuba::Cuhre<double>;
     using integral_t = secdecutil::amplitude::Integral</*integrand_return_t*/ double,/*real_t*/ double>;
     using qmc_integral_t = secdecutil::amplitude::QmcIntegral</*integrand_return_t*/ double,/*real_t*/ double, qmc_integrator_t, integrand_t>;
     using cuba_integral_t = secdecutil::amplitude::CubaIntegral</*integrand_return_t*/ double,/*real_t*/ double, cuba_integrator_t, integrand_t>;
     
-    qmc_integrator_t qmc_integrator;
-    qmc_integrator.randomgenerator.seed(42546);
+    const std::shared_ptr<qmc_integrator_t> qmc_integrator_ptr = std::make_shared<qmc_integrator_t>();
+    qmc_integrator_ptr->randomgenerator.seed(42546);
+    qmc_integrator_ptr->verbosity=3;
+    
+    // // should this work? qmc doesn't seem to use minn set via qmc->minn in amplitude.hpp
+    //qmc_integrator_t qmc_integrator;
+    //qmc_integrator.randomgenerator.seed(42546);
+    //qmc_integrator.verbosity=3;
+    //const std::shared_ptr<qmc_integrator_t> qmc_integrator_ptr = std::make_shared<qmc_integrator_t>(qmc_integrator);
+
     
     cuba_integrator_t cuba_integrator;
-    cuba_integrator.mineval = 12345;
-    cuba_integrator.seed = 123143;
+    cuba_integrator.flags = 2;
 
-    const std::shared_ptr<qmc_integrator_t> qmc_integrator_ptr = std::make_shared<qmc_integrator_t>(qmc_integrator);
     const std::shared_ptr<cuba_integrator_t> cuba_integrator_ptr = std::make_shared<cuba_integrator_t>(cuba_integrator);
 
     const integrand_t simple_integrand_container = integrand_t(simple_integrand.number_of_integration_variables, [](double const * const x, secdecutil::ResultInfo * result_info){return simple_integrand(x);});
@@ -336,7 +342,7 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
             1e-12, // epsrel
             1e-7, // epsabs
             1e6, // maxeval
-            1e4, // mineval
+            1e3, // mineval
             50., // maxincreasefac
             0.1, // min_epsrel
             1e-7, // min_epsabs
@@ -349,7 +355,7 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
             REQUIRE( 1e-12 == sum.epsrel );
             REQUIRE( 1e-7 == sum.epsabs );
             REQUIRE( 1e6 == sum.maxeval );
-            REQUIRE( 1e4 == sum.mineval );
+            REQUIRE( 1e3 == sum.mineval );
             REQUIRE( 50. == sum.maxincreasefac );
             REQUIRE( 0.1 == sum.min_epsrel );
             REQUIRE( 1e-7 == sum.min_epsabs );
@@ -374,7 +380,7 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
             1e-12, // epsrel
             1e-7, // epsabs
             1e6, // maxeval
-            1e4, // mineval
+            1e2, // mineval
             50., // maxincreasefac
             0.1, // min_epsrel
             1e-7, // min_epsabs
@@ -387,7 +393,7 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
             REQUIRE( 1e-12 == sum.epsrel );
             REQUIRE( 1e-7 == sum.epsabs );
             REQUIRE( 1e6 == sum.maxeval );
-            REQUIRE( 1e4 == sum.mineval );
+            REQUIRE( 1e2 == sum.mineval );
             REQUIRE( 50. == sum.maxincreasefac );
             REQUIRE( 0.1 == sum.min_epsrel );
             REQUIRE( 1e-7 == sum.min_epsabs );
@@ -414,7 +420,7 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
             epsrel,
             1e-20, // epsabs
             1e6, // maxeval
-            1e3, // mineval
+            1e2, // mineval, to ensure Cuhre doesn't reach requested precision in first integrate call
             50., // maxincreasefac
             1e-10, // min_epsrel
             1e-7, // min_epsabs
