@@ -39,6 +39,7 @@ include/ginac/pseries.h
 include/ginac/registrar.h
 include/ginac/parse_context.h
 include/ginac/integral.h
+include/ginac/integration_kernel.h
 include/ginac/ptr.h
 include/ginac/ex.h
 include/ginac/tensor.h
