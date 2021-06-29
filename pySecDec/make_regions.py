@@ -273,8 +273,6 @@ def derive_prod(poly_list,numerator,index,polynomial_name_indices):
 
     new_poly_list=[]
     for i in range(number_of_polys):
-
-        # TODO: what to do if power becomes 0 ??
         new_poly_list.append(ExponentiatedPolynomial(poly_list[i].expolist, poly_list[i].coeffs,poly_list[i].exponent -1 ,poly_list[i].polysymbols))
 
     return new_poly_list,numerator_new
@@ -309,7 +307,6 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
         Indices of polynomials in the symbols of the input polynomials.
 
     """
-    # TODO: assert order >=0
 
     if order < 0:
         return
@@ -495,10 +492,6 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
                 ",".join(map(lambda x: str(sympify_expression(x)/region[smallness_parameter_index]),region[region_variable_indices])),
                 (power_overall_smallness_parameter_no_regulators+power_smallness_parameter_measure)/region[smallness_parameter_index]))
 
-            # TODO: ensure expansion_by_regions_order, power_overall_smallness_parameter_no_regulators, power_smallness_parameter_measure are integer
-            assert int(power_overall_smallness_parameter_no_regulators) == power_overall_smallness_parameter_no_regulators, "`power_overall_smallness_parameter_no_regulators` (%s) is not an integer" % power_overall_smallness_parameter_no_regulators
-            assert int(power_smallness_parameter_measure) == power_smallness_parameter_measure, "`power_smallness_parameter_measure` (%s) is not an integer" % power_smallness_parameter_measure
-
             # expand the polynomials to the desired order:
             # expansion_by_regions_order - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
             expand_region_expansion_order = expansion_by_regions_order*region[smallness_parameter_index] - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
@@ -506,7 +499,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
 
             for i,term in enumerate(series):
                 package_args = make_package_args.copy()
-                package_args['name'] = name + '_region_' + '_'.join(str(number).replace('-','m') for ind, number in enumerate(region) if ind in region_variable_indices) + '_expansion_order_' + str(int(power_overall_smallness_parameter_no_regulators) + int(power_smallness_parameter_measure) + i).replace('-','m')
+                package_args['name'] = name + '_region_' + '_'.join(str(number).replace('-','m') for ind, number in enumerate(region) if ind in region_variable_indices) + '_expansion_order_' + str(power_overall_smallness_parameter_no_regulators + power_smallness_parameter_measure + i).replace('-','m').replace('/','d')
 
                 package_args['other_polynomials'] = [term.factors.pop()]
                 package_args['polynomials_to_decompose'] = term.factors
