@@ -270,127 +270,6 @@ def expand_Taylor(expression, indices, orders):
     '''
     return _expand_and_flatten(expression, indices, orders, _expand_Taylor_step)
 
-def _lowest_order(expression,variable):
-    # finds the lowest order of an expression
-    lowest_order_term = next(sp.series(expression, variable, 0, None))
-    try:
-        lowest_order = sp.poly(lowest_order_term, variable).monoms()[0][0]
-    except sp.PolynomialError:
-        # pole --> convert the inverse to polynomial
-        try:
-            lowest_order = - sp.poly(1/lowest_order_term, variable).monoms()[0][0]
-        except sp.PolynomialError:
-            lowest_order = -sp.oo
-    return lowest_order
-
-def expand_sympy_func(expression, variables, orders):
-    """
-    This expands powers of sympy functions such as `1/gamma(1+x1+x2+x3+x4+x5)`
-    faster than using just the `sympy.series()` function. It expands the
-    function first as a function of one argument, then inserts all the
-    arguments in it, i.e. the above function would be expanded as
-    `1/gamma(1+x)` and then after expanding a replacement `x=x1+x2+x3+x4+x5`
-    is made.
-
-    TODO: note that it doesn't set the polynomial to be truncated if the
-    expansion is truncated
-
-    :param expression:
-        string or sympy expression;
-        The expression to be expanded
-
-    :param variables:
-        iterable of strings or sympy symbols;
-        The variables to expand the `expression`
-        in.
-
-    :param orders:
-        iterable of integers;
-        The orders to expand to.
-
-    """
-    assert issubclass(type(expression), sp.Function) or type(expression) == sp.Pow and \
-        issubclass(type(expression.args[0]), sp.Function) and expression.args[1].is_constant(), \
-        "This function can only expand sympy functions or powers of functions"
-    power = expression.args[1] if type(expression) == sp.Pow else 1 # power of the function
-    function = expression.args[0] if type(expression) == sp.Pow else expression
-    expanded_argument = function.args[0]
-    # expand the arugment into a polynomial
-    for var, order in zip(variables,orders):
-        expanded_argument = sp.series(expanded_argument, sympify_expression(var), 0, max(2,order+1)).removeO().simplify()
-    argument_lowest_order = min(_lowest_order(expanded_argument,variable) for variable in variables)
-    # get the argument when the variables are all zero
-    zero_argument = expanded_argument.subs((variable,0) for variable in variables).simplify()
-    # and the non-constant part of the argument
-    if zero_argument.has(-sp.oo,sp.oo,sp.zoo):
-        zero_argument = sympify_expression("0")
-    x_argument = (expanded_argument-zero_argument).simplify()
-    # find all the regulators that are used in the expanded argument
-    if_used_regulators = np.isin(variables, list(expanded_argument.free_symbols))
-    # calculate the required order that the
-    order = np.sum(orders[if_used_regulators])
-    # pick a temporary variable to expand the function in one variable only
-    x = sympify_expression(variables[0])
-    to_expand = function.__class__(zero_argument+x)
-    expanded_x = sp.series(to_expand, x, 0, order+1).removeO()#.evalf(20)
-    if power != 1:
-        # if the power!=1, expand the power of the series further
-        to_expand = sp.Pow(expanded_x,power)
-        expanded_x = sp.series(to_expand, x, 0, order+1).removeO()#.evalf(20)
-    lowest_order = _lowest_order(expanded_x,x)
-    # insert the original argument into the expansion
-    expanded = expanded_x.subs(x,x_argument)
-    if lowest_order < 0 or argument_lowest_order < 0 or zero_argument == sympify_expression("0"):
-        return expanded
-    # convert it to a polynomial and remove higher order terms
-    poly = sp.poly(expanded, variables, domain="CC")
-    poly = Polynomial.from_expression(poly,variables)
-    # remove polynomial higher orders
-    pick =  (poly.expolist<=np.array(orders)).all(axis=1)
-    poly.expolist = poly.expolist[pick]
-    poly.coeffs = poly.coeffs[pick]
-    return poly
-
-def _preexpand(expression, variables, orders):
-    """
-    Try to expand each factor separately using the expand_sympy_func() function
-    and then multiply the factors back together.
-
-    TODO: note that it doesn't set the polynomiasl to be truncated if they
-    are truncated
-    """
-
-    # try to use the faster function expand_sympy_func() to expand
-    # factors of sympy functions, which happens
-    # in the case of feynman integrals
-    polys = []
-    # enables both the use of a function or a product of functions
-    args = expression.args if type(expression)==sp.Mul else [expression]
-    # find the sum of the lowest pole of the factors, to know to which order to expand
-    lowest_poles = np.array([sum(min(0,_lowest_order(factor.subs((var,0) for var in variables if var!=variable),variable)) for factor in args) for variable in variables])
-    for factor in args:
-        if issubclass(type(factor), sp.Function) or type(factor) == sp.Pow and issubclass(type(factor.args[0]), sp.Function) and factor.args[1].is_constant():
-            poly = expand_sympy_func(factor, variables, orders-lowest_poles)
-            if not issubclass(type(poly), Polynomial):
-                allpolys=False
-            polys.append(poly)
-        elif factor.is_constant():
-            polys.append(sympify_expression(factor))
-        else:
-            polys.append(factor)
-            allpolys = False
-    # multiply the factors back together and remove higher orders
-    expression = polys[0]
-    for n, poly in enumerate(polys[1:]):
-        expression *= poly
-        if issubclass(type(poly), Polynomial):
-            # remove polynomial higher orders
-            pick =  (expression.expolist<=np.array(orders-lowest_poles)).all(axis=1)
-            expression.expolist = expression.expolist[pick]
-            expression.coeffs = expression.coeffs[pick]
-
-    return expression
-
 def expand_sympy(expression, variables, orders):
     '''
     Expand a sympy expression in the `variables`
@@ -486,8 +365,6 @@ def expand_sympy(expression, variables, orders):
                 coeffs[i] = recursion(coeff, variables, orders, index + 1)
 
         return expansion
-
-    # expression = _preexpand(expression, variables, orders)
 
     # initialize the recursion
     return recursion(expression, variables, orders, 0)
