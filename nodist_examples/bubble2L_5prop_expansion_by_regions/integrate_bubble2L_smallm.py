@@ -5,10 +5,10 @@ import sympy as sp
 # load c++ library
 name = "bubble2L_smallm"
 intlib = IntegralLibrary(f"{name}/{name}_pylink.so")
-intlib.use_Qmc(transform="korobov3", fitfunction="polysingular")
+intlib.use_Qmc(transform="korobov3", fitfunction="polysingular", verbosity=1)
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[4,0.002,1])
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[4,0.002])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
@@ -22,4 +22,4 @@ print('Numerical Result')
 for power in [-2, -1, 0]:
     valreal, valimg = integral_result.coeff('eps',power).coeff('value').as_real_imag()
     errreal, errimg = integral_result.coeff('eps',power).coeff('error').as_real_imag()
-    print("eps^{:<2} {: .5f}{:+.5f}*I +/- {: .5f}{:+.5f}*I".format(power,float(valreal),float(valimg),float(errreal),float(errimg)))
+    print("eps^{:<2} {: .15f}{:+.15f}*I +/- {:.15f}{:+.15f}*I".format(power,float(valreal),float(valimg),float(errreal),float(errimg)))
