@@ -11,9 +11,13 @@
 #include <vector> // std::vector
 
 #ifdef SECDEC_WITH_CUDA
+    #include <thrust/complex.h>
     #define HOSTDEVICE __host__ __device__
+    typedef thrust::complex<double> complex_t;
 #else
+    #include <complex>
     #define HOSTDEVICE
+    typedef std::complex<double> complex_t;
 #endif
 
 using namespace Catch::Matchers;
@@ -41,6 +45,18 @@ struct other_integrand_t
     };
 
 } other_integrand;
+
+struct complex_integrand_t
+{
+
+    const static unsigned number_of_integration_variables = 2;
+
+    HOSTDEVICE complex_t operator()(double const * const x)
+    {
+        return x[0] * (complex_t(0.,1.) + x[1]); // integrates to 0.25+0.5i
+    };
+
+} complex_integrand;
 
 TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
 
@@ -407,7 +423,6 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
             REQUIRE( sum_handler.expression.at(i).min_epsabs == (i == 0 ? 0.14 : 1e-7) );
 
     };
-
     SECTION("computing the amplitude") {
 
         using sum_handler_t = secdecutil::amplitude::WeightedIntegralHandler</*integrand_return_t*/ double, /*real_t*/ double, /*coefficient_t*/ double, /*container_t*/ std::vector>;
@@ -438,6 +453,161 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
             REQUIRE( sum_results.at(i).value == Approx(integral_sum_solutions.at(i)).epsilon(3.*epsrel) ); // expect 3 sigma agreeement 99.7% of the time
         }
 
+    };
+
+    SECTION("amplitude precision with Vegas, together=false") {
+        using integrand_t = secdecutil::IntegrandContainer</*integrand_return_t*/ complex_t,/*x*/ double const * const,/*parameters*/ double>;
+        using integral_t = secdecutil::amplitude::Integral</*integrand_return_t*/ complex_t,/*real_t*/ double>;
+        
+        using cuba_integrator_t = secdecutil::cuba::Vegas<complex_t>;
+        using cuba_integral_t = secdecutil::amplitude::CubaIntegral</*integrand_return_t*/ complex_t,/*real_t*/ double, cuba_integrator_t, integrand_t>;
+        const std::shared_ptr<cuba_integrator_t> cuba_integrator_ptr = std::make_shared<cuba_integrator_t>();
+        cuba_integrator_ptr->flags = 2;
+        cuba_integrator_ptr->seed = 42546;
+
+        const integrand_t complex_integrand_container = integrand_t(complex_integrand.number_of_integration_variables, [](double const * const x, secdecutil::ResultInfo * result_info){return complex_integrand(x);});
+        std::shared_ptr<integral_t> complex_integral_ptr = std::make_shared<cuba_integral_t>(cuba_integrator_ptr, complex_integrand_container);
+
+        using weighted_integral_sum_t = std::vector<secdecutil::amplitude::WeightedIntegral<integral_t,/*coefficient_t*/complex_t>>;
+        std::vector<weighted_integral_sum_t> integral_sums
+        {
+            weighted_integral_sum_t{{complex_integral_ptr, complex_t(1.0,0.)}},
+            weighted_integral_sum_t{{complex_integral_ptr, complex_t(0.,1e-3)}}
+        };
+        using sum_handler_t = secdecutil::amplitude::WeightedIntegralHandler</*integrand_return_t*/ complex_t, /*real_t*/ double, /*coefficient_t*/ complex_t, /*container_t*/ std::vector>;
+
+        double epsrel = 1e-3;
+
+        sum_handler_t sum_handler
+        (
+            integral_sums,
+            epsrel,
+            1e-20, // epsabs
+            1e6, // maxeval
+            1e3, // mineval
+            50., // maxincreasefac
+            1e-2, // min_epsrel
+            1e-2, // min_epsabs
+            1e-14, // max_epsrel
+            1e-16 // max_epsabs
+        );
+
+        sum_handler.verbose = true;
+        auto sum_results = sum_handler.evaluate();
+
+        REQUIRE( typeid(sum_results) == typeid(std::vector<secdecutil::UncorrelatedDeviation<complex_t>>) );
+
+        REQUIRE( sum_results.at(0).value.real() == Approx(0.25   ).epsilon(3*sum_results.at(0).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE( sum_results.at(0).value.imag() == Approx(0.5    ).epsilon(3*sum_results.at(0).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE( sum_results.at(1).value.real() == Approx(-5e-4  ).epsilon(3*sum_results.at(1).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE( sum_results.at(1).value.imag() == Approx(2.5e-4 ).epsilon(3*sum_results.at(1).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+
+        REQUIRE( std::abs(sum_results.at(0).uncertainty)/std::abs(sum_results.at(0).value) < epsrel );
+        REQUIRE( std::abs(sum_results.at(1).uncertainty)/std::abs(sum_results.at(1).value) < epsrel );
+    };
+
+    SECTION("amplitude precision with Suave, together=true") {
+        using integrand_t = secdecutil::IntegrandContainer</*integrand_return_t*/ complex_t,/*x*/ double const * const,/*parameters*/ double>;
+        using integral_t = secdecutil::amplitude::Integral</*integrand_return_t*/ complex_t,/*real_t*/ double>;
+        
+        using cuba_integrator_t = secdecutil::cuba::Suave<complex_t>;
+        using cuba_integral_t = secdecutil::amplitude::CubaIntegral</*integrand_return_t*/ complex_t,/*real_t*/ double, cuba_integrator_t, integrand_t>;
+        const std::shared_ptr<cuba_integrator_t> cuba_integrator_ptr = std::make_shared<cuba_integrator_t>();
+        cuba_integrator_ptr->flags = 2;
+        cuba_integrator_ptr->nmin = 100;
+        cuba_integrator_ptr->seed = 42546;
+        cuba_integrator_ptr->together = true;
+
+        const integrand_t complex_integrand_container = integrand_t(complex_integrand.number_of_integration_variables, [](double const * const x, secdecutil::ResultInfo * result_info){return complex_integrand(x);});
+        std::shared_ptr<integral_t> complex_integral_ptr = std::make_shared<cuba_integral_t>(cuba_integrator_ptr, complex_integrand_container);
+
+        using weighted_integral_sum_t = std::vector<secdecutil::amplitude::WeightedIntegral<integral_t,/*coefficient_t*/complex_t>>;
+        std::vector<weighted_integral_sum_t> integral_sums
+        {
+            weighted_integral_sum_t{{complex_integral_ptr, complex_t(1e-3,0.)}},
+            weighted_integral_sum_t{{complex_integral_ptr, complex_t(0.,1)}}
+        };
+        using sum_handler_t = secdecutil::amplitude::WeightedIntegralHandler</*integrand_return_t*/ complex_t, /*real_t*/ double, /*coefficient_t*/ complex_t, /*container_t*/ std::vector>;
+
+        double epsrel = 3e-3;
+
+        sum_handler_t sum_handler
+        (
+            integral_sums,
+            epsrel,
+            1e-20, // epsabs
+            1e6, // maxeval
+            1e3, // mineval
+            50., // maxincreasefac
+            1e-2, // min_epsrel
+            1e-2, // min_epsabs
+            1e-14, // max_epsrel
+            1e-16 // max_epsabs
+        );
+
+        sum_handler.verbose = true;
+        auto sum_results = sum_handler.evaluate();
+
+        REQUIRE( typeid(sum_results) == typeid(std::vector<secdecutil::UncorrelatedDeviation<complex_t>>) );
+
+        REQUIRE( sum_results.at(0).value.real() == Approx(2.5e-4 ).epsilon(3*sum_results.at(0).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE( sum_results.at(0).value.imag() == Approx(5e-4   ).epsilon(3*sum_results.at(0).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE( sum_results.at(1).value.real() == Approx(-0.5   ).epsilon(3*sum_results.at(1).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE( sum_results.at(1).value.imag() == Approx( 0.25  ).epsilon(3*sum_results.at(1).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+
+        REQUIRE( std::abs(sum_results.at(0).uncertainty)/std::abs(sum_results.at(0).value) < epsrel );
+        REQUIRE( std::abs(sum_results.at(1).uncertainty)/std::abs(sum_results.at(1).value) < epsrel );
+    };
+    SECTION("amplitude precision with Divonne, together=true") {
+        using integrand_t = secdecutil::IntegrandContainer</*integrand_return_t*/ complex_t,/*x*/ double const * const,/*parameters*/ double>;
+        using integral_t = secdecutil::amplitude::Integral</*integrand_return_t*/ complex_t,/*real_t*/ double>;
+        
+        using cuba_integrator_t = secdecutil::cuba::Divonne<complex_t>;
+        using cuba_integral_t = secdecutil::amplitude::CubaIntegral</*integrand_return_t*/ complex_t,/*real_t*/ double, cuba_integrator_t, integrand_t>;
+        const std::shared_ptr<cuba_integrator_t> cuba_integrator_ptr = std::make_shared<cuba_integrator_t>();
+        cuba_integrator_ptr->flags = 2;
+        cuba_integrator_ptr->seed = 42546;
+        cuba_integrator_ptr->together = true;
+
+        const integrand_t complex_integrand_container = integrand_t(complex_integrand.number_of_integration_variables, [](double const * const x, secdecutil::ResultInfo * result_info){return complex_integrand(x);});
+        std::shared_ptr<integral_t> complex_integral_ptr = std::make_shared<cuba_integral_t>(cuba_integrator_ptr, complex_integrand_container);
+
+        using weighted_integral_sum_t = std::vector<secdecutil::amplitude::WeightedIntegral<integral_t,/*coefficient_t*/complex_t>>;
+        std::vector<weighted_integral_sum_t> integral_sums
+        {
+            weighted_integral_sum_t{{complex_integral_ptr, complex_t(1e-3,0.)}},
+            weighted_integral_sum_t{{complex_integral_ptr, complex_t(0.,1)}}
+        };
+        using sum_handler_t = secdecutil::amplitude::WeightedIntegralHandler</*integrand_return_t*/ complex_t, /*real_t*/ double, /*coefficient_t*/ complex_t, /*container_t*/ std::vector>;
+
+        double epsrel = 1e-4;
+
+        sum_handler_t sum_handler
+        (
+            integral_sums,
+            epsrel,
+            1e-20, // epsabs
+            1e6, // maxeval
+            1e3, // mineval
+            50., // maxincreasefac
+            1e-2, // min_epsrel
+            1e-2, // min_epsabs
+            1e-14, // max_epsrel
+            1e-16 // max_epsabs
+        );
+
+        sum_handler.verbose = true;
+        auto sum_results = sum_handler.evaluate();
+
+        REQUIRE( typeid(sum_results) == typeid(std::vector<secdecutil::UncorrelatedDeviation<complex_t>>) );
+
+        REQUIRE( sum_results.at(0).value.real() == Approx(2.5e-4 ).epsilon(3*sum_results.at(0).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE( sum_results.at(0).value.imag() == Approx(5e-4   ).epsilon(3*sum_results.at(0).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE( sum_results.at(1).value.real() == Approx(-0.5   ).epsilon(3*sum_results.at(1).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE( sum_results.at(1).value.imag() == Approx( 0.25    ).epsilon(3*sum_results.at(1).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+
+        REQUIRE( std::abs(sum_results.at(0).uncertainty)/std::abs(sum_results.at(0).value) < epsrel );
+        REQUIRE( std::abs(sum_results.at(1).uncertainty)/std::abs(sum_results.at(1).value) < epsrel );
     };
 
 };
