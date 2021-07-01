@@ -8,10 +8,10 @@ if __name__ == "__main__":
     triangle2L = IntegralLibrary('triangle2L/triangle2L_pylink.so')
 
     # choose integrator
-    triangle2L.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+    triangle2L.use_Vegas()
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle2L(real_parameters=[9.0],complex_parameters=[1.0])
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle2L(real_parameters=[9.0],complex_parameters=[1.0], verbose=True)
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

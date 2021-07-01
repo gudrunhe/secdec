@@ -9,10 +9,10 @@ if __name__ == "__main__":
     two_regulators = IntegralLibrary('two_regulators/two_regulators_pylink.so')
 
     # choose integrator
-    two_regulators.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+    two_regulators.use_Vegas()
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = two_regulators()
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = two_regulators(verbosee=True)
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

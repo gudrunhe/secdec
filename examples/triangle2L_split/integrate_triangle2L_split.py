@@ -8,10 +8,10 @@ if __name__ == "__main__":
     triangle2L_split = IntegralLibrary('triangle2L_split/triangle2L_split_pylink.so')
 
     # choose integrator
-    triangle2L_split.use_Divonne(epsrel=1e-5,epsabs=1e-5,maxeval=10**7,border=1e-8,flags=3)
+    triangle2L_split.use_Divonne(epsrel=1e-5,epsabs=1e-5,maxeval=10**7,border=1e-8)
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle2L_split(together=False)
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle2L_split(together=False, verbose=True)
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

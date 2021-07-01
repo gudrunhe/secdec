@@ -8,7 +8,7 @@ if __name__ == "__main__":
     pentabox = IntegralLibrary('pentabox_fin/pentabox_fin_pylink.so')
 
     # choose integrator
-    pentabox.use_Qmc(verbosity=2,minn=10**8,maxeval=1,transform='korobov3',fitfunction='polysingular')
+    pentabox.use_Qmc(verbosity=0,minn=10**8,maxeval=1,transform='korobov3',fitfunction='polysingular')
 
     # integrator settings used to run the timings
     #pentabox.use_Qmc(verbosity=2,minn=10**6,maxeval=1,transform='korobov3',fitfunction='polysingular')
@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     # integrate non-Euclidean point;
     s12, s23, s34, s45, s51 = [5.,-4.,2.,-6.,3.]
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = pentabox([s12,s23,s34,s45,s51],deformation_parameters_maximum=0.1)
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = pentabox([s12,s23,s34,s45,s51],deformation_parameters_maximum=0.1, verbose=True)
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
