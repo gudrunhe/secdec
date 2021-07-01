@@ -33,8 +33,9 @@ int main()
     // Pack amplitudes into handler
     %(name)s::handler_t<amplitudes_t> amplitudes
     (
-        unwrapped_amplitudes
-        // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+        unwrapped_amplitudes,
+        integrator.epsrel, integrator.epsabs
+        // further optional arguments: maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
     );
     amplitudes.verbose = true;
 

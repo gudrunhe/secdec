@@ -371,6 +371,8 @@ class CQuad(CPPIntegrator):
         self.c_lib.allocate_gsl_cquad.restype = c_void_p
         self.c_lib.allocate_gsl_cquad.argtypes = [c_double, c_double, c_uint, c_bool, c_double]
         self.c_integrator_ptr = self.c_lib.allocate_gsl_cquad(epsrel,epsabs,n,verbose,zero_border)
+        self._epsrel=epsrel
+        self._epsabs=epsabs
 
 class Vegas(CPPIntegrator):
     '''
@@ -391,6 +393,8 @@ class Vegas(CPPIntegrator):
         self.c_lib.allocate_cuba_Vegas.restype = c_void_p
         self.c_lib.allocate_cuba_Vegas.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong, c_double, c_longlong, c_longlong, c_longlong, c_bool]
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Vegas(epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nstart,nincrease,nbatch,real_complex_together)
+        self._epsrel=epsrel
+        self._epsabs=epsabs
 
 class Suave(CPPIntegrator):
     '''
@@ -411,6 +415,8 @@ class Suave(CPPIntegrator):
         self.c_lib.allocate_cuba_Suave.restype = c_void_p
         self.c_lib.allocate_cuba_Suave.argtypes = [c_double, c_double, c_int, c_int, c_longlong, c_longlong, c_double, c_longlong, c_longlong, c_double, c_bool]
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Suave(epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nnew,nmin,flatness,real_complex_together)
+        self._epsrel=epsrel
+        self._epsabs=epsabs
 
 class Divonne(CPPIntegrator):
     '''
@@ -437,6 +443,8 @@ class Divonne(CPPIntegrator):
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Divonne(epsrel, epsabs, flags, seed, mineval,maxeval,
                                                                  zero_border, key1, key2, key3, maxpass, border,
                                                                  maxchisq, mindeviation, real_complex_together)
+        self._epsrel=epsrel
+        self._epsabs=epsabs
 
 class Cuhre(CPPIntegrator):
     '''
@@ -457,6 +465,8 @@ class Cuhre(CPPIntegrator):
         self.c_lib.allocate_cuba_Cuhre.restype = c_void_p
         self.c_lib.allocate_cuba_Cuhre.argtypes = [c_double, c_double, c_int, c_longlong, c_longlong, c_double, c_int, c_bool]
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Cuhre(epsrel,epsabs,flags,mineval,maxeval,zero_border,key,real_complex_together)
+        self._epsrel=epsrel
+        self._epsabs=epsabs
 
 class Qmc(CPPIntegrator):
     '''
@@ -511,7 +521,7 @@ class Qmc(CPPIntegrator):
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=0,errormode='default',evaluateminn=0,
                       minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
@@ -559,6 +569,8 @@ class Qmc(CPPIntegrator):
                                                                     known_qmc_fitfunctions[str(fitfunction).lower()],
                                                                     known_qmc_generatingvectors[str(generatingvectors).lower()]
                                                                    )
+        self._epsrel=epsrel
+        self._epsabs=epsabs
 
 class CudaQmc(object):
     '''
@@ -609,7 +621,7 @@ class CudaQmc(object):
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=0.0,epsabs=0.0,maxeval=0,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=0,errormode='default',evaluateminn=0,
                       minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
@@ -671,6 +683,8 @@ class CudaQmc(object):
                                                                                                known_qmc_generatingvectors[str(generatingvectors).lower()],
                                                                                                len(devices),devices_t(*devices)
                                                                                           )
+        self._epsrel=epsrel
+        self._epsabs=epsabs
 
     def __del__(self):
         if hasattr(self, 'c_integrator_ptr_together'):
@@ -769,13 +783,13 @@ class IntegralLibrary(object):
         float, optional;
         The desired relative accuracy for the numerical
         evaluation of the weighted sum of the sectors.
-        Default: ``1.e-2``.
+        Default: epsrel of integrator (default 0.2).
 
     :param epsabs:
         float, optional;
         The desired absolute accuracy for the numerical
         evaluation of the weighted sum of the sectors.
-        Default: ``1.e-7``.
+        Default: epsabs of integrator (default 1e-7).
 
     :param maxeval:
         unsigned int, optional;
@@ -1050,12 +1064,16 @@ class IntegralLibrary(object):
                      number_of_presamples=100000, deformation_parameters_maximum=1.,
                      deformation_parameters_minimum=1.e-5,
                      deformation_parameters_decrease_factor=0.9,
-                     epsrel=1.e-2, epsabs=1.e-7, maxeval=18446744073709551615,
+                     epsrel=None, epsabs=None, maxeval=18446744073709551615,
                      mineval=50000, maxincreasefac=20., min_epsrel=0.2, min_epsabs=1.e-4,
                      max_epsrel=1.e-14, max_epsabs=1.e-20, min_decrease_factor=0.9,
                      decrease_to_percentage=0.7, soft_wall_clock_limit=1.7976931348623158e+308, # 1.7976931348623158e+308 max double
                      hard_wall_clock_limit=1.7976931348623158e+308, number_of_threads=0, reset_cuda_after=0, verbose=False
                 ):
+        # Set default epsrel,epsabs to integrator.epsrel,epsabs
+        if (epsrel is None): epsrel = self.high_dimensional_integrator._epsrel
+        if (epsabs is None): epsabs = self.high_dimensional_integrator._epsabs
+
         # Initialize and launch the underlying c routines in a subprocess
         # to enable KeyboardInterrupt and avoid crashing the primary python
         # interpreter on error.
