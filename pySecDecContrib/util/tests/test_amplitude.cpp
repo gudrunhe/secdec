@@ -312,15 +312,10 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
     using qmc_integral_t = secdecutil::amplitude::QmcIntegral</*integrand_return_t*/ double,/*real_t*/ double, qmc_integrator_t, integrand_t>;
     using cuba_integral_t = secdecutil::amplitude::CubaIntegral</*integrand_return_t*/ double,/*real_t*/ double, cuba_integrator_t, integrand_t>;
     
-    const std::shared_ptr<qmc_integrator_t> qmc_integrator_ptr = std::make_shared<qmc_integrator_t>();
-    qmc_integrator_ptr->randomgenerator.seed(42546);
-    qmc_integrator_ptr->verbosity=3;
-    
-    // // should this work? qmc doesn't seem to use minn set via qmc->minn in amplitude.hpp
-    //qmc_integrator_t qmc_integrator;
-    //qmc_integrator.randomgenerator.seed(42546);
-    //qmc_integrator.verbosity=3;
-    //const std::shared_ptr<qmc_integrator_t> qmc_integrator_ptr = std::make_shared<qmc_integrator_t>(qmc_integrator);
+    qmc_integrator_t qmc_integrator;
+    qmc_integrator.randomgenerator.seed(42546);
+    qmc_integrator.verbosity=3;
+    const std::shared_ptr<qmc_integrator_t> qmc_integrator_ptr = std::make_shared<qmc_integrator_t>(qmc_integrator); // this also checks the copy constructor
 
     
     cuba_integrator_t cuba_integrator;
