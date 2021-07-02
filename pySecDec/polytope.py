@@ -136,7 +136,7 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
                 # more than a single number in first two lines
                 # --> file does not contain dimensions
                 f.seek(0)
-            original_cone = np.loadtxt(f, dtype=int)
+            original_cone = np.loadtxt(f, dtype=int, ndmin = 2)
 
         # the triangulation is given as indices of `original_cone`
         with open(os.path.join(workdir, 'normaliz.tri'),'r') as f:

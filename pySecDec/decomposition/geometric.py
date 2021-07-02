@@ -67,8 +67,9 @@ def generate_fan(*polynomials):
         # use `Polynomial` class to remove duplicates
         cone_poly = Polynomial(cone, np.ones(len(cone),dtype=int), copy=False)
         cone_poly += identity_polynomial # implicit simplify
+
         for i,hyperplane in enumerate(cone_poly.expolist):
-            if (hyperplane > 0).all() or (hyperplane == 0).all():
+            if (len(hyperplane)>1 and (hyperplane > 0).all()) or (hyperplane == 0).all():
                 cone_poly.coeffs[i] = 0
         cone = cone_poly.simplify().expolist
 
@@ -78,7 +79,6 @@ def generate_fan(*polynomials):
                 not any( (hyperplane==cone).all(axis=-1).any() for hyperplane in -cone ) # do not append cones that have `hyperplane` and `-hyperplane`
            ):
                 fan.append(cone)
-
     return fan
 
 def transform_variables(polynomial, transformation, polysymbols='y'):

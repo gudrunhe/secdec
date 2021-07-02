@@ -85,6 +85,12 @@ class TestGeomethod(unittest.TestCase):
         for cone, target_cone in zip(fan_p2, self.sorted_target_fan_p2):
             np.testing.assert_array_equal(cone, target_cone)
 
+        fan_p = generate_fan(Polynomial.from_expression('1+x', ['x']))
+        target_fan_p = [[[1]]]
+        self.assertEqual(len(fan_p), len(target_fan_p))
+        for cone, target_cone in zip(fan_p, target_fan_p):
+            np.testing.assert_array_equal(cone, target_cone)
+
     #@attr('active')
     def test_convex_hull_exponentiated_polynomial(self):
         p0 = ExponentiatedPolynomial(self.p0.expolist, self.p0.coeffs, polysymbols=self.p0.polysymbols, exponent='8-3*eps')
@@ -170,6 +176,11 @@ class TestGeomethod(unittest.TestCase):
                     np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[0]), sort_2D_array(target_triangulated_cones2_normal[1]))
                     np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[1]), sort_2D_array(target_triangulated_cones2_normal[0]))
 
+    def test_triangulate_1D(self):
+        cone = [[1]]
+        target_cone = np.array([[[1]]])
+        triangulated_cone = triangulate(cone, workdir='tmpdir_test_triangulate_1D_python' + python_major_version, switch_representation=True)
+        np.testing.assert_array_equal(triangulated_cone, target_cone)
 
     #@attr('active')
     def test_transform_variables(self):
