@@ -315,6 +315,10 @@ def get_decomposition_routines(name, normaliz, workdir):
                                                                      primary=lambda sector, indices: [sector], # no primary decomposition
                                                                      secondary=lambda sector, indices: decomposition.geometric.geometric_decomposition_ku(sector, indices, normaliz, workdir)
                                                                  ),
+                                        geometric_infinity_no_primary=dict(
+                                                                     primary=lambda sector, indices: [sector], # no primary decomposition
+                                                                     secondary=lambda sector, indices: decomposition.geometric.geometric_decomposition(sector, indices, normaliz, workdir)
+                                                                 ),
                                         iterative_no_primary=dict(
                                                                      primary=lambda sector, indices: [sector], # no primary decomposition
                                                                      secondary=decomposition.iterative.iterative_decomposition
@@ -1459,8 +1463,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     :param integration_variables:
         iterable of strings or sympy symbols;
-        The variables that are to be integrated from
-        0 to 1.
+        The variables that are to be integrated. The
+        intgration region depends on the chosen
+        `decomposition_method`.
 
     :param regulators:
         iterable of strings or sympy symbols;
@@ -1618,15 +1623,22 @@ def make_package(name, integration_variables, regulators, requested_orders,
         The strategy to decompose the polynomials. The
         following strategies are available:
 
-        * 'iterative_no_primary' (default)
-        * 'geometric_no_primary'
-        * 'iterative'
-        * 'geometric'
-        * 'geometric_ku'
+        * 'iterative_no_primary' (default): integration region 
+          :math:`[0,1]^N`.
+        * 'geometric_no_primary': integration region :math:`[0,1]^N`.
+        * 'geometric_infinity_no_primary': integration region
+          :math:`[0,\infty]^N`.
+        * 'iterative': primary decomposition followed by
+          integration over :math:`[0,1]^{N-1}`.
+        * 'geometric': :math:`x_N` is set to one followed by
+          integration over :math:`[0,\infty]^{N-1}`.
+        * 'geometric_ku': primary decomposition followed by
+          integration over :math:`[0,1]^{N-1}`.
 
         'iterative', 'geometric', and 'geometric_ku' are only
-        valid for loop integrals. An end user should always use
-        'iterative_no_primary' or 'geometric_no_primary' here.
+        valid for loop integrals. An end user should use
+        'iterative_no_primary', 'geometric_no_primary', or
+        'geometric_infinity_no_primary' here.
         In order to compute loop integrals, please use the
         function :func:`pySecDec.loop_integral.loop_package`.
 
