@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
@@ -34,9 +35,6 @@ if __name__ == "__main__":
     # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
     requested_orders = [0],
 
-    # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-    requested_order = 0,
-
     # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
     form_optimization_level = 2,
 
@@ -51,6 +49,8 @@ if __name__ == "__main__":
     # executable here
     #normaliz_executable='/path/to/normaliz',
 
-    contour_deformation = True
+    contour_deformation = True,
+
+    pylink_qmc_transforms=['korobov1']
 
     )

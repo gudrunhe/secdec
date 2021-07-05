@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pySecDec.make_regions import make_regions
 from pySecDec.code_writer import sum_package
 

@@ -1,4 +1,5 @@
-from __future__ import print_function
+#!/usr/bin/env python3
+
 from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
@@ -7,7 +8,7 @@ if __name__ == '__main__':
     # load c++ library
     name = "triangle2L_case8_largeM"
     intlib = IntegralLibrary(f"{name}/{name}_pylink.so")
-    intlib.use_Qmc(transform="korobov3", fitfunction="polysingular")
+    intlib.use_Qmc(transform="korobov3", fitfunction="polysingular", epsrel=1e-4)
 
     # integrate
     str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[0.002, 4, 1])

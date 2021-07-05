@@ -1,20 +1,12 @@
+#!/usr/bin/env python3
 # This example is the second two loop planar box example in the Go Mishima paper arXiv:1812.04373
 
-from pySecDec.loop_integral.loop_regions import loop_regions
-from shutil import rmtree
-from os.path import isdir
-from os import chdir
-import os
-import pySecDec as psd
 from pySecDec.algebra import Polynomial
-import re
-
-import sympy as sp
+from pySecDec.loop_integral.loop_regions import loop_regions
 import numpy as np
-from pprint import pprint
-from pySecDec.expansion import expand_sympy
-
-chdir(os.path.expanduser("~/loputoo/pySecDec-1.4.2/nodist_examples/box2L_expansion_by_regions"))
+import pySecDec as psd
+import re
+import sympy as sp
 
 li = psd.loop_integral.LoopIntegralFromGraph(
 internal_lines = [['mt',[1,5]],['mt',[1,2]],['mt',[2,6]],[0,[6,4]],[0,[4,3]],[0,[3,5]],['mt',[5,6]]],
@@ -136,23 +128,12 @@ print(f"Paper vectors:\n{paper_vectors}")
 
 # note that one output folder for one region is not generated, because it has no 0th order term
 if 1:
-# if 0:
-    # if isdir("box2L_small_loop_massive_expansion_by_regions"):
-    #     rmtree("box2L_small_loop_massive_expansion_by_regions")
-    if isdir("tempdir"):
-        rmtree("tempdir")
     generators_args = psd.loop_integral.loop_regions(
         name = "box2L_small_loop_massive_expansion_by_regions",
-        # name = "tempdir",
         loop_integral=li,
         smallness_parameter = "mtsq",
         expansion_by_regions_order=0,processes=1)
 
-    for arg in generators_args:
-        print(arg["name"])
-
-    psd.code_writer.sum_package("box2L_small_loop_massive_expansion_by_regions", [psd.make_package]*len(generators_args), generators_args, li.regulators,
+    psd.code_writer.sum_package("box2L_small_loop_massive_expansion_by_regions", generators_args, li.regulators,
                 requested_orders = [0,0],
                 real_parameters = ['s','t','u','mtsq'], complex_parameters = [])
-
-    import configure

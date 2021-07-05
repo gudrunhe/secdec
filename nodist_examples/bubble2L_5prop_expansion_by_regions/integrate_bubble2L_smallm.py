@@ -1,4 +1,5 @@
-from __future__ import print_function
+#!/usr/bin/env python3
+
 from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
@@ -8,7 +9,7 @@ intlib = IntegralLibrary(f"{name}/{name}_pylink.so")
 intlib.use_Qmc(transform="korobov3", fitfunction="polysingular", verbosity=1)
 
 # integrate
-str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[4,0.002])
+str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[4,0.002,1])
 
 # convert complex numbers from c++ to sympy notation
 str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

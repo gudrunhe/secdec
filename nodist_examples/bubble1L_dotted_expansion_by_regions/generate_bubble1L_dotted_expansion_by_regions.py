@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # in this example we try to expand the dotted loop using the mass of the particle
 # in the loop as the small parameter
 # here we do it both ways, expaning in the msq directly, or replacing it by
@@ -5,7 +7,7 @@
 # (i.e. we have two propagators and a powerlist)
 
 from pySecDec.loop_integral import loop_regions
-from pySecDec.code_writer import sum_package, make_package
+from pySecDec.code_writer import sum_package
 import pySecDec as psd
 import numpy as np
 
@@ -57,7 +59,7 @@ for name, real_parameters, smallness_parameter, li in (
 
     # generate code that will calculate the sum of all regions and all orders in
     # the smallness parameter
-    sum_package(name, [make_package]*len(generators_args), generators_args, li.regulators,
+    sum_package(name, generators_args, li.regulators,
                     requested_orders = [0],
                     real_parameters = real_parameters,
                     complex_parameters = [])

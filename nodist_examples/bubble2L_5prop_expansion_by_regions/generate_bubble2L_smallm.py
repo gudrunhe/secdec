@@ -1,4 +1,5 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
+
 from pySecDec.loop_integral import loop_regions
 from pySecDec.code_writer import sum_package, make_package
 import pySecDec as psd
@@ -19,12 +20,11 @@ if __name__ == "__main__":
         name = 'bubble2L_smallm',
         loop_integral = li,
         smallness_parameter = 'z',
-        expansion_by_regions_order = 1) # this has to be 2 to catch the ultra-soft region
+        expansion_by_regions_order = 2) # this has to be 2 to catch the ultra-soft region
 
     # generate code that will calculate the sum of all regions and all orders in
     # the smallness parameter
     sum_package('bubble2L_smallm',
-        [make_package]*len(regions_generator_args),
         regions_generator_args, regulators = ['eps'],requested_orders = [0],
         real_parameters = ['psq','msq','z'],
         complex_parameters = [])

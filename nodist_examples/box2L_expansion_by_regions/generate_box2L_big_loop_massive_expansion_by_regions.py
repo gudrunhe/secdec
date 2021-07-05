@@ -1,19 +1,16 @@
+#!/usr/bin/env python3
 # This example is the first two loop planar box example in the Go Mishima paper arXiv:1812.04373
 
+from os.path import isdir
+from pprint import pprint
+from pySecDec.algebra import Polynomial
+from pySecDec.expansion import expand_sympy
 from pySecDec.loop_integral.loop_regions import loop_regions
 from shutil import rmtree
-from os.path import isdir
-from os import chdir
-import os
-import pySecDec as psd
-from pySecDec.algebra import Polynomial
-
-import sympy as sp
 import numpy as np
-from pprint import pprint
-from pySecDec.expansion import expand_sympy
-
-chdir(os.path.expanduser("~/loputoo/pySecDec-1.4.2/nodist_examples/box2L_expansion_by_regions"))
+import pySecDec as psd
+import pySecDec.loop_integral
+import sympy as sp
 
 li = psd.loop_integral.LoopIntegralFromGraph(
 internal_lines = [['mt',[1,5]],['mt',[1,2]],['mt',[2,6]],['mt',[6,4]],['mt',[4,3]],['mt',[3,5]],[0,[5,6]]],
@@ -108,11 +105,8 @@ if 1:
         smallness_parameter = "mtsq",
         expansion_by_regions_order=0,
         )
-    # for x in generators_args:
-    #     print(x["name"])
-    # generators_args = generators_args[:1]
     if __name__ == "__main__":
-        psd.code_writer.sum_package("box2L_big_loop_massive_expansion_by_regions", [psd.make_package]*len(generators_args), generators_args, li.regulators,
+        psd.code_writer.sum_package("box2L_big_loop_massive_expansion_by_regions", generators_args, li.regulators,
                     requested_orders = [0,0],
                     real_parameters = ['s','t','u','mtsq'], complex_parameters = [])
 

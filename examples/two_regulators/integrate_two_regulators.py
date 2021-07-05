@@ -1,4 +1,5 @@
-from __future__ import print_function
+#!/usr/bin/env python3
+
 from pySecDec.integral_interface import IntegralLibrary
 from math import pi
 import sympy as sp
@@ -12,7 +13,7 @@ if __name__ == "__main__":
     two_regulators.use_Vegas()
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = two_regulators(verbosee=True)
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = two_regulators(verbose=True)
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')

@@ -1,5 +1,6 @@
-#! /usr/bin/env python
-from pySecDec.loop_integral import LoopIntegralFromPropagators, loop_package
+#!/usr/bin/env python3
+
+from pySecDec.loop_integral import LoopIntegralFromPropagators, LoopPackage
 from pySecDec.code_writer.sum_package import sum_package, Coefficient
 from itertools import repeat
 import re, sympy as sp, numpy as np
@@ -13,7 +14,7 @@ def add_loop_integral(loop_package_args, powerlist):
     geometric_banlist = ['I73_I_1_1_1_1_1_1_0_0_0_0_0']
 
     loop_package_args.append(
-        dict(
+        LoopPackage(
 
             name = name,
 
@@ -173,10 +174,9 @@ for coeff,powerlist in zip(coefficients,powerlists):
 # call sum_package
 sum_package(
     name = 'I73',
-    package_generators = [loop_package] * len(loop_package_args),
-    generators_args = loop_package_args,
+    package_generators = loop_package_args,
     regulators = ['eps'],
     requested_orders = [0],
     real_parameters = Mandelstam_symbols,
-    coefficients = zero_free_coefficients
+    coefficients = [zero_free_coefficients]
 )
