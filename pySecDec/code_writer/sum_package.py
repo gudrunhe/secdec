@@ -395,7 +395,11 @@ def sum_package(name, package_generators, regulators, requested_orders,
         )
 
     # check if complex return type required
-    need_complex = len(complex_parameters) > 0 or any([(package_generator.enforce_complex or package_generator.contour_deformation_polynomial) for package_generator in package_generators])
+    need_complex = len(complex_parameters) > 0 or any(
+        (g.enforce_complex or g.contour_deformation) if type(g).__name__ == 'LoopPackage' else \
+        (g.enforce_complex or g.contour_deformation_polynomial)
+        for g in package_generators
+    )
 
 
     replacements_in_files = {

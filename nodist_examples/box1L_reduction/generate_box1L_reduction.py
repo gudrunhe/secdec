@@ -1,17 +1,18 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
+
 from pySecDec.code_writer.sum_package import sum_package, Coefficient
-from pySecDec.loop_integral import loop_package, LoopIntegralFromPropagators
+from pySecDec.loop_integral import LoopPackage, loop_package, LoopIntegralFromPropagators
 
 Mandelstam_symbols = ['s','t']
 mass_symbols = []
 
 real_parameters = Mandelstam_symbols + mass_symbols
 
-def make_1L_integral(powerlist, dim='4-2*eps'):
+def make_1L_integral(powerlist, dim='4-2*eps', name=None):
 
-    return dict(
+    return LoopPackage(
 
-        name = 'I_' + '_'.join( map(str,powerlist) ),
+        name = name if name else 'I_' + '_'.join( map(str,powerlist) ),
 
         loop_integral = LoopIntegralFromPropagators(
 
@@ -71,26 +72,20 @@ coefficients = [
 
 # reduced
 sum_package(
-
-    name = 'D0_reduced',
-
-    coefficients = coefficients,
-    package_generators = [loop_package]*len(integrals),
-    generators_args = integrals,
-
+    'D0_reduced',
+    integrals,
     regulators = ['eps'],
     requested_orders = [0],
-
+    coefficients = coefficients,
     real_parameters = real_parameters
-
 )
 
 # direct
-args = make_1L_integral([1,1,1,1])
-args['name'] = 'D0_direct'
-args['requested_order'] = 0
-loop_package(**args)
-
-
-
+sum_package(
+    'D0_direct',
+    [make_1L_integral([1,1,1,1])],
+    regulators = ['eps'],
+    requested_orders = [0],
+    real_parameters = real_parameters
+)
 
