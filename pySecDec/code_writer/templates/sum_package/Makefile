@@ -31,17 +31,17 @@ lib/lib$(NAME).so :
 
 # build the python shared library
 $(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_SO) $(QMC_TEMPLATE_OBJECTS)
-	$(CXX) -shared -o $@ pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(foreach INTEGRAL,$(INTEGRALS),$(INTEGRAL)/src/*.o) $(QMC_TEMPLATE_OBJECTS) $(LDFLAGS)
+	$(CXX) -shared -o $@ pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(foreach INTEGRAL,$(INTEGRALS),$(INTEGRAL)/src/*.o) $(QMC_TEMPLATE_OBJECTS) $(SUM_LDFLAGS)
 
 # build the example executable
 ifdef SECDEC_WITH_CUDA_FLAGS
 CONTRIB_RPATH := -Xlinker "-rpath $(SECDEC_CONTRIB)/lib"
 integrate_$(NAME) : integrate_$(NAME).o $(INTEGRALS_SO) lib/lib$(NAME).so
-	$(CXX) -o $@ $< $(LDFLAGS) -Xlinker '-rpath lib' $(CONTRIB_RPATH) -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS))
+	$(CXX) -o $@ $< -Xlinker '-rpath lib' $(CONTRIB_RPATH) -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS)) $(SUM_LDFLAGS)
 else
 CONTRIB_RPATH := -Wl,-rpath,$(SECDEC_CONTRIB)/lib
 integrate_$(NAME) : integrate_$(NAME).o $(INTEGRALS_SO) lib/lib$(NAME).so
-	$(CXX) -o $@ $< $(LDFLAGS) -Wl,-rpath,lib $(CONTRIB_RPATH) -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS))
+	$(CXX) -o $@ $< -Wl,-rpath,lib $(CONTRIB_RPATH) -l$(NAME) $(patsubst %%,-l%%,$(INTEGRALS)) $(SUM_LDFLAGS)
 endif
 
 very-clean : clean
