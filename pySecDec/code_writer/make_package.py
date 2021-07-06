@@ -1823,6 +1823,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # initialize the decomposition
     initial_sector = decomposition.Sector(polynomials_to_decompose, other_polynomials + transformations)
 
+    # use iterative method for 1D integrals with Cheng-Wu (avoids problem with 1L tadpole and geometric decomposition)
+    if decomposition_method == 'geometric' and len(all_integration_variables) == 1:
+        strategy = get_decomposition_routines('iterative', normaliz_executable, os.path.join(name,'normaliz_workdir'))
+
     # if splitting desired, implement it as additional primary decomposition
     if split:
         # cannot split when using the geometric decomposition method because the integration interval is [0,inf] after the primary decomposition
