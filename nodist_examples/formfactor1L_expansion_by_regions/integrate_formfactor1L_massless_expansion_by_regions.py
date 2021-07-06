@@ -1,4 +1,5 @@
-from __future__ import print_function
+#!/usr/bin/env python3
+
 from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
@@ -22,4 +23,4 @@ print('Numerical Result')
 for power in [-2, -1, 0]:
     valreal, valimg = integral_result.coeff('eps',power).coeff('value').as_real_imag()
     errreal, errimg = integral_result.coeff('eps',power).coeff('error').as_real_imag()
-    print("eps^{:<2} {: .5f}{:+.5f}*I +/- {: .5f}{:+.5f}*I".format(power,float(valreal),float(valimg),float(errreal),float(errimg)))
+    print("eps^{:<2} {: .5f}{:+.5f}*I +/- {: .5e}{:+.5e}*I".format(power,float(valreal),float(valimg),float(errreal),float(errimg)))

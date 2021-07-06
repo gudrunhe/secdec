@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pySecDec.integral_interface import IntegralLibrary
 from math import log
 
