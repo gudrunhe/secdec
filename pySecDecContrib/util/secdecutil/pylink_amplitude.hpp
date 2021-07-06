@@ -132,8 +132,8 @@ extern "C"
         try {
             result = amplitudes.evaluate();
         } catch (std::exception& e){
-            std::cout << "Encountered an exception of type '" << typeid(e).name() << "'" << std::endl;
-            std::cout << "  what():  " << e.what() << std::endl;
+            std::cerr << "Encountered an exception of type '" << typeid(e).name() << "'" << std::endl;
+            std::cerr << "  what():  " << e.what() << std::endl;
             return -1;
         }
         
