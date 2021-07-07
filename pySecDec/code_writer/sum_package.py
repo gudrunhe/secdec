@@ -1,6 +1,7 @@
 from ..metadata import version, git_id
 from .template_parser import validate_pylink_qmc_transforms, generate_pylink_qmc_macro_dict, parse_template_file, parse_template_tree
 from ..misc import sympify_symbols, make_cpp_list, chunks
+from .make_package import make_package
 import pySecDecContrib
 
 from time import strftime
@@ -332,12 +333,8 @@ def sum_package(name, package_generators, regulators, requested_orders,
     # "secdecutil::Series<secdecutil::Series<T>>"
     nested_series_type = 'secdecutil::Series<' * len(requested_orders) + 'T' + '>' * len(requested_orders)
     for package_generator in package_generators:
-        if type(package_generator).__name__ == 'LoopPackage':
-            assert len(requested_orders) == len(package_generator.loop_integral.regulators), \
-                "The `requested_orders` must match the number of regulators"
-        else:
-            assert len(requested_orders) == len(package_generator.regulators), \
-                "The `requested_orders` must match the number of regulators"
+        assert len(requested_orders) == len(package_generator.regulators), \
+            "The `requested_orders` must match the number of regulators"
 
     # define required listings of contributing integrals
     sub_integral_names = []
@@ -396,8 +393,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
 
     # check if complex return type required
     need_complex = len(complex_parameters) > 0 or any(
-        (g.enforce_complex or g.contour_deformation) if type(g).__name__ == 'LoopPackage' else \
-        (g.enforce_complex or g.contour_deformation_polynomial)
+        g.enforce_complex or g.contour_deformation_polynomial
         for g in package_generators
     )
 
@@ -489,10 +485,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
             replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
 
             minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
-            if type(package_generator).__name__ == 'LoopPackage':
-                pass
-            else:
-                package_generator = package_generator._replace(regulators = regulators)
+            package_generator = package_generator._replace(regulators = regulators)
             package_generator = package_generator._replace(requested_orders = np.asarray(requested_orders) - minimal_lowest_coefficient_orders)
 
             # parse integral specific files
@@ -504,10 +497,9 @@ def sum_package(name, package_generators, regulators, requested_orders,
 
             # Unpack package_generator to call
             package_generator_dict = package_generator._asdict()
-            sum_package_generator = package_generator_dict.pop('sum_package_generator')
 
-            # Call package_generator with remaining arguments
-            template_replacements = sum_package_generator(**package_generator_dict)
+            # Call package_generator with its arguments
+            template_replacements = make_package(**package_generator_dict)
 
             # Compute maximal number of integration variables
             number_of_integration_variables = max(number_of_integration_variables,template_replacements['number_of_integration_variables'])

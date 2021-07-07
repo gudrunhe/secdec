@@ -4,7 +4,6 @@ This module implements the main program - the function
 
 """
 
-from __future__ import print_function
 from ..metadata import version, git_id
 from ..misc import sympify_symbols, rangecomb, make_cpp_list, chunks
 from ..algebra import _Expression, Expression, Polynomial, \
@@ -2215,7 +2214,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
 
 # namedtuple representing a make_package type package_generator (for use with sum_package)
-MakePackage = namedtuple('MakePackage', list(inspect.signature(make_package).parameters) + ['sum_package_generator'])
+MakePackage = namedtuple('MakePackage', list(inspect.signature(make_package).parameters))
 # python <3.7 compatibility
 MakePackage.__new__.__defaults__ = tuple([v.default for k,v in inspect.signature(make_package).parameters.items()
-                                    if v.default != inspect._empty] + [make_package])
+                                    if v.default != inspect._empty])

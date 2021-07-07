@@ -1,4 +1,3 @@
-from __future__ import print_function
 from .matrix_sort import *
 import unittest
 import sympy as sp

@@ -1,4 +1,3 @@
-from __future__ import print_function
 from .template_parser import *
 from nose.plugins.attrib import attr
 import sys, os, shutil

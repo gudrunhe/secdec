@@ -9,7 +9,7 @@ function :func:`.loop_package`.
 from .from_graph import LoopIntegralFromGraph
 from .draw import plot_diagram
 from ..algebra import Polynomial
-from ..code_writer import make_package as code_writer_make_package
+from ..code_writer import MakePackage
 from ..make_package import make_package
 from ..misc import flatten, sympify_expression
 from itertools import chain
@@ -19,11 +19,13 @@ import numpy as np
 import sympy as sp
 import os
 
-def loop_package(name, loop_integral, requested_orders=None,
+def LoopPackage(name, loop_integral, requested_orders=None,
                  requested_order=None,
-                 real_parameters=[], complex_parameters=[],
+                 real_parameters=[],
+                 complex_parameters=[],
                  contour_deformation=True,
-                 additional_prefactor=1, form_optimization_level=2,
+                 additional_prefactor=1,
+                 form_optimization_level=2,
                  form_work_space='50M',
                  form_memory_use=None,
                  form_threads=2,
@@ -33,15 +35,125 @@ def loop_package(name, loop_integral, requested_orders=None,
                  split=False, ibp_power_goal=-1,
                  use_iterative_sort=True, use_light_Pak=True,
                  use_dreadnaut=False, use_Pak=True,
-                 processes=None, pylink_qmc_transforms=['korobov3x3'], package_generator=make_package): # Note package_generator must be last arg (required for LoopPackage initialisation)
+                 processes=None, pylink_qmc_transforms=['korobov3x3']):
     '''
+    Convert a loop integral into a :func:`pySecDec.code_writer.MakePackage` object
+    (suitable for use in :func:`pySecDec.code_writer.sum_package`).
+
+    All the arguments are the same as in :func:`pySecDec.loop_integral.loop_package`.
+    '''
+    # convert `contour_deformation` to bool
+    contour_deformation = bool(contour_deformation)
+
+    # convert `name` to string
+    name = str(name)
+
+    U_and_F = [loop_integral.exponentiated_U.copy(), loop_integral.exponentiated_F.copy()]
+    names_U_and_F = sp.symbols(['U','F'])
+
+    # append the regulator symbols and the symbols `U` and `F` to `U` and `F`
+    for poly in U_and_F:
+        poly.polysymbols.extend(loop_integral.regulators + names_U_and_F)
+        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_U_and_F)+len(loop_integral.regulators)], dtype=int)])
+
+    # append the regulator symbols to the `numerator` and to `measure`
+    numerator = loop_integral.numerator.copy()
+    measure = loop_integral.measure.copy()
+    for poly in chain([numerator], measure.factors):
+        poly.polysymbols = poly.polysymbols[:-2] + loop_integral.regulators + poly.polysymbols[-2:]
+        poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),len(loop_integral.regulators)], dtype=int), poly.expolist[:,-2:]])
+
+    if np.issubdtype(numerator.coeffs.dtype, np.number):
+        other_polynomials = [numerator]
+    else:
+        symbols = numerator.polysymbols
+        numerator.coeffs = np.array( [Polynomial.from_expression(coeff, symbols) for coeff in numerator.coeffs] )
+        other_polynomials = [flatten(numerator, 1)]
+
+    polynomials_to_decompose = list(U_and_F)
+    if sympify_expression( measure ) != 1:
+        # need ``loop_integral.measure`` only if it is nontrivial
+        polynomials_to_decompose += measure.factors
+
+    if requested_orders is None:
+        if requested_order is None:
+            raise ValueError("LoopPackage() requires requested_orders xor requested_order")
+        requested_orders = [requested_order]
+    else:
+        if requested_order is not None:
+            raise ValueError("LoopPackage() requires requested_orders xor requested_order")
+
+    return MakePackage(
+        name = name,
+
+        integration_variables = loop_integral.integration_variables,
+
+        regulators = loop_integral.regulators,
+        requested_orders = requested_orders,
+
+        polynomials_to_decompose = polynomials_to_decompose,
+        polynomial_names = names_U_and_F,
+        other_polynomials = other_polynomials,
+        contour_deformation_polynomial = 'F' if contour_deformation else None,
+        positive_polynomials = ['U'],
+
+        prefactor = sympify_expression(additional_prefactor) * loop_integral.Gamma_factor,
+
+        real_parameters = real_parameters,
+        complex_parameters = complex_parameters,
+
+        form_optimization_level = form_optimization_level,
+        form_work_space = form_work_space,
+        form_memory_use = form_memory_use,
+        form_threads = form_threads,
+
+        decomposition_method = decomposition_method,
+
+        normaliz_executable = normaliz_executable,
+
+        use_iterative_sort = use_iterative_sort,
+        use_Pak = use_Pak,
+        use_dreadnaut = use_dreadnaut,
+        use_light_Pak = use_light_Pak,
+
+        enforce_complex = enforce_complex,
+        ibp_power_goal = ibp_power_goal,
+        split = split,
+        processes = processes,
+
+        pylink_qmc_transforms = pylink_qmc_transforms
+    )
+
+def loop_package(name, loop_integral, requested_orders=None,
+                 requested_order=None,
+                 real_parameters=[],
+                 complex_parameters=[],
+                 contour_deformation=True,
+                 additional_prefactor=1,
+                 form_optimization_level=2,
+                 form_work_space='50M',
+                 form_memory_use=None,
+                 form_threads=2,
+                 decomposition_method='iterative',
+                 normaliz_executable='normaliz',
+                 enforce_complex=False,
+                 split=False,
+                 ibp_power_goal=-1,
+                 use_iterative_sort=True,
+                 use_light_Pak=True,
+                 use_dreadnaut=False,
+                 use_Pak=True,
+                 processes=None,
+                 pylink_qmc_transforms=['korobov3x3'],
+                 package_generator=make_package):
+    """
     Decompose, subtract and expand a Feynman
     parametrized loop integral. Return it as
     c++ package.
 
     .. seealso::
         This function is a wrapper around
-        :func:`pySecDec.make_package.make_package` (default).
+        :func:`pySecDec.make_package` (default).
 
     .. seealso::
         The generated library is described in
@@ -243,97 +355,37 @@ def loop_package(name, loop_integral, requested_orders=None,
 
     :param package_generator:
         function;
-        The generator function for the integral.
+        The generator function for the integral,
+        either :func:`pySecDec.make_package` or
+        :func:`pySecDec.code_writer.make_package`.
 
-        .. seealso::
-            :func:`pySecDec.make_package` and
-            :func:`pySecDec.code_writer.make_package`.
-
-        Default: `pySecDec.make_package`.
-    '''
-    print('running "loop_package" for "' + name + '"')
-
-    # convert `contour_deformation` to bool
-    contour_deformation = bool(contour_deformation)
-
-    # convert `name` to string
-    name = str(name)
-
-    U_and_F = [loop_integral.exponentiated_U.copy(), loop_integral.exponentiated_F.copy()]
-    names_U_and_F = sp.symbols(['U','F'])
-
-    # append the regulator symbols and the symbols `U` and `F` to `U` and `F`
-    for poly in U_and_F:
-        poly.polysymbols.extend(loop_integral.regulators + names_U_and_F)
-        poly.expolist = np.hstack([poly.expolist, np.zeros([len(poly.expolist),len(names_U_and_F)+len(loop_integral.regulators)], dtype=int)])
-
-    # append the regulator symbols to the `numerator` and to `measure`
-    numerator = loop_integral.numerator.copy()
-    measure = loop_integral.measure.copy()
-    for poly in chain([numerator], measure.factors):
-        poly.polysymbols = poly.polysymbols[:-2] + loop_integral.regulators + poly.polysymbols[-2:]
-        poly.expolist = np.hstack([poly.expolist[:,:-2], np.zeros([len(poly.expolist),len(loop_integral.regulators)], dtype=int), poly.expolist[:,-2:]])
-
-    if np.issubdtype(numerator.coeffs.dtype, np.number):
-        other_polynomials = [numerator]
-    else:
-        symbols = numerator.polysymbols
-        numerator.coeffs = np.array( [Polynomial.from_expression(coeff, symbols) for coeff in numerator.coeffs] )
-        other_polynomials = [flatten(numerator, 1)]
-
-    polynomials_to_decompose = list(U_and_F)
-    if sympify_expression( measure ) != 1:
-        # need ``loop_integral.measure`` only if it is nontrivial
-        polynomials_to_decompose += measure.factors
-
-    if requested_orders is None:
-        if requested_order is None:
-            raise ValueError("loop_package() requires requested_orders xor requested_order")
-        requested_orders = [requested_order]
-    else:
-        if requested_order is not None:
-            raise ValueError("loop_package() requires requested_orders xor requested_order")
-
-    make_package_return_value = package_generator(
-        name = name,
-
-        integration_variables = loop_integral.integration_variables,
-
-        regulators = loop_integral.regulators,
-        requested_orders = requested_orders,
-
-        polynomials_to_decompose = polynomials_to_decompose,
-        polynomial_names = names_U_and_F,
-        other_polynomials = other_polynomials,
-        contour_deformation_polynomial = 'F' if contour_deformation else None,
-        positive_polynomials = ['U'],
-
-        prefactor = sympify_expression(additional_prefactor) * loop_integral.Gamma_factor,
-
-        real_parameters = real_parameters,
-        complex_parameters = complex_parameters,
-
-        form_optimization_level = form_optimization_level,
-        form_work_space = form_work_space,
-        form_memory_use = form_memory_use,
-        form_threads = form_threads,
-
-        decomposition_method = decomposition_method,
-
-        normaliz_executable = normaliz_executable,
-
-        use_iterative_sort = use_iterative_sort,
-        use_Pak = use_Pak,
-        use_dreadnaut = use_dreadnaut,
-        use_light_Pak = use_light_Pak,
-
-        enforce_complex = enforce_complex,
-        ibp_power_goal = ibp_power_goal,
-        split = split,
-        processes = processes,
-
-        pylink_qmc_transforms = pylink_qmc_transforms
-    )
+        Default: :func:`pySecDec.make_package`.
+    """
+    make_package_return_value = package_generator(**LoopPackage(
+        name=name,
+        loop_integral=loop_integral,
+        requested_orders=requested_orders,
+        requested_order=requested_order,
+        real_parameters=real_parameters,
+        complex_parameters=complex_parameters,
+        contour_deformation=contour_deformation,
+        additional_prefactor=additional_prefactor,
+        form_optimization_level=form_optimization_level,
+        form_work_space=form_work_space,
+        form_memory_use=form_memory_use,
+        form_threads=form_threads,
+        decomposition_method=decomposition_method,
+        normaliz_executable=normaliz_executable,
+        enforce_complex=enforce_complex,
+        split=split,
+        ibp_power_goal=ibp_power_goal,
+        use_iterative_sort=use_iterative_sort,
+        use_light_Pak=use_light_Pak,
+        use_dreadnaut=use_dreadnaut,
+        use_Pak=use_Pak,
+        processes=processes,
+        pylink_qmc_transforms=pylink_qmc_transforms,
+    )._asdict())
 
     if isinstance(loop_integral, LoopIntegralFromGraph):
         try:
@@ -351,11 +403,3 @@ def loop_package(name, loop_integral, requested_orders=None,
             print('WARNING: Could not draw the Feynman diagram "%s". Reason: %s' % (name,error))
 
     return make_package_return_value
-
-
-# namedtuple representing a loop_package type package_generator (for use with sum_package)
-LoopPackage = namedtuple('LoopPackage', list(inspect.signature(loop_package).parameters) + ['sum_package_generator'])
-# python <3.7 compatibility
-LoopPackage.__new__.__defaults__ = tuple([v.default for k, v in inspect.signature(loop_package).parameters.items()
-                                            if (v.default != inspect._empty and k != 'package_generator')]
-                                            + [code_writer_make_package, loop_package])

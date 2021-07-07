@@ -4,7 +4,6 @@ This module provides a make_package like interface to code_writer.sum_package
 
 """
 
-from __future__ import print_function
 from .code_writer.make_package import MakePackage
 from .code_writer.sum_package import sum_package, Coefficient
 
