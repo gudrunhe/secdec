@@ -410,7 +410,31 @@ namespace %(name)s
         // None of the above dynamic_casts succeeded, throw and give up
         throw std::invalid_argument("Trying to call \"" EXPAND_STRINGIFY(INTEGRAL_NAME) "::make_amplitudes\" with unknown \"secdecutil::Integrator\" derived type: " + std::string(typeid(*integrator).name()));
     }
+
+    #ifdef SECDEC_WITH_CUDA
+        template<>
+        std::vector<nested_series_t<sum_t>> make_amplitudes<const secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t>*>
+        (
+            const std::vector<real_t>& real_parameters,
+            const std::vector<complex_t>& complex_parameters,
+            const std::string& lib_path,
+            const secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> * integrator
+            #if %(name)s_contour_deformation
+                ,unsigned number_of_presamples,
+                real_t deformation_parameters_maximum,
+                real_t deformation_parameters_minimum,
+                real_t deformation_parameters_decrease_factor
+            #endif
+        )
+        {
+            // secdecutil::integrators::Qmc
+            %(pylink_qmc_dynamic_cast_integrator)s
             
+            // None of the above dynamic_casts succeeded, throw and give up
+            throw std::invalid_argument("Trying to call \"" EXPAND_STRINGIFY(INTEGRAL_NAME) "::make_amplitudes\" with unknown \"secdecutil::Integrator\" derived type: " + std::string(typeid(*integrator).name()));
+        }
+    #endif
+    
     #if %(name)s_contour_deformation
     
         #define INSTANTIATE_MAKE_AMPLITUDES(INTEGRATOR) \

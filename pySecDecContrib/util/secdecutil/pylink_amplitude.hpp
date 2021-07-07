@@ -165,8 +165,8 @@ extern "C"
         int cuda_compute_integral
         (
             std::string * integral_without_prefactor_strptr, std::string * prefactor_strptr, std::string * integral_with_prefactor_strptr, // output
-            const secdecutil::Integrator<integrand_return_t,real_t> * together_integrator, // pointer to the integrator for together=true (not used)
-            const secdecutil::Integrator<integrand_return_t,real_t> * separate_integrator, // pointer to the integrator for together=false
+            const secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> * together_integrator, // pointer to the integrator for together=true (not used)
+            const secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> * separate_integrator, // pointer to the integrator for together=false
             const double real_parameters_input[], // real parameters
             const double complex_parameters_input[], // complex parameters serialized as real(x0), imag(x0), real(x1), imag(x1), ...
             const bool together, // integrate sectors together
@@ -193,36 +193,69 @@ extern "C"
             const char *lib_path
         )
         {
-            return compute_integral
+            size_t i;
+            std::stringstream sstream;
+
+            // fix output formatting
+            sstream.precision(std::numeric_limits<real_t>::max_digits10); // force enough digits to ensure unique recreation
+            sstream << std::scientific; // stringify floats as #.#e#
+            
+            // read real parameters
+            std::vector<real_t> real_parameters(number_of_real_parameters);
+            for (i=0 ; i<number_of_real_parameters ; ++i)
+                real_parameters[i] = real_parameters_input[i];
+
+            // read complex parameters
+            std::vector<complex_t> complex_parameters(number_of_complex_parameters);
+            for (i=0 ; i<number_of_complex_parameters ; ++i)
+                complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
+
+            // Construct the amplitudes
+            std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(real_parameters, complex_parameters, std::string(lib_path), separate_integrator);
+
+            // pack amplitude into handler
+            handler_t<amplitudes_t> amplitudes
             (
-                integral_without_prefactor_strptr, prefactor_strptr, integral_with_prefactor_strptr, // output
-                // no need for pointer to together_integrator
-                separate_integrator, // pointer to integrator_separate
-                real_parameters_input, // real parameters
-                complex_parameters_input, // complex parameters serialized as real(x0), imag(x0), real(x1), imag(x1), ...
-                together, // integrate sectors together
-                number_of_presamples,
-                deformation_parameters_maximum,
-                deformation_parameters_minimum,
-                deformation_parameters_decrease_factor,
-                epsrel,
-                epsabs,
-                maxeval,
-                mineval,
-                maxincreasefac,
-                min_epsrel,
-                min_epsabs,
-                max_epsrel,
-                max_epsabs,
-                min_decrease_factor,
-                decrease_to_percentage, // of remaining time
-                soft_wall_clock_limit,
-                hard_wall_clock_limit,
-                number_of_threads,
-                reset_cuda_after,
-                verbose,
-                lib_path
+                unwrapped_amplitudes,
+                epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
             );
+            amplitudes.min_decrease_factor = min_decrease_factor;
+            amplitudes.decrease_to_percentage = decrease_to_percentage;
+            amplitudes.soft_wall_clock_limit = soft_wall_clock_limit;
+            amplitudes.hard_wall_clock_limit = hard_wall_clock_limit;
+            amplitudes.number_of_threads = number_of_threads;
+            amplitudes.reset_cuda_after = reset_cuda_after;
+            amplitudes.verbose = verbose;
+
+            // compute the amplitude
+            std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> result;
+            try {
+                result = amplitudes.evaluate();
+            } catch (std::exception& e){
+                std::cout << "Encountered an exception of type '" << typeid(e).name() << "'" << std::endl;
+                std::cout << "  what():  " << e.what() << std::endl;
+                return -1;
+            }
+            
+            // populate output strings:
+            //   - integral without prefactor
+            sstream.str("");
+            for(const auto amp : result)
+                sstream << amp;
+            *integral_without_prefactor_strptr = sstream.str();
+            
+            //   - prefactor
+            sstream.str("");
+            sstream << "1";
+            *prefactor_strptr = sstream.str();
+            
+            //   - full result (prefactor*integral)
+            sstream.str("");
+            for(const auto amp : result)
+                sstream << amp;
+            *integral_with_prefactor_strptr = sstream.str();
+            
+            return 0;
         }
     #endif
 
