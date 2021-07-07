@@ -49,7 +49,9 @@ if __name__ == "__main__":
     contour_deformation=True,
 
     # there are singularities at one due to ``p4*p4 = mm``
-    split = True
+    split = True,
+
+    pylink_qmc_transforms=['korobov6']
 
     )
 

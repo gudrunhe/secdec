@@ -51,5 +51,7 @@ if __name__ == "__main__":
     # there are singularities at one due to ``p4*p4 = mm``
     #split = True # not needed for this integral
 
+    pylink_qmc_transforms=['korobov4']
+
     )
 
