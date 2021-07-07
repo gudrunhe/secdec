@@ -32,4 +32,5 @@ if __name__ == "__main__":
     # make sure the retun type is double
     enforce_complex = True,
 
+    package_generator=psd.code_writer.make_package
     )

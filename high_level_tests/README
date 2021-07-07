@@ -41,7 +41,8 @@ by the environment variable FORM.
 GPU support
 -----------
 
-Some tests can run the numerical integration on GPUs using CUDA. In order to
-enable CUDA, set the environment variables 'CXX=nvcc' and
-'SECDEC_WITH_CUDA=<target compute capabilities>', see the "Building the C++
-Library" in the "Getting Started" section of the documentaion for details.
+Some tests can run the numerical integration on GPUs using CUDA.
+In order to enable CUDA, set the environment variables 'CXX=nvcc'
+and 'SECDEC_WITH_CUDA_FLAGS=-arch=<target CUDA arch>' (try e.g.
+sm_52 if you are not sure), see the "Building the C++ Library" in
+the "Getting Started" section of the documentaion for details.
