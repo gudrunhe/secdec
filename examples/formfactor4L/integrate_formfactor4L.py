@@ -30,7 +30,7 @@ if __name__ == "__main__":
     #ff.use_Vegas(flags=2,maxeval=10**5,epsrel=1e-100,epsabs=1e-100) # used for timings
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = ff(verbos=True)
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = ff(verbose=True)
 
     # print results
     print('Numerical Result')
