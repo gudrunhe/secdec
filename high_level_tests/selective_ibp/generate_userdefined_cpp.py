@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import shutil
 from itertools import permutations
-from pySecDec import make_package
+from pySecDec.code_writer import make_package
 
 if __name__ == "__main__":
 

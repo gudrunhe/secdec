@@ -2,6 +2,7 @@ include ./Makefile.conf
 include ../test_suite/Makefile.conf
 
 $(INTEGRAL_NAME) : generate_$(INTEGRAL_NAME).py
+	@rm -rf $(INTEGRAL_NAME)
 	$(PYTHON) $<
 
 .PHONY : static-library

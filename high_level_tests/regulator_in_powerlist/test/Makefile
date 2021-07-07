@@ -4,7 +4,7 @@ include ../../test_suite/Makefile.conf
 test.o : test.cpp $(TEST_FRAMEWORK_DIR)/catch.hpp
 	$(CXX) $(CXXFLAGS) -I../$(INTEGRAL_NAME) $< -c -o $@
 
-test.exe : test.o $(TEST_FRAMEWORK_DIR)/catch.o
+test.exe : test.o $(TEST_FRAMEWORK_DIR)/catch.o ../$(INTEGRAL_NAME)/lib$(INTEGRAL_NAME).a
 	$(CXX) $+ -o $@ -L../$(INTEGRAL_NAME) -l$(INTEGRAL_NAME) $(LDFLAGS)
 
 .PHONY : test

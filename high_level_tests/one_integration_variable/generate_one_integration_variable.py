@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import shutil
-from pySecDec import make_package
+from pySecDec.code_writer import make_package
 
 if __name__ == "__main__":
 
@@ -21,4 +21,5 @@ if __name__ == "__main__":
     polynomials_to_decompose = ['(x)**(-1+eps)'],
     polynomial_names = ['p'],
     other_polynomials = ['p**-2'],
+    pylink_qmc_transforms=['korobov3', 'korobov2x1', 'sidi3']
     )
