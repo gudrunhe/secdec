@@ -152,7 +152,7 @@ extern "C"
         //   - full result (prefactor*integral)
         sstream.str("");
         for(const auto amp : result)
-            sstream << amp;
+            sstream << amp << "\n";
         *integral_with_prefactor_strptr = sstream.str();
         
         return 0;
@@ -252,7 +252,7 @@ extern "C"
             //   - full result (prefactor*integral)
             sstream.str("");
             for(const auto amp : result)
-                sstream << amp;
+                sstream << amp << "\n";
             *integral_with_prefactor_strptr = sstream.str();
             
             return 0;
