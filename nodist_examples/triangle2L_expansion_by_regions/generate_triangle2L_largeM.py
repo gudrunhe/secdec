@@ -31,6 +31,6 @@ if __name__ == '__main__':
     )
 
     sum_package('triangle2L_case8_largeM',
-        regions_generators, regulators = ['eps'],requested_orders = [0],
+        regions_generators, regulators = ['eps'], requested_orders = [0],
         real_parameters = ['s','msq','z'],
         complex_parameters = [])

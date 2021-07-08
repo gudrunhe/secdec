@@ -1,11 +1,12 @@
 (* case 8 of hep-ph/9605392, eq. (5.38) in Smirnov's book "Applied Asymptotic Expansions", expanded in (s/msq)^n up to n=2 *)
 
 F55[s_,msq_,nmax_]:= Module[{prefac,delta,splusidelta,ll,deno,P2n0,P2n1,P2n2,P1n0,P1n1,P1n2,P0n0,P0n1,P0n2,res,rho,rr,rrexpanded},
-                    
-   prefac=-Exp[2*eps*EulerGamma];
    (* prefac is inverse of extracted prefac because pysd integral is without any prefac *)
-   (* however the prefactor Gamma[2+2*eps] from the Feynman parametrisation is not included either in numerical result *)
+   prefac=-Exp[-2*eps*EulerGamma];
+   (* the prefactor Gamma[2+2*eps] from the Feynman parametrisation is not included either in numerical result *)
    prefac=prefac/Gamma[2+2*eps];
+   (* in Smirnov's formula there's also implicitly the dimensional regularization parameter mu set to msq. This is not included  either *)
+   prefac=prefac/msq^(2*eps);
    deno=s*msq;                 
    delta=10^(-15);  
    splusidelta=s+I*delta;                 
@@ -19,7 +20,6 @@ F55[s_,msq_,nmax_]:= Module[{prefac,delta,splusidelta,ll,deno,P2n0,P2n1,P2n2,P1n
    P2n2 = -1/3*ll + 1/9;                 
    P1n2 =  1/2*ll^2 - 11/6*ll - Pi^2/18 + 31/36;                   
    P0n2 = -7/18*ll^3+59/36*ll^2+(Pi^2/9-160/27)*ll-2/3*Zeta[3]-67/108*Pi^2+4709/648;
-                    
    res[0]=P2n0/eps^2+P1n0/eps+P0n0;
    res[1]=P2n1/eps^2+P1n1/eps+P0n1;
    res[2]=P2n2/eps^2+P1n2/eps+P0n2;
@@ -42,13 +42,8 @@ res=1/s^2 *(Log[-splusidelta/msq]*Log[1+splusidelta/msq]+PolyLog[2,-splusidelta/
 Return[res]
 ]
 
-test1=F55[1/2,1,0];
-P2fulltest1=P2[0.5,1];
-
-test2=F55[0.003,1,2];
-P2fulltest2=P2[0.003,1];
+test=F55[0.002,4,0];
+P2fulltest=P2[0.002,4];
 
 ftprefac=Gamma[1-2*eps]/(Gamma[1+eps]^2*Gamma[1-eps]^2);
 (* difference between ftprefac and Exp[2*eps*EulerGamma] is of order eps^3 *)
-
-
