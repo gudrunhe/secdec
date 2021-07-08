@@ -161,6 +161,124 @@ namespace %(name)s
 
         // Note: for the CUDA-compatible integrators we take an integrator with INTEGRAL_NAME::(cuda_)integrand_t
         // and return one with ::%(sub_integral_name)s::(cuda_)integrand_t instead
+        #define INSTANTIATE_AMPLITUDE_INTEGRAL_NONE_QMC \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::None::type, \
+                 INTEGRAL_NAME::INTEGRAND_TYPE, \
+                 secdecutil::integrators::void_template \
+            > \
+            , integrand_t> \
+            { \
+                using amplitude_integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::None::type, \
+                     ::%(sub_integral_name)s::INTEGRAND_TYPE, \
+                     secdecutil::integrators::void_template \
+                >; \
+                using amplitude_integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,amplitude_integrator_t,integrand_t>; \
+            }; \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::None::type, \
+                 INTEGRAL_NAME::INTEGRAND_TYPE, \
+                 ::integrators::fitfunctions::None::type \
+            > \
+            , integrand_t> \
+            { \
+                using amplitude_integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::None::type, \
+                     ::%(sub_integral_name)s::INTEGRAND_TYPE, \
+                     ::integrators::fitfunctions::None::type \
+                >; \
+                using amplitude_integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,amplitude_integrator_t,integrand_t>; \
+            }; \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::None::type, \
+                 INTEGRAL_NAME::INTEGRAND_TYPE, \
+                 ::integrators::fitfunctions::PolySingular::type \
+            > \
+            , integrand_t> \
+            { \
+                using amplitude_integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::None::type, \
+                     ::%(sub_integral_name)s::INTEGRAND_TYPE, \
+                     ::integrators::fitfunctions::PolySingular::type \
+                >; \
+                using amplitude_integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,amplitude_integrator_t,integrand_t>; \
+            };
+
+        #define INSTANTIATE_AMPLITUDE_INTEGRAL_BAKER_QMC \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::Baker::type, \
+                 INTEGRAL_NAME::INTEGRAND_TYPE, \
+                 secdecutil::integrators::void_template \
+            > \
+            , integrand_t> \
+            { \
+                using amplitude_integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::Baker::type, \
+                     ::%(sub_integral_name)s::INTEGRAND_TYPE, \
+                     secdecutil::integrators::void_template \
+                >; \
+                using amplitude_integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,amplitude_integrator_t,integrand_t>; \
+            }; \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::Baker::type, \
+                 INTEGRAL_NAME::INTEGRAND_TYPE, \
+                 ::integrators::fitfunctions::None::type \
+            > \
+            , integrand_t> \
+            { \
+                using amplitude_integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::Baker::type, \
+                     ::%(sub_integral_name)s::INTEGRAND_TYPE, \
+                     ::integrators::fitfunctions::None::type \
+                >; \
+                using amplitude_integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,amplitude_integrator_t,integrand_t>; \
+            }; \
+            template<typename integrand_return_t, typename real_t, typename integrand_t> \
+            struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
+                 INTEGRAL_NAME::integrand_return_t, \
+                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                 ::integrators::transforms::Baker::type, \
+                 INTEGRAL_NAME::INTEGRAND_TYPE, \
+                 ::integrators::fitfunctions::PolySingular::type \
+            > \
+            , integrand_t> \
+            { \
+                using amplitude_integrator_t = secdecutil::integrators::Qmc< \
+                     INTEGRAL_NAME::integrand_return_t, \
+                     INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                     ::integrators::transforms::Baker::type, \
+                     ::%(sub_integral_name)s::INTEGRAND_TYPE, \
+                     ::integrators::fitfunctions::PolySingular::type \
+                >; \
+                using amplitude_integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,amplitude_integrator_t,integrand_t>; \
+            };
+        
         #define INSTANTIATE_AMPLITUDE_INTEGRAL_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
             template<typename integrand_return_t, typename real_t, typename integrand_t> \
             struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
@@ -281,6 +399,8 @@ namespace %(name)s
         
         // secdecutil::integrators::Qmc
         %(pylink_qmc_instantiate_amplitude_integral)s
+        INSTANTIATE_AMPLITUDE_INTEGRAL_NONE_QMC
+        INSTANTIATE_AMPLITUDE_INTEGRAL_BAKER_QMC
         
         // Note: we define make_integrands with %(name)s_contour_deformation
         // but call ::sub_integral_name::make_integrands with %(sub_integral_name)s_contour_deformation
@@ -358,6 +478,64 @@ namespace %(name)s
             #define INSTANTIATE_MAKE_INTEGRAL(INTEGRATOR) \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
                         INTEGRATOR, unsigned, real_t, real_t, real_t);
+
+            #define INSTANTIATE_MAKE_INTEGRAL_NONE_QMC \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::None::type, \
+                         INTEGRAL_NAME::INTEGRAND_TYPE, \
+                         secdecutil::integrators::void_template \
+                    >, \
+                    unsigned, real_t, real_t, real_t); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::None::type, \
+                         INTEGRAL_NAME::INTEGRAND_TYPE, \
+                         ::integrators::fitfunctions::None::type \
+                    >, \
+                    unsigned, real_t, real_t, real_t); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                        INTEGRAL_NAME::integrand_return_t, \
+                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                        ::integrators::transforms::None::type, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
+                        ::integrators::fitfunctions::PolySingular::type \
+                    >, \
+                    unsigned, real_t, real_t, real_t);
+        
+            #define INSTANTIATE_MAKE_INTEGRAL_BAKER_QMC \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Baker::type, \
+                         INTEGRAL_NAME::INTEGRAND_TYPE, \
+                         secdecutil::integrators::void_template \
+                    >, \
+                    unsigned, real_t, real_t, real_t); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Baker::type, \
+                         INTEGRAL_NAME::INTEGRAND_TYPE, \
+                         ::integrators::fitfunctions::None::type \
+                    >, \
+                    unsigned, real_t, real_t, real_t); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                        INTEGRAL_NAME::integrand_return_t, \
+                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                        ::integrators::transforms::Baker::type, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
+                        ::integrators::fitfunctions::PolySingular::type \
+                    >, \
+                    unsigned, real_t, real_t, real_t);
         
             #define INSTANTIATE_MAKE_INTEGRAL_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
@@ -421,6 +599,58 @@ namespace %(name)s
         
             #define INSTANTIATE_MAKE_INTEGRAL(INTEGRATOR) \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, INTEGRATOR);
+  
+            #define INSTANTIATE_MAKE_INTEGRAL_NONE_QMC \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::None::type, \
+                         INTEGRAL_NAME::INTEGRAND_TYPE, \
+                         secdecutil::integrators::void_template \
+                    >); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::None::type, \
+                         INTEGRAL_NAME::INTEGRAND_TYPE, \
+                         ::integrators::fitfunctions::None::type \
+                    >); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                        INTEGRAL_NAME::integrand_return_t, \
+                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                        ::integrators::transforms::None::type, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
+                        ::integrators::fitfunctions::PolySingular::type \
+                    >);
+        
+            #define INSTANTIATE_MAKE_INTEGRAL_BAKER_QMC \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Baker::type, \
+                         INTEGRAL_NAME::INTEGRAND_TYPE, \
+                         secdecutil::integrators::void_template \
+                    >); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                         INTEGRAL_NAME::integrand_return_t, \
+                         INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                         ::integrators::transforms::Baker::type, \
+                         INTEGRAL_NAME::INTEGRAND_TYPE, \
+                         ::integrators::fitfunctions::None::type \
+                    >); \
+                template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
+                    secdecutil::integrators::Qmc< \
+                        INTEGRAL_NAME::integrand_return_t, \
+                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                        ::integrators::transforms::Baker::type, \
+                        INTEGRAL_NAME::INTEGRAND_TYPE, \
+                        ::integrators::fitfunctions::PolySingular::type \
+                    >);
         
             #define INSTANTIATE_MAKE_INTEGRAL_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
@@ -488,12 +718,18 @@ namespace %(name)s
         
         // secdecutil::integrators::Qmc
         %(pylink_qmc_instantiate_make_integral)s
-
+        INSTANTIATE_MAKE_INTEGRAL_NONE_QMC
+        INSTANTIATE_MAKE_INTEGRAL_BAKER_QMC
+        
+        #undef INSTANTIATE_AMPLITUDE_INTEGRAL_NONE_QMC
+        #undef INSTANTIATE_AMPLITUDE_INTEGRAL_BAKER_QMC
         #undef INSTANTIATE_AMPLITUDE_INTEGRAL_KOROBOV_QMC
         #undef INSTANTIATE_AMPLITUDE_INTEGRAL_SIDI_QMC
         #undef INSTANTIATE_MAKE_AMPLITUDES
-        #undef INSTANTIATE_MAKE_AMPLITUDES_KOROBOV_QMC
-        #undef INSTANTIATE_MAKE_AMPLITUDES_SIDI_QMC
+        #undef INSTANTIATE_MAKE_INTEGRAL_NONE_QMC
+        #undef INSTANTIATE_MAKE_INTEGRAL_BAKER_QMC
+        #undef INSTANTIATE_MAKE_INTEGRAL_KOROBOV_QMC
+        #undef INSTANTIATE_MAKE_INTEGRAL_SIDI_QMC
         
     };
 };
