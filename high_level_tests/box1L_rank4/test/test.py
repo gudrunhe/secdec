@@ -14,13 +14,12 @@ class CheckLib(unittest.TestCase):
 
         self.target_result_without_prefactor = \
         {
-               0:   97.52083333333 +  0.0j,
-               1: -124.937368867   - 11.9030583278j
+              -1:   97.52083333333 +  0.0j,
+               0: -181.22792152123 - 11.903058327787j
         }
         self.target_prefactor = \
         {
-              -1:  1.0,
-               0: -0.57721566490153,
+               0:  1.0
         }
         self.target_result_with_prefactor = \
         {

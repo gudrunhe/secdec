@@ -58,6 +58,4 @@ if __name__ == "__main__":
     #normaliz_executable='/path/to/normaliz',
     contour_deformation = True,
 
-    package_generator=psd.code_writer.make_package
-
     )
