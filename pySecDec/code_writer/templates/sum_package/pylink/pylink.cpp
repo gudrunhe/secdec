@@ -220,7 +220,8 @@
     if ( generatingvectors_id == cbcpt_dn2_6 ) \
         integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_dn2_6(); \
     if ( generatingvectors_id == cbcpt_cfftw1_6 ) \
-        integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_cfftw1_6();
+        integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_cfftw1_6(); \
+    integrator->logger = std::cerr;
 #define SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
         SET_COMMON_QMC_ARGS \
         if (number_of_devices > 0) \
