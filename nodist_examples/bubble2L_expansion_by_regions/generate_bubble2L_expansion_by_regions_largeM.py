@@ -1,8 +1,11 @@
+#! /usr/bin/env python
 from pySecDec.code_writer import make_package, sum_package
 from pySecDec.make_regions import make_regions
 from pySecDec.algebra import Polynomial
 
 import pySecDec as psd
+
+# example is I3tilde of hep-ph/9605392
 
 if __name__ == '__main__':
 
@@ -28,6 +31,8 @@ if __name__ == '__main__':
     polytope_from_sum_of=[0,1]
     )
 
+    # generate code that will calculate the sum of all regions and all orders in
+    # the smallness parameter
     sum_package('bubble2L_largeM',
         regions_generators, regulators = ['eps'],requested_orders = [0],
         real_parameters = ['psq','msq','z'],
