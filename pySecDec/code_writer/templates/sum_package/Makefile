@@ -13,20 +13,19 @@ static: lib$(NAME).a
 # alias for the dynamic library
 dynamic: lib$(NAME).so
 
-$(INTEGRALS_A): %%.a:
-	$(MAKE) -C $(dir $@) $(basename $1)
+$(INTEGRALS_A):
+	$(MAKE) -C $(dir $@) $(notdir $@)
 
 $(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(QMC_TEMPLATE_OBJECTS)
 	$(CXX) -shared -o $@ pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(QMC_TEMPLATE_OBJECTS) $(SUM_LDFLAGS)
 
 lib$(NAME).a : src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A)
-	( \
-		echo "create $@"; \
-		echo "addmod src/amplitude.o $(WINTEGRALS_OBJS)"; \
-		for x in $(INTEGRALS_A); do echo "addlib $$x"; done; \
-		echo "save"; \
-		echo "end"; \
-	) | ar -M
+	@rm -f $@
+	ar -c -q $@ src/amplitude.o $(WINTEGRALS_OBJS)
+	dir=$$(mktemp -d) && \
+	cd $$dir && \
+	$(foreach A,$(INTEGRALS_A),ar -x "$(CURDIR)/$(A)" && ar -q "$(CURDIR)/$@" *.o && rm -f *.o && ) \
+	rm -rf $$dir
 
 lib$(NAME).so : src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A)
 ifdef SECDEC_WITH_CUDA_FLAGS
@@ -36,8 +35,8 @@ else
 endif
 
 # build the example executable
-integrate_$(NAME) : integrate_$(NAME).o lib$(NAME).a $(INTEGRALS_A)
-	$(CXX) -o $@ integrate_$(NAME).o lib$(NAME).a $(INTEGRALS_A) $(SUM_LDFLAGS)
+integrate_$(NAME) : integrate_$(NAME).o lib$(NAME).a
+	$(CXX) -o $@ integrate_$(NAME).o lib$(NAME).a $(SUM_LDFLAGS)
 
 very-clean :: clean
 	for dir in */; do if [ -e "$$dir/Makefile" ]; then $(MAKE) -C "$$dir" $@; fi; done
