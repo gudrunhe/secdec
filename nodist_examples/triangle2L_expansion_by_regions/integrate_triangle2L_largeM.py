@@ -22,7 +22,13 @@ if __name__ == '__main__':
 
     # examples how to access individual orders
     print('Numerical Result')
-    for power in [-3, -2, -1, 0]:
+    for power in [-2, -1, 0]:
         valreal, valimg = integral_result.coeff('eps',power).coeff('value').as_real_imag()
         errreal, errimg = integral_result.coeff('eps',power).coeff('error').as_real_imag()
         print("eps^{:<2} {: .15f}{:+.15f}*I +/- {:.15f}{:+.15f}*I".format(power,float(valreal),float(valimg),float(errreal),float(errimg)))
+
+    # analytic result
+    print('\nAnalytic Result for s = 0.002, msq = 4 (leading order in smallness parameter)')
+    for power in [-2, -1, 0]:
+        valreal, valimg = [-1075.11, -6870.67, -9444.27], [-392.699, -8258.51, -52842.8]
+        print("eps^{:<2} {: }{:+}*I".format(power,float(valreal[power+2]),float(valimg[power+2])))
