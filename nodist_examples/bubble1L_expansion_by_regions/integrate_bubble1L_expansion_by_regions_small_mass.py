@@ -19,7 +19,7 @@ integral_result_err = sp.sympify(str_integral_with_prefactor.replace('+/-','*val
 
 # examples how to access individual orders
 print('Numerical Result')
-for power in [-2, -1, 0]:
+for power in [-1, 0]:
     valreal, valimg = integral_result.coeff('eps',power).coeff('value').as_real_imag()
     errreal, errimg = integral_result.coeff('eps',power).coeff('error').as_real_imag()
     print("eps^{:<2} {: .15f}{:+.15f}*I +/- {:.15f}{:+.15f}*I".format(power,float(valreal),float(valimg),float(errreal),float(errimg)))

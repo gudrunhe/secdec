@@ -15,7 +15,7 @@ if __name__ == '__main__':
     requested_orders = [0],
     smallness_parameter = 'z',
     polynomials_to_decompose = ['(x4*x5 + x3*x5 + x2*x5 + x1*x5 + x1*x4 + x1*x3 + x1*x2 + x0*x5 + x0*x4 + x0*x3 + x0*x2)**(3*eps)','( + (msq)*x4*x5**2 + (msq)*x3*x5**2 + (msq)*x2*x5**2 + (-z*s)*x2*x3*x5 + (msq)*x1*x5**2 + (msq)*x1*x4*x5 + (msq)*x1*x3*x5 + (msq - z*s)*x1*x2*x5 + (-z*s)*x1*x2*x3 + (msq)*x0*x5**2 + (msq)*x0*x4*x5 + (msq - z*s)*x0*x3*x5 + (msq)*x0*x2*x5 + (-z*s)*x0*x2*x3 + (-z*s)*x0*x1*x5 + (-z*s)*x0*x1*x4 + (-z*s)*x0*x1*x3 + (-z*s)*x0*x1*x2)**(-2*eps - 2)'],
-    expansion_by_regions_order = -1,
+    expansion_by_regions_order = 0,
     real_parameters = ['s','msq','z'],
     complex_parameters = [],
 
