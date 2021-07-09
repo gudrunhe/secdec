@@ -5,4 +5,5 @@ img=baseimage.sif
 dstdir=${TMP:-/tmp}/pysecdec-github-runner
 
 cd "$dstdir"
-singularity shell -C --overlay overlay.img -W work -B runner:/runner --pwd /runner $img
+imgpath=/homedir/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+singularity shell -C -W work -H homedir:/homedir -B runner:/runner --env=PATH=$imgpath --pwd /runner $img

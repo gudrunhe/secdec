@@ -10,4 +10,5 @@ if [ ! -d "$dstdir" ]; then
 fi
 
 cd "$dstdir"
-singularity exec -C --overlay overlay.img -W work -B runner:/runner $img nice /runner/run.sh
+imgpath=/homedir/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+singularity exec -C -W work -H homedir:/homedir -B runner:/runner --env=PATH=$imgpath --pwd /runner $img nice /runner/run.sh
