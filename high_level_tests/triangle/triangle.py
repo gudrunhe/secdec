@@ -50,5 +50,4 @@ if __name__ == "__main__":
     # executable here
     #normaliz_executable='/path/to/normaliz',
 
-    package_generator=psd.code_writer.make_package
     )
