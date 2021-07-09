@@ -13,14 +13,14 @@ class CheckLib(unittest.TestCase):
         self.epsrel = 1e-7
         self.epsabs = 1e-15
 
-        self.target_result_without_prefactor = \
+        self.target_result_with_prefactor = \
         {
-              -1: 1.0/9.0 + 0.0j
+              -2: 1.0/36.0 + 0.0j
         }
 
         self.target_prefactor = \
         {
-              -1: 1.0/4.0 + 0.0j
+              0: 1.0 + 0.0j
         }
 
     def check_integral(self, computed_series, target_series, epsrel, epsabs, order_min, order_max):
@@ -69,10 +69,10 @@ class CheckLib(unittest.TestCase):
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib([es12])
 
         # check integral
-        self.check_integral(str_integral_without_prefactor, self.target_result_without_prefactor, self.epsrel, self.epsabs, order_min=-1, order_max=-1)
+        self.check_integral(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs, order_min=-2, order_max=-2)
 
         # check prefactor
-        self.check_prefactor(str_prefactor, self.target_prefactor, order_min=-1, order_max=-1)
+        self.check_prefactor(str_prefactor, self.target_prefactor, order_min=0, order_max=0)
 
     def test_Cuhre_Euclidean(self):
         self.check_Cuhre(-1.)

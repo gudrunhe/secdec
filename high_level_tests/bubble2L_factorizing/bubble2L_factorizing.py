@@ -28,5 +28,4 @@ if __name__ == "__main__":
     # However, a bug caused wrong results when contour deformation was active.
     contour_deformation = True,
 
-    package_generator=psd.code_writer.make_package
     )
