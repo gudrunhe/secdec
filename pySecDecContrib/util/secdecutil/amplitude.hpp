@@ -5,6 +5,7 @@
 #include <cassert> // assert
 #include <chrono> // std::chrono::steady_clock
 #include <iostream> // std::cerr, std::dec
+#include <iomanip> // std::fixed, std::setprecision
 #include <limits> // std::numeric_limits
 #include <memory> // std::shared_ptr
 #include <string> // std::to_string
@@ -562,8 +563,9 @@ namespace secdecutil {
                     if(verbose and (next_n > curr_n))
                     {
                         std::cerr << "integral " << integral->id << "/" << integrals.size() << ": " << integral->display_name << ", time: ";
-                        std::printf("%.1f", integral->get_integration_time());
-                        std::cerr << " s, ";
+                        auto flags = std::cerr.flags();
+                        std::cerr << std::fixed << std::setprecision(1) << integral->get_integration_time() << "s, ";
+                        std::cerr.flags(flags);
                         print_datetime();
                         std::cerr << "res: " << old_result << " -> " << integral->get_integral_result()
                                       << ", n: " << curr_n << " -> " << std::dec << integral->get_number_of_function_evaluations() << std::endl;
