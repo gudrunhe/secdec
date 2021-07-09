@@ -15,6 +15,8 @@
 
 #include QUOTE_EXPAND(INTEGRAL_NAME.hpp)
 
+template<typename T> using amplitudes_t = std::vector<INTEGRAL_NAME::nested_series_t<T>>;
+
 /*
  * constants
  */
@@ -80,12 +82,6 @@ void test_integral(INTEGRAL_NAME::real_t s)
     const std::vector<INTEGRAL_NAME::real_t> real_parameters = { s };
     const std::vector<INTEGRAL_NAME::complex_t> complex_parameters = {  };
 
-    // get the integrands
-    const auto sector_integrands = INTEGRAL_NAME::make_integrands(real_parameters, complex_parameters);
-
-    // add integrands of sectors (together flag)
-    const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
-
     // define and configure integrator
     secdecutil::gsl::CQuad<INTEGRAL_NAME::integrand_return_t> cquad;
     secdecutil::cuba::Cuhre<INTEGRAL_NAME::integrand_return_t> cuhre;
@@ -96,11 +92,21 @@ void test_integral(INTEGRAL_NAME::real_t s)
     cuhre.flags = 2; cquad.verbose = true; // be verbose
     secdecutil::MultiIntegrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t> integrator(cquad,cuhre,2);
 
-    // integrate
-    auto result_without_prefactor = secdecutil::deep_apply( all_sectors,  integrator.integrate );
-    auto prefactor = INTEGRAL_NAME::prefactor(real_parameters, complex_parameters);
-    auto result_with_prefactor = result_without_prefactor * prefactor;
+    // Construct the amplitudes
+    std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
+        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../regulator_in_powerlist/regulator_in_powerlist_coefficients", integrator);
 
+    // Pack amplitudes into handler
+    INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+    (
+        unwrapped_amplitudes, epsrel, epsabs
+        // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+    );
+    
+    // integrate
+    const std::vector<INTEGRAL_NAME::nested_series_t<secdecutil::UncorrelatedDeviation<INTEGRAL_NAME::integrand_return_t>>> result = amplitudes.evaluate();
+    auto result_with_prefactor = result.at(0);
+    
     // compute target result
     const INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::integrand_return_t> target_result_with_prefactor =
         target_result_without_prefactor_without_kinematics * target_prefactor(s);
@@ -111,7 +117,6 @@ void test_integral(INTEGRAL_NAME::real_t s)
     CHECK(    result_with_prefactor.get_truncated_above() == target_result_with_prefactor.get_truncated_above()    );
     CHECK(      result_with_prefactor.expansion_parameter == target_result_with_prefactor.expansion_parameter      );
 
-    std::cout << "obtained result without prefactor:" << std::endl << result_without_prefactor << std::endl << std::endl;
     std::cout << "obtained result:" << std::endl << result_with_prefactor << std::endl << std::endl;
     std::cout << "target result:" << std::endl << target_result_with_prefactor << std::endl << std::endl;
 

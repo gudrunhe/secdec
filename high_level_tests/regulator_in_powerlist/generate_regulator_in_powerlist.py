@@ -24,5 +24,4 @@ if __name__ == "__main__":
     requested_orders = [0],
     real_parameters = ['s'],
     decomposition_method = 'geometric',
-    package_generator=psd.code_writer.make_package
     )
