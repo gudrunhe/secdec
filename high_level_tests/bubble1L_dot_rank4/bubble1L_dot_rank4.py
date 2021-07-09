@@ -45,7 +45,7 @@ if __name__ == "__main__":
     # whether or not to produce code to perform the contour deformation
     # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
     contour_deformation = True,
-
-    package_generator=psd.code_writer.make_package
+    
+    pylink_qmc_transforms=['korobov3','korobov6']
 
     )

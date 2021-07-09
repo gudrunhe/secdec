@@ -90,6 +90,17 @@ class CheckLib(unittest.TestCase):
 
         # check integral
         self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs)
+        
+    def test_Qmc_None_transform(self):
+        # choose integrator
+        self.lib.use_Qmc(epsrel=self.epsrel, maxeval=self.maxeval, epsabs=self.epsabs, verbosity=0, seed=143, transform='none', evaluateminn=0, fitfunction='polysingular')
 
+        # integrate
+        str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters, verbose=3)
+
+        # check integral
+        self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs)
+        
+        
 if __name__ == '__main__':
     unittest.main()

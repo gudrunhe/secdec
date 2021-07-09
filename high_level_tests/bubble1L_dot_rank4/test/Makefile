@@ -11,7 +11,7 @@ test.o : test.cpp $(TEST_FRAMEWORK_DIR)/catch.hpp
 	$(CXX) $(COMPILE) $(CXXFLAGS) -I../$(INTEGRAL_NAME) $< -o $@
 
 test.exe : test.o $(TEST_FRAMEWORK_DIR)/catch.o ../$(INTEGRAL_NAME)/lib$(INTEGRAL_NAME).a
-	$(CXX) $+ -o $@ -L../$(INTEGRAL_NAME) -l$(INTEGRAL_NAME) $(LDFLAGS)
+	$(CXX) $+ -o $@ -L../$(INTEGRAL_NAME) -l$(INTEGRAL_NAME) $(SUM_LDFLAGS)
 
 .PHONY : test
 test : test.log

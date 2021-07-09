@@ -15,6 +15,7 @@
 
 #include QUOTE_EXPAND(INTEGRAL_NAME.hpp)
 
+template<typename T> using amplitudes_t = std::vector<INTEGRAL_NAME::nested_series_t<T>>;
 
 TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
 
@@ -23,20 +24,6 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
         // User Specified Phase-space point
         const std::vector<INTEGRAL_NAME::real_t> real_parameters = { 1.275, 1.275 };
         const std::vector<INTEGRAL_NAME::complex_t> complex_parameters = { 30.886875, 30.886875, 123.5475 };
-
-        // get the integrands
-        #ifdef SECDEC_WITH_CUDA
-            const auto sector_integrands = INTEGRAL_NAME::make_cuda_integrands(real_parameters, complex_parameters);
-        #else
-            const auto sector_integrands = INTEGRAL_NAME::make_integrands(real_parameters, complex_parameters);
-        #endif
-
-        // add integrands of sectors (together flag)
-        const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(),
-        #ifdef SECDEC_WITH_CUDA
-            INTEGRAL_NAME::cuda_together_integrand_t()+
-        #endif
-        *sector_integrands.begin() );
 
         // define and configure integrator
         secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,
@@ -50,10 +37,20 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
         const double epsrel = 1e-4; integrator.epsrel = epsrel;
         const double epsabs = 1e-7; integrator.epsabs = epsabs;
 
+        // Construct the amplitudes
+        std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
+            INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../bubble1L_dot_rank4/bubble1L_dot_rank4_coefficients", integrator);
+
+        // Pack amplitudes into handler
+        INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+        (
+            unwrapped_amplitudes, integrator.epsrel, integrator.epsabs
+            // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+        );
+        
         // integrate
-        auto result_without_prefactor = secdecutil::deep_apply( all_sectors,  integrator.integrate );
-        auto prefactor = INTEGRAL_NAME::prefactor(real_parameters, complex_parameters);
-        auto result_with_prefactor = result_without_prefactor * prefactor;
+        const std::vector<INTEGRAL_NAME::nested_series_t<secdecutil::UncorrelatedDeviation<INTEGRAL_NAME::integrand_return_t>>> result = amplitudes.evaluate();
+        auto result_with_prefactor = result.at(0);
 
 
         // target result, obtained in a long run of pySecDec
@@ -101,30 +98,16 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
         }
     }
 
-    SECTION("Korobov12 integral transform") {
+    SECTION("Korobov6 integral transform") {
 
         // User Specified Phase-space point
         const std::vector<INTEGRAL_NAME::real_t> real_parameters = { 1.275, 1.275 };
         const std::vector<INTEGRAL_NAME::complex_t> complex_parameters = { 30.886875, 30.886875, 123.5475 };
 
-        // get the integrands
-        #ifdef SECDEC_WITH_CUDA
-            const auto sector_integrands = INTEGRAL_NAME::make_cuda_integrands(real_parameters, complex_parameters);
-        #else
-            const auto sector_integrands = INTEGRAL_NAME::make_integrands(real_parameters, complex_parameters);
-        #endif
-
-        // add integrands of sectors (together flag)
-        const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(),
-        #ifdef SECDEC_WITH_CUDA
-            INTEGRAL_NAME::cuda_together_integrand_t()+
-        #endif
-        *sector_integrands.begin() );
-
         // define and configure integrator
         secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,
         INTEGRAL_NAME::maximal_number_of_integration_variables,
-        ::integrators::transforms::Korobov<12>::type
+        ::integrators::transforms::Korobov<6>::type
         #ifdef SECDEC_WITH_CUDA
             ,INTEGRAL_NAME::cuda_together_integrand_t
         #endif
@@ -133,10 +116,20 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
         const double epsrel = 1e-4; integrator.epsrel = epsrel;
         const double epsabs = 1e-7; integrator.epsabs = epsabs;
 
+        // Construct the amplitudes
+        std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
+            INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../bubble1L_dot_rank4/bubble1L_dot_rank4_coefficients", integrator);
+
+        // Pack amplitudes into handler
+        INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+        (
+            unwrapped_amplitudes, integrator.epsrel, integrator.epsabs
+            // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+        );
+        
         // integrate
-        auto result_without_prefactor = secdecutil::deep_apply( all_sectors,  integrator.integrate );
-        auto prefactor = INTEGRAL_NAME::prefactor(real_parameters, complex_parameters);
-        auto result_with_prefactor = result_without_prefactor * prefactor;
+        const std::vector<INTEGRAL_NAME::nested_series_t<secdecutil::UncorrelatedDeviation<INTEGRAL_NAME::integrand_return_t>>> result = amplitudes.evaluate();
+        auto result_with_prefactor = result.at(0);
 
 
         // target result, obtained in a long run of pySecDec
@@ -192,12 +185,6 @@ TEST_CASE( "check result cuhre cquad", "[INTEGRAL_NAME]" ) {
     const std::vector<INTEGRAL_NAME::real_t> real_parameters = { 1.275, 1.275 };
     const std::vector<INTEGRAL_NAME::complex_t> complex_parameters = { 30.886875, 30.886875, 123.5475 };
 
-    // get the integrands
-    const auto sector_integrands = INTEGRAL_NAME::make_integrands(real_parameters, complex_parameters);
-
-    // add integrands of sectors (together flag)
-    const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
-
     // define and configure integrator
     secdecutil::gsl::CQuad<INTEGRAL_NAME::integrand_return_t> cquad;
     secdecutil::cuba::Cuhre<INTEGRAL_NAME::integrand_return_t> cuhre;
@@ -207,10 +194,20 @@ TEST_CASE( "check result cuhre cquad", "[INTEGRAL_NAME]" ) {
     const double epsabs = 1e-7; cquad.epsabs = cuhre.epsabs = epsabs;
     secdecutil::MultiIntegrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t> integrator(cquad,cuhre,2);
 
+    // Construct the amplitudes
+    std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
+        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../bubble1L_dot_rank4/bubble1L_dot_rank4_coefficients", integrator);
+
+    // Pack amplitudes into handler
+    INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+    (
+        unwrapped_amplitudes, epsrel, epsabs
+        // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+    );
+    
     // integrate
-    auto result_without_prefactor = secdecutil::deep_apply( all_sectors,  integrator.integrate );
-    auto prefactor = INTEGRAL_NAME::prefactor(real_parameters, complex_parameters);
-    auto result_with_prefactor = result_without_prefactor * prefactor;
+    const std::vector<INTEGRAL_NAME::nested_series_t<secdecutil::UncorrelatedDeviation<INTEGRAL_NAME::integrand_return_t>>> result = amplitudes.evaluate();
+    auto result_with_prefactor = result.at(0);
 
 
     // target result, obtained in a long run of pySecDec
