@@ -28,6 +28,13 @@ class CheckLib(unittest.TestCase):
                0:  -0.461392167549234,
                1:  -1.87323249797567
         }
+        
+        self.target_result_with_prefactor = \
+        {
+              -2:  -2.5,
+              -1:  -3.61392167549233578,
+               0:  -8.25856028440502143
+        }
 
     def check_result(self, computed_series, target_series, epsrel, epsabs, order_min, order_max):
         # convert result to sympy expressions
@@ -65,12 +72,12 @@ class CheckLib(unittest.TestCase):
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters)
-
+        
         # check integral
-        self.check_result(str_integral_without_prefactor, self.target_result_without_prefactor, self.epsrel, self.epsabs, order_min=-1, order_max=1)
+        self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs, order_min=-2, order_max=0)
 
         # check prefactor
-        self.check_result(str_prefactor, self.target_prefactor, self.epsrel, self.epsabs, order_min=-1, order_max=1)
+        #self.check_result(str_prefactor, self.target_prefactor, self.epsrel, self.epsabs, order_min=-2, order_max=0)
 
     def test_Cuhre_CQuad(self):
         # choose integrator
@@ -81,10 +88,10 @@ class CheckLib(unittest.TestCase):
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters, self.complex_parameters)
 
         # check integral
-        self.check_result(str_integral_without_prefactor, self.target_result_without_prefactor, self.epsrel, self.epsabs, order_min=-1, order_max=1)
+        self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs, order_min=-2, order_max=0)
 
         # check prefactor
-        self.check_result(str_prefactor, self.target_prefactor, self.epsrel, self.epsabs, order_min=-1, order_max=1)
+        #self.check_result(str_prefactor, self.target_prefactor, self.epsrel, self.epsabs, order_min=-2, order_max=0)
 
 if __name__ == '__main__':
     unittest.main()

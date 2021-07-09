@@ -14,17 +14,13 @@
 
 #include QUOTE_EXPAND(INTEGRAL_NAME.hpp)
 
+template<typename T> using amplitudes_t = std::vector<INTEGRAL_NAME::nested_series_t<T>>;
+
 TEST_CASE( "check result", "[INTEGRAL_NAME]" ) {
 
     // User Specified Phase-space point
     const std::vector<INTEGRAL_NAME::real_t> real_parameters = { 1., 1., 1. };
     const std::vector<INTEGRAL_NAME::complex_t> complex_parameters = {  };
-
-    // get the integrands
-    const auto sector_integrands = INTEGRAL_NAME::make_integrands(real_parameters, complex_parameters);
-
-    // add integrands of sectors (together flag)
-    const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
 
     // define and configure integrator
     secdecutil::gsl::CQuad<INTEGRAL_NAME::integrand_return_t> cquad;
@@ -40,10 +36,20 @@ TEST_CASE( "check result", "[INTEGRAL_NAME]" ) {
     const double epsabs = 1e-10; cquad.epsabs = cuhre.epsabs = epsabs;
     secdecutil::MultiIntegrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t> integrator(cquad,cuhre,2);
 
-    // integrate
-    auto result_without_prefactor = secdecutil::deep_apply( all_sectors,  integrator.integrate );
-    auto prefactor = INTEGRAL_NAME::prefactor(real_parameters, complex_parameters);
+    // Construct the amplitudes
+    std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
+        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../tadpole2L_rank2/tadpole2L_rank2_coefficients", integrator);
 
+    // Pack amplitudes into handler
+    INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+    (
+        unwrapped_amplitudes, epsrel, epsabs
+        // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+    );
+    
+    // integrate
+    const std::vector<INTEGRAL_NAME::nested_series_t<secdecutil::UncorrelatedDeviation<INTEGRAL_NAME::integrand_return_t>>> result = amplitudes.evaluate();
+    auto result_with_prefactor = result.at(0);
 
     // target result, obtained in a long run of pySecDec
     constexpr std::complex<double> I(0,1);
@@ -78,32 +84,35 @@ TEST_CASE( "check result", "[INTEGRAL_NAME]" ) {
         true, // series is truncated above; i.e. "+ O(eps**2)"
         "eps" // the expansion parameter
     );
+    
+    secdecutil::Series<std::complex<double>> target_result_with_prefactor = target_prefactor * target_result_without_prefactor;
 
     // basic checks
-    REQUIRE(          result_without_prefactor.get_order_min() == target_result_without_prefactor.get_order_min()          );
-    REQUIRE(          result_without_prefactor.get_order_max() == target_result_without_prefactor.get_order_max()          );
-    REQUIRE(    result_without_prefactor.get_truncated_above() == target_result_without_prefactor.get_truncated_above()    );
-    REQUIRE(      result_without_prefactor.expansion_parameter == target_result_without_prefactor.expansion_parameter      );
+    REQUIRE(          result_with_prefactor.get_order_min() == target_result_with_prefactor.get_order_min()          );
+    REQUIRE(          result_with_prefactor.get_order_max() == target_result_with_prefactor.get_order_max()          );
+    REQUIRE(    result_with_prefactor.get_truncated_above() == target_result_with_prefactor.get_truncated_above()    );
+    REQUIRE(      result_with_prefactor.expansion_parameter == target_result_with_prefactor.expansion_parameter      );
 
     std::cout << "----------------" << std::endl << std::endl;
 
-    for (int order = target_result_without_prefactor.get_order_min() ; order <= target_result_without_prefactor.get_order_max() ; ++ order)
+    for (int order = target_result_with_prefactor.get_order_min() ; order <= target_result_with_prefactor.get_order_max() ; ++ order)
     {
         std::cout << "checking order \"eps^" << order << "\" ..." << std::endl;
 
         // check that the uncertainties are reasonable
-        REQUIRE(      result_without_prefactor.at(order).uncertainty.real() <= std::abs(2*epsrel * target_result_without_prefactor.at(order).real())      );
-        if (  target_result_without_prefactor.at(order).imag() != 0.0  )
-            REQUIRE(      result_without_prefactor.at(order).uncertainty.imag() <= std::abs(2*epsrel * target_result_without_prefactor.at(order).imag())      );
+        REQUIRE(      result_with_prefactor.at(order).uncertainty.real() <= std::abs(2*epsrel * target_result_with_prefactor.at(order).real())      );
+        if (  target_result_with_prefactor.at(order).imag() != 0.0  )
+            REQUIRE(      result_with_prefactor.at(order).uncertainty.imag() <= std::abs(2*epsrel * target_result_with_prefactor.at(order).imag())      );
 
         // check values
         SECTION(" INTEGRAL "){
-            REQUIRE(  result_without_prefactor.at(order).value.real() == Approx( target_result_without_prefactor.at(order).real() ).epsilon( 10.0*epsrel )  );
-            if (  target_result_without_prefactor.at(order).imag() == 0.0  )
-                REQUIRE(  result_without_prefactor.at(order).value.imag() <= epsabs  );
+            REQUIRE(  result_with_prefactor.at(order).value.real() == Approx( target_result_with_prefactor.at(order).real() ).epsilon( 10.0*epsrel )  );
+            if (  target_result_with_prefactor.at(order).imag() == 0.0  )
+                REQUIRE(  result_with_prefactor.at(order).value.imag() <= epsabs  );
             else
-                REQUIRE(  result_without_prefactor.at(order).value.imag() == Approx( target_result_without_prefactor.at(order).imag() ).epsilon( 10.0*epsrel )  );
+                REQUIRE(  result_with_prefactor.at(order).value.imag() == Approx( target_result_with_prefactor.at(order).imag() ).epsilon( 10.0*epsrel )  );
         }
+        /*
         SECTION(" PREFACTOR "){
             REQUIRE(  prefactor.at(order).real() == Approx( target_prefactor.at(order).real() ).epsilon( epsrel )  );
             if (  target_prefactor.at(order).imag() == 0.0  )
@@ -111,6 +120,7 @@ TEST_CASE( "check result", "[INTEGRAL_NAME]" ) {
             else
                 REQUIRE(  prefactor.at(order).imag() == Approx( target_prefactor.at(order).imag() ).epsilon( epsrel )  );
         }
+        */
 
         std::cout << "----------------" << std::endl << std::endl;
     }
