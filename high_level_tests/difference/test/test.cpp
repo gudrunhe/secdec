@@ -1,5 +1,4 @@
 #include "catch.hpp"
-#include "difference.hpp"
 
 #include <complex> // std::complex
 #include <numeric> // std::accumulate
@@ -7,24 +6,39 @@
 #include <secdecutil/deep_apply.hpp> // deep_apply
 #include <secdecutil/series.hpp> // Series
 
+#define QUOTE(ARG) #ARG
+#define QUOTE_EXPAND(ARG) QUOTE(ARG)
+#define INTEGRAL_NAME difference
+
+#include QUOTE_EXPAND(INTEGRAL_NAME.hpp)
+
+template<typename T> using amplitudes_t = std::vector<INTEGRAL_NAME::nested_series_t<T>>;
+
 TEST_CASE( "check result", "[difference]" ) {
-
-    // get the integrands
-    const auto sector_integrands = difference::make_integrands(/* real_parameters */ {}, /* complex_parameters */ {});
-
-    // add integrands of sectors (together flag)
-    const auto all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
+    
+    // User Specified Phase-space point
+    const std::vector<INTEGRAL_NAME::real_t> real_parameters = { };
+    const std::vector<INTEGRAL_NAME::complex_t> complex_parameters = { };
 
     // define and comnfigure integrator
     auto integrator = secdecutil::cuba::Vegas<difference::integrand_return_t>();
     integrator.flags = 2; // verbose output --> see cuba manual
     const double epsrel = 1e-2; integrator.epsrel = epsrel;
 
-    // integrate
-    auto result = secdecutil::deep_apply( all_sectors,  integrator.integrate );
-    //          * difference::prefactor(/* real_parameters */ {}, /* complex_parameters */ {});
-    // the prefactor is just one --> don't need to multiply it
+    // Construct the amplitudes
+    std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
+        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../difference/difference_coefficients", integrator);
 
+    // Pack amplitudes into handler
+    INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+    (
+        unwrapped_amplitudes, integrator.epsrel, integrator.epsabs
+        // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+    );
+    
+    // integrate
+    const std::vector<INTEGRAL_NAME::nested_series_t<secdecutil::UncorrelatedDeviation<INTEGRAL_NAME::integrand_return_t>>> result = amplitudes.evaluate();
+    auto result_with_prefactor = result.at(0);
 
     // analytic result obtained with Mathematica
     constexpr std::complex<double> I(0,1);
@@ -47,10 +61,10 @@ TEST_CASE( "check result", "[difference]" ) {
     );
 
     // basic checks
-    REQUIRE(       result.get_order_min() == target_result.get_order_min()       );
-    REQUIRE(       result.get_order_max() == target_result.get_order_max()       );
-    REQUIRE( result.get_truncated_above() == target_result.get_truncated_above() );
-    REQUIRE(   result.expansion_parameter == target_result.expansion_parameter   );
+    REQUIRE(       result_with_prefactor.get_order_min() == target_result.get_order_min()       );
+    REQUIRE(       result_with_prefactor.get_order_max() == target_result.get_order_max()       );
+    REQUIRE( result_with_prefactor.get_truncated_above() == target_result.get_truncated_above() );
+    REQUIRE(   result_with_prefactor.expansion_parameter == target_result.expansion_parameter   );
 
     std::cout << "----------------" << std::endl << std::endl;
 
@@ -59,16 +73,16 @@ TEST_CASE( "check result", "[difference]" ) {
         std::cout << "checking order \"eps^" << order << "\" ..." << std::endl;
 
         // check that the uncertainties are reasonable
-        REQUIRE( result.at(order).uncertainty.real() <= std::abs(2*epsrel * target_result.at(order).real()) );
-        REQUIRE( result.at(order).uncertainty.imag() <= std::abs(2*epsrel * target_result.at(order).imag()) );
+        REQUIRE( result_with_prefactor.at(order).uncertainty.real() <= std::abs(2*epsrel * target_result.at(order).real()) );
+        REQUIRE( result_with_prefactor.at(order).uncertainty.imag() <= std::abs(2*epsrel * target_result.at(order).imag()) );
 
         // check that the desired uncertainties are reached
-        REQUIRE( result.at(order).uncertainty.real() <= std::abs(epsrel * result.at(order).value.real()) );
-        REQUIRE( result.at(order).uncertainty.imag() <= std::abs(epsrel * result.at(order).value.imag()) );
+        REQUIRE( result_with_prefactor.at(order).uncertainty.real() <= std::abs(epsrel * result_with_prefactor.at(order).value.real()) );
+        REQUIRE( result_with_prefactor.at(order).uncertainty.imag() <= std::abs(epsrel * result_with_prefactor.at(order).value.imag()) );
 
         // check integral value
-        REQUIRE(  result.at(order).value.real() == Approx( target_result.at(order).real() ).epsilon( epsrel )  );
-        REQUIRE(  result.at(order).value.imag() == Approx( target_result.at(order).imag() ).epsilon( epsrel )  );
+        REQUIRE(  result_with_prefactor.at(order).value.real() == Approx( target_result.at(order).real() ).epsilon( epsrel )  );
+        REQUIRE(  result_with_prefactor.at(order).value.imag() == Approx( target_result.at(order).imag() ).epsilon( epsrel )  );
 
         std::cout << "----------------" << std::endl << std::endl;
     }

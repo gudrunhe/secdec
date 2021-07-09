@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from pySecDec.code_writer import make_package
+from pySecDec import make_package
 
 if __name__ == "__main__":
 
