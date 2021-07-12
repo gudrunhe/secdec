@@ -175,7 +175,7 @@ namespace secdecutil {
             std::shared_ptr<integrator_t> integrator;
             integrand_t integrand;
             real_t scaleexpo;
-            std::string statefile;
+            std::vector<std::string> statefiles;
 
             real_t get_scaleexpo() const override { return scaleexpo; }
 
@@ -192,27 +192,15 @@ namespace secdecutil {
                 integrand(integrand),
                 scaleexpo(0.5)
                 {
-                  // set statefile path`
-                  std::ostringstream filename;
-                  if(const char* env_p = std::getenv("SECDEC_TMPDIR"))
-                      filename << env_p;
-                  else if(const char* env_p = std::getenv("TMPDIR"))
-                      filename << env_p;
-                  else 
-                      filename << "/tmp";
-                  std::ofstream f(filename.str()+"/pySecDecTest");
-                  if (!f)
-                    throw std::runtime_error("Can't write temporary files to directory "+filename.str());
-                  f.close();
-                  filename  << "/pySecDec" << (void const *)&integrand;
-                  //filename  << std::tmpnam(nullptr);
-                  statefile=filename.str();
+                  statefiles={std::tmpnam(nullptr),std::tmpnam(nullptr)};
                 };
 
             void compute_impl() override
             {
-                integrator->statefile = statefile.c_str();
+                integrator->statefiles = statefiles;
 
+                if(integrator->integrator_type == 3 and this->get_number_of_function_evaluations() !=0 ) return; //don't iterate with Divonne
+                
                 if(integrator->integrator_type != 3) // Divonne
                 {
                   unsigned long long int next_n = this->get_next_number_of_function_evaluations();
@@ -229,9 +217,8 @@ namespace secdecutil {
 
             ~CubaIntegral()
             {
-                remove((statefile+"0").c_str());
-                remove((statefile+"1").c_str()); // statefile for real part
-                remove((statefile+"2").c_str()); // statefile for imag part
+                for(auto sf : statefiles)
+                  remove(sf.c_str()); 
             }
         };
   
@@ -564,7 +551,7 @@ namespace secdecutil {
                     {
                         std::cerr << "integral " << integral->id << "/" << integrals.size() << ": " << integral->display_name << ", time: ";
                         auto flags = std::cerr.flags();
-                        std::cerr << std::fixed << std::setprecision(1) << integral->get_integration_time() << "s, ";
+                        std::cerr << std::fixed << std::setprecision(6) << integral->get_integration_time() << "s, ";
                         std::cerr.flags(flags);
                         print_datetime();
                         std::cerr << "res: " << old_result << " -> " << integral->get_integral_result()
