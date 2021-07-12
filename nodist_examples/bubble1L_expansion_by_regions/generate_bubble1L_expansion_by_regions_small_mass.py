@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pySecDec.code_writer import sum_package, make_package
 from pySecDec.loop_integral import loop_regions
 import pySecDec as psd

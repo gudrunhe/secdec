@@ -1,6 +1,6 @@
-from __future__ import division
-from pySecDec.code_writer.sum_package import sum_package, Coefficient
-from pySecDec.loop_integral import loop_package
+#!/usr/bin/env python3
+
+from pySecDec import sum_package, LoopPackage, Coefficient
 
 from fractions import Fraction
 import pySecDec as psd
@@ -71,13 +71,15 @@ def parse_integral(line,families):
         )
 
     #Define the package_args dict with all arguments for loop_package
-    package_args = {}
-    package_args['name'] = name
-    package_args['loop_integral'] = li
-    #The requested order can not be calculated yet as it depends on the order of the coefficient
-    package_args['real_parameters'] = mandelstam_symbols+mass_symbols
-    package_args['contour_deformation'] = contour_deformation
-    package_args['additional_prefactor'] = additional_prefactor
+    package_args = LoopPackage(
+        name=name,
+        loop_integral=li,
+        #The requested order can not *really* be calculated yet as it depends on the order of the coefficient
+        requested_order=requested_order,
+        real_parameters=mandelstam_symbols+mass_symbols,
+        contour_deformation=contour_deformation,
+        additional_prefactor=additional_prefactor
+    )
 
     return package_args
 
@@ -122,11 +124,11 @@ def parse_reduze_file(reduze_file):
 
     assert len(list_package_args) == len(coefficients)
 
-    # get real_parameters and remove them from package_args
-    real_parameters=list_package_args[0]['real_parameters']
+    # get real_parameters
+    real_parameters=list_package_args[0].real_parameters
     for package_args in list_package_args:
-        assert package_args.pop('real_parameters') == real_parameters
+        assert package_args.real_parameters == real_parameters
 
-    sum_package(integral_name,[loop_package]*len(list_package_args), list_package_args, ['eps'], [requested_order],real_parameters=real_parameters,coefficients=[coefficients])
+    sum_package(integral_name, list_package_args, ['eps'], [requested_order],real_parameters=real_parameters,coefficients=[coefficients])
 
 parse_reduze_file(name_reduze_file)

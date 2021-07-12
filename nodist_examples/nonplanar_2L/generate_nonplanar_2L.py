@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # This example is the nonplanar two loop nonplanar example in section 3.3 in arXiv:2003.02451
 # for example when using qsq, msq = -2.7, 0.2, all the poles cancel and only the finite term remains:
 # (2.81872,-2.70076e-07) +/- (6.44647e-05,2.45386e-07)
@@ -47,5 +49,3 @@ for args in generators_args:
 psd.code_writer.sum_package(name, [psd.make_package]*len(generators_args), generators_args, li.regulators,
             requested_orders = [0,0],
             real_parameters = ['qsq','msq'], complex_parameters = [])
-
-import configure

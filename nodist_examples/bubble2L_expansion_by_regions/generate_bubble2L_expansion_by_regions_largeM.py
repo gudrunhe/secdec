@@ -1,4 +1,5 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
+
 from pySecDec.code_writer import make_package, sum_package
 from pySecDec.make_regions import make_regions
 from pySecDec.algebra import Polynomial

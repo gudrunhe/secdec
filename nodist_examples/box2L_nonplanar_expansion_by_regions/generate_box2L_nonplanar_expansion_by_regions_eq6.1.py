@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # This example is the nonplanar two loop nonplanar box example corresponding to eq 6.1 in the Go Mishima paper arXiv:1812.04373
 
 import pySecDec as psd
@@ -37,15 +39,15 @@ replacement_rules = [
 
 print(f"U:\n{li.U}")
 uterm = sp.sympify("(x1+x2)*(x3+x4+x5+x6+x7)+(x3+x4)*(x5+x6+x7)")
-assert (sp.sympify(li.U)-uterm).simplify()==0
-print("u poly", (sp.sympify(li.U)-uterm).simplify()==0)
+assert (sp.sympify(str(li.U))-uterm).simplify()==0
+print("u poly", (sp.sympify(str(li.U))-uterm).simplify()==0)
 
 # print(f"F:\n{li.F}")
 
 f_new = Polynomial.from_expression(str(li.F), ["mtsq","s","t","u"])
 print(f"F2:\n{f_new}")
 
-mtsqterm = sp.sympify(f_new.coeffs[0])
+mtsqterm = sp.sympify(str(f_new.coeffs[0]))
 mtsqterm2 = sp.sympify("(x3+x4+x5+x6+x7)*((x1+x2)*(x3+x4+x5+x6+x7)+(x3+x4)*(x5+x6+x7))")
 print("mtsqterm eq",(mtsqterm-mtsqterm2).simplify()==0)
 assert (mtsqterm-mtsqterm2).simplify()==0
@@ -63,8 +65,8 @@ print("uterm eq",(uterm-uterm2).simplify()==0)
 assert (uterm-uterm2).simplify()==0
 
 F = mtsqterm2* sp.sympify("mtsq")+sterm2*sp.sympify("s")+tterm2*sp.sympify("t")+uterm2*sp.sympify("u")
-print("F eq", (F-sp.sympify(li.F)).expand().simplify()==0)
-assert (F-sp.sympify(li.F)).simplify()==0
+print("F eq", (F-sp.sympify(str(li.F))).expand().simplify()==0)
+assert (F-sp.sympify(str(li.F))).simplify()==0
 
 name = "box2L_nonplanar_expansion_by_regions_eq6p1"
 
@@ -77,8 +79,6 @@ generators_args = psd.loop_integral.loop_regions(
     enforce_complex=True,
     processes=None)
 
-psd.code_writer.sum_package(name, [psd.make_package]*len(generators_args), generators_args, li.regulators,
+psd.code_writer.sum_package(name, generators_args, li.regulators,
             requested_orders = [0,0],
             real_parameters = ['s','t','u','mtsq'], complex_parameters = [])
-
-import configure
