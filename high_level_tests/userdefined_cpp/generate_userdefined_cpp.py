@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import shutil
-from pySecDec.code_writer import make_package
+from pySecDec import make_package
 
 if __name__ == "__main__":
 
@@ -34,11 +34,11 @@ if __name__ == "__main__":
     )
 
     # check the generated "functions.hpp"
-    with open(name + '/src/functions.hpp') as generated_header_file:
+    with open(name + '/' + name + '_integral/src/functions.hpp') as generated_header_file:
         generated_header = generated_header_file.read()
     with open('functions_template_ordering_1.hpp') as target_header_1:
         with open('functions_template_ordering_2.hpp') as target_header_2:
             assert generated_header == target_header_1.read() or generated_header == target_header_2.read(), 'mismatch between generated and expected "functions.hpp"'
 
     # copy 'functions.hpp' (predefined for this example) to required directory
-    shutil.copy('functions_implementation.hpp',name+'/src/functions.hpp')
+    shutil.copy('functions_implementation.hpp',name + '/' + name + '_integral/src/functions.hpp')
