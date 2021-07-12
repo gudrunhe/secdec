@@ -19,7 +19,7 @@ if __name__ == "__main__":
     amp.use_Qmc()
 
     # integrate
-    _, _, result = amp([-1.3,-0.8],verbose=True,epsrel=1e-14,epsabs=1e-14) # t, u
+    _, _, result = amp([-1.3,-0.8]) # t, u
 
     # print result
     print('Numerical Result:', result)
