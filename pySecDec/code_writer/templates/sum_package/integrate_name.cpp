@@ -1,3 +1,4 @@
+#include <cstdlib> // std::atof
 #include <iostream> // std::cout
 #include <vector> // std::vector
 
@@ -10,11 +11,31 @@
 
 template<typename T> using amplitudes_t = std::vector<%(name)s::nested_series_t<T>>;
 
-int main()
+int main(int argc, const char *argv[])
 {
-    // User Specified Phase-space point
-    const std::vector<%(name)s::real_t> real_parameters = { /* EDIT: insert real parameter values here: %(names_of_real_parameters)s */ };
-    const std::vector<%(name)s::complex_t> complex_parameters = { /* EDIT: insert complex parameter values here: %(names_of_complex_parameters)s */ };
+    // Check the command line argument number
+    if (argc != 1 + %(number_of_real_parameters)d + 2*%(number_of_complex_parameters)d) {
+        std::cout << "usage: " << argv[0];
+        for ( const auto& name : %(name)s::names_of_real_parameters )
+            std::cout << " " << name;
+        for ( const auto& name : %(name)s::names_of_complex_parameters )
+            std::cout << " re(" << name << ") im(" << name << ")";
+        std::cout << std::endl;
+        return 1;
+    }
+
+    std::vector<%(name)s::real_t> real_parameters; // = { real parameter values (%(names_of_real_parameters)s) go here };
+    std::vector<%(name)s::complex_t> complex_parameters; // = { complex parameter values (%(names_of_complex_parameters)s) go here };
+
+    // Load parameters from the command line arguments
+    for (int i = 1; i < 1 + %(number_of_real_parameters)d; i++)
+        real_parameters.push_back(%(name)s::real_t(std::atof(argv[i])));
+
+    for (int i = 1 + %(number_of_real_parameters)d; i < 1 + %(number_of_real_parameters)d + 2*%(number_of_complex_parameters)d; i += 2) {
+        %(name)s::real_t re = std::atof(argv[i]);
+        %(name)s::real_t im = std::atof(argv[i+1]);
+        complex_parameters.push_back(%(name)s::complex_t(re, im));
+    }
     
     // Set up Integrator
     //secdecutil::cuba::Vegas<%(name)s::integrand_return_t> integrator;
