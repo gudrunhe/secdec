@@ -2,7 +2,7 @@
 name = "pySecDec"
 version = "1.4.5a1.dev6"
 
-author = "Sophia Borowka, Gudrun Heinrich, Stephan Jahn, Stephen Jones, Matthias Kerner, Vitaly Magerya, Andres Poldaru, Johannes Schlenk, Tom Zirke"
+author = "Sophia Borowka, Gudrun Heinrich, Stephan Jahn, Stephen Jones, Matthias Kerner, Florian Langer, Vitaly Magerya, Andres Poldaru, Johannes Schlenk, Emilio Villa, Tom Zirke"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
