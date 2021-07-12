@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import shutil
 from itertools import permutations
-from pySecDec.code_writer import make_package
+from pySecDec import make_package
 
 if __name__ == "__main__":
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     '    template<typename T0>\n    integrand_return_t dfuncd0(T0 arg0);',
     '    template<typename T0>\n    integrand_return_t func(T0 arg0);'
     )
-    with open(name + '/src/functions.hpp') as generated_header_file:
+    with open(name + '/' + name + '_integral/src/functions.hpp') as generated_header_file:
         generated_header = generated_header_file.read()
     with open('functions_template.hpp') as target_header_template_file:
         target_header_template = target_header_template_file.read()
@@ -51,4 +51,4 @@ if __name__ == "__main__":
     assert matched_header, 'mismatch between generated and expected "functions.hpp"'
 
     # copy 'functions.hpp' (predefined for this example) to required directory
-    shutil.copy('functions_implementation.hpp',name+'/src/functions.hpp')
+    shutil.copy('functions_implementation.hpp',name + '/' + name + '_integral/src/functions.hpp')

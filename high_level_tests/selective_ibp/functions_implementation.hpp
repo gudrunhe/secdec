@@ -1,13 +1,13 @@
-#ifndef userdefined_cpp_src_functions_hpp_included
-#define userdefined_cpp_src_functions_hpp_included
+#ifndef userdefined_cpp_integral_src_functions_hpp_included
+#define userdefined_cpp_integral_src_functions_hpp_included
 
-#include "userdefined_cpp.hpp"
+#include "userdefined_cpp_integral.hpp"
 #include "SecDecInternalFunctions.hpp"
 
 #include <cmath>
 #include <complex>
 
-namespace userdefined_cpp
+namespace userdefined_cpp_integral
 {
 
     /*

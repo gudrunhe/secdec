@@ -19,23 +19,28 @@ class CheckLib(unittest.TestCase):
                              }
         self.epsrel = 1e-4
         self.maxeval = 10**8
+        self.epsabs_tol = 1e-15
 
     def check_result(self, computed_series, epsrel):
         # convert result to sympy expressions
         integral_with_prefactor = sp.sympify(  computed_series.replace(',','+I*').replace('+/-','*value+error*')  )
 
         for order in range(-2,0):
-            value = integral_with_prefactor.coeff('eps',order).coeff('value')
-            error = integral_with_prefactor.coeff('eps',order).coeff('error')
+            value = complex( integral_with_prefactor.coeff('eps',order).coeff('value') )
+            error = complex( integral_with_prefactor.coeff('eps',order).coeff('error') )
 
             # check that the uncertainties are reasonable
-            self.assertLessEqual(error, abs(4*epsrel * self.target_result[order]))
+            self.assertLessEqual(error.real, abs(2*epsrel * self.target_result[order].real)+self.epsabs_tol)
+            self.assertLessEqual(error.imag, abs(2*epsrel * self.target_result[order].imag)+self.epsabs_tol)
 
             # check that the desired uncertainties are reached
-            self.assertLessEqual(error, abs(epsrel * value) )
+            self.assertLessEqual(error.real, abs(epsrel * value.real)+self.epsabs_tol )
+            self.assertLessEqual(error.imag, abs(epsrel * value.imag)+self.epsabs_tol )
 
             # check integral value
-            self.assertAlmostEqual(  value, self.target_result[order], delta=epsrel*abs(self.target_result[order])  )
+            self.assertAlmostEqual(  value.real, self.target_result[order].real, delta=epsrel*abs(self.target_result[order].real)+self.epsabs_tol  )
+            self.assertAlmostEqual(  value.imag, self.target_result[order].imag, delta=epsrel*abs(self.target_result[order].imag)+self.epsabs_tol  )
+
 
     def test_Vegas(self):
         # choose integrator
