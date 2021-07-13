@@ -3,7 +3,7 @@
 from .common import LoopIntegral
 from ..algebra import Polynomial
 from ..misc import det, adjugate, powerset, missing, all_pairs, \
-     cached_property, sympify_symbols, assert_degree_at_most_max_degree, sympify_expression
+     cached_property, sympify_symbols, assert_degree_at_most_max_degree, sympify_expression, rec_subs
 import sympy as sp
 import numpy as np
 
@@ -238,7 +238,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
         F -= self.preliminary_U * self.J
         for i,coeff in enumerate(F.coeffs):
             if isinstance(coeff, sp.Expr):
-                F.coeffs[i] = coeff.expand().subs(self.replacement_rules)
+                F.coeffs[i] = rec_subs(coeff,self.replacement_rules)
         return F.simplify()
 
     @cached_property
@@ -547,7 +547,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
 
                     # apply the replacement rules
                     for i, coeff in enumerate(this_numerator_summand.coeffs):
-                        this_numerator_summand.coeffs[i] = sympify_expression(coeff).expand().subs(replacement_rules)
+                        this_numerator_summand.coeffs[i] = rec_subs(sympify_expression(coeff), replacement_rules)
 
                     numerator += this_numerator_summand
 

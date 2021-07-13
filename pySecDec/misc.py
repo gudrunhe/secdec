@@ -526,3 +526,35 @@ def chunks(lst, n):
         n = n + 1
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
+
+def rec_subs(expr, repl, n = 200):
+    '''
+    Substitute repl in expr and expand until
+    expr stops changing or depth n is reached.
+
+    :param expr:
+        sympy expression;
+        Expression to which the replacement
+        rules are applied.
+
+    :param repl:
+        list;
+        List of replacement rules.
+
+    :param n:
+        integer;
+        Maximal number of repl applications.
+
+    :return:
+        Expression after substitutions.
+
+    '''
+    i = 0
+    while i < n:
+        expr_new = expr.expand().subs(repl)
+        if expr_new-expr == 0:
+            return expr_new
+        else:
+            expr = expr_new
+            i = i + 1
+    raise ValueError('Possible infinite recursion in replacement_rules (depth '+str(n)+')')

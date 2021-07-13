@@ -2,7 +2,7 @@
 
 from .common import LoopIntegral
 from ..algebra import Polynomial, ExponentiatedPolynomial
-from ..misc import missing, cached_property, sympify_symbols, assert_degree_at_most_max_degree, sympify_expression
+from ..misc import missing, cached_property, sympify_symbols, assert_degree_at_most_max_degree, sympify_expression, rec_subs
 from itertools import combinations
 import sympy as sp
 import numpy as np
@@ -258,7 +258,7 @@ class LoopIntegralFromGraph(LoopIntegral):
         for i in range(self.P):
             coeff = self.internal_lines[i][0]
             if coeff != 0:
-                coeff = (coeff**2).subs(self.replacement_rules)
+                coeff = rec_subs((coeff**2), self.replacement_rules)
                 coeffs.append(coeff)
                 expolist = [0]*self.P
                 expolist[i] = 1
