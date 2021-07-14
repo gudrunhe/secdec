@@ -384,6 +384,7 @@ def _parse_global_templates(name, regulators, polynomial_names,
                           # the files below are specific for each sector --> do not parse globally
                           'contour_deformation.h' : None,
                           'sector.h' : None,
+                          'sector.d' : None,
 
                           # the files below can only be written after the decomposition is completed
                           'integrands.cpp' : None,
@@ -567,6 +568,23 @@ def _make_FORM_shifted_orders(positive_powers):
             regulator_index += 1
             codelines.append( '#define shiftedRegulator%iPowerOrder%i "%i"' % (regulator_index,orders_index,regulator_power) )
     return '\n'.join(codelines)
+
+def _make_sector_cpp_files(sector_index, regulator_powers, highest_poles, contour_deformation):
+    """
+    Produce a Makefile-formatted list of .cpp files that
+    write_integrand.frm will produce for a given sector.
+
+    Please keep this synchronized with write_integrand.frm,
+    because the logic is duplicated.
+    """
+    files = sorted(
+        ("sector_%d_" % sector_index) + "_".join(str(pol-hi) for pol, hi in zip(p, highest_poles)).replace("-", "n") + ".cpp"
+        for p in regulator_powers
+    )
+    if contour_deformation:
+        files += ["contour_deformation_" + f for f in files] + ["optimize_deformation_parameters_" + f for f in files]
+    files = ["sector_%d.cpp" % sector_index] + files
+    return " \\\n\t".join("src/" + f for f in files)
 
 def _derivative_muliindex_to_name(basename, multiindex):
     '''
@@ -1368,9 +1386,11 @@ def _process_secondary_sector(environment):
     number_of_orders = len(regulator_powers)
 
     # generate the definitions of the FORM preprocessor variables "shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex'"
+    sector_cpp_files = _make_sector_cpp_files(sector_index, regulator_powers, highest_poles_current_sector, contour_deformation_polynomial is not None)
     regulator_powers = _make_FORM_shifted_orders(regulator_powers)
 
     # parse template file "sector.h"
+    template_replacements['sector_index'] = sector_index
     template_replacements['functions'] = _make_FORM_list(other_functions)
     template_replacements['cal_I_derivatives'] = _make_FORM_list(cal_I_derivative_functions)
     template_replacements['decomposed_polynomial_derivatives'] = _make_FORM_list(decomposed_polynomial_derivatives)
@@ -1384,11 +1404,20 @@ def _process_secondary_sector(environment):
     template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
     template_replacements['regulator_powers'] = regulator_powers
     template_replacements['number_of_orders'] = number_of_orders
+    template_replacements['sector_cpp_files'] = sector_cpp_files
+    template_replacements['sector_hpp_files'] = sector_cpp_files.replace(".cpp", ".hpp")
+    template_replacements['sector_codegen_sources'] = \
+            "codegen/sector%i.h" % sector_index if contour_deformation_polynomial is None else \
+            "codegen/sector%i.h codegen/contour_deformation_sector%i.h" % (sector_index, sector_index)
     parse_template_file(os.path.join(template_sources, 'codegen', 'sector.h'), # source
                         os.path.join(name,             'codegen', 'sector%i.h' % sector_index), # dest
                         template_replacements)
+    parse_template_file(os.path.join(template_sources, 'codegen', 'sector.d'), # source
+                        os.path.join(name,             'codegen', 'sector%i.d' % sector_index), # dest
+                        template_replacements)
     for key in 'functions', 'cal_I_derivatives', 'decomposed_polynomial_derivatives','insert_cal_I_procedure','insert_other_procedure','insert_decomposed_procedure', \
-            'integrand_definition_procedure','sector_container_initializer','highest_regulator_poles','regulator_powers','number_of_orders':
+            'integrand_definition_procedure','sector_container_initializer','highest_regulator_poles','regulator_powers','number_of_orders', \
+            'sector_index', 'sector_cpp_files', 'sector_hpp_files', 'sector_codegen_sources':
         del template_replacements[key]
 
     if contour_deformation_polynomial is not None:
@@ -1624,7 +1653,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         The strategy to decompose the polynomials. The
         following strategies are available:
 
-        * 'iterative_no_primary' (default): integration region 
+        * 'iterative_no_primary' (default): integration region
           :math:`[0,1]^N`.
         * 'geometric_no_primary': integration region :math:`[0,1]^N`.
         * 'geometric_infinity_no_primary': integration region

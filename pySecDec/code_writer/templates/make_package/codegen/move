@@ -27,7 +27,7 @@ dest_dirname = argv[-1]
 src_filenames = argv[1:-1]
 
 for src_filename in src_filenames:
-    dest_filepath = path.join(dest_dirname, src_filename)
+    dest_filepath = path.join(dest_dirname, path.basename(src_filename))
     txt = []
     with open(src_filename, 'r') as src:
         for line in src:

@@ -121,7 +121,7 @@ def parse_template_file(src, dest, replacements={}):
                 file.flush()
                 unflushedlen[0] = 0
 
-        dest_file_parts = re.split("%\((.*?)\)s",string)
+        dest_file_parts = re.split("%\(([^)]*)\)s",string)
         dest_file.write(dest_file_parts[0] % replacements)
         for n in range(1,len(dest_file_parts),2):
             bigtext = replacements[dest_file_parts[n]]
