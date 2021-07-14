@@ -271,14 +271,16 @@ known_qmc_fitfunctions = dict(
 #
 #     cbcpt_dn1_100 = 1,
 #     cbcpt_dn2_6 = 2,
-#     cbcpt_cfftw1_6 = 3
+#     cbcpt_cfftw1_6 = 3,
+#     cbcpt_cfftw2_10 = 4
 # };
 known_qmc_generatingvectors = dict(
     default = 0,
 
     cbcpt_dn1_100 = 1,
     cbcpt_dn2_6 = 2,
-    cbcpt_cfftw1_6 = 3
+    cbcpt_cfftw1_6 = 3,
+    cbcpt_cfftw2_10 = 4
 )
 
 class CPPIntegrator(object):

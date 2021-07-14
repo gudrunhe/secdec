@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: 8b80573179e2da21a9359f13d1e7a7c810eb0599
- * Generated: 12-06-2021 23:09:32
+ * Commit: 0625167d305d5fd734d43fb26e3dd855c6ccf341
+ * Generated: 14-07-2021 16:09:39
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -1437,6 +1437,42 @@ namespace integrators
             generatingvectors[7501410001]={1,2757177450,879378109,2460097563,3069036981,3181359993};
             generatingvectors[10088401751]={1,4180383535,3234338499,4352977744,1736039557,4095101376};
             generatingvectors[15173222401]={1,5795573206,4481927636,1112677318,2916664894,2804891062};
+
+            return generatingvectors;
+
+        }
+    };
+};
+#endif
+#ifndef QMC_GENERATINGVECTORS_CBCPT_CFFTW2_10_H
+#define QMC_GENERATINGVECTORS_CBCPT_CFFTW2_10_H
+
+#include <vector>
+#include <map>
+
+namespace integrators
+{
+    namespace generatingvectors
+    {
+        inline std::map<U,std::vector<U>> cbcpt_cfftw2_10()
+        {
+
+            // Vectors generated using custom CBC tool based on FFTW
+            // Settings:
+            // s = 10
+            // omega=inline('2*pi^2*(x.^2-x+1/6)')
+            // gamma=1/s
+            // beta=1
+
+            std::map<U,std::vector<U>> generatingvectors;
+            generatingvectors[2147483659]={1,594332840,987962412,92850199,232950545,732223484,216871252,167983424,134396467,967335352};
+            generatingvectors[3037000507]={1,1154488078,1364044675,403532140,1418532776,1211730398,1291040262,1460469075,8245344,1211134081};
+            generatingvectors[4294967311]={1,1782332935,2038179138,312057978,558140820,1823542953,1209402799,2050709695,826107915,1042894327};
+            generatingvectors[6074001001]={1,2515792464,2214346390,2112169118,1128189490,1484488734,1224278437,2351616022,1611384151,1114862459};
+            generatingvectors[8589934609]={1,3321942526,1019713590,1739656802,1346968868,647002714,2524234491,3572784402,3780296281,1932783779};
+            generatingvectors[12148002047]={1,4460034585,4192279828,956270804,4233805881,531494255,4314610224,5815452895,2216195588,991235505};
+            generatingvectors[17179869209]={1,6509448386,4956350883,7081563299,3187015543,3057004275,1370423947,2853256536,6529660412,6947593721};
+            generatingvectors[24296004011]={1,10063714232,11598913330,2292935963,1047062119,1472104940,758619429,10725375394,1245101568,3691451466};
 
             return generatingvectors;
 
