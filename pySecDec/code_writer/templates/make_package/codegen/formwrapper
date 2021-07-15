@@ -5,9 +5,11 @@
 # being too low, and if so, then increase WorkSpace in "form.set" file
 # from the current directory, and rerun the same FORM command.
 
+import os
 import re
 import subprocess
 import sys
+import tempfile
 
 if len(sys.argv) <= 1:
     sys.stderr.write("usage: formwrapper form-binary [form options] ...\n")
@@ -41,7 +43,16 @@ try:
                 bstdout.write(b"=== Error reading form.set: %%s\n" %% (str(e).encode("utf8"),))
                 lines = []
             lines.append("WorkSpace %%d\n" %% newws)
-            with open("form.set", "w") as f:
-                f.write("".join(lines))
+            # Try to write form.set atomically, just in case.
+            fd, tmpname = tempfile.mkstemp(prefix="form.set.", dir=".")
+            try:
+                os.fchmod(fd, 0o644)
+                os.close(fd)
+                with open(tmpname, "w") as f:
+                    f.write("".join(lines))
+                os.rename(tmpname, "form.set")
+            except:
+                os.unlink(tmpname)
+                raise
 except KeyboardInterrupt:
     pass
