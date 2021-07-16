@@ -389,7 +389,7 @@ class Vegas(CPPIntegrator):
     and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,zero_border=0.0,nstart=10000,nincrease=5000,nbatch=1000,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=10000,maxeval=9223372036854775807,zero_border=0.0,nstart=10000,nincrease=5000,nbatch=1000,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Vegas.restype = c_void_p
@@ -397,6 +397,8 @@ class Vegas(CPPIntegrator):
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Vegas(epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nstart,nincrease,nbatch,real_complex_together)
         self._epsrel=epsrel
         self._epsabs=epsabs
+        self._mineval=mineval
+        self._maxeval=maxeval
 
 class Suave(CPPIntegrator):
     '''
@@ -411,7 +413,7 @@ class Suave(CPPIntegrator):
     and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=0,maxeval=10**6,zero_border=0.0,nnew=1000,nmin=10,flatness=25.,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=10000,maxeval=9223372036854775807,zero_border=0.0,nnew=1000,nmin=10,flatness=25.,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Suave.restype = c_void_p
@@ -419,6 +421,8 @@ class Suave(CPPIntegrator):
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Suave(epsrel,epsabs,flags,seed,mineval,maxeval,zero_border,nnew,nmin,flatness,real_complex_together)
         self._epsrel=epsrel
         self._epsabs=epsabs
+        self._mineval=mineval
+        self._maxeval=maxeval
 
 class Divonne(CPPIntegrator):
     '''
@@ -433,7 +437,7 @@ class Divonne(CPPIntegrator):
     and in the cuba manual.
 
     '''
-    def __init__(self, integral_library, epsrel=1e-2, epsabs=1e-7, flags=0, seed=0, mineval=0, maxeval=10**6,zero_border=0.0,
+    def __init__(self, integral_library, epsrel=1e-2, epsabs=1e-7, flags=0, seed=0, mineval=10000, maxeval=9223372036854775807,zero_border=0.0,
                                          key1=2000, key2=1, key3=1, maxpass=4, border=0., maxchisq=1.,
                                          mindeviation=.15, real_complex_together=False):
         self.c_lib = integral_library.c_lib
@@ -447,6 +451,8 @@ class Divonne(CPPIntegrator):
                                                                  maxchisq, mindeviation, real_complex_together)
         self._epsrel=epsrel
         self._epsabs=epsabs
+        self._mineval=mineval
+        self._maxeval=maxeval
 
 class Cuhre(CPPIntegrator):
     '''
@@ -461,7 +467,7 @@ class Cuhre(CPPIntegrator):
     and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,mineval=0,maxeval=10**6,zero_border=0.0,key=0,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,mineval=10000,maxeval=9223372036854775807,zero_border=0.0,key=0,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Cuhre.restype = c_void_p
@@ -469,6 +475,8 @@ class Cuhre(CPPIntegrator):
         self.c_integrator_ptr = self.c_lib.allocate_cuba_Cuhre(epsrel,epsabs,flags,mineval,maxeval,zero_border,key,real_complex_together)
         self._epsrel=epsrel
         self._epsabs=epsabs
+        self._mineval=mineval
+        self._maxeval=maxeval
 
 class Qmc(CPPIntegrator):
     '''
@@ -524,7 +532,7 @@ class Qmc(CPPIntegrator):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=0,errormode='default',evaluateminn=0,
-                      minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
         self.c_lib_path = integral_library.c_lib_path
@@ -573,6 +581,8 @@ class Qmc(CPPIntegrator):
                                                                    )
         self._epsrel=epsrel
         self._epsabs=epsabs
+        self._mineval=minn
+        self._maxeval=maxeval
 
 class CudaQmc(object):
     '''
@@ -624,7 +634,7 @@ class CudaQmc(object):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=0,errormode='default',evaluateminn=0,
-                      minn=0,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
                         c_double, # epsrel
@@ -687,6 +697,8 @@ class CudaQmc(object):
                                                                                           )
         self._epsrel=epsrel
         self._epsabs=epsabs
+        self._mineval=minn
+        self._maxeval=maxeval
 
     def __del__(self):
         if hasattr(self, 'c_integrator_ptr_together'):
@@ -797,13 +809,13 @@ class IntegralLibrary(object):
         unsigned int, optional;
         The maximal number of integrand evaluations for
         each sector.
-        Default: ``ULLONG_MAX (18446744073709551615)``.
+        Default: maxeval of integrator (default ULLONG_MAX or LLONG_MAX).
 
     :param mineval:
         unsigned int, optional;
         The minimal number of integrand evaluations for
         each sector.
-        Default: ``50000``.
+        Default: mineval/minn of integrator (default 10000).
 
     :param maxincreasefac:
         float, optional;
@@ -1066,8 +1078,8 @@ class IntegralLibrary(object):
                      number_of_presamples=100000, deformation_parameters_maximum=1.,
                      deformation_parameters_minimum=1.e-5,
                      deformation_parameters_decrease_factor=0.9,
-                     epsrel=None, epsabs=None, maxeval=18446744073709551615,
-                     mineval=50000, maxincreasefac=20., min_epsrel=0.2, min_epsabs=1.e-4,
+                     epsrel=None, epsabs=None, maxeval=None,
+                     mineval=None, maxincreasefac=20., min_epsrel=0.2, min_epsabs=1.e-4,
                      max_epsrel=1.e-14, max_epsabs=1.e-20, min_decrease_factor=0.9,
                      decrease_to_percentage=0.7, soft_wall_clock_limit=1.7976931348623158e+308, # 1.7976931348623158e+308 max double
                      hard_wall_clock_limit=1.7976931348623158e+308, number_of_threads=0, reset_cuda_after=0, verbose=False
@@ -1075,6 +1087,8 @@ class IntegralLibrary(object):
         # Set default epsrel,epsabs to integrator.epsrel,epsabs
         if (epsrel is None): epsrel = self.high_dimensional_integrator._epsrel
         if (epsabs is None): epsabs = self.high_dimensional_integrator._epsabs
+        if (mineval is None): mineval = self.high_dimensional_integrator._mineval
+        if (maxeval is None): maxeval = self.high_dimensional_integrator._maxeval
 
         # Initialize and launch the underlying c routines in a subprocess
         # to enable KeyboardInterrupt and avoid crashing the primary python
