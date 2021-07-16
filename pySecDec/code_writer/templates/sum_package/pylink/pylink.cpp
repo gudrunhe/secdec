@@ -221,6 +221,8 @@
         integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_dn2_6(); \
     if ( generatingvectors_id == cbcpt_cfftw1_6 ) \
         integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_cfftw1_6(); \
+    if ( generatingvectors_id == cbcpt_cfftw2_10 ) \
+        integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_cfftw2_10(); \
     integrator->logger = std::cerr;
 #define SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
         SET_COMMON_QMC_ARGS \
@@ -269,7 +271,8 @@ enum qmc_generatingvectors_t : int
 
     cbcpt_dn1_100 = 1,
     cbcpt_dn2_6 = 2,
-    cbcpt_cfftw1_6 = 3
+    cbcpt_cfftw1_6 = 3,
+    cbcpt_cfftw2_10 = 4
 };
 
 #define CASE_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
