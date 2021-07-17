@@ -247,8 +247,10 @@ namespace secdecutil {
 
             void compute_impl() override
             {
+                if(this->get_number_of_function_evaluations() !=0 ) return; //don't iterate with CQuad
+                
                 unsigned long long int next_n = this->get_next_number_of_function_evaluations();
-
+                
                 this->integral_result = integrator->integrate(this->integrand); // run the numerical integration
             }
         };
