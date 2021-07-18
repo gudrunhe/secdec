@@ -111,7 +111,18 @@ extern "C"
             complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
 
         // Construct the amplitudes
-        std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(real_parameters, complex_parameters, std::string(lib_path), integrator);
+        std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(
+                                                                                          real_parameters,
+                                                                                          complex_parameters,
+                                                                                          std::string(lib_path),
+                                                                                          integrator
+                                                                                          #if integral_need_complex
+                                                                                              , number_of_presamples,
+                                                                                              deformation_parameters_maximum,
+                                                                                              deformation_parameters_minimum,
+                                                                                              deformation_parameters_decrease_factor
+                                                                                          #endif
+                                                                                          );
 
         // pack amplitude into handler
         handler_t<amplitudes_t> amplitudes
@@ -211,7 +222,18 @@ extern "C"
                 complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
 
             // Construct the amplitudes
-            std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(real_parameters, complex_parameters, std::string(lib_path), separate_integrator);
+            std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(
+                                                                                              real_parameters,
+                                                                                              complex_parameters,
+                                                                                              std::string(lib_path),
+                                                                                              separate_integrator
+                                                                                              #if integral_need_complex
+                                                                                                  , number_of_presamples,
+                                                                                                  deformation_parameters_maximum,
+                                                                                                  deformation_parameters_minimum,
+                                                                                                  deformation_parameters_decrease_factor
+                                                                                              #endif
+                                                                                              );
 
             // pack amplitude into handler
             handler_t<amplitudes_t> amplitudes
