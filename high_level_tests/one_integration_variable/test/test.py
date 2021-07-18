@@ -42,8 +42,8 @@ class CheckLib(unittest.TestCase):
             self.assertLessEqual(error.imag, epsabs)
 
             # check integral value
-            self.assertAlmostEqual(  value.real, self.target_result[order].real, delta=epsabs  )
-            self.assertAlmostEqual(  value.imag, self.target_result[order].imag, delta=epsabs  )
+            self.assertAlmostEqual(  value.real, self.target_result[order].real, delta=3.*epsabs  )
+            self.assertAlmostEqual(  value.imag, self.target_result[order].imag, delta=3.*epsabs  )
 
     def test_Vegas(self):
         # choose integrator

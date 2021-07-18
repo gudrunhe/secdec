@@ -44,11 +44,11 @@ class CheckLib(unittest.TestCase):
                 self.assertLessEqual(error.imag, abs(epsrel * value.imag) )
 
             # check integral value
-            self.assertAlmostEqual(  value.real, target_series[order].real, delta=epsrel*abs(target_series[order].real)  )
+            self.assertAlmostEqual(  value.real, target_series[order].real, delta=3.*epsrel*abs(target_series[order].real)  )
             if target_series[order].imag == 0.0:
-                self.assertAlmostEqual(  value.imag, target_series[order].imag, delta=epsabs  )
+                self.assertAlmostEqual(  value.imag, target_series[order].imag, delta=3.*epsabs  )
             else:
-                self.assertAlmostEqual(  value.imag, target_series[order].imag, delta=epsrel*abs(target_series[order].imag)  )
+                self.assertAlmostEqual(  value.imag, target_series[order].imag, delta=3.*epsrel*abs(target_series[order].imag)  )
 
     def check_prefactor(self, computed_series, target_series, order_min, order_max):
         # convert result to sympy expressions

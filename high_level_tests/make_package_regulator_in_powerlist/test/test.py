@@ -62,12 +62,12 @@ class CheckLib(unittest.TestCase):
                 self.assertLessEqual(computed_error.real, self.epsabs)
                 self.assertLessEqual(computed_value.real, 2. * computed_error.real)
             else:
-                self.assertAlmostEqual(computed_value.real, target_value.real, delta=abs(2*self.epsrel*target_value.real))
+                self.assertAlmostEqual(computed_value.real, target_value.real, delta=abs(3*self.epsrel*target_value.real))
             if target_value.imag == 0.0:
                 self.assertLessEqual(computed_error.imag, self.epsabs)
                 self.assertLessEqual(computed_value.imag, 2. * computed_error.imag)
             else:
-                self.assertAlmostEqual(computed_value.imag, target_value.imag, delta=abs(2*self.epsrel*target_value.imag))
+                self.assertAlmostEqual(computed_value.imag, target_value.imag, delta=abs(3*self.epsrel*target_value.imag))
 
         print("----------------\n")
 

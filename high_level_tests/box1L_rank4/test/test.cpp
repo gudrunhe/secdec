@@ -74,9 +74,9 @@ TEST_CASE( "check result", "[INTEGRAL_NAME]" ) {
         std::cout << "checking order \"eps^" << order << "\" ..." << std::endl;
 
         // check that the uncertainties are reasonable
-        REQUIRE(      result_with_prefactor.at(order).uncertainty.real() <= std::abs(2*epsrel * target_result_with_prefactor.at(order).real())      );
+        REQUIRE(      result_with_prefactor.at(order).uncertainty.real() <= std::abs(3*epsrel * target_result_with_prefactor.at(order).real())      );
         if (  target_result_with_prefactor.at(order).imag() != 0.0  )
-            REQUIRE(      result_with_prefactor.at(order).uncertainty.imag() <= std::abs(2*epsrel * target_result_with_prefactor.at(order).imag())      );
+            REQUIRE(      result_with_prefactor.at(order).uncertainty.imag() <= std::abs(3*epsrel * target_result_with_prefactor.at(order).imag())      );
 
         // check values
         REQUIRE(  result_with_prefactor.at(order).value.real() == Approx( target_result_with_prefactor.at(order).real() ).epsilon( 10.0*epsrel )  );

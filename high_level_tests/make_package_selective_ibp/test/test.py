@@ -35,7 +35,7 @@ class CheckLib(unittest.TestCase):
             self.assertLessEqual(error, abs(epsrel * value) )
 
             # check integral value
-            self.assertAlmostEqual(  value, self.target_result[order], delta=epsrel*abs(self.target_result[order])  )
+            self.assertAlmostEqual(  value, self.target_result[order], delta=3.*epsrel*abs(self.target_result[order])  )
 
     def test_Vegas(self):
         # choose integrator
