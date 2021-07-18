@@ -438,10 +438,8 @@ namespace %(name)s
                 #endif
             );
 
-            // Make a local copy of the integrator for use with the current sub_integral
-            static amplitude_integrator_t local_integrator(integrator);
-
-            const std::shared_ptr<amplitude_integrator_t> integrator_ptr = std::make_shared<amplitude_integrator_t>(local_integrator);
+            // Instantiate an amplitude_integrator_t from integrator, store this instance in a shared pointer
+            const std::shared_ptr<amplitude_integrator_t> integrator_ptr = std::make_shared<amplitude_integrator_t>(integrator);
 
             const std::function<sum_t(const integrand_t& integrand)> convert_integrands =
                 [ integrator_ptr ] (const integrand_t& integrand) -> sum_t
