@@ -31,7 +31,7 @@ namespace %(name)s
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters,
         const std::string& lib_path,
-        const integrator_t integrator
+        const integrator_t& integrator
         #if %(name)s_contour_deformation
             ,unsigned number_of_presamples,
             real_t deformation_parameters_maximum,
@@ -662,8 +662,7 @@ namespace %(name)s
     
     #endif
     
-    template<>
-    std::vector<nested_series_t<sum_t>> make_amplitudes<const secdecutil::Integrator<integrand_return_t,real_t>*>
+    std::vector<nested_series_t<sum_t>> make_amplitudes
     (
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters,
@@ -698,8 +697,7 @@ namespace %(name)s
     }
 
     #ifdef SECDEC_WITH_CUDA
-        template<>
-        std::vector<nested_series_t<sum_t>> make_amplitudes<const secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t>*>
+        std::vector<nested_series_t<sum_t>> make_amplitudes
         (
             const std::vector<real_t>& real_parameters,
             const std::vector<complex_t>& complex_parameters,
@@ -727,7 +725,7 @@ namespace %(name)s
     
         #define INSTANTIATE_MAKE_AMPLITUDES(INTEGRATOR) \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
-                    INTEGRATOR, unsigned, real_t, real_t, real_t);
+                    const INTEGRATOR&, unsigned, real_t, real_t, real_t);
 
         #define INSTANTIATE_MAKE_AMPLITUDES_NONE_QMC \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
@@ -737,7 +735,7 @@ namespace %(name)s
                      ::integrators::transforms::None::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
@@ -746,7 +744,7 @@ namespace %(name)s
                      ::integrators::transforms::None::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
@@ -755,7 +753,7 @@ namespace %(name)s
                     ::integrators::transforms::None::type, \
                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t);
 
         #define INSTANTIATE_MAKE_AMPLITUDES_BAKER_QMC \
@@ -766,7 +764,7 @@ namespace %(name)s
                      ::integrators::transforms::Baker::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
@@ -775,7 +773,7 @@ namespace %(name)s
                      ::integrators::transforms::Baker::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
@@ -784,7 +782,7 @@ namespace %(name)s
                     ::integrators::transforms::Baker::type, \
                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
@@ -795,7 +793,7 @@ namespace %(name)s
                      ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
@@ -804,7 +802,7 @@ namespace %(name)s
                      ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
@@ -813,7 +811,7 @@ namespace %(name)s
                     ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_SIDI_QMC(SIDIDEGREE) \
@@ -824,7 +822,7 @@ namespace %(name)s
                      ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
@@ -833,7 +831,7 @@ namespace %(name)s
                      ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
@@ -842,13 +840,13 @@ namespace %(name)s
                     ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
-                >, \
+                >&, \
                 unsigned, real_t, real_t, real_t);
     
     #else
     
         #define INSTANTIATE_MAKE_AMPLITUDES(INTEGRATOR) \
-            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, INTEGRATOR);
+            template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, const INTEGRATOR&);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_NONE_QMC \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
@@ -858,7 +856,7 @@ namespace %(name)s
                      ::integrators::transforms::None::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
-                >); \
+                >&); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
@@ -866,7 +864,7 @@ namespace %(name)s
                      ::integrators::transforms::None::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
-                >); \
+                >&); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                     INTEGRAL_NAME::integrand_return_t, \
@@ -874,7 +872,7 @@ namespace %(name)s
                     ::integrators::transforms::None::type, \
                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
-                >);
+                >&);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_BAKER_QMC \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
@@ -884,7 +882,7 @@ namespace %(name)s
                      ::integrators::transforms::Baker::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
-                >); \
+                >&); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
@@ -892,7 +890,7 @@ namespace %(name)s
                      ::integrators::transforms::Baker::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
-                >); \
+                >&); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                     INTEGRAL_NAME::integrand_return_t, \
@@ -900,7 +898,7 @@ namespace %(name)s
                     ::integrators::transforms::Baker::type, \
                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
-                >);
+                >&);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
@@ -910,7 +908,7 @@ namespace %(name)s
                      ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
-                >); \
+                >&); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
@@ -918,7 +916,7 @@ namespace %(name)s
                      ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
-                >); \
+                >&); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                     INTEGRAL_NAME::integrand_return_t, \
@@ -926,7 +924,7 @@ namespace %(name)s
                     ::integrators::transforms::Korobov<KOROBOVDEGREE1,KOROBOVDEGREE2>::type, \
                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
-                >);
+                >&);
     
         #define INSTANTIATE_MAKE_AMPLITUDES_SIDI_QMC(SIDIDEGREE) \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
@@ -936,7 +934,7 @@ namespace %(name)s
                      ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      secdecutil::integrators::void_template \
-                >); \
+                >&); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
@@ -944,7 +942,7 @@ namespace %(name)s
                      ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
                      INTEGRAL_NAME::INTEGRAND_TYPE, \
                      ::integrators::fitfunctions::None::type \
-                >); \
+                >&); \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                     INTEGRAL_NAME::integrand_return_t, \
@@ -952,7 +950,7 @@ namespace %(name)s
                     ::integrators::transforms::Sidi<SIDIDEGREE>::type, \
                     INTEGRAL_NAME::INTEGRAND_TYPE, \
                     ::integrators::fitfunctions::PolySingular::type \
-                >);
+                >&);
     #endif
     
     INSTANTIATE_MAKE_AMPLITUDES(secdecutil::gsl::CQuad<INTEGRAL_NAME::integrand_return_t>)

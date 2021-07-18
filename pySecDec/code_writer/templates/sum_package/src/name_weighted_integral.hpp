@@ -16,7 +16,7 @@ namespace %(name)s
         (
             const std::vector<real_t>& real_parameters,
             const std::vector<complex_t>& complex_parameters,
-            integrator_t integrator
+            const integrator_t& integrator
             #if %(name)s_contour_deformation
                 ,unsigned number_of_presamples,
                 real_t deformation_parameters_maximum,

@@ -53,7 +53,7 @@ namespace %(name)s
         const std::vector<real_t>& real_parameters,
         const std::vector<complex_t>& complex_parameters,
         const std::string& lib_path,
-        const integrator_t integrator
+        const integrator_t& integrator
         #if %(name)s_contour_deformation
             ,unsigned number_of_presamples = 100000,
             real_t deformation_parameters_maximum = 1.,
@@ -61,6 +61,34 @@ namespace %(name)s
             real_t deformation_parameters_decrease_factor = 0.9
         #endif
     );
+    std::vector<nested_series_t<sum_t>> make_amplitudes
+    (
+        const std::vector<real_t>& real_parameters,
+        const std::vector<complex_t>& complex_parameters,
+        const std::string& lib_path,
+        const secdecutil::Integrator<integrand_return_t,real_t> * integrator
+        #if %(name)s_contour_deformation
+            ,unsigned number_of_presamples,
+            real_t deformation_parameters_maximum,
+            real_t deformation_parameters_minimum,
+            real_t deformation_parameters_decrease_factor
+        #endif
+    );
+    #ifdef SECDEC_WITH_CUDA
+        std::vector<nested_series_t<sum_t>> make_amplitudes //<const secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t>*>
+        (
+            const std::vector<real_t>& real_parameters,
+            const std::vector<complex_t>& complex_parameters,
+            const std::string& lib_path,
+            const secdecutil::Integrator<integrand_return_t,real_t,cuda_integrand_t> * integrator
+            #if %(name)s_contour_deformation
+                ,unsigned number_of_presamples,
+                real_t deformation_parameters_maximum,
+                real_t deformation_parameters_minimum,
+                real_t deformation_parameters_decrease_factor
+            #endif
+        );
+    #endif
     // --}
 
     // some information about the integral
