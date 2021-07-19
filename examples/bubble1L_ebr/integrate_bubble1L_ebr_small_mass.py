@@ -4,7 +4,7 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-name = "bubble1L_expansion_by_regions_small_mass"
+name = "bubble1L_ebr_small_mass"
 bubble1L = IntegralLibrary(f"{name}/{name}_pylink.so")
 bubble1L.use_Qmc(transform="korobov3", fitfunction="polysingular", verbosity=1)
 

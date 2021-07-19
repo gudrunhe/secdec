@@ -3,10 +3,10 @@
 from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # load c++ library
-    name = "triangle2L_case8_largeM"
+    name = "triangle2L_largem_ebr"
     intlib = IntegralLibrary(f"{name}/{name}_pylink.so")
     intlib.use_Qmc(transform="korobov3", fitfunction="polysingular", epsrel=1e-4, verbosity=1)
 

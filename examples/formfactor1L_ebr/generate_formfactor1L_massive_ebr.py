@@ -4,14 +4,14 @@ from pySecDec.code_writer import sum_package, make_package
 from pySecDec.make_regions import make_regions
 import pySecDec as psd
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Example 6 of Bernd Jantzen (arXiv:1111.2589)
 
     regions_generators = make_regions(
 
     # make_regions_args
-    name = 'formfactor1L_massive_expansion_by_regions',
+    name = 'formfactor1L_massive_ebr',
     integration_variables = ['x0','x1','x2'],
     regulators = ['n','eps'],
     requested_orders = [0,0],
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     polytope_from_sum_of=[0,1])
 
     # sum_package
-    sum_package('formfactor1L_massive_expansion_by_regions',
+    sum_package('formfactor1L_massive_ebr',
         regions_generators, regulators = ['n','eps'], requested_orders = [0,0],
         real_parameters = ['qsq','msq','z'],
         complex_parameters = [])

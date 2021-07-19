@@ -10,10 +10,10 @@ if __name__ == "__main__":
 
     # define Feynman Integral
     li = psd.loop_integral.LoopIntegralFromPropagators(
-    propagators = ['k1**2-msq','(k1+k2)**2-msq','(k1+p1)**2','k2**2','(k1+k2+p1)**2'],
+    propagators = ['k1**2-msq_','(k1+k2)**2-msq_','(k1+p1)**2','k2**2','(k1+k2+p1)**2'],
     loop_momenta = ['k1','k2'],
     external_momenta = ['p1'],
-    replacement_rules = [('p1*p1', 'psq'), ('msq','z*msq')])
+    replacement_rules = [('p1*p1', 'psq'), ('msq_','z*msq')])
 
     # find the regions and expand the integrals using expansion by regions
     regions_generator_args = loop_regions(

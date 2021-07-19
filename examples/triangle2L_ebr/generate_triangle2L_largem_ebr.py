@@ -4,12 +4,12 @@ from pySecDec.code_writer import sum_package
 from pySecDec.make_regions import make_regions
 from pySecDec.algebra import Polynomial
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     regions_generators = make_regions(
 
     # make_regions_args
-    name = 'triangle2L_case8_largeM',
+    name = 'triangle2L_largem_ebr',
     integration_variables = ['x0','x1','x2','x3','x4','x5'],
     regulators = ['eps'],
     requested_orders = [0],
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     polytope_from_sum_of=[0,1]
     )
 
-    sum_package('triangle2L_case8_largeM',
+    sum_package('triangle2L_largem_ebr',
         regions_generators, regulators = ['eps'], requested_orders = [0],
         real_parameters = ['s','msq','z'],
         complex_parameters = [])

@@ -5,7 +5,7 @@ import pySecDec as psd
 
 # example is I3tilde of hep-ph/9605392
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     li = psd.loop_integral.LoopIntegralFromPropagators(
     propagators = ['k1**2-msq','(k1+p1)**2-msq','(k1-k2)**2-msq','k2**2','(k2+p1)**2'],

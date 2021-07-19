@@ -30,7 +30,7 @@ def get_stu(p1,p2,p3):
     return fourproduct(_s,_s), fourproduct(_t,_t), fourproduct(_u,_u)
 
 # load c++ library
-name = "box1L_expansion_by_regions"
+name = "box1L_ebr"
 intlib = IntegralLibrary("{0}/{0}_pylink.so".format(name))
 intlib.use_Qmc(transform="korobov3", fitfunction="polysingular", verbosity=1)
 

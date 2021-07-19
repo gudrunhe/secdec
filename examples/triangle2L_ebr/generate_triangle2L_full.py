@@ -3,7 +3,7 @@
 from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # example is case 8 of hep-ph/9704353, hep-ph/9605392
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     loop_package(
 
-    name = 'triangle2L_case8_full',
+    name = 'triangle2L_full',
 
     loop_integral = li,
 

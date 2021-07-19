@@ -8,12 +8,12 @@ import pySecDec as psd
 
 # example is I3tilde of hep-ph/9605392
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     regions_generators = make_regions(
 
     # make_regions_args
-    name = 'bubble2L_largeM',
+    name = 'bubble2L_largem_ebr',
     integration_variables = ['x0','x1','x2','x3','x4'],
     regulators = ['eps'],
     requested_orders = [0],
@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     # generate code that will calculate the sum of all regions and all orders in
     # the smallness parameter
-    sum_package('bubble2L_largeM',
+    sum_package('bubble2L_largem_ebr',
         regions_generators, regulators = ['eps'],requested_orders = [0],
         real_parameters = ['psq','msq','z'],
         complex_parameters = [])

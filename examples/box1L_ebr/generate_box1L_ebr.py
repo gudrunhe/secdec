@@ -41,13 +41,13 @@ if __name__ == "__main__":
 
     # find the regions
     generators_args = loop_regions(
-        name = "box1L_expansion_by_regions",
+        name = "box1L_ebr",
         loop_integral=li,
         smallness_parameter = "mtsq",
         expansion_by_regions_order=0)
 
     # write the code to sum up the regions
-    sum_package("box1L_expansion_by_regions",
+    sum_package("box1L_ebr",
                 generators_args,
                 li.regulators,
                 requested_orders = [0,0],

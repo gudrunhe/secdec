@@ -3,16 +3,16 @@
 from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # load c++ library
-    triangle2L_case8_full = IntegralLibrary('triangle2L_case8_full/triangle2L_case8_full_pylink.so')
+    triangle2L_full = IntegralLibrary('triangle2L_full/triangle2L_full_pylink.so')
 
     # choose integrator
-    triangle2L_case8_full.use_Vegas(flags=2,epsrel=1e-3,epsabs=1e-10,nstart=5000, nincrease=10000, maxeval=10000000) # ``flags=2``: verbose --> see Cuba manual
+    triangle2L_full.use_Vegas(flags=2,epsrel=1e-3,epsabs=1e-10,nstart=5000, nincrease=10000, maxeval=10000000) # ``flags=2``: verbose --> see Cuba manual
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle2L_case8_full(number_of_presamples=1000000,deformation_parameters_maximum=0.5,real_parameters=[2.0, 1.0])
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = triangle2L_full(number_of_presamples=1000000,deformation_parameters_maximum=0.5,real_parameters=[2.0, 1.0])
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
