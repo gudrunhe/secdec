@@ -848,7 +848,11 @@ namespace secdecutil {
 
                         // stop iterating if soft limit passed
                         if(elapsed_time > soft_wall_clock_limit)
+                        {
+                            if(verbose)
+                                std::cerr << "elapsed_time > soft_wall_clock_limit: " << elapsed_time << " > " << soft_wall_clock_limit << ", no further refinements (ensure_wall_clock_limit)" << std::endl;
                             repeat = false;
+                        }
                         else
                             // keep iterating only if improvements are possible within the time limit
                             repeat = can_improve_in_time;
@@ -909,6 +913,11 @@ namespace secdecutil {
                                             if(verbose)
                                                 std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
                                                         term.integral->display_name << ", current integral result: " << result << ", increase n: " << old_n << " -> " <<new_n << std::endl;
+                                        } else {
+                                            if(verbose)
+                                                std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                                    term.integral->display_name << ", new_n <= old_n: " << new_n << " < " << old_n << " (ensure_min_prec)" << std::endl;
+
                                         }
                                     }
                                 }
@@ -941,10 +950,14 @@ namespace secdecutil {
                         abs_error_goal = max(abs_error_goal, sum.epsabs); // Do not request an error smaller than epsabs
 
                         if(verbose)
-                            std::cerr << std::endl << "sum: " << sum.display_name << ", current sum result: " << current_sum << ",  error goal: " << abs_error_goal<<std::endl;
-                        if(abs_error < abs_error_goal)
-                                return;
+                            std::cerr << std::endl << "sum: " << sum.display_name << ", current sum result: " << current_sum << ",  error goal: " << abs_error_goal << " (ensure_error_goal)" << std::endl;
 
+                        if(abs_error < abs_error_goal)
+                            {
+                                if(verbose)
+                                    std::cerr << "sum: " << sum.display_name << ", current sum result: " << current_sum << ", abs_error < abs_error_goal: " << abs_error << " < " << abs_error_goal << ", no further refinements (ensure_error_goal)" << std::endl;
+                                return;
+                            }
                         abs_error_goal *= abs_error_goal; // require variance rather than standard deviation in the following
 
 
@@ -963,6 +976,21 @@ namespace secdecutil {
                                 c.push_back(  -1  );
                             else
                                 c.push_back(  sqrt(time) / abserr  );
+
+                            if(verbose)
+                            {
+                                if(!term.integral->allow_refine)
+                                    std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                                term.integral->display_name << ", allow_refine = false, no further refinements (ensure_error_goal)" << std::endl;
+
+                                if(relerr < sum.max_epsrel)
+                                    std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                                term.integral->display_name << ", relerr < max_epsrel: " << relerr << " < " << max_epsrel << ", no further refinements (ensure_error_goal)" << std::endl;
+
+                                if(abserr < sum.max_epsabs)
+                                    std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                                term.integral->display_name << ", abserr < max_epsabs: " << abserr << " < " << max_epsabs << ", no further refinements (ensure_error_goal)" << std::endl;
+                            }
                         }
                         assert(c.size() == sum.summands.size());
 
@@ -1034,7 +1062,11 @@ namespace secdecutil {
                                         std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
                                                 term.integral->display_name << ", current integral result: " << term.integral->get_integral_result() <<
                                                 ", contribution to sum error: " << abs(term.integral->get_integral_result().uncertainty*term.coefficient) <<
-                                                ", increase n: " << curr_n << " -> " <<proposed_next_n << std::endl;
+                                                ", increase n: " << curr_n << " -> " <<proposed_next_n << " (ensure_error_goal)" << std::endl;
+                                } else {
+                                    if(verbose)
+                                        std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                                term.integral->display_name << ", proposed_next_n <= curr_n: " << proposed_next_n << " < " << curr_n << " (ensure_error_goal)" << std::endl;
                                 }
                             }
 
@@ -1043,7 +1075,7 @@ namespace secdecutil {
 
                 // Damp very large increase in number of points
                 std::function<void(sum_t&)> ensure_maxincreasefac =
-                    [] (sum_t& sum)
+                    [ this ] (sum_t& sum)
                     {
                         for(auto& term: sum.summands)
                         {
@@ -1053,7 +1085,14 @@ namespace secdecutil {
                             const unsigned long long int max_next_n = curr_n * sum.maxincreasefac; // implicit cast to unsigned long long int
 
                             if( next_n > max_next_n )
+                            {
                                 term.integral->set_next_number_of_function_evaluations( max_next_n, true );
+                                if(verbose)
+                                    std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
+                                            term.integral->display_name << ", current integral result: " << term.integral->get_integral_result() <<
+                                            ", contribution to sum error: " << abs(term.integral->get_integral_result().uncertainty*term.coefficient) <<
+                                            ", decreasing next_n: " << next_n << " -> max_next_n: " << max_next_n << " (ensure_maxincreasefac)" << std::endl;
+                            }
                         }
                     };
 
@@ -1113,12 +1152,19 @@ namespace secdecutil {
                 do {
                     repeat = false;
 
-                    secdecutil::deep_apply(expression, ensure_min_prec);
-                    secdecutil::deep_apply(expression, ensure_maxincreasefac);
-                    ensure_wall_clock_limit(repeat, integrals);
-
                     if(verbose)
                         std::cerr << std::endl << "computing integrals to satisfy min_epsrel " << this->min_epsrel << " or min_epsabs " << this->min_epsabs << std::endl;
+
+                    secdecutil::deep_apply(expression, ensure_min_prec);
+                    if(verbose)
+                        std::cerr << "ensure_error_goal requires further refinements: " << (repeat ? "true" : "false") << std::endl;
+                    secdecutil::deep_apply(expression, ensure_maxincreasefac);
+                    if(verbose)
+                        std::cerr << "ensure_maxincreasefac allows/requires further refinements: " << (repeat ? "true" : "false") << std::endl;
+                    ensure_wall_clock_limit(repeat, integrals);
+                    if(verbose)
+                        std::cerr << "ensure_wall_clock_limit allows/requires further refinements: " << (repeat ? "true" : "false") << std::endl;
+
                     evaluate_integrals<integrand_return_t>(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
                         std::cerr << "---------------------" << std::endl << std::endl;
@@ -1133,13 +1179,19 @@ namespace secdecutil {
                 // ensure the error goal of each sum is reached as good as possible under the given time constraint
                 do {
                     repeat = false;
-
-                    secdecutil::deep_apply(expression, ensure_error_goal);
-                    secdecutil::deep_apply(expression, ensure_maxincreasefac);
-                    ensure_wall_clock_limit(repeat, integrals);
-
                     if(verbose)
                         std::cerr << std::endl << "computing integrals to satisfy error goals on sums: epsrel " << this->epsrel << ", epsabs " << this->epsabs << std::endl;
+
+                    secdecutil::deep_apply(expression, ensure_error_goal);
+                    if(verbose)
+                        std::cerr << "ensure_error_goal requires further refinements: " << (repeat ? "true" : "false") << std::endl;
+                    secdecutil::deep_apply(expression, ensure_maxincreasefac);
+                    if(verbose)
+                        std::cerr << "ensure_maxincreasefac allows/requires further refinements: " << (repeat ? "true" : "false") << std::endl;
+                    ensure_wall_clock_limit(repeat, integrals);
+                    if(verbose)
+                        std::cerr << "ensure_wall_clock_limit allows/requires further refinements: " << (repeat ? "true" : "false") << std::endl;
+
                     evaluate_integrals<integrand_return_t>(integrals, verbose, number_of_threads, reset_cuda_after, changed_deformation_parameters_map);
                     if(verbose){
                         std::cerr << "---------------------" << std::endl << std::endl;
