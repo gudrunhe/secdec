@@ -9,7 +9,7 @@ class CheckQmcErrorMessages(unittest.TestCase):
         self.lib = IntegralLibrary('../one_integration_variable/one_integration_variable_pylink.so')
 
     def test_setting_errormode(self):
-        self.assertRaisesRegexp(ValueError, 'Unknown `errormode` "foo"', self.lib.use_Qmc, transform='korobov3', errormode='foo')
+        self.assertRaisesRegex(ValueError, 'Unknown `errormode` "foo"', self.lib.use_Qmc, transform='korobov3', errormode='foo')
 
         # test known errormodes
         self.lib.use_Qmc(errormode='default', transform='korobov3')
