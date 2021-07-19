@@ -19,6 +19,23 @@ namespace %(name)s
 {
     // whether or not to use contour deformation
     #define %(name)s_contour_deformation %(contour_deformation)i
+
+    // some information about the integral
+    // --{
+    const unsigned long long number_of_integrals = %(number_of_integrals)i;
+    const unsigned int number_of_amplitudes = %(number_of_amplitudes)i;
+
+    const unsigned int number_of_real_parameters = %(number_of_real_parameters)i;
+    const std::vector<std::string> names_of_real_parameters = {%(names_of_real_parameters)s};
+
+    const unsigned int number_of_complex_parameters = %(number_of_complex_parameters)i;
+    const std::vector<std::string> names_of_complex_parameters = {%(names_of_complex_parameters)s};
+
+    const unsigned int number_of_regulators = %(number_of_regulators)i;
+    const std::vector<std::string> names_of_regulators = {%(names_of_regulators)s};
+
+    const std::vector<int> requested_orders = {%(requested_orders)s};
+    // --}
     
     // basic data types
     // --{
@@ -43,6 +60,33 @@ namespace %(name)s
     typedef secdecutil::amplitude::WeightedIntegral<integral_t,integrand_return_t> weighted_integral_t;
     typedef std::vector<weighted_integral_t> sum_t;
     template<template<typename...> class container_t> using handler_t = secdecutil::amplitude::WeightedIntegralHandler<integrand_return_t,real_t,integrand_return_t,container_t>;
+    
+    #ifdef SECDEC_WITH_CUDA
+        #if %(name)s_contour_deformation
+            typedef secdecutil::CudaIntegrandContainerWithDeformation
+                    <
+                        real_t,complex_t,1/*maximal_number_of_functions*/,
+                        maximal_number_of_integration_variables,
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
+                    >
+                    cuda_integrand_t;
+            typedef cuda_integrand_t cuda_together_integrand_t;
+        #else
+            typedef secdecutil::CudaIntegrandContainerWithoutDeformation
+                    <
+                        real_t,complex_t,integrand_return_t,
+                        1/*maximal_number_of_functions*/,
+                        number_of_real_parameters,number_of_complex_parameters,
+                        %(name_as_char_pack)s
+                    >
+                    cuda_integrand_t;
+            typedef cuda_integrand_t cuda_together_integrand_t;
+        #endif
+        typedef cuda_integrand_t user_integrand_t;
+    #else
+        typedef integrand_t user_integrand_t;
+    #endif
     // --}
 
     // amplitude getter functions
@@ -90,49 +134,5 @@ namespace %(name)s
         );
     #endif
     // --}
-
-    // some information about the integral
-    // --{
-    const unsigned long long number_of_integrals = %(number_of_integrals)i;
-    const unsigned int number_of_amplitudes = %(number_of_amplitudes)i;
-
-    const unsigned int number_of_real_parameters = %(number_of_real_parameters)i;
-    const std::vector<std::string> names_of_real_parameters = {%(names_of_real_parameters)s};
-
-    const unsigned int number_of_complex_parameters = %(number_of_complex_parameters)i;
-    const std::vector<std::string> names_of_complex_parameters = {%(names_of_complex_parameters)s};
-
-    const unsigned int number_of_regulators = %(number_of_regulators)i;
-    const std::vector<std::string> names_of_regulators = {%(names_of_regulators)s};
-
-    const std::vector<int> requested_orders = {%(requested_orders)s};
-    // --}
-    
-    #ifdef SECDEC_WITH_CUDA
-        #if %(name)s_contour_deformation
-            typedef secdecutil::CudaIntegrandContainerWithDeformation
-                    <
-                        real_t,complex_t,1/*maximal_number_of_functions*/,
-                        maximal_number_of_integration_variables,
-                        number_of_real_parameters,number_of_complex_parameters,
-                        %(name_as_char_pack)s
-                    >
-                    cuda_integrand_t;
-            typedef cuda_integrand_t cuda_together_integrand_t;
-        #else
-            typedef secdecutil::CudaIntegrandContainerWithoutDeformation
-                    <
-                        real_t,complex_t,integrand_return_t,
-                        1/*maximal_number_of_functions*/,
-                        number_of_real_parameters,number_of_complex_parameters,
-                        %(name_as_char_pack)s
-                    >
-                    cuda_integrand_t;
-            typedef cuda_integrand_t cuda_together_integrand_t;
-        #endif
-        typedef cuda_integrand_t user_integrand_t;
-    #else
-        typedef integrand_t user_integrand_t;
-    #endif
 };
 #endif
