@@ -1070,8 +1070,7 @@ class IntegralLibrary(object):
             pass
 
         # set the default integrator (CQuad for 1D, Vegas otherwise)
-        self.use_Vegas()
-        self.use_CQuad()
+        self.use_Qmc()
 
     def __call__(
                      self, real_parameters=[], complex_parameters=[], together=True,
