@@ -2,13 +2,28 @@
 
 from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
+import numpy as np
 
-# load c++ library
+# the exact analytical result of the diagram
+def f(psq,msq):
+    msq = complex(msq)
+    return 1/psq*(np.log(-psq/msq)+np.log(1-msq/psq))
+
+# the numerical value of the taylor series to some order of the exact result
+def fapprox(psq,msq,order):
+    msq = complex(msq)
+    s = 0
+    for j in range(1,1+order):
+        s -= pow(msq/psq,j)/j
+    return (s+np.log(-psq/msq))/psq
+
 psq, msq = 4, 0.002
 names = ["bubble1L_dotted_z", "bubble1L_dotted_m"]
 real_parameters = [[psq,msq,1], [psq,msq]] # z set to 1
 
 for name, realp in zip(names, real_parameters):
+
+    # load c++ library
     intlib = IntegralLibrary("{0}/{0}_pylink.so".format(name))
     intlib.use_Qmc(transform="korobov3", fitfunction="polysingular")
 
@@ -28,3 +43,9 @@ for name, realp in zip(names, real_parameters):
         valreal, valimg = integral_result.coeff('eps',power).coeff('value').as_real_imag()
         errreal, errimg = integral_result.coeff('eps',power).coeff('error').as_real_imag()
         print("eps^{:<2} {: .5f}{:+.5f}*I +/- {: .5e}{:+.5e}*I".format(power,float(valreal),float(valimg),float(errreal),float(errimg)))
+
+    order = 1
+    print("psq, msq: {}, {}".format(psq,msq))
+    print("exact result: {:.5f}".format(f(psq,msq)))
+    print("approximate result to order {}: {:.5f}".format(order,fapprox(psq,msq,order)))
+    print()
