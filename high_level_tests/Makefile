@@ -11,7 +11,7 @@ ALL_EXAMPLES=$(shell ls -d *[!test_suite]*/ | sed s\#/\#\#)
 .PHONY : runtests
 runtests : $(ALL_EXAMPLES)
 
-# Runing selection
+# Running selection
 # ----------------
 SELECTED_TESTS = regulator_in_powerlist bubble1L_dot_rank4 tadpole2L_rank2 userdefined_cpp
 .PHONY : runselected
