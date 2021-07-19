@@ -519,8 +519,8 @@ class Qmc(CPPIntegrator):
         The name of a set of generating vectors.
         The possible choices correspond to the available generating
         vectors of the underlying Qmc implementation. Possible values
-        are ``"default"``, ``"cbcpt_dn1_100"``,
-        ``"cbcpt_dn2_6"`` and ``"cbcpt_cfftw1_6"``.
+        are ``"default"``, ``"cbcpt_dn1_100"``, ``"cbcpt_dn2_6"``,
+        ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``.
 
     .. seealso::
         The most important options are described in
@@ -625,8 +625,8 @@ class CudaQmc(object):
         The name of a set of generating vectors.
         The possible choices correspond to the available generating
         vectors of the underlying Qmc implementation. Possible values
-        are ``"default"``, ``"cbcpt_dn1_100"``,
-        ``"cbcpt_dn2_6"`` and ``"cbcpt_cfftw1_6"``.
+        are ``"default"``, ``"cbcpt_dn1_100"``, ``"cbcpt_dn2_6"``,
+        ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``.
 
     The other options are defined in the Qmc docs. If
     an argument is set to 0 then the default of the
