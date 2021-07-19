@@ -44,6 +44,9 @@ namespace secdecutil {
                     throw cuda_error( cudaGetErrorString(error) );
             };
         #endif
+    
+        // this error is thrown if a lattice larger than those available in the qmc is requested
+        struct qmc_largest_lattice_error : public std::domain_error { using std::domain_error::domain_error; };
 
         template<typename integrand_return_t, typename real_t>
         class Integral
@@ -61,6 +64,7 @@ namespace secdecutil {
                 typedef real_t real_t_type;
                 std::string display_name = "INTEGRAL"; // used as an user readable name for the integral
                 int id; // used for user output, so that the integral can be identified more easier in thousands of integrals, without going through the names
+                bool allow_refine = true; // indicates whether the integral can be improved with further iterations
 
                 /*
                  * constructor
@@ -114,7 +118,7 @@ namespace secdecutil {
                 virtual void compute_impl() = 0; // implementation should populate "integral_result"
                 void compute()
                 {
-                    if(next_number_of_function_evaluations > number_of_function_evaluations) {
+                    if(allow_refine && (next_number_of_function_evaluations > number_of_function_evaluations)) {
                         auto start_time = std::chrono::steady_clock::now();
                         compute_impl();
                         auto end_time = std::chrono::steady_clock::now();
@@ -149,16 +153,15 @@ namespace secdecutil {
 
                 unsigned long long int desired_next_n = this->get_next_number_of_function_evaluations();
                 unsigned long long int next_n = qmc->get_next_n(desired_next_n);
-                if(next_n < desired_next_n)
-                    throw std::domain_error("class QmcIntegral: The requested number_of_function_evaluations ("
-                        + std::to_string(desired_next_n) + ") exceeds the largest available lattice ("
-                        + std::to_string(next_n) +").");
-                this->set_next_number_of_function_evaluations( next_n ); // set number of function evluations to the next larger lattice
+
+                // set number of function evaluations to the next larger lattice (allow decrease, e.g. if next_number_of_function_evaluations > largest lattice)
+                this->set_next_number_of_function_evaluations( next_n, true );
+
                 qmc->minn = next_n; // set lattice size, ignore random shifts "minm"
                 qmc->maxeval = 1; // make "qmc" ignore epsrel and epsabs
 
                 secdecutil::UncorrelatedDeviation<integrand_return_t> new_result = qmc->integrate(this->integrand); // run the numerical integration
-
+                
                 try {
                     integrand_return_t old_error = this->get_integral_result().uncertainty;
                     if(abs(old_error) > abs(new_result.uncertainty))
@@ -166,6 +169,15 @@ namespace secdecutil {
                 } catch (const integral_not_computed_error&) {
                     this->integral_result = std::move(new_result);
                 };
+
+                if(next_n < desired_next_n)
+                {
+                    this->allow_refine = false; //don't iterate with same/smaller lattice
+                    // warn user that they require too many function evaluations, we return the result from the largest lattice
+                    throw qmc_largest_lattice_error("WARNING class QmcIntegral: The requested number_of_function_evaluations ("
+                        + std::to_string(desired_next_n) + ") exceeds the largest available lattice ("
+                        + std::to_string(next_n) +"), using largest available lattice.");
+                }
             }
         };
 
@@ -199,7 +211,8 @@ namespace secdecutil {
             {
                 integrator->statefiles = statefiles;
 
-                if(integrator->integrator_type == 3 and this->get_number_of_function_evaluations() !=0 ) return; //don't iterate with Divonne
+                if(integrator->integrator_type == 3)
+                    this->allow_refine = false; //don't iterate with Divonne
                 
                 if(integrator->integrator_type != 3) // Divonne
                 {
@@ -247,8 +260,8 @@ namespace secdecutil {
 
             void compute_impl() override
             {
-                if(this->get_number_of_function_evaluations() !=0 ) return; //don't iterate with CQuad
-                
+                this->allow_refine = false; //don't iterate with CQuad
+
                 unsigned long long int next_n = this->get_next_number_of_function_evaluations();
                 
                 this->integral_result = integrator->integrate(this->integrand); // run the numerical integration
@@ -280,6 +293,8 @@ namespace secdecutil {
 
             void compute_impl() override
             {
+                this->allow_refine = false; //don't iterate with MultiIntegrator
+                
                 unsigned long long int next_n = this->get_next_number_of_function_evaluations();
 
                 this->integral_result = integrator->integrate(this->integrand); // run the numerical integration
@@ -532,6 +547,11 @@ namespace secdecutil {
                             if(not changed_deformation_parameters){
                                 throw std::runtime_error("All deformation parameters at minimum already, integral still fails.");
                             }
+                        } catch(qmc_largest_lattice_error& e)
+                        {
+                            if(verbose)
+                                std::cerr << e.what() << std::endl;
+                            break;
                         }
                         if(not failed){
                             if(failed_atleast_once){
@@ -871,7 +891,7 @@ namespace secdecutil {
                     {
                         for (term_t& term : sum.summands)
                         {
-                            if(term.integral->get_number_of_function_evaluations() < sum.maxeval)
+                            if(term.integral->allow_refine && term.integral->get_number_of_function_evaluations() < sum.maxeval)
                             {
                                 secdecutil::UncorrelatedDeviation<integrand_return_t> result = term.integral->get_integral_result();
                                 real_t abserr = abs(result.uncertainty);
@@ -923,7 +943,7 @@ namespace secdecutil {
                         if(verbose)
                             std::cerr << std::endl << "sum: " << sum.display_name << ", current sum result: " << current_sum << ",  error goal: " << abs_error_goal<<std::endl;
                         if(abs_error < abs_error_goal)
-                            return;
+                                return;
 
                         abs_error_goal *= abs_error_goal; // require variance rather than standard deviation in the following
 
@@ -939,7 +959,7 @@ namespace secdecutil {
                             abserr *= abs(term.coefficient); // contribution to total error of the sum
 
 
-                            if(relerr < sum.max_epsrel || abserr < sum.max_epsabs)
+                            if(!term.integral->allow_refine || relerr < sum.max_epsrel || abserr < sum.max_epsabs)
                                 c.push_back(  -1  );
                             else
                                 c.push_back(  sqrt(time) / abserr  );
@@ -1010,10 +1030,10 @@ namespace secdecutil {
                                 if(proposed_next_n > curr_n)
                                 {
                                     repeat = true;
-                                    if (verbose)
+                                    if(verbose)
                                         std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
-                                                term.integral->display_name << ", current integral result: " << term.integral->get_integral_result() << 
-                                                ", contribution to sum error: " << abs(term.integral->get_integral_result().uncertainty*term.coefficient) << 
+                                                term.integral->display_name << ", current integral result: " << term.integral->get_integral_result() <<
+                                                ", contribution to sum error: " << abs(term.integral->get_integral_result().uncertainty*term.coefficient) <<
                                                 ", increase n: " << curr_n << " -> " <<proposed_next_n << std::endl;
                                 }
                             }
