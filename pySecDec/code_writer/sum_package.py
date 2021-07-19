@@ -392,11 +392,9 @@ def sum_package(name, package_generators, regulators, requested_orders,
         )
 
     # check if complex return type required
-    need_complex = len(complex_parameters) > 0 or any(
-        g.enforce_complex or g.contour_deformation_polynomial
-        for g in package_generators
-    )
-
+    enforce_complex = any(g.enforce_complex for g in package_generators)
+    contour_deformation = any(g.contour_deformation_polynomial for g in package_generators)
+    need_complex = len(complex_parameters) > 0 or enforce_complex or contour_deformation
 
     replacements_in_files = {
                                 'name' : name,
@@ -406,6 +404,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
                                 'names_of_real_parameters' : make_cpp_list(real_parameters),
                                 'number_of_complex_parameters' : len(complex_parameters),
                                 'names_of_complex_parameters' : make_cpp_list(complex_parameters),
+                                'have_complex_parameters': len(complex_parameters) > 0,
                                 'number_of_amplitudes' : len(coefficients),
                                 'integral_names' : sub_integral_names,
                                 'integral_initialization' : integral_initialization,
@@ -427,7 +426,10 @@ def sum_package(name, package_generators, regulators, requested_orders,
                                 'pylink_qmc_instantiate_amplitude_integral': '\n        '.join(pylink_qmc_instantiate_amplitude_integral_rules),
                                 'pylink_qmc_externs': ' '.join(pylink_qmc_extern_rules),
                                 'pylink_qmc_cases': ' '.join(pylink_qmc_case_rules),
-                                'need_complex': int(bool(need_complex))
+                                'need_complex': int(bool(need_complex)),
+                                'enforce_complex': int(bool(enforce_complex)),
+                                'enforce_complex_return_type': int(bool(enforce_complex)),  # make sure that this is either ``0`` or ``1``
+                                'contour_deformation': int(bool(contour_deformation))
     }
     filesystem_replacements = {
                                   'integrate_name.cpp' : 'integrate_' + name + '.cpp',
@@ -462,7 +464,6 @@ def sum_package(name, package_generators, regulators, requested_orders,
 
         # call package generator for every integral
         number_of_integration_variables = 0
-        contour_deformation = 0
         template_replacements = {}
         for j, package_generator in enumerate(package_generators):
             sub_name = package_generator.name
@@ -504,12 +505,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
             # Compute maximal number of integration variables
             number_of_integration_variables = max(number_of_integration_variables,template_replacements['number_of_integration_variables'])
 
-            # Enable contour deformation if any integral requires it
-            if template_replacements['contour_deformation']:
-                contour_deformation = 1
-
         replacements_in_files['number_of_integration_variables'] = number_of_integration_variables
-        replacements_in_files['contour_deformation'] = contour_deformation
 
     finally:
         os.chdir(original_working_directory)

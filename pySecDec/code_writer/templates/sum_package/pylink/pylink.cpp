@@ -9,7 +9,18 @@
 
 #define INTEGRAL_NAME %(name)s
 
-#define integral_need_complex %(need_complex)i 
+// whether or not to use contour deformation
+#define integral_contour_deformation %(contour_deformation)i
+
+// whether or not complex parameters are present
+#define integral_has_complex_parameters %(have_complex_parameters)i
+
+// whether or not the return type should be complex in any case
+#define integral_enforce_complex_return_type %(enforce_complex_return_type)i
+
+#if integral_has_complex_parameters || integral_contour_deformation || integral_enforce_complex_return_type
+    #define integral_need_complex 1
+#endif
 
 #include <secdecutil/pylink.hpp> // The python-C binding is general and therefore contained in the util
 #include <secdecutil/pylink_amplitude.hpp>
@@ -484,4 +495,7 @@ enum qmc_generatingvectors_t : int
 #undef SET_COMMON_QMC_ARGS
 #undef SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
 
+#undef integral_contour_deformation
+#undef integral_has_complex_parameters
+#undef integral_enforce_complex_return_type
 #undef integral_need_complex

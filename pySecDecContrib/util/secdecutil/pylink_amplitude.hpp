@@ -116,7 +116,7 @@ extern "C"
                                                                                           complex_parameters,
                                                                                           std::string(lib_path),
                                                                                           integrator
-                                                                                          #if integral_need_complex
+                                                                                          #if integral_contour_deformation
                                                                                               , number_of_presamples,
                                                                                               deformation_parameters_maximum,
                                                                                               deformation_parameters_minimum,
@@ -227,7 +227,7 @@ extern "C"
                                                                                               complex_parameters,
                                                                                               std::string(lib_path),
                                                                                               separate_integrator
-                                                                                              #if integral_need_complex
+                                                                                              #if integral_contour_deformation
                                                                                                   , number_of_presamples,
                                                                                                   deformation_parameters_maximum,
                                                                                                   deformation_parameters_minimum,

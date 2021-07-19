@@ -13,6 +13,10 @@
 // whether or not the return type should be complex in any case
 #define integral_enforce_complex_return_type %(enforce_complex_return_type)i
 
+#if integral_has_complex_parameters || integral_contour_deformation || integral_enforce_complex_return_type
+    #define integral_need_complex 1
+#endif
+
 #include <secdecutil/pylink.hpp> // The python-C binding is general and therefore contained in the util
 #include <secdecutil/pylink_integral.hpp>
 
@@ -489,3 +493,4 @@ enum qmc_generatingvectors_t : int
 #undef integral_contour_deformation
 #undef integral_has_complex_parameters
 #undef integral_enforce_complex_return_type
+#undef integral_need_complex
