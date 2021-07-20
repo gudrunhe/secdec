@@ -1235,7 +1235,7 @@ class IntegralLibrary(object):
     def use_Qmc(self, *args, **kwargs):
         if hasattr(self.c_lib,'allocate_integrators_Qmc'):
             self._cuda = False
-            self.integrator = Qmc(self,*args,**kwargs)
+            self.high_dimensional_integrator = self.integrator = Qmc(self,*args,**kwargs)
         else:
             self._cuda = True
-            self.integrator = CudaQmc(self,*args,**kwargs)
+            self.high_dimensional_integrator = self.integrator = CudaQmc(self,*args,**kwargs)
