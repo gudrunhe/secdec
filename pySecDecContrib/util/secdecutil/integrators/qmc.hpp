@@ -50,7 +50,29 @@ namespace secdecutil
             using Integrator<return_t,return_t,container_t>::integrate;
             static constexpr bool cuda_compliant_integrator = true;
 
-            Qmc(){};
+            Qmc(){
+                // concat relevant generating vectors by default
+                std::map<U,std::vector<U>> default_generatingvectors;
+                std::map<U,std::vector<U>> next_map;
+                if(maxdim<=6)
+                {
+                    next_map = ::integrators::generatingvectors::cbcpt_dn2_6();
+                    default_generatingvectors.insert(next_map.begin(), next_map.end());
+                    next_map = ::integrators::generatingvectors::cbcpt_cfftw1_6();
+                    default_generatingvectors.insert(next_map.begin(), next_map.end());
+                }
+                if(maxdim<=10)
+                {
+                    next_map = ::integrators::generatingvectors::cbcpt_cfftw2_10();
+                    default_generatingvectors.insert(next_map.begin(), next_map.end());
+                }
+                if(maxdim<=100)
+                {
+                    next_map = ::integrators::generatingvectors::cbcpt_dn1_100();
+                    default_generatingvectors.insert(next_map.begin(), next_map.end());
+                }
+                this->generatingvectors = default_generatingvectors;
+            };
 
             template<typename original_container_t>
             Qmc( const Qmc<return_t,maxdim,transform_t,original_container_t,fitfunction_t>& original) : Integrator<return_t,return_t,container_t>(), ::integrators::Qmc<return_t,return_t,maxdim,transform_t,fitfunction_t>(original)
@@ -85,7 +107,29 @@ namespace secdecutil
             using Integrator<return_t,return_t,container_t>::integrate;
             static constexpr bool cuda_compliant_integrator = true;
 
-            Qmc(){};
+            Qmc(){
+                // concat relevant generating vectors by default
+                std::map<U,std::vector<U>> default_generatingvectors;
+                std::map<U,std::vector<U>> next_map;
+                if(maxdim<=6)
+                {
+                    next_map = ::integrators::generatingvectors::cbcpt_dn2_6();
+                    default_generatingvectors.insert(next_map.begin(), next_map.end());
+                    next_map = ::integrators::generatingvectors::cbcpt_cfftw1_6();
+                    default_generatingvectors.insert(next_map.begin(), next_map.end());
+                }
+                if(maxdim<=10)
+                {
+                    next_map = ::integrators::generatingvectors::cbcpt_cfftw2_10();
+                    default_generatingvectors.insert(next_map.begin(), next_map.end());
+                }
+                if(maxdim<=100)
+                {
+                    next_map = ::integrators::generatingvectors::cbcpt_dn1_100();
+                    default_generatingvectors.insert(next_map.begin(), next_map.end());
+                }
+                this->generatingvectors = default_generatingvectors;
+            };
 
             template<typename original_container_t>
             Qmc( const Qmc<return_t,maxdim,transform_t,original_container_t>& original) : Integrator<return_t,return_t,container_t>(), ::integrators::Qmc<return_t,return_t,maxdim,transform_t>(original)
@@ -120,7 +164,29 @@ namespace secdecutil
             public: \
                 using Integrator<complex_template<return_t>, return_t, container_t>::integrate; \
                 static constexpr bool cuda_compliant_integrator = true; \
-                Qmc() { this->together = true; }; \
+                Qmc() { \
+                    this->together = true; \
+                    std::map<U,std::vector<U>> default_generatingvectors; \
+                    std::map<U,std::vector<U>> next_map; \
+                    if(maxdim<=6) \
+                    { \
+                        next_map = ::integrators::generatingvectors::cbcpt_dn2_6(); \
+                        default_generatingvectors.insert(next_map.begin(), next_map.end()); \
+                        next_map = ::integrators::generatingvectors::cbcpt_cfftw1_6(); \
+                        default_generatingvectors.insert(next_map.begin(), next_map.end()); \
+                    } \
+                    if(maxdim<=10) \
+                    { \
+                        next_map = ::integrators::generatingvectors::cbcpt_cfftw2_10(); \
+                        default_generatingvectors.insert(next_map.begin(), next_map.end()); \
+                    } \
+                    if(maxdim<=100) \
+                    { \
+                        next_map = ::integrators::generatingvectors::cbcpt_dn1_100(); \
+                        default_generatingvectors.insert(next_map.begin(), next_map.end()); \
+                    } \
+                    this->generatingvectors = default_generatingvectors; \
+                }; \
                 template<typename original_container_t> \
                 Qmc( const Qmc<complex_template<return_t>,maxdim,transform_t,original_container_t,fitfunction_t>& original) : \
                     Integrator<complex_template<return_t>,return_t,container_t>(), \
@@ -138,7 +204,29 @@ namespace secdecutil
             public: \
                 using Integrator<complex_template<return_t>, return_t, container_t>::integrate; \
                 static constexpr bool cuda_compliant_integrator = true; \
-                Qmc() { this->together = true; }; \
+                Qmc() { \
+                    this->together = true; \
+                    std::map<U,std::vector<U>> default_generatingvectors; \
+                    std::map<U,std::vector<U>> next_map; \
+                    if(maxdim<=6) \
+                    { \
+                        next_map = ::integrators::generatingvectors::cbcpt_dn2_6(); \
+                        default_generatingvectors.insert(next_map.begin(), next_map.end()); \
+                        next_map = ::integrators::generatingvectors::cbcpt_cfftw1_6(); \
+                        default_generatingvectors.insert(next_map.begin(), next_map.end()); \
+                    } \
+                    if(maxdim<=10) \
+                    { \
+                        next_map = ::integrators::generatingvectors::cbcpt_cfftw2_10(); \
+                        default_generatingvectors.insert(next_map.begin(), next_map.end()); \
+                    } \
+                    if(maxdim<=100) \
+                    { \
+                        next_map = ::integrators::generatingvectors::cbcpt_dn1_100(); \
+                        default_generatingvectors.insert(next_map.begin(), next_map.end()); \
+                    } \
+                    this->generatingvectors = default_generatingvectors; \
+                }; \
                 template<typename original_container_t> \
                 Qmc( const Qmc<complex_template<return_t>,maxdim,transform_t,original_container_t>& original) : \
                     Integrator<complex_template<return_t>,return_t,container_t>(), \

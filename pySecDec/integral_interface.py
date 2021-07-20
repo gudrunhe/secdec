@@ -522,6 +522,10 @@ class Qmc(CPPIntegrator):
         are ``"default"``, ``"cbcpt_dn1_100"``, ``"cbcpt_dn2_6"``,
         ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``.
 
+        The ``"default"`` value will use all available generating
+        vectors suitable for the highest dimension integral
+        appearing in the library.
+
     .. seealso::
         The most important options are described in
         :numref:`chapter_cpp_qmc`.
