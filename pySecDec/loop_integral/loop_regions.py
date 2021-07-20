@@ -229,7 +229,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
 
         # make_package_args
         polynomial_names = polynomial_names,
-        prefactor = loop_integral.Gamma_factor,
+        prefactor = sympify_expression(additional_prefactor) * loop_integral.Gamma_factor,
 
         contour_deformation_polynomial = 'F' if contour_deformation else None,
         positive_polynomials = ['U'],
