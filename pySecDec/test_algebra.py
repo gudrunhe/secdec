@@ -575,6 +575,14 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         self.assertRaisesRegexp(TypeError, "\'x\*y\' is not.*symbol", Polynomial.from_expression, 'a*x + b*y + c*x**2*y', [x,x*y])
         self.assertRaisesRegexp(TypeError, "polysymbols.*at least one.*symbol", Polynomial.from_expression, 'a*x + b*y + c*x**2*y', [])
 
+    def test_negative_exponent(self):
+        vars = ['x','y']
+        p1 = Polynomial.from_expression('A*y**-1*x + B*x*y*x**-2 + C*y**-1', vars)
+        p2 = Polynomial([[1,-1],[-1,1],[0,-1]],['A','B','C'],vars)
+        np.testing.assert_array_equal(p1.coeffs, p2.coeffs)
+        np.testing.assert_array_equal(p1.expolist, p2.expolist)
+        np.testing.assert_array_equal(p1.polysymbols, p2.polysymbols)
+
 class TestExponentiatedPolynomial(unittest.TestCase):
     def test_init(self):
         ExponentiatedPolynomial([(1,2),(1,0),(2,1)], ['x',2,3])

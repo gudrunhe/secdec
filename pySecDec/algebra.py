@@ -444,8 +444,11 @@ class Polynomial(_Expression):
             if not symbol.is_Symbol:
                 raise TypeError("'%s' is not a symbol" % symbol)
 
-        sympy_poly = sp.poly(expression, polysymbols)
-        expolist = sympy_poly.monoms()
+        polysymbols_pm = polysymbols + [1/symbol for symbol in polysymbols]
+
+        sympy_poly = sp.poly(expression, polysymbols_pm)
+        expolist = np.array(sympy_poly.monoms())
+        expolist = np.subtract(*np.split(expolist, 2, axis=1))
         coeffs = sympy_poly.coeffs()
         return Polynomial(expolist, coeffs, polysymbols)
 
