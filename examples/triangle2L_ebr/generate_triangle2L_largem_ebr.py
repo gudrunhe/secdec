@@ -1,36 +1,37 @@
 #!/usr/bin/env python3
 
+from pySecDec.loop_integral import LoopIntegralFromPropagators
+from pySecDec.loop_integral import loop_regions
 from pySecDec.code_writer import sum_package
-from pySecDec.make_regions import make_regions
-from pySecDec.algebra import Polynomial
 
 if __name__ == "__main__":
 
-    regions_generators = make_regions(
-
-    # make_regions_args
-    name = 'triangle2L_largem_ebr',
-    integration_variables = ['x0','x1','x2','x3','x4','x5'],
-    regulators = ['eps'],
-    requested_orders = [0],
-    smallness_parameter = 'z',
-    polynomials_to_decompose = ['(x4*x5 + x3*x5 + x2*x5 + x1*x5 + x1*x4 + x1*x3 + x1*x2 + x0*x5 + x0*x4 + x0*x3 + x0*x2)**(3*eps)','( + (msq)*x4*x5**2 + (msq)*x3*x5**2 + (msq)*x2*x5**2 + (-z*s)*x2*x3*x5 + (msq)*x1*x5**2 + (msq)*x1*x4*x5 + (msq)*x1*x3*x5 + (msq - z*s)*x1*x2*x5 + (-z*s)*x1*x2*x3 + (msq)*x0*x5**2 + (msq)*x0*x4*x5 + (msq - z*s)*x0*x3*x5 + (msq)*x0*x2*x5 + (-z*s)*x0*x2*x3 + (-z*s)*x0*x1*x5 + (-z*s)*x0*x1*x4 + (-z*s)*x0*x1*x3 + (-z*s)*x0*x1*x2)**(-2*eps - 2)'],
-    expansion_by_regions_order = 0,
-    real_parameters = ['s','msq','z'],
-    complex_parameters = [],
-
-    # make_package_args
-    form_work_space = '2G',
-    polynomial_names = ['U','F'],
-    contour_deformation_polynomial = 'F',
-    positive_polynomials = ['U'],
-    #prefactor = '''gamma(1-2*eps)/(gamma(1+eps)*gamma(1+eps)*gamma(1-eps)*gamma(1-eps))*msq**(2+2*eps)''',
-    #prefactor = '''gamma(2+2*eps)''',
-    decomposition_method = 'geometric',
-    polytope_from_sum_of=[0,1]
+    # this object represents the Feynman graph
+    li = LoopIntegralFromPropagators(
+            propagators = ['(k1+p1)**2','(k1-p2)**2','(k2+p1)**2','(k2-p2)**2','k2**2','(k1-k2)**2-msq_'],
+            loop_momenta = ['k1','k2'],
+            external_momenta = ['p1','p2'],
+                replacement_rules = [
+                                        ('p1*p1', 0),
+                                        ('p2*p2', 0),
+                                        ('p1*p2', 's/2'),
+                                        ('msq_', 'msq/z')
+                                    ]
     )
+    
+    # find the regions
+    generators_args = loop_regions(
+        name = 'triangle2L_largem_ebr',
+        loop_integral = li,
+        smallness_parameter = 'z',
+        expansion_by_regions_order = 1,
+        additional_prefactor = '1/gamma(2+2*eps)',
+        decomposition_method = 'geometric')
 
+    # write the code to sum up the regions
     sum_package('triangle2L_largem_ebr',
-        regions_generators, regulators = ['eps'], requested_orders = [0],
-        real_parameters = ['s','msq','z'],
-        complex_parameters = [])
+                generators_args,
+                li.regulators,
+                requested_orders = [0],
+                real_parameters = ['s','msq','z'],
+                complex_parameters = [])
