@@ -1,36 +1,39 @@
 #!/usr/bin/env python3
 
-from pySecDec.code_writer import sum_package, make_package
-from pySecDec.make_regions import make_regions
+from pySecDec import sum_package
+from pySecDec.loop_integral import loop_regions
 import pySecDec as psd
 
 if __name__ == "__main__":
 
     # Example 6 of Bernd Jantzen (arXiv:1111.2589)
+    
+    
+    li = psd.loop_integral.LoopIntegralFromGraph(
+        internal_lines = [['0',[1,3]],['0',[2,3]],['m',[1,2]]],
+        external_lines = [['p1',1],['p2',2],['p3',3]],
+        powerlist=['1+n/2','1+n/3','1'],
+        regulators=['eps','n'],
+        replacement_rules = [
+                            ('p1*p1', '0'),
+                            ('p2*p2', '0'),
+                            ('p3*p3', '-qsq'),
+                            ('m**2', 'z*msq')
+                            ]
+    )
+                        
+    # find the regions
+    generators_args = loop_regions(
+        name = 'formfactor1L_massive_ebr',
+        loop_integral=li,
+        smallness_parameter = 'z',
+        expansion_by_regions_order=0,
+        decomposition_method = 'geometric')
 
-    regions_generators = make_regions(
-
-    # make_regions_args
-    name = 'formfactor1L_massive_ebr',
-    integration_variables = ['x0','x1','x2'],
-    regulators = ['n','eps'],
-    requested_orders = [0,0],
-    smallness_parameter = 'z',
-    polynomials_to_decompose = ['(x0+x1+x2)**((1+n/2)+(1+n/3)-3+2*eps)','((z*msq)*x2*(x0+x1+x2)+(qsq)*x0*x1)**(-(1+n/2)-(1+n/3)+1-eps)','x0**(n/2)','x1**(n/3)'],
-    expansion_by_regions_order = 0,
-    real_parameters = ['qsq','msq','z'],
-    complex_parameters = [],
-
-    # make_package_args
-    polynomial_names = ['U','F'],
-    contour_deformation_polynomial = 'F',
-    positive_polynomials = ['U'],
-    prefactor = '-gamma(eps + 1)', # limits n->0 already taken in prefactor
-    decomposition_method = 'geometric',
-    polytope_from_sum_of=[0,1])
-
-    # sum_package
+    # write the code to sum up the regions
     sum_package('formfactor1L_massive_ebr',
-        regions_generators, regulators = ['n','eps'], requested_orders = [0,0],
-        real_parameters = ['qsq','msq','z'],
-        complex_parameters = [])
+                generators_args,
+                li.regulators,
+                requested_orders = [0,0],
+                real_parameters = ['qsq','msq','z'],
+                complex_parameters = [])
