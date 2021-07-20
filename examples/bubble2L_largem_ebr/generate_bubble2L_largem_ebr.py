@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-from pySecDec.code_writer import make_package, sum_package
-from pySecDec.make_regions import make_regions
-from pySecDec.algebra import Polynomial
+from pySecDec.loop_integral import loop_regions
+from pySecDec.code_writer import sum_package, make_package
+import pySecDec as psd
 
 import pySecDec as psd
 
@@ -10,31 +10,24 @@ import pySecDec as psd
 
 if __name__ == "__main__":
 
-    regions_generators = make_regions(
+    # define Feynman Integral
+    li = psd.loop_integral.LoopIntegralFromPropagators(
+    propagators = ['k1**2-msq_','(k1+p1)**2-msq_','(k1-k2)**2-msq_','k2**2','(k2+p1)**2'],
+    loop_momenta = ['k1','k2'],
+    external_momenta = ['p1'],
+    replacement_rules = [('p1*p1', 'psq'), ('msq_','msq/z')])
 
-    # make_regions_args
-    name = 'bubble2L_largem_ebr',
-    integration_variables = ['x0','x1','x2','x3','x4'],
-    regulators = ['eps'],
-    requested_orders = [0],
-    smallness_parameter = 'z',
-    polynomials_to_decompose = ['(x2*x4 + x2*x3 + x1*x4 + x1*x3 + x1*x2 + x0*x4 + x0*x3 + x0*x2)**(3*eps - 1)','((-z*psq)*x2*x3*x4 + (msq)*x2**2*x4 + (msq)*x2**2*x3 + (-z*psq)*x1*x3*x4 + (2*msq)*x1*x2*x4 + (2*msq - z*psq)*x1*x2*x3 + (msq)*x1*x2**2 + (msq)*x1**2*x4 + (msq)*x1**2*x3 + (msq)*x1**2*x2 + (-z*psq)*x0*x3*x4 + (2*msq - z*psq)*x0*x2*x4 + (2*msq)*x0*x2*x3 + (msq)*x0*x2**2 + (2*msq - z*psq)*x0*x1*x4 + (2*msq - z*psq)*x0*x1*x3 + (2*msq - z*psq)*x0*x1*x2 + (msq)*x0**2*x4 + (msq)*x0**2*x3 + (msq)*x0**2*x2)**(-2*eps - 1)'],
-    expansion_by_regions_order = 1,
-    real_parameters = ['psq','msq','z'],
-    complex_parameters = [],
-
-    # make_package_args
-    polynomial_names = ['U','F'],
-    contour_deformation_polynomial = 'F',
-    positive_polynomials = ['U'],
-    #prefactor = '-1',
-    decomposition_method = 'iterative',
-    polytope_from_sum_of=[0,1]
-    )
+    # find the regions and expand the integrals using expansion by regions
+    regions_generator_args = loop_regions(
+        name = 'bubble2L_largem_ebr',
+        loop_integral = li,
+        smallness_parameter = 'z',
+        additional_prefactor = '-1',
+        expansion_by_regions_order = 1)
 
     # generate code that will calculate the sum of all regions and all orders in
     # the smallness parameter
     sum_package('bubble2L_largem_ebr',
-        regions_generators, regulators = ['eps'],requested_orders = [0],
+        regions_generator_args, regulators = ['eps'],requested_orders = [0],
         real_parameters = ['psq','msq','z'],
         complex_parameters = [])
