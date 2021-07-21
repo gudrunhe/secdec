@@ -45,9 +45,6 @@ namespace secdecutil {
             };
         #endif
     
-        // this error is thrown if a lattice larger than those available in the qmc is requested
-        struct qmc_largest_lattice_error : public std::domain_error { using std::domain_error::domain_error; };
-
         template<typename integrand_return_t, typename real_t>
         class Integral
         {
@@ -115,12 +112,12 @@ namespace secdecutil {
                 /*
                  * Functions to compute the integral with the given "number_of_function_evaluations".
                  */
-                virtual void compute_impl() = 0; // implementation should populate "integral_result"
-                void compute()
+                virtual void compute_impl(const bool verbose) = 0; // implementation should populate "integral_result"
+                void compute(const bool verbose)
                 {
                     if(allow_refine && (next_number_of_function_evaluations > number_of_function_evaluations)) {
                         auto start_time = std::chrono::steady_clock::now();
-                        compute_impl();
+                        compute_impl(verbose);
                         auto end_time = std::chrono::steady_clock::now();
                         number_of_function_evaluations = next_number_of_function_evaluations;
                         integration_time = std::chrono::duration<real_t>(end_time - start_time).count();
@@ -147,13 +144,22 @@ namespace secdecutil {
             QmcIntegral(const std::shared_ptr<integrator_t>& qmc, const integrand_t& integrand) :
                 Integral<integrand_return_t,real_t>(qmc->minn), qmc(qmc), integrand(integrand), scaleexpo(1.0) {};
 
-            void compute_impl() override
+            void compute_impl(const bool verbose) override
             {
                 using std::abs;
 
                 unsigned long long int desired_next_n = this->get_next_number_of_function_evaluations();
                 unsigned long long int next_n = qmc->get_next_n(desired_next_n);
-
+                if(next_n < desired_next_n)
+                {
+                    this->allow_refine = false; //don't iterate with same/smaller lattice
+                    // warn user that they require too many function evaluations, we return the result from the largest lattice
+                    if(verbose)
+                        std::cerr << "WARNING class QmcIntegral: The requested number_of_function_evaluations ("
+                            + std::to_string(desired_next_n) + ") exceeds the largest available lattice ("
+                            + std::to_string(next_n) +"), using largest available lattice." << std::endl;
+                }
+                
                 // set number of function evaluations to the next larger lattice (allow decrease, e.g. if next_number_of_function_evaluations > largest lattice)
                 this->set_next_number_of_function_evaluations( next_n, true );
 
@@ -169,15 +175,6 @@ namespace secdecutil {
                 } catch (const integral_not_computed_error&) {
                     this->integral_result = std::move(new_result);
                 };
-
-                if(next_n < desired_next_n)
-                {
-                    this->allow_refine = false; //don't iterate with same/smaller lattice
-                    // warn user that they require too many function evaluations, we return the result from the largest lattice
-                    throw qmc_largest_lattice_error("WARNING class QmcIntegral: The requested number_of_function_evaluations ("
-                        + std::to_string(desired_next_n) + ") exceeds the largest available lattice ("
-                        + std::to_string(next_n) +"), using largest available lattice.");
-                }
             }
         };
 
@@ -207,7 +204,7 @@ namespace secdecutil {
                   statefiles={std::tmpnam(nullptr),std::tmpnam(nullptr)};
                 };
 
-            void compute_impl() override
+            void compute_impl(const bool verbose) override
             {
                 integrator->statefiles = statefiles;
 
@@ -258,7 +255,7 @@ namespace secdecutil {
                 scaleexpo(0.5)
                 {};
 
-            void compute_impl() override
+            void compute_impl(const bool verbose) override
             {
                 this->allow_refine = false; //don't iterate with CQuad
 
@@ -291,7 +288,7 @@ namespace secdecutil {
                 scaleexpo(0.5)
                 {};
 
-            void compute_impl() override
+            void compute_impl(const bool verbose) override
             {
                 this->allow_refine = false; //don't iterate with MultiIntegrator
                 
@@ -516,7 +513,7 @@ namespace secdecutil {
                     while(true){
                         bool failed = false;
                         try{
-                            integral->compute();
+                            integral->compute(verbose);
                         } catch(secdecutil::sign_check_error& e){
                             failed = true;
                             std::cerr << "Exception: " << e.what() << std::endl;
@@ -547,11 +544,6 @@ namespace secdecutil {
                             if(not changed_deformation_parameters){
                                 throw std::runtime_error("All deformation parameters at minimum already, integral still fails.");
                             }
-                        } catch(qmc_largest_lattice_error& e)
-                        {
-                            if(verbose)
-                                std::cerr << e.what() << std::endl;
-                            break;
                         }
                         if(not failed){
                             if(failed_atleast_once){

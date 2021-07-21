@@ -98,10 +98,12 @@ TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
 
     SECTION("setting next number of function evaluations, compute(), and getter function after compute()") {
 
+        const bool verbose = false;
+
         integral_ptr->set_next_number_of_function_evaluations(9000); // Note: number must be above qmc->minn
         REQUIRE(integral_ptr->get_next_number_of_function_evaluations() == 9000);
 
-        integral_ptr->compute();
+        integral_ptr->compute(verbose);
 
         // should have gone to the smallest generating vector
         REQUIRE(integral_ptr->get_number_of_function_evaluations() == 65521);
@@ -128,7 +130,7 @@ TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
         REQUIRE(integral_ptr->get_number_of_function_evaluations() == 65521);
         REQUIRE(integral_ptr->get_next_number_of_function_evaluations() == 200000);
 
-        integral_ptr->compute();
+        integral_ptr->compute(verbose);
 
         // should have a smaller error on the integral now
         const double value_second_estimate = integral_ptr->get_integral_result().value;
@@ -136,10 +138,10 @@ TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
         REQUIRE(uncertainty_second_estimate < 5e-10);
         REQUIRE(value_second_estimate == Approx(1./24.).epsilon(3.*uncertainty_second_estimate)); // expect 3 sigma agreeement 99.7% of the time
 
-        // exceeding largest available QMC lattice
-        integral_ptr->set_next_number_of_function_evaluations(400000);
-        REQUIRE_THROWS_AS(integral_ptr->compute(), std::domain_error);
-        REQUIRE_THROWS_WITH(integral_ptr->compute(), Equals("class QmcIntegral: The requested number_of_function_evaluations (400000) exceeds the largest available lattice (327673)."));
+        // exceeding largest available QMC lattice // (now just computes the largest lattice)
+        //integral_ptr->set_next_number_of_function_evaluations(400000);
+        //REQUIRE_THROWS_AS(integral_ptr->compute(verbose), std::domain_error);
+        //REQUIRE_THROWS_WITH(integral_ptr->compute(verbose), Equals("class QmcIntegral: The requested number_of_function_evaluations (400000) exceeds the largest available lattice (327673)."));
 
     };
 
@@ -179,11 +181,13 @@ TEST_CASE( "Integration with CubaIntegral", "[Integral][CubaIntegral]" ) {
     };
 
     SECTION("setting next number of function evaluations, compute(), and getter function after compute()") {
+        
+        const bool verbose = false;
 
         integral_ptr->set_next_number_of_function_evaluations(1e5);
         REQUIRE(integral_ptr->get_next_number_of_function_evaluations() == 1e5);
 
-        integral_ptr->compute();
+        integral_ptr->compute(verbose);
 
         // should have gone to the smallest generating vector
         REQUIRE(integral_ptr->get_number_of_function_evaluations() == 1e5);
@@ -210,7 +214,7 @@ TEST_CASE( "Integration with CubaIntegral", "[Integral][CubaIntegral]" ) {
         REQUIRE(integral_ptr->get_number_of_function_evaluations() == 1e5);
         REQUIRE(integral_ptr->get_next_number_of_function_evaluations() == 5e7);
 
-        integral_ptr->compute();
+        integral_ptr->compute(verbose);
 
         // should have a smaller error on the integral now
         const double value_second_estimate = integral_ptr->get_integral_result().value;
