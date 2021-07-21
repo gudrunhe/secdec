@@ -535,7 +535,7 @@ class Qmc(CPPIntegrator):
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=0,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=9223372036854775807,errormode='default',evaluateminn=0,
                       minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
@@ -637,7 +637,7 @@ class CudaQmc(object):
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=0,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=9223372036854775807,errormode='default',evaluateminn=0,
                       minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
@@ -813,7 +813,7 @@ class IntegralLibrary(object):
         unsigned int, optional;
         The maximal number of integrand evaluations for
         each sector.
-        Default: maxeval of integrator (default ULLONG_MAX or LLONG_MAX).
+        Default: maxeval of integrator (default LLONG_MAX).
 
     :param mineval:
         unsigned int, optional;
@@ -1073,7 +1073,7 @@ class IntegralLibrary(object):
             # c_lib has been compiled without cuda
             pass
 
-        # set the default integrator (CQuad for 1D, Vegas otherwise)
+        # set the default integrator 
         self.use_Qmc()
 
     def __call__(
