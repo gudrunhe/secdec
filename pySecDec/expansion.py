@@ -115,13 +115,11 @@ def _expand_singular_step(product, index, order):
 
     # factorize overall epsilon from numerator and denominator such that it is nonzero for epsilon -> 0
     #    => can do ordinary Taylor expansion on the non singular factor
-    highest_pole = 0
-    while denominator.becomes_zero_for([index]):
-        highest_pole += 1
-        denominator.expolist[:,index] -= 1
-    while numerator.becomes_zero_for([index]):
-        highest_pole -= 1
-        numerator.expolist[:,index] -= 1
+    num_min_exp = min(numerator.expolist[:,index])
+    den_min_exp = min(denominator.expolist[:,index])
+    numerator.expolist[:,index] -= num_min_exp
+    denominator.expolist[:,index] -= den_min_exp
+    highest_pole = - num_min_exp + den_min_exp
 
     if order < -highest_pole:
         raise OrderError('The lowest order (%i) is higher than the requested order (%i)' %(-highest_pole,order))
