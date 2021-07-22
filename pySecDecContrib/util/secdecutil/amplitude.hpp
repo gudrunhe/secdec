@@ -16,6 +16,8 @@
 #include <fstream> // for writing changed deformation parameters to file
 #include <sstream> // std::ostringstream 
 #include <cstdio> // std::remove 
+#include <unistd.h> // mkdtemp
+#include <cstring> // strcpy
 
 #include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
 #include <secdecutil/uncertainties.hpp> // secdecutil::UncorrelatedDeviation
@@ -184,7 +186,8 @@ namespace secdecutil {
             std::shared_ptr<integrator_t> integrator;
             integrand_t integrand;
             real_t scaleexpo;
-            std::vector<std::string> statefiles;
+            std::string tmpdir;
+
 
             real_t get_scaleexpo() const override { return scaleexpo; }
 
@@ -199,14 +202,30 @@ namespace secdecutil {
                 Integral<integrand_return_t,real_t>(integrator->mineval > 1 ? integrator->mineval : 1000),
                 integrator(integrator),
                 integrand(integrand),
-                scaleexpo(0.5)
+                scaleexpo(0.5),
+                tmpdir("")
                 {
-                  statefiles={std::tmpnam(nullptr),std::tmpnam(nullptr)};
+                  // set statefile path`
+                  std::string path;
+                  if(const char* env_p = std::getenv("SECDEC_TMPDIR"))
+                      path+= env_p;
+                  else if(const char* env_p = std::getenv("TMPDIR"))
+                      path+= env_p;
+                  else
+                      path += "/tmp";
+                  if (not path.empty())
+                  {
+                      path  += "/pySecDec-XXXXXX" ;
+                      char buf [path.length()+1];
+                      strcpy(buf, path.c_str());
+                      if(mkdtemp(buf))
+                        tmpdir=buf;
+                  }
                 };
 
             void compute_impl(const bool verbose) override
             {
-                integrator->statefiles = statefiles;
+                integrator->statefiledir = tmpdir;
 
                 if(integrator->integrator_type == 3)
                     this->allow_refine = false; //don't iterate with Divonne
@@ -227,8 +246,9 @@ namespace secdecutil {
 
             ~CubaIntegral()
             {
-                for(auto sf : statefiles)
-                  remove(sf.c_str()); 
+                for(char i : {'0','1','2'})
+                  remove((tmpdir + '/' + i).c_str()); 
+                rmdir(tmpdir.c_str());
             }
         };
   

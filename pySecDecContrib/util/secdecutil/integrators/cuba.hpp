@@ -309,11 +309,11 @@ namespace secdecutil
             long long int nincrease; \
             long long int nbatch; \
             constexpr static int gridno = 0; \
-            std::vector<std::string> statefiles; \
+            std::string statefiledir; \
             constexpr static void* spin = nullptr; \
             constexpr static int integrator_type = 1; \
             std::shared_ptr<long long int> neval; \
-            int togethermode = 0; \
+            char togethermode = '0'; \
             \
             Vegas \
             ( \
@@ -328,12 +328,12 @@ namespace secdecutil
                 long long int nincrease = 5000, \
                 long long int nbatch = 1000, \
                 std::shared_ptr<long long int> neval = std::make_shared<long long int>(0), \
-                std::vector<std::string> statefiles = {"",""}, \
-                int togethermode = 0 \
+                std::string statefiledir = "", \
+                char togethermode = '0' \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 seed(seed),mineval(mineval),maxeval(maxeval), \
-                nstart(nstart),nincrease(nincrease),nbatch(nbatch),neval(neval),statefiles(statefiles),togethermode(togethermode) \
+                nstart(nstart),nincrease(nincrease),nbatch(nbatch),neval(neval),statefiledir(statefiledir),togethermode(togethermode) \
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
@@ -345,7 +345,7 @@ namespace secdecutil
                 Vegas(original.epsrel,original.epsabs,original.flags, \
                 original.seed,original.mineval,original.maxeval, \
                 original.zero_border,original.nstart, \
-                original.nincrease,original.nbatch,original.neval,original.statefiles,original.togethermode) \
+                original.nincrease,original.nbatch,original.neval,original.statefiledir,original.togethermode) \
             { \
                 this->copy_together_flag(original); \
             };
@@ -370,7 +370,7 @@ namespace secdecutil
             nincrease, \
             nbatch, \
             gridno, \
-            statefiles.at(togethermode%2).c_str(), \
+            statefiledir.empty() ? "" : (statefiledir + '/' + togethermode).c_str(), \
             spin, \
             neval.get(), \
             &fail, \
@@ -388,7 +388,7 @@ namespace secdecutil
             VEGAS_CALL(false); \
         else \
             VEGAS_CALL(true); \
-        if(togethermode !=0 ) \
+        if(togethermode != '0' ) \
             togethermode++;
         
 
@@ -408,7 +408,7 @@ namespace secdecutil
                                                      new Vegas<T>( \
                                                                      epsrel,epsabs,this->flags, \
                                                                      seed,mineval,maxeval,this->zero_border, \
-                                                                     nstart,nincrease,nbatch,neval,statefiles,1 \
+                                                                     nstart,nincrease,nbatch,neval,statefiledir,'1' \
                                                                  ) \
                                                  ); \
         }; \
@@ -441,11 +441,11 @@ namespace secdecutil
             long long int nnew; \
             long long int nmin; \
             cubareal flatness; \
-            std::vector<std::string> statefiles; \
+            std::string statefiledir; \
             constexpr static void* spin = nullptr; \
             constexpr static int integrator_type = 2; \
             std::shared_ptr<long long int> neval; \
-            int togethermode = 0; \
+            char togethermode = '0'; \
             \
             Suave \
             ( \
@@ -460,13 +460,13 @@ namespace secdecutil
                 long long int nmin = 10, \
                 cubareal flatness = 25., \
                 std::shared_ptr<long long int> neval = std::make_shared<long long int>(0), \
-                std::vector<std::string> statefiles = {"",""}, \
-                int togethermode = 0 \
+                std::string statefiledir = "", \
+                char togethermode = '0' \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 seed(seed),mineval(mineval),maxeval(maxeval), \
                 nnew(nnew),nmin(nmin),flatness(flatness),neval(neval), \
-                statefiles(statefiles),togethermode(togethermode) \
+                statefiledir(statefiledir),togethermode(togethermode) \
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
@@ -480,7 +480,7 @@ namespace secdecutil
                 original.flags,original.seed,original.mineval, \
                 original.maxeval,original.zero_border,original.nnew, \
                 original.nmin,original.flatness,original.neval, \
-                original.statefiles,original.togethermode) \
+                original.statefiledir,original.togethermode) \
             { \
                 this->copy_together_flag(original); \
             };
@@ -502,7 +502,7 @@ namespace secdecutil
             nnew, \
             nmin, \
             flatness, \
-            statefiles.at(togethermode%2).c_str(), \
+            statefiledir.empty() ? "" : (statefiledir + '/' + togethermode).c_str(), \
             spin, \
             &nregions, \
             neval.get(), \
@@ -522,7 +522,7 @@ namespace secdecutil
             SUAVE_CALL(false); \
         else \
             SUAVE_CALL(true); \
-        if(togethermode !=0 ) \
+        if(togethermode != '0' ) \
             togethermode++;
 
       template <typename T>
@@ -541,7 +541,7 @@ namespace secdecutil
                                                      new Suave<T>( \
                                                                      epsrel,epsabs,this->flags, \
                                                                      seed,mineval,maxeval,this->zero_border, \
-                                                                     nnew,nmin,flatness,neval,statefiles,1 \
+                                                                     nnew,nmin,flatness,neval,statefiledir,'1' \
                                                                  ) \
                                                  ); \
         }; \
@@ -582,11 +582,11 @@ namespace secdecutil
             constexpr static cubareal * xgiven = nullptr; \
             constexpr static long long int nextra = 0; \
             constexpr static peakfinder_t peakfinder = nullptr; \
-            std::vector<std::string> statefiles; \
+            std::string statefiledir; \
             constexpr static void * spin = nullptr; \
             constexpr static int integrator_type = 3; \
             std::shared_ptr<long long int> neval; \
-            int togethermode = 0; \
+            char togethermode = '0'; \
             \
             Divonne \
             ( \
@@ -605,14 +605,14 @@ namespace secdecutil
                 cubareal maxchisq = 1., \
                 cubareal mindeviation = .15, \
                 std::shared_ptr<long long int> neval = std::make_shared<long long int>(0), \
-                std::vector<std::string> statefiles = {"",""}, \
-                int togethermode = 0 \
+                std::string statefiledir = "", \
+                char togethermode = '0' \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 seed(seed),mineval(mineval),maxeval(maxeval), \
                 key1(key1), key2(key2), key3(key3), maxpass(maxpass), \
                 border(border), maxchisq(maxchisq), mindeviation(mindeviation),neval(neval), \
-                statefiles(statefiles),togethermode(togethermode) \
+                statefiledir(statefiledir),togethermode(togethermode) \
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
@@ -627,7 +627,7 @@ namespace secdecutil
                 original.zero_border,original.key1,original.key2, \
                 original.key3,original.maxpass,original.border, \
                 original.maxchisq,original.mindeviation,original.neval, \
-                original.statefiles,original.togethermode) \
+                original.statefiledir,original.togethermode) \
             { \
                 this->copy_together_flag(original); \
             };
@@ -658,7 +658,7 @@ namespace secdecutil
             xgiven, \
             nextra, \
             peakfinder, \
-            statefiles.at(togethermode%2).c_str(), \
+            statefiledir.empty() ? "" : (statefiledir + '/' + togethermode).c_str(), \
             spin, \
             &nregions, \
             neval.get(), \
@@ -678,7 +678,7 @@ namespace secdecutil
             DIVNONNE_CALL(false); \
         else \
             DIVNONNE_CALL(true); \
-        if(togethermode !=0 ) \
+        if(togethermode != '0' ) \
             togethermode++;
 
       template <typename T>
@@ -698,7 +698,7 @@ namespace secdecutil
                                                                        epsrel,epsabs,this->flags, \
                                                                        seed,mineval,maxeval,this->zero_border, \
                                                                        key1, key2, key3, maxpass, \
-                                                                       border, maxchisq, mindeviation,neval,statefiles,1 \
+                                                                       border, maxchisq, mindeviation,neval,statefiledir,'1' \
                                                                    ) \
                                                  ); \
         }; \
@@ -727,11 +727,11 @@ namespace secdecutil
             long long int mineval; \
             long long int maxeval; \
             int key; \
-            std::vector<std::string> statefiles; \
+            std::string statefiledir; \
             constexpr static void* spin = nullptr; \
             constexpr static int integrator_type = 4; \
             std::shared_ptr<long long int> neval; \
-            int togethermode = 0; \
+            char togethermode = '0'; \
             \
             Cuhre \
             ( \
@@ -743,12 +743,12 @@ namespace secdecutil
                 cubareal zero_border = 0., \
                 int key = 0, \
                 std::shared_ptr<long long int> neval = std::make_shared<long long int>(0), \
-                std::vector<std::string> statefiles = {"",""}, \
-                int togethermode = 0 \
+                std::string statefiledir = "", \
+                char togethermode = '0' \
             ) : \
                 epsrel(epsrel),epsabs(epsabs), \
                 mineval(mineval),maxeval(maxeval),key(key),neval(neval), \
-                statefiles(statefiles),togethermode(togethermode) \
+                statefiledir(statefiledir),togethermode(togethermode) \
             { \
                 this->flags = flags; \
                 this->zero_border = zero_border; \
@@ -760,7 +760,7 @@ namespace secdecutil
             ) : \
                 Cuhre(original.epsrel,original.epsabs,original.flags, \
                 original.mineval,original.maxeval,original.zero_border,original.key,original.neval, \
-                original.statefiles,original.togethermode) \
+                original.statefiledir,original.togethermode) \
             { \
                 this->copy_together_flag(original); \
             };
@@ -779,7 +779,7 @@ namespace secdecutil
             mineval, \
             maxeval, \
             key, \
-            statefiles.at(togethermode%2).c_str(), \
+            statefiledir.empty() ? "" : (statefiledir + '/' + togethermode).c_str(), \
             spin, \
             &nregions, \
             neval.get(), \
@@ -799,7 +799,7 @@ namespace secdecutil
             CUHRE_CALL(false); \
         else \
             CUHRE_CALL(true); \
-        if(togethermode !=0 ) \
+        if(togethermode != '0' ) \
             togethermode++;
 
       template <typename T>
@@ -818,7 +818,7 @@ namespace secdecutil
                                                      new Cuhre<T>( \
                                                                      epsrel,epsabs,this->flags, \
                                                                      mineval,maxeval,this->zero_border, \
-                                                                     key,neval,statefiles,1 \
+                                                                     key,neval,statefiledir,'1' \
                                                                  ) \
                                                  ); \
         }; \
