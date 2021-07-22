@@ -77,8 +77,8 @@ TEST_CASE( "check result", "[difference]" ) {
         REQUIRE( result_with_prefactor.at(order).uncertainty.imag() <= std::abs(2*epsrel * target_result.at(order).imag()) );
 
         // check that the desired uncertainties are reached
-        REQUIRE( result_with_prefactor.at(order).uncertainty.real() <= std::abs(epsrel * result_with_prefactor.at(order).value.real()) );
-        REQUIRE( result_with_prefactor.at(order).uncertainty.imag() <= std::abs(epsrel * result_with_prefactor.at(order).value.imag()) );
+        REQUIRE( result_with_prefactor.at(order).uncertainty.real() <= std::abs(epsrel * result_with_prefactor.at(order).value) );
+        REQUIRE( result_with_prefactor.at(order).uncertainty.imag() <= std::abs(epsrel * result_with_prefactor.at(order).value) );
 
         // check integral value
         REQUIRE(  result_with_prefactor.at(order).value.real() == Approx( target_result.at(order).real() ).epsilon( epsrel )  );

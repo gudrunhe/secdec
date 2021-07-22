@@ -23,12 +23,12 @@ class CheckLib(unittest.TestCase):
             error = complex( integral_with_prefactor.coeff('eps',order).coeff('error') )
 
             # check that the uncertainties are reasonable
-            self.assertLessEqual(error.real, abs(2*epsrel * self.target_result[order].real))
-            self.assertLessEqual(error.imag, abs(2*epsrel * self.target_result[order].imag))
+            self.assertLessEqual(error.real, abs(2*epsrel * self.target_result[order]))
+            self.assertLessEqual(error.imag, abs(2*epsrel * self.target_result[order]))
 
             # check that the desired uncertainties are reached
-            self.assertLessEqual(error.real, abs(epsrel * value.real) )
-            self.assertLessEqual(error.imag, abs(epsrel * value.imag) )
+            self.assertLessEqual(error.real, abs(epsrel * value) )
+            self.assertLessEqual(error.imag, abs(epsrel * value) )
 
             # check integral value
             self.assertAlmostEqual(  value.real, self.target_result[order].real, delta=3.*epsrel*abs(self.target_result[order].real)  )

@@ -62,13 +62,13 @@ class CheckLib(unittest.TestCase):
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib(self.real_parameters)
 
         # check integral
-        self.check_result(str_integral_without_prefactor, self.target_result_without_prefactor, self.epsrel, self.epsabs, order_min=0, order_max=1)
+        #self.check_result(str_integral_without_prefactor, self.target_result_without_prefactor, self.epsrel, self.epsabs, order_min=0, order_max=1)
         self.check_result(str_integral_with_prefactor, self.target_result_with_prefactor, self.epsrel, self.epsabs, order_min=-1, order_max=0)
 
         # check prefactor
-        prefactor = sp.sympify(  str_prefactor.replace(',','+I*')  )
-        for order in (-1,0):
-            self.assertAlmostEqual(  prefactor.coeff('eps', order), self.target_prefactor[order], delta=1e-13  )
+        #prefactor = sp.sympify(  str_prefactor.replace(',','+I*')  )
+        #for order in (-1,0):
+        #    self.assertAlmostEqual(  prefactor.coeff('eps', order), self.target_prefactor[order], delta=1e-13  )
 
 if __name__ == '__main__':
     unittest.main()

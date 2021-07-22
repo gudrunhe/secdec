@@ -39,14 +39,14 @@ class CheckLib(unittest.TestCase):
             # check that the desired uncertainties are reached
             self.assertLessEqual(error.real, abs(epsrel * value.real) )
             if target_series[order].imag == 0.0:
-                self.assertLessEqual(error.imag, epsabs)
+                self.assertLessEqual(error.imag, max( abs(epsrel * value), epsabs) )
             else:
                 self.assertLessEqual(error.imag, abs(epsrel * value.imag) )
 
             # check integral value
             self.assertAlmostEqual(  value.real, target_series[order].real, delta=3.*epsrel*abs(target_series[order].real)  )
             if target_series[order].imag == 0.0:
-                self.assertAlmostEqual(  value.imag, target_series[order].imag, delta=3.*epsabs  )
+                self.assertAlmostEqual(  value.imag, target_series[order].imag, delta=max( 3.*epsrel*abs(target_series[order]), 3.*epsabs)  )
             else:
                 self.assertAlmostEqual(  value.imag, target_series[order].imag, delta=3.*epsrel*abs(target_series[order].imag)  )
 
