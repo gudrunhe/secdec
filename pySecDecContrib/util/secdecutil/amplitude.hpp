@@ -1060,7 +1060,9 @@ namespace secdecutil {
                                 unsigned long long int proposed_next_n =
                                     max(
                                             next_n,
-                                            static_cast<unsigned long long int>( curr_n*pow(c_i,-beta)*pow(fac,0.5/scaleexpo) )
+                                            static_cast<unsigned long long int>( min( curr_n*pow(c_i,-beta)*pow(fac,0.5/scaleexpo), 
+                                                                                 static_cast<real_t>(std::numeric_limits<long long>::max()))  // in some extreme cases (e.g. test cases using MC with tiny error goal), proposed_next_n could exceed LLONG_MAX
+                                                                               )
                                        );
                                 proposed_next_n = min(sum.maxeval, proposed_next_n);
 
