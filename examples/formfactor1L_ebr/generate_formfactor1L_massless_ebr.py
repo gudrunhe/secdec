@@ -12,11 +12,11 @@ if __name__ == "__main__":
         external_lines = [['p1',1],['p2',2],['p3',3]],
         replacement_rules = [
                             ('p3*p3', '-qsq'),
-                            ('p1*p1', '-z**2*psq'),
-                            ('p2*p2', '-z**2*lsq'),
+                            ('p1*p1', '-z*psq'),
+                            ('p2*p2', '-z*lsq'),
                             ]
     )
-    
+
     # find the regions
     generators_args = loop_regions(
         name = 'formfactor1L_massless_ebr',
