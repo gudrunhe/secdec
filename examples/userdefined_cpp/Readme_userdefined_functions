@@ -10,7 +10,7 @@ remainder_expression = '(dum1(z0,z1,z2,z3) + 5*eps*z0)**(1+eps) * dum2(z0,z1,alp
 Which shows that both is possible: 
 (a) explicit definitions in the python input files
 (b) only the argument list is defined, the explicit definitions will be defined later in 
-[process_directory]/src/functions.hpp 
+[process_directory]/[process_directory]_integral/src/functions.hpp 
 A template for this file will be created automatically together with the process_directory.
 An example for a functions.hpp file is given by functions_dummyI.hpp.
 The arguments are the ones that occur in the argument list of the function in generate_dummyI.py, 
@@ -34,7 +34,7 @@ The example thetafunction shows how to define an extra non-analytic function lik
 In the python input file, it is defined as 
 remainder_expression = 'cut1(z1,delta)'. 
 The first argument is z1, the second one is the cut parameter delta.
-Once the process directory is created, the function cut1 should be defined in src/functions.hpp.
+Once the process directory is created, the function cut1 should be defined in [process_directory]/[process_directory]_integral/src/functions.hpp.
 For the current example, the definition of cut1 is exemplified in functions_thetafunction.hpp and 
 the latter is copied automatically to the correct location (see the last line of generate_thetafunction.py).
 

@@ -32,4 +32,4 @@ if __name__ == "__main__":
     )
 
     # copy 'functions.hpp' (predefined for this example) to required directory
-    shutil.copy('functions_thetafunction.hpp','thetafunction/src/functions.hpp')
+    shutil.copy('functions_thetafunction.hpp','thetafunction/thetafunction_integral/src/functions.hpp')

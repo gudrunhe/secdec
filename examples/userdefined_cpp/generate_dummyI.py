@@ -32,4 +32,4 @@ if __name__ == "__main__":
     )
 
     # copy 'functions.hpp' (predefined for this example) to required directory
-    shutil.copy('functions_dummyI.hpp','dummyI/src/functions.hpp')
+    shutil.copy('functions_dummyI.hpp','dummyI/dummyI_integral/src/functions.hpp')
