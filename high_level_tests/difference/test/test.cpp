@@ -12,8 +12,6 @@
 
 #include QUOTE_EXPAND(INTEGRAL_NAME.hpp)
 
-template<typename T> using amplitudes_t = std::vector<INTEGRAL_NAME::nested_series_t<T>>;
-
 TEST_CASE( "check result", "[difference]" ) {
     
     // User Specified Phase-space point
@@ -30,7 +28,7 @@ TEST_CASE( "check result", "[difference]" ) {
         INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../difference/difference_coefficients", integrator);
 
     // Pack amplitudes into handler
-    INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+    INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes
     (
         unwrapped_amplitudes, integrator.epsrel, integrator.epsabs
         // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs

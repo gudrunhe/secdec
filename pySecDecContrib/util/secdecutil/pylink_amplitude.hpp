@@ -21,8 +21,6 @@
 #define EXPAND_STRINGIFY(item) STRINGIFY(item)
 #define STRINGIFY(item) #item
 
-template<typename T> using amplitudes_t = std::vector<nested_series_t<T>>;
-
 extern "C"
 {
     /*

@@ -51,6 +51,7 @@ namespace %(name)s
     // all integrals must have the same return type, assume complex
     typedef complex_t integrand_return_t;
     template<typename T> using nested_series_t = %(nested_series_type)s;
+    template<typename T> using amplitudes_t = std::vector<nested_series_t<T>>;
     typedef secdecutil::IntegrandContainer<integrand_return_t, real_t const * const, real_t> integrand_t;
     // --}
 

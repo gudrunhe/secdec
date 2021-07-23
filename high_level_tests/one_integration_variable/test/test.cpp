@@ -12,8 +12,6 @@
 
 #include QUOTE_EXPAND(INTEGRAL_NAME.hpp)
 
-template<typename T> using amplitudes_t = std::vector<INTEGRAL_NAME::nested_series_t<T>>;
-
 TEST_CASE( "check result with qmc", "[INTEGRAL_NAME]" ) {
 
     SECTION("default integral transform") {
@@ -44,7 +42,7 @@ TEST_CASE( "check result with qmc", "[INTEGRAL_NAME]" ) {
             INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../one_integration_variable/one_integration_variable_coefficients", integrator);
 
         // Pack amplitudes into handler
-        INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+        INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes
         (
             unwrapped_amplitudes, integrator.epsrel, integrator.epsabs
             // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
@@ -127,7 +125,7 @@ TEST_CASE( "check result with qmc", "[INTEGRAL_NAME]" ) {
             INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../one_integration_variable/one_integration_variable_coefficients", integrator);
 
         // Pack amplitudes into handler
-        INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+        INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes
         (
             unwrapped_amplitudes, integrator.epsrel, integrator.epsabs
             // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs

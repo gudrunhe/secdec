@@ -9,8 +9,6 @@
 
 #include "%(name)s.hpp"
 
-template<typename T> using amplitudes_t = std::vector<%(name)s::nested_series_t<T>>;
-
 int main(int argc, const char *argv[])
 {
     // Check the command line argument number
@@ -52,7 +50,7 @@ int main(int argc, const char *argv[])
         %(name)s::make_amplitudes(real_parameters, complex_parameters, "%(name)s_coefficients", integrator);
 
     // Pack amplitudes into handler
-    %(name)s::handler_t<amplitudes_t> amplitudes
+    %(name)s::handler_t<%(name)s::amplitudes_t> amplitudes
     (
         unwrapped_amplitudes,
         integrator.epsrel, integrator.epsabs

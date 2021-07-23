@@ -13,8 +13,6 @@
 
 #include QUOTE_EXPAND(INTEGRAL_NAME.hpp)
 
-template<typename T> using amplitudes_t = std::vector<INTEGRAL_NAME::nested_series_t<T>>;
-
 constexpr std::complex<double> I(0,1);
 
 TEST_CASE( "check number of parameters", "[triangle]" ) {
@@ -84,7 +82,7 @@ void check_pySecDec_triangle(double s, double msq, secdecutil::Series<std::compl
             INTEGRAL_NAME::make_amplitudes({s,msq}, {}, "../triangle/triangle_coefficients", integrator);
 
         // Pack amplitudes into handler
-        INTEGRAL_NAME::handler_t<amplitudes_t> amplitudes
+        INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes
         (
             unwrapped_amplitudes, integrator.epsrel, integrator.epsabs
             // further optional arguments: epsrel, epsabs, maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
