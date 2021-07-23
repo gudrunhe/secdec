@@ -389,7 +389,7 @@ class Vegas(CPPIntegrator):
     and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=10000,maxeval=9223372036854775807,zero_border=0.0,nstart=10000,nincrease=5000,nbatch=1000,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=10000,maxeval=4611686018427387903,zero_border=0.0,nstart=10000,nincrease=5000,nbatch=1000,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Vegas.restype = c_void_p
@@ -413,7 +413,7 @@ class Suave(CPPIntegrator):
     and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=10000,maxeval=9223372036854775807,zero_border=0.0,nnew=1000,nmin=10,flatness=25.,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,seed=0,mineval=10000,maxeval=4611686018427387903,zero_border=0.0,nnew=1000,nmin=10,flatness=25.,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Suave.restype = c_void_p
@@ -437,7 +437,7 @@ class Divonne(CPPIntegrator):
     and in the cuba manual.
 
     '''
-    def __init__(self, integral_library, epsrel=1e-2, epsabs=1e-7, flags=0, seed=0, mineval=10000, maxeval=9223372036854775807,zero_border=0.0,
+    def __init__(self, integral_library, epsrel=1e-2, epsabs=1e-7, flags=0, seed=0, mineval=10000, maxeval=4611686018427387903,zero_border=0.0,
                                          key1=2000, key2=1, key3=1, maxpass=4, border=0., maxchisq=1.,
                                          mindeviation=.15, real_complex_together=False):
         self.c_lib = integral_library.c_lib
@@ -467,7 +467,7 @@ class Cuhre(CPPIntegrator):
     and in the cuba manual.
 
     '''
-    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,mineval=10000,maxeval=9223372036854775807,zero_border=0.0,key=0,real_complex_together=False):
+    def __init__(self,integral_library,epsrel=1e-2,epsabs=1e-7,flags=0,mineval=10000,maxeval=4611686018427387903,zero_border=0.0,key=0,real_complex_together=False):
         self.c_lib = integral_library.c_lib
         self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_cuba_Cuhre.restype = c_void_p
@@ -535,7 +535,7 @@ class Qmc(CPPIntegrator):
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=9223372036854775807,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
                       minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         self.c_lib = integral_library.c_lib
@@ -637,7 +637,7 @@ class CudaQmc(object):
     underlying Qmc implementation is used.
 
     '''
-    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=9223372036854775807,errormode='default',evaluateminn=0,
+    def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
                       minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         argtypes = [
@@ -813,7 +813,7 @@ class IntegralLibrary(object):
         unsigned int, optional;
         The maximal number of integrand evaluations for
         each sector.
-        Default: maxeval of integrator (default LLONG_MAX).
+        Default: maxeval of integrator (default 2**62-1).
 
     :param mineval:
         unsigned int, optional;
