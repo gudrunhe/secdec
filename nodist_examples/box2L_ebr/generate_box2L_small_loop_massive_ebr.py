@@ -129,11 +129,11 @@ print(f"Paper vectors:\n{paper_vectors}")
 # note that one output folder for one region is not generated, because it has no 0th order term
 if 1:
     generators_args = psd.loop_integral.loop_regions(
-        name = "box2L_small_loop_massive_expansion_by_regions",
+        name = "box2L_small_loop_massive_ebr",
         loop_integral=li,
         smallness_parameter = "mtsq",
         expansion_by_regions_order=0,processes=1)
 
-    psd.code_writer.sum_package("box2L_small_loop_massive_expansion_by_regions", generators_args, li.regulators,
+    psd.code_writer.sum_package("box2L_small_loop_massive_ebr", generators_args, li.regulators,
                 requested_orders = [0,0],
                 real_parameters = ['s','t','u','mtsq'], complex_parameters = [])

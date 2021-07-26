@@ -96,17 +96,17 @@ print("tterm eq",(tterm-tterm2).simplify()==0)
 
 if 1:
 # if 0:
-    if isdir("box2L_big_loop_massive_expansion_by_regions"):
-        rmtree("box2L_big_loop_massive_expansion_by_regions")
+    if isdir("box2L_big_loop_massive_ebr"):
+        rmtree("box2L_big_loop_massive_ebr")
 
     generators_args = psd.loop_integral.loop_regions(
-        name = "box2L_big_loop_massive_expansion_by_regions",
+        name = "box2L_big_loop_massive_ebr",
         loop_integral=li,
         smallness_parameter = "mtsq",
         expansion_by_regions_order=0,
         )
     if __name__ == "__main__":
-        psd.code_writer.sum_package("box2L_big_loop_massive_expansion_by_regions", generators_args, li.regulators,
+        psd.code_writer.sum_package("box2L_big_loop_massive_ebr", generators_args, li.regulators,
                     requested_orders = [0,0],
                     real_parameters = ['s','t','u','mtsq'], complex_parameters = [])
 

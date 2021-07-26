@@ -4,7 +4,7 @@ from pySecDec.integral_interface import IntegralLibrary
 import sympy as sp
 
 # load c++ library
-name = "box2L_small_loop_massive_expansion_by_regions"
+name = "box2L_small_loop_massive_ebr"
 intlib = IntegralLibrary("{0}/{0}_pylink.so".format(name))
 intlib.use_Qmc(transform="korobov3", fitfunction="polysingular")
 

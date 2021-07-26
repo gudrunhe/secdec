@@ -70,7 +70,7 @@ if __name__ == "__main__":
     print("F eq", (F-sp.sympify(str(li.F))).expand().simplify()==0)
     assert (F-sp.sympify(str(li.F))).simplify()==0
 
-    name = "box2L_nonplanar_expansion_by_regions_eq6p1"
+    name = "box2L_nonplanar_ebr_eq6p1"
 
     generators_args = psd.loop_integral.loop_regions(
         name = name,
