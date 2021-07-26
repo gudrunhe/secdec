@@ -917,11 +917,15 @@ namespace secdecutil {
                                     if(relerr > sum.min_epsrel)
                                     {
                                         unsigned long long int old_n = term.integral->get_number_of_function_evaluations();
-                                        real_t new_n = old_n * pow(min(relerr/sum.min_epsrel,abserr/sum.min_epsabs), 1./term.integral->get_scaleexpo());
+                                        unsigned long long int new_n = static_cast<unsigned long long int>(
+                                                                        min( old_n * pow(min(relerr/sum.min_epsrel,abserr/sum.min_epsabs), 1./term.integral->get_scaleexpo()),
+                                                                        static_cast<real_t>(std::numeric_limits<long long>::max()))  // in some extreme cases (e.g. test cases using MC with tiny error goal), next_n could exceed LLONG_MAX
+                                                                       );
+                                        
                                         if(new_n > old_n)
                                         {
                                             repeat = true;
-                                            term.integral->set_next_number_of_function_evaluations( new_n > sum.maxeval ? sum.maxeval : static_cast<unsigned long long int>(new_n) );
+                                            term.integral->set_next_number_of_function_evaluations( new_n > sum.maxeval ? sum.maxeval : new_n );
                                             if(verbose)
                                                 std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
                                                         term.integral->display_name << ", current integral result: " << result << ", increase n: " << old_n << " -> " <<new_n << std::endl;
@@ -1094,9 +1098,9 @@ namespace secdecutil {
                         for(auto& term: sum.summands)
                         {
                             // Do not increase points by more than a factor of maxincreasefac
-                            const real_t curr_n = term.integral->get_number_of_function_evaluations(); // implicit cast to real_t
-                            const real_t next_n = term.integral->get_next_number_of_function_evaluations(); // implicit cast to real_t
-                            const unsigned long long int max_next_n = curr_n * sum.maxincreasefac; // implicit cast to unsigned long long int
+                            const real_t curr_n_as_real = term.integral->get_number_of_function_evaluations(); // implicit cast to real_t
+                            const unsigned long long int next_n = term.integral->get_next_number_of_function_evaluations();
+                            const unsigned long long int max_next_n = curr_n_as_real * sum.maxincreasefac; // implicit cast to unsigned long long int
 
                             if( next_n > max_next_n )
                             {
