@@ -10,32 +10,7 @@ import sympy as sp
 import os
 import shutil
 
-#User Input
-name_reduze_file = 'F3_121111100.red'
-
-mandelstam_symbols = ['s','t']
-mass_symbols = ['msq']
-additional_prefactor = 'eps**4*(s/msq)**2'
-contour_deformation = True
-requested_order = 3
-
-loop_momenta = ['p1','p2']
-external_momenta = ['k1','k2','k3']
-replacement_rules = [
-                        ('k1*k1', '0'),
-                        ('k2*k2', '0'),
-                        ('k3*k3', '0'),
-                        ('k1*k2', 's/2'),
-                        ('k1*k3', '-s/2-t/2'),
-                        ('k3*k2', 't/2'),
-                    ]
-
-families = {}
-families["AA_F1"] = ['(p1)**2-msq','(p2)**2-msq','(p1-p2)**2','(p1+k1)**2-msq','(p2+k1)**2-msq','(p1-k2)**2-msq','(p2-k2)**2-msq','(p1-k2-k3)**2-msq','(p2-k2-k3)**2-msq']
-families["AA_F1x123"] = ['(p1)**2-msq','(p2)**2-msq','(p1-p2)**2','(p1+k2)**2-msq','(p2+k2)**2-msq','(p1-k3)**2-msq','(p2-k3)**2-msq','(p1-k3-k1)**2-msq','(p2-k3-k1)**2-msq']
-families["AA_F3"] = ['(p1)**2','(p1-p2)**2-msq','(p1+k1)**2','(p2+k1)**2-msq','(p1-k2)**2','(p2-k2)**2-msq','(p2-k2-k3)**2-msq','(p1-k2-k3)**2','(p2)**2-msq']
-
-def parse_integral(line,families):
+def parse_integral(line, families, args):
     ''' Extracts the name, integral family, dimensions and powerlist from \
         a line that was identified as an integral. Returns a dict with \
         the arguments for loop_package '''
@@ -62,10 +37,10 @@ def parse_integral(line,families):
             raise "Could not parse dimension shift for integral %s" % name
 
     li = psd.loop_integral.LoopIntegralFromPropagators(
-            loop_momenta=loop_momenta,
-            external_momenta=external_momenta,
+            loop_momenta=args['loop_momenta'],
+            external_momenta=args['external_momenta'],
             propagators=families[name_family],
-            replacement_rules=replacement_rules,
+            replacement_rules=args['replacement_rules'],
             powerlist=powerlist,
             dimensionality=str(dim) + "-2*eps"
         )
@@ -75,24 +50,24 @@ def parse_integral(line,families):
         name=name,
         loop_integral=li,
         #The requested order can not *really* be calculated yet as it depends on the order of the coefficient
-        requested_order=requested_order,
-        real_parameters=mandelstam_symbols+mass_symbols,
-        contour_deformation=contour_deformation,
-        additional_prefactor=additional_prefactor
+        requested_order=args['requested_order'],
+        real_parameters=args['mandelstam_symbols']+args['mass_symbols'],
+        contour_deformation=args['contour_deformation'],
+        additional_prefactor=args['additional_prefactor']
     )
 
     return package_args
 
-def parse_coefficient(line, dimension_symbol):
+def parse_coefficient(line, dimension_symbol, args):
     '''Decomposes the coefficent into numerator and denominator and \
     calculates the order of epsilon of the coefficient.'''
     d = sp.symbols(dimension_symbol)
     eps = sp.symbols("eps")
     coeff_n, coeff_d = sp.fraction(sp.cancel(sp.together(sp.sympify(line).subs(d,4-2*eps))))
-    coefficient = Coefficient([str(coeff_n)],[str(coeff_d)],[eps],mandelstam_symbols+mass_symbols)
+    coefficient = Coefficient([str(coeff_n)],[str(coeff_d)],[eps],args['mandelstam_symbols']+args['mass_symbols'])
     return coefficient
 
-def parse_reduze_file(reduze_file):
+def parse_reduze_file(reduze_file, families, args):
 
     list_package_args = []
     coefficients = []
@@ -116,11 +91,11 @@ def parse_reduze_file(reduze_file):
                 assert line.strip() == '1'
             elif spaces == 4:
                 # RHS integral
-                list_package_args.append(parse_integral(line,families))
+                list_package_args.append(parse_integral(line, families, args))
 
             elif spaces == 5:
                 # Coefficient
-                coefficients.append(parse_coefficient(line,'d'))
+                coefficients.append(parse_coefficient(line, 'd', args))
 
     assert len(list_package_args) == len(coefficients)
 
@@ -129,6 +104,34 @@ def parse_reduze_file(reduze_file):
     for package_args in list_package_args:
         assert package_args.real_parameters == real_parameters
 
-    sum_package(integral_name, list_package_args, ['eps'], [requested_order],real_parameters=real_parameters,coefficients=[coefficients])
+    sum_package(integral_name, list_package_args, ['eps'], [args['requested_order']],real_parameters=real_parameters,coefficients=[coefficients])
 
-parse_reduze_file(name_reduze_file)
+if __name__ == "__main__":
+
+    #User Input
+    name_reduze_file = 'F3_121111100.red'
+
+    args = {}
+    args['mandelstam_symbols'] = ['s','t']
+    args['mass_symbols'] = ['msq']
+    args['additional_prefactor'] = 'eps**4*(s/msq)**2'
+    args['contour_deformation'] = True
+    args['requested_order'] = 3
+
+    args['loop_momenta'] = ['p1','p2']
+    args['external_momenta'] = ['k1','k2','k3']
+    args['replacement_rules'] = [
+                            ('k1*k1', '0'),
+                            ('k2*k2', '0'),
+                            ('k3*k3', '0'),
+                            ('k1*k2', 's/2'),
+                            ('k1*k3', '-s/2-t/2'),
+                            ('k3*k2', 't/2'),
+                        ]
+
+    families = {}
+    families["AA_F1"] = ['(p1)**2-msq','(p2)**2-msq','(p1-p2)**2','(p1+k1)**2-msq','(p2+k1)**2-msq','(p1-k2)**2-msq','(p2-k2)**2-msq','(p1-k2-k3)**2-msq','(p2-k2-k3)**2-msq']
+    families["AA_F1x123"] = ['(p1)**2-msq','(p2)**2-msq','(p1-p2)**2','(p1+k2)**2-msq','(p2+k2)**2-msq','(p1-k3)**2-msq','(p2-k3)**2-msq','(p1-k3-k1)**2-msq','(p2-k3-k1)**2-msq']
+    families["AA_F3"] = ['(p1)**2','(p1-p2)**2-msq','(p1+k1)**2','(p2+k1)**2-msq','(p1-k2)**2','(p2-k2)**2-msq','(p2-k2-k3)**2-msq','(p1-k2-k3)**2','(p2)**2-msq']
+
+    parse_reduze_file(name_reduze_file, families, args)
