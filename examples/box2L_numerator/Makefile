@@ -5,7 +5,7 @@ SECDEC_CONTRIB = $(shell python3 -m pySecDecContrib --dirname)
 CXXFLAGS = -I"$(SECDEC_CONTRIB)/include" -c -std=c++14 -O2 -I.
 
 # LDFLAGS
-LDFLAGS = -L"$(SECDEC_CONTRIB)/lib" $(patsubst %,-L%,$(INTEGRALS)) $(patsubst %,-l%,$(INTEGRALS)) -lgsl -lgslcblas -lcuba -lm
+LDFLAGS = -L"$(SECDEC_CONTRIB)/lib" $(patsubst %,-L%,$(INTEGRALS)) $(patsubst %,-l%,$(INTEGRALS)) -lgsl -lgslcblas -lcuba -lginac -lcln -lm
 
 integrate_box2L : integrate_box2L.o $(patsubst %,lib%.a,$(INTEGRALS))
 	$(CXX) -o $@ $< $(LDFLAGS)

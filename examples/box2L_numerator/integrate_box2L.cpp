@@ -11,7 +11,6 @@
 #include "box2L_invprop/box2L_invprop.hpp"
 #include "box2L_contracted_tensor/box2L_contracted_tensor.hpp"
 
-
 /*
  * the integral from pySecDec using two different input forms
  */
@@ -41,21 +40,34 @@ box2L_invprop::nested_series_t<secdecutil::UncorrelatedDeviation<box2L_invprop::
     const std::vector<real_t> real_parameters{s,t};
     const std::vector<complex_t> complex_parameters{};
 
-    // optimize contour
-    const std::vector<nested_series_t<box2L_invprop::integrand_t>> integrands = box2L_invprop::make_integrands(real_parameters, complex_parameters);
-
-    // add integrands of sectors (together flag)
-    const box2L_invprop::nested_series_t<box2L_invprop::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Vegas<integrand_return_t>();
-    integrator.flags = 2; // verbose output
+    // Set up Integrator
+    secdecutil::integrators::Qmc<
+                                    integrand_return_t,
+                                    maximal_number_of_integration_variables,
+                                    integrators::transforms::Korobov<3>::type,
+                                    user_integrand_t
+                                > integrator;
+    integrator.verbosity = 1;
     integrator.epsrel = 5e-3;
     integrator.epsabs = 1e-7;
     integrator.maxeval = 1e6;
+    
+    // Construct the amplitudes
+    std::vector<nested_series_t<sum_t>> unwrapped_amplitudes =
+        make_amplitudes(real_parameters, complex_parameters, "box2L_invprop/box2L_invprop_coefficients", integrator);
 
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * box2L_invprop::prefactor(real_parameters, complex_parameters);
+    // Pack amplitudes into handler
+    handler_t<amplitudes_t> amplitudes
+    (
+        unwrapped_amplitudes,
+        integrator.epsrel, integrator.epsabs
+        // further optional arguments: maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+    );
+
+        // compute the amplitudes
+    const std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> result = amplitudes.evaluate();
+    
+    return result.at(0);
 }
 
 // 'box2L_contracted_tensor' - input numerator as contracted tensor
@@ -66,21 +78,34 @@ box2L_contracted_tensor::nested_series_t<secdecutil::UncorrelatedDeviation<box2L
     const std::vector<real_t> real_parameters{s,t};
     const std::vector<complex_t> complex_parameters{};
 
-    // construct integrands
-    const std::vector<nested_series_t<box2L_contracted_tensor::integrand_t>> integrands = box2L_contracted_tensor::make_integrands(real_parameters, complex_parameters);
-
-    // add integrands of sectors (together flag)
-    const box2L_contracted_tensor::nested_series_t<box2L_contracted_tensor::integrand_t> summed_integrands = std::accumulate(++integrands.begin(), integrands.end(), *integrands.begin() );
-
-    // define the integrator
-    auto integrator = secdecutil::cuba::Vegas<integrand_return_t>();
-    integrator.flags = 2; // verbose output
+    // Set up Integrator
+    secdecutil::integrators::Qmc<
+                                    integrand_return_t,
+                                    maximal_number_of_integration_variables,
+                                    integrators::transforms::Korobov<3>::type,
+                                    user_integrand_t
+                                > integrator;
+    integrator.verbosity = 1;
     integrator.epsrel = 5e-3;
     integrator.epsabs = 1e-7;
     integrator.maxeval = 1e6;
 
-    // integrate
-    return secdecutil::deep_apply(summed_integrands, integrator.integrate) * box2L_contracted_tensor::prefactor(real_parameters, complex_parameters);
+    // Construct the amplitudes
+    std::vector<nested_series_t<sum_t>> unwrapped_amplitudes =
+        make_amplitudes(real_parameters, complex_parameters, "box2L_contracted_tensor/box2L_contracted_tensor_coefficients", integrator);
+
+    // Pack amplitudes into handler
+    handler_t<amplitudes_t> amplitudes
+    (
+        unwrapped_amplitudes,
+        integrator.epsrel, integrator.epsabs
+        // further optional arguments: maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+    );
+
+        // compute the amplitudes
+    const std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> result = amplitudes.evaluate();
+    
+    return result.at(0);
 }
 
 int main()
