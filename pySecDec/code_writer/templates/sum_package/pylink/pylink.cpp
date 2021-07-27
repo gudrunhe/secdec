@@ -188,7 +188,7 @@
     unsigned long long int minm, \
     unsigned long long int maxnperpackage, \
     unsigned long long int maxmperpackage, \
-    unsigned long long int cputhreads, \
+    long long int cputhreads, \
     unsigned long long int cudablocks, \
     unsigned long long int cudathreadsperblock, \
     unsigned long long int verbosity, \
@@ -216,7 +216,7 @@
         integrator->maxnperpackage = maxnperpackage; \
     if ( maxmperpackage != 0 ) \
         integrator->maxmperpackage = maxmperpackage; \
-    if ( cputhreads != 0 ) \
+    if ( cputhreads != -1 ) \
         integrator->cputhreads = cputhreads; \
     if ( cudablocks != 0 ) \
         integrator->cudablocks = cudablocks; \

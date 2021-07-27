@@ -536,8 +536,10 @@ class Qmc(CPPIntegrator):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
+        if cputhreads is None:
+            cputhreads = -1 # use c++ default
         self.c_lib = integral_library.c_lib
         self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_integrators_Qmc.restype = c_void_p
@@ -551,7 +553,7 @@ class Qmc(CPPIntegrator):
                                                             c_ulonglong, # minm
                                                             c_ulonglong, # maxnperpackage
                                                             c_ulonglong, # maxmperpackage
-                                                            c_ulonglong, # cputhreads
+                                                            c_longlong, # cputhreads
                                                             c_ulonglong, # cudablocks
                                                             c_ulonglong, # cudathreadsperblock
                                                             c_ulonglong, # verbosity
@@ -638,8 +640,10 @@ class CudaQmc(object):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=0,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
+        if cputhreads is None:
+            cputhreads = -1 # use c++ default
         argtypes = [
                         c_double, # epsrel
                         c_double, # epsabs
@@ -650,7 +654,7 @@ class CudaQmc(object):
                         c_ulonglong, # minm
                         c_ulonglong, # maxnperpackage
                         c_ulonglong, # maxmperpackage
-                        c_ulonglong, # cputhreads
+                        c_longlong, # cputhreads
                         c_ulonglong, # cudablocks
                         c_ulonglong, # cudathreadsperblock
                         c_ulonglong, # verbosity

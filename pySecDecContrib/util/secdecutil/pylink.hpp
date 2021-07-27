@@ -165,7 +165,7 @@ extern "C"
     unsigned long long int minm, \
     unsigned long long int maxnperpackage, \
     unsigned long long int maxmperpackage, \
-    unsigned long long int cputhreads, \
+    long long int cputhreads, \
     unsigned long long int cudablocks, \
     unsigned long long int cudathreadsperblock, \
     unsigned long long int verbosity, \
