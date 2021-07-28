@@ -11,4 +11,7 @@ fi
 
 cd "$dstdir"
 imgpath=/homedir/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-singularity exec -C -W work -H homedir:/homedir -B runner:/runner --env=PATH=$imgpath --pwd /runner $img nice /runner/run.sh
+while true; do
+    singularity exec -C -W work -H homedir:/homedir -B runner:/runner --env=PATH=$imgpath --pwd /runner $img nice /runner/run.sh || break
+    sleep 10
+done
