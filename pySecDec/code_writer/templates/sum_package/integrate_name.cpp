@@ -62,10 +62,9 @@ int main(int argc, const char *argv[])
     // To specify different settings for a particular order in a particular amplitude,
     // type e.g.: amplitudes.expression.at(<amplitude index>).at(<order>).epsrel = 1e-5;
 
-    // optionally set wall clock limits (in seconds)
+    // optionally set wall clock limit (in seconds)
     // Note: Only the wall clock time spent in "amplitudes.evaluate()" is considered for these limits.
-    // amplitudes.soft_wall_clock_limit = 60 *  8;
-    // amplitudes.hard_wall_clock_limit = 60 * 10;
+    // amplitudes.wall_clock_limit = 60 *  8;
 
     // optionally compute multiple integrals concurrently
     // Note: The integrals themselves may also be computed in parallel irrespective of this option.

@@ -695,8 +695,7 @@ namespace secdecutil {
                 bool verbose;
                 real_t min_decrease_factor;
                 real_t decrease_to_percentage; // of remaining time
-                real_t soft_wall_clock_limit;
-                real_t hard_wall_clock_limit;
+                real_t wall_clock_limit;
                 size_t number_of_threads;
                 size_t reset_cuda_after;
                 container_t<sum_t> expression;
@@ -728,8 +727,7 @@ namespace secdecutil {
                 ) :
                     verbose(false),
                     min_decrease_factor(0.9),
-                    hard_wall_clock_limit(std::numeric_limits<double>::infinity()),
-                    soft_wall_clock_limit(std::numeric_limits<double>::infinity()),
+                    wall_clock_limit(std::numeric_limits<double>::infinity()),
                     decrease_to_percentage(0.7),
                     number_of_threads(0),
                     reset_cuda_after(0),
@@ -786,13 +784,14 @@ namespace secdecutil {
                 /*
                  * estimate total time and try to get below wall_clock_limit
                  */
-                void ensure_wall_clock_limit(bool& repeat, std::vector<integral_t*>& integrals)
+                void ensure_wall_clock_limit(bool& repeat, std::vector<integral_t*>& integrals, double decrease_to_percentage=1.0)
                 {
                     real_t elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
-                    real_t remaining_time = hard_wall_clock_limit - elapsed_time;
+                    real_t remaining_time = wall_clock_limit - elapsed_time;
 
                     if(remaining_time <= 0.)
                     {
+                        repeat = false;
                         if(verbose)
                         {
                             std::cerr << std::endl;
@@ -824,8 +823,7 @@ namespace secdecutil {
                         std::cerr << "elapsed time: " << elapsed_time << " s = " << elapsed_time/60 << " min = " << elapsed_time/60/60 << " hr" << std::endl;
                         std::cerr << "estimated time for integrations: " << time_for_next_iteration << " s = " << time_for_next_iteration/60 << " min = " << time_for_next_iteration/60/60 << " hr" << std::endl;
                         std::cerr << "remaining time: " << remaining_time << " s = " << remaining_time/60 << " min = " << remaining_time/60/60 << " hr" << std::endl;
-                        std::cerr << "soft wall clock limit: " << soft_wall_clock_limit << " s = " << soft_wall_clock_limit/60 << " min = " << soft_wall_clock_limit/60/60 << " hr" << std::endl;
-                        std::cerr << "hard wall clock limit: " << hard_wall_clock_limit << " s = " << hard_wall_clock_limit/60 << " min = " << hard_wall_clock_limit/60/60 << " hr" << std::endl;
+                        std::cerr << "wall clock limit: " << wall_clock_limit << " s = " << wall_clock_limit/60 << " min = " << wall_clock_limit/60/60 << " hr" << std::endl;
                     }
 
                     // decrease number of sampling points if sampling would run out of time
@@ -858,11 +856,11 @@ namespace secdecutil {
                             }
                         }
 
-                        // stop iterating if soft limit passed
-                        if(elapsed_time > soft_wall_clock_limit)
+                        // stop iterating if wall-clock limit passed
+                        if(elapsed_time > wall_clock_limit)
                         {
                             if(verbose)
-                                std::cerr << "elapsed_time > soft_wall_clock_limit: " << elapsed_time << " > " << soft_wall_clock_limit << ", no further refinements (ensure_wall_clock_limit)" << std::endl;
+                                std::cerr << "elapsed_time > wall_clock_limit: " << elapsed_time << " > " << wall_clock_limit << ", no further refinements (ensure_wall_clock_limit)" << std::endl;
                             repeat = false;
                         }
                         else
@@ -1033,7 +1031,6 @@ namespace secdecutil {
                                     // use all terms to obtain initial estimate of fac
                                     if( firstiter )
                                         var_estimate += absvar * pow(c_i,2*beta_times_scaleexpo);
-
                                     // improve fac taking into account that error of term doesn't change if n_target < n_current
                                     else
                                         var_estimate += absvar * min(pow(c_i,2*beta_times_scaleexpo)/fac, 1.);
@@ -1047,6 +1044,39 @@ namespace secdecutil {
                             firstiter = false;
 
                         } while(fac < oldfac && fac != 0); // If term.integral->get_number_of_function_evaluations() > optimal N_i, use current n but update var_estimate
+
+                        // reduce number of sampling points if estimated time for next iteration > decrease_to_percentage*time_remaining
+                        real_t elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
+                        real_t time_remaining = (wall_clock_limit - elapsed_time)*decrease_to_percentage;
+                        do {
+                            oldfac = fac;
+
+                            real_t time_estimate(0);
+                            real_t scaleexpo;
+
+                            for(size_t i = 0; i < sum.summands.size(); ++i)
+                            {
+                                real_t& c_i = c.at(i);
+                                term_t& term = sum.summands.at(i);
+                                if(c_i > 0)
+                                {
+                                    scaleexpo = term.integral->get_scaleexpo();
+                                    const real_t beta = 2./(2.*scaleexpo+1.);
+
+                                    real_t temp = pow(c_i,-beta)*pow(fac,0.5/scaleexpo);
+                                    if (temp>0)
+                                        time_estimate+= term.integral->get_integration_time()*temp;
+                                }
+                            }
+
+                            if (time_estimate > time_remaining)
+                            {
+                                fac *= pow(time_remaining/time_estimate, 2*scaleexpo); 
+                                if(verbose)
+                                    std::cerr << "using reduced number of sampling points due to time limit" << std::endl;
+                            }
+                        } while(fac < oldfac && fac != 0); // If term.integral->get_number_of_function_evaluations() > optimal N_i, use current n but update var_estimate
+
 
                         // Store target in term
                         for(size_t i = 0; i < sum.summands.size(); ++i)
@@ -1179,7 +1209,7 @@ namespace secdecutil {
                     secdecutil::deep_apply(expression, ensure_maxincreasefac);
                     if(verbose)
                         std::cerr << "ensure_maxincreasefac allows/requires further refinements: " << (repeat ? "true" : "false") << std::endl;
-                    ensure_wall_clock_limit(repeat, integrals);
+                    ensure_wall_clock_limit(repeat, integrals, decrease_to_percentage);
                     if(verbose)
                         std::cerr << "ensure_wall_clock_limit allows/requires further refinements: " << (repeat ? "true" : "false") << std::endl;
 
@@ -1206,7 +1236,8 @@ namespace secdecutil {
                     secdecutil::deep_apply(expression, ensure_maxincreasefac);
                     if(verbose)
                         std::cerr << "ensure_maxincreasefac allows/requires further refinements: " << (repeat ? "true" : "false") << std::endl;
-                    ensure_wall_clock_limit(repeat, integrals);
+                    // ensure_error_goal already implements wall_clock_limit, but separately for each sum. Here we check that when considering all sums, the wall_clock_limit is not exceeded.
+                    ensure_wall_clock_limit(repeat, integrals, 1.0); 
                     if(verbose)
                         std::cerr << "ensure_wall_clock_limit allows/requires further refinements: " << (repeat ? "true" : "false") << std::endl;
 

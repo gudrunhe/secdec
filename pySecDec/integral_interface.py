@@ -869,7 +869,7 @@ class IntegralLibrary(object):
         float, optional;
         If the next refinement iteration is expected to
         make the total time taken for the code to run
-        longer than ``hard_wall_clock_limit`` then the
+        longer than ``wall_clock_limit`` then the
         number of points to be requested in the next
         iteration will be reduced by
         at least ``min_decrease_factor``.
@@ -881,7 +881,7 @@ class IntegralLibrary(object):
         ``remaining_time * decrease_to_percentage > time_for_next_iteration``
         then the number of points requested in
         the next refinement iteration will be reduced.
-        Here: ``remaining_time = hard_wall_clock_limit - elapsed_time``
+        Here: ``remaining_time = wall_clock_limit - elapsed_time``
         and ``time_for_next_iteration`` is the estimated
         time required for the next refinement iteration.
         Note: if this condition is met this means that
@@ -889,26 +889,13 @@ class IntegralLibrary(object):
         precision.
         Default: ``0.7``.
 
-    :param soft_wall_clock_limit:
+    :param wall_clock_limit:
         float, optional;
         If the current elapsed time has passed
-        ``soft_wall_clock`` limit and a refinement
+        ``wall_clock`` limit and a refinement
         iteration finishes then a new refinement iteration
         will not be started. Instead, the code will return
         the current result and exit.
-        Default: ``DBL_MAX (1.7976931348623158e+308)``.
-
-    :param hard_wall_clock_limit:
-        float, optional;
-        If the next refinement iteration is expected to
-        make the total time taken for the code to run
-        longer than ``hard_wall_clock_limit`` then the
-        number of points in the next iteration will be
-        reduced such that the code is expected to finish
-        before the elapsed time reaches
-        ``hard_wall_clock_limit``. Note that this means
-        that the expected precision will not match the
-        desired precision.
         Default: ``DBL_MAX (1.7976931348623158e+308)``.
 
     :param number_of_threads:
@@ -1033,8 +1020,7 @@ class IntegralLibrary(object):
                                                c_double, # max_epsabs
                                                c_double, # min_decrease_factor
                                                c_double, # decrease_to_percentage
-                                               c_double, # soft_wall_clock_limit
-                                               c_double, # hard_wall_clock_limit
+                                               c_double, # wall_clock_limit
                                                c_size_t, # number_of_threads
                                                c_size_t, # reset_cuda_after
                                                c_bool, # verbose
@@ -1066,8 +1052,7 @@ class IntegralLibrary(object):
                                                         c_double,  # max_epsabs
                                                         c_double,  # min_decrease_factor
                                                         c_double,  # decrease_to_percentage
-                                                        c_double,  # soft_wall_clock_limit
-                                                        c_double,  # hard_wall_clock_limit
+                                                        c_double,  # wall_clock_limit
                                                         c_size_t,  # number_of_threads
                                                         c_size_t,  # reset_cuda_after
                                                         c_bool, # verbose
@@ -1088,8 +1073,8 @@ class IntegralLibrary(object):
                      epsrel=None, epsabs=None, maxeval=None,
                      mineval=None, maxincreasefac=20., min_epsrel=0.2, min_epsabs=1.e-4,
                      max_epsrel=1.e-14, max_epsabs=1.e-20, min_decrease_factor=0.9,
-                     decrease_to_percentage=0.7, soft_wall_clock_limit=1.7976931348623158e+308, # 1.7976931348623158e+308 max double
-                     hard_wall_clock_limit=1.7976931348623158e+308, number_of_threads=0, reset_cuda_after=0, verbose=False
+                     decrease_to_percentage=0.7, wall_clock_limit=1.7976931348623158e+308, # 1.7976931348623158e+308 max double
+                     number_of_threads=0, reset_cuda_after=0, verbose=False
                 ):
         # Set default epsrel,epsabs to integrator.epsrel,epsabs
         if (epsrel is None): epsrel = self.high_dimensional_integrator._epsrel
@@ -1114,7 +1099,7 @@ class IntegralLibrary(object):
                                                   epsrel, epsabs, maxeval,
                                                   mineval, maxincreasefac, min_epsrel, min_epsabs,
                                                   max_epsrel, max_epsabs, min_decrease_factor,
-                                                  decrease_to_percentage, soft_wall_clock_limit, hard_wall_clock_limit,
+                                                  decrease_to_percentage, wall_clock_limit,
                                                   number_of_threads, reset_cuda_after, verbose
                                               )
                                      )
@@ -1136,7 +1121,7 @@ class IntegralLibrary(object):
                                 epsrel, epsabs, maxeval,
                                 mineval, maxincreasefac, min_epsrel, min_epsabs,
                                 max_epsrel, max_epsabs, min_decrease_factor,
-                                decrease_to_percentage, soft_wall_clock_limit, hard_wall_clock_limit,
+                                decrease_to_percentage, wall_clock_limit, 
                                 number_of_threads, reset_cuda_after, verbose
                             ):
         # Passed in correct number of parameters?
@@ -1175,7 +1160,7 @@ class IntegralLibrary(object):
                                                  epsrel, epsabs, maxeval,
                                                  mineval, maxincreasefac, min_epsrel, min_epsabs,
                                                  max_epsrel, max_epsabs, min_decrease_factor,
-                                                 decrease_to_percentage, soft_wall_clock_limit, hard_wall_clock_limit,
+                                                 decrease_to_percentage, wall_clock_limit, 
                                                  number_of_threads, reset_cuda_after, verbose,
                                                  self.c_lib_path.encode("utf-8")
                                             )
@@ -1191,7 +1176,7 @@ class IntegralLibrary(object):
                                             epsrel, epsabs, maxeval,
                                             mineval, maxincreasefac, min_epsrel, min_epsabs,
                                             max_epsrel, max_epsabs, min_decrease_factor,
-                                            decrease_to_percentage, soft_wall_clock_limit, hard_wall_clock_limit,
+                                            decrease_to_percentage, wall_clock_limit, 
                                             number_of_threads, reset_cuda_after, verbose,
                                             self.c_lib_path.encode("utf-8")
                                     )

@@ -120,8 +120,7 @@ extern "C"
         const real_t max_epsabs,
         const real_t min_decrease_factor,
         const real_t decrease_to_percentage, // of remaining time
-        const real_t soft_wall_clock_limit,
-        const real_t hard_wall_clock_limit,
+        const real_t wall_clock_limit,
         const size_t number_of_threads,
         const size_t reset_cuda_after,
         const bool verbose,
@@ -240,8 +239,7 @@ extern "C"
             const real_t max_epsabs,
             const real_t min_decrease_factor,
             const real_t decrease_to_percentage, // of remaining time
-            const real_t soft_wall_clock_limit,
-            const real_t hard_wall_clock_limit,
+            const real_t wall_clock_limit,
             const size_t number_of_threads,
             const size_t reset_cuda_after,
             const bool verbose,

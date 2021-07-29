@@ -83,8 +83,7 @@ extern "C"
         const real_t max_epsabs,
         const real_t min_decrease_factor,
         const real_t decrease_to_percentage, // of remaining time
-        const real_t soft_wall_clock_limit,
-        const real_t hard_wall_clock_limit,
+        const real_t wall_clock_limit,
         const size_t number_of_threads,
         const size_t reset_cuda_after,
         const bool verbose,
@@ -130,8 +129,7 @@ extern "C"
         );
         amplitudes.min_decrease_factor = min_decrease_factor;
         amplitudes.decrease_to_percentage = decrease_to_percentage;
-        amplitudes.soft_wall_clock_limit = soft_wall_clock_limit;
-        amplitudes.hard_wall_clock_limit = hard_wall_clock_limit;
+        amplitudes.wall_clock_limit = wall_clock_limit;
         amplitudes.number_of_threads = number_of_threads;
         amplitudes.reset_cuda_after = reset_cuda_after;
         amplitudes.verbose = verbose;
@@ -194,8 +192,7 @@ extern "C"
             const real_t max_epsabs,
             const real_t min_decrease_factor,
             const real_t decrease_to_percentage, // of remaining time
-            const real_t soft_wall_clock_limit,
-            const real_t hard_wall_clock_limit,
+            const real_t wall_clock_limit,
             const size_t number_of_threads,
             const size_t reset_cuda_after,
             const bool verbose,
@@ -241,8 +238,7 @@ extern "C"
             );
             amplitudes.min_decrease_factor = min_decrease_factor;
             amplitudes.decrease_to_percentage = decrease_to_percentage;
-            amplitudes.soft_wall_clock_limit = soft_wall_clock_limit;
-            amplitudes.hard_wall_clock_limit = hard_wall_clock_limit;
+            amplitudes.wall_clock_limit = wall_clock_limit;
             amplitudes.number_of_threads = number_of_threads;
             amplitudes.reset_cuda_after = reset_cuda_after;
             amplitudes.verbose = verbose;
