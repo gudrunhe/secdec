@@ -4,10 +4,15 @@ from ..misc import sympify_symbols, make_cpp_list, chunks
 from .make_package import make_package
 import pySecDecContrib
 
+from multiprocessing import Pool
 from time import strftime
-import os, sys, shutil, subprocess
 import numpy as np
+import os
+import shutil
+import subprocess
 import sympy as sp
+import sys
+import tempfile
 
 class Coefficient(object):
     r'''
@@ -224,10 +229,49 @@ class Coefficient(object):
 
         return lowest_orders, form_output
 
+def _generate_one_term(coefficients, complex_parameters, form_executable, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
+
+    sub_name = package_generator.name
+    replacements_in_files['sub_integral_name'] = sub_name
+
+    package_generator = package_generator._replace(real_parameters = real_parameters,
+                                                   complex_parameters = complex_parameters,
+                                                   pylink_qmc_transforms = pylink_qmc_transforms)
+
+    # process coefficients
+    lowest_coefficient_orders = []
+    coeffsdir = name + '_coefficients'
+    os.makedirs(coeffsdir, exist_ok=True)
+    for i in range(len(coefficients)):
+        #coefficient = coefficients[i][j]
+        coefficient = coefficients[i]
+        with tempfile.TemporaryDirectory(prefix="pSD") as tempdir:
+            this_coefficients_lowest_coefficient_orders, coefficient_expressions = \
+                    coefficient.process(form=form_executable, workdir=os.path.join(tempdir, "form"))
+        lowest_coefficient_orders.append(this_coefficients_lowest_coefficient_orders)
+        with open(os.path.join(coeffsdir, sub_name+'_coefficient%i.txt'%i),'w') as coeffile:
+            coeffile.write(coefficient_expressions)
+    replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
+
+    minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
+    package_generator = package_generator._replace(regulators = regulators)
+    package_generator = package_generator._replace(requested_orders = np.asarray(requested_orders) - minimal_lowest_coefficient_orders)
+
+    # parse integral specific files
+    for ch in 'ch':
+        suffix = '_weighted_integral.%spp' % ch
+        parse_template_file(os.path.join(template_sources, 'src', 'name' + suffix), # source
+                            os.path.join('src', sub_name + suffix), # dest
+                            replacements_in_files)
+
+    # Call make_package with its arguments
+    return make_package(**package_generator._asdict())
+
 # TODO: high-level test
 def sum_package(name, package_generators, regulators, requested_orders,
                 real_parameters=[], complex_parameters=[], coefficients=None,
-                form_executable=None, pylink_qmc_transforms=['korobov3x3']):
+                form_executable=None, pylink_qmc_transforms=['korobov3x3'],
+                processes=1):
     r'''
     Decompose, subtract and expand a list of expressions
     of the form
@@ -298,8 +342,19 @@ def sum_package(name, package_generators, regulators, requested_orders,
         * ``korobov<i>`` for 1 <= i <= 6 (same as ``korobov<i>x<i>``)
         * ``sidi<i>`` for 1 <= i <= 6
 
-        `New in version 1.5`.
         Default: ``['korobov3x3']``
+    
+    :param processes:
+        integer or None, optional;
+        Parallelize the generation of terms in a sum using this
+        many processes.
+
+        When set to a value larger than 1, this will override the
+        ``processes`` argument of the terms in a sum, meaning
+        that each term will not use parallelization, but rather
+        different terms will be generated in parallel.
+
+        Default: ``1``
 
     '''
     print('running "sum_package" for ' + name)
@@ -465,47 +520,31 @@ def sum_package(name, package_generators, regulators, requested_orders,
         # call package generator for every integral
         number_of_integration_variables = 0
         template_replacements = {}
-        for j, package_generator in enumerate(package_generators):
-            sub_name = package_generator.name
-            replacements_in_files['sub_integral_name'] = sub_name
 
-            package_generator = package_generator._replace(real_parameters = real_parameters,
-                                                           complex_parameters = complex_parameters,
-                                                           pylink_qmc_transforms = pylink_qmc_transforms)
+        if processes is not None and processes > 1:
+            with Pool(processes) as pool:
+                template_replacements = pool.starmap(_generate_one_term, [(
+                        [c[j] for c in coefficients], complex_parameters,
+                        form_executable, name, package_generator._replace(processes=1),
+                        pylink_qmc_transforms, real_parameters, regulators,
+                        replacements_in_files, requested_orders,
+                        template_sources
+                    )
+                    for j, package_generator in enumerate(package_generators)
+                ])
+        else:
+            template_replacements = [_generate_one_term(
+                    [c[j] for c in coefficients], complex_parameters,
+                    form_executable, name, package_generator,
+                    pylink_qmc_transforms, real_parameters, regulators,
+                    replacements_in_files, requested_orders,
+                    template_sources
+                )
+                for j, package_generator in enumerate(package_generators)
+            ]
 
-            # process coefficients
-            lowest_coefficient_orders = []
-            coeffsdir = name + '_coefficients'
-            os.makedirs(coeffsdir, exist_ok=True)
-            for i in range(len(coefficients)):
-                coefficient = coefficients[i][j]
-                this_coefficients_lowest_coefficient_orders, coefficient_expressions = coefficient.process(form=form_executable)
-                lowest_coefficient_orders.append(this_coefficients_lowest_coefficient_orders)
-                with open(os.path.join(coeffsdir, sub_name+'_coefficient%i.txt'%i),'w') as coeffile:
-                    coeffile.write(coefficient_expressions)
-            replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
-
-            minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
-            package_generator = package_generator._replace(regulators = regulators)
-            package_generator = package_generator._replace(requested_orders = np.asarray(requested_orders) - minimal_lowest_coefficient_orders)
-
-            # parse integral specific files
-            for ch in 'ch':
-                suffix = '_weighted_integral.%spp' % ch
-                parse_template_file(os.path.join(template_sources, 'src', 'name' + suffix), # source
-                                    os.path.join('src', sub_name + suffix), # dest
-                                    replacements_in_files)
-
-            # Unpack package_generator to call
-            package_generator_dict = package_generator._asdict()
-
-            # Call package_generator with its arguments
-            template_replacements = make_package(**package_generator_dict)
-
-            # Compute maximal number of integration variables
-            number_of_integration_variables = max(number_of_integration_variables,template_replacements['number_of_integration_variables'])
-
-        replacements_in_files['number_of_integration_variables'] = number_of_integration_variables
+        replacements_in_files['number_of_integration_variables'] = \
+                max(t['number_of_integration_variables'] for t in template_replacements)
 
     finally:
         os.chdir(original_working_directory)
@@ -516,4 +555,4 @@ def sum_package(name, package_generators, regulators, requested_orders,
                         replacements_in_files)
 
     # Return template replacements of last integral processed (for 1 integral case this emulates what code_writer.make_package does)
-    return template_replacements
+    return template_replacements[-1]
