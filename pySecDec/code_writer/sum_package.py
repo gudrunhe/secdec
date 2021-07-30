@@ -521,7 +521,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
         number_of_integration_variables = 0
         template_replacements = {}
 
-        if processes is not None and processes > 1:
+        if processes > 1:
             with Pool(processes) as pool:
                 template_replacements = pool.starmap(_generate_one_term, [(
                         [c[j] for c in coefficients], complex_parameters,

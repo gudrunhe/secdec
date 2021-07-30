@@ -1762,9 +1762,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     :param processes:
         integer or None, optional;
-        The maximal number of processes to be used. If ``None``,
-        the number of CPUs :func:`multiprocessing.cpu_count()` is
-        used.
+        Parallelize the package generation using at most this many
+        processes. If ``None``, use the total number of logical
+        CPUs on the system (that is, :func:`os.cpu_count()`),
+        or the number of CPUs allocated to the current process
+        (``len(os.sched_getaffinity(0))``), on platforms where
+        this information is available (i.e. Linux+glibc).
         `New in version 1.3`.
         Default: ``None``
 
@@ -1985,7 +1988,12 @@ def make_package(name, integration_variables, regulators, requested_orders,
         primary_sectors_to_consider = strategy['primary'](initial_sector, range(len(integration_variables)))
 
     # initialize the multiprocessing pool to process the `secondary_sectors` in parallel
-    if processes is None or processes > 1:
+    if processes is None:
+        try:
+            processes = len(os.sched_getaffinity(0))
+        except AttributeError:
+            processes = os.cpu_count()
+    if processes > 1:
         pool = Pool(processes)
     else:
         pool = None
