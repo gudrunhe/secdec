@@ -14,6 +14,7 @@ try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
+import os
 import os.path
 
 def _parse_series_coefficient(text):
@@ -526,12 +527,27 @@ class Qmc(CPPIntegrator):
         vectors suitable for the highest dimension integral
         appearing in the library.
 
+    :param cputhreads:
+        int;
+        The number of CPU threads that should be used to evaluate
+        the integrand function.
+
+        The default is the number of logical CPUs allocated to the
+        current process (that is, ``len(os.sched_getaffinity(0))``)
+        on platforms that expose this information (i.e. Linux+glibc),
+        or ``os.cpu_count()``.
+
+        If GPUs are used, one additional CPU thread per device
+        will be launched for communicating with the device. One
+        can set ``cputhreads'' to zero to disable CPU evaluation
+        in this case.
+
     .. seealso::
         The most important options are described in
         :numref:`chapter_cpp_qmc`.
 
     The other options are defined in the Qmc docs. If
-    an argument is set to 0 then the default of the
+    an argument is omitted then the default of the
     underlying Qmc implementation is used.
 
     '''
@@ -539,7 +555,10 @@ class Qmc(CPPIntegrator):
                       minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         if cputhreads is None:
-            cputhreads = -1 # use c++ default
+            try:
+                cputhreads = len(os.sched_getaffinity(0))
+            except AttributeError:
+                cputhreads = os.cpu_count()
         self.c_lib = integral_library.c_lib
         self.c_lib_path = integral_library.c_lib_path
         self.c_lib.allocate_integrators_Qmc.restype = c_void_p
@@ -634,8 +653,27 @@ class CudaQmc(object):
         are ``"default"``, ``"cbcpt_dn1_100"``, ``"cbcpt_dn2_6"``,
         ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``.
 
+    :param cputhreads:
+        int;
+        The number of CPU threads that should be used to evaluate
+        the integrand function.
+
+        The default is the number of logical CPUs allocated to the
+        current process (that is, ``len(os.sched_getaffinity(0))``)
+        on platforms that expose this information (i.e. Linux+glibc),
+        or ``os.cpu_count()``.
+
+        If GPUs are used, one additional CPU thread per device
+        will be launched for communicating with the device. One
+        can set ``cputhreads'' to zero to disable CPU evaluation
+        in this case.
+
+    .. seealso::
+        The most important options are described in
+        :numref:`chapter_cpp_qmc`.
+
     The other options are defined in the Qmc docs. If
-    an argument is set to 0 then the default of the
+    an argument is omitted then the default of the
     underlying Qmc implementation is used.
 
     '''
@@ -643,7 +681,10 @@ class CudaQmc(object):
                       minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
         devices_t = c_int * len(devices)
         if cputhreads is None:
-            cputhreads = -1 # use c++ default
+            try:
+                cputhreads = len(os.sched_getaffinity(0))
+            except AttributeError:
+                cputhreads = os.cpu_count()
         argtypes = [
                         c_double, # epsrel
                         c_double, # epsabs
