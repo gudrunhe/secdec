@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-# in this example we try to expand the dotted loop using the mass of the particle
+# in this example we expand the dotted loop using the mass of the particle
 # in the loop as the small parameter
-# here we do it both ways, expaning in the msq directly, or replacing it by
-# z*msq, expanding in z and then using z=1, here we use 2 Feynman parameters
-# (i.e. we have two propagators and a powerlist)
+# here we do it both ways simultaneously: expanding in the msq directly, 
+# or replacing it by z*msq, expanding in z and then using z=1
 
 from pySecDec.loop_integral import LoopIntegralFromPropagators
 from pySecDec.loop_integral import loop_regions
