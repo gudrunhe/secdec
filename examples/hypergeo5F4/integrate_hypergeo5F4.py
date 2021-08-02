@@ -9,7 +9,7 @@ if __name__ == "__main__":
     hypergeo5F4 = IntegralLibrary('hypergeo5F4/hypergeo5F4_pylink.so')
 
     # choose integrator
-    hypergeo5F4.use_Vegas()
+    hypergeo5F4.use_Qmc()
 
     # integrate
     str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = hypergeo5F4([0.5], epsrel=1e-4, verbose=True)
