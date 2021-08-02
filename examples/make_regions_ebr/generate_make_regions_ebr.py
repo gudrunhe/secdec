@@ -10,7 +10,7 @@ if __name__ == "__main__":
     # -Log[t] + O[t]
 
     regions_generators = make_regions(
-        name = 'make_regions',
+        name = 'make_regions_ebr',
         integration_variables = ['x'],
         regulators = ['delta'],
         requested_orders = [0],
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     )
 
     sum_package(
-        'make_regions',
+        'make_regions_ebr',
         regions_generators,
         regulators = ['delta'],
         requested_orders = [0],

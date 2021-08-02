@@ -9,7 +9,7 @@ if __name__ == "__main__":
     t = 0.01
 
     # load c++ library
-    intlib = IntegralLibrary('make_regions/make_regions_pylink.so')
+    intlib = IntegralLibrary('make_regions_ebr/make_regions_ebr_pylink.so')
 
     # integrate
     _, _, result = intlib(real_parameters=[t])
