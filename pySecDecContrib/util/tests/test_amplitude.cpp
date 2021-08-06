@@ -58,6 +58,18 @@ struct complex_integrand_t
 
 } complex_integrand;
 
+struct complex_const_integrand_t
+{
+
+    const static unsigned number_of_integration_variables = 1;
+
+    HOSTDEVICE complex_t operator()(double const * const x)
+    {
+        return complex_t(1., 0.); 
+    };
+
+} complex_const_integrand;
+
 TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
 
     using integrand_t = secdecutil::IntegrandContainer</*integrand_return_t*/ double,/*x*/ double const * const,/*parameters*/ double>;
@@ -607,6 +619,81 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
 
         REQUIRE( std::abs(sum_results.at(0).uncertainty)/std::abs(sum_results.at(0).value) < epsrel );
         REQUIRE( std::abs(sum_results.at(1).uncertainty)/std::abs(sum_results.at(1).value) < epsrel );
+    };
+
+    SECTION("amplitude precision with different errormodes") {
+        using integrand_t = secdecutil::IntegrandContainer</*integrand_return_t*/ complex_t,/*x*/ double const * const,/*parameters*/ double>;
+        using integral_t = secdecutil::amplitude::Integral</*integrand_return_t*/ complex_t,/*real_t*/ double>;
+        
+        using cuba_integrator_t = secdecutil::cuba::Vegas<complex_t>;
+        using cuba_integral_t = secdecutil::amplitude::CubaIntegral</*integrand_return_t*/ complex_t,/*real_t*/ double, cuba_integrator_t, integrand_t>;
+        const std::shared_ptr<cuba_integrator_t> cuba_integrator_ptr = std::make_shared<cuba_integrator_t>();
+        cuba_integrator_ptr->flags = 2;
+        cuba_integrator_ptr->seed = 42546;
+        cuba_integrator_ptr->together = true;
+
+        const integrand_t complex_integrand_container = integrand_t(complex_integrand.number_of_integration_variables, [](double const * const x, secdecutil::ResultInfo * result_info){return complex_integrand(x);});
+        const integrand_t complex_integrand_container2 = integrand_t(complex_const_integrand.number_of_integration_variables, [](double const * const x, secdecutil::ResultInfo * result_info){return complex_const_integrand(x);});
+        std::shared_ptr<integral_t> complex_integral_ptr = std::make_shared<cuba_integral_t>(cuba_integrator_ptr, complex_integrand_container);
+        std::shared_ptr<integral_t> complex_integral_ptr2 = std::make_shared<cuba_integral_t>(cuba_integrator_ptr, complex_integrand_container2);
+
+        using weighted_integral_sum_t = std::vector<secdecutil::amplitude::WeightedIntegral<integral_t,/*coefficient_t*/complex_t>>;
+        std::vector<weighted_integral_sum_t> integral_sums
+        {
+            weighted_integral_sum_t{{complex_integral_ptr, complex_t(1.,0.)}} + 
+            weighted_integral_sum_t{{complex_integral_ptr2, complex_t(0., 10000.)}}
+        };
+        using sum_handler_t = secdecutil::amplitude::WeightedIntegralHandler</*integrand_return_t*/ complex_t, /*real_t*/ double, /*coefficient_t*/ complex_t, /*container_t*/ std::vector>;
+
+        double epsrel = 1e-3;
+
+        sum_handler_t sum_handler
+        (
+            integral_sums,
+            epsrel,
+            1e-20, // epsabs
+            1e6, // maxeval
+            1e3, // mineval
+            50., // maxincreasefac
+            1e-2, // min_epsrel
+            1e-2, // min_epsabs
+            1e-14, // max_epsrel
+            1e-16 // max_epsabs
+        );
+
+        sum_handler.verbose = true;
+        sum_handler.errormode = sum_handler.all;
+        //sum_handler.errormode = secdecutil::amplitude::all;
+        auto sum_results = sum_handler.evaluate();
+
+        REQUIRE( sum_results.at(0).uncertainty.real()/std::abs(sum_results.at(0).value.real()) < epsrel );
+        REQUIRE( sum_results.at(0).uncertainty.imag()/std::abs(sum_results.at(0).value.imag()) < epsrel );
+
+        std::vector<weighted_integral_sum_t> integral_sums2
+        {
+            weighted_integral_sum_t{{complex_integral_ptr, complex_t(0.,1.)}} + 
+            weighted_integral_sum_t{{complex_integral_ptr2, complex_t(1e-4,0.)}}
+        };
+        sum_handler_t sum_handler2
+        (
+            integral_sums2,
+            epsrel,
+            1e-20, // epsabs
+            1e6, // maxeval
+            1e3, // mineval
+            50., // maxincreasefac
+            1e-2, // min_epsrel
+            1e-2, // min_epsabs
+            1e-14, // max_epsrel
+            1e-16 // max_epsabs
+        );
+
+        sum_handler2.verbose = true;
+        sum_handler2.errormode = sum_handler2.largest;
+        sum_results = sum_handler2.evaluate();
+
+        REQUIRE( std::max(sum_results.at(0).uncertainty.real(),sum_results.at(0).uncertainty.imag()) / 
+                 std::max(std::abs(sum_results.at(0).value.real()),std::abs(sum_results.at(0).value.imag())) < epsrel );
     };
 
 };

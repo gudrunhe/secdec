@@ -114,6 +114,16 @@ A class template for integrating a sum of ``WeightedIntegral`` types.
 
             The maximum absolute accuracy assumed possible for each individual sector. Any sector known to this precision will not be refined further. Note: if this condition is met this means that the expected precision will not match the desired precision.
 
+        .. cpp:var:: ErrorMode errormode
+            
+            With ``enum ErrorMode : int { abs=0, all, largest, real, imag};``
+
+            Defines how epsrel and epsabs are defined for complex values.
+            With the choice  ``largest``, the relative uncertainty is defined as 
+            ``max( |Re(error)|, |Im(error)|)/max( |Re(result)|, |Im(result)|)``.
+            Choosing ``all`` will apply epsrel and epsabs to both the real
+            and imaginary part separately.
+
 Series
 ------
 

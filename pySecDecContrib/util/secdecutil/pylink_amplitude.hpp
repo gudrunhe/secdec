@@ -87,6 +87,7 @@ extern "C"
         const size_t number_of_threads,
         const size_t reset_cuda_after,
         const bool verbose,
+        const int errormode_enum,
         const char *lib_path
     )
     {
@@ -133,6 +134,7 @@ extern "C"
         amplitudes.number_of_threads = number_of_threads;
         amplitudes.reset_cuda_after = reset_cuda_after;
         amplitudes.verbose = verbose;
+        amplitudes.errormode = static_cast<handler_t<amplitudes_t>::ErrorMode>(errormode_enum);
 
         // compute the amplitude
         std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> result;

@@ -964,6 +964,19 @@ class IntegralLibrary(object):
         Controls the verbosity of the output of the amplitude.
         Default: ``False``.
 
+    :param errormode:
+        str, optional;
+        Allowed values: ``abs``, ``all``, ``largest``, ``real``, ``imag``.
+        Defines how epsrel and epsabs should be applied to complex values.
+        With the choice  ``largest``, the relative uncertainty is defined as 
+        ``max( |Re(error)|, |Im(error)|)/max( |Re(result)|, |Im(result)|)``.
+        Choosing ``all`` will apply epsrel and epsabs to both the real
+        and imaginary part separately.
+        Note: If either the real or imaginary part integrate to 0,
+        the choices ``all``, ``real`` or ``imag`` might prevent the integration
+        from stopping since the requested precision epsrel cannot be reached.
+        Default: ``abs``.
+
     .. seealso::
         A more detailed description of these parameters and
         how they affect timing/precision is given in
@@ -1065,6 +1078,7 @@ class IntegralLibrary(object):
                                                c_size_t, # number_of_threads
                                                c_size_t, # reset_cuda_after
                                                c_bool, # verbose
+                                               c_int, # errormode
                                                c_char_p  # lib_path
         ]
 
@@ -1097,6 +1111,7 @@ class IntegralLibrary(object):
                                                         c_size_t,  # number_of_threads
                                                         c_size_t,  # reset_cuda_after
                                                         c_bool, # verbose
+                                                        c_int, # errormode
                                                         c_char_p  # lib_path
                                                    ]
         except AttributeError:
@@ -1115,13 +1130,27 @@ class IntegralLibrary(object):
                      mineval=None, maxincreasefac=20., min_epsrel=0.2, min_epsabs=1.e-4,
                      max_epsrel=1.e-14, max_epsabs=1.e-20, min_decrease_factor=0.9,
                      decrease_to_percentage=0.7, wall_clock_limit=1.7976931348623158e+308, # 1.7976931348623158e+308 max double
-                     number_of_threads=0, reset_cuda_after=0, verbose=False
+                     number_of_threads=0, reset_cuda_after=0, verbose=False, errormode='abs'
                 ):
         # Set default epsrel,epsabs to integrator.epsrel,epsabs
         if (epsrel is None): epsrel = self.high_dimensional_integrator._epsrel
         if (epsabs is None): epsabs = self.high_dimensional_integrator._epsabs
         if (mineval is None): mineval = self.high_dimensional_integrator._mineval
         if (maxeval is None): maxeval = self.high_dimensional_integrator._maxeval
+
+        if errormode == 'abs':
+            errormode_enum = 0
+        elif errormode == 'all':
+            errormode_enum = 1
+        elif errormode == 'largest':
+            errormode_enum = 2
+        elif errormode == 'real':
+            errormode_enum = 3
+        elif errormode == 'imag':
+            errormode_enum = 4
+        else:
+            raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
+
 
         # Initialize and launch the underlying c routines in a subprocess
         # to enable KeyboardInterrupt and avoid crashing the primary python
@@ -1141,7 +1170,7 @@ class IntegralLibrary(object):
                                                   mineval, maxincreasefac, min_epsrel, min_epsabs,
                                                   max_epsrel, max_epsabs, min_decrease_factor,
                                                   decrease_to_percentage, wall_clock_limit,
-                                                  number_of_threads, reset_cuda_after, verbose
+                                                  number_of_threads, reset_cuda_after, verbose, errormode_enum
                                               )
                                      )
         integration_thread.daemon = True # daemonize worker to have it killed when the main thread is killed
@@ -1163,7 +1192,7 @@ class IntegralLibrary(object):
                                 mineval, maxincreasefac, min_epsrel, min_epsabs,
                                 max_epsrel, max_epsabs, min_decrease_factor,
                                 decrease_to_percentage, wall_clock_limit, 
-                                number_of_threads, reset_cuda_after, verbose
+                                number_of_threads, reset_cuda_after, verbose, errormode_enum
                             ):
         # Passed in correct number of parameters?
         assert len(real_parameters) == int(self.info['number_of_real_parameters']), \
@@ -1202,7 +1231,7 @@ class IntegralLibrary(object):
                                                  mineval, maxincreasefac, min_epsrel, min_epsabs,
                                                  max_epsrel, max_epsabs, min_decrease_factor,
                                                  decrease_to_percentage, wall_clock_limit, 
-                                                 number_of_threads, reset_cuda_after, verbose,
+                                                 number_of_threads, reset_cuda_after, verbose,errormode_enum,
                                                  self.c_lib_path.encode("utf-8")
                                             )
         else:
@@ -1218,7 +1247,7 @@ class IntegralLibrary(object):
                                             mineval, maxincreasefac, min_epsrel, min_epsabs,
                                             max_epsrel, max_epsabs, min_decrease_factor,
                                             decrease_to_percentage, wall_clock_limit, 
-                                            number_of_threads, reset_cuda_after, verbose,
+                                            number_of_threads, reset_cuda_after, verbose,errormode_enum,
                                             self.c_lib_path.encode("utf-8")
                                     )
         return_value_queue.put(compute_integral_return_value)

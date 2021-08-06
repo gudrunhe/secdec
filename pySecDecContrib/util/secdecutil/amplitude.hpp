@@ -32,6 +32,8 @@ namespace secdecutil {
 
     namespace amplitude {
 
+        
+
         // this exception is thrown when a getter function of Integral is called before the corresponding field has been populated
         struct integral_not_computed_error : public std::logic_error { using std::logic_error::logic_error; };
 
@@ -632,6 +634,11 @@ namespace secdecutil {
         template<typename integrand_return_t, typename real_t, typename coefficient_t, template<typename...> class container_t>
         class WeightedIntegralHandler
         {
+            #ifdef SECDEC_WITH_CUDA
+                typedef thrust::complex<real_t> complex_t;
+            #else
+                typedef std::complex<real_t> complex_t;
+            #endif
             public:
 
                 using integral_t = Integral<integrand_return_t,real_t>;
@@ -707,6 +714,9 @@ namespace secdecutil {
                 real_t max_epsrel;
                 real_t max_epsabs;
 
+                enum ErrorMode : int { abs=0, all, largest, real, imag};
+                ErrorMode errormode;
+
                 /*
                  * constructor
                  */
@@ -721,7 +731,8 @@ namespace secdecutil {
                     real_t min_epsrel = 0.2,
                     real_t min_epsabs = 1e-4,
                     real_t max_epsrel = 1e-14,
-                    real_t max_epsabs = 1e-20
+                    real_t max_epsabs = 1e-20,
+                    ErrorMode errormode=ErrorMode::abs
                 ) :
                     verbose(false),
                     min_decrease_factor(0.9),
@@ -731,7 +742,8 @@ namespace secdecutil {
                     reset_cuda_after(0),
                     expression( deep_apply(expression,convert_to_sum_t) ),
                     epsrel(epsrel),epsabs(epsabs),maxeval(maxeval),mineval(mineval),maxincreasefac(maxincreasefac),min_epsrel(min_epsrel),
-                    min_epsabs(min_epsabs),max_epsrel(max_epsrel),max_epsabs(max_epsabs),changed_deformation_parameters_map(read_map_from_file())
+                    min_epsabs(min_epsabs),max_epsrel(max_epsrel),max_epsabs(max_epsabs),changed_deformation_parameters_map(read_map_from_file()),
+                    errormode(errormode)
                 {
                     std::function<void(sum_t&)> set_parameters =
                         [&] (sum_t& sum)
@@ -777,6 +789,19 @@ namespace secdecutil {
                     container_t<sum_return_t> result = evaluate_expression();
                     for (unsigned int amp_idx = 0; amp_idx < result.size(); ++amp_idx)
                         std::cerr << "amplitude" << amp_idx << " = " << result.at(amp_idx) << std::endl;
+                }
+
+                real_t apply_errormode(sum_base_t error)
+                {
+                    using std::abs;
+
+                    if (errormode == this->abs)
+                        return abs(error);
+                    if (errormode == real)
+                        return abs(complex_t(error).real());
+                    if (errormode == imag)
+                        return abs(complex_t(error).imag());
+                    throw std::runtime_error("unexpected errormode");
                 }
 
                 /*
@@ -952,12 +977,20 @@ namespace secdecutil {
                 std::function<void(sum_t&)> ensure_error_goal =
                     [ this, &repeat ] (sum_t& sum)
                     {
+                        ErrorMode original_errormode = errormode; // for errormode==largest, we will temporarily set errormode = real or imag, depending on which error is larger
                         // compute absolute error goal
                         sum_return_t current_sum = compute_sum(sum);
                         sum_base_t current_sum_value = current_sum.value;
                         sum_base_t current_sum_error = current_sum.uncertainty;
-                        real_t abs_error = abs(current_sum_error);
-                        real_t abs_error_goal = sum.epsrel * abs(current_sum_value);
+                        if (errormode == largest)
+                        {
+                            errormode = (complex_t(current_sum.uncertainty).real() > complex_t(current_sum.uncertainty).imag()) ? real : imag;
+                        }
+
+                        real_t abs_error = apply_errormode(current_sum_error);
+                        real_t abs_error_goal = sum.epsrel * apply_errormode(current_sum_value);
+                        if(original_errormode == largest)
+                            abs_error_goal = sum.epsrel * std::max(abs(complex_t(current_sum_value).real()), abs(complex_t(current_sum_value).imag()));
                         abs_error_goal = max(abs_error_goal, abs_error*sum.epsrel); // If current error larger than current result set goal based on error
                         abs_error_goal = max(abs_error_goal, sum.epsabs); // Do not request an error smaller than epsabs
 
@@ -968,6 +1001,7 @@ namespace secdecutil {
                             {
                                 if(verbose)
                                     std::cerr << "sum: " << sum.display_name << ", current sum result: " << current_sum << ", abs_error < abs_error_goal: " << abs_error << " < " << abs_error_goal << ", no further refinements (ensure_error_goal)" << std::endl;
+                                errormode = original_errormode;
                                 return;
                             }
                         abs_error_goal *= abs_error_goal; // require variance rather than standard deviation in the following
@@ -979,10 +1013,8 @@ namespace secdecutil {
                         {
                             auto time = term.integral->get_integration_time();
                             secdecutil::UncorrelatedDeviation<integrand_return_t> integral = term.integral->get_integral_result();
-                            real_t abserr = abs(integral.uncertainty);
-                            real_t relerr = abserr / abs( integral.value );
-                            abserr *= abs(term.coefficient); // contribution to total error of the sum
-
+                            real_t abserr = apply_errormode(integral.uncertainty * term.coefficient);
+                            real_t relerr = abserr / abs( integral.value * term.coefficient);
 
                             if(!term.integral->allow_refine || relerr < sum.max_epsrel || abserr < sum.max_epsabs)
                                 c.push_back(  -1  );
@@ -1018,7 +1050,7 @@ namespace secdecutil {
                                 real_t& c_i = c.at(i);
                                 term_t& term = sum.summands.at(i);
                                 secdecutil::UncorrelatedDeviation<integrand_return_t> result = term.integral->get_integral_result();
-                                real_t abserr = abs(result.uncertainty) * abs(term.coefficient); // contribution to total error of the sum
+                                real_t abserr = apply_errormode(result.uncertainty * term.coefficient); // contribution to total error of the sum
                                 real_t absvar = abserr * abserr;
                                 if(c_i > 0)
                                 {
@@ -1107,7 +1139,7 @@ namespace secdecutil {
                                     if(verbose)
                                         std::cerr << "sum: " << sum.display_name << ", term: " << term.display_name << ", integral " << term.integral->id << ": " <<
                                                 term.integral->display_name << ", current integral result: " << term.integral->get_integral_result() <<
-                                                ", contribution to sum error: " << abs(term.integral->get_integral_result().uncertainty*term.coefficient) <<
+                                                ", contribution to sum error: " << apply_errormode(term.integral->get_integral_result().uncertainty*term.coefficient) <<
                                                 ", increase n: " << curr_n << " -> " <<proposed_next_n << " (ensure_error_goal)" << std::endl;
                                 } else {
                                     if(verbose)
@@ -1117,6 +1149,7 @@ namespace secdecutil {
                             }
 
                         }
+                        errormode = original_errormode;
                     };
 
                 // Damp very large increase in number of points
@@ -1228,7 +1261,20 @@ namespace secdecutil {
                     if(verbose)
                         std::cerr << std::endl << "computing integrals to satisfy error goals on sums: epsrel " << this->epsrel << ", epsabs " << this->epsabs << std::endl;
 
-                    secdecutil::deep_apply(expression, ensure_error_goal);
+                    if (errormode == all)
+                    {
+                        if(verbose) std::cerr << std::endl << "ensure error goal for real part" << std::endl;
+                        errormode = real;
+                        secdecutil::deep_apply(expression, ensure_error_goal);
+                        if(verbose) std::cerr << std::endl << "ensure error goal for imag part" << std::endl;
+                        errormode = imag;
+                        secdecutil::deep_apply(expression, ensure_error_goal);
+                        errormode = all;
+                    }
+                    else 
+                    {
+                        secdecutil::deep_apply(expression, ensure_error_goal);
+                    }
                     if(verbose)
                         std::cerr << "ensure_error_goal requires further refinements: " << (repeat ? "true" : "false") << std::endl;
                     secdecutil::deep_apply(expression, ensure_maxincreasefac);

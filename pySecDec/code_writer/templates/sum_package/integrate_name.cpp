@@ -66,6 +66,14 @@ int main(int argc, const char *argv[])
     // Note: Only the wall clock time spent in "amplitudes.evaluate()" is considered for these limits.
     // amplitudes.wall_clock_limit = 60 *  8;
 
+    // optionally the errormode, which defines how epsrel and epsabs are defined for complex values, can be changed. The default is
+    // amplitudes.errormode = amplitudes.abs;
+    // Possible choices besides abs are: all, largest, real, imag
+    // With the choice  'largest', the relative uncertainty is defined as 'max( |Re(error)|, |Im(error)|)/max( |Re(result)|, |Im(result)|)'.
+    // Choosing 'all' will apply epsrel and epsabs to both the real and imaginary part separately.
+    // Note: If either the real or imaginary part integrate to 0, the choices 'all', 'real' or 'imag' might prevent the integration
+    // from stopping since the requested precision epsrel cannot be reached.
+
     // optionally compute multiple integrals concurrently
     // Note: The integrals themselves may also be computed in parallel irrespective of this option.
     // amplitudes.number_of_threads = 12;
