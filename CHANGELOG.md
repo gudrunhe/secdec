@@ -12,9 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `make_regions` function, performs expansion by regions on generic regulated integrals.
 - `loop_regions` function, performs expansion by regions on loop integrals.
 - `Coefficient` class, represents a rational function that can be passed to `sum_package`.
-- `series_to_ginac`, `series_to_sympy`, `series_to_mathematica` and `series_to_maple` functions added to `pySecDec.integral_interface`, they convert the result returned by the python library to a format compatible with various CAS programs.
+- `series_to_ginac`, `series_to_sympy`, `series_to_mathematica` and `series_to_maple` functions added to `pySecDec.integral_interface`, they convert the result returned by the python library to a format compatible with various CAS programs. See [issue #3](https://github.com/gudrunhe/secdec/issues/3).
 - `pylink_qmc_transforms` argument for `sum_package`, `make_package` and `loop_package`, allows a list of QMC integral transforms that should be generated for the python library to be specified (e.g. `pylink_qmc_transforms=['korobov2x3','korobov4','sidi4']`). Default is now just `korobov3`.
-- `form_memory_use` and `form_threads` arguments for `make_package` and `loop_package`, the maximum memory use allowed by FORM and the number of TFORM threads, respectively. 
+- `form_memory_use` argument for `make_package` and `loop_package`, the maximum memory use allowed by FORM
+- `form_threads` argument for `make_package` and `loop_package`, the number of allowed TFORM threads. 
 - `DEBUG=1` flag for c++ library, produces a library suitable for debuggers and applies AddressSanitizer.
 - [example] `easy_sum` and `yyyy1L` (demonstrates `sum_package` with generic integrals).
 - [example] `yyyy1L` (demonstrates `sum_package` with loop integrals).
@@ -33,15 +34,15 @@ code=sm_XX -gencode arch=compute_YY,code=sm_YY"` (note: the script `print-cuda-a
 - `make_package` uses less RAM.
 - Various optimisations when computing derivatives and Jacobians (should slightly improve generate performance).
 - Parallelisation in Makefile for c++ library improved.
-- Example `userdefined_cpp` is now compatible with the new c++ backend.
+- Example `userdefined_cpp` made compatible with the new c++ backend.
 - [dist] update to Cuba-4.2.1 (28 Jun 2021).
 - [dist] update to qmc-1.0.6
 
 ### Deprecated
 - Python versions below 3.6 are no longer supported.
 - A c++14 compliant compiler is now required (previously c++11 was sufficient)
-- The behaviour of `make_package` and the generated c++ backend has changed. The old behaviour can be obtained by calling `pySecDec.code_writer.make_package`.
-- The behaviour of `loop_package` and the generated c++ backend has changed. The old behaviour can be obtained by passing the argument `package_generator=pySecDec.code_writer.make_package` to the function.
+- The behaviour of `make_package` and the generated c++ backend has changed. The deprecated behaviour can be obtained by calling `pySecDec.code_writer.make_package`.
+- The behaviour of `loop_package` and the generated c++ backend has changed. The deprecated behaviour can be obtained by passing the argument `package_generator=pySecDec.code_writer.make_package` to the function.
 - The `SECDEC_WITH_CUDA=sm_XX` environment variable has been deprecated, use `SECDEC_WITH_CUDA_FLAGS`.
 - Not all QMC integral transforms are compiled for the python interface by default. Set `pylink_qmc_transforms` when generating the library.
 - `requested_order=x` for `loop_package`, use `requested_orders=[x]`.
