@@ -1948,7 +1948,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual((sympify_expression(loop_integral.measure)-sympify_expression(result_measure)).simplify(),0)
 
 #@attr('active')
-class TestUF_LoopPackage(unittest.TestCase):
+class TestUF_LoopPackageFromPropagators(unittest.TestCase):
     def test_loop_package_twice(self):
         cwd = os.getcwd()
         tmpdir = tempfile.mkdtemp(prefix="pysecdec")
@@ -1959,6 +1959,25 @@ class TestUF_LoopPackage(unittest.TestCase):
                 loop_momenta=["k"],
                 external_momenta=["q"],
                 replacement_rules=[("q**2", "1")]
+            )
+            loop_package("bubble1", li, [0])
+            loop_package("bubble2", li, [0])
+            # The test is that no exceptions are thrown up to
+            # this point.
+        finally:
+            os.chdir(cwd)
+            shutil.rmtree(tmpdir)
+
+class TestUF_LoopPackageFromGraph(unittest.TestCase):
+    def test_loop_package_twice(self):
+        cwd = os.getcwd()
+        tmpdir = tempfile.mkdtemp(prefix="pysecdec")
+        try:
+            os.chdir(tmpdir)
+            li = LoopIntegralFromGraph(
+                internal_lines=[[0, [1, 2]], [0, [1,2]]],
+                external_lines=[['p', 1], ['p', 2]],
+                replacement_rules=[('p*p', '-1')]
             )
             loop_package("bubble1", li, [0])
             loop_package("bubble2", li, [0])
