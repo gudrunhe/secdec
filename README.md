@@ -194,7 +194,7 @@ missing `.sty` file, do the following:
 ## Making a PyPI release
 
 To create a release on [PyPI], first increment the version number
-of pySecDec in `pyproject.toml`, and update `ChangeLog`. Then
+of pySecDec in `pyproject.toml`, and update `CHANGELOG.md`. Then
 make sure you have a recent [Singularity] installed, and run
 
     ./build-release.sh

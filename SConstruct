@@ -62,7 +62,7 @@ env = Environment(
 contrib = SConscript("pySecDecContrib/SConscript", exports="env")
 sdist_extra_source = File(Split("""
     COPYING
-    ChangeLog
+    CHANGELOG.md
     PKG-INFO
     README.md
     SConstruct
