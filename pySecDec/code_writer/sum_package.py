@@ -267,7 +267,7 @@ def _generate_one_term(coefficients, complex_parameters, form_executable, name, 
     # Call make_package with its arguments
     return make_package(**package_generator._asdict())
 
-# TODO: high-level test
+
 def sum_package(name, package_generators, regulators, requested_orders,
                 real_parameters=[], complex_parameters=[], coefficients=None,
                 form_executable=None, pylink_qmc_transforms=['korobov3x3'],
