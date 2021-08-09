@@ -127,7 +127,7 @@ code=sm_XX -gencode arch=compute_YY,code=sm_YY"` (note: the script `print-cuda-a
 ## [1.2.1] - 2017-08-18
 - fix release 1.2
 
-## [1.2] - 2017-08-09
+## [1.2] - 2017-08-09 [YANKED]
 ### Version 1.2 has a bug that can lead to wrong results without warning. Please use a different version.
 - [make_package] more efficient algebra
 - [util/integrator] add dedicated 1D integrator 'cquad'
