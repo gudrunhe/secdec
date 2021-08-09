@@ -74,7 +74,6 @@ A class template for integrating a sum of ``WeightedIntegral`` types.
 
             The cuda driver does not automatically remove unnecessary functions from the device memory such that the device may run out of memory after some time. This option controls after how many integrals ``cudaDeviceReset()`` is called to clear the memory. With the default ``0``, ``cudaDeviceReset()`` is never called. This option is ignored if compiled without cuda.
 
-
         .. cpp:var:: const container_t<std::vector<term_t>>& expression
 
             The sum of terms to be integrated.
