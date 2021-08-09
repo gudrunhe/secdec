@@ -28,8 +28,6 @@
 #include <secdecutil/integrators/qmc.hpp>
 // cannot set the number of points for CQuad --> not suitable for "Integral"
 
-// TODO: documentation
-
 namespace secdecutil {
 
     namespace amplitude {

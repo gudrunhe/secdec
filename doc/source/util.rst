@@ -11,6 +11,110 @@ functions needed by the c++ code generated using :func:`loop_package <pySecDec.l
 or :func:`make_package <pySecDec.code_writer.make_package>`. Everything defined by the `SecDecUtil`
 is put into the c++ namepace `secdecutil`.
 
+Amplitude
+---------
+
+A collection of utilities for evaluating amplitudes (sums of integrals multiplied by coefficients).
+
+
+WeightedIntegral
+~~~~~~~~~~~~~~~~
+
+A class template containing an integral, ``I``, and the coefficient of the integral, ``C``. 
+A ``WeightedIntegral`` is interpreted as the product ``C*I`` and can be used to represent individual terms in an amplitude.
+
+    .. cpp:struct:: template<typename integral_t, typename coefficient_t> WeightedIntegral
+
+        .. cpp:var:: std::shared_ptr<integral_t> integral;
+
+            A shared pointer to the integral.
+
+        .. cpp:var:: coefficient_t coefficient;
+
+            The coefficient which will be multiplied on to the integral.
+
+        .. cpp:var:: std::string display_name = "WINTEGRAL";
+
+            A string used to indicate the name of the current weighted integral.
+
+        .. cpp:function:: WeightedIntegral(const std::shared_ptr<integral_t>& integral,const coefficient_t& coefficient = coefficient_t(1)) 
+
+
+The arithmetic operators (``+``, ``-``, ``*``, ``/``) are overloaded for ``WeightedIntegral`` types.
+
+WeightedIntegralHandler
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A class template for integrating a sum of ``WeightedIntegral`` types.
+
+    .. cpp:struct:: template<typename integrand_return_t, typename real_t, typename coefficient_t, template<typename...> class container_t> class WeightedIntegralHandler
+
+        .. cpp:var:: bool verbose
+
+            Controls the verbosity of the output of the amplitude.
+
+
+        .. cpp:var:: real_t min_decrease_factor
+
+            If the next refinement iteration is expected to make the total time taken for the code to run longer than ``wall_clock_limit`` then the number of points to be requested in the next iteration will be reduced by at least ``min_decrease_factor``.
+
+        .. cpp:var:: real_t decrease_to_percentage
+
+            If ``remaining_time * decrease_to_percentage > time_for_next_iteration`` then the number of points requested in the next refinement iteration will be reduced. Here: ``remaining_time = wall_clock_limit - elapsed_time`` and ``time_for_next_iteration`` is the estimated time required for the next refinement iteration. Note: if this condition is met this means that the expected precision will not match the desired precision.
+
+        .. cpp:var:: real_t wall_clock_limit
+
+            If the current elapsed time has passed ``wall_clock`` limit and a refinement iteration finishes then a new refinement iteration will not be started. Instead, the code will return the current result and exit.
+
+        .. cpp:var:: size_t number_of_threads
+
+            The number of threads used to compute integrals concurrently. Note: The integrals themselves may also be computed with multiple threads irrespective of this option.
+
+        .. cpp:var:: size_t reset_cuda_after
+
+            The cuda driver does not automatically remove unnecessary functions from the device memory such that the device may run out of memory after some time. This option controls after how many integrals ``cudaDeviceReset()`` is called to clear the memory. With the default ``0``, ``cudaDeviceReset()`` is never called. This option is ignored if compiled without cuda.
+
+
+        .. cpp:var:: const container_t<std::vector<term_t>>& expression
+
+            The sum of terms to be integrated.
+
+        .. cpp:var:: real_t epsrel
+
+            The desired relative accuracy for the numerical evaluation of the weighted sum of the sectors.
+
+        .. cpp:var:: real_t epsabs
+
+            The desired absolute accuracy for the numerical evaluation of the weighted sum of the sectors.
+
+        .. cpp:var:: unsigned long long int maxeval
+
+            The maximal number of integrand evaluations for each sector.
+
+        .. cpp:var:: unsigned long long int mineval
+
+            The minimal number of integrand evaluations for each sector.
+
+        .. cpp:var:: real_t maxincreasefac
+
+            The maximum factor by which the number of integrand evaluations will be increased in a single refinement iteration.
+
+        .. cpp:var:: real_t min_epsrel
+
+            The minimum relative accuracy required for each individual sector.
+
+        .. cpp:var:: real_t min_epsabs
+
+            The minimum absolute accuracy required for each individual sector.
+
+        .. cpp:var:: real_t max_epsrel
+
+            The maximum relative accuracy assumed possible for each individual sector. Any sector known to this precision will not be refined further. Note: if this condition is met this means that the expected precision will not match the desired precision.
+
+        .. cpp:var:: real_t max_epsabs
+
+            The maximum absolute accuracy assumed possible for each individual sector. Any sector known to this precision will not be refined further. Note: if this condition is met this means that the expected precision will not match the desired precision.
+
 Series
 ------
 
