@@ -977,6 +977,9 @@ namespace secdecutil {
                 std::function<void(sum_t&)> ensure_error_goal =
                     [ this, &repeat ] (sum_t& sum)
                     {
+                        if(sum.epsrel == 0. and sum.epsabs == 0.)
+                            sum.epsrel=1e-50;
+
                         ErrorMode original_errormode = errormode; // for errormode==largest, we will temporarily set errormode = real or imag, depending on which error is larger
                         // compute absolute error goal
                         sum_return_t current_sum = compute_sum(sum);
@@ -1068,7 +1071,6 @@ namespace secdecutil {
                                     var_estimate += absvar;
                                 }
                             }
-
                             fac *= var_estimate / abs_error_goal; // Factor by which we must rescale to reach absolute error goal
 
                             firstiter = false;
