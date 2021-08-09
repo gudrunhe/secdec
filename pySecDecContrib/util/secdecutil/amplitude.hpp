@@ -822,6 +822,10 @@ namespace secdecutil {
                             std::cerr << "remaining time: " << remaining_time << " s = " << remaining_time/60 << " min = " << remaining_time/60/60 << " hr" << std::endl;
                             std::cerr << "stopping due to time constraint" << std::endl;
                         }
+                        for (integral_t* integral : integrals)
+                        {
+                            integral->set_next_number_of_function_evaluations(  integral->get_number_of_function_evaluations(), true );
+                        }
                         return;
                     }
 
