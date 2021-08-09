@@ -35,8 +35,8 @@ code=sm_XX -gencode arch=compute_YY,code=sm_YY"` (note: the script `print-cuda-a
 - Various optimisations when computing derivatives and Jacobians (should slightly improve generate performance).
 - Parallelisation in Makefile for c++ library improved.
 - Example `userdefined_cpp` made compatible with the new c++ backend.
-- [dist] update to Cuba-4.2.1 (28 Jun 2021).
-- [dist] update to qmc-1.0.6
+- [dist] update to [Cuba-4.2.1](http://www.feynarts.de/cuba/) (28 Jun 2021).
+- [dist] update to [qmc-1.0.6](https://github.com/mppmu/qmc).
 
 ### Deprecated
 - Python versions below 3.6 are no longer supported.
