@@ -47,6 +47,13 @@ How can I request a higher numerical accuracy?
 The integrator stops if any of the following conditions is fulfilled: (1) ``epsrel`` is reached, (2) ``epsabs`` is reached, (3) ``maxeval`` is reached.
 Therefore, setting these parameters accordingly will cause the integrator to make more iterations and reach a more accurate result.
 
+What can I do if the integration takes very long?
+-------------------------------------------------
+
+For most integrals, the best performance will be achieved using the QMC integrator and we recommend switching to it, if not already used.
+If changing the integrator doesn't improve the runtime, it is possible that the integrator parameters should be adjusted, as described in the previous sections.
+In particular for integrals with spurious poles, the parameter ``epsabs`` should be increased, since it is the only relevant stopping criterion in this case, besides ``maxeval``.
+
 How can I tune the contour deformation parameters?
 --------------------------------------------------
 
