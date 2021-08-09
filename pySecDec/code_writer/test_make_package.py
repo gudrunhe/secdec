@@ -88,6 +88,23 @@ class TestMidLevel(TestMakePackage):
 
         self.assertEqual(template_replacements['pole_structures_initializer'], '{{-1,0}}')
 
+    #@attr('active')
+    def test_pole_structures_serial(self):
+        self.tmpdir = 'tmpdir_test_pole_structures_python' + python_major_version
+
+        template_replacements = \
+        make_package(
+                        name=self.tmpdir,
+                        integration_variables = ['x','y'],
+                        regulators = ['eps'],
+                        processes=1,
+
+                        requested_orders = [0],
+                        polynomials_to_decompose = ['(x+y)^(-2+eps)']
+                    )
+
+        self.assertEqual(template_replacements['pole_structures_initializer'], '{{-1,0}}')
+
 # ----------------------------------- parse input -----------------------------------
 class TestConvertInput(TestMakePackage):
     def setUp(self):
