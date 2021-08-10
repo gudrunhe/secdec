@@ -198,6 +198,7 @@ extern "C"
             const size_t number_of_threads,
             const size_t reset_cuda_after,
             const bool verbose,
+            const int errormode_enum,
             const char *lib_path
         )
         {
