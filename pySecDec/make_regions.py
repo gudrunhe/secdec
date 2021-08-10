@@ -348,7 +348,6 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
 
             i+=1
 
-# TODO: high-level test
 
 def make_regions(name, integration_variables, regulators, requested_orders, smallness_parameter,
                  polynomials_to_decompose, expansion_by_regions_order=0, real_parameters=[], complex_parameters=[],
