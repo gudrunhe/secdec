@@ -6,10 +6,10 @@ import sympy as sp
 if __name__ == "__main__":
 
     # load c++ library
-    HZ2L_nonplanar = IntegralLibrary('HZ2L_nonplanar/HZ2L_nonplanar_pylink.so')
+    HZ2L_nonplanar = IntegralLibrary('hz2l_nonplanar/hz2l_nonplanar_pylink.so')
 
     # choose integrator
-    HZ2L_nonplanar.use_Qmc(verbosity=0,minn=10**8,maxeval=1,transform='korobov3')
+    HZ2L_nonplanar.use_Qmc(verbosity=0,maxeval=10**6,transform='korobov3')
 
     # integrator settings used to run the timings
     #HZ2L_nonplanar.use_Qmc(verbosity=2,minn=10**6,maxeval=10**6,transform='korobov3')
