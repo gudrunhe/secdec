@@ -9,7 +9,7 @@ if __name__ == "__main__":
     box1L = IntegralLibrary('box1L/box1L_pylink.so')
 
     # choose integrator
-    box1L.use_Vegas()
+    #box1L.use_Vegas()
 
     number_of_real_parameters = int(box1L.info['number_of_real_parameters'])
     number_of_complex_parameters = int(box1L.info['number_of_complex_parameters'])
