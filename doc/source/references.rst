@@ -97,6 +97,10 @@ References
             | `doi:10.1016/j.cpc.2019.02.015 <http://dx.doi.org/10.1016/j.cpc.2019.02.015>`_,
 	    | `arXiv:1811.11720 <http://arxiv.org/abs/1811.11720>`_
 
+.. [PSD21]  | G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, F. Langer, V Magerya, A Poldaru, J. Schlenk, E. Villa
+              *Expansion by regions with pySecDec*,
+            | (to appear)
+
 .. [RUV17]  | B. Ruijl, T. Ueda, J. Vermaseren,
               *FORM version 4.2*,
             | `arXiv:1707.06453 <http://arxiv.org/abs/1707.06453>`_

@@ -405,12 +405,10 @@ options of the integrator we refer to :numref:`chapter_cpp_qmc`.
 List of Examples
 ----------------
 
-Here we list the available examples. For more details regarding each example see [PSD17]_ and [PSD18]_.
+Here we list the available examples. For more details regarding each example see [PSD17]_, [PSD18]_ and [PSD21]_.
 
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **easy**:                  | a simple parametric integral, described in :numref:`a_simple_example`                                                          |
-+----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **easy_cuda**:             | the same integral as in **easy** but computed on GPUs with CUDA                                                                |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **box1L**:                 | a simple 1-loop, 4-point, 4-propagator integral, described in :numref:`evaluating_a_loop_integral`                             |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
@@ -442,7 +440,28 @@ Here we list the available examples. For more details regarding each example see
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **hypergeo5F4**:           | a general dimensionally regulated parameter integral                                                                           |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **4photon1L_amplitude**:   | calculation of the 4-photon amplitude, showing how to use `pySecDec` as an integral library in a larger context                |
+| **hz2L_nonplanar**:        | a 2-loop, 4-point, 7-propagator integral with internal and external masses                                                     |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **box1L_ebr**:             | uses expansion by regions to expand a 1-loop box with a small internal mass                                                    |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **bubble1L_ebr**:          | uses expansion by regions to expand a 1-loop, 2-point integral in various limits                                               |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **bubble1L_dotted_ebr**:   | uses expansion by regions to expand a 1-loop, 2-point integral, demonstrates the :math:`t` and :math:`z` methods described in  |
+|                            | [PSD21]_                                                                                                                       | 
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **bubble2L_largem_ebr**:   | uses expansion by regions to expand a 1-loop, 2-point integral with a large mass                                               |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **bubble2L_smallm_ebr**:   | uses expansion by regions to expand a 1-loop, 2-point integral with a small mass                                               |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **formfactor1L_ebr**:      | uses expansion by regions to compute various 1-loop, 3-point form factor integrals from the literature                         |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **triangle2L_ebr**:        | uses expansion by regions to compute a 2-loop, 3-point integral with a large mass                                              |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **make_regions_ebr**:      | uses expansion by regions to compute a simple generic integral with a small parameter                                          |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **easy_sum**:              | calculates the sum of two integrals with different coefficients, demonstrates the use of ``sum_package``                       |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **yyyy1L**:                | calculates a 1-loop 4-photon helicity amplitude, demonstrates the use of ``sum_package``                                       |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **two_regulators**:        | an integral involving poles in two different regulators.                                                                       |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
