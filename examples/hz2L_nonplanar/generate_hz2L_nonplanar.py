@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     loop_package(
 
-    name = 'hz2l_nonplanar',
+    name = 'hz2L_nonplanar',
 
     loop_integral = li,
 
