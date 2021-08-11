@@ -54,7 +54,7 @@ box2L_invprop::nested_series_t<secdecutil::UncorrelatedDeviation<box2L_invprop::
     
     // Construct the amplitudes
     std::vector<nested_series_t<sum_t>> unwrapped_amplitudes =
-        make_amplitudes(real_parameters, complex_parameters, "box2L_invprop/box2L_invprop_coefficients", integrator);
+        make_amplitudes(real_parameters, complex_parameters, "box2L_invprop/box2L_invprop_data", integrator);
 
     // Pack amplitudes into handler
     handler_t<amplitudes_t> amplitudes
@@ -92,7 +92,7 @@ box2L_contracted_tensor::nested_series_t<secdecutil::UncorrelatedDeviation<box2L
 
     // Construct the amplitudes
     std::vector<nested_series_t<sum_t>> unwrapped_amplitudes =
-        make_amplitudes(real_parameters, complex_parameters, "box2L_contracted_tensor/box2L_contracted_tensor_coefficients", integrator);
+        make_amplitudes(real_parameters, complex_parameters, "box2L_contracted_tensor/box2L_contracted_tensor_data", integrator);
 
     // Pack amplitudes into handler
     handler_t<amplitudes_t> amplitudes

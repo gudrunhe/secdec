@@ -37,7 +37,7 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
 
         // Construct the amplitudes
         std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
-            INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../bubble1L_dot_rank4/bubble1L_dot_rank4_coefficients", integrator);
+            INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../bubble1L_dot_rank4/bubble1L_dot_rank4_data", integrator);
 
         // Pack amplitudes into handler
         INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes
@@ -116,7 +116,7 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
 
         // Construct the amplitudes
         std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
-            INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../bubble1L_dot_rank4/bubble1L_dot_rank4_coefficients", integrator);
+            INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../bubble1L_dot_rank4/bubble1L_dot_rank4_data", integrator);
 
         // Pack amplitudes into handler
         INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes
@@ -194,7 +194,7 @@ TEST_CASE( "check result cuhre cquad", "[INTEGRAL_NAME]" ) {
 
     // Construct the amplitudes
     std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
-        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../bubble1L_dot_rank4/bubble1L_dot_rank4_coefficients", integrator);
+        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../bubble1L_dot_rank4/bubble1L_dot_rank4_data", integrator);
 
     // Pack amplitudes into handler
     INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes

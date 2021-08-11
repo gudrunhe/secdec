@@ -92,7 +92,7 @@ void test_integral(INTEGRAL_NAME::real_t s)
 
     // Construct the amplitudes
     std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
-        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../regulator_in_powerlist/regulator_in_powerlist_coefficients", integrator);
+        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../regulator_in_powerlist/regulator_in_powerlist_data", integrator);
 
     // Pack amplitudes into handler
     INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes

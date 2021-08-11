@@ -240,7 +240,7 @@ def _generate_one_term(coefficients, complex_parameters, form_executable, name, 
 
     # process coefficients
     lowest_coefficient_orders = []
-    coeffsdir = name + '_coefficients'
+    coeffsdir = name + '_data'
     os.makedirs(coeffsdir, exist_ok=True)
     for i in range(len(coefficients)):
         #coefficient = coefficients[i][j]

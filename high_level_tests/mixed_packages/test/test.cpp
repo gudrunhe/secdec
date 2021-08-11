@@ -32,7 +32,7 @@ TEST_CASE( "check result", "[INTEGRAL_NAME]" ) {
     
     // Construct the amplitudes
     std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
-        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../mixed_packages/mixed_packages_coefficients", integrator);
+        INTEGRAL_NAME::make_amplitudes(real_parameters, complex_parameters, "../mixed_packages/mixed_packages_data", integrator);
 
     // Pack amplitudes into handler
     INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes

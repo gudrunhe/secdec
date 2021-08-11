@@ -1015,8 +1015,8 @@ class IntegralLibrary(object):
         c_lib = self.c_lib = CDLL(shared_object_path)
         basename, ext = os.path.splitext(shared_object_path)
         self.c_lib_path = \
-                basename[:-7] + "_coefficients" if basename.endswith("_pylink") else \
-                basename + "_coefficients"
+                basename[:-7] + "_data" if basename.endswith("_pylink") else \
+                basename + "_data"
 
         # set c prototypes
         c_lib.allocate_string.restype = c_void_p

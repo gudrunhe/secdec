@@ -47,7 +47,7 @@ int main(int argc, const char *argv[])
 
     // Construct the amplitudes
     std::vector<%(name)s::nested_series_t<%(name)s::sum_t>> unwrapped_amplitudes =
-        %(name)s::make_amplitudes(real_parameters, complex_parameters, "%(name)s_coefficients", integrator);
+        %(name)s::make_amplitudes(real_parameters, complex_parameters, "%(name)s_data", integrator);
 
     // Pack amplitudes into handler
     %(name)s::handler_t<%(name)s::amplitudes_t> amplitudes

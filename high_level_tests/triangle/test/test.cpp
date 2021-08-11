@@ -22,11 +22,11 @@ TEST_CASE( "check number of parameters", "[triangle]" ) {
     integrator.flags = 0; // verbose output --> see cuba manual
     integrator.maxeval = 2e6;
     
-    REQUIRE_THROWS_AS( INTEGRAL_NAME::make_amplitudes(/* real_parameters */ {}, /* complex_parameters */ {}, "../triangle/triangle_coefficients", integrator), std::logic_error );
+    REQUIRE_THROWS_AS( INTEGRAL_NAME::make_amplitudes(/* real_parameters */ {}, /* complex_parameters */ {}, "../triangle/triangle_data", integrator), std::logic_error );
 
     try {
 
-      triangle::make_amplitudes(/* real_parameters */ {}, /* complex_parameters */ {}, "../triangle/triangle_coefficients", integrator);
+      triangle::make_amplitudes(/* real_parameters */ {}, /* complex_parameters */ {}, "../triangle/triangle_data", integrator);
 
     } catch (std::logic_error error) {
 
@@ -79,7 +79,7 @@ void check_pySecDec_triangle(double s, double msq, secdecutil::Series<std::compl
         
         // Construct the amplitudes
         std::vector<INTEGRAL_NAME::nested_series_t<INTEGRAL_NAME::sum_t>> unwrapped_amplitudes =
-            INTEGRAL_NAME::make_amplitudes({s,msq}, {}, "../triangle/triangle_coefficients", integrator);
+            INTEGRAL_NAME::make_amplitudes({s,msq}, {}, "../triangle/triangle_data", integrator);
 
         // Pack amplitudes into handler
         INTEGRAL_NAME::handler_t<INTEGRAL_NAME::amplitudes_t> amplitudes
