@@ -10,7 +10,7 @@ SECDEC_WITH_CUDA = 1
 endif
 
 
-.DEFAULT_GOAL=check
+.DEFAULT_GOAL=build
 .PHONY .SILENT : help
 help :
 	echo
