@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from pySecDec import sum_package
-from pySecDec.loop_integral import loop_regions
+from pySecDec import sum_package, loop_regions
 import pySecDec as psd
 
 # This example is the first one loop box example in Go Mishima paper arXiv:1812.04373

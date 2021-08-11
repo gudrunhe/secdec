@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
-from pySecDec.loop_integral import LoopPackage
-from pySecDec.code_writer import sum_package
+from pySecDec import LoopPackage
+from pySecDec import sum_package
 
 # import integrals and coefficients
 import integrals

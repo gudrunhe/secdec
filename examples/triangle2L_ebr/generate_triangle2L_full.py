@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
 if __name__ == "__main__":
 
     # example is case 8 of hep-ph/9704353, hep-ph/9605392
 
-    li = psd.loop_integral.LoopIntegralFromPropagators(
+    li = psd.LoopIntegralFromPropagators(
     propagators = ['(k1+p1)**2','(k1-p2)**2','(k2+p1)**2','(k2-p2)**2','k2**2','(k1-k2)**2-msq'],
     loop_momenta = ['k1','k2'],
     external_momenta = ['p1','p2'],
@@ -23,7 +22,7 @@ if __name__ == "__main__":
     Mandelstam_symbols = ['s']
     mass_symbols = ['msq']
 
-    loop_package(
+    psd.loop_package(
 
     name = 'triangle2L_full',
 

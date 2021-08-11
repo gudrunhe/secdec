@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-from pySecDec.loop_integral import LoopIntegralFromPropagators
-from pySecDec.loop_integral import loop_regions
-from pySecDec.code_writer import sum_package
+from pySecDec import LoopIntegralFromPropagators
+from pySecDec import loop_regions
+from pySecDec import sum_package
 
 if __name__ == "__main__":
 

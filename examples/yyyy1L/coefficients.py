@@ -1,4 +1,4 @@
-from pySecDec.code_writer.sum_package import Coefficient
+from pySecDec import Coefficient
 
 ### Coefficients definitions ###
 

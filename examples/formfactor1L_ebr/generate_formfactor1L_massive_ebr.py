@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from pySecDec import sum_package
-from pySecDec.loop_integral import loop_regions
 import pySecDec as psd
 
 if __name__ == "__main__":
@@ -9,7 +7,7 @@ if __name__ == "__main__":
     # Example 6 of Bernd Jantzen (arXiv:1111.2589)
     
     
-    li = psd.loop_integral.LoopIntegralFromGraph(
+    li = psd.LoopIntegralFromGraph(
         internal_lines = [['0',[1,3]],['0',[2,3]],['m',[1,2]]],
         external_lines = [['p1',1],['p2',2],['p3',3]],
         powerlist=['1+n/2','1+n/3','1'],
@@ -23,7 +21,7 @@ if __name__ == "__main__":
     )
                         
     # find the regions
-    generators_args = loop_regions(
+    generators_args = psd.loop_regions(
         name = 'formfactor1L_massive_ebr',
         loop_integral=li,
         smallness_parameter = 'z',
@@ -31,7 +29,7 @@ if __name__ == "__main__":
         decomposition_method = 'geometric')
 
     # write the code to sum up the regions
-    sum_package('formfactor1L_massive_ebr',
+    psd.sum_package('formfactor1L_massive_ebr',
                 generators_args,
                 li.regulators,
                 requested_orders = [0,0],

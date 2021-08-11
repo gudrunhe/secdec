@@ -5,9 +5,7 @@
 # Here we demonstrate the method where we expand in z*msq,
 # expand in z and then set z=1.
 
-from pySecDec.loop_integral import LoopIntegralFromPropagators
-from pySecDec.loop_integral import loop_regions
-from pySecDec.code_writer import sum_package
+from pySecDec import sum_package, loop_regions, LoopIntegralFromPropagators
 
 if __name__ == "__main__":
 

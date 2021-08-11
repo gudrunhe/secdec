@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
 if __name__ == "__main__":
 
-    li = psd.loop_integral.LoopIntegralFromGraph(
+    li = psd.LoopIntegralFromGraph(
     internal_lines = [['m',[3,4]],['m',[4,5]],['m',[3,5]],[0,[1,2]],[0,[4,1]],[0,[2,5]]],
     external_lines = [['p1',1],['p2',2],['p3',3]],
 
@@ -25,7 +24,7 @@ if __name__ == "__main__":
     mass_symbols = ['msq']
 
 
-    loop_package(
+    psd.loop_package(
 
     name = 'triangle2L',
 

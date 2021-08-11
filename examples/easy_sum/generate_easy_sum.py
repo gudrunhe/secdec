@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from pySecDec.code_writer.sum_package import Coefficient
-from pySecDec.make_package import MakePackage
-from pySecDec.code_writer import sum_package
+from pySecDec import Coefficient
+from pySecDec import MakePackage
+from pySecDec import sum_package
 
 if __name__ == "__main__":
 

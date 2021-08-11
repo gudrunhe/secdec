@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
 if __name__ == "__main__":
 
-    li = psd.loop_integral.LoopIntegralFromGraph(
+    li = psd.LoopIntegralFromGraph(
     internal_lines = [[0,[1,2]],[0,[2,5]],[0,[1,6]],['mt',[3,5]],['mt',[3,6]],['mt',[4,5]],['mt',[4,6]]],
     external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
 
@@ -29,7 +28,7 @@ if __name__ == "__main__":
     mass_symbols = ['mt2','mH2','mZ2']
 
 
-    loop_package(
+    psd.loop_package(
 
     name = 'hz2L_nonplanar',
 

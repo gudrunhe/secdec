@@ -4,9 +4,7 @@
 # using the mass of the propagator as the small parameter.
 # Here we demonstrate the method where we expand directly in msq,
 
-from pySecDec.loop_integral import LoopIntegralFromPropagators
-from pySecDec.loop_integral import loop_regions
-from pySecDec.code_writer import sum_package
+from pySecDec import sum_package, loop_regions, LoopIntegralFromPropagators
 
 if __name__ == "__main__":
 

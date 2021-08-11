@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
 if __name__ == "__main__":
 
-    li = psd.loop_integral.LoopIntegralFromGraph(
+    li = psd.LoopIntegralFromGraph(
 
     internal_lines = [ [0,[1,2]],[0,[1,3]],[0,[2,3]],[0,[2,5]],[0,[5,6]],[0,[6,3]],[0,[6,7]],[0,[5,7]],[0,[7,4]],[0,[4,7]],[0,[4,3]],[0,[4,1]] ],
     external_lines = [['p',1],['p',2]],
@@ -13,7 +12,7 @@ if __name__ == "__main__":
 
     )
 
-    loop_package(
+    psd.loop_package(
 
     name = 'bubble6L',
 

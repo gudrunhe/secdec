@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
 if __name__ == "__main__":
 
-    li = psd.loop_integral.LoopIntegralFromGraph(
+    li = psd.LoopIntegralFromGraph(
 
         internal_lines = [[0,[1,2]],[0,[2,6]],[0,[6,3]],[0,[3,4]],[0,[4,5]],[0,[5,7]],[0,[7,1]],[0,[7,6]]],
         external_lines = [['p1',1],['p2',2],['p3',3],['p4',4],['p5',5]],
@@ -33,7 +32,7 @@ if __name__ == "__main__":
     mass_symbols = []
 
 
-    loop_package(
+    psd.loop_package(
 
     name = 'pentabox_fin',
 

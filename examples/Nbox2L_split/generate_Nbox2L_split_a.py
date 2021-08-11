@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
 if __name__ == "__main__":
 
-    li = psd.loop_integral.LoopIntegralFromPropagators(
+    li = psd.LoopIntegralFromPropagators(
 
     loop_momenta = ['k1','k2'],
     external_momenta = ['p1','p2','p3'],
@@ -26,7 +25,7 @@ if __name__ == "__main__":
     Mandelstam_symbols = ['s','t']
     mass_symbols = ['mm']
 
-    loop_package(
+    psd.loop_package(
 
     name = 'Nbox2L_split_a',
 

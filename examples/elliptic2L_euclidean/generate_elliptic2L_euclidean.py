@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
 if __name__ == "__main__":
 
-    li = psd.loop_integral.LoopIntegralFromPropagators(
+    li = psd.LoopIntegralFromPropagators(
     propagators = ['k1**2-msq','(k1+p1+p2)**2-msq','k2**2-msq','(k2+p1+p2)**2-msq','(k1+p1)**2-msq','(k1-k2)**2','(k2-p3)**2-msq','(k2+p1)**2','(k1-p3)**2'],
     powerlist = [1,1,0,1,1,1,1,0,0],
     loop_momenta = ['k1','k2'],
@@ -23,7 +22,7 @@ if __name__ == "__main__":
     mass_symbols = ['msq']
 
 
-    loop_package(
+    psd.loop_package(
 
     name = 'elliptic2L_euclidean',
 

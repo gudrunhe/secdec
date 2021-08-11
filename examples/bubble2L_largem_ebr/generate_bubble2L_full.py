@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
-from pySecDec.loop_integral import loop_package
 import pySecDec as psd
 
 # example is I3tilde of hep-ph/9605392
 
 if __name__ == "__main__":
 
-    li = psd.loop_integral.LoopIntegralFromPropagators(
+    li = psd.LoopIntegralFromPropagators(
     propagators = ['k1**2-msq','(k1+p1)**2-msq','(k1-k2)**2-msq','k2**2','(k2+p1)**2'],
     loop_momenta = ['k1','k2'],
     external_momenta = ['p1'],
@@ -18,7 +17,7 @@ if __name__ == "__main__":
     Mandelstam_symbols = ['psq']
     mass_symbols = ['msq']
 
-    loop_package(
+    psd.loop_package(
 
     name = 'bubble2L_full',
 

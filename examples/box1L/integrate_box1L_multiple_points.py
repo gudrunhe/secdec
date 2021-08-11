@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from pySecDec.integral_interface import IntegralLibrary
-import sympy as sp
 
 if __name__ == "__main__":
 
