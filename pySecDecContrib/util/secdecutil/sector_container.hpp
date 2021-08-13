@@ -413,7 +413,7 @@ namespace secdecutil {
                         std::to_string(maximal_number_of_functions) + ") with too many (" +
                         std::to_string(number_of_functions) + ") functions."
                     );
-                size_t i;
+                int i;
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                    get_device_functions[k] = in_get_device_functions[k];
@@ -485,7 +485,7 @@ namespace secdecutil {
                         std::to_string(maximal_number_of_functions) + ") with too many (" +
                         std::to_string(number_of_functions) + ") functions."
                     );
-                size_t i;
+                int i;
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                    get_device_functions[k] = other.get_device_functions[k];
@@ -543,7 +543,7 @@ namespace secdecutil {
                         std::to_string(number_of_functions) + ") functions."
                     );
                 number_of_integration_variables = std::max(this->number_of_integration_variables,other.number_of_integration_variables);
-                size_t i;
+                int i;
                 unsigned long long offset = this->number_of_functions;
                 for (unsigned long long k=0; k<other.number_of_functions; ++k)
                 {
@@ -632,7 +632,7 @@ namespace secdecutil {
                         std::to_string(maximal_number_of_functions) + ") with too many (" +
                         std::to_string(number_of_functions) + ") functions."
                     );
-                size_t i;
+                int i;
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     get_device_functions[k] = in_get_device_functions[k];
@@ -685,7 +685,7 @@ namespace secdecutil {
                          std::to_string(maximal_number_of_functions) + ") with too many (" +
                          std::to_string(number_of_functions) + ") functions."
                     );
-                size_t i;
+                int i;
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     get_device_functions[k] = other.get_device_functions[k];
@@ -730,7 +730,7 @@ namespace secdecutil {
                         std::to_string(maximal_number_of_functions) + ") with too many (" +
                         std::to_string(number_of_functions) + ") functions."
                     );
-                size_t i;
+                int i;
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     get_device_functions[k] = other.get_device_functions[k];
@@ -794,7 +794,7 @@ namespace secdecutil {
                         std::to_string(number_of_functions) + ") functions."
                     );
                 number_of_integration_variables = std::max(this->number_of_integration_variables,other.number_of_integration_variables);
-                size_t i;
+                int i;
                 unsigned long long offset = this->number_of_functions;
                 for (unsigned long long k=0; k<other.number_of_functions; ++k)
                 {

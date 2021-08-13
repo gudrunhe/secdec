@@ -55,7 +55,7 @@ namespace secdecutil
 
         static double integrand_prototype_for_gsl(double x, void * params)
         {
-          auto& typed_params = *( reinterpret_cast<params_t const * const>(params) );
+          auto& typed_params = *( reinterpret_cast<params_t const *>(params) );
 
           // "x" has type double, but the integrand expects type T --> cast to type T
           T integration_variable = x < typed_params.zero_border ? typed_params.zero_border : x;
