@@ -6,7 +6,7 @@ Routines to series expand singular and nonsingular expressions.
 
 """
 
-from .algebra import Product, Sum, Polynomial, ExponentiatedPolynomial
+from .algebra import Product, Polynomial, ExponentiatedPolynomial
 from .misc import sympify_symbols, flatten, sympify_expression
 from numpy import iterable
 import numpy as np

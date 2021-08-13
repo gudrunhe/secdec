@@ -10,7 +10,6 @@ from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial, refactorize
 from ..misc import powerset, sympify_expression
 import numpy as np
-import sympy as sp
 
 # ********************** helper functions **********************
 

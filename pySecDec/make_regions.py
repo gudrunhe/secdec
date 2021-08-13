@@ -6,12 +6,11 @@ Routines to perform an expansion by regions, see e.g. [PS11]_.
 
 """
 
-from .decomposition.common import Sector, refactorize
 from .polytope import Polytope
 from .algebra import Polynomial, ExponentiatedPolynomial, Product
 from .code_writer.make_package import MakePackage
 from .misc import sympify_expression
-import numpy as np, sympy as sp
+import numpy as np
 
 _sympy_one = sympify_expression(1)
 
@@ -311,8 +310,6 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
         return
 
     else:
-        number_of_polys = len(poly_list)
-        number_of_symbols = len(numerator.polysymbols)
         i = 1
         # 0th order term
         term = Product(*poly_list)

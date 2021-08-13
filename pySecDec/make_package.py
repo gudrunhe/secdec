@@ -5,7 +5,7 @@ This module provides a make_package like interface to code_writer.sum_package
 """
 
 from .code_writer.make_package import MakePackage
-from .code_writer.sum_package import sum_package, Coefficient
+from .code_writer.sum_package import sum_package
 
 # ---------------------------------- main function ----------------------------------
 def make_package(name, integration_variables, regulators, requested_orders,

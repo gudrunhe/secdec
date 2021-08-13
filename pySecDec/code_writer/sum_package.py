@@ -10,7 +10,6 @@ import numpy as np
 import os
 import shutil
 import subprocess
-import sympy as sp
 import sys
 import tempfile
 
@@ -518,7 +517,6 @@ def sum_package(name, package_generators, regulators, requested_orders,
             f.write(name+"\n\n"+"\n".join(sub_integral_names.split()))
 
         # call package generator for every integral
-        number_of_integration_variables = 0
         template_replacements = {}
 
         if processes > 1:

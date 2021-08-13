@@ -13,8 +13,6 @@ from ..code_writer import MakePackage
 from ..make_package import make_package
 from ..misc import flatten, sympify_expression
 from itertools import chain
-from collections import namedtuple
-import inspect
 import numpy as np
 import sympy as sp
 import os

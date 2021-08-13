@@ -5,7 +5,7 @@ The iterative sector decomposition routines.
 """
 
 from .common import Sector
-from ..algebra import Polynomial, Product, refactorize
+from ..algebra import Product, refactorize
 from ..misc import powerset
 import numpy as np
 

@@ -4,7 +4,7 @@ multiple decompition modules.
 
 '''
 
-from ..algebra import Polynomial, ExponentiatedPolynomial, Product, refactorize
+from ..algebra import Polynomial, ExponentiatedPolynomial
 from ..misc import argsort_ND_array, sympify_expression
 import numpy as np
 import sympy as sp

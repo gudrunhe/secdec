@@ -553,7 +553,6 @@ class Qmc(CPPIntegrator):
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
                       minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
-        devices_t = c_int * len(devices)
         if cputhreads is None:
             try:
                 cputhreads = len(os.sched_getaffinity(0))

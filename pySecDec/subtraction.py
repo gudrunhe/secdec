@@ -11,7 +11,6 @@ from .algebra import Polynomial, ExponentiatedPolynomial, Sum, Product, Pow
 from .misc import sympify_expression
 from itertools import repeat
 import numpy as np
-import sympy as sp
 
 _sympy_one = sympify_expression(1)
 
@@ -217,7 +216,6 @@ def integrate_pole_part(polyprod, *indices):
 
 def _integrate_by_parts_single_index(polyprod, power_goal, index):
     monomial_product = polyprod.factors[0] # e.g. (z1**2)**1-eps0-eps1  *  (z1*z2)**3-4*eps1
-    monomial_product_FeynmanJ_set_to_one = monomial_product.replace(index,1)
     regulator_poles = polyprod.factors[1]
     cal_I = Product(*polyprod.factors[2:], copy=False)
     polysymbols = monomial_product.symbols
