@@ -185,8 +185,26 @@ considered as variables by asking for the ``symbols``:
 Feynman Parametrization of Loop Integrals
 -----------------------------------------
 
-The primary purpose of `pySecDec` is the numerical calculation of loop integrals as they arise in fixed
-order calculations in quantum field theories. In the first step of our approach, the loop integral is 
+The primary purpose of `pySecDec` is the numerical computation of loop integrals as they arise in fixed
+order calculations in quantum field theories. 
+
+The conventions of `pySecDec` are fixed as follows:
+a Feynman graph :math:`G^{\mu_1 \ldots \mu_R}_{l_1 \ldots l_R}` in :math:`D` dimensions at :math:`L` loops with :math:`R` loop momenta in the numerator and :math:`N` propagators, where the propagators can have arbitrary, not necessarily integer powers :math:`\nu_j`, is considered to have the following representation in momentum space,
+
+.. math::
+   :nowrap:
+
+    \begin{align}
+    G &= \int\prod\limits_{l=1}^{L} \mathrm{d}^D\kappa_l\;
+    \frac{k_{l_1}^{\mu_1} \cdots k_{l_R}^{\mu_R}}
+    {\prod\limits_{j=1}^{N} P_{j}^{\nu_j}(\{k\},\{p\},m_j^2)}, \nonumber \\
+    \mathrm{d}^D\kappa_l&=\frac{\mu^{4-D}}{i\pi^{\frac{D}{2}}}\,\mathrm{d}^D k_l\;,\;
+    P_j(\{k\},\{p\},m_j^2)=(q_j^2-m_j^2+i\delta)\;, \nonumber
+    \end{align}
+
+where the :math:`q_j` are linear combinations of external momenta :math:`p_i` and loop momenta :math:`k_l`.
+
+In the first step of our approach, the loop integral is 
 converted from the momentum representation to the Feynman parameter representation, see for example [Hei08]_ (Chapter 3).
 
 The module :mod:`pySecDec.loop_integral` implements exactly that conversion.
