@@ -322,7 +322,7 @@ After the lines parsing the input parameters, an :cpp:class:`secdecutil::Integra
                                     > integrator;
         integrator.verbosity = 1;
 
-The amplitude is constructed via a call to :cpp:func:`name::make_amplitudes` and packed into a :cpp:func:`name::handler_t`:
+The amplitude is constructed via a call to :cpp:func:`name::make_amplitudes` and packed into a :cpp:type:`name::handler_t`.
 
 .. code-block:: c++
 
@@ -339,9 +339,13 @@ The amplitude is constructed via a call to :cpp:func:`name::make_amplitudes` and
         );
         amplitudes.verbose = true;
 
-If desired, the contour deformation can be adjusted via additional arguments to :cpp:func:`name::handler_t`.
+If desired, the contour deformation can be adjusted via additional arguments to :cpp:type:`name::handler_t`.
 
-To numerically integrate the sum of sectors, the :cpp:func:`name::handler_t::evaluate` function is called:
+.. seealso::
+
+        :numref:`chapter_secdecutil_amplitude` and :numref:`generated_cpp_amplitude_sum_libs` for more detailed information about :cpp:func:`name::make_amplitudes` and :cpp:type:`name::handler_t`.
+
+To numerically integrate the sum of sectors, the :cpp:type:`name::handler_t::evaluate()` function is called:
 
 .. code-block:: c++
 
