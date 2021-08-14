@@ -64,7 +64,7 @@ def parse_coefficient(line, dimension_symbol, args):
     d = sp.symbols(dimension_symbol)
     eps = sp.symbols("eps")
     coeff_n, coeff_d = sp.fraction(sp.cancel(sp.together(sp.sympify(line).subs(d,4-2*eps))))
-    coefficient = Coefficient([str(coeff_n)],[str(coeff_d)],[eps],args['mandelstam_symbols']+args['mass_symbols'])
+    coefficient = Coefficient([str(coeff_n)],[str(coeff_d)],args['mandelstam_symbols']+args['mass_symbols'])
     return coefficient
 
 def parse_reduze_file(reduze_file, families, args):

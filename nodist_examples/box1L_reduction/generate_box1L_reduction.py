@@ -64,11 +64,11 @@ if __name__ == "__main__":
 
     coefficients = [
                        [
-                            Coefficient(['1'], ['s'], ['eps'], real_parameters),
-                            Coefficient(['1'], ['t'], ['eps'], real_parameters),
-                            Coefficient(['1'], ['s'], ['eps'], real_parameters),
-                            Coefficient(['1'], ['t'], ['eps'], real_parameters),
-                            Coefficient(['2*(s+t)'], ['s*t'], ['eps'], real_parameters),
+                            Coefficient(['1'], ['s'], real_parameters),
+                            Coefficient(['1'], ['t'], real_parameters),
+                            Coefficient(['1'], ['s'], real_parameters),
+                            Coefficient(['1'], ['t'], real_parameters),
+                            Coefficient(['2*(s+t)'], ['s*t'], real_parameters),
                        ]
                    ]
 

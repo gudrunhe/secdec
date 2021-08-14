@@ -61,8 +61,8 @@ class TestCoefficient(unittest.TestCase):
     #@attr('active')
     @attr('slow')
     def test_coefficient_order_num_den(self):
-        coeff = Coefficient([self.numerator],[self.denominator], self.regulators, self.parameters)
-        lowest_orders, coefficient_definition = coeff.process(workdir='tmpdir_test_coefficient_order_num_den' + python_major_version)
+        coeff = Coefficient([self.numerator],[self.denominator], self.parameters)
+        lowest_orders, coefficient_definition = coeff.process(self.regulators, workdir='tmpdir_test_coefficient_order_num_den' + python_major_version)
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [-1])
@@ -83,8 +83,8 @@ class TestCoefficient(unittest.TestCase):
     #@attr('active')
     @attr('slow')
     def test_coefficient_order_empty(self):
-        coeff = Coefficient([],[], self.regulators, self.parameters)
-        lowest_orders, coefficient_definition = coeff.process(workdir='tmpdir_test_coefficient_order_empty' + python_major_version)
+        coeff = Coefficient([],[], self.parameters)
+        lowest_orders, coefficient_definition = coeff.process(self.regulators, workdir='tmpdir_test_coefficient_order_empty' + python_major_version)
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [0])
@@ -100,8 +100,8 @@ class TestCoefficient(unittest.TestCase):
     #@attr('active')
     @attr('slow')
     def test_coefficient_order_no_numerator(self):
-        coeff = Coefficient([],[self.denominator,'eps^2'], self.regulators, self.parameters)
-        lowest_orders, coefficient_definition = coeff.process(workdir='tmpdir_test_coefficient_order_no_numerator' + python_major_version)
+        coeff = Coefficient([],[self.denominator,'eps^2'], self.parameters)
+        lowest_orders, coefficient_definition = coeff.process(self.regulators, workdir='tmpdir_test_coefficient_order_no_numerator' + python_major_version)
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [-3])
@@ -122,8 +122,8 @@ class TestCoefficient(unittest.TestCase):
     #@attr('active')
     @attr('slow')
     def test_coefficient_order_no_denominator(self):
-        coeff = Coefficient([self.numerator,'eps^2'], [], self.regulators, self.parameters)
-        lowest_orders, coefficient_definition = coeff.process(workdir='tmpdir_test_coefficient_order_no_denominator' + python_major_version)
+        coeff = Coefficient([self.numerator,'eps^2'], [], self.parameters)
+        lowest_orders, coefficient_definition = coeff.process(self.regulators, workdir='tmpdir_test_coefficient_order_no_denominator' + python_major_version)
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [2])
@@ -143,8 +143,8 @@ class TestCoefficient(unittest.TestCase):
 
     #@attr('active')
     def test_coefficient_with_imaginary_unit(self):
-        coeff = Coefficient(['I*(5+I*8)'], [], [], [])
-        lowest_orders, coefficient_definition = coeff.process(workdir='tmpdir_test_coefficient_with_imaginary_unit' + python_major_version)
+        coeff = Coefficient(['I*(5+I*8)'], [], [])
+        lowest_orders, coefficient_definition = coeff.process([], workdir='tmpdir_test_coefficient_with_imaginary_unit' + python_major_version)
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [])

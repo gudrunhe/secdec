@@ -27,20 +27,16 @@ class Coefficient(object):
         iterable of str;
         The terms in the denominator.
 
-    :param regulators:
-        iterable of strings or sympy symbols;
-        The symbols denoting the regulators.
-
     :param parameters:
         iterable of strings or sympy symbols;
         The symbols other parameters.
 
         '''
-    def __init__(self, numerators, denominators, regulators, parameters):
+    def __init__(self, numerators, denominators, parameters):
         for input_value, input_name in \
             zip(
-                    ( numerators ,  denominators ,  regulators ,  parameters ),
-                    ('numerators', 'denominators', 'regulators', 'parameters')
+                    ( numerators ,  denominators ,  parameters ),
+                    ('numerators', 'denominators', 'parameters')
                ):
             assert np.iterable(input_value), "`%s` must be iterable." % input_name
             if input_name in ('numerators', 'denominators'):
@@ -49,14 +45,17 @@ class Coefficient(object):
 
         self.numerators = list(numerators)
         self.denominators = list(denominators)
-        self.regulators = sympify_symbols(regulators, 'All `regulators` must be symbols.')
         self.parameters = sympify_symbols(parameters, 'All `parameters` must be symbols.')
 
-    def process(self, form=None, workdir='form_tmp', keep_workdir=False):
+    def process(self, regulators, form=None, workdir='form_tmp', keep_workdir=False):
         r'''
         Calculate and return the lowest orders of the coefficients in
         the regulators and a string defining the expressions "numerator",
         "denominator", and "regulator_factor".
+
+        :param regulators:
+            iterable of strings or sympy symbols;
+            The symbols denoting the regulators.
 
         :param form:
             string or None;
@@ -83,6 +82,7 @@ class Coefficient(object):
             Whether or not to delete the `workdir` after execution.
 
         '''
+        regulators = sympify_symbols(regulators, 'All `regulators` must be symbols.')
         # get the name of FORM command-line executable
         if form is None:
             form_var = os.environ.get('FORM', None)
@@ -182,9 +182,9 @@ class Coefficient(object):
                                      outfile=outfile,
                                      number_of_num=len(self.numerators),
                                      number_of_den=len(self.denominators),
-                                     regulators=','.join(map(str,self.regulators)),
-                                     parameters=','.join(map(str,self.parameters))
-                                )
+                                     parameters=','.join(map(str,self.parameters)),
+                                     regulators=','.join(map(str, regulators))
+        )
 
         # run form program
         os.mkdir(workdir)
@@ -216,12 +216,12 @@ class Coefficient(object):
                 shutil.rmtree(workdir)
 
         # read lowest_orders from form output
-        lowest_orders = np.empty(len(self.regulators), dtype=int)
+        lowest_orders = np.empty(len(regulators), dtype=int)
         regulator_factor = form_output[form_output.rfind('regulator_factor'):]
         regulator_factor = regulator_factor[:regulator_factor.find(';')].replace('\n','').replace(' ','')
         regulator_factors = regulator_factor.split('=')[1].split('*')[1:]
-        assert len(regulator_factors) == len(self.regulators)
-        for idx,(regulator,factor) in enumerate(zip(self.regulators,regulator_factors)):
+        assert len(regulator_factors) == len(regulators)
+        for idx,(regulator,factor) in enumerate(zip(regulators,regulator_factors)):
             form_regulator, power = factor.split('^')
             assert form_regulator == str(regulator), '%s != %s' % (form_regulator, regulator)
             lowest_orders[idx] = int(power.lstrip('(').rstrip(')'))
@@ -246,7 +246,7 @@ def _generate_one_term(coefficients, complex_parameters, form_executable, name, 
         coefficient = coefficients[i]
         with tempfile.TemporaryDirectory(prefix="pSD") as tempdir:
             this_coefficients_lowest_coefficient_orders, coefficient_expressions = \
-                    coefficient.process(form=form_executable, workdir=os.path.join(tempdir, "form"))
+                    coefficient.process(regulators, form=form_executable, workdir=os.path.join(tempdir, "form"))
         lowest_coefficient_orders.append(this_coefficients_lowest_coefficient_orders)
         with open(os.path.join(coeffsdir, sub_name+'_coefficient%i.txt'%i),'w') as coeffile:
             coeffile.write(coefficient_expressions)
@@ -373,7 +373,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
     pylink_qmc_transforms = validate_pylink_qmc_transforms(pylink_qmc_transforms)
 
     # prepare coefficients
-    empty_coefficient = Coefficient((), (), regulators, ())
+    empty_coefficient = Coefficient((), (), ())
     if coefficients is None:
         coefficients = [[empty_coefficient] * len(package_generators)]
     else:

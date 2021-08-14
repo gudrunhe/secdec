@@ -12,12 +12,12 @@ if __name__ == "__main__":
 
     coefficients = [
         [ # sum1
-            Coefficient(['2*s'],['1'],['eps'],['s']),   # easy1
-            Coefficient(['3*s'],['1'],['eps'],['s'])    # easy2
+            Coefficient(['2*s'],['1'],['s']),   # easy1
+            Coefficient(['3*s'],['1'],['s'])    # easy2
         ],
         [ # sum2
-            Coefficient(['s'],['2*eps'],['eps'],['s']), # easy1
-            Coefficient(['s*eps'],['3'],['eps'],['s'])  # easy2
+            Coefficient(['s'],['2*eps'],['s']), # easy1
+            Coefficient(['s*eps'],['3'],['s'])  # easy2
         ]
     ]
 

@@ -148,7 +148,7 @@ for integral in integrals:
     coefficient = I73_expr.coeff(  integral.replace('[','(').replace(']',')')  )
     numerator, denominator = sp.fraction( coefficient )
     assert (numerator / denominator - coefficient).simplify() == 0
-    coefficients.append( Coefficient(['sqrtDelta*('+str(numerator)+')'],['('+str(denominator)+')*sqrtDelta'],['eps'],Mandelstam_symbols) )
+    coefficients.append( Coefficient(['sqrtDelta*('+str(numerator)+')'],['('+str(denominator)+')*sqrtDelta'],Mandelstam_symbols) )
 
 # check the extracted coefficients
 reconstructed_I73 = sum(

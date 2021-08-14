@@ -23,7 +23,7 @@ if __name__ == "__main__":
         real_parameters = Mandelstam_symbols + mass_symbols,
         requested_orders = [0]
     )
-    integral1_coeff = Coefficient(['s'],['msq'],['eps'],['s','msq'])
+    integral1_coeff = Coefficient(['s'],['msq'],['s','msq'])
     
     integral2 = MakePackage(
         name='integral2',
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         real_parameters = Mandelstam_symbols + mass_symbols,
         requested_orders = [0]
     )
-    integral2_coeff = Coefficient(['s**2'],['msq**2'],['eps'],['s','msq'])
+    integral2_coeff = Coefficient(['s**2'],['msq**2'],['s','msq'])
 
     sum_package(
         'mixed_packages',
