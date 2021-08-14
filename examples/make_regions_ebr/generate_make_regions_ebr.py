@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from pySecDec import sum_package, make_package, make_regions
+from pySecDec import sum_package, make_regions
 
 if __name__ == "__main__":
 
