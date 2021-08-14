@@ -196,6 +196,39 @@ When should I use the “split” option?
 
 The modules :func:`loop_package <pySecDec.loop_integral.loop_package>` and :func:`make_package <pySecDec.code_writer.make_package>` have the option to split the integration domain (``split=True``). This option can be useful for integrals which do not have a Euclidean region. If certain kinematic conditions are fulfilled, for example if the integral contains massive on-shell lines, it can happen that singularities at :math:`x_i = 1` remain in the :math:`\mathcal{F}` polynomial after the decomposition. The split option remaps these singularities to the origin of parameter space. If your integral is of this type, and with the standard approach the numerical integration does not seem to converge, try the ``split`` option. It produces a lot more sectors, so it should not be used without need. We also would like to mention that very often a change of basis to increase the (negative) power of the :math:`\mathcal{F}` polynomial can be beneficial if integrals of this type occur in the calculation.
 
+How can I obtain results from pySecDec in a format convenient for GiNaC/ Sympy/ Mathematica/ Maple?
+------------------------------------------------------------------------------------------------
+
+If you are using the :ref:`python interface <python-interface-basic>`, you can use the functions :func:`series_to_ginac <pySecDec.integral_interface.series_to_ginac>`, :func:`series_to_sympy <pySecDec.integral_interface.series_to_sympy>`, :func:`series_to_mathematica <pySecDec.integral_interface.series_to_mathematica>`, :func:`series_to_maple <pySecDec.integral_interface.series_to_maple>` to convert the output of the integral library.
+
+Example::
+
+    #!/usr/bin/env python3
+    from pySecDec.integral_interface import IntegralLibrary
+    from pySecDec.integral_interface import series_to_ginac, series_to_sympy, series_to_mathematica, series_to_maple
+
+    if __name__ == "__main__":
+
+        # load c++ library
+        easy = IntegralLibrary('easy/easy_pylink.so')
+
+        # integrate
+        _, _, result = easy()
+
+        # print result
+        print(series_to_ginac(result))
+        print(series_to_sympy(result))
+        print(series_to_mathematica(result))
+        print(series_to_maple(result))
+
+Outputs::
+
+    ('(1+0*I)/eps + (0.306852819440052549+0*I) + Order(eps)', '(5.41537065611170534e-17+0*I)/eps + (1.3864926114078559e-15+0*I) + Order(eps)')
+    ('(1+0*I)/eps + (0.306852819440052549+0*I) + O(eps)', '(5.41537065611170534e-17+0*I)/eps + (1.3864926114078559e-15+0*I) + O(eps)')
+    ('(1+0*I)/eps + (0.306852819440052549+0*I) + O[eps]', '(5.41537065611170534*10^-17+0*I)/eps + (1.3864926114078559*10^-15+0*I) + O[eps]')
+    ('(1+0*I)/eps + (0.306852819440052549+0*I) + O(eps)', '(5.41537065611170534e-17+0*I)/eps + (1.3864926114078559e-15+0*I) + O(eps)')
+
+
 Expansion by regions: what does the parameter ``z`` mean?
 -------------------------------------------------
 
