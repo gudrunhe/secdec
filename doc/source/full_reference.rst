@@ -24,9 +24,6 @@ This section describes all public functions and classes in `pySecDec`.
 .. automodule:: pySecDec.expansion
     :members:
 
-.. automodule:: pySecDec.region_expand
-    :members:
-
 .. automodule:: pySecDec.code_writer
     :members:
 
