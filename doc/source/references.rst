@@ -109,4 +109,9 @@ References
               *New features of FORM*,
             | `arXiv:math-ph/0010025 <http://arxiv.org/abs/math-ph/0010025>`_
 
+.. [Mis18]  | G. Mishima,
+              *High-Energy Expansion of Two-Loop Massive Four-Point Diagrams*
+            | `doi:10.1007/JHEP02(2019)080 <https://doi.org/10.1007/JHEP02(2019)080>`_,
+            | `arXiv:1812.04373 <https://arxiv.org/abs/1812.04373>`_
+
 

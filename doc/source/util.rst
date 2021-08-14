@@ -11,11 +11,14 @@ functions needed by the c++ code generated using :func:`loop_package <pySecDec.l
 or :func:`make_package <pySecDec.code_writer.make_package>`. Everything defined by the `SecDecUtil`
 is put into the c++ namepace `secdecutil`.
 
+.. _chapter_secdecutil_amplitude:
+
 Amplitude
 ---------
 
 A collection of utilities for evaluating amplitudes (sums of integrals multiplied by coefficients).
 
+.. _chapter_secdecutil_weighted_integral:
 
 WeightedIntegral
 ~~~~~~~~~~~~~~~~
@@ -41,6 +44,8 @@ A ``WeightedIntegral`` is interpreted as the product ``C*I`` and can be used to 
 
 
 The arithmetic operators (``+``, ``-``, ``*``, ``/``) are overloaded for ``WeightedIntegral`` types.
+
+.. _chapter_secdecutil_weighted_integral_handler:
 
 WeightedIntegralHandler
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -124,6 +129,8 @@ A class template for integrating a sum of ``WeightedIntegral`` types.
             Choosing ``all`` will apply epsrel and epsabs to both the real
             and imaginary part separately.
 
+.. _chapter_secdecutil_series:
+
 Series
 ------
 
@@ -172,6 +179,8 @@ Output:
 .. literalinclude:: cpp_doctest/series_doctest_basic_usage.txt
    :language: sh
 
+.. _chapter_secdecutil_deep_apply:
+
 Deep Apply
 ----------
 
@@ -195,6 +204,7 @@ Output:
 .. literalinclude:: cpp_doctest/deep_apply_doctest_basic_usage.txt
    :language: sh
 
+.. _chapter_secdecutil_uncertainties:
 
 Uncertainties
 -------------
@@ -254,6 +264,8 @@ Output:
 
 .. literalinclude:: cpp_doctest/uncertainties_doctest_basic_usage.txt
    :language: sh
+
+.. _chapter_secdecutil_integrand_container:
 
 Integrand Container
 -------------------

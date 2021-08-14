@@ -25,7 +25,7 @@ To run the example change to the `easy` directory and run the commands::
 
 Additional build options are discussed in the :ref:`next section <building_the_cpp_lib>`. This will evaluate and print the result of the integral::
 
-    Numerical Result: + (1.00015897181235158e+00 +/- 4.03392522752491021e-03)*eps^-1 + (3.06903035514056399e-01 +/- 2.82319349818329918e-03) + O(eps)
+    Numerical Result: + ((1.00000000000000022e+00,0.00000000000000000e+00) +/- (5.65352153979095401e-17,0.00000000000000000e+00))*eps^-1 + ((3.06852819440053548e-01,0.00000000000000000e+00) +/- (1.18502493127591741e-15,0.00000000000000000e+00)) + O(eps)
     Analytic Result: + (1.000000)*eps^-1 + (0.306853) + O(eps)
 
 The file ``generate_easy.py`` defines the integral and calls `pySecDec` to perform the sector decomposition.
@@ -39,11 +39,11 @@ The user is encouraged to copy and adapt these files to evaluate their own integ
     If the user is interested in evaluating a loop integral there are many convenience functions that make this much easier. Please see :ref:`evaluating_a_loop_integral` for more details.
 
 
-In ``generate_easy.py`` we first import :func:`make_package <pySecDec.code_writer.make_package>`, a function which can decompose, subtract and expand regulated integrals and write a C++ package to evaluate them.
+In ``generate_easy.py`` we first import :func:`make_package <pySecDec.make_package>`, a function which can decompose, subtract and expand regulated integrals and write a C++ package to evaluate them.
 To define our integral we give it a `name` which will be used as the name of the output directory and C++ namespace.
 The `integration_variables` are declared along with a list of the name of the `regulators`.
 We must specify a list of the `requested_orders` to which `pySecDec` should expand our integral in each regulator.
-Here we specify ``requested_orders = [0]`` which instructs :func:`make_package <pySecDec.code_writer.make_package>` to expand the integral up to and including :math:`\mathcal{O}(\epsilon)`.
+Here we specify ``requested_orders = [0]`` which instructs :func:`make_package <pySecDec.make_package>` to expand the integral up to and including :math:`\mathcal{O}(\epsilon)`.
 Next, we declare the `polynomials_to_decompose`, here `sympy` syntax should be used.
 
 .. literalinclude:: ../../examples/easy/generate_easy.py
@@ -95,8 +95,8 @@ To explain the input format, let us look at ``generate_box1L.py`` from the one-l
 
 .. code::
 
-    import pySecDec as psd
     from pySecDec.loop_integral import loop_package
+    import pySecDec as psd
 
 They say that the module `pySecDec` should be imported with the alias `psd`, and that the
 function :func:`loop_package <pySecDec.loop_integral.loop_package>` from the module :mod:`loop_integral <pySecDec.loop_integral>` is needed.
@@ -181,7 +181,8 @@ After running the python script `generate_box1L.py` the folder `box1L` is create
 
 .. code::
 
-    Makefile    Makefile.conf    README    box1L.hpp    codegen    integrate_box1L.cpp    cuda_integrate_box1L.cpp    pylink    src
+    Makefile    README    box1L.pdf    box1L_integral    integral_names.txt    pylink
+    Makefile.conf    box1L.hpp    box1L_coefficients    integrate_box1L.cpp    src
 
 in the folder `box1L`, typing
 
@@ -189,12 +190,12 @@ in the folder `box1L`, typing
 
     $ make
 
-will create the static library ``libbox1L.a`` and ``box1L_pylink.so`` which can be linked to external programs.
+will create the static library ``box1L_integral/libbox1L_integral.a`` and ``box1L_pylink.so`` which can be linked to external programs.
 The ``make`` command can also be run in parallel by using the ``-j`` option. The number of threads each instance of ``tform`` uses can be
 set via the environment variable `FORMTHREADS`.
 
 .. versionadded:: 1.4
-    The environment variable `FORMOPT` sets FORM's code optimization level. If not set, the value that was passed to :func:`make_package <pySecDec.code_writer.make_package>`
+    The environment variable `FORMOPT` sets FORM's code optimization level. If not set, the value that was passed to :func:`make_package <pySecDec.make_package>`
     or :func:`loop_package <pySecDec.loop_integral.loop_package>` is used.
 
 To build the dynamic library ``libbox1L.so`` set ``dynamic`` as build target:
@@ -202,8 +203,6 @@ To build the dynamic library ``libbox1L.so`` set ``dynamic`` as build target:
 .. code::
 
     $ make dynamic
-
-The code generation with FORM without subsequent compilation can be run by setting ``source`` as build target.
 
 To build the library with `nvcc` for GPU support, type
 
@@ -214,7 +213,8 @@ To build the library with `nvcc` for GPU support, type
 where ``sm_XX`` must be replaced by the target GPU architechtures, see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
 The ``SECDEC_WITH_CUDA_FLAGS`` environment variable, which enables GPU code compilation, contains flags which are passed to NVCC during code compilation and linking.
 Multiple GPU architectures may be specified as described in the `NVCC manual <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_, for example
-``SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_XX,code=sm_XX -gencode arch=compute_YY,code=sm_YY"`` where ``XX`` and ``YY`` are the target GPU architectures.
+``SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_XX,code=sm_XX -gencode arch=compute_YY,code=sm_YY"`` where ``XX`` and ``YY`` are the target GPU architectures. The script 
+``examples/easy/print-cuda-arch.sh`` can be used to obtain the compute architecture of your current machine.  
 
 To evaluate the integral numerically a program can call one of these libraries.
 How to do this interactively or via a python script is explained in the section :ref:`Python Interface <python_interface>`.
@@ -298,7 +298,7 @@ In the ``integrate_box1L.py`` an example is shown how to parse the expression wi
     print('eps^-1:', integral_with_prefactor.coeff('eps',-1).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',-1).coeff('error'), ')')
     print('eps^0 :', integral_with_prefactor.coeff('eps',0).coeff('value'), '+/- (', integral_with_prefactor_err.coeff('eps',0).coeff('error'), ')')
 
-An example of how to loop over several kinematic points is shown in the example `multiple_kinematic_points.py`.
+An example of how to loop over several kinematic points is shown in the example `integrate_box1L_multiple_points.py`.
 
 ..  _cpp_interface:
 
@@ -309,96 +309,292 @@ Usually it is easier to obtain a numerical result using the :ref:`Python Interfa
 However, the library can also be used directly from C++.
 Inside the generated `box1L` folder the file ``integrate_box1L.cpp`` demonstrates this.
 
-The function ``print_integral_info`` shows how to access the important variables of the integral library.
+After the lines parsing the input parameters, an :cpp:class:`secdecutil::Integrator` is constructed and its parameters are set:
 
-In the ``main`` function a kinematic point must be specified by setting the ``real_parameters`` variable, for example::
+.. code-block:: c++
 
-    int main()
-    {
-    //  User Specified Phase-space point
-        const std::vector<box1L::real_t> real_parameters = {4.0, -0.75, 1.25, 1.0}; // EDIT: kinematic point specified here
-        const std::vector<box1L::complex_t> complex_parameters = {  };
+        // Set up Integrator
+        secdecutil::integrators::Qmc<
+                                    box1L::integrand_return_t,
+                                        box1L::maximal_number_of_integration_variables,
+                                        integrators::transforms::Korobov<3>::type,
+                                        box1L::user_integrand_t
+                                    > integrator;
+        integrator.verbosity = 1;
 
-The :cpp:func:`name::make_integrands` function returns an :cpp:class:`secdecutil::IntegrandContainer` for each sector and regulator order::
+The amplitude is constructed via a call to :cpp:func:`name::make_amplitudes` and packed into a :cpp:func:`name::handler_t`:
 
-    //  Generate the integrands (optimization of the contour if applicable)
-        const std::vector<box1L::nested_series_t<box1L::integrand_t>> sector_integrands = box1L::make_integrands(real_parameters, complex_parameters);
+.. code-block:: c++
 
-The contour deformation has to be adjusted in case of a sign check error (sign_check_error). This can be done via additional arguments to :cpp:func:`name::make_integrands`.
-The sectors can be added before integration::
+        // Construct the amplitudes
+        std::vector<box1L::nested_series_t<box1L::sum_t>> unwrapped_amplitudes =
+            box1L::make_amplitudes(real_parameters, complex_parameters, "box1L_coefficients", integrator);
 
-    //  Add integrands of sectors (together flag)
-        const box1L::nested_series_t<box1L::integrand_t> all_sectors = std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
+        // Pack amplitudes into handler
+        box1L::handler_t<box1L::amplitudes_t> amplitudes
+        (
+            unwrapped_amplitudes,
+            integrator.epsrel, integrator.epsabs
+            // further optional arguments: maxeval, mineval, maxincreasefac, min_epsrel, min_epsabs, max_epsrel, max_epsabs
+        );
+        amplitudes.verbose = true;
 
-An :cpp:class:`secdecutil::Integrator` is constructed and its parameters are set::
+If desired, the contour deformation can be adjusted via additional arguments to :cpp:func:`name::handler_t`.
 
-    //  Integrate
-        secdecutil::cuba::Vegas<box1L::integrand_return_t> integrator;
-        integrator.flags = 2; // verbose output --> see cuba manual
+To numerically integrate the sum of sectors, the :cpp:func:`name::handler_t::evaluate` function is called:
 
-To numerically integrate the functions the :cpp:func:`secdecutil::Integrator::integrate` function is applied to each :cpp:class:`secdecutil::IntegrandContainer` using :cpp:func:`secdecutil::deep_apply`::
+.. code-block:: c++
 
-    const box1L::nested_series_t<secdecutil::UncorrelatedDeviation<box1L::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors, integrator.integrate );
+        // compute the amplitudes
+        const std::vector<box1L::nested_series_t<secdecutil::UncorrelatedDeviation<box1L::integrand_return_t>>> result = amplitudes.evaluate();
+
+The remaining lines print the result:
+
+.. code-block:: c++
+
+        // print the result
+        for (unsigned int amp_idx = 0; amp_idx < box1L::number_of_amplitudes; ++amp_idx)
+            std::cout << "amplitude" << amp_idx << " = " << result.at(amp_idx) << std::endl;
 
 
-The remaining lines print the result::
+The C++ program can be built with the command::
 
-        std::cout << "------------" << std::endl << std::endl;
+    $ make integrate_box1L
 
-        std::cout << "-- integral info -- " << std::endl;
-        print_integral_info();
-        std::cout << std::endl;
+A kinematic point must be specified when calling the ``integrate_box1L`` executable, the input format is::
 
-        std::cout << "-- integral without prefactor -- " << std::endl;
-        std::cout << result_all << std::endl << std::endl;
+    $ ./integrate_box1L 4.0 -0.75 1.25 1.0 
 
-        std::cout << "-- prefactor -- " << std::endl;
-        const box1L::nested_series_t<box1L::integrand_return_t> prefactor = box1L::prefactor(real_parameters, complex_parameters);
-        std::cout << prefactor << std::endl << std::endl;
+where the arguments are the ``real_parameters`` values for (``s``, ``t``, ``s1``, ``msq``).
+For integrals depending on ``complex_parameters``, their value is specified by a space separated pair of numbers representing the real and imaginary part.
 
-        std::cout << "-- full result (prefactor*integral) -- " << std::endl;
-        std::cout << prefactor*result_all << std::endl;
-        return 0;
-    }
+If your integral is higher than seven dimensional, changing the integral transform to :cpp:type:`integrators::transforms::Baker::type` may improve the accuracy of the result. 
+For further options of the QMC integrator we refer to :numref:`chapter_cpp_qmc`.
 
-After editing the ``real_parameters`` as described above the C++ program can be built and executed with the commands
+.. _evaluating_a_weighted_sum_of_integrals:
+
+Evaluating a Weighted Sum of Integrals
+--------------------------------------
+
+.. versionadded:: 1.5
+
+Let us examine example ``easy_sum``, which demonstrates how two weighted sums of dimensionally regulated integrals can be evaluated.
+The example computes the following two weighted sums:
+
+.. math::
+
+    & 2 s\ I_1 + 3 s\ I_2, \\
+    & \frac{s}{2 \epsilon}\ I_1 + \frac{s \epsilon}{3}\ I_2,
+
+where
+
+.. math::
+
+    I_1 & = \int_0^1 \mathrm{d} x \int_0^1 \mathrm{d} y \ (x+y)^{-2+\epsilon}, \\
+    I_2 & = \int_0^1 \mathrm{d} x \int_0^1 \mathrm{d} y \ (2x+3y)^{-1+\epsilon}.
+
+
+First, we import the necessary python packages and open the ``if __name__ == "__main__"`` guard, as required by `multiprocessing <https://docs.python.org/3/library/multiprocessing.html>`_.
 
 .. code::
 
-    $ make integrate_box1L
-    $ ./integrate_box1L
+    #!/usr/bin/env python3
+    from pySecDec import Coefficient
+    from pySecDec import MakePackage
+    from pySecDec import sum_package
 
-.. versionadded:: 1.4
+    if __name__ == "__main__":
 
-The similar template file ``cuda_integrate_box1L.cpp`` provides an example to run on GPUs. The main differences are in the lines that generate, add, and integrate the integrands.
-Rather than :cpp:func:`name::make_integrands`, :cpp:func:`name::make_cuda_integrands` is called::
+The common arguments for the integrals are collected in the ``common_args`` dictionary.
 
-    // Generate the integrands (optimization of the contour if applicable)
-    const std::vector<box1L::nested_series_t<box1L::cuda_integrand_t>> sector_integrands = box1L::make_cuda_integrands(real_parameters, complex_parameters);
+.. code::
 
-If the integrands are added together before integration, the sum command is as follows::
+        common_args = {}
+        common_args['real_parameters'] = ['s']
+        common_args['regulators'] = ['eps']
+        common_args['requested_orders'] = [0]
 
-    // Add integrands of sectors (together flag)
-    const box1L::nested_series_t<box1L::cuda_together_integrand_t> all_sectors =
-        std::accumulate(++sector_integrands.begin(), sector_integrands.end(), box1L::cuda_together_integrand_t()+*sector_integrands.begin());
+Next, the coefficients of the integrals for each weighted sum are specified.
+Each :class:`Coefficient <pySecDec.code_writer.sum_package.Coefficient>` is specified as a list of numerator factors, list of denominator factors and a list of real or complex parameters on which the coefficient depends.
+Coefficients can depend also depend the regulators, the :func:`sum_package <pySecDec.code_writer.sum_package.sum_package>` function will automatically determine the correct orders to which the coefficients and integrals should be expanded in order to obtain the ``requested_orders``.
 
-Note the conversion from :cpp:type:`name::cuda_integrand_t` to :cpp:type:`name::cuda_together_integrand_t`. The CUDA-capable version of the Qmc
-integrator takes additional the template arguments :cpp:type:`box1L::maximal_number_of_integration_variables`, :cpp:type:`integrators::transforms::Korobov<3>::type`,
-and :cpp:type:`name::cuda_integrand_t`::
+.. code::
 
-    // Integrate
-    secdecutil::integrators::Qmc<
-                                    box1L::integrand_return_t,
-                                    box1L::maximal_number_of_integration_variables,
-                                    integrators::transforms::Korobov<3>::type, // EDIT: integral transform specified to "Korobov<3>"
-                                    box1L::cuda_together_integrand_t
-                                > integrator;
-    integrator.verbosity = 1;
-    const box1L::nested_series_t<secdecutil::UncorrelatedDeviation<box1L::integrand_return_t>> result_all = secdecutil::deep_apply( all_sectors, integrator.integrate );
+        coefficients = [
+            [ # sum1
+                Coefficient(['2*s'],['1'],['s']),   # easy1
+                Coefficient(['3*s'],['1'],['s'])    # easy2
+            ],
+            [ # sum2
+                Coefficient(['s'],['2*eps'],['s']), # easy1
+                Coefficient(['s*eps'],['3'],['s'])  # easy2
+            ]
+        ]
 
-If the integrands are integrated separately, :cpp:type:`name::cuda_together_integrand_t` should be changed to :cpp:type:`name::cuda_integrand_t`. If your integral
-is higher than seven dimensional, changing the integral transform to :cpp:type:`integrators::transforms::Baker::type` may improve the accuracy of the result. For further
-options of the integrator we refer to :numref:`chapter_cpp_qmc`.
+
+The integrals are specified using the `MakePackage` wrapper function (which has the same arguments as :func:`make_package <pySecDec.code_writer.make_package>`), for loop integrals the `LoopPackage` wrapper may be used (it has the same arguments as :func:`loop_package <pySecDec.loop_integral.loop_package>`).
+
+.. code::
+
+        integrals = [
+            MakePackage('easy1',
+                integration_variables = ['x','y'],
+                polynomials_to_decompose = ['(x+y)^(-2+eps)'],
+                **common_args),
+            MakePackage('easy2',
+                integration_variables = ['x','y'],
+                polynomials_to_decompose = ['(2*x+3*y)^(-1+eps)'],
+                **common_args)
+        ]
+
+Finally, the list of integrals and coefficients are passed to :func:`sum_package <pySecDec.code_writer.sum_package.sum_package>`. This will generate a C++ library which efficiently evaluates both weighted sums of integrals, sharing the results of the integrals between the different sums. 
+    
+.. code::
+
+        # generate code sum of (int * coeff)
+        sum_package('easy_sum', integrals,
+            coefficients = coefficients, **common_args)
+
+The generated C++ library can be :ref:`compiled <building_the_cpp_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
+
+.. _using_expansion_by_regions_generic_integral:
+
+Using Expansion By Regions (Generic Integral)
+---------------------------------------------
+
+.. versionadded:: 1.5
+
+The example ``make_regions_ebr`` provides a simple introduction to the expansion by regions functionality within pySecDec.
+For a more detailed discussion of expansion by regions see our paper [PSD21]_.
+
+The necessary packages are loaded and the ``if __name__ == "__main__"`` guard is opened.
+
+.. code::
+
+    #!/usr/bin/env python3
+    from pySecDec import sum_package, make_regions
+
+    if __name__ == "__main__":
+
+Expansion by regions is applied to a generic integral using the :func:`make_regions <pySecDec.make_regions>` function.
+
+.. code::
+
+        regions_generators = make_regions(
+            name = 'make_regions_ebr',
+            integration_variables = ['x'],
+            regulators = ['delta'],
+            requested_orders = [0],
+            smallness_parameter = 't',
+            polynomials_to_decompose = ['(x)**(delta)','(t + x + x**2)**(-1)'],
+            expansion_by_regions_order = 0,
+            real_parameters = ['t'],
+            complex_parameters = [],
+            decomposition_method = 'geometric_infinity_no_primary',
+            polytope_from_sum_of=[1]
+        )
+
+The output of :func:`make_regions <pySecDec.make_regions.make_regions>` can be passed to :func:`sum_package <pySecDec.code_writer.sum_package.sum_package>` in order to generate a C++ library suitable for evaluating the expanded integral.
+
+.. code::
+
+        sum_package(
+            'make_regions_ebr',
+            regions_generators,
+            regulators = ['delta'],
+            requested_orders = [0],
+            real_parameters = ['t']
+        )
+
+The generated C++ library can be :ref:`compiled <building_the_cpp_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
+
+.. _using_expansion_by_regions_loop_integral:
+
+Using Expansion By Regions (Loop Integral)
+------------------------------------------
+
+.. versionadded:: 1.5
+
+The example ``generate_box1L_ebr`` demonstrates how expansion by regions can be applied to loop integrals within pySecDec by applying it to the 1-loop box integral as described in Section 4.2 of [Mis18]_.
+For a more detailed discussion of expansion by regions see our paper [PSD21]_.
+
+First, the necessary packages are loaded and the ``if __name__ == "__main__"`` guard is opened.
+
+.. code::
+
+    #!/usr/bin/env python3
+
+    from pySecDec import sum_package, loop_regions
+    import pySecDec as psd
+
+    # This example is the first one loop box example in Go Mishima paper arXiv:1812.04373
+
+    if __name__ == "__main__":
+
+The loop integral can be constructed via the convenience functions in :mod:`loop_integral <pySecDec.loop_integral>`, here we use :class:`LoopintegralFromGraph <pySecDec.loop_integral.LoopIntegralFromGraph>`.
+Note that ``powerlist=["1+n1","1+n1/2","1+n1/3","1+n1/5"]``, here ``n1`` is an extra regulator required to regulate the singularities which appear when expanding this loop integral.
+We use the "trick" of introducing only a single regulator divided by different prime numbers for each power, rather than unique regulators for each propagator (though this is also supported by pySecDec). 
+Poles in the extra regulator ``n1`` may appear in individual regions but are expected to cancel when all regions are summed.
+
+.. code::
+
+        # here we define the Feynman diagram
+        li = psd.loop_integral.LoopIntegralFromGraph(
+        internal_lines = [['mt',[3,1]],['mt',[1,2]],['mt',[2,4]],['mt',[4,3]]],
+        external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
+        powerlist=["1+n1","1+n1/2","1+n1/3","1+n1/5"],
+        regulators=["eps","n1"],
+        Feynman_parameters=["x%i" % i for i in range(1,5)], # this renames the parameters, so we get the same polynomials as in the paper
+
+        replacement_rules = [
+                                # note that in those relations all momenta are incoming
+                                # below we have general relations
+                                ('p1*p1', 'm1sq'),
+                                ('p2*p2', 'm2sq'),
+                                ('p3*p3', 'm3sq'),
+                                ('p4*p4', 'm4sq'),
+                                ('p1*p2', 's/2-(m1sq+m2sq)/2'),
+                                ('p1*p3', 't/2-(m1sq+m3sq)/2'),
+                                ('p1*p4', 'u/2-(m1sq+m4sq)/2'),
+                                ('p2*p3', 'u/2-(m2sq+m3sq)/2'),
+                                ('p2*p4', 't/2-(m2sq+m4sq)/2'),
+                                ('p3*p4', 's/2-(m3sq+m4sq)/2'),
+                                ('u', '(m1sq+m2sq+m3sq+m4sq)-s-t'),
+                                # these below are for our specific case
+                                ('mt**2', 'mtsq'),
+                                ('m1sq',0),
+                                ('m2sq',0),
+                                ('m3sq','mHsq'),
+                                ('m4sq','mHsq'),
+                                ('mHsq', 0),
+                            ])
+
+Expansion by regions is applied to a loop integral using the :func:`loop_regions <pySecDec.loop_integral.loop_regions>` function.
+We expand around a small mass `mtsq`.
+
+.. code::
+
+        # find the regions
+        generators_args = loop_regions(
+            name = "box1L_ebr",
+            loop_integral=li,
+            smallness_parameter = "mtsq",
+            expansion_by_regions_order=0)
+
+The output of :func:`loop_regions <pySecDec.loop_integral.loop_regions>` can be passed to :func:`sum_package <pySecDec.code_writer.sum_package.sum_package>` in order to generate a C++ library suitable for evaluating the expanded integral.
+
+.. code::
+
+        # write the code to sum up the regions
+        sum_package("box1L_ebr",
+                    generators_args,
+                    li.regulators,
+                    requested_orders = [0,0],
+                    real_parameters = ['s','t','u','mtsq'],
+                    complex_parameters = [])
+
+
+The generated C++ library can be :ref:`compiled <building_the_cpp_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
 
 .. _list_of_examples:
 
@@ -442,7 +638,8 @@ Here we list the available examples. For more details regarding each example see
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **hz2L_nonplanar**:        | a 2-loop, 4-point, 7-propagator integral with internal and external masses                                                     |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **box1L_ebr**:             | uses expansion by regions to expand a 1-loop box with a small internal mass                                                    |
+| **box1L_ebr**:             | uses expansion by regions to expand a 1-loop box with a small internal mass, this integral is also considered in Section 4.2   |
+|                            | of [Mis18]_                                                                                                                    |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **bubble1L_ebr**:          | uses expansion by regions to expand a 1-loop, 2-point integral in various limits                                               |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
