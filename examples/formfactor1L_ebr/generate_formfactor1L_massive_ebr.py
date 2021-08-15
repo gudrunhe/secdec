@@ -11,7 +11,7 @@ if __name__ == "__main__":
         internal_lines = [['0',[1,3]],['0',[2,3]],['m',[1,2]]],
         external_lines = [['p1',1],['p2',2],['p3',3]],
         powerlist=['1+n/2','1+n/3','1'],
-        regulators=['eps','n'],
+        regulators=['n','eps'],
         replacement_rules = [
                             ('p1*p1', '0'),
                             ('p2*p2', '0'),

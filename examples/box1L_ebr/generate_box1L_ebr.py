@@ -12,7 +12,7 @@ if __name__ == "__main__":
     internal_lines = [['mt',[3,1]],['mt',[1,2]],['mt',[2,4]],['mt',[4,3]]],
     external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
     powerlist=["1+n1","1+n1/2","1+n1/3","1+n1/5"],
-    regulators=["eps","n1"],
+    regulators=["n1","eps"],
     Feynman_parameters=["x%i" % i for i in range(1,5)], # this renames the parameters, so we get the same polynomials as in the paper
 
     replacement_rules = [
