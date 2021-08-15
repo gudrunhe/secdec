@@ -11,7 +11,7 @@ if __name__ == "__main__":
     intlib.use_Qmc(transform='korobov3', fitfunction='polysingular', epsrel=1e-4, minn=50000, maxeval=100000000)
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[0.002, 4, 1],verbose=True)
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[0.002, 4],verbose=True)
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
