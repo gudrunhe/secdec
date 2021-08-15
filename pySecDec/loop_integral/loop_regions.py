@@ -197,7 +197,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
     # add regulators of the form x_i**(n/p_i), where n is a regulator
     if add_monomial_regulator_power is not None:
         regulator = sympify_expression(add_monomial_regulator_power)
-        loop_integral.regulators.insert(1,regulator)
+        loop_integral.regulators.insert(0,regulator)
         primes = [sp.prime(n+1) for n in range(len(loop_integral.integration_variables)-1)]
         monomial_factors = []
         for prime, variable in zip(primes,loop_integral.integration_variables[:-1]):
