@@ -15,7 +15,7 @@ if __name__ == "__main__":
         replacement_rules = [
                             ('p1*p1', '0'),
                             ('p2*p2', '0'),
-                            ('p3*p3', '-qsq'),
+                            ('p3*p3', '-Qsq'),
                             ('m**2', 'z*msq')
                             ]
     )
@@ -33,5 +33,5 @@ if __name__ == "__main__":
                 generators_args,
                 li.regulators,
                 requested_orders = [0,0],
-                real_parameters = ['qsq','msq','z'],
+                real_parameters = ['Qsq','msq','z'],
                 complex_parameters = [])

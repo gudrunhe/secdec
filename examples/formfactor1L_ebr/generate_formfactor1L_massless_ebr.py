@@ -9,9 +9,9 @@ if __name__ == "__main__":
         internal_lines = [['0',[1,3]],['0',[2,3]],['0',[1,2]]],
         external_lines = [['p1',1],['p2',2],['p3',3]],
         replacement_rules = [
-                            ('p3*p3', '-qsq'),
-                            ('p1*p1', '-z*psq'),
-                            ('p2*p2', '-z*lsq'),
+                            ('p3*p3', '-Qsq'),
+                            ('p1*p1', '-z*Psq'),
+                            ('p2*p2', '-z*Lsq'),
                             ]
     )
 
@@ -27,5 +27,5 @@ if __name__ == "__main__":
                 generators_args,
                 li.regulators,
                 requested_orders = [0],
-                real_parameters = ['qsq','lsq','psq','z'],
+                real_parameters = ['Qsq','Lsq','Psq','z'],
                 complex_parameters = [])
