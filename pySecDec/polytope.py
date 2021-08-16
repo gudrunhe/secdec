@@ -2,7 +2,7 @@
 Polytope
 --------
 
-The polytope class as required by :mod:`pySecDec.region_expand`
+The polytope class as required by :mod:`pySecDec.make_regions`
 and :mod:`pySecDec.decomposition.geometric`.
 
 """
