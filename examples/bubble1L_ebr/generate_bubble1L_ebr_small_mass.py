@@ -8,13 +8,13 @@ if __name__ == "__main__":
     li = psd.LoopIntegralFromGraph(
             internal_lines = [['m',[1,2]],['m',[2,1]]],
             external_lines = [['p',1],['p',2]],
-            replacement_rules = [('p*p', 's'), ('m*m', 'z*msq')])
+            replacement_rules = [('p*p', 's'), ('m*m', 'msq')])
 
     # find the regions and expand the integrals using expansion by regions
     regions_generator_args = psd.loop_regions(
         name = 'bubble1L_ebr_small_mass',
         loop_integral = li,
-        smallness_parameter = 'z',
+        smallness_parameter = 'msq',
         expansion_by_regions_order = 2)
 
     # generate code that will calculate the sum of all regions and all orders in
@@ -23,5 +23,5 @@ if __name__ == "__main__":
         regions_generator_args,
         regulators = ['eps'],
         requested_orders = [0],
-        real_parameters = ['s','msq','z'],
+        real_parameters = ['s','msq'],
         complex_parameters = [])
