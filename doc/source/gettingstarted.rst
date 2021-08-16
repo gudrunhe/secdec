@@ -531,7 +531,7 @@ First, the necessary packages are loaded and the ``if __name__ == "__main__"`` g
     from pySecDec import sum_package, loop_regions
     import pySecDec as psd
 
-    # This example is the first one loop box example in Go Mishima paper arXiv:1812.04373
+    # This example is the one-loop box example in Go Mishima's paper arXiv:1812.04373
 
     if __name__ == "__main__":
 
@@ -548,11 +548,11 @@ Poles in the extra regulator ``n1`` may appear in individual regions but are exp
         external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
         powerlist=["1+n1","1+n1/2","1+n1/3","1+n1/5"],
         regulators=["eps","n1"],
-        Feynman_parameters=["x%i" % i for i in range(1,5)], # this renames the parameters, so we get the same polynomials as in the paper
+        Feynman_parameters=["x%i" % i for i in range(1,5)], # renames the parameters to get the same polynomials as in 1812.04373
 
         replacement_rules = [
                                 # note that in those relations all momenta are incoming
-                                # below we have general relations
+                                # general relations:
                                 ('p1*p1', 'm1sq'),
                                 ('p2*p2', 'm2sq'),
                                 ('p3*p3', 'm3sq'),
@@ -564,7 +564,7 @@ Poles in the extra regulator ``n1`` may appear in individual regions but are exp
                                 ('p2*p4', 't/2-(m2sq+m4sq)/2'),
                                 ('p3*p4', 's/2-(m3sq+m4sq)/2'),
                                 ('u', '(m1sq+m2sq+m3sq+m4sq)-s-t'),
-                                # these below are for our specific case
+                                # relations for our specific case:
                                 ('mt**2', 'mtsq'),
                                 ('m1sq',0),
                                 ('m2sq',0),
