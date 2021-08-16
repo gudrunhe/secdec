@@ -2163,8 +2163,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             pool.close()
 
     # expand the `prefactor` to the required orders
-    print('expanding the prefactor')
     required_prefactor_orders = requested_orders - lowest_orders
+    print('expanding the prefactor', prefactor, '(regulators:', regulators, ', orders:', required_prefactor_orders, ')')
     expanded_prefactor = expand_sympy(prefactor, regulators, required_prefactor_orders)
 
     # pack the `prefactor` into c++ function that returns a nested `Series`
