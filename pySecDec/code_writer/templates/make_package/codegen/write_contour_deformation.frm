@@ -358,6 +358,7 @@
   Format float 20;
   Format C;
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "complex_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
+  #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "(void)SecDecInternalAbbreviation;#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
   #write <optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 

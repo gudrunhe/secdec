@@ -127,7 +127,7 @@ extern "C"
         const char *lib_path
     )
     {
-        size_t i;
+        int i;
         std::stringstream sstream;
 
         // fix output formatting
@@ -246,7 +246,7 @@ extern "C"
             const char *lib_path
         )
         {
-            size_t i;
+            int i;
             std::stringstream sstream;
 
             // fix output formatting

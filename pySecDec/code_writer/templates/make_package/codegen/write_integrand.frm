@@ -1187,6 +1187,7 @@ Bracket `regulators';
 
     #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#// contour deformation sign checks#@SecDecInternalNewline@#"
     #write <sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternalSignCheckExpression;#@SecDecInternalNewline@#"
+    #write <sector_`sectorID'_`cppOrder'.cpp> "(void)SecDecInternalSignCheckExpression;#@SecDecInternalNewline@#"
 
     hide; nhide toOptimize, expr;
     Bracket SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal;
