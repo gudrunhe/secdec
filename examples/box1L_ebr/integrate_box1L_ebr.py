@@ -5,11 +5,11 @@ import sympy as sp
 import numpy as np
 
 # define analytic result
-def f(s,t,u, mtsq):
+def f(s,t, mtsq):
     """
     The resulting function of the integral from arXiv:1812.04373, to order 0 in mtsq.
 
-    Expected Result from the paper for ['s','t','u','mtsq'] = [4.0, -2.82842712475, -2.82842712475, 0.1]:
+    Expected Result from the paper for ['s','t','mtsq'] = [4.0, -2.82842712475, 0.1]:
     (-1.30718609739+1.85618421207j)
     """
     v = -t/s
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     intlib.use_Qmc(transform="korobov3", fitfunction="polysingular", verbosity=1)
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[4.0, -2.82842712475, -2.82842712475, 0.1])
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[4.0, -2.82842712475, 0.1])
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
@@ -49,12 +49,12 @@ if __name__ == "__main__":
     # print analytic result for given kinematics
     p1 = fourvec(0,[1,0,0])
     p2 = fourvec(0,[-1,0,0])
-    p3 = fourvec(0,[0,1,1])
+    p3 = fourvec(0,[0,0,1])
     s,t,u = get_stu(p1,p2,p3)
     mtsq=0.1
 
-    print("When using s, t, u, mtsq = {:.5f}, {:.5f}, {:.5f}, {:.5f}".format(s,t,u,mtsq))
-    print("The expected result is: {:.15f}".format(f(s,t,u,mtsq)))
+    print("When using s, t, mtsq = {:.5f}, {:.5f}, {:.5f}".format(s,t,mtsq))
+    print("The expected result is: {:.15f}".format(f(s,t,mtsq)))
     print()
 
     # examples how to access individual orders

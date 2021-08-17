@@ -50,5 +50,5 @@ if __name__ == "__main__":
                 generators_args,
                 li.regulators,
                 requested_orders = [0,0],
-                real_parameters = ['s','t','u','mtsq'],
+                real_parameters = ['s','t','mtsq'],
                 complex_parameters = [])
