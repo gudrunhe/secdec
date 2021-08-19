@@ -1,6 +1,6 @@
 [project]
 name = "pySecDec"
-version = "1.4.5a1.dev6"
+version = "1.5"
 
 author = "Sophia Borowka, Gudrun Heinrich, Stephan Jahn, Stephen Jones, Matthias Kerner, Florian Langer, Vitaly Magerya, Andres Poldaru, Johannes Schlenk, Emilio Villa, Tom Zirke"
 classifiers = [
