@@ -11,7 +11,7 @@ if __name__ == "__main__":
     intlib.use_Qmc(transform="korobov3", fitfunction="polysingular", verbosity=1)
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[100,1,1,1])
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[100,0.005,1,1])
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
@@ -29,6 +29,6 @@ if __name__ == "__main__":
 
     # analytic result
     # from Eq (3.19) of arXiv:1803.04310
-    # N[-1/qsq (Log[qsq/lsq] Log[qsq/psq] + Pi^2/3)] /. {qsq -> 100, lsq -> 1, psq -> 1}
-    print('\nAnalytic Result for qsq = 100, lsq = 1, psq = 1')
-    print("eps^0  -0.244974605756100")
+    # N[-1/Qsq (Log[Qsq/Lsq] Log[Qsq/Psq] + Pi^2/3),15] /. {Qsq -> 100, Lsq -> 1/2, Psq -> 1/2}
+    print('\nAnalytic Result for Qsq = 100, Lsq = 0.5, Psq = 0.5')
+    print("eps^0  -0.313620350503610")
