@@ -1271,7 +1271,7 @@ def _process_secondary_sector(environment):
 
     #  - for the `other_polynomials`
     for prod, exponentiated_function, basename in zip(sector.other, symbolic_other_polynomials, names_other_polynomials):
-        _, expression = prod.factors
+        _, expression = prod.copy().factors
         expression.exponent = 1 # exponent is already part of the `tracker`
         update_derivatives(
             basename=basename, # name as defined in `polynomial_names` or dummy name
@@ -1321,7 +1321,7 @@ def _process_secondary_sector(environment):
             )
 
     #  - for the contour deformation polynomial
-        full_expression = sector.cast[contour_deformation_polynomial_index].factors[1]
+        full_expression = sector.cast[contour_deformation_polynomial_index].copy().factors[1]
         full_expression.exponent = 1 # exponent is already part of the `tracker`
         update_derivatives(
             str(contour_deformation_polynomial), # basename
