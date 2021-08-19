@@ -1282,7 +1282,7 @@ def _process_secondary_sector(environment):
     #  - for the `polynomials_to_decompose`
     for i,symbolic_polynomials in enumerate((symbolic_polynomials_to_decompose,symbolic_polynomials_to_decompose_all_symbols_undeformed)):
         for prod, exponentiated_function, basename in zip(sector.cast , symbolic_polynomials, names_polynomials_to_decompose):
-            _, expression = prod.factors
+            _, expression = prod.copy().factors # take copy to avoid modifying original expression
             expression.exponent = 1 # exponent is already part of the `tracker`
             update_derivatives(
                 basename=basename, # name as defined in `polynomial_names` or dummy name
