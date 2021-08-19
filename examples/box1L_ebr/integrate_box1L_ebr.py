@@ -30,6 +30,12 @@ def get_stu(p1,p2,p3):
     return fourproduct(_s,_s), fourproduct(_t,_t), fourproduct(_u,_u)
 
 if __name__ == "__main__":
+    # kinematics
+    p1 = fourvec(0,[1,0,0])
+    p2 = fourvec(0,[-1,0,0])
+    p3 = fourvec(0,[np.sqrt(2)-1,-np.sqrt(2*(np.sqrt(2)-1)),0])
+    s,t,u = get_stu(p1,p2,p3)
+    mtsq=0.1
 
     # load c++ library
     name = "box1L_ebr"
@@ -37,7 +43,7 @@ if __name__ == "__main__":
     intlib.use_Qmc(transform="korobov3", fitfunction="polysingular", verbosity=1)
 
     # integrate
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[4.0, -2.82842712475, 0.1])
+    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[s, t, mtsq])
 
     # convert complex numbers from c++ to sympy notation
     str_integral_with_prefactor = str_integral_with_prefactor.replace(',','+I*')
@@ -47,12 +53,6 @@ if __name__ == "__main__":
     integral_result_err = sp.sympify(str_integral_with_prefactor.replace('+/-','*value+error*'))
 
     # print analytic result for given kinematics
-    p1 = fourvec(0,[1,0,0])
-    p2 = fourvec(0,[-1,0,0])
-    p3 = fourvec(0,[0,0,1])
-    s,t,u = get_stu(p1,p2,p3)
-    mtsq=0.1
-
     print("When using s, t, mtsq = {:.5f}, {:.5f}, {:.5f}".format(s,t,mtsq))
     print("The expected result is: {:.15f}".format(f(s,t,mtsq)))
     print()

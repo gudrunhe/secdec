@@ -8,4 +8,4 @@ res=f0+f1*Log[-splusidelta/msq];
 Return[res]
 ]
 
-test=I3[0.002,4,100]
+test=I3[0.002,4,0]

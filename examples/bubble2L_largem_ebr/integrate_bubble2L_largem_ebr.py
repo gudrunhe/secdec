@@ -25,6 +25,6 @@ if __name__ == "__main__":
 
     # analytic result
     print('Analytic Result for s = 0.002, msq = 4')
-    valreal, valimg = 1.32507, 0.392683
+    valreal, valimg = 1.325113, 0.3926991
     print("eps^0  {: }{:+}*I\n".format(valreal,valimg))
 
