@@ -35,6 +35,7 @@ if [ ! -f "$tmpdir/dist/$name.tar.gz" ]; then
     exit 1
 fi
 
+c mkdir -p dist
 c cp -ai "$tmpdir/dist/$name.tar.gz" dist/
 
 for tag in manylinux2010_x86_64 manylinux2014_x86_64 manylinux_2_24_x86_64; do
