@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example `userdefined_cpp` made compatible with the new C++ backend.
 - [Cuba](http://www.feynarts.de/cuba/) was updated to 4.2.1 (28 Jun 2021).
 - [Qmc](https://github.com/mppmu/qmc) was updated to 1.0.6.
+- Integration routines now print logs to the standard error instead of the standard output. To ignore the distinction and save both, invoke your integration script as `python3 integrate.py >output.txt 2>&1` from the shell.
 
 ### Removed
 - Python versions below 3.6 are no longer supported.
