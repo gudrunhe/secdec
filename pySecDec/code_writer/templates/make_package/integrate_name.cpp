@@ -86,15 +86,18 @@ int main(int argc, const char *argv[])
         complex_parameters.push_back(%(name)s::complex_t(re, im));
     }
 
-    // Generate the integrands (optimization of the contour if applicable)
+    // Generate the integrands (optimisation of the contour if applicable)
+    std::cerr << "Generating integrands (optimising contour if required)" << std::endl;
     const std::vector<%(name)s::nested_series_t<%(name)s::integrand_t>> sector_integrands =
         %(name)s::make_integrands(real_parameters, complex_parameters);
 
     // Add integrands of sectors (together flag)
+    std::cerr << "Summing integrands" << std::endl;
     const %(name)s::nested_series_t<%(name)s::integrand_t> all_sectors =
         std::accumulate(++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin());
 
     // Integrate
+    std::cerr << "Integrating" << std::endl;
     secdecutil::cuba::Vegas<%(name)s::integrand_return_t> integrator;
     integrator.flags = 2; // verbose output --> see cuba manual
     const %(name)s::nested_series_t<secdecutil::UncorrelatedDeviation<%(name)s::integrand_return_t>> result_all =

@@ -86,15 +86,18 @@ int main(int argc, const char *argv[])
         complex_parameters.push_back(%(name)s::complex_t(re, im));
     }
 
-    // Generate the integrands (optimization of the contour if applicable)
+    // Generate the integrands (optimisation of the contour if applicable)
+    std::cerr << "Generating integrands (optimising contour if required)" << std::endl;
     const std::vector<%(name)s::nested_series_t<%(name)s::cuda_integrand_t>> sector_integrands =
         %(name)s::make_cuda_integrands(real_parameters, complex_parameters);
 
     // Add integrands of sectors (together flag)
+    std::cerr << "Summing integrands" << std::endl;
     const %(name)s::nested_series_t<%(name)s::cuda_together_integrand_t> all_sectors =
         std::accumulate(++sector_integrands.begin(), sector_integrands.end(), %(name)s::cuda_together_integrand_t()+*sector_integrands.begin());
 
     // Integrate
+    std::cerr << "Integrating" << std::endl;
     secdecutil::integrators::Qmc<
                                     %(name)s::integrand_return_t,
                                     %(name)s::maximal_number_of_integration_variables,

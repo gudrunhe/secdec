@@ -109,6 +109,7 @@ extern "C"
             complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
 
         // Construct the amplitudes
+        if(verbose) std::cerr << "Generating amplitudes (optimising contour if required)" << std::endl;
         std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(
                                                                                           real_parameters,
                                                                                           complex_parameters,
@@ -123,6 +124,7 @@ extern "C"
                                                                                           );
 
         // pack amplitude into handler
+        if(verbose) std::cerr << "Packing amplitudes into handler" << std::endl;
         handler_t<amplitudes_t> amplitudes
         (
             unwrapped_amplitudes,
@@ -137,6 +139,7 @@ extern "C"
         amplitudes.errormode = static_cast<handler_t<amplitudes_t>::ErrorMode>(errormode_enum);
 
         // compute the amplitude
+        if(verbose) std::cerr << "Integrating" << std::endl;
         std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> result;
         try {
             result = amplitudes.evaluate();
@@ -220,6 +223,7 @@ extern "C"
                 complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
 
             // Construct the amplitudes
+            if(verbose) std::cerr << "Generating amplitudes (optimising contour if required)" << std::endl;
             std::vector<nested_series_t<sum_t>> unwrapped_amplitudes = make_amplitudes(
                                                                                               real_parameters,
                                                                                               complex_parameters,
@@ -234,6 +238,7 @@ extern "C"
                                                                                               );
 
             // pack amplitude into handler
+            if(verbose) std::cerr << "Packing amplitudes into handler" << std::endl;
             handler_t<amplitudes_t> amplitudes
             (
                 unwrapped_amplitudes,
@@ -247,6 +252,7 @@ extern "C"
             amplitudes.verbose = verbose;
 
             // compute the amplitude
+            if(verbose) std::cerr << "Integrating" << std::endl;
             std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> result;
             try {
                 result = amplitudes.evaluate();

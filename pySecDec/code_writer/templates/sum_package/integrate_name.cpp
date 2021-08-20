@@ -34,8 +34,9 @@ int main(int argc, const char *argv[])
         %(name)s::real_t im = std::atof(argv[i+1]);
         complex_parameters.push_back(%(name)s::complex_t(re, im));
     }
-    
+
     // Set up Integrator
+    std::cerr << "Setting up integrator" << std::endl;
     //secdecutil::cuba::Vegas<%(name)s::integrand_return_t> integrator;
     secdecutil::integrators::Qmc<
                                     %(name)s::integrand_return_t,
@@ -46,10 +47,12 @@ int main(int argc, const char *argv[])
     integrator.verbosity = 1;
 
     // Construct the amplitudes
+    std::cerr << "Generating amplitudes (optimising contour if required)" << std::endl;
     std::vector<%(name)s::nested_series_t<%(name)s::sum_t>> unwrapped_amplitudes =
         %(name)s::make_amplitudes(real_parameters, complex_parameters, "%(name)s_data", integrator);
 
     // Pack amplitudes into handler
+    std::cerr << "Packing amplitudes into handler" << std::endl;
     %(name)s::handler_t<%(name)s::amplitudes_t> amplitudes
     (
         unwrapped_amplitudes,
@@ -85,6 +88,7 @@ int main(int argc, const char *argv[])
     // amplitudes.reset_cuda_after = 2000;
 
     // compute the amplitudes
+    std::cerr << "Integrating" << std::endl;
     const std::vector<%(name)s::nested_series_t<secdecutil::UncorrelatedDeviation<%(name)s::integrand_return_t>>> result = amplitudes.evaluate();
 
     // print the result

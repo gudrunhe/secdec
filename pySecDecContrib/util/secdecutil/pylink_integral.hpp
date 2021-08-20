@@ -145,6 +145,7 @@ extern "C"
             complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
 
         // optimize the deformation (if any)
+        if(verbose) std::cerr << "Generating integrands (optimising contour if required)" << std::endl;
         const std::vector<nested_series_t<secdec_integrand_t>> sector_integrands =
         make_integrands
         (
@@ -161,9 +162,11 @@ extern "C"
         try{
             if (together) {
                 // add integrands of sectors (together flag)
+                if(verbose) std::cerr << "Summing integrands" << std::endl;
                 const nested_series_t<secdec_integrand_t> all_sectors = std::accumulate( ++sector_integrands.begin(), sector_integrands.end(), *sector_integrands.begin() );
 
                 // perform the integration
+                if(verbose) std::cerr << "Integrating" << std::endl;
                 result_all.reset
                 (
                     new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
@@ -173,9 +176,11 @@ extern "C"
                 );
             } else {
                 // perform the integration
+                if(verbose) std::cerr << "Integrating" << std::endl;
                 const std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> integrated_sectors = secdecutil::deep_apply( sector_integrands, integrator->integrate );
 
                 // add integrated sectors
+                if(verbose) std::cerr << "Summing integrals" << std::endl;
                 result_all.reset
                 (
                     new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
@@ -264,6 +269,7 @@ extern "C"
                 complex_parameters[i] = complex_t(complex_parameters_input[2*i],complex_parameters_input[2*i + 1]);
 
             // optimize the deformation (if any)
+            if(verbose) std::cerr << "Generating integrands (optimising contour if required)" << std::endl;
             const std::vector<nested_series_t<cuda_integrand_t>> sector_integrands =
             make_cuda_integrands
             (
@@ -280,10 +286,12 @@ extern "C"
             try{
                 if (together) {
                     // add integrands of sectors (together flag)
+                    if(verbose) std::cerr << "Summing integrands" << std::endl;
                     const nested_series_t<cuda_together_integrand_t> all_sectors =
                         std::accumulate( ++sector_integrands.begin(), sector_integrands.end(), cuda_together_integrand_t()+*sector_integrands.begin() );
 
                     // perform the integration
+                    if(verbose) std::cerr << "Integrating" << std::endl;
                     result_all.reset
                     (
                         new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
@@ -293,9 +301,11 @@ extern "C"
                     );
                 } else {
                     // perform the integration
+                    if(verbose) std::cerr << "Integrating" << std::endl;
                     const std::vector<nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>> integrated_sectors = secdecutil::deep_apply( sector_integrands, separate_integrator->integrate );
 
                     // add integrated sectors
+                    if(verbose) std::cerr << "Summing integrals" << std::endl;
                     result_all.reset
                     (
                         new nested_series_t<secdecutil::UncorrelatedDeviation<integrand_return_t>>
