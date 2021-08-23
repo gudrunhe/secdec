@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
         # load c++ library
         intlib = IntegralLibrary("{0}/{0}_pylink.so".format(name))
-        intlib.use_Qmc(transform="korobov3", fitfunction="polysingular")
+        intlib.use_Qmc(transform="korobov3")
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=realp)

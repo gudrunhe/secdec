@@ -8,7 +8,7 @@ if __name__ == "__main__":
     # load c++ library
     name = "formfactor1L_massless_ebr"
     intlib = IntegralLibrary(f"{name}/{name}_pylink.so")
-    intlib.use_Qmc(transform="korobov3", fitfunction="polysingular", verbosity=1)
+    intlib.use_Qmc(transform="korobov3", verbosity=1)
 
     # integrate
     str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[100,0.005,1,1])

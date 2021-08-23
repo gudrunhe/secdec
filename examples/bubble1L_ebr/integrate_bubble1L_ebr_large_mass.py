@@ -8,7 +8,7 @@ if __name__ == "__main__":
     # load c++ library
     name = "bubble1L_ebr_large_mass"
     bubble1L = IntegralLibrary(f"{name}/{name}_pylink.so")
-    bubble1L.use_Qmc(transform="korobov3", fitfunction="polysingular", verbosity=1)
+    bubble1L.use_Qmc(transform="korobov3", verbosity=1)
 
     # integrate
     str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = bubble1L(real_parameters=[0.002,4])

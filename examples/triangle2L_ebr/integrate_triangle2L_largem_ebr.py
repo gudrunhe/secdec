@@ -8,7 +8,7 @@ if __name__ == "__main__":
     # load c++ library
     name = 'triangle2L_largem_ebr'
     intlib = IntegralLibrary(f'{name}/{name}_pylink.so')
-    intlib.use_Qmc(transform='korobov3', fitfunction='polysingular', epsrel=1e-4, minn=50000, maxeval=100000000)
+    intlib.use_Qmc(transform='korobov3', epsrel=1e-4, minn=50000, maxeval=100000000)
 
     # integrate
     str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = intlib(real_parameters=[0.002, 4],verbose=True)
