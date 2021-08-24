@@ -1,0 +1,7 @@
+# packages required to build docs (needed by readthedocs)
+numpy==1.19.1
+sphinx==3.5.1
+sympy==1.8
+enscons==0.26
+toml==0.10
+packaging==20.5
