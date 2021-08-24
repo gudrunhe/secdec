@@ -5,13 +5,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2] - 2021-08-24
+
+### Removed
+- Example `nodist_examples/ExpansionByRegions`.
+
+### Fixed
+- Building of the [online documentation](https://secdec.readthedocs.io).
+
 ## [1.5.1] - 2021-08-24
 
 ### Changed
 - Print more detailed information regarding the stage of the calculation (generating integrals/ optimising contour/ summing integrals) when `verbose=1`.
 
 ### Fixed
-- **Bug** which modified exponents in the original integrand expression when computing derivatives. This led to incorrect results for some integrals with very simple `F` polynomials.
+- Issue #7: Bug which modified exponents in the original integrand expression when computing derivatives. This led to incorrect results for some integrals with very simple `F` polynomials. (Thanks to @apik for reporting this)
 
 ## [1.5] - 2021-08-09 (Expansion by Regions / Amplitudes)
 
