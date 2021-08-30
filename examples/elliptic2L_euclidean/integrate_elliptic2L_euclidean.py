@@ -33,5 +33,5 @@ if __name__ == "__main__":
 
     # elliptic Integral f^A_66 of Eq(4.21) arXiv:1609.06685
     # analytic result kindly provided by the authors
-    print('Analytic Result for Euclidean point')
-    print('eps^0: 0.247074199140732131068066')
+    print('Analytic Result for Euclidean point (does not contain prefactor (s/msq)^(3/2))')
+    print('eps^0: 0.160479399806677010960593')
