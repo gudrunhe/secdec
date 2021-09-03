@@ -36,14 +36,8 @@ else
 	$(CXX) -c $(CXXFLAGS) -fPIC $< -o $@
 endif
 
-# code generation from files in codegen/* into src/*
 codegen/sector%%.done: codegen/sector%%.h
 	@# generate c++ code
 	cd codegen && $(PYTHON) formwrapper $(FORMCALL) -D sectorID=$(patsubst codegen/sector%%.h,%%,$<) write_integrand.frm
-	@# move source code to appropriate directory
-	$(PYTHON) codegen/move \
-		codegen/sector_$(patsubst codegen/sector%%.h,%%,$<).cpp \
-		codegen/*sector_$(patsubst codegen/sector%%.h,%%,$<)_*.[ch]pp \
-		src/
-	@# "mark" done
+	$(PYTHON) codegen/export_sector $(patsubst %%.h,%%.info,$<) src/
 	touch $@

@@ -268,4 +268,38 @@ namespace %(name)s
 
 #undef STD
 
+#define SecDecInternalDenominator(x) 1.0/(x)
+
+#ifdef SECDEC_WITH_CUDA
+#define SecDecInternalRealPart(x) (complex_t{x}).real()
+#define SecDecInternalImagPart(x) (complex_t{x}).imag()
+#define SecDecInternalAbs(x) thrust::abs(complex_t{x})
+#else
+#define SecDecInternalRealPart(x) std::real(x)
+#define SecDecInternalImagPart(x) std::imag(x)
+#define SecDecInternalAbs(x) std::abs(x)
+#endif
+
+#define SecDecInternalOutputDeformationParameters(i, v) output_deformation_parameters[i] = (v);
+#define SecDecInternalSignCheckErrorPositivePolynomial(id) \
+    { \
+      secdecutil::ResultInfo current_result; \
+      current_result.return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_positive_polynomial; \
+      current_result.signCheckId = (id); \
+      result_info->fill_if_empty_threadsafe(current_result); \
+    };
+#define SecDecInternalSignCheckErrorContourDeformation(id) \
+    { \
+      secdecutil::ResultInfo current_result; \
+      current_result.return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_contour_deformation; \
+      current_result.signCheckId = (id); \
+      result_info->fill_if_empty_threadsafe(current_result); \
+    };
+
+#if defined(__GNUC__) || defined(__NVCC__)
+#define restrict __restrict__
+#else
+#define restrict
+#endif
+
 #endif

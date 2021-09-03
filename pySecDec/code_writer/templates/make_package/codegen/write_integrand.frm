@@ -1,29 +1,13 @@
 #-
+#: ContinuationLines 32000
+* Despite what the docs say, ContinuationLines is used not only
+* for Fortran, but for everything.
 Off statistics;
 
 * Workaround:
 * Do not use gzip since it sometimes fails for large expressions
 * due to a bug in FORM.
 On compress;
-
-* Define two general procedures that write c++ code to define and undefine
-* c++ preprocessor varibables accessing a c++ array.
-#procedure cppDefine(?FORMNames,cppArrayName,filename)
-  #$counter = 0;
-  #Do varname = {`?FORMNames'}
-    #If x`varname' != x
-      #write <`filename'> "#define `varname' `cppArrayName'[`$counter']#@SecDecInternalNewline@#"
-      #$counter = $counter + 1;
-    #EndIf
-  #EndDo
-#endProcedure
-#procedure cppUndefine(?FORMNames,filename)
-  #Do varname = {`?FORMNames'}
-    #If x`varname' != x
-      #write <`filename'> "#undef `varname'#@SecDecInternalNewline@#"
-    #EndIf
-  #EndDo
-#endProcedure
 
 *Define a procedure that removes expressions known to be zero
 #redefine knownZeroFunctions ""
@@ -154,6 +138,28 @@ drop zeroCheck;
 * Bracket according to the regulators to separate the orders.
 Bracket `regulators';
 
+* We'll write all the results into sector`sectorID'.info, which
+* is a key-value file to be processed later by Python.
+
+* FORM has the annoying habit of inserting newlines and spaces
+* into its output if it gets too long; we can tolerate that in
+* the values, but at least keys should be newline-free. Hence
+* the 255-character line length limit.
+Format rational;
+Format 255;
+
+* General information about this sector.
+#write <sector`sectorID'.info> "@namespace=`name'"
+#write <sector`sectorID'.info> "@sector=`sectorID'"
+#write <sector`sectorID'.info> "@contourDeformation=`contourDeformation'"
+#write <sector`sectorID'.info> "@integrationVariables=`integrationVariables'"
+#write <sector`sectorID'.info> "@realParameters=`realParameters'"
+#write <sector`sectorID'.info> "@complexParameters=`complexParameters'"
+#write <sector`sectorID'.info> "@regulators=`regulators'"
+#write <sector`sectorID'.info> "@highestPoles=`highestPoles'"
+#write <sector`sectorID'.info> "@requiredOrders=`requiredOrders'"
+#write <sector`sectorID'.info> "@numOrders=`numOrders'"
+
 * Optimize each order in epsilon separately.
 * The orders to be processed are enumerated in python. The shifted power
 * of each regulator is stored in the preprocessor variable
@@ -183,28 +189,15 @@ Bracket `regulators';
     #endif
   #EndDo
 
-* We are writing a the c++ file "sector_`sectorID'_`cppOrder'.cpp"
-* and the corresponding header "sector_`sectorID'_`cppOrder'.hpp".
+* General information about this expansion order.
+  #write <sector`sectorID'.info> "@order`shiftedOrderIndex'_name=`cppOrder'"
+  #write <sector`sectorID'.info> "@order`shiftedOrderIndex'_regulatorPowers="
+  #Do regulatorIndex = 1, `numReg'
+    #$absOfOrder = `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''-`highestPole`regulatorIndex'';
+    #write <sector`sectorID'.info> " `$absOfOrder',";
+  #EndDo
+  #write <sector`sectorID'.info> "@end"
 
-* Open the namspace in which the sector is to be implemented
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#include <cmath>//nan#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "namespace `name'#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "{#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  #ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  __host__ __device__#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  #endif#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  integrand_return_t sector_`sectorID'_order_`cppOrder'_integrand#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  (#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const integration_variables,#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const real_parameters,#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    complex_t const * const complex_parameters,#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.cpp> "    real_t const * const deformation_parameters,#@SecDecInternalNewline@#"
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.cpp> "    secdecutil::ResultInfo * const result_info#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  )#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  {#@SecDecInternalNewline@#"
 
 * extract the order in the regulators that we are about to process
   #$currentOrder = 1;
@@ -634,6 +627,7 @@ Bracket `regulators';
 * {
 * "Format rational" because we need the dollar variables as integers
   Format rational;
+  Format 255;
   hide; nhide toOptimize, expression;
   #call simplify
 
@@ -874,6 +868,7 @@ Bracket `regulators';
   #EndIf
   ;
   Format O`optimizationLevel';
+  Format 255;
   .sort
   ExtraSymbols,array,SecDecInternalAbbreviation;
   #optimize toOptimize
@@ -883,49 +878,24 @@ Bracket `regulators';
 * {
 * "Format rational": Need the indices as integers.
   Format rational;
+  Format 255;
 
 * call the general procedure to write the corresponding c++ code define in the beginning of this file
-  #call cppDefine(`occurringIntegrationVariables',integration_variables,sector_`sectorID'_`cppOrder'.cpp)
-  #call cppDefine(`realParameters',real_parameters,sector_`sectorID'_`cppOrder'.cpp)
-  #call cppDefine(`complexParameters',complex_parameters,sector_`sectorID'_`cppOrder'.cpp)
+  #write <sector`sectorID'.info> "@order`shiftedOrderIndex'_integrationVariables=`occurringIntegrationVariables'"
   #If `contourDeformation'
-    #call cppDefine(`occurringDeformationParameters',deformation_parameters,sector_`sectorID'_`cppOrder'.cpp)
+  #write <sector`sectorID'.info> "@order`shiftedOrderIndex'_deformationParameters=`occurringDeformationParameters'"
+  #Else `contourDeformation'
+  #write <sector`sectorID'.info> "@order`shiftedOrderIndex'_deformationParameters="
   #EndIf
-* }
-
-* Processing denominators in FORM is easiest if packed into a function.
-* Define that function as c preprocessor macro.
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalDenominator(x) 1./(x)#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) (complex_t{x}).real()#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalImagPart(x) (complex_t{x}).imag()#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#else#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalRealPart(x) std::real(x)#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalImagPart(x) std::imag(x)#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
-
-* Define "SecDecInternalAbbreviation[0]" as c preprocessor variable "tmp".
-* Since FORM does not use "SecDecInternalAbbreviation[0]", we can use it.
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define tmp SecDecInternalAbbreviation[0]#@SecDecInternalNewline@#"
-
-* Define a function preprocessor macro to handle the abbrevition vectors
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#define SecDecInternalAbbreviations`shiftedOrderIndex'(ID) SecDecInternalAbbreviation[ID]#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
 
 * define the abbreviations in c
   Format float 20;
   Format C;
-  #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalAbbreviation[`optimmaxvar_' + 1];#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "integrand_return_t SecDecInternalSecondAbbreviation[sector_`sectorID'_order_`cppOrder'_optimmaxvar_second + 1];#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-
-  #write <sector_`sectorID'_`cppOrder'.cpp> "for(int i=0; i<`optimmaxvar_' + 1; ++i) SecDecInternalAbbreviation[i] = nan(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "for(int i=0; i<sector_`sectorID'_order_`cppOrder'_optimmaxvar_second + 1; ++i) SecDecInternalSecondAbbreviation[i] = nan(#@SecDecInternalDblquote@##@SecDecInternalDblquote@#);#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+  Format 255;
 
 * write Abbreviations in c format
-  #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+  #write <sector`sectorID'.info> "@order`shiftedOrderIndex'_integrandBody="
+  #write <sector`sectorID'.info> "%%O"
 
 * Reload "toOptmize" such that the optimization symbols of the first
 * optimization are promoted to regular FORM variables.
@@ -936,6 +906,7 @@ Bracket `regulators';
   #clearoptimize
   Format O0;
   Format normal;
+  Format 255;
   Local toOptimize = `$toOptimize';
 
 * Define the function calls replaced by symbols.
@@ -975,6 +946,7 @@ Bracket `regulators';
 
   #Do i = 1,1
     Format normal;
+    Format 255;
     skip;
     .sort
     skip;
@@ -1030,6 +1002,7 @@ Bracket `regulators';
           #$globalIDCounter = $globalIDCounter + 1;
           #redefine SecDecInternalLabel`$function'Call`$callIndex'GlobalIDMin "`$globalLabelCounter'"
           Format normal;
+          Format 255;
           skip; nskip parseNext;
 
           #If `numberOfArgs`$function'Label`$callIndex'' == 0
@@ -1065,6 +1038,7 @@ Bracket `regulators';
     Format float 20;
     Format C;
     Format O`optimizationLevel';
+    Format 255;
     Bracket SecDecInternalLabelSecDecInternalGeneral;
     .sort
     ExtraSymbols,array,SecDecInternalSecondAbbreviation;
@@ -1078,9 +1052,7 @@ Bracket `regulators';
       #redefine numberOfSecondAbbreviations "`optimmaxvar_'"
     #EndIf
 
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@##@SecDecInternalNewline@#// begin next dependency level#@SecDecInternalNewline@#"
-    #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
+    #write <sector`sectorID'.info> "%%O"
 
     #Do globalID = `parseNextGlobalIDMin', `parseNextGlobalIDMax'
       #redefine function "`parseNextFunction`globalID''"
@@ -1088,17 +1060,17 @@ Bracket `regulators';
 
       #If x`function' != x
         skip unparsed;
-        #write <sector_`sectorID'_`cppOrder'.cpp> "auto SecDecInternal`function'Call`callIndex' = "
+        #write <sector`sectorID'.info> "SecDecInternal`function'Call`callIndex' = "
         #If `numberOfArgs`function'Label`callIndex'' == 0
           Local expr = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ `SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'];
           .sort
-          #write <sector_`sectorID'_`cppOrder'.cpp> "%%e#@SecDecInternalNewline@#"  expr(#@no_split_expression@#)
+          #write <sector`sectorID'.info> "%%E;"  expr(#@FAIL@#)
           drop expr;
         #ElseIf `function' == SecDecInternalPow
           Local base = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin')];
           Local exponent = SecDecInternalfDUMMY(parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+1)]);
           .sort
-          #write <sector_`sectorID'_`cppOrder'.cpp> "pow(%%E," base(#@no_split_expression@#)
+          #write <sector`sectorID'.info> "pow(%%E," base(#@FAIL@#)
           drop base;
           skip; nskip exponent;
           #redefine exponentIsInteger "0"
@@ -1107,23 +1079,25 @@ Bracket `regulators';
           .sort
           #If `exponentIsInteger'
             Format rational;
+            Format 255;
           #EndIf
-          #write <sector_`sectorID'_`cppOrder'.cpp> "%%E);#@SecDecInternalNewline@#" exponent(#@no_split_expression@#)
+          #write <sector`sectorID'.info> "%%E);" exponent(#@FAIL@#)
           Format C;
           Format float 20;
+          Format 255;
           drop exponent;
         #Else
-          #write <sector_`sectorID'_`cppOrder'.cpp> "`function'("
+          #write <sector`sectorID'.info> "`function'("
           #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
             Local arg`argIndex' = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+`argIndex'-1)];
             .sort
-            #write <sector_`sectorID'_`cppOrder'.cpp> "%%E"  arg`argIndex'(#@no_split_expression@#)
+            #write <sector`sectorID'.info> "%%E"  arg`argIndex'(#@FAIL@#)
             drop arg`argIndex';
             #If `argIndex' != `numberOfArgs`function'Label`callIndex''
-              #write <sector_`sectorID'_`cppOrder'.cpp> ","
+              #write <sector`sectorID'.info> ","
             #EndIf
           #EndDo
-          #write <sector_`sectorID'_`cppOrder'.cpp> ");#@SecDecInternalNewline@#"
+          #write <sector`sectorID'.info> ");"
         #EndIf
 
         Id SecDecInternal`function'Call`callIndex' = SecDecInternal`function'Call`callIndex' / SecDecInternalsDUMMYhaveUnparsedDependencies;
@@ -1165,6 +1139,7 @@ Bracket `regulators';
   Format float 20;
   Format C;
   Format O`optimizationLevel';
+  Format 255;
   #If `contourDeformation'
     Bracket SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal, SecDecInternalLabelUCallSignCheckGlobal;
   #EndIf
@@ -1176,18 +1151,11 @@ Bracket `regulators';
     #redefine numberOfSecondAbbreviations "`optimmaxvar_'"
   #EndIf
 
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@##@SecDecInternalNewline@#// begin final dependency level#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "%%O#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-* }
+  #write <sector`sectorID'.info> "%%O"
 
 * write code for the sign checks
 * {
   #If `contourDeformation'
-
-    #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#// contour deformation sign checks#@SecDecInternalNewline@#"
-    #write <sector_`sectorID'_`cppOrder'.cpp> "real_t SecDecInternalSignCheckExpression;#@SecDecInternalNewline@#"
-    #write <sector_`sectorID'_`cppOrder'.cpp> "(void)SecDecInternalSignCheckExpression;#@SecDecInternalNewline@#"
 
     hide; nhide toOptimize, expr;
     Bracket SecDecInternalLabelContourDeformationPolynomialCallSignCheckGlobal;
@@ -1201,13 +1169,8 @@ Bracket `regulators';
       .sort
 
       #If termsin(expr) > 0
-        #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-        #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression > 0) {#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::ResultInfo current_result;#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  current_result.return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_contour_deformation;#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  current_result.signCheckId = `signCheckId';#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  result_info->fill_if_empty_threadsafe(current_result);#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "}#@SecDecInternalNewline@#"
+        #write <sector`sectorID'.info> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);" expr(#@FAIL@#)
+        #write <sector`sectorID'.info> "if (SecDecInternalSignCheckExpression > 0) SecDecInternalSignCheckErrorContourDeformation(`signCheckId');"
       #EndIf
 
     #EndDo
@@ -1224,13 +1187,8 @@ Bracket `regulators';
       .sort
 
       #If termsin(expr) > 0
-        #write <sector_`sectorID'_`cppOrder'.cpp> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%%E);#@SecDecInternalNewline@#" expr(#@no_split_expression@#)
-        #write <sector_`sectorID'_`cppOrder'.cpp> "if (SecDecInternalSignCheckExpression < 0) {#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::ResultInfo current_result;#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  current_result.return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_positive_polynomial;#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  current_result.signCheckId = `signCheckId';#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "  result_info->fill_if_empty_threadsafe(current_result);#@SecDecInternalNewline@#"
-        #write <sector_`sectorID'_`cppOrder'.cpp> "}#@SecDecInternalNewline@#"
+        #write <sector`sectorID'.info> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%%E);" expr(#@FAIL@#)
+        #write <sector`sectorID'.info> "if (SecDecInternalSignCheckExpression < 0)  SecDecInternalSignCheckErrorPositivePolynomial(`signCheckId');"
       #EndIf
 
     #EndDo
@@ -1242,96 +1200,12 @@ Bracket `regulators';
     drop expr;
     .sort
 
-    #write <sector_`sectorID'_`cppOrder'.cpp> "// end of contour deformation sign checks#@SecDecInternalNewline@#"
-
   #EndIf
 * }
 
 * write the integrand
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "tmp = %%e#@SecDecInternalNewline@#" toOptimize(#@no_split_expression@#)
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#@SecDecInternalNewline@#"
-
-* return statement
-  #write <sector_`sectorID'_`cppOrder'.cpp> "return tmp;#@SecDecInternalNewline@#"
-
-* undefine the c preprocessor macros
-  #call cppUndefine(`occurringIntegrationVariables',sector_`sectorID'_`cppOrder'.cpp)
-  #call cppUndefine(`realParameters',sector_`sectorID'_`cppOrder'.cpp)
-  #call cppUndefine(`complexParameters',sector_`sectorID'_`cppOrder'.cpp)
-  #If `contourDeformation'
-    #call cppUndefine(`occurringDeformationParameters',sector_`sectorID'_`cppOrder'.cpp)
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalDenominator#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalRealPart#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalImagPart#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef tmp#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#undef SecDecInternalAbbreviations`shiftedOrderIndex'#@SecDecInternalNewline@#"
-
-* Close the c++ function
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  };#@SecDecInternalNewline@#"
-
-* Get the __device__ function pointer to the host
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.cpp> "  __device__ secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction"
-  #Else
-    #write <sector_`sectorID'_`cppOrder'.cpp> "  __device__ secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction"
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.cpp> "  * const device_sector_`sectorID'_order_`cppOrder'_integrand = sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction"
-  #Else
-    #write <sector_`sectorID'_`cppOrder'.cpp> "  secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction"
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.cpp> "   * get_device_sector_`sectorID'_order_`cppOrder'_integrand()#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "   {#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.cpp> "     using IntegrandFunction = secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction;#@SecDecInternalNewline@#"
-  #Else
-    #write <sector_`sectorID'_`cppOrder'.cpp> "     using IntegrandFunction = secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction;#@SecDecInternalNewline@#"
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.cpp> "     IntegrandFunction* device_address_on_host;#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "     auto errcode = cudaMemcpyFromSymbol(&device_address_on_host,device_sector_`sectorID'_order_`cppOrder'_integrand, sizeof(IntegrandFunction*));#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "     if (errcode != cudaSuccess) throw secdecutil::cuda_error( cudaGetErrorString(errcode) );#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "     return device_address_on_host;#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "   };#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.cpp> "#endif#@SecDecInternalNewline@#"
-
-* Close the namespace
-  #write <sector_`sectorID'_`cppOrder'.cpp> "};#@SecDecInternalNewline@#"
-
-* Write the corresponding header "sector_`sectorID'_`cppOrder'.hpp".
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#ifndef `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#define `name'_codegen_sector_`sectorID'_`cppOrder'_hpp_included#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"`name'.hpp\"#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"functions.hpp\"#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.hpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#define sector_`sectorID'_order_`cppOrder'_optimmaxvar_second `numberOfSecondAbbreviations'#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "namespace `name'#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "{#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  #ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  __host__ __device__#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  #endif#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction#@SecDecInternalNewline@#"
-  #Else
-    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction#@SecDecInternalNewline@#"
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  sector_`sectorID'_order_`cppOrder'_integrand;#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  #ifdef SECDEC_WITH_CUDA#@SecDecInternalNewline@#"
-  #If `contourDeformation'
-    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithDeformation<real_t, complex_t>::DeformedIntegrandFunction"
-  #Else
-    #write <sector_`sectorID'_`cppOrder'.hpp> "    secdecutil::SectorContainerWithoutDeformation<real_t, complex_t, integrand_return_t>::IntegrandFunction"
-  #EndIf
-  #write <sector_`sectorID'_`cppOrder'.hpp> "    * get_device_sector_`sectorID'_order_`cppOrder'_integrand();#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "  #endif#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "}#@SecDecInternalNewline@#"
-  #write <sector_`sectorID'_`cppOrder'.hpp> "#endif#@SecDecInternalNewline@#"
-
+  #write <sector`sectorID'.info> "return(%%E);" toOptimize(#@FAIL@#)
+  #write <sector`sectorID'.info> "@end"
 
 * write the contour deformation optimize functions if required
   #If `contourDeformation'
@@ -1340,105 +1214,7 @@ Bracket `regulators';
 
 #EndDo
 
-
-* Here, all integrand functions are written to the hard disc.
-* We still need a file that collects the whole sector.
-
 * clear last step
 .store
-
-* "Format rational": Need the indices as integers.
-Format rational;
-
-* include series class
-#write <sector_`sectorID'.cpp> "#include <secdecutil/series.hpp>#@SecDecInternalNewline@#"
-
-#write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
-
-#Do shiftedOrderIndex = 1, `numOrders'
-* Construct `cppOrder' for use in the function and file names.
-* {
-  #Redefine cppOrder ""
-  #Do regulatorIndex = 1, `numReg'
-    #$absOfOrder = `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''-`highestPole`regulatorIndex'';
-
-*   Since we are not allowed to have a "-" in c++ function names,
-*   replace the "-" by an "n" if required
-    #if `$absOfOrder' < 0
-      #$absOfOrder = - $absOfOrder;
-      #Redefine cppOrder "`cppOrder'n`$absOfOrder'"
-    #else
-      #Redefine cppOrder "`cppOrder'`$absOfOrder'"
-    #endif
-
-*   Separate the orders in the different regulators by underscores
-    #if `regulatorIndex' != `numReg'
-      #Redefine cppOrder "`cppOrder'_"
-    #endif
-  #EndDo
-* }
-
-* define c++ preprocessor macros for the number of integration variables in each integrand
-  #write <sector_`sectorID'.cpp> "#define sector_`sectorID'_order_`cppOrder'_numIV `numOccurringIVOrder`shiftedOrderIndex''#@SecDecInternalNewline@#"
-
-* include the headers for all orders in this sector
-  #write <sector_`sectorID'.cpp> "#include \"sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
-
-* include contour deformation and optimize deformation_parameter headers (if needed)
-  #If `contourDeformation'
-    #write <sector_`sectorID'.cpp> "#include \"contour_deformation_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
-    #write <sector_`sectorID'.cpp> "#include \"optimize_deformation_parameters_sector_`sectorID'_`cppOrder'.hpp\"#@SecDecInternalNewline@#"
-  #EndIf
-
-  #write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
-
-#EndDo
-
-* open c++ namespace
-#write <sector_`sectorID'.cpp> "namespace `name'#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.cpp> "{#@SecDecInternalNewline@#"
-
-* write the getter function of the container
-#write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.cpp> "`integrandContainerType' get_integrand_of_sector_`sectorID'()#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.cpp> "{#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.cpp> "return `integrandContainerInitializer';#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.cpp> "};#@SecDecInternalNewline@#"
-#write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
-
-* close c++ namespace
-#write <sector_`sectorID'.cpp> "};#@SecDecInternalNewline@#"
-
-#write <sector_`sectorID'.cpp> "#@SecDecInternalNewline@#"
-
-* undefine the c++ preprocessor macros for the number of integration variables
-*{
-#Do shiftedOrderIndex = 1, `numOrders'
-* Construct `cppOrder' for use in the function and file names.
-* {
-  #Redefine cppOrder ""
-  #Do regulatorIndex = 1, `numReg'
-    #$absOfOrder = `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''-`highestPole`regulatorIndex'';
-
-*   Since we are not allowed to have a "-" in c++ function names,
-*   replace the "-" by an "n" if required
-    #if `$absOfOrder' < 0
-      #$absOfOrder = - $absOfOrder;
-      #Redefine cppOrder "`cppOrder'n`$absOfOrder'"
-    #else
-      #Redefine cppOrder "`cppOrder'`$absOfOrder'"
-    #endif
-
-*   Separate the orders in the different regulators by underscores
-    #if `regulatorIndex' != `numReg'
-      #Redefine cppOrder "`cppOrder'_"
-    #endif
-  #EndDo
-* }
-
-* undefine the c++ preprocessor macros
-  #write <sector_`sectorID'.cpp> "#undef sector_`sectorID'_order_`cppOrder'_numIV#@SecDecInternalNewline@#"
-#EndDo
-*}
 
 .end

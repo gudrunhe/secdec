@@ -604,59 +604,6 @@ def _derivative_muliindex_to_name(basename, multiindex):
 
 
 # ---------------------------------- write c++ code ---------------------------------
-def _make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation):
-    '''
-    Write the c++ code that initilizes the container class
-    (``Series<Series<...<Series<IntegrandContainer>>...>``).
-
-    '''
-    assert len(min_orders) == len(max_orders)
-    last_regulator_index = len(min_orders) - 1
-
-    def multiindex_to_cpp_order(multiindex):
-        '(-1,3,2,-4) --> n1_3_2_n4'
-        snippets = []
-        for order in multiindex:
-            snippets.append(str(order).replace('-','n'))
-        return '_'.join(snippets)
-
-    current_orders = np.array(min_orders) # use as nonlocal variable in `recursion`
-    def recursion(regulator_index):
-        if regulator_index < last_regulator_index:
-            outstr_body_snippets = []
-            outstr_head = '{%i,%i,{' % (min_orders[regulator_index],max_orders[regulator_index])
-            for this_regulator_order in range(min_orders[regulator_index],max_orders[regulator_index]+1):
-                current_orders[regulator_index] = this_regulator_order
-                outstr_body_snippets.append( recursion(regulator_index + 1) )
-            outstr_tail = '},true,#@%sDblquote@#%s#@%sDblquote@#}' % (internal_prefix,regulator_names[regulator_index],internal_prefix)
-            return ''.join( (outstr_head, ','.join(outstr_body_snippets), outstr_tail) )
-        else: # regulator_index == last_regulator_index; i.e. processing last regulator
-            outstr_head = '{%i,%i,{{' % (min_orders[regulator_index],max_orders[regulator_index])
-            outstr_body_snippets = []
-            for this_regulator_order in range(min_orders[regulator_index],max_orders[regulator_index]+1):
-                current_orders[regulator_index] = this_regulator_order
-                if contour_deformation:
-                    outstr_body_snippets.append(
-                        (
-                            '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand,' +
-                            '#@SecDecInternalNewline@##ifdef#@SecDecInternalSpace@#SECDEC_WITH_CUDA#@SecDecInternalNewline@#get_device_sector_%(sector_ID)i_order_%(cpp_order)s_integrand,' +
-                            '#@SecDecInternalNewline@##endif#@SecDecInternalNewline@#' +
-                            'sector_%(sector_ID)i_order_%(cpp_order)s_contour_deformation_polynomial,' +
-                            'sector_%(sector_ID)i_order_%(cpp_order)s_maximal_allowed_deformation_parameters'
-                        ) % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
-                    )
-                else:
-                    outstr_body_snippets.append(
-                        (
-                            '%(sector_ID)i,\{%(order)s\},sector_%(sector_ID)i_order_%(cpp_order)s_numIV,sector_%(sector_ID)i_order_%(cpp_order)s_integrand' +
-                            '#@SecDecInternalNewline@##ifdef#@SecDecInternalSpace@#SECDEC_WITH_CUDA#@SecDecInternalNewline@#,get_device_sector_%(sector_ID)i_order_%(cpp_order)s_integrand' +
-                            '#@SecDecInternalNewline@##endif#@SecDecInternalNewline@#'
-                        ) % dict(sector_ID=sector_ID,cpp_order=multiindex_to_cpp_order(current_orders),order=_make_FORM_list(current_orders))
-                    )
-            outstr_tail = '}},true,#@%sDblquote@#%s#@%sDblquote@#}' % (internal_prefix,regulator_names[regulator_index],internal_prefix)
-            return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
-
-    return recursion(0)
 
 def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parameters):
     regulators = expanded_prefactor.polysymbols
@@ -1398,10 +1345,8 @@ def _process_secondary_sector(environment):
     template_replacements['insert_other_procedure'] = FORM_other_definitions
     template_replacements['insert_decomposed_procedure'] = FORM_decomposed_definitions
     template_replacements['integrand_definition_procedure'] = _make_FORM_function_definition(internal_prefix+'sDUMMYIntegrand', integrand, args=None, limit=10**6)
-    template_replacements['sector_container_initializer'] = _make_CXX_Series_initialization(regulators, -highest_poles_current_sector,
-                                                                                            required_orders, sector_index,
-                                                                                            contour_deformation_polynomial is not None)
     template_replacements['highest_regulator_poles'] = _make_FORM_list(highest_poles_current_sector)
+    template_replacements['required_orders'] = _make_FORM_list(required_orders)
     template_replacements['regulator_powers'] = regulator_powers
     template_replacements['number_of_orders'] = number_of_orders
     template_replacements['sector_cpp_files'] = sector_cpp_files
@@ -1416,7 +1361,7 @@ def _process_secondary_sector(environment):
                         os.path.join(name,             'codegen', 'sector%i.d' % sector_index), # dest
                         template_replacements)
     for key in 'functions', 'cal_I_derivatives', 'decomposed_polynomial_derivatives','insert_cal_I_procedure','insert_other_procedure','insert_decomposed_procedure', \
-            'integrand_definition_procedure','sector_container_initializer','highest_regulator_poles','regulator_powers','number_of_orders', \
+            'integrand_definition_procedure','highest_regulator_poles','required_orders','regulator_powers','number_of_orders', \
             'sector_index', 'sector_cpp_files', 'sector_hpp_files', 'sector_codegen_sources':
         del template_replacements[key]
 
