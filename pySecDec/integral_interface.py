@@ -595,7 +595,7 @@ class Qmc(CPPIntegrator):
             errormode_enum = 2
         else:
             raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
-
+            
         self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(epsrel,epsabs,maxeval,errormode_enum,evaluateminn,minn,
                                                                     minm,maxnperpackage,maxmperpackage,cputhreads,
                                                                     cudablocks,cudathreadsperblock,verbosity,
@@ -1117,9 +1117,6 @@ class IntegralLibrary(object):
             # c_lib has been compiled without cuda
             pass
 
-        # set the default integrator 
-        self.use_Qmc()
-
     def __call__(
                      self, real_parameters=[], complex_parameters=[], together=True,
                      number_of_presamples=100000, deformation_parameters_maximum=1.,
@@ -1131,6 +1128,10 @@ class IntegralLibrary(object):
                      decrease_to_percentage=0.7, wall_clock_limit=1.7976931348623158e+308, # 1.7976931348623158e+308 max double
                      number_of_threads=0, reset_cuda_after=0, verbose=False, errormode='abs'
                 ):
+        # Set the default integrator
+        if getattr(self, "integrator", None) is None:
+            self.use_Qmc()
+
         # Set default epsrel,epsabs to integrator.epsrel,epsabs
         if (epsrel is None): epsrel = self.high_dimensional_integrator._epsrel
         if (epsabs is None): epsabs = self.high_dimensional_integrator._epsabs
@@ -1292,6 +1293,9 @@ class IntegralLibrary(object):
         if self._cuda:
             raise RuntimeError('Cannot use `CQuad` together with `CudaQmc`.')
         self.cquad = CQuad(self, *args, **kwargs)
+        # If no high_dimensional integrator set, use vegas
+        if getattr(self, "high_dimensional_integrator", None) is None:
+            self.use_Vegas()
         self.integrator = MultiIntegrator(self,self.cquad,self.high_dimensional_integrator,2)
 
     def use_Qmc(self, *args, **kwargs):
