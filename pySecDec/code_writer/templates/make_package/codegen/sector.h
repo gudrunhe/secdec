@@ -4,6 +4,9 @@
 * Whether or not we are producing code for contour deformation
 #define contourDeformation "%(contour_deformation)i"
 
+* Whether or not complex return type is enforced
+#define enforceComplex "%(enforce_complex_return_type)i"
+
 * number of integration variables
 #define numIV "%(number_of_integration_variables)i"
 

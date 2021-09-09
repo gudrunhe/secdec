@@ -152,6 +152,7 @@ Format 255;
 #write <sector`sectorID'.info> "@namespace=`name'"
 #write <sector`sectorID'.info> "@sector=`sectorID'"
 #write <sector`sectorID'.info> "@contourDeformation=`contourDeformation'"
+#write <sector`sectorID'.info> "@enforceComplex=`enforceComplex'"
 #write <sector`sectorID'.info> "@integrationVariables=`integrationVariables'"
 #write <sector`sectorID'.info> "@realParameters=`realParameters'"
 #write <sector`sectorID'.info> "@complexParameters=`complexParameters'"
