@@ -10,6 +10,7 @@ from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial, refactorize
 from ..misc import powerset, sympify_expression
 import numpy as np
+import math
 
 # ********************** helper functions **********************
 
@@ -38,21 +39,27 @@ def remap_one_to_zero(polynomial, *indices):
      + (1) + (-1)*x0
 
     '''
-    coeffs = polynomial.coeffs
-    monomials = [Polynomial.from_expression(s, polynomial.polysymbols) for s in polynomial.polysymbols]
-    dummy_poly_coeffs = np.array([sympify_expression('coeffs_%i__'%i) for i in range(len(coeffs))])
-    dummy_poly_polysymbols = ('monomials_%i__'%i for i in range(len(polynomial.polysymbols)))
-    dummy_poly = Polynomial(polynomial.expolist.copy(), dummy_poly_coeffs,
-                                        dummy_poly_polysymbols, copy=False)
-    code_new_poly = str(dummy_poly).replace('__',']').replace('_', '[')
-    for index in indices:
-        code_new_poly = code_new_poly.replace('monomials[%i]'%index, '(1-monomials[%i])'%index)
+    expolist, coefficients = [], []
+    # go through each term of the original polynomial
+    for expos, coeff in zip(polynomial.expolist, polynomial.coeffs):
+        # the factors of the term that are not remapped along with the coefficient
+        termpoly = Polynomial([[0 if m in indices else expos[m] for m in range(len(polynomial.polysymbols))]], [coeff], polynomial.polysymbols)
+        # generate a polynomial for each remapped monomial of this term,
+        # calculate the coefficients directly using binomial coefficients
+        # and multiply the polynomials to the rest of the term
+        for index in indices:
+            n = expos[index]
+            binomexpolist = np.zeros((n+1, len(polynomial.polysymbols)), dtype=np.int)
+            binomexpolist[:,index] = range(n+1)
+            binomcoeffs = [pow(-1,k) * math.factorial(n) // math.factorial(n-k) // math.factorial(k) for k in range(n+1)]
+            binompoly = Polynomial(binomexpolist, binomcoeffs, polynomial.polysymbols)
+            termpoly *= binompoly
+        # keep track of all the resulting terms
+        expolist.extend(termpoly.expolist)
+        coefficients.extend(termpoly.coeffs)
 
-    remapped_polynomial = eval(code_new_poly)
-
-    # make sure that `remapped_polynomial` is of type Polynomial
-    if not isinstance(remapped_polynomial, Polynomial):
-        remapped_polynomial = Polynomial(np.zeros([1,len(monomials)],dtype=int), np.array([remapped_polynomial]), polynomial.polysymbols, copy=1)
+    # generate the full remapped polynomial
+    remapped_polynomial = Polynomial(expolist, coefficients, polynomial.polysymbols).simplify()
 
     if hasattr(polynomial, 'exponent'):
         # convert to `ExponentiatedPolynomial`
