@@ -188,7 +188,11 @@ namespace %(name)s
         return SecDecInternalPow(x, y);
     }
     #if %(name)s_has_complex_parameters || %(name)s_contour_deformation || %(name)s_enforce_complex_return_type
-        template <typename Tbase, typename Texponent> complex_t pow(Tbase base, Texponent exponent)
+        template <typename Tbase, typename Texponent>
+      #ifdef SECDEC_WITH_CUDA
+        __host__ __device__
+      #endif
+        complex_t pow(Tbase base, Texponent exponent)
         {
             #ifdef SECDEC_WITH_CUDA
                 complex_t cbase = base;
