@@ -27,6 +27,7 @@ very-clean:: clean
 
 clean::
 	rm -f *.o *.so *.a pylink/*.o src/*.o integrate_$(NAME) cuda_integrate_$(NAME)
+	rm -f distsrc/*.o distsrc/*.fatbin disteval/*.so disteval/*.fatbin
 
 # implicit rule to build object files
 %%.o : %%.cpp
@@ -39,5 +40,50 @@ endif
 codegen/sector%%.done: codegen/sector%%.h
 	@# generate c++ code
 	cd codegen && $(PYTHON) formwrapper $(FORMCALL) -D sectorID=$(patsubst codegen/sector%%.h,%%,$<) write_integrand.frm
-	$(PYTHON) codegen/export_sector $(patsubst %%.h,%%.info,$<) src/
+	$(PYTHON) codegen/export_sector $(patsubst %%.h,%%.info,$<) ./
 	touch $@
+
+# The following is for the distributed evaluation.
+SECDEC_WITH_CUDA_FLAGS?=-gencode arch=compute_75,code=sm_75 -gencode arch=compute_80,code=sm_80
+
+SECTOR_ORDERS:=$(patsubst src/sector_%%.cpp,%%,$(filter src/sector_%%.cpp,$(SECTOR_CPP)))
+SECTOR_ORDERS:=$(foreach a,$(SECTOR_ORDERS),$(if $(findstring _,$a),$a,))
+
+
+ifdef SECDEC_WITH_CUDA_FLAGS
+disteval.done: disteval/$(NAME).fatbin disteval/builtin_cuda.fatbin disteval/$(NAME).so disteval/builtin_cpu.so
+else
+disteval.done: disteval/$(NAME).so disteval/builtin_cpu.so
+endif
+	date >$@
+
+# CPU files (.so)
+
+XCXXFLAGS=-std=c++14 -O3 -funsafe-math-optimizations $(CXXFLAGS)
+
+DIST_SO_OBJECTS = $(patsubst %%,distsrc/sector_%%.o,$(SECTOR_ORDERS))
+
+distsrc/%%.o: distsrc/%%.cpp
+	$(CXX) -c -o $@ -fPIC $(XCXXFLAGS) $^
+
+disteval/$(NAME).so: $(DIST_SO_OBJECTS)
+	$(CXX) -shared -o $@ $^ $(XCXXFLAGS) $(LDFLAGS)
+
+disteval/builtin_cpu.so: distsrc/builtin_cpu.o
+	$(CXX) -shared -o $@ $^ $(XCXXFLAGS) $(LDFLAGS)
+
+# CUDA files (.fatbin)
+
+NVCC?=nvcc
+XNVCCFLAGS=-std=c++14 $(SECDEC_WITH_CUDA_FLAGS) $(NVCCFLAGS)
+
+DIST_FATBIN_OBJECTS = $(patsubst %%,distsrc/sector_%%.fatbin,$(SECTOR_ORDERS))
+
+distsrc/%%.fatbin: distsrc/%%.cu
+	$(NVCC) $(XNVCCFLAGS) -dc -fatbin -o $@ $^
+
+disteval/$(NAME).fatbin: $(DIST_FATBIN_OBJECTS)
+	$(NVCC) $(XNVCCFLAGS) -dlink -fatbin -o $@ $^
+
+disteval/builtin_cuda.fatbin: distsrc/builtin_cuda.fatbin
+	$(NVCC) $(XNVCCFLAGS) -dlink -fatbin -o $@ $^

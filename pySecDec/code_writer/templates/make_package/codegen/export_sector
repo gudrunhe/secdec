@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
 # Convert a sector<N>.info file into:
-# - sector_<N>.cpp
-# - sector_<N>_*.cpp
-# - sector_<N>_*.hpp
-# - contour_deformation_sector_<N>_*.cpp
-# - contour_deformation_sector_<N>_*.hpp
-# - optimize_deformation_parameters_sector_<N>_*.cpp
-# - optimize_deformation_parameters_sector_<N>_*.hpp
+# - src/sector_<N>.cpp
+# - src/sector_<N>_*.cpp
+# - src/sector_<N>_*.hpp
+# - src/contour_deformation_sector_<N>_*.cpp
+# - src/contour_deformation_sector_<N>_*.hpp
+# - src/optimize_deformation_parameters_sector_<N>_*.cpp
+# - src/optimize_deformation_parameters_sector_<N>_*.hpp
+# - distsrc/sector_<N>.cpp
+# - distsrc/sector_<N>.cu
 #
 # Usage: python3 export_sector sector_<N>.info destination-dir
 
@@ -66,6 +68,12 @@ def cleanup_code(text):
     code = sed(code, r"pow\(([a-zA-Z0-9]*),2\)", r"\1*\1")
     code = sed(code, r"pow\(([a-zA-Z0-9]*),3\)", r"\1*\1*\1")
     code = sed(code, r"pow\(([a-zA-Z0-9]*),4\)", r"(\1*\1)*(\1*\1)")
+    code = sed(code, r"pow\(", r"SecDecInternalPow(")
+    code = sed(code, r"log\(", r"SecDecInternalLog(")
+    code = sed(code, r"= *([a-zA-Z0-9_*]*)[*]i_[*]([a-zA-Z0-9_*]*)", r"= SecDecInternalI(\1*\2)")
+    code = sed(code, r"= *([a-zA-Z0-9_*]*)[*]i_", r"= SecDecInternalI(\1)")
+    code = sed(code, r"= *i_[*]([a-zA-Z0-9_*]*)", r"= SecDecInternalI(\1)")
+    code = sed(code, r"if *\((.*)\) *SecDecInternalSignCheck", r"if (unlikely(\1)) SecDecInternalSignCheck")
     code = sed(code, r"[.]E[+]0([^0-9])", r"\1")
     code = sed(code, r" *= *", " = ")
     code = sed(code, r" *[+] *([^0-9])", r" + \1")
@@ -97,7 +105,7 @@ def cleanup_code(text):
             line = f"auto {old2new[var]} = {expr}"
         lines.append(line)
     code = "\n".join(lines)
-    ret = old2new.get("tmp", "tmp")
+    code = sed(code, r"^result_t (.*SecDecInternal.*Part.*)$", r"real_t \1")
     return code
 
 def template_writer(template_source, *argnames):
@@ -405,6 +413,126 @@ secdecutil::SectorContainerWithDeformation<real_t, complex_t>::MaximalDeformatio
 #endif
 """, "i")
 
+VECSIZE = 4
+DIST_SECTOR_ORDER_CPP = template_writer("""\
+@@ complex = i.complexParameters or int(i.contourDeformation) or int(i.enforceComplex)
+#define SECDEC_RESULT_IS_COMPLEX ${1 if complex else 0}
+#include "common_cpu.h"
+
+#define SecDecInternalSignCheckErrorPositivePolynomial(id) {*presult = nan("U"); return 1; }
+#define SecDecInternalSignCheckErrorContourDeformation(id) {*presult = nan("F"); return 2; }
+
+extern "C" int
+${i.namespace}__sector_${i.sector}_order_${i.order_name}(
+    result_t * restrict presult,
+    const unsigned long lattice,
+    const unsigned long index1,
+    const unsigned long index2,
+    const unsigned long * restrict genvec,
+    const real_t * restrict shift,
+    const real_t * restrict realp,
+    const complex_t * restrict complexp,
+    const real_t * restrict deformp
+)
+{
+@@ for j, v in enumerate(getlist(i.realParameters)):
+    const real_t ${v} = realp[${j}];
+@@ for j, v in enumerate(getlist(i.complexParameters)):
+    const complex_t ${v} = complexp[${j}];
+@@ for j, v in enumerate(getlist(i.order_deformationParameters)):
+    const real_t ${v} = deformp[${j}];
+@@ pass
+    const real_t invlattice = 1.0/lattice;
+    resultvec_t acc = RESULTVEC_ZERO;
+    unsigned long index = index1;
+@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+    int_t li_${v} = mulmod(genvec[${j}], index, lattice);
+@@ pass
+    for (; index < index2; index += ${VECSIZE}) {
+@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+@@     for k in range(VECSIZE):
+        int_t li_${v}_${k} = li_${v}; li_${v} = warponce_i(li_${v} + genvec[${j}], lattice);
+@@     li_list = ", ".join(f"li_{v}_{k}*invlattice" for k in range(VECSIZE))
+        realvec_t ${v} = {{ ${li_list} }};
+        ${v} = warponce(${v} + shift[${j}], 1);
+@@ pass
+@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+        auto w_${v} = korobov3_w(${v});
+@@ pass
+        auto w = ${"*".join("w_" + v for v in getlist(i.order_integrationVariables))};
+@@ for k in range(VECSIZE):
+        if (unlikely(index + ${k} >= index2)) w.x[${k}] = 0;
+@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+        ${v} = korobov3_f(${v});
+@@ for line in cleanup_code(i.order_integrandBody).splitlines():
+        ${line.replace("return(", "acc = acc + w*(")}
+@@ pass
+    }
+    *presult = componentsum(acc);
+    return 0;
+}
+""", "i")
+
+DIST_SECTOR_ORDER_CU = template_writer("""\
+@@ complex = i.complexParameters or int(i.contourDeformation) or int(i.enforceComplex)
+#define SECDEC_RESULT_IS_COMPLEX ${1 if complex else 0}
+#include "common_cuda.h"
+
+#define SecDecInternalSignCheckErrorPositivePolynomial(id) {val = nan("U"); break;}
+#define SecDecInternalSignCheckErrorContourDeformation(id) {val = nan("F"); break;}
+
+extern "C" __global__ void
+${i.namespace}__sector_${i.sector}_order_${i.order_name}(
+    result_t * __restrict__ result,
+    const unsigned long lattice,
+    const unsigned long index1,
+    const unsigned long index2,
+    const unsigned long * __restrict__ genvec,
+    const real_t * __restrict__ shift,
+    const real_t * __restrict__ realp,
+    const complex_t * __restrict__ complexp,
+    const real_t * __restrict__ deformp
+)
+{
+    // assert(blockDim.x == 128);
+    int bid = blockIdx.x;
+    int tid = threadIdx.x;
+@@ for j, v in enumerate(getlist(i.realParameters)):
+    real_t ${v} = realp[${j}];
+@@ for j, v in enumerate(getlist(i.complexParameters)):
+    complex_t ${v} = complexp[${j}];
+@@ for j, v in enumerate(getlist(i.order_deformationParameters)):
+    real_t ${v} = deformp[${j}];
+@@ pass
+    real_t invlattice = 1.0/lattice;
+    result_t val = 0.0;
+    unsigned long index = index1 + (bid*128 + tid)*8;
+@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+    unsigned long li_${v} = mulmod(index, genvec[${j}], lattice);
+@@ pass
+    for (int i = 0; (i < 8) && (index < index2); i++, index++) {
+@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+        real_t ${v} = warponce(li_${v}*invlattice + shift[${j}], 1.0);
+        li_${v} = warponce_i(li_${v} + genvec[${j}], lattice);
+@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+        real_t w_${v} = korobov3_w(${v});
+@@ pass
+        real_t w = ${"*".join("w_" + v for v in getlist(i.order_integrationVariables))};
+@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+        ${v} = korobov3_f(${v});
+@@ for line in cleanup_code(i.order_integrandBody).splitlines():
+        ${line.replace("return(", "val += w*(")}
+@@ pass
+    }
+    // Sum up 128*8=1024 values across 4 warps.
+    typedef cub::BlockReduce<result_t, 128, cub::BLOCK_REDUCE_RAKING_COMMUTATIVE_ONLY> Reduce;
+    __shared__ typename Reduce::TempStorage shared;
+    result_t sum = Reduce(shared).Sum(val);
+    if (tid == 0) result[bid] = sum;
+}
+""", "i")
+
+
 if __name__ == "__main__":
 
     if len(sys.argv) != 3:
@@ -416,7 +544,7 @@ if __name__ == "__main__":
 
     info = load_info(sectorfile)
 
-    fname = os.path.join(dstdir, "sector_" + info["sector"] + ".cpp")
+    fname = os.path.join(dstdir, "src/sector_" + info["sector"] + ".cpp")
     print("* Creating", fname)
     with open(fname, "w") as f:
         SECTOR_CPP(f, DictionaryWrapper(info))
@@ -424,15 +552,17 @@ if __name__ == "__main__":
     for oidx in range(1, int(info["numOrders"]) + 1):
         so = "sector_" + info["sector"] + "_" + info[f"order{oidx}_name"]
         files = {
-            f"{so}.cpp": SECTOR_ORDER_CPP,
-            f"{so}.hpp": SECTOR_ORDER_HPP,
+            f"distsrc/{so}.cpp": DIST_SECTOR_ORDER_CPP,
+            f"distsrc/{so}.cu": DIST_SECTOR_ORDER_CU,
+            f"src/{so}.cpp": SECTOR_ORDER_CPP,
+            f"src/{so}.hpp": SECTOR_ORDER_HPP,
         }
         if int(info["contourDeformation"]):
             files.update({
-                f"contour_deformation_{so}.cpp": CONTOUR_DEFORMATION_SECTOR_ORDER_CPP,
-                f"contour_deformation_{so}.hpp": CONTOUR_DEFORMATION_SECTOR_ORDER_HPP,
-                f"optimize_deformation_parameters_{so}.cpp": OPTIMIZE_DEFORMATION_PARAMETERS_SECTOR_ORDER_CPP,
-                f"optimize_deformation_parameters_{so}.hpp": OPTIMIZE_DEFORMATION_PARAMETERS_SECTOR_ORDER_HPP,
+                f"src/contour_deformation_{so}.cpp": CONTOUR_DEFORMATION_SECTOR_ORDER_CPP,
+                f"src/contour_deformation_{so}.hpp": CONTOUR_DEFORMATION_SECTOR_ORDER_HPP,
+                f"src/optimize_deformation_parameters_{so}.cpp": OPTIMIZE_DEFORMATION_PARAMETERS_SECTOR_ORDER_CPP,
+                f"src/optimize_deformation_parameters_{so}.hpp": OPTIMIZE_DEFORMATION_PARAMETERS_SECTOR_ORDER_HPP,
             })
         # Mungle the key names so that templates could access
         # the current order keys as `order_xxx`, instead of

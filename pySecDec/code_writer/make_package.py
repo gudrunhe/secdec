@@ -24,7 +24,9 @@ from collections import namedtuple
 import inspect
 import numpy as np
 import sympy as sp
-import sys, os
+import json
+import os
+import sys
 import pySecDecContrib
 
 # The only public object this module provides is the function `make_package`.
@@ -569,22 +571,29 @@ def _make_FORM_shifted_orders(positive_powers):
             codelines.append( '#define shiftedRegulator%iPowerOrder%i "%i"' % (regulator_index,orders_index,regulator_power) )
     return '\n'.join(codelines)
 
+def _make_sector_order_names(sector_index, regulator_powers, highest_poles):
+    return dict(sorted(
+        (p, (sector_index, "_".join(str(pol-hi) for pol, hi in zip(p, highest_poles)).replace("-", "n")))
+        for p in regulator_powers))
+
 def _make_sector_cpp_files(sector_index, regulator_powers, highest_poles, contour_deformation):
     """
     Produce a Makefile-formatted list of .cpp files that
-    write_integrand.frm will produce for a given sector.
+    export_sector will produce for a given sector.
 
     Please keep this synchronized with write_integrand.frm,
-    because the logic is duplicated.
+    because the logic for listing and naming expansion orders
+    is duplicated.
     """
-    files = sorted(
-        ("sector_%d_" % sector_index) + "_".join(str(pol-hi) for pol, hi in zip(p, highest_poles)).replace("-", "n") + ".cpp"
-        for p in regulator_powers
-    )
+    orders = _make_sector_order_names(sector_index, regulator_powers, highest_poles).values()
+    files = [f"src/sector_{sector_index}.cpp"]
+    files += [f"src/sector_{s}_{o}.cpp" for s, o in orders]
     if contour_deformation:
-        files += ["contour_deformation_" + f for f in files] + ["optimize_deformation_parameters_" + f for f in files]
-    files = ["sector_%d.cpp" % sector_index] + files
-    return " \\\n\t".join("src/" + f for f in files)
+        files += [f"src/contour_deformation_sector_{s}_{o}.cpp" for s, o in orders]
+        files += [f"src/optimize_deformation_parameters_sector_{s}_{o}.cpp" for s, o in orders]
+    files += [f"distsrc/sector_{s}_{o}.cpp" for s, o in orders]
+    files += [f"distsrc/sector_{s}_{o}.cu" for s, o in orders]
+    return " \\\n\t".join(files)
 
 def _derivative_muliindex_to_name(basename, multiindex):
     '''
@@ -1333,6 +1342,7 @@ def _process_secondary_sector(environment):
     number_of_orders = len(regulator_powers)
 
     # generate the definitions of the FORM preprocessor variables "shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex'"
+    sector_order_names = _make_sector_order_names(sector_index, regulator_powers, highest_poles_current_sector)
     sector_cpp_files = _make_sector_cpp_files(sector_index, regulator_powers, highest_poles_current_sector, contour_deformation_polynomial is not None)
     regulator_powers = _make_FORM_shifted_orders(regulator_powers)
 
@@ -1383,13 +1393,12 @@ def _process_secondary_sector(environment):
                 'deformation_parameters':
             del template_replacements[key]
 
-    return lowest_orders, function_declarations, this_pole_structures
+    return lowest_orders, function_declarations, this_pole_structures, sector_order_names
 
 def _reduce_sectors_by_symmetries(sectors, message, indices, use_iterative_sort, use_light_Pak_sort, use_Pak, use_dreadnaut, name):
     '''
     Function that reduces the number of sectors by
     identifying symmetries.
-
     '''
     print(message + ' before symmetry finding:', len(sectors))
     # find symmetries
@@ -1857,6 +1866,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # initialize list of pole structures
     pole_structures = []
+    sector_orders = {}
 
     # define the imaginary unit
     imaginary_unit = sympify_expression('I')
@@ -2080,29 +2090,31 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
             # process the `secondary_sectors` in parallel
             if pool is not None:
-                lowest_orders_and_function_declarations_and_pole_structures = \
+                lowest_orders_and_function_declarations_and_pole_structures_and_so = \
                     pool.map(
                                 _process_secondary_sector,
                                 _make_environment( locals() )
                             )
             else:
-                lowest_orders_and_function_declarations_and_pole_structures = \
+                lowest_orders_and_function_declarations_and_pole_structures_and_so = \
                     list(map(
                             _process_secondary_sector,
                             _make_environment( locals() )
                         ))
 
             # get the `sector_index` after processing the secondary sectors
-            sector_index = sector_index + len(lowest_orders_and_function_declarations_and_pole_structures)
+            sector_index = sector_index + len(lowest_orders_and_function_declarations_and_pole_structures_and_so)
 
             # update the global `lowest_orders`
-            lowest_orders = np.min([item[0] for item in lowest_orders_and_function_declarations_and_pole_structures],axis=0)
+            lowest_orders = np.min([item[0] for item in lowest_orders_and_function_declarations_and_pole_structures_and_so],axis=0)
 
             # update the global `function_declarations` and `pole_structures`
-            for item in lowest_orders_and_function_declarations_and_pole_structures:
-                _,f,p = item
+            for _, f, p, so in lowest_orders_and_function_declarations_and_pole_structures_and_so:
                 function_declarations.update(f)
                 pole_structures.append(p)
+                for powers, order_name in so.items():
+                    sector_orders.setdefault(powers, [])
+                    sector_orders[powers].append(order_name)
 
     finally:
         # make sure the pool is closed
@@ -2113,6 +2125,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     required_prefactor_orders = requested_orders - lowest_orders
     print('expanding the prefactor', prefactor, '(regulators:', regulators, ', orders:', required_prefactor_orders, ')')
     expanded_prefactor = expand_sympy(prefactor, regulators, required_prefactor_orders)
+    print(repr(expanded_prefactor))
 
     # pack the `prefactor` into c++ function that returns a nested `Series`
     # and takes the `real_parameters` and the `complex_parameters`
@@ -2150,6 +2163,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # parse the template files "integrands.cpp", "name.hpp", "pole_structures.cpp", "prefactor.cpp", and "functions.hpp"
     template_replacements['function_declarations'] = '\n'.join(function_declarations)
     template_replacements['make_integrands_return_t'] = make_integrands_return_t
+    template_replacements['prefactor'] = str(expanded_prefactor)
     template_replacements['prefactor_type'] = prefactor_type
     template_replacements['prefactor_function_body'] = prefactor_function_body
     template_replacements['number_of_sectors'] = sector_index
@@ -2182,6 +2196,31 @@ def make_package(name, integration_variables, regulators, requested_orders,
         parse_template_file(os.path.join(template_sources, 'pylink', pylink_qmc_transform['src']),
                             os.path.join(name,             'pylink', pylink_qmc_transform['dest']),
                             pylink_qmc_transform_replacements)
+
+    os.mkdir(os.path.join(name, "disteval"))
+    with open(os.path.join(name, "disteval", name + ".json"), "w") as f:
+        json.dump({
+            "name": name,
+            "type": "integral",
+            "dimension": len(integration_variables),
+            "regulator_count": len(regulators),
+            "regulators": [str(p) for p in regulators],
+            "realp_count": len(real_parameters),
+            "realp": [str(p) for p in real_parameters],
+            "complexp_count": len(complex_parameters),
+            "complexp": [str(p) for p in complex_parameters],
+            "deformp_count": 0 if contour_deformation_polynomial is None else len(integration_variables),
+            "complex_result": contour_deformation_polynomial is not None or bool(complex_parameters) or enforce_complex,
+            "expansion_orders": list(map(int, requested_orders)),
+            "prefactor": str(expanded_prefactor).strip(),
+            "orders": [
+                {
+                    "regulator_powers": [int(p) for p in powers],
+                    "kernels": [f"sector_{s}_order_{o}" for s, o in order_names]
+                }
+                for powers, order_names in sector_orders.items()
+            ]
+        }, f, indent=4)
 
     print('"' + name + '" done')
 

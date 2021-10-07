@@ -258,6 +258,13 @@ namespace %(name)s
     INT_COMPLEX(/)
     #undef INT_COMPLEX
 
+    static inline real_t SecDecInternalRealPart(const real_t x) { return x; }
+    static inline real_t SecDecInternalRealPart(const complex_t x) { return x.real(); }
+    static inline real_t SecDecInternalImagPart(const real_t x) { return 0; }
+    static inline real_t SecDecInternalImagPart(const complex_t x) { return x.imag(); }
+    static inline complex_t SecDecInternalI(const real_t x) { return complex_t{0, x}; }
+    static inline complex_t SecDecInternalI(const complex_t x) { return complex_t{-x.imag(), x.real()}; }
+
     #undef %(name)s_contour_deformation
     #undef %(name)s_has_complex_parameters
     #undef %(name)s_enforce_complex_return_type
@@ -269,16 +276,16 @@ namespace %(name)s
 #undef STD
 
 #define SecDecInternalDenominator(x) 1.0/(x)
+#define SecDecInternalLog(x) log(x)
 
 #ifdef SECDEC_WITH_CUDA
-#define SecDecInternalRealPart(x) (complex_t{x}).real()
-#define SecDecInternalImagPart(x) (complex_t{x}).imag()
 #define SecDecInternalAbs(x) thrust::abs(complex_t{x})
 #else
-#define SecDecInternalRealPart(x) std::real(x)
-#define SecDecInternalImagPart(x) std::imag(x)
 #define SecDecInternalAbs(x) std::abs(x)
 #endif
+
+#define likely(x) (x)
+#define unlikely(x) (x)
 
 #define SecDecInternalOutputDeformationParameters(i, v) output_deformation_parameters[i] = (v);
 #define SecDecInternalSignCheckErrorPositivePolynomial(id) \
