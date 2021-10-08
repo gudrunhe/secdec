@@ -573,7 +573,7 @@ def _make_FORM_shifted_orders(positive_powers):
 
 def _make_sector_order_names(sector_index, regulator_powers, highest_poles):
     return dict(sorted(
-        (p, (sector_index, "_".join(str(pol-hi) for pol, hi in zip(p, highest_poles)).replace("-", "n")))
+        (tuple(p-highest_poles), (sector_index, "_".join(str(pol-hi) for pol, hi in zip(p, highest_poles)).replace("-", "n")))
         for p in regulator_powers))
 
 def _make_sector_cpp_files(sector_index, sector_order_names, contour_deformation):
