@@ -505,7 +505,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ for j, v in enumerate(getlist(i.order_deformationParameters)):
     const real_t ${v} = deformp[${j}];
 @@ pass
-    real_t invlattice = 1.0/lattice;
+    const real_t invlattice = 1.0/lattice;
     result_t val = 0.0;
     unsigned long index = index1 + (bid*128 + tid)*8;
 @@ intvars = getlist(i.order_integrationVariables)

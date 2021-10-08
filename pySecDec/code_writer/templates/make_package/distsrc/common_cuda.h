@@ -14,10 +14,16 @@ typedef thrust::complex<real_t> complex_t;
     { return (x >= 0) ? log(x) : complex_t{log(-x), -M_PI}; };
     mathfn complex_t SecDecInternalLog(const complex_t x)
     { return (x.imag() == 0) ? SecDecInternalLog(x.real()) : log(x); };
+    mathfn complex_t SecDecInternalPow(real_t x, real_t n)
+    { return (x >= 0) ? pow(x, n) : conj(pow(complex_t{x}, n)); }
+    mathfn complex_t SecDecInternalPow(complex_t x, real_t n)
+    { return conj(pow(conj(x), n)); }
 #else
     typedef real_t result_t;
     mathfn real_t SecDecInternalLog(real_t x)
     { return log(x); };
+    mathfn real_t SecDecInternalPow(real_t x, real_t n)
+    { return pow(x, n); }
 #endif
 
 mathfn real_t SecDecInternalRealPart(const real_t x) { return x; }

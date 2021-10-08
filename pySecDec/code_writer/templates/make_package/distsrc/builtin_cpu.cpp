@@ -17,13 +17,13 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
     const real_t * restrict deformp
 )
 {
-    real_t q2 = realp[0];
-    real_t m1sq = realp[1];
-    real_t m2sq = realp[2];
-    real_t m3sq = realp[3];
-    real_t SecDecInternalLambda0 = deformp[0];
-    real_t SecDecInternalLambda1 = deformp[1];
-    real_t invlattice = 1.0/lattice;
+    const real_t q2 = realp[0];
+    const real_t m1sq = realp[1];
+    const real_t m2sq = realp[2];
+    const real_t m3sq = realp[3];
+    const real_t SecDecInternalLambda0 = deformp[0];
+    const real_t SecDecInternalLambda1 = deformp[1];
+    const real_t invlattice = 1.0/lattice;
     resultvec_t acc = RESULTVEC_ZERO;
     unsigned long index = index1;
     int_t li_x0 = mulmod(genvec[0], index, lattice);

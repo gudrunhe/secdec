@@ -97,6 +97,10 @@ INT_COMPLEX(/)
     static inline realvec_t fname(const realvec_t &a) \
     { return realvec_t{{ fn(a.x[0]), fn(a.x[1]), fn(a.x[2]), fn(a.x[3]) }}; }
 
+#define DEF_RR_FUNCTION_1(fname, fn, a1decl, a1) \
+    static inline realvec_t fname(const realvec_t &a, a1decl a1) \
+    { return realvec_t{{ fn(a.x[0], a1), fn(a.x[1], a1), fn(a.x[2], a1), fn(a.x[3], a1) }}; }
+
 DEF_OPERATOR(realvec_t, operator +, realvec_t, realvec_t, +)
 DEF_OPERATOR(realvec_t, operator -, realvec_t, realvec_t, -)
 DEF_OPERATOR(realvec_t, operator *, realvec_t, realvec_t, *)
@@ -252,6 +256,28 @@ mathfn realvec_t SecDecInternalImagPart(const complexvec_t &a) { return a.im; }
             {{c0.imag(), c1.imag(), c2.imag(), c3.imag()}} \
         }; \
     }
+#define DEF_CC_FUNCTION_1(fname, fn, a1decl, a1) \
+    static inline complexvec_t fname(const complexvec_t &a, a1decl a1) { \
+        complex_t c0 = fn(complex_t{a.re.x[0], a.im.x[0]}, a1); \
+        complex_t c1 = fn(complex_t{a.re.x[1], a.im.x[1]}, a1); \
+        complex_t c2 = fn(complex_t{a.re.x[2], a.im.x[2]}, a1); \
+        complex_t c3 = fn(complex_t{a.re.x[3], a.im.x[3]}, a1); \
+        return complexvec_t{ \
+            {{c0.real(), c1.real(), c2.real(), c3.real()}}, \
+            {{c0.imag(), c1.imag(), c2.imag(), c3.imag()}} \
+        }; \
+    }
+#define DEF_CR_FUNCTION_1(fname, fn, a1decl, a1) \
+    static inline complexvec_t fname(const realvec_t &a, a1decl a1) { \
+        complex_t c0 = fn(a.x[0], a1); \
+        complex_t c1 = fn(a.x[1], a1); \
+        complex_t c2 = fn(a.x[2], a1); \
+        complex_t c3 = fn(a.x[3], a1); \
+        return complexvec_t{ \
+            {{c0.real(), c1.real(), c2.real(), c3.real()}}, \
+            {{c0.imag(), c1.imag(), c2.imag(), c3.imag()}} \
+        }; \
+    }
 
 mathfn complexvec_t SecDecInternalI(const realvec_t &a)
 { return complexvec_t{REALVEC_ZERO, a}; }
@@ -274,13 +300,24 @@ DEF_CC_FUNCTION(exp, exp)
     typedef complexvec_t resultvec_t;
     #define RESULTVEC_ZERO COMPLEXVEC_ZERO
 
+    // In pySecDec log(-1) must be -pi, while the C (and related)
+    // standards require +pi. We fix this by noting that
+    //     pysecdec_log(x) = complex_conjugate(c_log(complex_conjugate(x)))
     static inline complex_t SecDecInternalLog(const real_t x)
     { return (x >= 0) ? std::log(x) : complex_t{std::log(-x), -M_PI}; };
     static inline complex_t SecDecInternalLog(const complex_t x)
-    { return (x.imag() == 0) ? SecDecInternalLog(x.real()) : std::log(x); };
+    { return std::conj(std::log(std::conj(x))); }
 
     DEF_CR_FUNCTION(SecDecInternalLog, SecDecInternalLog)
     DEF_CC_FUNCTION(SecDecInternalLog, SecDecInternalLog)
+
+    static inline complex_t SecDecInternalPow(const real_t x, const real_t n)
+    { return (x >= 0) ? std::pow(x, n) : std::conj(std::pow(complex_t{x}, n)); }
+    static inline complex_t SecDecInternalPow(const complex_t x, const real_t n)
+    { return std::conj(std::pow(std::conj(x), n)); };
+
+    DEF_CR_FUNCTION_1(SecDecInternalPow, SecDecInternalPow, real_t, n)
+    DEF_CC_FUNCTION_1(SecDecInternalPow, SecDecInternalPow, real_t, n)
 
 #else
 
@@ -293,4 +330,8 @@ DEF_CC_FUNCTION(exp, exp)
 
     DEF_RR_FUNCTION(SecDecInternalLog, SecDecInternalLog)
 
+    static inline real_t SecDecInternalPow(const real_t x, const real_t n)
+    { return std::pow(x, n); }
+
+    DEF_RR_FUNCTION_1(SecDecInternalPow, SecDecInternalPow, real_t, n)
 #endif
