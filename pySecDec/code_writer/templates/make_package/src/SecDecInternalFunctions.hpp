@@ -277,6 +277,7 @@ namespace %(name)s
 
 #define SecDecInternalDenominator(x) 1.0/(x)
 #define SecDecInternalLog(x) log(x)
+#define SecDecInternalPow(x, n) pow(x, n)
 
 #ifdef SECDEC_WITH_CUDA
 #define SecDecInternalAbs(x) thrust::abs(complex_t{x})

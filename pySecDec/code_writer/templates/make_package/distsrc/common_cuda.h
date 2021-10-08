@@ -27,6 +27,8 @@ mathfn real_t SecDecInternalImagPart(const complex_t x) { return x.imag(); }
 mathfn complex_t SecDecInternalI(const real_t x) { return complex_t{0, x}; }
 mathfn complex_t SecDecInternalI(const complex_t x) { return complex_t{-x.imag(), x.real()}; }
 
+mathfn real_t exp(int n) { return exp(real_t(n)); }
+
 #define SecDecInternalDenominator(x) 1.0/(x)
 
 #define likely(x) __builtin_expect((x), 1)

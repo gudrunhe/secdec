@@ -445,24 +445,25 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
     const real_t invlattice = 1.0/lattice;
     resultvec_t acc = RESULTVEC_ZERO;
     unsigned long index = index1;
-@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+@@ intvars = getlist(i.order_integrationVariables)
+@@ for j, v in enumerate(intvars):
     int_t li_${v} = mulmod(genvec[${j}], index, lattice);
 @@ pass
     for (; index < index2; index += ${VECSIZE}) {
-@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+@@ for j, v in enumerate(intvars):
 @@     for k in range(VECSIZE):
         int_t li_${v}_${k} = li_${v}; li_${v} = warponce_i(li_${v} + genvec[${j}], lattice);
 @@     li_list = ", ".join(f"li_{v}_{k}*invlattice" for k in range(VECSIZE))
         realvec_t ${v} = {{ ${li_list} }};
         ${v} = warponce(${v} + shift[${j}], 1);
 @@ pass
-@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+@@ for j, v in enumerate(intvars):
         auto w_${v} = korobov3_w(${v});
 @@ pass
-        auto w = ${"*".join("w_" + v for v in getlist(i.order_integrationVariables))};
+        realvec_t w = ${"*".join("w_" + v for v in intvars) if intvars else "REALVEC_CONST(1)"};
 @@ for k in range(1, VECSIZE):
         if (unlikely(index + ${k} >= index2)) w.x[${k}] = 0;
-@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+@@ for j, v in enumerate(intvars):
         ${v} = korobov3_f(${v});
 @@ for line in cleanup_code(i.order_integrandBody).splitlines():
         ${line.replace("return(", "acc = acc + w*(")}
@@ -498,27 +499,28 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
     int bid = blockIdx.x;
     int tid = threadIdx.x;
 @@ for j, v in enumerate(getlist(i.realParameters)):
-    real_t ${v} = realp[${j}];
+    const real_t ${v} = realp[${j}];
 @@ for j, v in enumerate(getlist(i.complexParameters)):
-    complex_t ${v} = complexp[${j}];
+    const complex_t ${v} = complexp[${j}];
 @@ for j, v in enumerate(getlist(i.order_deformationParameters)):
-    real_t ${v} = deformp[${j}];
+    const real_t ${v} = deformp[${j}];
 @@ pass
     real_t invlattice = 1.0/lattice;
     result_t val = 0.0;
     unsigned long index = index1 + (bid*128 + tid)*8;
-@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+@@ intvars = getlist(i.order_integrationVariables)
+@@ for j, v in enumerate(intvars):
     unsigned long li_${v} = mulmod(index, genvec[${j}], lattice);
 @@ pass
     for (int i = 0; (i < 8) && (index < index2); i++, index++) {
-@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+@@ for j, v in enumerate(intvars):
         real_t ${v} = warponce(li_${v}*invlattice + shift[${j}], 1.0);
         li_${v} = warponce_i(li_${v} + genvec[${j}], lattice);
-@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+@@ for j, v in enumerate(intvars):
         real_t w_${v} = korobov3_w(${v});
 @@ pass
-        real_t w = ${"*".join("w_" + v for v in getlist(i.order_integrationVariables))};
-@@ for j, v in enumerate(getlist(i.order_integrationVariables)):
+        real_t w = ${"*".join("w_" + v for v in intvars) if intvars else "1"};
+@@ for j, v in enumerate(intvars):
         ${v} = korobov3_f(${v});
 @@ for line in cleanup_code(i.order_integrandBody).splitlines():
         ${line.replace("return(", "val += w*(")}

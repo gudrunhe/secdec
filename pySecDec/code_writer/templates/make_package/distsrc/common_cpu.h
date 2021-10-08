@@ -93,6 +93,10 @@ INT_COMPLEX(/)
     mathfn bool fname(const vec_t &a, const scalar_t &b) \
     { return (a.x[0] op b) redop (a.x[1] op b) redop (a.x[2] op b) redop (a.x[3] op b); }
 
+#define DEF_RR_FUNCTION(fname, fn) \
+    static inline realvec_t fname(const realvec_t &a) \
+    { return realvec_t{{ fn(a.x[0]), fn(a.x[1]), fn(a.x[2]), fn(a.x[3]) }}; }
+
 DEF_OPERATOR(realvec_t, operator +, realvec_t, realvec_t, +)
 DEF_OPERATOR(realvec_t, operator -, realvec_t, realvec_t, -)
 DEF_OPERATOR(realvec_t, operator *, realvec_t, realvec_t, *)
@@ -226,7 +230,7 @@ mathfn complexvec_t operator /(const complex_t &a, const realvec_t &b)
 mathfn realvec_t SecDecInternalRealPart(const complexvec_t &a) { return a.re; }
 mathfn realvec_t SecDecInternalImagPart(const complexvec_t &a) { return a.im; }
 
-#define DEF_COMPLEX_FUNCTION(fname, fn) \
+#define DEF_CC_FUNCTION(fname, fn) \
     static inline complexvec_t fname(const complexvec_t &a) { \
         complex_t c0 = fn(complex_t{a.re.x[0], a.im.x[0]}); \
         complex_t c1 = fn(complex_t{a.re.x[1], a.im.x[1]}); \
@@ -236,7 +240,8 @@ mathfn realvec_t SecDecInternalImagPart(const complexvec_t &a) { return a.im; }
             {{c0.real(), c1.real(), c2.real(), c3.real()}}, \
             {{c0.imag(), c1.imag(), c2.imag(), c3.imag()}} \
         }; \
-    } \
+    }
+#define DEF_CR_FUNCTION(fname, fn) \
     static inline complexvec_t fname(const realvec_t &a) { \
         complex_t c0 = fn(a.x[0]); \
         complex_t c1 = fn(a.x[1]); \
@@ -256,6 +261,11 @@ mathfn complexvec_t SecDecInternalI(const complexvec_t &a)
 mathfn complex_t componentsum(const complexvec_t &a)
 { return complex_t{ componentsum(a.re), componentsum(a.im) }; }
 
+// Misc functions
+
+DEF_RR_FUNCTION(exp, exp)
+DEF_CC_FUNCTION(exp, exp)
+
 // Result vectors
 
 #if SECDEC_RESULT_IS_COMPLEX
@@ -269,7 +279,8 @@ mathfn complex_t componentsum(const complexvec_t &a)
     static inline complex_t SecDecInternalLog(const complex_t x)
     { return (x.imag() == 0) ? SecDecInternalLog(x.real()) : std::log(x); };
 
-    DEF_COMPLEX_FUNCTION(SecDecInternalLog, SecDecInternalLog)
+    DEF_CR_FUNCTION(SecDecInternalLog, SecDecInternalLog)
+    DEF_CC_FUNCTION(SecDecInternalLog, SecDecInternalLog)
 
 #else
 
@@ -279,5 +290,7 @@ mathfn complex_t componentsum(const complexvec_t &a)
 
     static inline real_t SecDecInternalLog(real_t x)
     { return std::log(x); };
+
+    DEF_RR_FUNCTION(SecDecInternalLog, SecDecInternalLog)
 
 #endif
