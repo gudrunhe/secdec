@@ -47,6 +47,17 @@ static unsigned long mulmod(unsigned long a, unsigned long b, unsigned long k) {
     }
 }
 
+// Operators for complex (op) int
+
+#define INT_COMPLEX(OP) \
+  mathfn complex_t operator OP(const int x, const complex_t &y) { return (real_t)(x) OP y; } \
+  mathfn complex_t operator OP(const complex_t &x, const int y) { return x OP (real_t)(y); }
+
+INT_COMPLEX(+)
+INT_COMPLEX(-)
+INT_COMPLEX(*)
+INT_COMPLEX(/)
+
 // Real vectors
 
 #define REALVEC_CONST(c) (realvec_t{{c,c,c,c}})
