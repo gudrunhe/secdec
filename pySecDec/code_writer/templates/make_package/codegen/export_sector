@@ -545,7 +545,6 @@ if __name__ == "__main__":
     info = load_info(sectorfile)
 
     fname = os.path.join(dstdir, "src/sector_" + info["sector"] + ".cpp")
-    print("* Creating", fname)
     with open(fname, "w") as f:
         SECTOR_CPP(f, DictionaryWrapper(info))
 
@@ -573,6 +572,5 @@ if __name__ == "__main__":
         })
         for filename, template in files.items():
             fname = os.path.join(dstdir, filename)
-            print("* Creating", fname)
             with open(fname, "w") as f:
                 template(f, info_thisorder)
