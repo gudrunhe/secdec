@@ -460,7 +460,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
         auto w_${v} = korobov3_w(${v});
 @@ pass
         auto w = ${"*".join("w_" + v for v in getlist(i.order_integrationVariables))};
-@@ for k in range(VECSIZE):
+@@ for k in range(1, VECSIZE):
         if (unlikely(index + ${k} >= index2)) w.x[${k}] = 0;
 @@ for j, v in enumerate(getlist(i.order_integrationVariables)):
         ${v} = korobov3_f(${v});

@@ -44,10 +44,9 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
         auto w_x0 = korobov3_w(x0);
         auto w_x1 = korobov3_w(x1);
         auto w = w_x0*w_x1;
-        if (!likely(index + 0 < index2)) w.x[0] = 0;
-        if (!likely(index + 1 < index2)) w.x[1] = 0;
-        if (!likely(index + 2 < index2)) w.x[2] = 0;
-        if (!likely(index + 3 < index2)) w.x[3] = 0;
+        if (unlikely(index + 1 >= index2)) w.x[1] = 0;
+        if (unlikely(index + 2 >= index2)) w.x[2] = 0;
+        if (unlikely(index + 3 >= index2)) w.x[3] = 0;
         x0 = korobov3_f(x0);
         x1 = korobov3_f(x1);
         auto tmp1_1 = -q2 + m2sq + m3sq + m1sq;
