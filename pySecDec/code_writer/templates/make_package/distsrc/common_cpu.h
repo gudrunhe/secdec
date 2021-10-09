@@ -334,4 +334,5 @@ DEF_CC_FUNCTION(exp, exp)
     { return std::pow(x, n); }
 
     DEF_RR_FUNCTION_1(SecDecInternalPow, SecDecInternalPow, real_t, n)
+
 #endif

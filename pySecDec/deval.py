@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 """
-Distributed pySecDec integral evaluator.
-Usage: python3 -m pySecDec.deval integrand.json [--points=N] [--epsrel=N] [--shifts=N] param=value ...
+Distributed (and local) evaluator for pySecDec integrals.
+Usage:
+    python3 -m pySecDec.deval integrand.json [options] param=value ...
+Options:
+    --epsrel=X  integrate till this relative precision (default: 1e-4)
+    --points=X  start integration with this lattice size (default: 1e4)
+    --shifts=X  use this many lattice shifts per integral (default: 32)
+Arguments:
+    param=value use this value for the given integral parameter
 """
 
 import asyncio
 import base64
 import collections
+import getopt
 import json
 import numpy as np
 import os
@@ -21,8 +29,8 @@ from .generating_vectors import generating_vector
 
 log_starttime = time.time()
 def log(*args):
-    print(f"{time.time() - log_starttime:.3f}]", *args)
-    sys.stdout.flush()
+    print(f"{time.time() - log_starttime:.3f}]", *args, file=sys.stderr)
+    sys.stderr.flush()
 
 # Generic RPC
 
@@ -448,51 +456,83 @@ async def doeval(par, workers, dirname, info, npoints, epsrel, nshifts, realp, c
     log("startup time:", t1-t0)
     log("presampling time:", t2-t1)
     log("integration time:", t3-t2)
-    log("result:")
+    print("(")
     for p, val, var in sorted(zip(orders.keys(), value, variance)):
+        stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
         err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
-        stem = " * ".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
-        log(f"{stem} == {val:+.18e}")
-        log(f"{stem} +- {err:+.18e} ({np.abs(err)/np.abs(val):.2e})")
+        print(f"  +{stem}*({val:+.18e})")
+        print(f"  +{stem}*({err:+.18e})*plusminus")
+    print(")")
+    sys.stdout.flush()
 
 def load_cluster_json(dirname):
     try:
-        with open(os.path.join(dirname, "pysecdec.cluster.json", "r")) as f:
-            return json.load(f)
+        filename = os.path.join(dirname, "cluster.json")
+        with open(filename, "r") as f:
+            cluster_json = json.load(f)
+            assert "cluster" in cluster_json
+            assert isinstance(cluster_json["cluster"], list)
+            log(f"Using cluster configuration from {filename:r}")
+            return cluster_json
     except FileNotFoundError:
         pass
-    try:
-        processes = len(os.sched_getaffinity(0))
-    except AttributeError:
-        processes = os.cpu_count()
-    log(f"Can't find pysecdec.cluster.json; will run locally on {processes} CPUs")
-    return {"cluster": [{"count": processes, "command": f"python3 -m pySecDec.dworker --cpu '{dirname}'"}]}
+    log(f"Can't find cluster.json; will run locally")
+    ncpu = ncuda = 0
+    if os.path.exists(os.path.join(dirname, "builtin_cpu.so")):
+        try:
+            ncpu = len(os.sched_getaffinity(0))
+        except AttributeError:
+            ncpu = os.cpu_count()
+    else:
+        log(f"CPU worker data was not built, skipping")
+    if os.path.exists(os.path.join(dirname, "builtin_cuda.fatbin")):
+        try:
+            import pycuda.driver
+            pycuda.driver.init()
+            ncuda = pycuda.driver.Device.count()
+            ncpu = 0
+        except Exception as e:
+            log(f"Can't determine GPU count: {e}")
+    else:
+        log(f"CUDA worker data was not built, skipping")
+    return {
+        "cluster": [
+            {"count": ncpu, "command": f"nice python3 -m pySecDec.dworker --cpu '{dirname}'"},
+            {"count": ncuda, "command": f"nice python3 -m pySecDec.dworker --cuda '{dirname}'"}
+        ]
+    }
 
 def main():
-
-    if len(sys.argv) < 2:
-        print(__doc__.strip())
-        exit(1)
-
-    intfile = sys.argv[1]
-    dirname = os.path.dirname(intfile)
 
     valuemap = {}
     npoints = 10**4
     epsrel = 1e-4
     nshifts = 32
-    for arg in sys.argv[2:]:
-        if "=" not in arg: raise ValueError(f"Bad argument: {arg}")
-        key, value = arg.split("=", 1)
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["points=", "epsrel=", "shifts=", "help"])
+    except getopt.GetoptError as e:
+        print(e, file=sys.stderr)
+        print("use --help to see the usage", file=sys.stderr)
+        exit(1)
+    for key, value in opts:
         if key == "--points": npoints = int(float(value))
         elif key == "--epsrel": epsrel = float(value)
         elif key == "--shifts": nshifts = int(float(value))
-        elif key.startswith("--"): raise ValueError(f"Unknown option: {key}")
-        else:
-            value = complex(value)
-            value = value.real if value.imag == 0 else value
-            valuemap[key] = value
-            log(f"{key} = {value}")
+        elif key == "--help":
+            print(__doc__.strip())
+            exit(0)
+    if len(args) < 1:
+        print(__doc__.strip(), file=sys.stderr)
+        exit(1)
+    intfile = args[0]
+    dirname = os.path.dirname(intfile)
+    for arg in args[1:]:
+        if "=" not in arg: raise ValueError(f"Bad argument: {arg}")
+        key, value = arg.split("=", 1)
+        value = complex(value)
+        value = value.real if value.imag == 0 else value
+        valuemap[key] = value
+        log(f"{key} = {value}")
 
     with open(intfile, "r") as f:
         info = json.load(f)
@@ -501,13 +541,11 @@ def main():
     complexp = np.array([valuemap[p] for p in info["complexp"]], dtype=np.complex128)
 
     cluster = load_cluster_json(dirname)
-
     workers = []
     for w in cluster["cluster"]:
         workers.extend([w["command"]] * w.get("count", 1))
-
     if len(workers) == 0:
-        print("No workers defined in pysecdec.cluster.json.")
+        log("No workers defined")
         exit(1)
 
     par = Scheduler()
