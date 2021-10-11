@@ -464,7 +464,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ for k in range(1, VECSIZE):
         if (unlikely(index + ${k} >= index2)) w.x[${k}] = 0;
 @@ for j, v in enumerate(intvars):
-        ${v} = korobov3_f(${v});
+        ${v} = clamp01(korobov3_f(${v}));
 @@ for line in cleanup_code(i.order_integrandBody).splitlines():
         ${line.replace("return(", "acc = acc + w*(")}
 @@ pass
@@ -521,7 +521,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ pass
         real_t w = ${"*".join("w_" + v for v in intvars) if intvars else "1"};
 @@ for j, v in enumerate(intvars):
-        ${v} = korobov3_f(${v});
+        ${v} = clamp01(korobov3_f(${v}));
 @@ for line in cleanup_code(i.order_integrandBody).splitlines():
         ${line.replace("return(", "val += w*(")}
 @@ pass

@@ -72,6 +72,12 @@ INT_COMPLEX(/)
         mathfn ret_t fname(const scalar_t &a, const vec_t &b) { return ret_t{ a op b.x }; } \
         mathfn ret_t fname(const vec_t &a, const scalar_t &b) { return ret_t{ a.x op b }; }
 
+    mathfn realvec_t vec_max(const realvec_t &a, const realvec_t &b)
+    { return realvec_t{a.x > b.x ? a.x : b.x}; }
+
+    mathfn realvec_t vec_min(const realvec_t &a, const realvec_t &b)
+    { return realvec_t{a.x < b.x ? a.x : b.x}; }
+
 #else
 
     #define DEF_OPERATOR(ret_t, fname, arg1_t, arg2_t, op) \
@@ -83,6 +89,18 @@ INT_COMPLEX(/)
         { return ret_t{{ a op b.x[0], a op b.x[1], a op b.x[2], a op b.x[3] }}; } \
         mathfn ret_t fname(const vec_t &a, const scalar_t &b) \
         { return ret_t{{ a.x[0] op b, a.x[1] op b, a.x[2] op b, a.x[3] op b }}; }
+
+    mathfn realvec_t vec_max(const realvec_t &a, const realvec_t &b)
+    { return realvec_t{{ a.x[0] > b.x[0] ? a.x[0] : b.x[0],
+                         a.x[1] > b.x[1] ? a.x[1] : b.x[1],
+                         a.x[2] > b.x[2] ? a.x[2] : b.x[2],
+                         a.x[3] > b.x[3] ? a.x[3] : b.x[3] }}; }
+
+    mathfn realvec_t vec_min(const realvec_t &a, const realvec_t &b)
+    { return realvec_t{{ a.x[0] < b.x[0] ? a.x[0] : b.x[0],
+                         a.x[1] < b.x[1] ? a.x[1] : b.x[1],
+                         a.x[2] < b.x[2] ? a.x[2] : b.x[2],
+                         a.x[3] < b.x[3] ? a.x[3] : b.x[3] }}; }
 
 #endif
 
@@ -126,6 +144,9 @@ mathfn realvec_t warponce(const realvec_t &a, const real_t b)
                      ab.x[1] >= 0 ? ab.x[1] : a.x[1],
                      ab.x[2] >= 0 ? ab.x[2] : a.x[2],
                      ab.x[3] >= 0 ? ab.x[3] : a.x[3] }}; }
+
+mathfn realvec_t clamp01(const realvec_t &a)
+{ return vec_max(vec_min(a, REALVEC_CONST(1)), REALVEC_CONST(0)); }
 
 mathfn realvec_t korobov1_f(const realvec_t &x) { return x*x*((-2)*x + 3); }
 mathfn realvec_t korobov1_w(const realvec_t &x) { return (1 - x)*x*6; }
