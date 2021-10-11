@@ -94,12 +94,12 @@ class Worker:
             log(f"{self.name} reader failed: {type(e).__name__}: {e}")
         log(f"{self.name} reader exited")
 
-async def launch_worker(command, maxtimeout=10):
+async def launch_worker(command, dirname, maxtimeout=10):
     timeout = min(1, maxtimeout/10)
     while True:
         log(f"starting {command}")
         p = await asyncio.create_subprocess_shell(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        p.stdin.write(b"@start\n")
+        p.stdin.write(b"@start " + encode_payload(dirname) + b"\n")
         answer = await p.stdout.readline()
         if answer.startswith(b"@started "):
             name = answer[9:].strip().decode("utf-8")
@@ -473,7 +473,7 @@ async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, value
     t1 = time.time()
 
     async def add_worker(cmd):
-        w = await launch_worker(cmd)
+        w = await launch_worker(cmd, dirname)
         await w.call("load", [os.path.join(dirname, ii["name"] + ".json") for ii in infos.values()])
         await benchmark_worker(w)
         par.workers.append(w)
@@ -524,7 +524,7 @@ def load_cluster_json(dirname):
             cluster_json = json.load(f)
             assert "cluster" in cluster_json
             assert isinstance(cluster_json["cluster"], list)
-            log(f"Using cluster configuration from {filename:r}")
+            log(f"Using cluster configuration from {filename!r}")
             return cluster_json
     except FileNotFoundError:
         pass
@@ -549,8 +549,8 @@ def load_cluster_json(dirname):
         log(f"CUDA worker data was not built, skipping")
     return {
         "cluster": [
-            {"count": ncpu, "command": f"nice python3 -m pySecDec.dworker --cpu '{dirname}'"},
-            {"count": ncuda, "command": f"nice python3 -m pySecDec.dworker --cuda '{dirname}'"}
+            {"count": ncpu, "command": f"nice python3 -m pySecDec.dworker --cpu"},
+            {"count": ncuda, "command": f"nice python3 -m pySecDec.dworker --cuda"}
         ]
     }
 

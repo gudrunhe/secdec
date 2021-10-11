@@ -20,16 +20,18 @@ def log(text):
 
 class CudaWorker:
 
-    def __init__(self, dirname):
+    def __init__(self):
         self.narguments = self.nrealp = self.ncomplexp = self.ndeformp = self.nblocks = 0
         self.genvec_d = self.shift_d = self.realp_d = self.complexp_d = self.deformp_d = 0
         self.reallocate(16, 2**24, 16, 16, 16)
         self.cubin = {}
         self.kernels = {}
-        self.load_builtin_kernels(dirname)
         self.first_t = None
         self.last_t = None
         self.sum_t = 0.0
+
+    def start(self, dirname):
+        self.load_builtin_kernels(dirname)
 
     def load_builtin_kernels(self, dirname):
         self.sum_cubin = cuda.module_from_file(os.path.join(dirname, "builtin_cuda.fatbin"))
@@ -121,12 +123,14 @@ class CudaWorker:
 
 class CPUWorker:
 
-    def __init__(self, dirname):
+    def __init__(self):
         self.dlls = {}
         self.kernels = {}
         self.first_t = None
         self.last_t = None
         self.sum_t = 0.0
+
+    def start(self, dirname):
         self.load_dll("builtin", os.path.join(dirname, "builtin_cpu.so"))
 
     def load(self, jsonfiles):
@@ -192,25 +196,22 @@ if __name__ == "__main__":
     WORKERNAME = f"{socket.gethostname()}.{os.getpid()}"
 
     worker_type = "cpu"
-    dirname = "."
     for arg in sys.argv[1:]:
         if arg == "--cpu": worker_type = "cpu"
         elif arg == "--cuda": worker_type = "cuda"
-        elif arg.startswith("--"):
-            raise ValueError(f"Unknown option: {arg}")
         else:
-            dirname = arg
+            raise ValueError(f"Unknown option: {arg}")
 
     if worker_type == "cuda":
         log("Starting CUDA worker")
         import pycuda.autoinit
         import pycuda.driver as cuda
-        ii = CudaWorker(dirname)
+        ii = CudaWorker()
 
     if worker_type == "cpu":
         log("Starting CPU worker")
         import ctypes
-        ii = CPUWorker(dirname)
+        ii = CPUWorker()
 
     read_t = 0.0
     while True:
@@ -222,7 +223,7 @@ if __name__ == "__main__":
             read_t += t1 - t0
         m = re.match("@([a-zA-Z0-9_]+)(?: ([^\\n]*))?\n", line)
         if not m:
-            print(b"??? " + repr(line))
+            print(b"??? " + repr(line).encode("utf-8"))
             sys.stdout.flush()
             continue
         cmd = m.group(1)
@@ -241,6 +242,7 @@ if __name__ == "__main__":
             result = getattr(ii, arg["method"])(**kwargs)
             print("@return", str(result))
         elif cmd == "start":
+            ii.start(decode_bin(arg) if arg else ".")
             respond(f"@started {WORKERNAME}\n".encode("utf-8"))
         elif cmd == "stop":
             break

@@ -1,0 +1,87 @@
+# Basic usage
+
+To integrate this example using the distributed evaluator (locally
+or on a cluster), first generate the library:
+
+    ./generate_elliptic2L_physical.py
+
+then build it:
+
+    make -j4 -C elliptic2L_physical disteval.done
+
+and finally integrate (locally):
+
+    python3 -m pySecDec.deval \
+        elliptic2L_physical/disteval/elliptic2L_physical.json \
+        s=90 t=-2.5 pp4=1.6 msq=1 \
+        --epsrel=3e-5
+
+The option `--epsrel=3e-5` will make the evaluator integrate in
+the adaptive mode untill this precision is reached.
+
+Use the option `--points=1e6` to specify the initial lattice size
+on which all integrals will be evaluated in the first iteration.
+
+If you don't want to use the adaptive mode and would like to
+evaluate the integrals on a fixed lattice size once, and exit,
+use `--points=1e6 --epsrel=10`.
+
+Run `python3 -m pySecDec.deval --help` for the list of options.
+
+# Faster CPU workers
+
+Advanced users that want maximum performance will want to
+compile the CPU worker with the AVX2 and FMA/FMA4 instruction
+sets allowed, and also using Clang instead of GCC (because Clang
+produces better AVX code):
+
+    make -j4 -C elliptic2L_physical disteval.done \
+        CXXFLAGS="-mavx2 -mfma" CXX=clang++
+
+Of course, your processors should support these instruction sets.
+Search for "avx2" and "fma" in /proc/cpuinfo to verify.
+
+If you are only running locally, consider using CXXFLAGS="-march=native"
+to allow the compiler to use all instructions your processor
+supports (libraries built this way will likely not work on other
+machines).
+
+# GPU workers
+
+Users with GPUs will want to compile CUDA support:
+
+    make -j4 -C elliptic2L_physical disteval.done \
+        SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_75,code=sm_75 -gencode arch=compute_80,code=sm_80"
+
+Note that SECDEC_WITH_CUDA_FLAGS is separate from CXXFLAGS and
+CXX, and in principle all of them should be specified, so that
+both the fastest CPU worker code and the GPU worker code would
+be built.
+
+# Running on a cluster
+
+To make the same evaluation command utilize multiple machines on
+a cluster, you must create cluster.json in the same directory
+where the .json file is located; each worker is then defined
+by the command to start it. For example for the Slurm cluster
+manager the configuration may look like this:
+
+    cat >elliptic2L_physical/disteval/cluster.json <<EOF
+    {
+        "cluster": [
+            {"count": 2, "command": "srun -p gpu-partition --gpus=1 python3 -m pySecDec.dworker --cuda"},
+            {"count": 0, "command": "srun -p cpu-partition python3 -m pySecDec.dworker --cpu"}
+        ]
+    }
+    EOF
+
+To compare, the default `cluster.json` is:
+
+    {
+        "cluster": [
+            {"count": Ncpu, "command": f"nice python3 -m pySecDec.dworker --cpu"},
+            {"count": Ncuda, "command": f"nice python3 -m pySecDec.dworker --cuda"}
+        ]
+    }
+
+with `Ncpu` and `Ncuda` substituted by autodetected values.
