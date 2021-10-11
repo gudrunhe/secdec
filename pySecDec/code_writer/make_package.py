@@ -2214,16 +2214,18 @@ def make_package(name, integration_variables, regulators, requested_orders,
             "name": name,
             "type": "integral",
             "dimension": len(integration_variables),
-            "regulator_count": len(regulators),
             "regulators": [str(p) for p in regulators],
-            "realp_count": len(real_parameters),
             "realp": [str(p) for p in real_parameters],
-            "complexp_count": len(complex_parameters),
             "complexp": [str(p) for p in complex_parameters],
             "deformp_count": 0 if contour_deformation_polynomial is None else len(integration_variables),
             "complex_result": contour_deformation_polynomial is not None or bool(complex_parameters) or enforce_complex,
-            "expansion_orders": list(map(int, requested_orders)),
+            "requested_orders": list(map(int, requested_orders)),
             "prefactor": str(expanded_prefactor).strip(),
+            "kernels": [
+                f"sector_{s}_order_{o}"
+                for powers, order_names in sector_orders.items()
+                for s, o in order_names
+            ],
             "orders": [
                 {
                     "regulator_powers": [int(p) for p in powers],

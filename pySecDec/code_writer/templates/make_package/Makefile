@@ -29,7 +29,7 @@ very-clean:: clean
 
 clean::
 	rm -f *.o *.so *.a pylink/*.o src/*.o integrate_$(NAME) cuda_integrate_$(NAME)
-	rm -f distsrc/*.o distsrc/*.fatbin disteval/*.so disteval/*.fatbin
+	rm -f disteval.done distsrc/*.o distsrc/*.fatbin disteval/*.so disteval/*.fatbin
 
 # implicit rule to build object files
 %%.o : %%.cpp

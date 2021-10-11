@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Distributed pySecDec integral evaluator.
-Usage: python3 -m pySecDec.dworker [--cpu | --cuda [dirname]
+Usage: python3 -m pySecDec.dworker [--cpu | --cuda] [dirname]
 """
 
 import json
@@ -41,11 +41,12 @@ class CudaWorker:
         self.gauge_kernel = self.sum_cubin.get_function("builtin__gauge")
         self.gauge_kernel.prepare("PQQQPPPPP")
 
-    def load(self, jsonfile):
-        with open(jsonfile, "r") as f:
-            info = json.load(f)
-        dirname = os.path.dirname(jsonfile)
-        self.cubin[info["name"]] = cuda.module_from_file(os.path.join(dirname, info["name"] + ".fatbin"))
+    def load(self, jsonfiles):
+        for jsonfile in jsonfiles:
+            with open(jsonfile, "r") as f:
+                info = json.load(f)
+            dirname = os.path.dirname(jsonfile)
+            self.cubin[info["name"]] = cuda.module_from_file(os.path.join(dirname, info["name"] + ".fatbin"))
 
     def reallocate(self, narguments, nblocks, nrealp, ncomplexp, ndeformp):
         if narguments > self.narguments:
@@ -128,11 +129,12 @@ class CPUWorker:
         self.sum_t = 0.0
         self.load_dll("builtin", os.path.join(dirname, "builtin_cpu.so"))
 
-    def load(self, jsonfile):
-        with open(jsonfile, "r") as f:
-            info = json.load(f)
-        dirname = os.path.dirname(jsonfile)
-        self.load_dll(info["name"], os.path.join(dirname, info["name"] + ".so"))
+    def load(self, jsonfiles):
+        for jsonfile in jsonfiles:
+            with open(jsonfile, "r") as f:
+                info = json.load(f)
+            dirname = os.path.dirname(jsonfile)
+            self.load_dll(info["name"], os.path.join(dirname, info["name"] + ".so"))
 
     def load_dll(self, key, sofile):
         self.dlls[key] = ctypes.cdll.LoadLibrary(os.path.abspath(sofile))

@@ -44,3 +44,23 @@ very-clean :: clean
 clean ::
 	for dir in */; do if [ -e "$$dir/Makefile" ]; then $(MAKE) -C "$$dir" $@; fi; done
 	rm -f *.o *.so *.a pylink/*.o src/*.o integrate_$(NAME)
+	rm -f disteval.done disteval/*.so disteval/*.fatbin $(foreach I,$(INTEGRALS),disteval/$I.json)
+
+# The following is for the distributed evaluation.
+
+$(foreach I,$(INTEGRALS),disteval/$I.json:; ln -f $I/$$@ disteval/)
+$(foreach I,$(INTEGRALS),disteval/$I.so: $I/disteval.done; ln -f $I/$$@ disteval/)
+$(foreach I,$(INTEGRALS),disteval/$I.fatbin: $I/disteval.done; ln -f $I/$$@ disteval/)
+
+$(foreach I,$(word 1,$(INTEGRALS)),disteval/builtin_cpu.so: $I/disteval.done; ln -f $I/$$@ disteval/)
+$(foreach I,$(word 1,$(INTEGRALS)),disteval/builtin_cuda.fatbin: $I/disteval.done; ln -f $I/$$@ disteval/)
+
+$(foreach I,$(INTEGRALS),$I/disteval.done)::
+	$(MAKE) -C $(dir $@) disteval.done
+
+ifdef SECDEC_WITH_CUDA_FLAGS
+disteval.done: $(foreach I,$(INTEGRALS),disteval/$I.json disteval/$I.so disteval/$I.fatbin) disteval/builtin_cpu.so disteval/builtin_cuda.fatbin
+else
+disteval.done: $(foreach I,$(INTEGRALS),disteval/$I.json disteval/$I.so) disteval/builtin_cpu.so
+endif
+	date >$@

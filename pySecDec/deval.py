@@ -242,6 +242,8 @@ async def integrate(par, family, kernel, dim, lattice, genvec, nshifts, realp, c
     return np.mean(results)/lattice, var/lattice**2
 
 async def presample(par, family, kernel, dim, npoints, nshifts, realp, complexp, deformp_count):
+    if deformp_count == 0:
+        return np.zeros(0, dtype=np.complex128)
     lattice, genvec = generating_vector(dim, npoints)
     log(f"start presample for {family}.{kernel}, lattice={lattice}, nshifts={nshifts}")
     async def target(lamb):
@@ -353,7 +355,7 @@ async def integrate_weighted_sums(par, W, integrals, epsrel, nshifts=32, scaling
 
 # Main
 
-async def benchmark_worker(w, info):
+async def benchmark_worker(w):
     lattice, genvec = generating_vector(2, 10**3)
     shift = np.array([0.3, 0.8])
     realp = np.array([2.0, 0.1, 0.2, 0.3])
@@ -406,63 +408,113 @@ def bracket(expr, varlist):
             result[(power,)] = coef
     return result
 
-async def doeval(par, workers, dirname, info, npoints, epsrel, nshifts, realp, complexp):
+def series_bracket(expr, varlist, orderlist):
+    result = {}
+    orders = sp.collect(sp.series(expr, varlist[0], n=orderlist[0]+1).removeO(), varlist[0], evaluate=False)
+    othervars = varlist[1:]
+    otherorders = orderlist[1:]
+    for stem, coef in orders.items():
+        power = int(stem.exp) if stem.is_Pow else 0 if stem == 1 else 1
+        if othervars:
+            for powers, c in series_bracket(coef, othervars, otherorders).items():
+                result[(power,) + powers] = c
+        else:
+            result[(power,)] = coef
+    return result
+
+async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, valuemap):
+    # Load the integrals from the requested json file
     t0 = time.time()
+
+    with open(intfile, "r") as f:
+        info = json.load(f)
+
+    sp_regulators = sp.var(info["regulators"])
+    requested_orders = info["requested_orders"]
+    orders = {}
+    if info["type"] == "integral":
+        infos = {info["name"] : info}
+        kernels = {}
+        for k in info["kernels"]:
+            kernels[info["name"], k] = len(kernels)
+        log(f"got the total of {len(kernels)} kernels")
+        split_integral_into_orders(orders, 0, kernels, info, 1, valuemap, sp_regulators, requested_orders)
+    elif info["type"] == "sum":
+        log(f"loading {len(info['integrals'])} integrals")
+        infos = {}
+        kernels = {}
+        for i in info["integrals"]:
+            with open(os.path.join(dirname, f"{i}.json"), "r") as f:
+                infos[i] = json.load(f)
+                assert infos[i]["name"] == i
+            for k in infos[i]["kernels"]:
+                kernels[i, k] = len(kernels)
+        log(f"got the total of {len(kernels)} kernels")
+        log("loading amplitude coefficients")
+        for a, terms in enumerate(info["sums"]):
+            orders = {}
+            for t in terms:
+                co = load_coefficient(os.path.join(dirname, t["coefficient"]), valuemap)
+                split_integral_into_orders(orders, a, kernels, infos[t["integral"]], co, valuemap, sp_regulators, requested_orders)
+    else:
+        raise ValueError(f"unknown type: {info['type']}")
+
+    realp = {
+        i : np.array([valuemap[p] for p in info["realp"]], dtype=np.float64)
+        for i, info in infos.items()
+    }
+    complexp = {
+        i : np.array([valuemap[p] for p in info["complexp"]], dtype=np.complex128)
+        for i, info in infos.items()
+    }
+    W = np.stack([w for w in orders.values()])
+
+    # Launch all the workers
+    t1 = time.time()
+
     async def add_worker(cmd):
         w = await launch_worker(cmd)
-        await w.call("load", os.path.join(dirname, info["name"] + ".json"))
-        await benchmark_worker(w, info)
+        await w.call("load", [os.path.join(dirname, ii["name"] + ".json") for ii in infos.values()])
+        await benchmark_worker(w)
         par.workers.append(w)
     await asyncio.gather(*[add_worker(cmd) for cmd in workers])
     log("workers:")
     for w in par.workers:
         log(f"- {w.name}: int speed={w.speed:.2e}bps, int overhead={w.int_overhead:.2e}s, total overhead={w.overhead:.2e}s, latency={w.latency:.2e}s")
-    # Figure out the coefficient matrix between the expansion
-    # order and the full kernel list.
-    kernels = []
-    for o in info["orders"]:
-        kernels.extend(o["kernels"])
-    kernel2idx = {k : i for i, k in enumerate(kernels)}
-    sp_regulators = sp.var(info["regulators"])
-    prefactor = bracket(sp.sympify(info["prefactor"]), sp_regulators)
-    prefactor = {p : complex(c) for p, c in prefactor.items()}
-    orders = {}
-    for o in info["orders"]:
-        powers = np.array(o["regulator_powers"])
-        for pow, coef in prefactor.items():
-            p = powers + pow
-            c = complex(coef)
-            if np.all(p <= info["expansion_orders"]):
-                orders.setdefault(tuple(p), np.zeros(len(kernels), dtype=np.complex128))
-                for k in o["kernels"]:
-                    orders[tuple(p)][kernel2idx[k]] += coef
-    W = np.stack([w for p, w in orders.items()])
-    t1 = time.time()
+
     # Presample all kernels
-    deformp = await asyncio.gather(*[
-        presample(par, info["name"], k, info["dimension"], 10**4, nshifts,
-            realp, complexp, info["deformp_count"])
-        for k in kernels
-    ])
     t2 = time.time()
+    deformp = await asyncio.gather(*[
+        presample(par, fam, k, infos[fam]["dimension"], 10**4, nshifts,
+            realp[fam], complexp[fam], infos[fam]["deformp_count"])
+        for fam, ker in kernels.keys()
+    ])
+
     # Integrate the weighted sum
+    t3 = time.time()
     ints = [
-        WeightedIntegral(info["name"], k,
-            info["dimension"], realp, complexp, defp, info["complex_result"])
-        for k, defp in zip(kernels, deformp)
+        WeightedIntegral(fam, ker, infos[fam]["dimension"], realp[fam], complexp[fam], defp, infos[fam]["complex_result"])
+        for (fam, ker), defp in zip(kernels.keys(), deformp)
     ]
     value, variance = await integrate_weighted_sums(par, W, ints, epsrel, nshifts=nshifts, npoints0=npoints)
-    t3 = time.time()
-    log("startup time:", t1-t0)
-    log("presampling time:", t2-t1)
-    log("integration time:", t3-t2)
-    print("(")
-    for p, val, var in sorted(zip(orders.keys(), value, variance)):
-        stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
-        err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
-        print(f"  +{stem}*({val:+.18e})")
-        print(f"  +{stem}*({err:+.18e})*plusminus")
-    print(")")
+
+    # Report the results
+    t4 = time.time()
+    log("integral load time:", t1-t0)
+    log("worker startup time:", t2-t1)
+    log("presampling time:", t3-t2)
+    log("integration time:", t4-t3)
+
+    ampids = sorted(set(a for a, p in orders.keys()))
+    for ampid in ampids:
+        print("(")
+        for (a, p), val, var in sorted(zip(orders.keys(), value, variance)):
+            if a != ampid: continue
+            stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
+            err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
+            print(f"  +{stem}*({val:+.18e})")
+            print(f"  +{stem}*({err:+.18e})*plusminus")
+        print(")")
     sys.stdout.flush()
 
 def load_cluster_json(dirname):
@@ -502,6 +554,34 @@ def load_cluster_json(dirname):
         ]
     }
 
+def load_coefficient(filename, valuemap):
+    coeff = sp.sympify(1)
+    with open(filename, "r") as f:
+        text = f.read()
+    for part in text.split(";", 3):
+        part = part.strip()
+        if not part: continue
+        key, value = part.split("=")
+        key = key.strip()
+        value = sp.sympify(value).subs(valuemap)
+        if key == "numerator": coeff *= value
+        if key == "denominator": coeff /= value
+        if key == "regulator_factor": coeff *= value
+    return coeff
+
+def split_integral_into_orders(orders, oidx, kernels, info, coefficient, valmap, sp_regulators, requested_orders):
+    prefactor = series_bracket(coefficient*sp.sympify(info["prefactor"]).subs(valmap), sp_regulators, requested_orders)
+    prefactor = {p : complex(c) for p, c in prefactor.items()}
+    for o in info["orders"]:
+        powers = np.array(o["regulator_powers"])
+        for pow, coef in prefactor.items():
+            p = powers + pow
+            c = complex(coef)
+            if np.all(p <= info["requested_orders"]):
+                orders.setdefault((oidx, tuple(p)), np.zeros(len(kernels), dtype=np.complex128))
+                for k in o["kernels"]:
+                    orders[oidx, tuple(p)][kernels[info["name"], k]] += coef
+
 def main():
 
     valuemap = {}
@@ -534,12 +614,7 @@ def main():
         valuemap[key] = value
         log(f"{key} = {value}")
 
-    with open(intfile, "r") as f:
-        info = json.load(f)
-
-    realp = np.array([valuemap[p] for p in info["realp"]], dtype=np.float64)
-    complexp = np.array([valuemap[p] for p in info["complexp"]], dtype=np.complex128)
-
+    # Load worker list
     cluster = load_cluster_json(dirname)
     workers = []
     for w in cluster["cluster"]:
@@ -548,11 +623,13 @@ def main():
         log("No workers defined")
         exit(1)
 
+
+    # Start the scheduler and begin evaluation
     par = Scheduler()
 
     loop = asyncio.get_event_loop()
     scheduler = loop.create_task(par.schedule_periodically())
-    loop.run_until_complete(doeval(par, workers, dirname, info, npoints, epsrel, nshifts, realp, complexp))
+    loop.run_until_complete(doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, valuemap))
     scheduler.cancel()
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ import pySecDecContrib
 
 from multiprocessing import Pool
 from time import strftime
+import json
 import numpy as np
 import os
 import shutil
@@ -248,8 +249,11 @@ def _generate_one_term(coefficients, complex_parameters, form_executable, name, 
             this_coefficients_lowest_coefficient_orders, coefficient_expressions = \
                     coefficient.process(regulators, form=form_executable, workdir=os.path.join(tempdir, "form"))
         lowest_coefficient_orders.append(this_coefficients_lowest_coefficient_orders)
-        with open(os.path.join(coeffsdir, sub_name+'_coefficient%i.txt'%i),'w') as coeffile:
+        filename = os.path.join(coeffsdir, f"{sub_name}_coefficient{i}.txt")
+        filename2 = os.path.join("disteval", "coefficients", f"{sub_name}_coefficient{i}.txt")
+        with open(filename,'w') as coeffile:
             coeffile.write(coefficient_expressions)
+        os.link(filename, filename2)
     replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
 
     minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
@@ -513,6 +517,8 @@ def sum_package(name, package_generators, regulators, requested_orders,
 
     original_working_directory = os.getcwd()
 
+    os.mkdir(os.path.join(name, "disteval"))
+    os.mkdir(os.path.join(name, "disteval", "coefficients"))
     try:
         os.chdir(name)
         with open("integral_names.txt","w") as f:
@@ -554,5 +560,24 @@ def sum_package(name, package_generators, regulators, requested_orders,
                         os.path.join(name, name + '.hpp'),  # dest
                         replacements_in_files)
 
+    with open(os.path.join(name, "disteval", name + ".json"), "w") as f:
+        json.dump({
+            "name": name,
+            "type": "sum",
+            "max_dimension": replacements_in_files["number_of_integration_variables"],
+            "regulators": [str(p) for p in regulators],
+            "requested_orders": requested_orders,
+            "realp": [str(p) for p in real_parameters],
+            "complexp": [str(p) for p in complex_parameters],
+            "complex_result": bool(need_complex),
+            "integrals": [p.name for p in package_generators],
+            "sums": [
+                [
+                    {"integral": p.name, "coefficient": f"coefficients/{p.name}_coefficient{i}.txt"}
+                    for p in package_generators
+                ]
+                for i, c in enumerate(coefficients)
+            ]
+        }, f, indent=4)
     # Return template replacements of last integral processed (for 1 integral case this emulates what code_writer.make_package does)
     return template_replacements[-1]
