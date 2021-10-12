@@ -4,6 +4,7 @@ Distributed (and local) evaluator for pySecDec integrals.
 Usage:
     python3 -m pySecDec.deval integrand.json [options] param=value ...
 Options:
+    --cluster=X use this cluster.json file
     --epsrel=X  integrate till this relative precision (default: 1e-4)
     --points=X  start integration with this lattice size (default: 1e4)
     --shifts=X  use this many lattice shifts per integral (default: 32)
@@ -517,9 +518,8 @@ async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, value
         print(")")
     sys.stdout.flush()
 
-def load_cluster_json(dirname):
+def load_cluster_json(filename):
     try:
-        filename = os.path.join(dirname, "cluster.json")
         with open(filename, "r") as f:
             cluster_json = json.load(f)
             assert "cluster" in cluster_json
@@ -529,6 +529,7 @@ def load_cluster_json(dirname):
     except FileNotFoundError:
         pass
     log(f"Can't find cluster.json; will run locally")
+    dirname = os.path.dirname(filename)
     ncpu = ncuda = 0
     if os.path.exists(os.path.join(dirname, "builtin_cpu.so")):
         try:
@@ -588,15 +589,17 @@ def main():
     npoints = 10**4
     epsrel = 1e-4
     nshifts = 32
+    clusterfile = None
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["points=", "epsrel=", "shifts=", "help"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "epsrel=", "points=", "shifts=", "help"])
     except getopt.GetoptError as e:
         print(e, file=sys.stderr)
         print("use --help to see the usage", file=sys.stderr)
         exit(1)
     for key, value in opts:
-        if key == "--points": npoints = int(float(value))
+        if key == "--cluster": clusterfile = value
         elif key == "--epsrel": epsrel = float(value)
+        elif key == "--points": npoints = int(float(value))
         elif key == "--shifts": nshifts = int(float(value))
         elif key == "--help":
             print(__doc__.strip())
@@ -606,6 +609,7 @@ def main():
         exit(1)
     intfile = args[0]
     dirname = os.path.dirname(intfile)
+    clusterfile = os.path.join(dirname, "cluster.json") if clusterfile is None else clusterfile
     for arg in args[1:]:
         if "=" not in arg: raise ValueError(f"Bad argument: {arg}")
         key, value = arg.split("=", 1)
@@ -615,7 +619,7 @@ def main():
         log(f"{key} = {value}")
 
     # Load worker list
-    cluster = load_cluster_json(dirname)
+    cluster = load_cluster_json(clusterfile)
     workers = []
     for w in cluster["cluster"]:
         workers.extend([w["command"]] * w.get("count", 1))
