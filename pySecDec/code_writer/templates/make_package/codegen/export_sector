@@ -73,6 +73,7 @@ def cleanup_code(text):
     code = sed(code, r"= *([a-zA-Z0-9_*]*)[*]i_[*]([a-zA-Z0-9_*]*)", r"= SecDecInternalI(\1*\2)")
     code = sed(code, r"= *([a-zA-Z0-9_*]*)[*]i_", r"= SecDecInternalI(\1)")
     code = sed(code, r"= *i_[*]([a-zA-Z0-9_*]*)", r"= SecDecInternalI(\1)")
+    code = sed(code, r"= *([+-])i_[*]([a-zA-Z0-9_*]*)", r"= SecDecInternalI(\1\2)")
     code = sed(code, r"if *\((.*)\) *SecDecInternalSignCheck", r"if (unlikely(\1)) SecDecInternalSignCheck")
     code = sed(code, r"[.]E[+]0([^0-9])", r"\1")
     code = sed(code, r" *= *", " = ")
