@@ -48,12 +48,12 @@ clean ::
 
 # The following is for the distributed evaluation.
 
-$(foreach I,$(INTEGRALS),disteval/$I.json:; ln -f $I/$$@ disteval/)
-$(foreach I,$(INTEGRALS),disteval/$I.so: $I/disteval.done; ln -f $I/$$@ disteval/)
-$(foreach I,$(INTEGRALS),disteval/$I.fatbin: $I/disteval.done; ln -f $I/$$@ disteval/)
+$(foreach I,$(INTEGRALS),disteval/$I.json): disteval/%%.json:; ln -f $*/$@ $@
+$(foreach I,$(INTEGRALS),disteval/$I.so): disteval/%%.so: %%/disteval.done; ln -f $*/$@ $@
+$(foreach I,$(INTEGRALS),disteval/$I.fatbin): disteval/%%.fatbin: %%/disteval.done; ln -f $*/$@ $@
 
-$(foreach I,$(word 1,$(INTEGRALS)),disteval/builtin_cpu.so: $I/disteval.done; ln -f $I/$$@ disteval/)
-$(foreach I,$(word 1,$(INTEGRALS)),disteval/builtin_cuda.fatbin: $I/disteval.done; ln -f $I/$$@ disteval/)
+disteval/builtin_cpu.so: $(word 1,$(INTEGRALS))/disteval.done; ln -f $(word 1,$(INTEGRALS))/$@ $@
+disteval/builtin_cuda.fatbin: $(word 1,$(INTEGRALS))/disteval.done; ln -f $(word 1,$(INTEGRALS))/$@ $@
 
 $(foreach I,$(INTEGRALS),$I/disteval.done)::
 	$(MAKE) -C $(dir $@) disteval.done
