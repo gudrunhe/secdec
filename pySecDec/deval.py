@@ -556,6 +556,8 @@ def load_cluster_json(filename):
     }
 
 def load_coefficient(filename, valuemap):
+    log("-", filename)
+    tr = {ord(" "): None, ord("\n"): None, ord("\\"): None}
     coeff = sp.sympify(1)
     with open(filename, "r") as f:
         text = f.read()
@@ -564,6 +566,7 @@ def load_coefficient(filename, valuemap):
         if not part: continue
         key, value = part.split("=")
         key = key.strip()
+        value = value.translate(tr)
         value = sp.sympify(value).subs(valuemap)
         if key == "numerator": coeff *= value
         if key == "denominator": coeff /= value
