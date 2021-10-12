@@ -409,9 +409,35 @@ def bracket(expr, varlist):
             result[(power,)] = coef
     return result
 
+def ginsh_series(ex, var, order):
+    hashed = {}
+    def hashfn(m):
+        v = f"hash{len(hashed)}"
+        hashed[v] = m.group(0)
+        return v
+    text = str(ex).replace("**", "^")
+    text = re.sub(r"polygamma\(([^)]*)\)", hashfn, text)
+    with open("/tmp/ginsh.txt", "w") as f:
+        f.write("START;\nseries((")
+        f.write(text)
+        f.write("),(")
+        f.write(str(var))
+        f.write("),(")
+        f.write(str(order))
+        f.write("));\nquit;")
+    subprocess.check_call("ginsh /tmp/ginsh.txt > /tmp/ginsh.out", shell=True)
+    with open("/tmp/ginsh.out", "r") as f:
+        text = f.read()
+    text = re.sub(r".*START\n", "", text, flags=re.DOTALL)
+    text = re.sub(r"[+]Order\([^)]*\)", "", text, flags=re.DOTALL)
+    text = text.strip()
+    assert text != ""
+    return sp.sympify(text).subs(hashed)
+
 def series_bracket(expr, varlist, orderlist):
     result = {}
-    orders = sp.collect(sp.series(expr, varlist[0], n=orderlist[0]+1).removeO(), varlist[0], evaluate=False)
+    orders = sp.collect(ginsh_series(expr, varlist[0], orderlist[0]+1), varlist[0], evaluate=False)
+    #orders = sp.collect(sp.series(expr, varlist[0], n=orderlist[0]+1).removeO(), varlist[0], evaluate=False)
     othervars = varlist[1:]
     otherorders = orderlist[1:]
     for stem, coef in orders.items():
@@ -455,6 +481,7 @@ async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, value
         for a, terms in enumerate(info["sums"]):
             orders = {}
             for t in terms:
+                log("-", t["coefficient"])
                 co = load_coefficient(os.path.join(dirname, t["coefficient"]), valuemap)
                 split_integral_into_orders(orders, a, kernels, infos[t["integral"]], co, valuemap, sp_regulators, requested_orders)
     else:
@@ -556,7 +583,6 @@ def load_cluster_json(filename):
     }
 
 def load_coefficient(filename, valuemap):
-    log("-", filename)
     tr = {ord(" "): None, ord("\n"): None, ord("\\"): None}
     coeff = sp.sympify(1)
     with open(filename, "r") as f:
@@ -574,7 +600,8 @@ def load_coefficient(filename, valuemap):
     return coeff
 
 def split_integral_into_orders(orders, oidx, kernels, info, coefficient, valmap, sp_regulators, requested_orders):
-    prefactor = series_bracket(coefficient*sp.sympify(info["prefactor"]).subs(valmap), sp_regulators, requested_orders)
+    highest_orders = np.min([o["regulator_powers"] for o in info["orders"]], axis=0)
+    prefactor = series_bracket(coefficient*sp.sympify(info["prefactor"]).subs(valmap), sp_regulators, -highest_orders + requested_orders)
     prefactor = {p : complex(c) for p, c in prefactor.items()}
     for o in info["orders"]:
         powers = np.array(o["regulator_powers"])
