@@ -25,6 +25,7 @@ import subprocess
 import sympy as sp
 import sys
 import time
+import traceback
 
 from .generating_vectors import generating_vector
 
@@ -156,7 +157,7 @@ class Scheduler:
         now = time.time()
         end = now + end_dt
         log(f"-- scheduling {len(self.todo)} jobs --")
-        self.todo.sort(key=lambda j: self.job_complexity(j)*(j.index2 - j.index1), reverse=True)
+        #self.todo.sort(key=lambda j: self.job_complexity(j)*(j.index2 - j.index1), reverse=True)
         endtimes = {w.name:max(0, self.starttimes.get(w.name, now)) for w in self.workers}
         qsizes = {w.name:0 for w in self.workers}
         for w, j in self.sent:
@@ -224,6 +225,7 @@ class Scheduler:
             else: job.future.set_exception(error)
         except Exception as e:
             log("INT JOB RET ERR:", e)
+            traceback.print_exc()
 
 # Integration
 
@@ -296,10 +298,15 @@ def adjust_n(W2, V, v, a, tau, n0):
         n[mask] = nn
     return n
 
-async def integrate_weighted_sums(par, W, integrals, epsrel, nshifts=32, scaling=2, npoints0=10**5, K=10):
-    def int_one(par, wi, lattice, genvec, nshifts):
-        return integrate(par, wi.iname, wi.kname, wi.dim, lattice, genvec, nshifts,
-                wi.realp, wi.complexp, wi.deformp, wi.complex_result)
+async def integrate_weighted_sums(par, W, integrals, epsrel, nshifts=32, scaling=2, npoints0=10**5, K=10, eta=0.9):
+    async def int_one(par, wi, lattice, genvec, nshifts):
+        while True:
+            v, e = await integrate(par, wi.iname, wi.kname, wi.dim, lattice, genvec, nshifts,
+                    wi.realp, wi.complexp, wi.deformp, wi.complex_result)
+            if not np.isnan(v):
+                return v, e
+            wi.deformp[:] = wi.deformp*eta
+            log(f"decreasing deformp for {wi.iname}.{wi.kname} to {wi.deformp}")
     W2 = abs2(W)
     oldlattice = [None] * len(integrals)
     results = [None] * len(integrals)
@@ -331,7 +338,11 @@ async def integrate_weighted_sums(par, W, integrals, epsrel, nshifts=32, scaling
         errs = np.array([e for v, e in results])
         val = W @ vals
         var = W2 @ errs
-        relerr = np.max(np.sqrt((np.real(var) + np.imag(var))/abs2(val)))
+        # Regulate 0/0
+        absvar = np.real(var) + np.imag(var)
+        relerr = np.sqrt(absvar/abs2(val))
+        relerr[absvar == 0] = 0
+        relerr = np.max(relerr)
         log("val =", val)
         log("relerr =", relerr)
         if relerr < epsrel:
@@ -435,6 +446,8 @@ def ginsh_series(ex, var, order):
     return sp.sympify(text).subs(hashed)
 
 def series_bracket(expr, varlist, orderlist):
+    if expr == 0:
+        return {}
     result = {}
     orders = sp.collect(ginsh_series(expr, varlist[0], orderlist[0]+1), varlist[0], evaluate=False)
     #orders = sp.collect(sp.series(expr, varlist[0], n=orderlist[0]+1).removeO(), varlist[0], evaluate=False)
@@ -479,7 +492,6 @@ async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, value
         log(f"got the total of {len(kernels)} kernels")
         log("loading amplitude coefficients")
         for a, terms in enumerate(info["sums"]):
-            orders = {}
             for t in terms:
                 log("-", t["coefficient"])
                 co = load_coefficient(os.path.join(dirname, t["coefficient"]), valuemap)
@@ -513,7 +525,7 @@ async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, value
     # Presample all kernels
     t2 = time.time()
     deformp = await asyncio.gather(*[
-        presample(par, fam, k, infos[fam]["dimension"], 10**4, nshifts,
+        presample(par, fam, ker, infos[fam]["dimension"], 10**4, nshifts,
             realp[fam], complexp[fam], infos[fam]["deformp_count"])
         for fam, ker in kernels.keys()
     ])
@@ -545,18 +557,17 @@ async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, value
         print(")")
     sys.stdout.flush()
 
-def load_cluster_json(filename):
+def load_cluster_json(jsonfile, dirname):
     try:
-        with open(filename, "r") as f:
+        with open(jsonfile, "r") as f:
             cluster_json = json.load(f)
             assert "cluster" in cluster_json
             assert isinstance(cluster_json["cluster"], list)
-            log(f"Using cluster configuration from {filename!r}")
+            log(f"Using cluster configuration from {jsonfile!r}")
             return cluster_json
     except FileNotFoundError:
+        log(f"Can't find {jsonfile}; will run locally")
         pass
-    log(f"Can't find cluster.json; will run locally")
-    dirname = os.path.dirname(filename)
     ncpu = ncuda = 0
     if os.path.exists(os.path.join(dirname, "builtin_cpu.so")):
         try:
@@ -586,13 +597,12 @@ def load_coefficient(filename, valuemap):
     tr = {ord(" "): None, ord("\n"): None, ord("\\"): None}
     coeff = sp.sympify(1)
     with open(filename, "r") as f:
-        text = f.read()
+        text = f.read().translate(tr)
     for part in text.split(";", 3):
         part = part.strip()
         if not part: continue
         key, value = part.split("=")
         key = key.strip()
-        value = value.translate(tr)
         value = sp.sympify(value).subs(valuemap)
         if key == "numerator": coeff *= value
         if key == "denominator": coeff /= value
@@ -649,14 +659,13 @@ def main():
         log(f"{key} = {value}")
 
     # Load worker list
-    cluster = load_cluster_json(clusterfile)
+    cluster = load_cluster_json(clusterfile, dirname)
     workers = []
     for w in cluster["cluster"]:
         workers.extend([w["command"]] * w.get("count", 1))
     if len(workers) == 0:
         log("No workers defined")
         exit(1)
-
 
     # Start the scheduler and begin evaluation
     par = Scheduler()

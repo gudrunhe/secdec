@@ -97,17 +97,21 @@ class CudaWorker:
         return res[0]
 
     def integrate(self, iname, kname, narguments, lattice, i1, i2, genvec, shift, realp=None, complexp=None, deformp=None, complex_result=False):
-        if (iname, kname) not in self.kernels:
-            self.kernels[iname, kname] = self.cubin[iname].get_function(iname + "__" + kname)
-            self.kernels[iname, kname].prepare("PQQQPPPPP")
-        t1 = time.time()
-        res = self.integrate_kernel(self.kernels[iname, kname], narguments, lattice, i1, i2, genvec, shift,
-                realp=realp, complexp=complexp, deformp=deformp, complex_result=complex_result)
-        t2 = time.time()
-        if self.first_t is None: self.first_t = t1
-        self.last_t = t2
-        self.sum_t += t2-t1
-        return res, i2-i1, t2-t1
+        try:
+            if (iname, kname) not in self.kernels:
+                self.kernels[iname, kname] = self.cubin[iname].get_function(iname + "__" + kname)
+                self.kernels[iname, kname].prepare("PQQQPPPPP")
+            t1 = time.time()
+            res = self.integrate_kernel(self.kernels[iname, kname], narguments, lattice, i1, i2, genvec, shift,
+                    realp=realp, complexp=complexp, deformp=deformp, complex_result=complex_result)
+            t2 = time.time()
+            if self.first_t is None: self.first_t = t1
+            self.last_t = t2
+            self.sum_t += t2-t1
+            return res, i2-i1, t2-t1
+        except Exception as e:
+            log(f"integrate({iname}.{kname}) failed: {e}")
+            raise
 
     def integrate_gauge(self, lattice, i1, i2, genvec, shift, realp, complexp, deformp):
         t1 = time.time()
