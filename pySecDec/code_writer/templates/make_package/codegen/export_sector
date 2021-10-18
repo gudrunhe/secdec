@@ -473,6 +473,98 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
     *presult = componentsum(acc);
     return 0;
 }
+
+@@ if int(i.contourDeformation):
+#define SecDecInternalOutputDeformationParameters(i, v) deformp[i] = vec_min(deformp[i], v);
+
+extern "C" void
+${i.namespace}__sector_${i.sector}_order_${i.order_name}__maxdeformp(
+    real_t * restrict maxdeformp,
+    const unsigned long lattice,
+    const unsigned long index1,
+    const unsigned long index2,
+    const unsigned long * restrict genvec,
+    const real_t * restrict shift,
+    const real_t * restrict realp,
+    const complex_t * restrict complexp
+)
+{
+@@     for j, v in enumerate(getlist(i.realParameters)):
+    const real_t ${v} = realp[${j}];
+@@     for j, v in enumerate(getlist(i.complexParameters)):
+    const complex_t ${v} = complexp[${j}];
+@@     ndeformp = len(getlist(i.order_deformationParameters))
+@@     deformp_init = ', '.join(['REALVEC_CONST(10.0)']*ndeformp)
+    const real_t invlattice = 1.0/lattice;
+    realvec_t deformp[${ndeformp}] = { ${deformp_init} };
+    unsigned long index = index1;
+@@     intvars = getlist(i.order_integrationVariables)
+@@     for j, v in enumerate(intvars):
+    int_t li_${v} = mulmod(genvec[${j}], index, lattice);
+@@     pass
+    for (; index < index2; index += ${VECSIZE}) {
+@@     for j, v in enumerate(intvars):
+@@         for k in range(VECSIZE):
+        int_t li_${v}_${k} = li_${v}; li_${v} = warponce_i(li_${v} + genvec[${j}], lattice);
+@@         li_list = ", ".join(f"li_{v}_{k}*invlattice" for k in range(VECSIZE))
+        realvec_t ${v} = {{ ${li_list} }};
+        ${v} = warponce(${v} + shift[${j}], 1);
+@@     for j, v in enumerate(intvars):
+        ${v} = clamp01(korobov1_f(${v}));
+@@     code = cleanup_code(i.order_optimizeDeformationParametersBody)
+@@     for line in code.splitlines():
+        ${line}
+@@     pass
+    }
+@@     for j, v in enumerate(getlist(i.order_deformationParameters)):
+    maxdeformp[${j}] = componentmin(deformp[${j}]);
+@@     pass
+}
+
+#define i_ (complex_t{0,1})
+
+extern "C" int
+${i.namespace}__sector_${i.sector}_order_${i.order_name}__fpolycheck(
+    const unsigned long lattice,
+    const unsigned long index1,
+    const unsigned long index2,
+    const unsigned long * restrict genvec,
+    const real_t * restrict shift,
+    const real_t * restrict realp,
+    const complex_t * restrict complexp,
+    const real_t * restrict deformp
+)
+{
+@@     for j, v in enumerate(getlist(i.realParameters)):
+    const real_t ${v} = realp[${j}];
+@@     for j, v in enumerate(getlist(i.complexParameters)):
+    const complex_t ${v} = complexp[${j}];
+@@     for j, v in enumerate(getlist(i.order_deformationParameters)):
+    const real_t ${v} = deformp[${j}];
+@@     pass
+    const real_t invlattice = 1.0/lattice;
+    unsigned long index = index1;
+@@     intvars = getlist(i.order_integrationVariables)
+@@     for j, v in enumerate(intvars):
+    int_t li_${v} = mulmod(genvec[${j}], index, lattice);
+@@     pass
+    for (; index < index2; index += ${VECSIZE}) {
+@@     for j, v in enumerate(intvars):
+@@         for k in range(VECSIZE):
+        int_t li_${v}_${k} = li_${v}; li_${v} = warponce_i(li_${v} + genvec[${j}], lattice);
+@@         li_list = ", ".join(f"li_{v}_{k}*invlattice" for k in range(VECSIZE))
+        realvec_t ${v} = {{ ${li_list} }};
+        ${v} = warponce(${v} + shift[${j}], 1);
+@@     for j, v in enumerate(intvars):
+        ${v} = clamp01(korobov1_f(${v}));
+@@     code = cleanup_code(i.order_contourDeformationPolynomialBody)
+@@     for line in code.splitlines():
+        ${line.replace("return(", "auto fpoly_im = SecDecInternalImagPart(")}
+@@     pass
+        if (unlikely(fpoly_im > 0)) return 1;
+    }
+    return 0;
+}
 """, "i")
 
 DIST_SECTOR_ORDER_CU = template_writer("""\

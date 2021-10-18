@@ -32,6 +32,8 @@ mathfn int_t warponce_i(const int_t a, const int_t b)
 
 mathfn real_t SecDecInternalRealPart(const real_t &a) { return a; }
 mathfn real_t SecDecInternalImagPart(const real_t &a) { return 0; }
+mathfn real_t SecDecInternalAbs(const real_t &a) { return std::abs(a); }
+mathfn real_t SecDecInternalAbs(const complex_t &a) { return std::abs(a); }
 mathfn complex_t SecDecInternalI(const real_t &a) { return complex_t{0, a}; }
 mathfn complex_t SecDecInternalI(const complex_t &a) { return complex_t{-a.imag(), a.real()}; }
 
@@ -104,6 +106,16 @@ INT_COMPLEX(/)
 
 #endif
 
+mathfn realvec_t vec_max(const realvec_t &a, const real_t &b)
+{ return vec_max(a, REALVEC_CONST(b)); }
+mathfn realvec_t vec_max(const real_t &a, const realvec_t &b)
+{ return vec_max(REALVEC_CONST(a), b); }
+
+mathfn realvec_t vec_min(const realvec_t &a, const real_t &b)
+{ return vec_min(a, REALVEC_CONST(b)); }
+mathfn realvec_t vec_min(const real_t &a, const realvec_t &b)
+{ return vec_min(REALVEC_CONST(a), b); }
+
 #define DEF_FUNCTION(ret_t, fname, arg_t, f) \
     mathfn ret_t fname(const arg_t &a) \
     { return ret_t{{ f(a.x[0]), f(a.x[1]), f(a.x[2]), f(a.x[3]) }}; }
@@ -137,6 +149,11 @@ mathfn realvec_t SecDecInternalImagPart(const realvec_t &a) { return REALVEC_ZER
 
 mathfn real_t componentsum(const realvec_t &a)
 { return a.x[0] + a.x[1] + a.x[2] + a.x[3]; }
+
+mathfn real_t componentmin(const realvec_t &a)
+{ real_t m1 = a.x[0] < a.x[1] ? a.x[0] : a.x[1];
+  real_t m2 = a.x[2] < a.x[3] ? a.x[2] : a.x[3];
+  return m1 < m2 ? m1 : m2; }
 
 mathfn realvec_t warponce(const realvec_t &a, const real_t b)
 { realvec_t ab = a - b;
