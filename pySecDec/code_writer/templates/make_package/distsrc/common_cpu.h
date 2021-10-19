@@ -269,6 +269,8 @@ mathfn complexvec_t operator /(const complex_t &a, const realvec_t &b)
 { realvec_t inv_b = 1/b;
   return complexvec_t{ (a.real()*inv_b, a.imag()*inv_b) };}
 
+mathfn real_t SecDecInternalRealPart(const complex_t &a) { return a.real(); }
+mathfn real_t SecDecInternalImagPart(const complex_t &a) { return a.imag(); }
 mathfn realvec_t SecDecInternalRealPart(const complexvec_t &a) { return a.re; }
 mathfn realvec_t SecDecInternalImagPart(const complexvec_t &a) { return a.im; }
 
