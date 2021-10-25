@@ -114,4 +114,7 @@ contrib += \
         pre_commands="sed -i.bak 's/readline/NOreadline/g' configure && ",
         install_target="install-strip")
 
+contrib += env.Program("bin/pysecdec_cpuworker", [f"disteval/cpuworker.cpp"], CXXFLAGS="-std=c++14 -O3", LIBS=["dl"])
+#contrib += env.Program("bin/pysecdec_cudaworker", [f"disteval/cudaworker.cpp"], CXXFLAGS="-std=c++14 -O3", LIBS=["dl"])
+
 Return("contrib")

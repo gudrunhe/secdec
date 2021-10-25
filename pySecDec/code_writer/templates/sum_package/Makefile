@@ -52,15 +52,15 @@ $(foreach I,$(INTEGRALS),disteval/$I.json): disteval/%%.json:; ln -f $*/$@ $@
 $(foreach I,$(INTEGRALS),disteval/$I.so): disteval/%%.so: %%/disteval.done; ln -f $*/$@ $@
 $(foreach I,$(INTEGRALS),disteval/$I.fatbin): disteval/%%.fatbin: %%/disteval.done; ln -f $*/$@ $@
 
-disteval/builtin_cpu.so: $(word 1,$(INTEGRALS))/disteval.done; ln -f $(word 1,$(INTEGRALS))/$@ $@
-disteval/builtin_cuda.fatbin: $(word 1,$(INTEGRALS))/disteval.done; ln -f $(word 1,$(INTEGRALS))/$@ $@
+disteval/builtin.so: $(word 1,$(INTEGRALS))/disteval.done; ln -f $(word 1,$(INTEGRALS))/$@ $@
+disteval/builtin.fatbin: $(word 1,$(INTEGRALS))/disteval.done; ln -f $(word 1,$(INTEGRALS))/$@ $@
 
 $(foreach I,$(INTEGRALS),$I/disteval.done)::
 	$(MAKE) -C $(dir $@) disteval.done
 
 ifdef SECDEC_WITH_CUDA_FLAGS
-disteval.done: $(foreach I,$(INTEGRALS),disteval/$I.json disteval/$I.so disteval/$I.fatbin) disteval/builtin_cpu.so disteval/builtin_cuda.fatbin
+disteval.done: $(foreach I,$(INTEGRALS),disteval/$I.json disteval/$I.so disteval/$I.fatbin) disteval/builtin.so disteval/builtin.fatbin
 else
-disteval.done: $(foreach I,$(INTEGRALS),disteval/$I.json disteval/$I.so) disteval/builtin_cpu.so
+disteval.done: $(foreach I,$(INTEGRALS),disteval/$I.json disteval/$I.so) disteval/builtin.so
 endif
 	date >$@

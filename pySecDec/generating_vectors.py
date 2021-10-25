@@ -203,16 +203,16 @@ def generating_vector(nvariables, minsize):
     if nvariables <= 100:
         i = cbcpt_dn1_100_lattice.searchsorted(np.int64(minsize))
         if i < len(cbcpt_dn1_100_gv):
-            return cbcpt_dn1_100_lattice[i], cbcpt_dn1_100_gv[i, :nvariables]
+            return int(cbcpt_dn1_100_lattice[i]), cbcpt_dn1_100_gv[i, :nvariables].tolist()
     if nvariables <= 10:
         i = cbcpt_cfftw2_10_lattice.searchsorted(np.int64(minsize))
         if i < len(cbcpt_cfftw2_10_gv):
-            return cbcpt_cfftw2_10_lattice[i], cbcpt_cfftw2_10_gv[i, :nvariables]
+            return int(cbcpt_cfftw2_10_lattice[i]), cbcpt_cfftw2_10_gv[i, :nvariables].tolist()
     raise ValueError(f"No generating vectors for {nvariables} variables of size {minsize}")
 
 def max_lattice(nvariables):
     if nvariables <= 10:
-        return cbcpt_cfftw2_10_lattice[-1]
+        return int(cbcpt_cfftw2_10_lattice[-1])
     if nvariables <= 100:
-        return cbcpt_dn1_100_lattice[-1]
+        return int(cbcpt_dn1_100_lattice[-1])
     raise ValueError(f"No generating vectors for {nvariables} variables")

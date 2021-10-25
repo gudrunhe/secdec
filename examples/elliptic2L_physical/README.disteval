@@ -69,8 +69,8 @@ manager the configuration may look like this:
     cat >elliptic2L_physical/disteval/cluster.json <<EOF
     {
         "cluster": [
-            {"count": 2, "command": "srun -p gpu-partition --gpus=1 python3 -m pySecDec.dworker --cuda"},
-            {"count": 0, "command": "srun -p cpu-partition python3 -m pySecDec.dworker --cpu"}
+            {"count": 2, "command": "srun -p gpu-partition --gpus=1 python3 -m pySecDecWorker --cuda"},
+            {"count": 0, "command": "srun -p cpu-partition python3 -m pySecDecWorker --cpu"}
         ]
     }
     EOF
@@ -79,8 +79,8 @@ To compare, the default `cluster.json` is:
 
     {
         "cluster": [
-            {"count": Ncpu, "command": f"nice python3 -m pySecDec.dworker --cpu"},
-            {"count": Ncuda, "command": f"nice python3 -m pySecDec.dworker --cuda"}
+            {"count": Ncpu, "command": f"nice python3 -m pySecDecWorker --cpu"},
+            {"count": Ncuda, "command": f"nice python3 -m pySecDecWorker --cuda"}
         ]
     }
 

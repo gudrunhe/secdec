@@ -51,9 +51,9 @@ SECTOR_ORDERS:=$(patsubst src/sector_%%.cpp,%%,$(filter src/sector_%%.cpp,$(SECT
 SECTOR_ORDERS:=$(foreach a,$(SECTOR_ORDERS),$(if $(findstring _,$a),$a,))
 
 ifdef SECDEC_WITH_CUDA_FLAGS
-disteval.done: disteval/$(NAME).fatbin disteval/builtin_cuda.fatbin disteval/$(NAME).so disteval/builtin_cpu.so
+disteval.done: disteval/$(NAME).fatbin disteval/builtin.fatbin disteval/$(NAME).so disteval/builtin.so
 else
-disteval.done: disteval/$(NAME).so disteval/builtin_cpu.so
+disteval.done: disteval/$(NAME).so disteval/builtin.so
 endif
 	date >$@
 
@@ -69,7 +69,7 @@ distsrc/%%.o: distsrc/%%.cpp
 disteval/$(NAME).so: $(DIST_SO_OBJECTS)
 	$(CXX) -shared -o $@ $^
 
-disteval/builtin_cpu.so: distsrc/builtin_cpu.o
+disteval/builtin.so: distsrc/builtin.o
 	$(CXX) -shared -o $@ $^
 
 # CUDA files (.fatbin)
@@ -85,5 +85,5 @@ distsrc/%%.fatbin: distsrc/%%.cu
 disteval/$(NAME).fatbin: $(DIST_FATBIN_OBJECTS)
 	$(NVCC) $(NVCCFLAGS) -dlink -fatbin -o $@ $^
 
-disteval/builtin_cuda.fatbin: distsrc/builtin_cuda.fatbin
+disteval/builtin.fatbin: distsrc/builtin.fatbin
 	$(NVCC) $(NVCCFLAGS) -dlink -fatbin -o $@ $^

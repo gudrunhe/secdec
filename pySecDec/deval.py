@@ -5,8 +5,9 @@ Usage:
     python3 -m pySecDec.deval integrand.json [options] param=value ...
 Options:
     --cluster=X use this cluster.json file
-    --epsrel=X  integrate till this relative precision (default: 1e-4)
-    --points=X  start integration with this lattice size (default: 1e4)
+    --epsabs=X  stop if this absolute precision is achieved (default: 1e-10)
+    --epsrel=X  stop if this relative precision is achieved (default: 1e-4)
+    --points=X  begin integration with this lattice size (default: 1e4)
     --shifts=X  use this many lattice shifts per integral (default: 32)
 Arguments:
     param=value use this value for the given integral parameter
@@ -17,13 +18,16 @@ import base64
 import collections
 import getopt
 import json
+import math
 import numpy as np
 import os
 import pickle
+import random
 import re
 import subprocess
 import sympy as sp
 import sys
+import tempfile
 import time
 import traceback
 
@@ -31,16 +35,31 @@ from .generating_vectors import generating_vector
 
 log_starttime = time.time()
 def log(*args):
-    print(f"{time.time() - log_starttime:.3f}]", *args, file=sys.stderr)
+    t = time.time() - log_starttime
+    if t < 60:
+        print(f"{t:.3f}]", *args, file=sys.stderr)
+    else:
+        m, s = divmod(t, 60)
+        if m < 60:
+            print(f"{m:.0f}:{s:06.3f}]", *args, file=sys.stderr)
+        else:
+            h, m = divmod(m, 60)
+            print(f"{h:.0f}:{m:02.0f}:{s:06.3f}]", *args, file=sys.stderr)
     sys.stderr.flush()
+
+def abs2(x):
+    return np.real(x)**2 + np.imag(x)**2
 
 # Generic RPC
 
 def encode_message(data):
-    return base64.b64encode(pickle.dumps(data)) + b"\n"
+    return json.dumps(data,separators=(',',':')).encode("ascii") + b"\n"
 
 def decode_message(binary):
-    return pickle.loads(base64.b64decode(binary[1:]))
+    return json.loads(binary[1:])
+
+class WorkerException(Exception):
+    pass
 
 class Worker:
 
@@ -51,23 +70,52 @@ class Worker:
         self.callbacks = {}
         self.reader_task = asyncio.get_event_loop().create_task(self._reader())
 
+    def queue_size(self):
+        return len(self.callbacks)
+
     def call_cb(self, method, args, callback, callback_args=()):
-        i = self.serial = self.serial + 1
-        self.callbacks[i] = (callback, callback_args)
-        message = encode_message(((i, method, args),))
+        token = self.serial = self.serial + 1
+        self.callbacks[token] = (callback, callback_args)
+        message = encode_message((token, method, args))
         self.process.stdin.write(message)
+        return token
+    
+    def cancel_cb(self, token):
+        if token in self.callbacks:
+            self.callbacks[token] = (lambda a,b,c:None, ())
 
     def call(self, method, *args):
         fut = asyncio.futures.Future()
-        def call_return(result, error):
+        def call_return(result, error, w):
             if error is None: fut.set_result(result)
-            else: fut.set_exception(Exception(error))
+            else: fut.set_exception(WorkerException(error))
         self.call_cb(method, args, call_return)
+        return fut
+    
+    def multicall(self, calls):
+        fut = asyncio.futures.Future()
+        results = [None]*len(calls)
+        ntodo = [len(calls)]
+        def multicall_return(result, error, w, i):
+            if error is None:
+                results[i] = result
+                ntodo[0] -= 1
+                if ntodo[0] == 0:
+                    fut.set_result(results)
+            else:
+                fut.set_exception(WorkerException(error))
+        s0 = self.serial
+        self.serial += len(calls)
+        parts = []
+        for i, (method, args) in enumerate(calls):
+            parts.append(encode_message((s0 + i, method, args)))
+            self.callbacks[s0 + i] = (multicall_return, (i,))
+        self.process.stdin.write(b"".join(parts))
         return fut
 
     async def _reader(self):
-        log(f"{self.name}: started reading")
         rx = re.compile(b"^@([a-zA-Z0-9_]+)(?: ([^\\n]*))?\n$")
+        line = None
         try:
             while True:
                 line = await self.process.stdout.readline()
@@ -76,11 +124,12 @@ class Worker:
                     i, res, err = decode_message(line)
                     callback, callback_args = self.callbacks[i]
                     del self.callbacks[i]
-                    callback(res, err, *callback_args)
+                    callback(res, err, self, *callback_args)
                 else:
                     log(f"{self.name}: {line}")
         except Exception as e:
             log(f"{self.name} reader failed: {type(e).__name__}: {e}")
+            log(f"{self.name} line was {line!r}")
         log(f"{self.name} reader exited")
 
 async def launch_worker(command, dirname, maxtimeout=10):
@@ -88,7 +137,7 @@ async def launch_worker(command, dirname, maxtimeout=10):
     while True:
         log(f"starting {command}")
         p = await asyncio.create_subprocess_shell(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        p.stdin.write(encode_message(((0, "start", (dirname,)),)))
+        p.stdin.write(encode_message((0, "start", (dirname,))))
         answer = await p.stdout.readline()
         try:
             _, name, err = decode_message(answer)
@@ -111,150 +160,37 @@ async def launch_worker(command, dirname, maxtimeout=10):
 
 # Generic scheduling
 
-class PlainScheduler:
+class RandomScheduler:
     def __init__(self):
         self.workers = []
-        self.nwaiting = []
+        self.wspeed = []
 
     def add_worker(self, worker):
         self.workers.append(worker)
-        self.nwaiting.append(0)
+        self.wspeed.append(worker.speed)
+
+    def queue_size(self):
+        return sum(w.queue_size() for w in self.workers)
 
     def call(self, method, *args):
-        fut = asyncio.futures.Future()
-        i = np.argmin(self.nwaiting)
-        self.nwaiting[i] += 1
-        self.workers[i].call_cb(method, args, self._cb, (fut, i))
-        return fut
+        w = min(random.choices(self.workers, weights=self.wspeed, k=3),
+                key=lambda w: w.queue_size())#/w.speed)
+        return w.call(method, *args)
 
-    def _cb(self, result, error, fut, i):
-        self.nwaiting[i] -= 1
-        if error is None: fut.set_result(result)
-        else: fut.set_exception(error)
+    def call_cb(self, method, args, callback, callback_args):
+        w = min(random.choices(self.workers, weights=self.wspeed, k=3),
+                key=lambda w: w.queue_size())#/w.speed)
+        return (w, w.call_cb(method, args, callback, callback_args))
 
-    def integrate(self, iname, kname, dim, lattice, genvec, shift, realp, complexp, deformp, complex_result):
-        return self.call("integrate", iname, kname,
-                dim, lattice, 0, lattice, genvec, shift,
-                realp, complexp, deformp, complex_result)
-
-# Integration scheduling
-
-Job_Integrate = collections.namedtuple("Job_Integrate",
-    "future iname kname dim lattice index1 index2 genvec shift realp complexp deformp complex_result")
-
-class Scheduler:
-    def __init__(self):
-        self.workers = []
-        self.sent = []
-        self.todo = []
-        self.starttimes = {}
-        self.C_average = 100.0
-        self.C_by_family = {}
-        self.C_by_kernel = {}
-        self.todo_updated = asyncio.Event()
-
-    def integrate(self, iname, kname, dim, lattice, genvec, shift, realp, complexp, deformp, complex_result):
-        fut = asyncio.futures.Future()
-        self.todo.append(Job_Integrate(
-            fut, iname, kname, dim, lattice, 0, lattice,
-            genvec, shift, realp, complexp, deformp, complex_result))
-        self.todo_updated.set()
-        return fut
-
-    def job_complexity(self, job):
-        c = self.C_by_kernel.get((job.iname, job.kname), None)
-        if c is not None: return c
-        c = self.C_by_family.get(job.iname, None)
-        if c is not None: return c
-        return self.C_average
-
-    def job_time_estimate(self, job, worker):
-        return self.job_complexity(job)*(job.index2 - job.index1)/worker.speed + worker.overhead
-
-    def schedule(self, end_dt):
-        if len(self.todo) == 0: return
-        now = time.time()
-        end = now + end_dt
-        log(f"-- scheduling {len(self.todo)} jobs --")
-        #self.todo.sort(key=lambda j: self.job_complexity(j)*(j.index2 - j.index1), reverse=True)
-        endtimes = {w.name:max(0, self.starttimes.get(w.name, now)) for w in self.workers}
-        qsizes = {w.name:0 for w in self.workers}
-        for w, j in self.sent:
-            endtimes[w.name] += self.job_time_estimate(j, w)
-            qsizes[w.name] += 1
-        log("queue end time estimates:")
-        for wname, t in endtimes.items():
-            log(f"- {wname}: {qsizes[wname]} items, {t-now:.3f}s")
-        while len(self.todo) > 0:
-            w = min(self.workers, key=lambda w: endtimes[w.name])
-            if endtimes[w.name] > end:
-                log(f"min endtime is now {endtimes[w.name]-now}")
-                break
-            j = self.todo.pop()
-            endtimes[w.name] += self.job_time_estimate(j, w)
-            qsizes[w.name] += 1
-            #log(f"scheduling on {w.name} till {endtimes[w.name]-now:.3f}: {j.iname}.{j.kname} {j.index2-j.index1:.2e}p {self.job_time_estimate(j, w):.2e}s")
-            self.sent.append((w, j))
-            w.call_cb("integrate", (j.iname, j.kname,
-                    j.dim, j.lattice, j.index1, j.index2, j.genvec, j.shift,
-                    j.realp, j.complexp, j.deformp, j.complex_result),
-                    self._integrate_job_return, (w, j))
-        log("queue end estimates (still", len(self.todo), "jobs todo):")
-        for wname, t in endtimes.items():
-            log(f"- {wname}: {qsizes[wname]} items, {t-now:.3f}s")
-
-    async def schedule_periodically(self):
-        timeout = 0.05
-        while True:
-            try:
-                self.schedule(10.0)
-            except Exception as e:
-                log("SCHEDULER FAIL:", e)
-            if len(self.todo) > 0:
-                log(f"scheduler: sleeping for {timeout}")
-                await asyncio.sleep(timeout)
-                timeout = min(2.00, timeout*1.125)
-            else:
-                log("scheduler: waiting for more work")
-                self.todo_updated.clear()
-                await self.todo_updated.wait()
-
-    def _integrate_job_return(self, result, error, worker, job):
-        try:
-            value, dn, dt = result
-            if not np.isnan(value):
-                c = max((dt - worker.int_overhead)*worker.speed/dn, 1.0)
-                if (job.iname, job.kname) in self.C_by_kernel:
-                    c = 0.75*self.C_by_kernel[job.iname, job.kname] + 0.25*c
-                self.C_by_kernel[job.iname, job.kname] = c
-                self.C_by_family[job.iname] = np.mean([
-                    v for (i, k), v in self.C_by_kernel.items()
-                    if i == job.iname
-                ])
-                self.C_average = np.mean([v for v in self.C_by_family.values()])
-            self.sent.remove((worker, job))
-            if any(w is worker for w, j in self.sent):
-                self.starttimes[worker.name] = time.time() - worker.latency*0.5
-            else:
-                if worker.name in self.starttimes:
-                    del self.starttimes[worker.name]
-                log(f"{worker.name} has no work anymore!")
-            if error is None: job.future.set_result(value)
-            else: job.future.set_exception(error)
-        except Exception as e:
-            log("INT JOB RET ERR:", e)
-            traceback.print_exc()
+    def cancel_cb(self, token):
+        w, t = token
+        w.cancel_cb(t)
 
 # Integration
 
-async def mktask(future):
-    task = asyncio.ensure_future(future)
-    await asyncio.sleep(0)
-    return task
-
-async def integrate(par, family, kernel, dim, lattice, genvec, nshifts, realp, complexp, deformp, complex_result):
+async def integrate(par, kindex, dim, lattice, genvec, nshifts, realp, complexp, deformp, complex_result):
     results = np.array(await asyncio.gather(*[
-        await mktask(par.integrate(family, kernel, dim, lattice, genvec, np.random.rand(dim),
+        await mktask(par.integrate(kindex, dim, lattice, genvec, np.random.rand(dim).tolist(),
             realp, complexp, deformp, complex_result))
         for i in range(nshifts)
     ]))
@@ -264,115 +200,12 @@ async def integrate(par, family, kernel, dim, lattice, genvec, nshifts, realp, c
         var = np.var(results)/nshifts
     return np.mean(results)/lattice, var/lattice**2
 
-async def presample(par, family, kernel, dim, npoints, realp, complexp, deformp_count):
-    if deformp_count == 0:
-        return None
-    lattice, genvec = generating_vector(dim, npoints)
-    log(f"start presample for {family}.{kernel}, lattice={lattice}")
-    maxdeformp = await par.call("maxdeformp", family, kernel, deformp_count,
-            lattice, genvec, np.random.rand(dim), realp, complexp)
-    log(f"maxdeformp of {family}.{kernel} is {maxdeformp}")
-    return maxdeformp
-
-# Weighted sum integration
-
-WeightedIntegral = collections.namedtuple("WeightedIntegral",
-    "iname kname dim realp complexp deformp complex_result")
-
-def abs2(x):
-    return np.real(x)**2 + np.imag(x)**2
-
-def adjust_n(W2, V, v, a, tau, n0):
-    assert np.all(V>0)
-    #lam = (1/V * (W2**(1/(a+1)) @ (v * (a*v/tau)**(-a/(a+1)))))**((a+1)/a)
-    lam = (1/V * (W2**(1/(a+1)) @ (v**(1/(a+1)) * (tau/a)**(a/(a+1)))))**((a+1)/a)
-    n = (a*v/tau * np.max((lam * W2.T).T, axis=0))**(1/(a+1))
-    # Same as above, but taking into account that we already did
-    # n0 points per integral.
-    while np.any(n < n0) and np.any(n > n0):
-        mask = n > n0
-        n[~mask] = n0[~mask]
-        VV = V - W2[:,~mask] @ (v[~mask]/n0[~mask]**a)
-        VV = np.maximum(VV, np.zeros_like(VV))
-        lam = (1/VV * (W2[:,mask]**(1/(a+1)) @ (v[mask] * (a*v[mask]/tau[mask])**(-a/(a+1)))))**((a+1)/a)
-        nn = (a*v[mask]/tau[mask] * np.max((lam * W2[:,mask].T).T, axis=0))**(1/(a+1))
-        n[mask] = nn
-    return n
-
-async def integrate_weighted_sums(par, W, integrals, epsrel, nshifts=32, scaling=2, npoints0=10**5, K=10, eta=0.8):
-    async def int_one(par, wi, lattice, genvec, nshifts):
-        while True:
-            v, e = await integrate(par, wi.iname, wi.kname, wi.dim, lattice, genvec, nshifts,
-                    wi.realp, wi.complexp, wi.deformp, wi.complex_result)
-            if not np.isnan(v):
-                return v, e
-            wi.deformp[:] = wi.deformp*eta
-            log(f"decreasing deformp for {wi.iname}.{wi.kname} to {wi.deformp}")
-    W2 = abs2(W)
-    oldlattice = [None] * len(integrals)
-    results = [None] * len(integrals)
-    lattice, genvec = zip(*[generating_vector(wi.dim, npoints0) for wi in integrals])
-    while True:
-        newresults = await asyncio.gather(*[
-            await mktask(int_one(par, wi, lattice[i], genvec[i], nshifts))
-            for i, wi in enumerate(integrals)
-            if lattice[i] != oldlattice[i]
-        ])
-        j = 0
-        for i in range(len(integrals)):
-            if lattice[i] != oldlattice[i]:
-                if results[i] is None:
-                    log(f"int[{i}] = {newresults[j]} @ {lattice[i]}")
-                else:
-                    oval, oerr = results[i]
-                    nval, nerr = newresults[j]
-                    k = np.sqrt((np.real(oerr) + np.imag(oerr))/(np.real(nerr) + np.imag(nerr)))
-                    p = lattice[i]/oldlattice[i]
-                    log(f"int[{i}] = {newresults[j]} @ {lattice[i]} ({k:.2g}x precision at {p:.1f}x lattice)")
-                    if k < 1.0:
-                        # Unlucky lattice size; replace the result with the old one.
-                        newresults[j] = results[i]
-                results[i] = newresults[j]
-                j += 1
-        oldlattice = lattice
-        vals = np.array([v for v, e in results])
-        errs = np.array([e for v, e in results])
-        val = W @ vals
-        var = W2 @ errs
-        # Regulate 0/0
-        absvar = np.real(var) + np.imag(var)
-        relerr = np.sqrt(absvar/abs2(val))
-        relerr[absvar == 0] = 0
-        relerr = np.max(relerr)
-        log("val =", val)
-        log("relerr =", relerr)
-        if relerr < epsrel:
-            log("precision reached")
-            for i in range(len(integrals)):
-                log(f"lattice[{i}] = {lattice[i]}")
-            return val, var
-        tau = np.array([par.C_by_kernel[wi.iname, wi.kname] for wi in integrals])
-        v = np.array([(np.real(errs[i]) + np.imag(errs[i])) * lattice[i]**scaling for i in range(len(integrals))])
-        n = adjust_n(W2, abs2(val)*epsrel**2, v, scaling, tau, np.array(lattice))
-        n = np.clip(n, lattice, np.array(lattice)*K)
-        newlattice, newgenvec = zip(*[
-            generating_vector(wi.dim, n[i])
-            for i, wi in enumerate(integrals)
-        ])
-        # Ugh. Do something smarter here.
-        assert newlattice != lattice
-        for i, (l1, l2) in enumerate(zip(lattice, newlattice)):
-            if l1 != l2:
-                log(f"lattice[{i}] = {l1} -> {l2} ({l2/l1:.1f}x)")
-        lattice, genvec = newlattice, newgenvec
-
 # Main
 
 async def benchmark_worker(w):
     lattice, genvec = generating_vector(2, 10**3)
-    shift = np.array([0.3, 0.8])
-    realp = np.array([2.0, 0.1, 0.2, 0.3])
-    deformp = np.array([1.0, 1.0])
+    shift = ([0.3, 0.8])
+    deformp = ([1.0, 1.0])
     # Measure round-trip latency.
     latency = []
     for i in range(4):
@@ -382,23 +215,23 @@ async def benchmark_worker(w):
     w.latency = latency = np.mean(latency)
     # Calculate worker's total per-message overhead by how many
     # empty jobs can it do per second.
+    t0 = time.time()
     bench0 = await asyncio.gather(*[
-        await mktask(w.call("integrate", "builtin", "gauge", 2, lattice, 0, lattice,
-            genvec, shift, realp, None, deformp, True))
-        for i in range(50)
+        w.call("integrate", 0, lattice, 0, 1, genvec, shift, deformp)
+        for i in range(1000)
     ])
     t1 = time.time()
-    w.overhead = (t1-t0-latency)/len(bench0)
+    dt0 = min(dt for v, dn, dt in bench0)
+    w.int_overhead = dt0
+    w.overhead = max(w.int_overhead, (t1-t0-latency)/len(bench0))
     # Give the worker a big enough job so that the linear part of
     # the scaling would dominate over the integration overhead.
     # Figure out FLOPS that way.
-    dt0 = min(dt for v, dn, dt in bench0)
-    w.int_overhead = dt0
-    for k in (5,6,7,8,9):
+    for k in (6,7,8,9):
         lattice, genvec = generating_vector(2, 10**k)
-        v, dn, dt = await w.call("integrate", "builtin", "gauge",
-                2, lattice, 0, lattice, genvec, shift, realp, None, deformp, True)
-        if dt > dt0*100:
+        v, dn, dt = await w.call("integrate", 0,
+                lattice, 0, lattice, genvec, shift, deformp)
+        if dt > dt0*1000:
             break
     w.speed = dn/(dt - dt0)
 
@@ -422,6 +255,8 @@ def bracket(expr, varlist):
     return result
 
 def ginsh_series(ex, var, order):
+    if not ex.has(var):
+        return ex
     hashed = {}
     def hashfn(m):
         v = f"hash{len(hashed)}"
@@ -429,7 +264,7 @@ def ginsh_series(ex, var, order):
         return v
     text = str(ex).replace("**", "^")
     text = re.sub(r"polygamma\(([^)]*)\)", hashfn, text)
-    with open("/tmp/ginsh.txt", "w") as f:
+    with tempfile.NamedTemporaryFile(prefix="psd_ginsh", mode="w") as f:
         f.write("START;\nseries((")
         f.write(text)
         f.write("),(")
@@ -437,9 +272,11 @@ def ginsh_series(ex, var, order):
         f.write("),(")
         f.write(str(order))
         f.write("));\nquit;")
-    subprocess.check_call("ginsh /tmp/ginsh.txt > /tmp/ginsh.out", shell=True)
-    with open("/tmp/ginsh.out", "r") as f:
-        text = f.read()
+        f.flush()
+        subprocess.check_call(f"ginsh {f.name} > {f.name}.out", shell=True)
+        with open(f"{f.name}.out", "r") as f2:
+            text = f2.read()
+        os.unlink(f"{f.name}.out")
     text = re.sub(r".*START\n", "", text, flags=re.DOTALL)
     text = re.sub(r"[+]Order\([^)]*\)", "", text, flags=re.DOTALL)
     text = text.strip()
@@ -462,7 +299,24 @@ def series_bracket(expr, varlist, orderlist):
             result[(power,)] = coef
     return result
 
-async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, valuemap):
+def adjust_n(W2, V, v, a, tau, n0):
+    assert np.all(V>0)
+    #lam = (1/V * (W2**(1/(a+1)) @ (v * (a*v/tau)**(-a/(a+1)))))**((a+1)/a)
+    lam = (1/V * (W2**(1/(a+1)) @ (v**(1/(a+1)) * (tau/a)**(a/(a+1)))))**((a+1)/a)
+    n = (a*v/tau * np.max((lam * W2.T).T, axis=0))**(1/(a+1))
+    # Same as above, but taking into account that we already did
+    # n0 points per integral.
+    while np.any(n < n0) and np.any(n > n0):
+        mask = n > n0
+        n[~mask] = n0[~mask]
+        VV = V - W2[:,~mask] @ (v[~mask]/n0[~mask]**a)
+        VV = np.maximum(VV, np.zeros_like(VV))
+        lam = (1/VV * (W2[:,mask]**(1/(a+1)) @ (v[mask] * (a*v[mask]/tau[mask])**(-a/(a+1)))))**((a+1)/a)
+        nn = (a*v[mask]/tau[mask] * np.max((lam * W2[:,mask].T).T, axis=0))**(1/(a+1))
+        n[mask] = nn
+    return n
+
+async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap):
     # Load the integrals from the requested json file
     t0 = time.time()
 
@@ -471,62 +325,73 @@ async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, value
 
     sp_regulators = sp.var(info["regulators"])
     requested_orders = info["requested_orders"]
-    orders = {}
+    ap2coeffs = {} # (ampid, powerlist) -> coeflist
     if info["type"] == "integral":
         infos = {info["name"] : info}
-        kernels = {}
+        kernel2idx = {}
         for k in info["kernels"]:
-            kernels[info["name"], k] = len(kernels)
-        log(f"got the total of {len(kernels)} kernels")
-        split_integral_into_orders(orders, 0, kernels, info, 1, valuemap, sp_regulators, requested_orders)
+            kernel2idx[info["name"], k] = len(kernel2idx)
+        log(f"got the total of {len(kernel2idx)} kernels")
+        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, 1, valuemap, sp_regulators, requested_orders)
     elif info["type"] == "sum":
         log(f"loading {len(info['integrals'])} integrals")
         infos = {}
-        kernels = {}
+        kernel2idx = {}
         for i in info["integrals"]:
             with open(os.path.join(dirname, f"{i}.json"), "r") as f:
                 infos[i] = json.load(f)
                 assert infos[i]["name"] == i
             for k in infos[i]["kernels"]:
-                kernels[i, k] = len(kernels)
-        log(f"got the total of {len(kernels)} kernels")
+                kernel2idx[i, k] = len(kernel2idx)
+        log(f"got the total of {len(kernel2idx)} kernels")
         log("loading amplitude coefficients")
-        #filename2co = {}
         for a, terms in enumerate(info["sums"]):
             for t in terms:
                 log("-", t["coefficient"])
-                #co = filename2co.get(t["coefficient"])
-                ##if co is None:
                 co = load_coefficient(os.path.join(dirname, t["coefficient"]), valuemap)
-                #    filename2co[t["coefficient"]] = co
-                split_integral_into_orders(orders, a, kernels, infos[t["integral"]], co, valuemap, sp_regulators, requested_orders)
-        #filename2co = None
+                split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], co, valuemap, sp_regulators, requested_orders)
     else:
         raise ValueError(f"unknown type: {info['type']}")
+    korders = {}
+    for fam, ii in infos.items():
+        for i, oo in enumerate(ii["orders"]):
+            for ker in oo["kernels"]:
+                korders.setdefault((fam, ker), i)
 
     realp = {
-        i : np.array([valuemap[p] for p in info["realp"]], dtype=np.float64) \
-                if info["realp"] else None
+        i : [valuemap[p] for p in info["realp"]]
         for i, info in infos.items()
     }
     complexp = {
-        i : np.array([valuemap[p] for p in info["complexp"]], dtype=np.complex128) \
-                if info["complexp"] else None
+        i : [(np.real(valuemap[p]), np.imag(valuemap[p])) for p in info["complexp"]]
         for i, info in infos.items()
     }
-    W = np.stack([w for w in orders.values()])
+    family2idx = {fam:i for i, fam in enumerate(infos.keys())}
+    W = np.stack([w for w in ap2coeffs.values()])
+    W2 = abs2(W)
+    log(f"will consider {len(ap2coeffs)} sums:")
+    for a, p in sorted(ap2coeffs.keys()):
+        log(f"- amp{a},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
 
     # Launch all the workers
     t1 = time.time()
 
-    par0 = PlainScheduler()
+    par = RandomScheduler()
 
     async def add_worker(cmd):
         w = await launch_worker(cmd, dirname)
-        par.workers.append(w)
-        par0.add_worker(w)
-        await w.call("load", [os.path.join(dirname, ii["name"] + ".json") for ii in infos.values()])
+        await w.call("family", 0, "builtin", 2, (2.0, 0.1, 0.2, 0.3), (), True)
+        await w.call("kernel", 0, 0, "gauge")
+        await w.multicall([
+            ("family", (i+1, fam, info["dimension"], realp[fam], complexp[fam], info["complex_result"]))
+            for i, (fam, info) in enumerate(infos.items())
+        ])
+        await w.multicall([
+            ("kernel", (i+1, family2idx[fam]+1, ker))
+            for (fam, ker), i in kernel2idx.items()
+        ])
         await benchmark_worker(w)
+        par.add_worker(w)
     await asyncio.gather(*[add_worker(cmd) for cmd in workers])
     log("workers:")
     for w in par.workers:
@@ -534,19 +399,125 @@ async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, value
 
     # Presample all kernels
     t2 = time.time()
-    deformp = await asyncio.gather(*[
-        await mktask(presample(par0, fam, ker, infos[fam]["dimension"], npoints,
-            realp[fam], complexp[fam], infos[fam]["deformp_count"]))
-        for fam, ker in kernels.keys()
-    ])
+    log("distributing presampling jobs")
+    results = []
+    for i, (fam, ker) in enumerate(kernel2idx.keys()):
+        lattice, genvec = generating_vector(infos[fam]["dimension"], npresample)
+        f = par.call("maxdeformp", i+1, infos[fam]["deformp_count"],
+            lattice, genvec, np.random.rand(infos[fam]["dimension"]).tolist())
+        results.append(f)
+    log("waiting for the presampling results")
+    deformp = await asyncio.gather(*results)
+    deformp = [[min(max(x, 1e-6), 1.0) for x in defp] for defp in deformp]
+    for i, d in enumerate(deformp):
+        log(f"maxdeformp of k{i} is {d}")
 
     # Integrate the weighted sum
     t3 = time.time()
-    ints = [
-        WeightedIntegral(fam, ker, infos[fam]["dimension"], realp[fam], complexp[fam], defp, infos[fam]["complex_result"])
-        for (fam, ker), defp in zip(kernels.keys(), deformp)
-    ]
-    value, variance = await integrate_weighted_sums(par, W, ints, epsrel, nshifts=nshifts, npoints0=npoints)
+
+    fams = [fam for fam, ker in kernel2idx.keys()]
+    dims = [infos[fam]["dimension"] for fam in fams]
+    genvecs = [None] * len(kernel2idx)
+    oldlattices = np.zeros(len(kernel2idx), dtype=np.float64)
+    lattices = np.zeros(len(kernel2idx), dtype=np.float64)
+    for i, ((fam, ker), defp) in enumerate(zip(kernel2idx.keys(), deformp)):
+        dim = infos[fam]["dimension"]
+        lattices[i], genvecs[i] = generating_vector(dim, npoints0)
+    shift_val = np.zeros((len(kernel2idx), nshifts), dtype=np.complex128)
+    shift_tag = np.full((len(kernel2idx), nshifts), None, dtype=np.object)
+    kern_db = np.ones(len(kernel2idx))
+    kern_di = np.ones(len(kernel2idx))
+    kern_val = np.zeros(len(kernel2idx), dtype=np.complex128)
+    kern_var = np.full(len(kernel2idx), np.inf, dtype=np.complex128)
+
+    def int_cb(result, exception, w, idx, shift):
+        (re, im), di, dt = result
+        if math.isnan(re) or math.isnan(im):
+            for s in range(nshifts):
+                par.cancel_cb(shift_tag[idx, s])
+            deformp[idx] = tuple(p*0.9 for p in deformp[idx])
+            log(f"got NaN from k{idx}; decreasing deformp by 0.9")
+            schedule_kernel(idx)
+        else:
+            kern_db[idx] += dt*w.speed
+            kern_di[idx] += di
+            shift_val[idx, shift] = complex(re, im)
+
+    def schedule_kernel(idx):
+        for s in range(nshifts):
+            shift_tag[idx, s] = par.call_cb("integrate",
+                (idx+1, int(lattices[idx]), 0, int(lattices[idx]), genvecs[idx],
+                np.random.rand(dims[idx]).tolist(),
+                deformp[idx]),
+                int_cb, (idx, s))
+
+    while True:
+        log("distributing integration jobs")
+        for i, ((fam, ker), defp) in enumerate(zip(kernel2idx.keys(), deformp)):
+            if np.all(W[:, i] == 0):
+                log(f"- k{i} -> skip")
+                continue
+            if lattices[i] == oldlattices[i]:
+                continue
+            dim = infos[fam]["dimension"]
+            schedule_kernel(i)
+            asyncio.sleep(0)
+        log("worker queue sizes:")
+        for w in par.workers:
+            log(f"- {w.name}: {w.queue_size()}")
+        log("waiting")
+        while par.queue_size() > 0:
+            log(f"still todo: {par.queue_size()}")
+            await asyncio.sleep(1)
+        log("integration done")
+        new_kern_val = np.mean(shift_val, axis=1)
+        new_kern_val /= lattices
+        new_kern_var = np.var(np.real(shift_val), axis=1) + (1j)*np.var(np.imag(shift_val), axis=1)
+        new_kern_var /= lattices**2 * nshifts
+        lucky = new_kern_var < kern_var
+        kern_val[lucky] = new_kern_val[lucky]
+        kern_var[lucky] = new_kern_var[lucky]
+        log(f"unlucky results: {np.count_nonzero(~lucky)}")
+
+        amp_val = W @ kern_val
+        amp_var = W2 @ kern_var
+        amp_absval = np.sqrt(abs2(amp_val))
+        amp_abserr = np.sqrt(np.real(amp_var) + np.imag(amp_var))
+        log("absval =", amp_absval)
+        log("abserr =", amp_abserr)
+        amp_relerr = amp_abserr/amp_absval
+        amp_relerr[amp_abserr == 0] = 0
+        log("relerr =", amp_relerr)
+        amp_maxerr = np.maximum(epsabs, amp_absval*epsrel)
+        log("max abserr =", amp_maxerr)
+        log("abserr K =", amp_abserr/amp_maxerr)
+        if np.all(amp_abserr <= amp_maxerr):
+            log("precision reached")
+            for i in range(len(kernel2idx)):
+                log(f"lattice[k{i}] = {lattices[i]:.3e}")
+            break
+        tau = kern_db/kern_di
+        scaling = 2
+        K = 10
+        kern_absvar = np.real(kern_var) + np.imag(kern_var)
+        v = kern_absvar * lattices**scaling
+        n = adjust_n(W2, amp_maxerr**2, v, scaling, tau, lattices)
+        n = np.clip(n, lattices, lattices*K)
+        toobig = n >= lattices*K
+        if np.any(toobig):
+            n[toobig] = lattices[toobig]*K
+            toosmall = n < lattices*(K/2)
+            n[toosmall] = lattices[toosmall]
+        newlattices = np.zeros(len(kernel2idx), dtype=np.float64)
+        newgenvecs = [None] * len(kernel2idx)
+        for i in range(len(kernel2idx)):
+            newlattices[i], newgenvecs[i] = generating_vector(dims[i], n[i])
+        # Ugh. Do something smarter here.
+        assert np.any(newlattices != lattices)
+        for i, (l1, l2) in enumerate(zip(lattices, newlattices)):
+            if l1 != l2:
+                log(f"lattice[k{i}] = {l1} -> {l2} ({l2/l1:.1f}x)")
+        oldlattices, lattices, genvecs = lattices, newlattices, newgenvecs
 
     # Report the results
     t4 = time.time()
@@ -555,20 +526,20 @@ async def doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, value
     log("presampling time:", t3-t2)
     log("integration time:", t4-t3)
 
-    ampids = sorted(set(a for a, p in orders.keys()))
+    ampids = sorted(set(a for a, p in ap2coeffs.keys()))
     for ampid in ampids:
         relerr = []
         print("(")
-        for (a, p), val, var in sorted(zip(orders.keys(), value, variance)):
+        for (a, p), val, var in sorted(zip(ap2coeffs.keys(), amp_val, amp_var)):
             if a != ampid: continue
             stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
             err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
-            print(f"  +{stem}*({val:+.18e})")
-            print(f"  +{stem}*({err:+.18e})*plusminus")
+            print(f"  +{stem}*({val:+.16e})")
+            print(f"  +{stem}*({err:+.16e})*plusminus")
             relerr.append(np.abs(err/val))
         print(")")
+        sys.stdout.flush()
         log(f"amplitude {ampid+1} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
-    sys.stdout.flush()
 
 def load_cluster_json(jsonfile, dirname):
     try:
@@ -582,14 +553,14 @@ def load_cluster_json(jsonfile, dirname):
         log(f"Can't find {jsonfile}; will run locally")
         pass
     ncpu = ncuda = 0
-    if os.path.exists(os.path.join(dirname, "builtin_cpu.so")):
+    if os.path.exists(os.path.join(dirname, "builtin.so")):
         try:
             ncpu = max(1, len(os.sched_getaffinity(0)) - 1)
         except AttributeError:
             ncpu = max(1, os.cpu_count() - 1)
     else:
         log(f"CPU worker data was not built, skipping")
-    if os.path.exists(os.path.join(dirname, "builtin_cuda.fatbin")):
+    if os.path.exists(os.path.join(dirname, "builtin.fatbin")):
         try:
             import pycuda.driver
             pycuda.driver.init()
@@ -601,8 +572,8 @@ def load_cluster_json(jsonfile, dirname):
         log(f"CUDA worker data was not built, skipping")
     return {
         "cluster": [
-            {"count": ncpu, "command": f"nice python3 -m pySecDec.dworker --cpu"},
-            {"count": ncuda, "command": f"nice python3 -m pySecDec.dworker --cuda"}
+            {"count": ncpu, "command": f"nice python3 -m pySecDecWorker --cpu"},
+            {"count": ncuda, "command": f"nice python3 -m pySecDecWorker --cuda"}
         ]
     }
 
@@ -622,35 +593,41 @@ def load_coefficient(filename, valuemap):
         if key == "regulator_factor": coeff *= value
     return coeff
 
-def split_integral_into_orders(orders, oidx, kernels, info, coefficient, valmap, sp_regulators, requested_orders):
+def split_integral_into_orders(orders, ampid, kernel2idx, info, coefficient, valmap, sp_regulators, requested_orders):
     highest_orders = np.min([o["regulator_powers"] for o in info["orders"]], axis=0)
     prefactor = series_bracket(coefficient*sp.sympify(info["prefactor"]).subs(valmap), sp_regulators, -highest_orders + requested_orders)
     prefactor = {p : complex(c) for p, c in prefactor.items()}
+    oo = {}
     for o in info["orders"]:
         powers = np.array(o["regulator_powers"])
         for pow, coef in prefactor.items():
             p = powers + pow
             c = complex(coef)
-            if np.all(p <= info["requested_orders"]):
-                orders.setdefault((oidx, tuple(p)), np.zeros(len(kernels), dtype=np.complex128))
+            if np.all(p <= requested_orders):
+                key = (ampid, tuple(p.tolist()))
+                orders.setdefault(key, np.zeros(len(kernel2idx), dtype=np.complex128))
+                oo.setdefault(key, np.zeros(len(kernel2idx), dtype=np.complex128))
                 for k in o["kernels"]:
-                    orders[oidx, tuple(p)][kernels[info["name"], k]] += coef
+                    orders[key][kernel2idx[info["name"], k]] += coef
+                    oo[key][kernel2idx[info["name"], k]] += coef
 
 def main():
 
     valuemap = {}
-    npoints = 10**5
+    npoints = 10**4
+    epsabs = 1e-10
     epsrel = 1e-4
     nshifts = 32
     clusterfile = None
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "epsrel=", "points=", "shifts=", "help"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "epsabs=", "epsrel=", "points=", "shifts=", "help"])
     except getopt.GetoptError as e:
         print(e, file=sys.stderr)
         print("use --help to see the usage", file=sys.stderr)
         exit(1)
     for key, value in opts:
         if key == "--cluster": clusterfile = value
+        elif key == "--epsabs": epsabs = float(value)
         elif key == "--epsrel": epsrel = float(value)
         elif key == "--points": npoints = int(float(value))
         elif key == "--shifts": nshifts = int(float(value))
@@ -663,13 +640,20 @@ def main():
     intfile = args[0]
     dirname = os.path.dirname(intfile)
     clusterfile = os.path.join(dirname, "cluster.json") if clusterfile is None else clusterfile
+    log("Settings:")
+    log(f"- file = {intfile}")
+    log(f"- epsabs = {epsabs}")
+    log(f"- epsrel = {epsrel}")
+    log(f"- points = {npoints}")
+    log(f"- shifts = {nshifts}")
+    log("Invariants:")
     for arg in args[1:]:
         if "=" not in arg: raise ValueError(f"Bad argument: {arg}")
         key, value = arg.split("=", 1)
         value = complex(value)
         value = value.real if value.imag == 0 else value
         valuemap[key] = value
-        log(f"{key} = {value}")
+        log(f"- {key} = {value}")
 
     # Load worker list
     cluster = load_cluster_json(clusterfile, dirname)
@@ -680,13 +664,9 @@ def main():
         log("No workers defined")
         exit(1)
 
-    # Start the scheduler and begin evaluation
-    par = Scheduler()
-
+    # Begin evaluation
     loop = asyncio.get_event_loop()
-    scheduler = loop.create_task(par.schedule_periodically())
-    loop.run_until_complete(doeval(par, workers, dirname, intfile, epsrel, npoints, nshifts, valuemap))
-    scheduler.cancel()
+    loop.run_until_complete(doeval(workers, dirname, intfile, epsabs, epsrel, npoints*10, npoints, nshifts, valuemap))
 
 if __name__ == "__main__":
     main()

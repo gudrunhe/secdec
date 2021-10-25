@@ -510,7 +510,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__maxdeformp(
         realvec_t ${v} = {{ ${li_list} }};
         ${v} = warponce(${v} + shift[${j}], 1);
 @@     for j, v in enumerate(intvars):
-        ${v} = clamp01(korobov1_f(${v}));
+        ${v} = clamp01(korobov3_f(${v}));
 @@     code = cleanup_code(i.order_optimizeDeformationParametersBody)
 @@     for line in code.splitlines():
         ${line}
@@ -556,7 +556,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__fpolycheck(
         realvec_t ${v} = {{ ${li_list} }};
         ${v} = warponce(${v} + shift[${j}], 1);
 @@     for j, v in enumerate(intvars):
-        ${v} = clamp01(korobov1_f(${v}));
+        ${v} = clamp01(korobov3_f(${v}));
 @@     code = cleanup_code(i.order_contourDeformationPolynomialBody)
 @@     for line in code.splitlines():
         ${line.replace("return(", "auto fpoly_im = SecDecInternalImagPart(")}
