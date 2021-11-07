@@ -430,7 +430,7 @@ namespace %(name)s
             (
                 real_parameters,
                 complex_parameters
-                #if %(sub_integral_name)s_contour_deformation
+                #if %(name)s_contour_deformation
                     ,number_of_presamples,
                     deformation_parameters_maximum,
                     deformation_parameters_minimum,
