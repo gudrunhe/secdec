@@ -311,7 +311,7 @@ def adjust_n(W2, V, v0, a, tau, n0):
         n[~mask] = n0[~mask]
         VV = V - W2[:,~mask] @ (v0[~mask]/n0[~mask]**a)
         VV = np.maximum(VV, np.zeros_like(VV))
-        lam = (1/VV * (W2[:,mask]**(1/(a+1)) @ (v0[mask]**(1/(a+1) * (a/tau[mask])**(-a/(a+1)))))**((a+1)/a)
+        lam = (1/VV * (W2[:,mask]**(1/(a+1)) @ (v0[mask]**(1/(a+1)) * (a/tau[mask])**(-a/(a+1)))))**((a+1)/a)
         nn = (a*v0[mask]/tau[mask] * np.max((lam * W2[:,mask].T).T, axis=0))**(1/(a+1))
         n[mask] = nn
     return n
