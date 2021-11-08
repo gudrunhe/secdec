@@ -14,9 +14,9 @@ if __name__ == "__main__":
     worker_type = "cpu"
     for arg in sys.argv[1:]:
         if arg == "--cpu": worker_type = "cpu"
-        elif arg == "--cuda":
-            raise ValueError(f"CUDA worker does not work yet")
+        elif arg == "--cuda": worker_type = "cuda"
         else:
             raise ValueError(f"Unknown option: {arg}")
     binpath = os.path.join(pySecDecContrib.dirname, "bin", f"pysecdec_{worker_type}worker")
     os.execl(binpath, binpath)
+    os.exit(1)

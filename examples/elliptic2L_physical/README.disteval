@@ -43,8 +43,8 @@ Search for "avx2" and "fma" in /proc/cpuinfo to verify.
 
 If you are only running locally, consider using CXXFLAGS="-march=native"
 to allow the compiler to use all instructions your processor
-supports (libraries built this way will likely not work on other
-machines).
+supports (beware that libraries built this way will likely not
+work on other machines).
 
 # GPU workers
 
