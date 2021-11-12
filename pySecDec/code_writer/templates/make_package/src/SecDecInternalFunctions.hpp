@@ -258,16 +258,22 @@ namespace %(name)s
     INT_COMPLEX(/)
     #undef INT_COMPLEX
 
-    static inline real_t SecDecInternalRealPart(const real_t x) { return x; }
-    static inline real_t SecDecInternalRealPart(const complex_t x) { return x.real(); }
-    static inline real_t SecDecInternalImagPart(const real_t x) { return 0; }
-    static inline real_t SecDecInternalImagPart(const complex_t x) { return x.imag(); }
-    static inline complex_t SecDecInternalI(const real_t x) { return complex_t{0, x}; }
-    static inline complex_t SecDecInternalI(const complex_t x) { return complex_t{-x.imag(), x.real()}; }
+    #ifdef SECDEC_WITH_CUDA
+        #define SecDecFn __host__ __device__ static inline
+     #else
+        #define SecDecFn static inline
+    #endif
+    SecDecFn real_t SecDecInternalRealPart(const real_t x) { return x; }
+    SecDecFn real_t SecDecInternalRealPart(const complex_t x) { return x.real(); }
+    SecDecFn real_t SecDecInternalImagPart(const real_t x) { return 0; }
+    SecDecFn real_t SecDecInternalImagPart(const complex_t x) { return x.imag(); }
+    SecDecFn complex_t SecDecInternalI(const real_t x) { return complex_t{0, x}; }
+    SecDecFn complex_t SecDecInternalI(const complex_t x) { return complex_t{-x.imag(), x.real()}; }
 
     #undef %(name)s_contour_deformation
     #undef %(name)s_has_complex_parameters
     #undef %(name)s_enforce_complex_return_type
+    #undef SecDecFn
 
     // --}
 
