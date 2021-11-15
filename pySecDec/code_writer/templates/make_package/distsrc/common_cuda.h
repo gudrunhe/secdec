@@ -1,5 +1,6 @@
 #pragma diag_suppress 177 // disable the "function was declared but never referenced" warning
 
+#include <cinttypes>
 #include <cub/block/block_reduce.cuh>
 #include <thrust/complex.h>
 
@@ -54,17 +55,17 @@ mathfn real_t korobov4_w(real_t x) { auto xx = (1 - x)*x; auto xx2 = xx*xx; retu
 mathfn real_t korobov5_f(real_t x) { auto x3 = x*x*x; return x3*x3*((((((-252)*x + 1386)*x - 3080)*x + 3465)*x - 1980)*x + 462); }
 mathfn real_t korobov5_w(real_t x) { auto xx = (1 - x)*x; auto xx2 = xx*xx; return xx2*xx2*xx*2772; }
 
-mathfn unsigned long mulmod(unsigned long a, unsigned long b, unsigned long k) {
+mathfn uint64_t mulmod(uint64_t a, uint64_t b, uint64_t k) {
     // assume 0 <= a,b <= k < 2^53
     if (k <= 3037000499) { // floor(Int, sqrt(2^63-1))
         return (a*b) %% k;
     } else {
         auto x = static_cast<double>(a);
-        auto c = static_cast<unsigned long>( (x*b) / k );
-        auto r = static_cast<signed long>( (a*b) - (c*k) ) %% static_cast<signed long>(k);
-        return r < 0 ? static_cast<unsigned long>(r+k) : static_cast<unsigned long>(r);
+        auto c = static_cast<uint64_t>( (x*b) / k );
+        auto r = static_cast<int64_t>( (a*b) - (c*k) ) %% static_cast<int64_t>(k);
+        return r < 0 ? static_cast<uint64_t>(r+k) : static_cast<uint64_t>(r);
     }
 }
 
 mathfn real_t warponce(const real_t a, const real_t b) { return a >= b ? a - b : a; }
-mathfn unsigned long warponce_i(const unsigned long a, const unsigned long b) { return a >= b ? a - b : a; }
+mathfn uint64_t warponce_i(const uint64_t a, const uint64_t b) { return a >= b ? a - b : a; }

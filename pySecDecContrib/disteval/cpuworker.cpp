@@ -21,10 +21,10 @@ typedef struct { double re, im; } complex_t;
 
 typedef int (*IntegrateF)(
     void * presult,
-    const unsigned long lattice,
-    const unsigned long index1,
-    const unsigned long index2,
-    const unsigned long * genvec,
+    const uint64_t lattice,
+    const uint64_t index1,
+    const uint64_t index2,
+    const uint64_t * genvec,
     const real_t * shift,
     const real_t * realp,
     const complex_t * complexp,
@@ -33,20 +33,20 @@ typedef int (*IntegrateF)(
 
 typedef void (*MaxdeformpF)(
     real_t * deformp,
-    const unsigned long lattice,
-    const unsigned long index1,
-    const unsigned long index2,
-    const unsigned long * genvec,
+    const uint64_t lattice,
+    const uint64_t index1,
+    const uint64_t index2,
+    const uint64_t * genvec,
     const real_t * shift,
     const real_t * realp,
     const complex_t * complexp
 );
 
 typedef int (*FpolycheckF)(
-    const unsigned long lattice,
-    const unsigned long index1,
-    const unsigned long index2,
-    const unsigned long * genvec,
+    const uint64_t lattice,
+    const uint64_t index1,
+    const uint64_t index2,
+    const uint64_t * genvec,
     const real_t * shift,
     const real_t * realp,
     const complex_t * complexp,

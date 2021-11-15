@@ -7,10 +7,10 @@
 extern "C" int
 builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, order=0
     result_t * restrict presult,
-    const unsigned long lattice,
-    const unsigned long index1,
-    const unsigned long index2,
-    const unsigned long * restrict genvec,
+    const uint64_t lattice,
+    const uint64_t index1,
+    const uint64_t index2,
+    const uint64_t * restrict genvec,
     const real_t * restrict shift,
     const real_t * restrict realp,
     const complex_t * restrict complexp,
@@ -25,7 +25,7 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
     const real_t SecDecInternalLambda1 = deformp[1];
     const real_t invlattice = 1.0/lattice;
     resultvec_t acc = RESULTVEC_ZERO;
-    unsigned long index = index1;
+    uint64_t index = index1;
     int_t li_x0 = mulmod(genvec[0], index, lattice);
     int_t li_x1 = mulmod(genvec[1], index, lattice);
     for (; index < index2; index += 4) {

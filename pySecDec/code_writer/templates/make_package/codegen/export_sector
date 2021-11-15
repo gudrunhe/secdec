@@ -426,10 +426,10 @@ DIST_SECTOR_ORDER_CPP = template_writer("""\
 extern "C" int
 ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
     result_t * restrict presult,
-    const unsigned long lattice,
-    const unsigned long index1,
-    const unsigned long index2,
-    const unsigned long * restrict genvec,
+    const uint64_t lattice,
+    const uint64_t index1,
+    const uint64_t index2,
+    const uint64_t * restrict genvec,
     const real_t * restrict shift,
     const real_t * restrict realp,
     const complex_t * restrict complexp,
@@ -445,7 +445,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ pass
     const real_t invlattice = 1.0/lattice;
     resultvec_t acc = RESULTVEC_ZERO;
-    unsigned long index = index1;
+    uint64_t index = index1;
 @@ intvars = getlist(i.order_integrationVariables)
 @@ for j, v in enumerate(intvars):
     int_t li_${v} = mulmod(genvec[${j}], index, lattice);
@@ -480,10 +480,10 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 extern "C" void
 ${i.namespace}__sector_${i.sector}_order_${i.order_name}__maxdeformp(
     real_t * restrict maxdeformp,
-    const unsigned long lattice,
-    const unsigned long index1,
-    const unsigned long index2,
-    const unsigned long * restrict genvec,
+    const uint64_t lattice,
+    const uint64_t index1,
+    const uint64_t index2,
+    const uint64_t * restrict genvec,
     const real_t * restrict shift,
     const real_t * restrict realp,
     const complex_t * restrict complexp
@@ -497,7 +497,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__maxdeformp(
 @@     deformp_init = ', '.join(['REALVEC_CONST(10.0)']*ndeformp)
     const real_t invlattice = 1.0/lattice;
     realvec_t deformp[${ndeformp}] = { ${deformp_init} };
-    unsigned long index = index1;
+    uint64_t index = index1;
 @@     intvars = getlist(i.order_integrationVariables)
 @@     for j, v in enumerate(intvars):
     int_t li_${v} = mulmod(genvec[${j}], index, lattice);
@@ -525,10 +525,10 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__maxdeformp(
 
 extern "C" int
 ${i.namespace}__sector_${i.sector}_order_${i.order_name}__fpolycheck(
-    const unsigned long lattice,
-    const unsigned long index1,
-    const unsigned long index2,
-    const unsigned long * restrict genvec,
+    const uint64_t lattice,
+    const uint64_t index1,
+    const uint64_t index2,
+    const uint64_t * restrict genvec,
     const real_t * restrict shift,
     const real_t * restrict realp,
     const complex_t * restrict complexp,
@@ -543,7 +543,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__fpolycheck(
     const real_t ${v} = deformp[${j}];
 @@     pass
     const real_t invlattice = 1.0/lattice;
-    unsigned long index = index1;
+    uint64_t index = index1;
 @@     intvars = getlist(i.order_integrationVariables)
 @@     for j, v in enumerate(intvars):
     int_t li_${v} = mulmod(genvec[${j}], index, lattice);
@@ -578,10 +578,10 @@ DIST_SECTOR_ORDER_CU = template_writer("""\
 extern "C" __global__ void
 ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
     result_t * __restrict__ result,
-    const unsigned long lattice,
-    const unsigned long index1,
-    const unsigned long index2,
-    const unsigned long * __restrict__ genvec,
+    const uint64_t lattice,
+    const uint64_t index1,
+    const uint64_t index2,
+    const uint64_t * __restrict__ genvec,
     const real_t * __restrict__ shift,
     const real_t * __restrict__ realp,
     const complex_t * __restrict__ complexp,
@@ -600,10 +600,10 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ pass
     const real_t invlattice = 1.0/lattice;
     result_t val = 0.0;
-    unsigned long index = index1 + (bid*128 + tid)*8;
+    uint64_t index = index1 + (bid*128 + tid)*8;
 @@ intvars = getlist(i.order_integrationVariables)
 @@ for j, v in enumerate(intvars):
-    unsigned long li_${v} = mulmod(index, genvec[${j}], lattice);
+    uint64_t li_${v} = mulmod(index, genvec[${j}], lattice);
 @@ pass
     for (int i = 0; (i < 8) && (index < index2); i++, index++) {
 @@ for j, v in enumerate(intvars):

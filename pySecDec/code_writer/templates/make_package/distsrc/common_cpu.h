@@ -37,15 +37,15 @@ mathfn real_t SecDecInternalAbs(const complex_t &a) { return std::abs(a); }
 mathfn complex_t SecDecInternalI(const real_t &a) { return complex_t{0, a}; }
 mathfn complex_t SecDecInternalI(const complex_t &a) { return complex_t{-a.imag(), a.real()}; }
 
-static unsigned long mulmod(unsigned long a, unsigned long b, unsigned long k) {
+static uint64_t mulmod(uint64_t a, uint64_t b, uint64_t k) {
     // assume 0 <= a,b <= k < 2^53
     if (k <= 3037000499) { // floor(Int, sqrt(2^63-1))
         return (a*b) %% k;
     } else {
         auto x = static_cast<double>(a);
-        auto c = static_cast<unsigned long>( (x*b) / k );
-        auto r = static_cast<signed long>( (a*b) - (c*k) ) %% static_cast<signed long>(k);
-        return r < 0 ? static_cast<unsigned long>(r+k) : static_cast<unsigned long>(r);
+        auto c = static_cast<uint64_t>( (x*b) / k );
+        auto r = static_cast<int64_t>( (a*b) - (c*k) ) %% static_cast<int64_t>(k);
+        return r < 0 ? static_cast<uint64_t>(r+k) : static_cast<uint64_t>(r);
     }
 }
 

@@ -39,10 +39,10 @@ sum_kernel(sum_c_b128_x1024, complex_t)
 extern "C" __global__ void
 builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, order=0
     result_t * __restrict__ result,
-    const unsigned long lattice,
-    const unsigned long index1,
-    const unsigned long index2,
-    const unsigned long * __restrict__ genvec,
+    const uint64_t lattice,
+    const uint64_t index1,
+    const uint64_t index2,
+    const uint64_t * __restrict__ genvec,
     const real_t * __restrict__ shift,
     const real_t * __restrict__ realp,
     const complex_t * __restrict__ complexp,
@@ -60,9 +60,9 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
     const real_t SecDecInternalLambda1 = deformp[1];
     const real_t invlattice = 1.0/lattice;
     result_t val = 0.0;
-    unsigned long index = index1 + (bid*128 + tid)*8;
-    unsigned long li_x0 = mulmod(index, genvec[0], lattice);
-    unsigned long li_x1 = mulmod(index, genvec[1], lattice);
+    uint64_t index = index1 + (bid*128 + tid)*8;
+    uint64_t li_x0 = mulmod(index, genvec[0], lattice);
+    uint64_t li_x1 = mulmod(index, genvec[1], lattice);
     for (int i = 0; (i < 8) && (index < index2); i++, index++) {
         real_t x0 = warponce(li_x0*invlattice + shift[0], 1.0);
         li_x0 = warponce_i(li_x0 + genvec[0], lattice);
