@@ -5,7 +5,12 @@ typedef int64_t int_t;
 typedef double real_t;
 typedef std::complex<real_t> complex_t;
 
-#if defined(__GNUC__) || defined(__clang__)
+// Vector extension are available in GCC since v4.9, and in
+// Clang since v3.5. Ternary operator works on vectors since GCC
+// v4.9, and Clang v10.0, except for MacOS, where Clang that
+// identifies as v10.0 does not support the ternary operator.
+
+#if (100*__GNUC__ + __GNUC_MINOR__ > 409) || (100*__clang_major__ + __clang_minor__ > 305)
     #define GNU_VECTORS 1
     struct alignas(32) realvec_t { real_t x __attribute__((vector_size(32))); };
     struct alignas(32) complexvec_t { realvec_t re, im; };
@@ -19,6 +24,12 @@ typedef std::complex<real_t> complex_t;
     #define likely(x) (x)
     #define unlikely(x) (x)
     #define restrict
+#endif
+
+#if (100*__GNUC__ + __GNUC_MINOR__ > 409) // || (100*__clang_major__ + __clang_minor__ > 1000)
+    #define GNU_VECTOR_TERNARY 1
+#else
+    #define GNU_VECTOR_TERNARY 0
 #endif
 
 #define mathfn static inline
@@ -74,12 +85,6 @@ INT_COMPLEX(/)
         mathfn ret_t fname(const scalar_t &a, const vec_t &b) { return ret_t{ a op b.x }; } \
         mathfn ret_t fname(const vec_t &a, const scalar_t &b) { return ret_t{ a.x op b }; }
 
-    mathfn realvec_t vec_max(const realvec_t &a, const realvec_t &b)
-    { return realvec_t{a.x > b.x ? a.x : b.x}; }
-
-    mathfn realvec_t vec_min(const realvec_t &a, const realvec_t &b)
-    { return realvec_t{a.x < b.x ? a.x : b.x}; }
-
 #else
 
     #define DEF_OPERATOR(ret_t, fname, arg1_t, arg2_t, op) \
@@ -91,6 +96,18 @@ INT_COMPLEX(/)
         { return ret_t{{ a op b.x[0], a op b.x[1], a op b.x[2], a op b.x[3] }}; } \
         mathfn ret_t fname(const vec_t &a, const scalar_t &b) \
         { return ret_t{{ a.x[0] op b, a.x[1] op b, a.x[2] op b, a.x[3] op b }}; }
+
+#endif
+
+#if GNU_VECTOR_TERNARY
+
+    mathfn realvec_t vec_max(const realvec_t &a, const realvec_t &b)
+    { return realvec_t{a.x > b.x ? a.x : b.x}; }
+
+    mathfn realvec_t vec_min(const realvec_t &a, const realvec_t &b)
+    { return realvec_t{a.x < b.x ? a.x : b.x}; }
+
+#else
 
     mathfn realvec_t vec_max(const realvec_t &a, const realvec_t &b)
     { return realvec_t{{ a.x[0] > b.x[0] ? a.x[0] : b.x[0],
