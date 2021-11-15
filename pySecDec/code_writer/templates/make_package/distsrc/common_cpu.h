@@ -99,6 +99,15 @@ INT_COMPLEX(/)
 
 #endif
 
+DEF_OPERATOR(realvec_t, operator +, realvec_t, realvec_t, +)
+DEF_OPERATOR(realvec_t, operator -, realvec_t, realvec_t, -)
+DEF_OPERATOR(realvec_t, operator *, realvec_t, realvec_t, *)
+DEF_OPERATOR(realvec_t, operator /, realvec_t, realvec_t, /)
+DEF_SCALAR_OPERATOR(realvec_t, operator +, realvec_t, real_t, +)
+DEF_SCALAR_OPERATOR(realvec_t, operator -, realvec_t, real_t, -)
+DEF_SCALAR_OPERATOR(realvec_t, operator *, realvec_t, real_t, *)
+DEF_SCALAR_OPERATOR(realvec_t, operator /, realvec_t, real_t, /)
+
 #if GNU_VECTOR_TERNARY
 
     mathfn realvec_t vec_max(const realvec_t &a, const realvec_t &b)
@@ -106,6 +115,10 @@ INT_COMPLEX(/)
 
     mathfn realvec_t vec_min(const realvec_t &a, const realvec_t &b)
     { return realvec_t{a.x < b.x ? a.x : b.x}; }
+
+    mathfn realvec_t warponce(const realvec_t &a, const real_t b)
+    { realvec_t ab = realvec_t{a.x - b};
+      return realvec_t{ab.x >= 0 ? ab.x : a.x}; }
 
 #else
 
@@ -120,6 +133,13 @@ INT_COMPLEX(/)
                          a.x[1] < b.x[1] ? a.x[1] : b.x[1],
                          a.x[2] < b.x[2] ? a.x[2] : b.x[2],
                          a.x[3] < b.x[3] ? a.x[3] : b.x[3] }}; }
+
+    mathfn realvec_t warponce(const realvec_t &a, const real_t b)
+    { realvec_t ab = a - b;
+      return realvec_t{{ ab.x[0] >= 0 ? ab.x[0] : a.x[0],
+                         ab.x[1] >= 0 ? ab.x[1] : a.x[1],
+                         ab.x[2] >= 0 ? ab.x[2] : a.x[2],
+                         ab.x[3] >= 0 ? ab.x[3] : a.x[3] }}; }
 
 #endif
 
@@ -136,6 +156,7 @@ mathfn realvec_t vec_min(const real_t &a, const realvec_t &b)
 #define DEF_FUNCTION(ret_t, fname, arg_t, f) \
     mathfn ret_t fname(const arg_t &a) \
     { return ret_t{{ f(a.x[0]), f(a.x[1]), f(a.x[2]), f(a.x[3]) }}; }
+
 #define DEF_SCALAR_BOOL_OPERATOR(fname, vec_t, scalar_t, op, redop) \
     mathfn bool fname(const vec_t &a, const scalar_t &b) \
     { return (a.x[0] op b) redop (a.x[1] op b) redop (a.x[2] op b) redop (a.x[3] op b); }
@@ -148,14 +169,6 @@ mathfn realvec_t vec_min(const real_t &a, const realvec_t &b)
     static inline realvec_t fname(const realvec_t &a, a1decl a1) \
     { return realvec_t{{ fn(a.x[0], a1), fn(a.x[1], a1), fn(a.x[2], a1), fn(a.x[3], a1) }}; }
 
-DEF_OPERATOR(realvec_t, operator +, realvec_t, realvec_t, +)
-DEF_OPERATOR(realvec_t, operator -, realvec_t, realvec_t, -)
-DEF_OPERATOR(realvec_t, operator *, realvec_t, realvec_t, *)
-DEF_OPERATOR(realvec_t, operator /, realvec_t, realvec_t, /)
-DEF_SCALAR_OPERATOR(realvec_t, operator +, realvec_t, real_t, +)
-DEF_SCALAR_OPERATOR(realvec_t, operator -, realvec_t, real_t, -)
-DEF_SCALAR_OPERATOR(realvec_t, operator *, realvec_t, real_t, *)
-DEF_SCALAR_OPERATOR(realvec_t, operator /, realvec_t, real_t, /)
 DEF_SCALAR_BOOL_OPERATOR(operator >, realvec_t, real_t, >, ||)
 DEF_SCALAR_BOOL_OPERATOR(operator <, realvec_t, real_t, <, ||)
 DEF_FUNCTION(realvec_t, operator -, realvec_t, -)
@@ -171,13 +184,6 @@ mathfn real_t componentmin(const realvec_t &a)
 { real_t m1 = a.x[0] < a.x[1] ? a.x[0] : a.x[1];
   real_t m2 = a.x[2] < a.x[3] ? a.x[2] : a.x[3];
   return m1 < m2 ? m1 : m2; }
-
-mathfn realvec_t warponce(const realvec_t &a, const real_t b)
-{ realvec_t ab = a - b;
-  return realvec_t{{ ab.x[0] >= 0 ? ab.x[0] : a.x[0],
-                     ab.x[1] >= 0 ? ab.x[1] : a.x[1],
-                     ab.x[2] >= 0 ? ab.x[2] : a.x[2],
-                     ab.x[3] >= 0 ? ab.x[3] : a.x[3] }}; }
 
 mathfn realvec_t clamp01(const realvec_t &a)
 { return vec_max(vec_min(a, REALVEC_CONST(1)), REALVEC_CONST(0)); }
