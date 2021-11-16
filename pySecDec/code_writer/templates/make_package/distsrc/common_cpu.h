@@ -82,6 +82,9 @@ INT_COMPLEX(/)
 
 #if HAVE_GNU_VECTORS
 
+    #define DEF_OPERATOR1(ret_t, fname, arg1_t, op) \
+        mathfn ret_t fname(const arg1_t &a) { return ret_t{ op a.x }; }
+
     #define DEF_OPERATOR(ret_t, fname, arg1_t, arg2_t, op) \
         mathfn ret_t fname(const arg1_t &a, const arg2_t &b) { return ret_t{ a.x op b.x }; }
 
@@ -90,6 +93,10 @@ INT_COMPLEX(/)
         mathfn ret_t fname(const vec_t &a, const scalar_t &b) { return ret_t{ a.x op b }; }
 
 #else
+
+    #define DEF_OPERATOR1(ret_t, fname, arg1_t, op) \
+        mathfn ret_t fname(const arg1_t &a) \
+        { return ret_t{{ op a.x[0], op a.x[1], op a.x[2], op a.x[3] }}; }
 
     #define DEF_OPERATOR(ret_t, fname, arg1_t, arg2_t, op) \
         mathfn ret_t fname(const arg1_t &a, const arg2_t &b) \
@@ -103,6 +110,7 @@ INT_COMPLEX(/)
 
 #endif
 
+DEF_OPERATOR1(realvec_t, operator -, realvec_t, -)
 DEF_OPERATOR(realvec_t, operator +, realvec_t, realvec_t, +)
 DEF_OPERATOR(realvec_t, operator -, realvec_t, realvec_t, -)
 DEF_OPERATOR(realvec_t, operator *, realvec_t, realvec_t, *)
@@ -175,7 +183,6 @@ mathfn realvec_t vec_min(const real_t &a, const realvec_t &b)
 
 DEF_SCALAR_BOOL_OPERATOR(operator >, realvec_t, real_t, >, ||)
 DEF_SCALAR_BOOL_OPERATOR(operator <, realvec_t, real_t, <, ||)
-DEF_FUNCTION(realvec_t, operator -, realvec_t, -)
 DEF_FUNCTION(realvec_t, SecDecInternalAbs, realvec_t, std::abs)
 
 mathfn realvec_t SecDecInternalRealPart(const realvec_t &a) { return a; }
