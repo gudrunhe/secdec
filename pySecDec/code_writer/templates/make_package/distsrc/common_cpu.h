@@ -5,31 +5,32 @@ typedef int64_t int_t;
 typedef double real_t;
 typedef std::complex<real_t> complex_t;
 
-// Vector extension are available in GCC since v4.9, and in
-// Clang since v3.5. Ternary operator works on vectors since GCC
-// v4.9, and Clang v10.0, except for MacOS, where Clang that
-// identifies as v10.0 does not support the ternary operator.
+// Vector extension are available in GCC since v4.9, and in Clang
+// since v3.5. Ternary operator works on vectors since GCC v4.9,
+// and Clang v10.0.
+//
+// A special case is made for Apple Clang, which identifies as
+// Clang, but with a completely unrelated version scheme.
 
-#if (100*__GNUC__ + __GNUC_MINOR__ > 409) || (100*__clang_major__ + __clang_minor__ > 305)
-    #define GNU_VECTORS 1
+#define GNUC_VERSION        (__GNUC__ * 100 + __GNUC_MINOR__)
+#define CLANG_VERSION       ((__clang_major__ * 100 + __clang_minor__) && !(__apple_build_version__ > 0))
+#define APPLE_CLANG_VERSION ((__clang_major__ * 100 + __clang_minor__) && (__apple_build_version__ > 0))
+
+#define HAVE_GNU_VECTORS        (GNUC_VERSION >= 409) || (CLANG_VERSION >= 305) || (APPLE_CLANG_VERSION >= 600)
+#define HAVE_GNU_VECTOR_TERNARY (GNUC_VERSION >= 409) || (CLANG_VERSION >= 1000) || (APPLE_CLANG_VERSION >= 1200)
+
+#if HAVE_GNU_VECTORS
     struct alignas(32) realvec_t { real_t x __attribute__((vector_size(32))); };
     struct alignas(32) complexvec_t { realvec_t re, im; };
     #define likely(x) __builtin_expect((x), 1)
     #define unlikely(x) __builtin_expect((x), 0)
     #define restrict __restrict__
 #else
-    #define GNU_VECTORS 0
     struct alignas(32) realvec_t { real_t x[4]; };
     struct alignas(32) complexvec_t { realvec_t re, im; };
     #define likely(x) (x)
     #define unlikely(x) (x)
     #define restrict
-#endif
-
-#if (100*__GNUC__ + __GNUC_MINOR__ > 409) // || (100*__clang_major__ + __clang_minor__ > 1000)
-    #define GNU_VECTOR_TERNARY 1
-#else
-    #define GNU_VECTOR_TERNARY 0
 #endif
 
 #define mathfn static inline
@@ -76,7 +77,7 @@ INT_COMPLEX(/)
 #define REALVEC_CONST(c) (realvec_t{{c,c,c,c}})
 #define REALVEC_ZERO REALVEC_CONST(0)
 
-#if GNU_VECTORS
+#if HAVE_GNU_VECTORS
 
     #define DEF_OPERATOR(ret_t, fname, arg1_t, arg2_t, op) \
         mathfn ret_t fname(const arg1_t &a, const arg2_t &b) { return ret_t{ a.x op b.x }; }
@@ -108,7 +109,7 @@ DEF_SCALAR_OPERATOR(realvec_t, operator -, realvec_t, real_t, -)
 DEF_SCALAR_OPERATOR(realvec_t, operator *, realvec_t, real_t, *)
 DEF_SCALAR_OPERATOR(realvec_t, operator /, realvec_t, real_t, /)
 
-#if GNU_VECTOR_TERNARY
+#if HAVE_GNU_VECTOR_TERNARY
 
     mathfn realvec_t vec_max(const realvec_t &a, const realvec_t &b)
     { return realvec_t{a.x > b.x ? a.x : b.x}; }
