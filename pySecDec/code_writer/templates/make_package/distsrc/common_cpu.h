@@ -12,12 +12,15 @@ typedef std::complex<real_t> complex_t;
 // A special case is made for Apple Clang, which identifies as
 // Clang, but with a completely unrelated version scheme.
 
-#define GNUC_VERSION        (__GNUC__ * 100 + __GNUC_MINOR__)
-#define CLANG_VERSION       ((__clang_major__ * 100 + __clang_minor__) && !(__apple_build_version__ > 0))
-#define APPLE_CLANG_VERSION ((__clang_major__ * 100 + __clang_minor__) && (__apple_build_version__ > 0))
+#define GNUC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
+#if !__apple_build_version__
+    #define CLANG_VERSION (__clang_major__ * 100 + __clang_minor__)
+#else
+    #define APPLE_CLANG_VERSION (__clang_major__ * 100 + __clang_minor__)
+#endif
 
-#define HAVE_GNU_VECTORS        (GNUC_VERSION >= 409) || (CLANG_VERSION >= 305) || (APPLE_CLANG_VERSION >= 600)
-#define HAVE_GNU_VECTOR_TERNARY (GNUC_VERSION >= 409) || (CLANG_VERSION >= 1000) || (APPLE_CLANG_VERSION >= 1200)
+#define HAVE_GNU_VECTORS        ((GNUC_VERSION >= 409) || (CLANG_VERSION >= 305) || (APPLE_CLANG_VERSION >= 600))
+#define HAVE_GNU_VECTOR_TERNARY ((GNUC_VERSION >= 409) || (CLANG_VERSION >= 1000) || (APPLE_CLANG_VERSION >= 1200))
 
 #if HAVE_GNU_VECTORS
     struct alignas(32) realvec_t { real_t x __attribute__((vector_size(32))); };
