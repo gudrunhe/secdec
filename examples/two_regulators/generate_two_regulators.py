@@ -28,7 +28,13 @@ if __name__ == "__main__":
 
     # the WorkSpace parameter for FORM
     form_work_space = '500M',
-
+    
+    # Note:
+    # * this integral is numerically regulated for z0->1 (see remainder_expression)
+    # * default korobov3x3 transforms the integrand strongly close to z0->1
+    # * applying korobov3x3 makes the integrand too numerically unstable to integrate (often get nan)
+    # We instead use the asymmetric korobov3x1 to avoid introducing too much noise for z0->1
+    pylink_qmc_transforms=['korobov3x1']
 
     )
 

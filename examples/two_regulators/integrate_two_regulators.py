@@ -10,7 +10,8 @@ if __name__ == "__main__":
     two_regulators = IntegralLibrary('two_regulators/two_regulators_pylink.so')
 
     # choose integrator
-    two_regulators.use_Vegas()
+    #two_regulators.use_Vegas()
+    two_regulators.use_Qmc(transform='korobov3x1')
 
     # integrate
     str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = two_regulators(verbose=True)
