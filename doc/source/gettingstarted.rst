@@ -645,7 +645,8 @@ Here we list the available examples. For more details regarding each example see
 | **box1L_ebr**:             | uses expansion by regions to expand a 1-loop box with a small internal mass, this integral is also considered in Section 4.2   |
 |                            | of [Mis18]_                                                                                                                    |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **bubble1L_ebr**:          | uses expansion by regions to expand a 1-loop, 2-point integral in various limits                                               |
+| **bubble1L_ebr**:          | uses expansion by regions to expand a 1-loop, 2-point integral in various limits, demonstrates the use of an additional        |
+|                            | regulator as described in [PSD21]_                                                                                             |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **bubble1L_dotted_ebr**:   | uses expansion by regions to expand a 1-loop, 2-point integral, demonstrates the :math:`t` and :math:`z` methods described in  |
 |                            | [PSD21]_                                                                                                                       | 
@@ -654,7 +655,8 @@ Here we list the available examples. For more details regarding each example see
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **bubble2L_smallm_ebr**:   | uses expansion by regions to expand a 1-loop, 2-point integral with a small mass                                               |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
-| **formfactor1L_ebr**:      | uses expansion by regions to compute various 1-loop, 3-point form factor integrals from the literature                         |
+| **formfactor1L_ebr**:      | uses expansion by regions to compute various 1-loop, 3-point form factor integrals from the literature, demonstrates the use   |
+|                            | of ``add_monomial_regulator_power`` to introduce an additional regulator as described in [PSD21]_                              |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **triangle2L_ebr**:        | uses expansion by regions to compute a 2-loop, 3-point integral with a large mass                                              |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
