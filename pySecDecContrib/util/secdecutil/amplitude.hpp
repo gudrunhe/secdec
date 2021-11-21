@@ -1325,4 +1325,13 @@ namespace secdecutil {
 
 };
 
+namespace std {
+
+    template <class T1, class T2, class T3>
+    struct common_type<std::vector<secdecutil::amplitude::WeightedIntegral<T1,T2>>, T3> {
+        using type = std::vector<secdecutil::amplitude::WeightedIntegral<T1,T2>>;
+    };
+        
+}
+
 #endif
