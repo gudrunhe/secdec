@@ -9,6 +9,7 @@ Options:
     --epsrel=X  stop if this relative precision is achieved (default: 1e-4)
     --points=X  begin integration with this lattice size (default: 1e4)
     --shifts=X  use this many lattice shifts per integral (default: 32)
+    --help      show this help message
 Arguments:
     param=value use this value for the given integral parameter
 """
@@ -31,7 +32,7 @@ import tempfile
 import time
 import traceback
 
-from .generating_vectors import generating_vector
+from .generating_vectors import generating_vector, max_lattice_size
 
 log_starttime = time.time()
 def log(*args):
@@ -186,20 +187,6 @@ class RandomScheduler:
         w, t = token
         w.cancel_cb(t)
 
-# Integration
-
-async def integrate(par, kindex, dim, lattice, genvec, nshifts, realp, complexp, deformp, complex_result):
-    results = np.array(await asyncio.gather(*[
-        await mktask(par.integrate(kindex, dim, lattice, genvec, np.random.rand(dim).tolist(),
-            realp, complexp, deformp, complex_result))
-        for i in range(nshifts)
-    ]))
-    if np.iscomplexobj(results):
-        var = (np.var(np.real(results)) + (1j)*np.var(np.imag(results)))/nshifts
-    else:
-        var = np.var(results)/nshifts
-    return np.mean(results)/lattice, var/lattice**2
-
 # Main
 
 async def benchmark_worker(w):
@@ -276,13 +263,13 @@ def ginsh_series(ex, var, order):
         f.flush()
         subprocess.check_call(f"ginsh {f.name} > {f.name}.out", shell=True)
         with open(f"{f.name}.out", "r") as f2:
-            text = f2.read()
+            result = f2.read()
         os.unlink(f"{f.name}.out")
-    text = re.sub(r".*START\n", "", text, flags=re.DOTALL)
-    text = re.sub(r"[+]Order\([^)]*\)", "", text, flags=re.DOTALL)
-    text = text.strip()
-    assert text != ""
-    return sp.sympify(text).subs(hashed)
+    result = re.sub(r".*START\n", "", result, flags=re.DOTALL)
+    result = re.sub(r"[+]Order\([^)]*\)", "", result, flags=re.DOTALL)
+    result = result.strip()
+    assert result != ""
+    return sp.sympify(result).subs(hashed)
 
 def series_bracket(expr, varlist, orderlist):
     if expr == 0:
@@ -300,20 +287,60 @@ def series_bracket(expr, varlist, orderlist):
             result[(power,)] = coef
     return result
 
-def adjust_n(W2, V, v0, a, tau, n0):
+def adjust_1d_n(W2, V, w, a, tau, nmin, nmax):
+    assert np.all(W2 > 0)
+    assert np.all(w > 0)
+    assert np.all(tau > 0)
+    assert np.all(nmin > 0)
+    if W2 @ (w/nmin**a) <= V:
+        return nmin
+    n = (w/tau * W2)**(1/(a+1))
+    assert not np.any(np.isnan(n))
+    n *= (1/V * (W2 @ (w/n**a)))**(1/a)
+    assert not np.any(np.isinf(n))
+    assert not np.any(np.isnan(n))
+    # Enforce nmax, raising the rest
+    mask = (n > nmax)
+    while True:
+        n[mask] = nmax[mask]
+        maskc = np.count_nonzero(mask)
+        if maskc == 0: break
+        if maskc == len(n): return n
+        VV = V - (W2[mask] @ (w[mask]/n[mask]**a))
+        if VV < 0:
+            log(f"Probably can't reach the target error now that {np.count_nonzero(mask)} integrals are capped at maximum lattice size")
+            log(f"... will still try though")
+            return n
+        assert np.all(VV > 0)
+        mask2 = (~mask)
+        n[mask2] *= (1/VV * (W2[mask2] @ (w[mask2]/n[mask2]**a)))**(1/a)
+        assert not np.any(np.isinf(n))
+        assert not np.any(np.isnan(n))
+        add = (n > nmax)
+        if not np.any(add): break
+        mask |= add
+    mask = (n < nmin)
+    while True:
+        n[mask] = nmin[mask]
+        maskc = np.count_nonzero(mask)
+        if maskc == 0: break
+        if maskc == len(n): return n
+        VV = np.clip(V - W2[mask] @ (w[mask]/n[mask]**a), 0, np.inf)
+        mask2 = (~mask)
+        n[mask2] *= (1/VV * (W2[mask2] @ (w[mask2]/n[mask2]**a)))**(1/a)
+        add = (n < nmin)
+        if not np.any(add): break
+        mask |= add
+    return n
+
+def adjust_n(W2, V, w, a, tau, nmin, nmax, names=[]):
     assert np.all(V>0)
-    lam = (1/V * (W2**(1/(a+1)) @ (v0**(1/(a+1)) * (tau/a)**(a/(a+1)))))**((a+1)/a)
-    n = (a*v0/tau * np.max((lam * W2.T).T, axis=0))**(1/(a+1))
-    # Same as above, but taking into account that we already did
-    # n0 points per integral.
-    while np.any(n < n0) and np.any(n > n0):
-        mask = n > n0
-        n[~mask] = n0[~mask]
-        VV = V - W2[:,~mask] @ (v0[~mask]/n0[~mask]**a)
-        VV = np.maximum(VV, np.zeros_like(VV))
-        lam = (1/VV * (W2[:,mask]**(1/(a+1)) @ (v0[mask]**(1/(a+1)) * (a/tau[mask])**(-a/(a+1)))))**((a+1)/a)
-        nn = (a*v0[mask]/tau[mask] * np.max((lam * W2[:,mask].T).T, axis=0))**(1/(a+1))
-        n[mask] = nn
+    assert len(W2) == len(V)
+    n = nmin.copy()
+    for i in range(len(W2)-1, -1, -1):
+        mask = (w != 0) & (W2[i,:] != 0)
+        n[mask] = adjust_1d_n(W2[i,mask], V[i], w[mask], a, tau[mask], n[mask], nmax[mask])
+        assert not np.any(np.isnan(n))
     return n
 
 async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap):
@@ -398,13 +425,14 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
         log(f"- {w.name}: int speed={w.speed:.2e}bps, int overhead={w.int_overhead:.2e}s, total overhead={w.overhead:.2e}s, latency={w.latency:.2e}s")
 
     # Presample all kernels
+    kern_rng = [np.random.default_rng(0) for fam, ker in kernel2idx.keys()]
     t2 = time.time()
     log("distributing presampling jobs")
     results = []
     for i, (fam, ker) in enumerate(kernel2idx.keys()):
         lattice, genvec = generating_vector(infos[fam]["dimension"], npresample)
         f = par.call("maxdeformp", i+1, infos[fam]["deformp_count"],
-            lattice, genvec, np.random.rand(infos[fam]["dimension"]).tolist())
+            lattice, genvec, kern_rng[i].random(infos[fam]["dimension"]).tolist())
         results.append(f)
     log("waiting for the presampling results")
     deformp = await asyncio.gather(*results)
@@ -420,10 +448,12 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
     dims = [infos[fam]["dimension"] for fam in fams]
     genvecs = [None] * len(kernel2idx)
     oldlattices = np.zeros(len(kernel2idx), dtype=np.float64)
+    maxlattices = np.array([max_lattice_size(d) for d in dims], dtype=np.float64)
     lattices = np.zeros(len(kernel2idx), dtype=np.float64)
     for i in range(len(kernel2idx)):
         lattices[i], genvecs[i] = generating_vector(dims[i], npoints0)
     shift_val = np.zeros((len(kernel2idx), nshifts), dtype=np.complex128)
+    shift_rnd = np.empty((len(kernel2idx), nshifts), dtype=np.object)
     shift_tag = np.full((len(kernel2idx), nshifts), None, dtype=np.object)
     kern_db = np.ones(len(kernel2idx))
     kern_di = np.ones(len(kernel2idx))
@@ -440,20 +470,72 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
             schedule_kernel(idx)
         else:
             shift_val[idx, shift] = complex(re, im)
-            kern_db[idx] += dt*w.speed
-            kern_di[idx] += di
+            if dt > 2*w.int_overhead:
+                kern_db[idx] += (dt - w.int_overhead)*w.speed
+                kern_di[idx] += di
 
     def schedule_kernel(idx):
         for s in range(nshifts):
+            shift = kern_rng[idx].random(dims[idx])
+            shift_rnd[idx, s] = shift
             shift_tag[idx, s] = par.call_cb("integrate",
                 (idx+1, int(lattices[idx]), 0, int(lattices[idx]), genvecs[idx],
-                np.random.rand(dims[idx]).tolist(),
+                shift.tolist(),
                 deformp[idx]),
                 shift_done_cb, (idx, s))
 
-    eps_plan = ((0.2, 1e-4), (epsrel, epsabs)) if epsrel < 0.1 else ((epsrel, epsabs),)
-    for this_epsrel, this_epsabs in eps_plan:
-        log(f"trying to achieve epsrel={this_epsrel} and epsabs={this_epsabs}")
+    perkern_epsrel = 0.2
+    perkern_epsabs = 1e-4
+
+    def propose_lattices1(amp_val, amp_var):
+        scaling = 2
+        K = 20
+        kern_maxvar = np.maximum(perkern_epsabs**2, abs2(kern_val)*perkern_epsrel**2)
+        kern_absvar = np.real(kern_var) + np.imag(kern_var)
+        if np.all(kern_absvar <= kern_maxvar):
+            log("per-integral precision reached")
+            for i in range(len(kernel2idx)):
+                log(f"lattice[k{i}] = {lattices[i]:.3e}")
+            oldlattices[:] = lattices
+            return None
+        n = lattices * (kern_absvar/kern_maxvar)**(1/scaling)
+        n = np.clip(n, lattices, lattices*K)
+        mask_toolo = (lattices < n) & (n < lattices * 2)
+        n[mask_toolo] = lattices[mask_toolo]*2
+        return n
+
+    def propose_lattices2(amp_val, amp_var):
+        scaling = 2
+        K = 20
+        amp_absval = np.sqrt(abs2(amp_val))
+        amp_abserr = np.sqrt(np.real(amp_var) + np.imag(amp_var))
+        log("absval =", amp_absval)
+        log("abserr =", amp_abserr)
+        amp_relerr = amp_abserr/amp_absval
+        amp_relerr[amp_abserr == 0] = 0
+        log("relerr =", amp_relerr)
+        amp_maxerr = np.maximum(epsabs, amp_absval*epsrel)
+        log("max abserr =", amp_maxerr)
+        log("abserr K =", amp_abserr/amp_maxerr)
+        if np.all(amp_abserr <= amp_maxerr):
+            log("per-amplitude precision reached")
+            for i in range(len(kernel2idx)):
+                log(f"lattice[k{i}] = {lattices[i]:.3e}")
+            oldlattices[:] = lattices
+            return None
+        tau = kern_db/kern_di
+        kern_absvar = np.real(kern_var) + np.imag(kern_var)
+        v0 = kern_absvar * lattices**scaling
+        n = adjust_n(W2, amp_maxerr**2, v0, scaling, tau, lattices, maxlattices)
+        n = np.clip(n, lattices, lattices*K)
+        toobig = n >= lattices*K
+        if np.any(toobig):
+            n[toobig] = lattices[toobig]*K
+            toosmall = n < lattices*2
+            n[toosmall] = lattices[toosmall]
+        return n
+
+    async def iterate_integration(propose_lattices):
         while True:
             mask_todo = lattices != oldlattices
             if np.any(mask_todo):
@@ -472,9 +554,12 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
                 new_kern_val /= lattices
                 new_kern_var = np.var(np.real(shift_val), axis=1) + (1j)*np.var(np.imag(shift_val), axis=1)
                 new_kern_var /= lattices**2 * nshifts
+
+                latticex = lattices/oldlattices
+                precisionx = np.sqrt((np.real(kern_var) + np.imag(kern_var)) / (np.real(new_kern_var) + np.imag(new_kern_var)))
                 for i in mask_todo.nonzero()[0]:
                     i = int(i)
-                    log(f"@@ (\"{fams[i]}_{kers[i]}\", {lattices[i]}, ({np.real(new_kern_val[i])},{np.imag(new_kern_val[i])}), ({np.sqrt(np.real(new_kern_var[i]))},{np.sqrt(np.imag(new_kern_var[i]))})),")
+                    log(f"k{i} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
                 mask_lucky = np.logical_and(new_kern_var <= kern_var, mask_todo)
                 kern_val[mask_lucky] = new_kern_val[mask_lucky]
                 kern_var[mask_lucky] = new_kern_var[mask_lucky]
@@ -486,6 +571,7 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
             # Report results
             if np.any(mask_todo):
                 ampids = sorted(set(a for a, p in ap2coeffs.keys()))
+                relerrs = []
                 for ampid in ampids:
                     relerr = []
                     log(f"amp{ampid}=(")
@@ -495,60 +581,34 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
                         err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
                         log(f"  +{stem}*({val:+.16e})")
                         log(f"  +{stem}*({err:+.16e})*plusminus")
-                        relerr.append(np.abs(err/val))
+                        relerr.append(np.abs(err) / np.maximum(np.abs(val), epsabs))
                     log(")")
-                    sys.stdout.flush()
                     log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
-            if this_epsrel == 0.2:
-                kern_maxvar = np.maximum(this_epsabs**2, abs2(kern_val)*this_epsrel**2)
-                kern_absvar = np.real(kern_var) + np.imag(kern_var)
-                if np.all(kern_absvar <= kern_maxvar):
-                    log("precision reached")
-                    for i in range(len(kernel2idx)):
-                        log(f"lattice[k{i}] = {lattices[i]:.3e}")
-                    oldlattices[:] = lattices
-                    break
-                scaling = 2
-                n = lattices * (kern_absvar/kern_maxvar)**(1/scaling)
-            else:
-                amp_absval = np.sqrt(abs2(amp_val))
-                amp_abserr = np.sqrt(np.real(amp_var) + np.imag(amp_var))
-                log("absval =", amp_absval)
-                log("abserr =", amp_abserr)
-                amp_relerr = amp_abserr/amp_absval
-                amp_relerr[amp_abserr == 0] = 0
-                log("relerr =", amp_relerr)
-                amp_maxerr = np.maximum(this_epsabs, amp_absval*this_epsrel)
-                log("max abserr =", amp_maxerr)
-                log("abserr K =", amp_abserr/amp_maxerr)
-                if np.all(amp_abserr <= amp_maxerr):
-                    log("precision reached")
-                    for i in range(len(kernel2idx)):
-                        log(f"lattice[k{i}] = {lattices[i]:.3e}")
-                    oldlattices[:] = lattices
-                    break
-                tau = kern_db/kern_di
-                scaling = 2
-                K = 20
-                kern_absvar = np.real(kern_var) + np.imag(kern_var)
-                v0 = kern_absvar * lattices**scaling
-                n = adjust_n(W2, amp_maxerr**2, v0, scaling, tau, lattices)
-                n = np.clip(n, lattices, lattices*K)
-                toobig = n >= lattices*K
-                if np.any(toobig):
-                    n[toobig] = lattices[toobig]*K
-                    toosmall = n < lattices*(K/2)
-                    n[toosmall] = lattices[toosmall]
+                    relerrs.append(np.max(relerr))
+                log(f"largest relative error: {np.max(relerrs):.2e} (amp{np.argmax(relerrs)})")
+            n = propose_lattices(amp_val, amp_var)
+            if n is None:
+                return amp_val, amp_var
             newlattices = np.zeros(len(kernel2idx), dtype=np.float64)
             newgenvecs = [None] * len(kernel2idx)
             for i in range(len(kernel2idx)):
                 newlattices[i], newgenvecs[i] = generating_vector(dims[i], n[i])
-            # Ugh. Do something smarter here.
-            assert np.any(newlattices != lattices)
+            if not np.any(newlattices != lattices):
+                log("can't increase the lattice sizes any more; giving up")
+                return amp_val, amp_var
             for i, (l1, l2) in enumerate(zip(lattices, newlattices)):
                 if l1 != l2:
                     log(f"lattice[k{i}] = {l1} -> {l2} ({l2/l1:.1f}x)")
-            oldlattices, lattices, genvecs = lattices, newlattices, newgenvecs
+            oldlattices[:] = lattices
+            lattices[:] = newlattices
+            genvecs[:] = newgenvecs
+
+    if epsrel < 0.1:
+        log(f"trying to achieve epsrel={perkern_epsrel} and epsabs={perkern_epsabs} for each kernel")
+        await iterate_integration(propose_lattices1)
+
+    log(f"trying to achieve epsrel={epsrel} and epsabs={epsabs} for each amplitude")
+    amp_val, amp_var = await iterate_integration(propose_lattices2)
 
     # Report the results
     t4 = time.time()
@@ -558,6 +618,7 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
     log("integration time:", t4-t3)
 
     ampids = sorted(set(a for a, p in ap2coeffs.keys()))
+    relerrs = []
     for ampid in ampids:
         relerr = []
         print("(")
@@ -567,10 +628,12 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
             err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
             print(f"  +{stem}*({val:+.16e})")
             print(f"  +{stem}*({err:+.16e})*plusminus")
-            relerr.append(np.abs(err/val))
+            relerr.append(np.abs(err) / np.maximum(np.abs(val), epsabs))
         print(")")
         sys.stdout.flush()
         log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
+        relerrs.append(np.max(relerr))
+    log(f"largest relative error: {np.max(relerrs):.2e} (amp{np.argmax(relerrs)})")
 
 def load_cluster_json(jsonfile, dirname):
     try:
@@ -584,13 +647,10 @@ def load_cluster_json(jsonfile, dirname):
         log(f"Can't find {jsonfile}; will run locally")
         pass
     ncpu = ncuda = 0
-    if os.path.exists(os.path.join(dirname, "builtin.so")):
-        try:
-            ncpu = max(1, len(os.sched_getaffinity(0)) - 1)
-        except AttributeError:
-            ncpu = max(1, os.cpu_count() - 1)
-    else:
-        log(f"CPU worker data was not built, skipping")
+    try:
+        ncpu = max(1, len(os.sched_getaffinity(0)) - 1)
+    except AttributeError:
+        ncpu = max(1, os.cpu_count() - 1)
     if os.path.exists(os.path.join(dirname, "builtin.fatbin")):
         try:
             import pycuda.driver
@@ -601,6 +661,7 @@ def load_cluster_json(jsonfile, dirname):
             log(f"Can't determine GPU count: {e}")
     else:
         log(f"CUDA worker data was not built, skipping")
+    log(f"local CPU worker count: {ncpu}, GPU worker count: {ncuda}")
     return {
         "cluster": [
             {"count": ncpu, "command": f"nice python3 -m pySecDecWorker --cpu"},
@@ -698,7 +759,7 @@ def main():
 
     # Begin evaluation
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(doeval(workers, dirname, intfile, epsabs, epsrel, npoints*10, npoints, nshifts, valuemap))
+    loop.run_until_complete(doeval(workers, dirname, intfile, epsabs, epsrel, npoints, npoints, nshifts, valuemap))
 
 if __name__ == "__main__":
     main()
