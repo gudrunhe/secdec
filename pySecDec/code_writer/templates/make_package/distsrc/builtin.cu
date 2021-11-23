@@ -10,11 +10,11 @@
 
 #define sum_kernel(name, value_t) \
     extern "C" __global__ void \
-    name(value_t *dst, value_t *src, const unsigned long n) \
+    name(value_t *dst, value_t *src, uint64_t n) \
     { \
-        auto bid = blockIdx.x; \
-        auto tid = threadIdx.x; \
-        auto idx = (bid*128 + tid)*8; \
+        uint64_t bid = blockIdx.x; \
+        uint64_t tid = threadIdx.x; \
+        uint64_t idx = (bid*128 + tid)*8; \
         value_t val1 = (idx+0 < n) ? src[idx+0] : value_t(0); \
         value_t val2 = (idx+1 < n) ? src[idx+1] : value_t(0); \
         value_t val3 = (idx+2 < n) ? src[idx+2] : value_t(0); \
@@ -50,8 +50,8 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
 )
 {
     // assert(blockDim.x == 128);
-    int bid = blockIdx.x;
-    int tid = threadIdx.x;
+    const uint64_t bid = blockIdx.x;
+    const uint64_t tid = threadIdx.x;
     const real_t q2 = realp[0];
     const real_t m1sq = realp[1];
     const real_t m2sq = realp[2];

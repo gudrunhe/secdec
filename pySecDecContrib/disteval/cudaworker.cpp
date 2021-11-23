@@ -360,15 +360,16 @@ cmd_integrate(uint64_t token, IntegrateCmd &c)
         return t2-t1;
     }
     if (1) { // CUDA path
-        unsigned long threads = 128, pt_per_thread = 8;
-        unsigned long blocks = (c.i2 - c.i1 + threads*pt_per_thread - 1)/(threads*pt_per_thread);
-        unsigned long bufsize = fam.complex_result ? blocks*sizeof(complex_t) : blocks*sizeof(real_t);
+        uint64_t threads = 128, pt_per_thread = 8;
+        uint64_t blocks = (c.i2 - c.i1 + threads*pt_per_thread - 1)/(threads*pt_per_thread);
+        uint64_t bufsize = fam.complex_result ? blocks*sizeof(complex_t) : blocks*sizeof(real_t);
         if (bufsize > G.cuda.buffer_size) {
             fprintf(stderr, "%s] realloc CUDA buffer to %zuMB\n", G.workername, bufsize/1024/1024);
             CU(cuMemFree, G.cuda.buffer_d);
             G.cuda.buffer_size = bufsize;
             CU(cuMemAlloc, &G.cuda.buffer_d, G.cuda.buffer_size);
             CU(cuMemsetD8Async, G.cuda.buffer_d, 0, G.cuda.buffer_size, G.cuda.stream);
+            CU(cuStreamSynchronize, G.cuda.stream);
         }
         memcpy(G.cuda.params->genvec, c.genvec, sizeof(c.genvec)); 
         memcpy(G.cuda.params->shift, c.shift, sizeof(c.shift)); 
@@ -387,11 +388,10 @@ cmd_integrate(uint64_t token, IntegrateCmd &c)
         void *sum_args[] = {&G.cuda.buffer_d, &G.cuda.buffer_d, &blocks, NULL};
         CUfunction fn_sum = fam.complex_result ? G.cuda.fn_sum_c_b128_x1024 : G.cuda.fn_sum_d_b128_x1024;
         while (blocks > 1) {
-            unsigned reduced = (blocks + 1024-1)/1024;
+            uint64_t reduced = (blocks + 1024-1)/1024;
             CU(cuLaunchKernel, fn_sum, reduced, 1, 1, 128, 1, 1, 0, G.cuda.stream, sum_args, NULL);
             blocks = reduced;
         }
-        CU(cuLaunchKernel, fn_sum, 1, 1, 1, 128, 1, 1, 0, G.cuda.stream, sum_args, NULL);
         G.cuda.result->re = 0;
         G.cuda.result->im = 0;
         CU(cuMemcpyDtoHAsync, G.cuda.result, G.cuda.buffer_d, fam.complex_result ? sizeof(complex_t) : sizeof(real_t), G.cuda.stream);

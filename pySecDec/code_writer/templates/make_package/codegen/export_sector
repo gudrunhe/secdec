@@ -589,8 +589,8 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 )
 {
     // assert(blockDim.x == 128);
-    int bid = blockIdx.x;
-    int tid = threadIdx.x;
+    const uint64_t bid = blockIdx.x;
+    const uint64_t tid = threadIdx.x;
 @@ for j, v in enumerate(getlist(i.realParameters)):
     const real_t ${v} = realp[${j}];
 @@ for j, v in enumerate(getlist(i.complexParameters)):
