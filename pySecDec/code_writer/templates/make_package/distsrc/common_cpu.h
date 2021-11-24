@@ -9,17 +9,23 @@ typedef std::complex<real_t> complex_t;
 // since v3.5. Ternary operator works on vectors since GCC v4.9,
 // and Clang v10.0.
 //
-// A special case is made for Apple Clang, which identifies as
-// Clang, but with a completely unrelated version scheme.
+// Special cases are made for Apple Clang, which identifies as
+// Clang but with a completely unrelated version scheme, and
+// the Intel C compiler, which identifies as GCC but does not
+// implement all the vector extensions.
 
-#define GNUC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
+#if !__INTEL_COMPILER
+    #define GNUC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
+#else
+    #define ICC_VERSION __INTEL_COMPILER
+#endif
 #if !__apple_build_version__
     #define CLANG_VERSION (__clang_major__ * 100 + __clang_minor__)
 #else
     #define APPLE_CLANG_VERSION (__clang_major__ * 100 + __clang_minor__)
 #endif
 
-#define HAVE_GNU_VECTORS        ((GNUC_VERSION >= 409) || (CLANG_VERSION >= 305) || (APPLE_CLANG_VERSION >= 600))
+#define HAVE_GNU_VECTORS        ((GNUC_VERSION >= 409) || (CLANG_VERSION >= 305) || (APPLE_CLANG_VERSION >= 600)) || (ICC_VERSION >= 1800)
 #define HAVE_GNU_VECTOR_TERNARY ((GNUC_VERSION >= 409) || (CLANG_VERSION >= 1000) || (APPLE_CLANG_VERSION >= 1200))
 
 #if HAVE_GNU_VECTORS
