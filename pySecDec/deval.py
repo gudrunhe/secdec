@@ -425,14 +425,14 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
         log(f"- {w.name}: int speed={w.speed:.2e}bps, int overhead={w.int_overhead:.2e}s, total overhead={w.overhead:.2e}s, latency={w.latency:.2e}s")
 
     # Presample all kernels
-    kern_rng = [np.random.default_rng(0) for fam, ker in kernel2idx.keys()]
+    kern_rng = [np.random.RandomState(0) for fam, ker in kernel2idx.keys()]
     t2 = time.time()
     log("distributing presampling jobs")
     results = []
     for i, (fam, ker) in enumerate(kernel2idx.keys()):
         lattice, genvec = generating_vector(infos[fam]["dimension"], npresample)
         f = par.call("maxdeformp", i+1, infos[fam]["deformp_count"],
-            lattice, genvec, kern_rng[i].random(infos[fam]["dimension"]).tolist())
+            lattice, genvec, kern_rng[i].rand(infos[fam]["dimension"]).tolist())
         results.append(f)
     log("waiting for the presampling results")
     deformp = await asyncio.gather(*results)
@@ -476,7 +476,7 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
 
     def schedule_kernel(idx):
         for s in range(nshifts):
-            shift = kern_rng[idx].random(dims[idx])
+            shift = kern_rng[idx].rand(dims[idx])
             shift_rnd[idx, s] = shift
             shift_tag[idx, s] = par.call_cb("integrate",
                 (idx+1, int(lattices[idx]), 0, int(lattices[idx]), genvecs[idx],
