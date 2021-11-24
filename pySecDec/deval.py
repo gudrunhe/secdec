@@ -648,21 +648,22 @@ def load_cluster_json(jsonfile, dirname):
     except FileNotFoundError:
         log(f"Can't find {jsonfile}; will run locally")
         pass
-    ncpu = ncuda = 0
+    ncpu = 0
     try:
         ncpu = max(1, len(os.sched_getaffinity(0)) - 1)
     except AttributeError:
         ncpu = max(1, os.cpu_count() - 1)
+    ncuda = 0
     if os.path.exists(os.path.join(dirname, "builtin.fatbin")):
         try:
-            import pycuda.driver
-            pycuda.driver.init()
-            ncuda = pycuda.driver.Device.count()
-            ncpu = 0
+            from pySecDecContrib import dirname
+            p = subprocess.run([os.path.join(dirname, "bin", "pysecdec_listcuda")], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            ncuda = len(p.stdout.splitlines())
         except Exception as e:
             log(f"Can't determine GPU count: {e}")
     else:
         log(f"CUDA worker data was not built, skipping")
+    if ncuda > 0: ncpu = 0
     log(f"local CPU worker count: {ncpu}, GPU worker count: {ncuda}")
     return {
         "cluster": [

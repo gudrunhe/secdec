@@ -116,6 +116,7 @@ contrib += \
 
 contrib += env.Program("bin/pysecdec_cpuworker", [f"disteval/cpuworker.cpp"], CXXFLAGS="-std=c++14 -O3", LIBS=["dl", "rt"])
 contrib += env.Program("bin/pysecdec_cudaworker", [f"disteval/cudaworker.cpp"], CXXFLAGS="-std=c++14 -O3", LIBS=["dl", "rt"])
+contrib += env.Program("bin/pysecdec_listcuda", [f"disteval/listcuda.cpp"], CXXFLAGS="-std=c++14 -O3", LIBS=["dl"])
 File("disteval/minicuda.h")
 
 Return("contrib")

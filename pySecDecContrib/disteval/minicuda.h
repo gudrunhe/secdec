@@ -9,6 +9,7 @@
 
 #include <dlfcn.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 typedef enum CUresult_enum {} CUresult;
 typedef int CUdevice;
@@ -30,6 +31,12 @@ typedef void (*CUhostFn)(void *userData);
 #define CU_CTX_SCHED_BLOCKING_SYNC  4
 #define CU_CTX_MAP_HOST             8
 
+// cuDeviceGetAttribute
+typedef enum CUdevice_attribute_enum {
+    CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR = 75,
+    CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR = 76
+} CUdevice_attribute;
+
 #define CUdeclare(fn, ...) \
     typedef CUresult (*fn ## _t)(__VA_ARGS__); \
     static fn ## _t fn = (fn ## _t)NULL;
@@ -38,6 +45,7 @@ CUdeclare(cuCtxCreate, CUcontext *ctx, unsigned int flags, CUdevice dev);
 CUdeclare(cuCtxPushCurrent, CUcontext ctx);
 CUdeclare(cuCtxSetCurrent, CUcontext ctx);
 CUdeclare(cuDeviceGet, CUdevice *device, int ordinal);
+CUdeclare(cuDeviceGetAttribute, int *val, CUdevice_attribute attrib, CUdevice dev);
 CUdeclare(cuDeviceGetCount, int *count);
 CUdeclare(cuDeviceGetName, char *name, int len, CUdevice dev);
 CUdeclare(cuDevicePrimaryCtxRetain, CUcontext *ctx, CUdevice dev);
@@ -79,6 +87,7 @@ load_minicuda()
     CUinit(cuCtxPushCurrent,            "cuCtxPushCurrent_v2");
     CUinit(cuCtxSetCurrent,             "cuCtxSetCurrent");
     CUinit(cuDeviceGet,                 "cuDeviceGet");
+    CUinit(cuDeviceGetAttribute,        "cuDeviceGetAttribute");
     CUinit(cuDeviceGetCount,            "cuDeviceGetCount");
     CUinit(cuDeviceGetName,             "cuDeviceGetName");
     CUinit(cuDevicePrimaryCtxRetain,    "cuDevicePrimaryCtxRetain");
