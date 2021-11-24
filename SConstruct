@@ -81,7 +81,7 @@ if os.path.exists(".git"):
 else:
     # We are in a giless sdist. Lets hope that metadata.py was
     # included in it.
-    source = DirectoryFiles("pySecDec", "pySecDecWorker")
+    source = DirectoryFiles("pySecDec") + DirectoryFiles("pySecDecWorker")
     generated_source = []
 
 platformlib = env.Whl("platlib", source + generated_source + contrib, root="")
