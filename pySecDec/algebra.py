@@ -446,7 +446,7 @@ class Polynomial(_Expression):
 
         polysymbols_pm = polysymbols + [1/symbol for symbol in polysymbols]
 
-        sympy_poly = sp.poly(expression, polysymbols_pm)
+        sympy_poly = sp.poly(sympify_expression(expression), polysymbols_pm)
         expolist = np.array(sympy_poly.monoms())
         expolist = np.subtract(*np.split(expolist, 2, axis=1))
         coeffs = sympy_poly.coeffs()
