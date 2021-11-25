@@ -7,7 +7,7 @@
 
 #include <secdecutil/amplitude.hpp> // secdecutil::amplitude::Integral, secdecutil::amplitude::CubaIntegral, secdecutil::amplitude::QmcIntegral
 #include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
-#include <secdecutil/ginac_coefficient_parser.hpp> // secdecutil::ginac::read_coefficient
+#include <secdecutil/coefficient_parser.hpp> // secdecutil::exparse::read_coefficient
 #include <secdecutil/integrators/cquad.hpp> // secdecutil::gsl::CQuad
 #include <secdecutil/integrators/cuba.hpp> // secdecutil::cuba::Vegas, secdecutil::cuba::Suave, secdecutil::cuba::Cuhre, secdecutil::cuba::Divonne
 #include <secdecutil/integrators/qmc.hpp> // secdecutil::integrators::Qmc
@@ -50,7 +50,7 @@ namespace %(sub_integral_name)s
     {
         std::ifstream coeffile(lib_path + "/%(sub_integral_name)s_coefficient" + std::to_string(amp_idx) + ".txt");
         assert( coeffile.is_open() );
-        return secdecutil::ginac::read_coefficient<nested_series_t>
+        return secdecutil::exparse::read_coefficient<nested_series_t>
                (
                     coeffile, compute_required_orders(amp_idx),
                     names_of_regulators, names_of_real_parameters, names_of_complex_parameters,

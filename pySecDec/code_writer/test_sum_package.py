@@ -69,9 +69,10 @@ class TestCoefficient(unittest.TestCase):
 
         # check coefficient_definition
         processed_expressions = coefficient_definition.split(';')
-        processed_numerator = sympify_expression( processed_expressions[0].split('=')[1] )
-        processed_denominator = sympify_expression( processed_expressions[1].split('=')[1] )
-        processed_regulator_factor = sympify_expression( processed_expressions[2].split('=')[1] )
+        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
+        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
+        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
+        
         self.assertEqual(
             (
                 (self.sympified_numerator / self.sympified_denominator) / \
@@ -91,9 +92,9 @@ class TestCoefficient(unittest.TestCase):
 
         # check coefficient_definition
         processed_expressions = coefficient_definition.split(';')
-        processed_numerator = sympify_expression( processed_expressions[0].split('=')[1] )
-        processed_denominator = sympify_expression( processed_expressions[1].split('=')[1] )
-        processed_regulator_factor = sympify_expression( processed_expressions[2].split('=')[1] )
+        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
+        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
+        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
         for item in (processed_numerator, processed_denominator, processed_regulator_factor):
             self.assertEqual(item, 1)
 
@@ -108,9 +109,9 @@ class TestCoefficient(unittest.TestCase):
 
         # check coefficient_definition
         processed_expressions = coefficient_definition.split(';')
-        processed_numerator = sympify_expression( processed_expressions[0].split('=')[1] )
-        processed_denominator = sympify_expression( processed_expressions[1].split('=')[1] )
-        processed_regulator_factor = sympify_expression( processed_expressions[2].split('=')[1] )
+        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
+        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
+        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
         self.assertEqual(
             (
                 (1 / self.sympified_denominator / sympify_expression('eps^2')) / \
@@ -130,9 +131,9 @@ class TestCoefficient(unittest.TestCase):
 
         # check coefficient_definition
         processed_expressions = coefficient_definition.split(';')
-        processed_numerator = sympify_expression( processed_expressions[0].split('=')[1] )
-        processed_denominator = sympify_expression( processed_expressions[1].split('=')[1] )
-        processed_regulator_factor = sympify_expression( processed_expressions[2].split('=')[1] )
+        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
+        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
+        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
         self.assertEqual(
             (
                 (self.sympified_numerator * sympify_expression('eps^2')) / \
@@ -151,11 +152,11 @@ class TestCoefficient(unittest.TestCase):
 
         # check coefficient_definition
         processed_expressions = coefficient_definition.split(';')
-        processed_numerator = processed_expressions[0].split('=')[1]
-        processed_denominator = processed_expressions[1].split('=')[1]
-        processed_regulator_factor = processed_expressions[2].split('=')[1]
-
-        self.assertFalse( '^2' in processed_numerator )
+        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
+        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
+        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
+        
+        self.assertFalse( '^2' in str(processed_numerator) )
 
         self.assertEqual( sympify_expression(processed_numerator) - sympify_expression('5*I-8') , 0)
         self.assertEqual( sympify_expression(processed_denominator) - sympify_expression('1') , 0)

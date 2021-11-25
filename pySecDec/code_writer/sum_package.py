@@ -147,24 +147,24 @@ class Coefficient(object):
             * convert i_ to I
             multiply replace_(i_,I);
             .sort:beforeWrite;
+            
+            #write <`OUTFILE'> "regulator_factor = 1"
+            #Do regulator = {`regulators',}
+              #If x`regulator' != x
+                #write <`OUTFILE'> "*`regulator'^`$global`regulator'fac'"
+              #EndIf
+            #EndDo
+            #write <`OUTFILE'> ";"
 
             #write <`OUTFILE'> "numerator = 1"
             #Do idx = 1,`numberOfnum'
-              #write <`OUTFILE'> "*(%%E)", num`idx'
+              #write <`OUTFILE'> ",%%E", num`idx'
             #EndDo
             #write <`OUTFILE'> ";"
 
             #write <`OUTFILE'> "denominator = 1"
             #Do idx = 1,`numberOfden'
-              #write <`OUTFILE'> "*(%%E)", den`idx'
-            #EndDo
-            #write <`OUTFILE'> ";"
-
-            #write <`OUTFILE'> "regulator_factor = 1"
-            #Do regulator = {`regulators',}
-              #If x`regulator' != x
-                #write <`OUTFILE'> "*`regulator'^(`$global`regulator'fac')"
-              #EndIf
+              #write <`OUTFILE'> ",%%E", den`idx'
             #EndDo
             #write <`OUTFILE'> ";"
 

@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "../secdecutil/ginac_coefficient_parser.hpp" // secdecutil::ginac::read_coefficient
+#include "../secdecutil/coefficient_parser.hpp" // secdecutil::exparse::read_coefficient
 #include "../secdecutil/series.hpp" // secdecutil::Series
 
 #include <complex> // std::complex
@@ -12,16 +12,16 @@ TEST_CASE( "Read a basic coefficient", "[read_coefficient]" ) {
     std::istringstream coeff_stream
     (
         "\n\
+        regulator_factor = 1\n\
+        *eps^0\n\
+        ;\n\
         numerator = 1\n\
-        *(1/2*v3*v4 + 1/2*v3*v4^2*v5*sqrtDelta - 1/2*v3^2*v4^2*sqrtDelta + 1/2*\n\
+        ,1/2*v3*v4 + 1/2*v3*v4^2*v5*sqrtDelta - 1/2*v3^2*v4^2*sqrtDelta + 1/2*\n\
           v2*v3^2*v4*sqrtDelta - 1/2*v1*v3*v4*v5*sqrtDelta - 1/2*v1*v2*v3*v4\n\
-          *sqrtDelta)\n\
+          *sqrtDelta\n\
         ;\n\
         denominator = 1\n\
-        *(1)\n\
-        ;\n\
-        regulator_factor = 1\n\
-        *eps^(0)\n\
+        ,1\n\
         ;\n\
         "
     );
@@ -39,7 +39,7 @@ TEST_CASE( "Read a basic coefficient", "[read_coefficient]" ) {
     std::vector<std::complex<double>> complex_parameters{v1,v2,v3,v4,v5};
 
     const secdecutil::Series<std::complex<double>> parsed_coefficient =
-        secdecutil::ginac::read_coefficient<secdecutil::Series>
+        secdecutil::exparse::read_coefficient<secdecutil::Series>
         (
             coeff_stream, required_orders, names_of_regulators,
             names_of_real_parameters, names_of_complex_parameters,
