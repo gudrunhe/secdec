@@ -9,8 +9,11 @@
 #include <unistd.h>
 #include <vector>
 
-//#define unlikely(x) (x)
-#define unlikely(x) __builtin_expect((x), 0)
+#if __GNUC__
+    #define unlikely(x) __builtin_expect((x), 0)
+#else
+    #define unlikely(x) (x)
+#endif
 
 typedef double real_t;
 typedef struct { double re, im; } complex_t;
@@ -220,11 +223,11 @@ cmd_presample(uint64_t token, PresampleCmd &c)
                 c.lattice, 0, c.lattice, c.genvec, c.shift,
                 fam.realp, fam.complexp, deformp);
         if (r == 0) break;
-        for (int i = 0; i < c.ndeformp; i++) deformp[i] *= 0.9;
+        for (uint64_t i = 0; i < c.ndeformp; i++) deformp[i] *= 0.9;
     }
     double t2 = timestamp();
     printf("@[%zu,[", token);
-    for (int i = 0; i < c.ndeformp; i++) {
+    for (uint64_t i = 0; i < c.ndeformp; i++) {
         if (i != 0) putchar(',');
         printf("%.16e", deformp[i]);
     }

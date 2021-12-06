@@ -2,6 +2,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <math.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,15 +12,20 @@
 
 #include "minicuda.h"
 
-//#define unlikely(x) (x)
-#define unlikely(x) __builtin_expect((x), 0)
+#if __GNUC__
+    #define unlikely(x) __builtin_expect((x), 0)
+#else
+    #define unlikely(x) (x)
+#endif
 
 typedef double real_t;
-typedef struct { double re, im; } complex_t;
+typedef struct { real_t re, im; } complex_t;
 
 #define MAXPATH 4095
 #define MAXNAME 255
 #define MAXDIM 32
+#define NTHREADS 2
+#define MAXQUEUE 16
 
 typedef int (*IntegrateF)(
     void * presult,
@@ -104,6 +110,7 @@ struct PresampleCmd {
 };
 
 struct IntegrateCmd {
+    uint64_t token;
     uint64_t kernelidx;
     uint64_t lattice;
     uint64_t i1;
@@ -122,6 +129,18 @@ struct CudaParameterData {
 };
 
 // Global state
+
+struct PerThreadState {
+    pthread_t thread;
+    CUstream stream;
+    CUdeviceptr buffer_d;
+    size_t buffer_size;
+    CUdeviceptr params_d;
+    CudaParameterData *params;
+    complex_t *result;
+    double useful_time;
+};
+
 static struct GlobalState {
     char workername[MAXNAME];
     std::vector<Family> families;
@@ -129,19 +148,23 @@ static struct GlobalState {
     char *input_line = NULL;
     char *input_p = NULL;
     size_t input_linesize = 0;
+    double useful_time = 0;
     struct GlobalCudaState {
         CUdevice device;
         CUcontext context;
-        CUstream stream;
-        CUdeviceptr buffer_d;
-        size_t buffer_size;
-        CUdeviceptr params_d;
-        CudaParameterData *params;
-        complex_t *result;
         CUmodule builtin_module;
         CUfunction fn_sum_d_b128_x1024;
         CUfunction fn_sum_c_b128_x1024;
     } cuda;
+    struct IntegrateCmdQueue {
+        IntegrateCmd cmd[MAXQUEUE];
+        int head = 0;
+        int tail = 0;
+        pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+        pthread_cond_t cond_ins = PTHREAD_COND_INITIALIZER;
+        pthread_cond_t cond_rem = PTHREAD_COND_INITIALIZER;
+    } queue;
+    PerThreadState threads[NTHREADS];
 } G;
 
 #define input_getchar() (*G.input_p++)
@@ -153,6 +176,34 @@ timestamp()
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec + ts.tv_nsec*1e-9;
+}
+
+// Work queue
+
+static void
+submit_integrate_cmd(const IntegrateCmd &cmd)
+{
+    pthread_mutex_lock(&G.queue.lock);
+    while (((G.queue.head + 1) % MAXQUEUE) == G.queue.tail) {
+        pthread_cond_wait(&G.queue.cond_rem, &G.queue.lock);
+    }
+    G.queue.cmd[G.queue.head] = cmd;
+    G.queue.head = (G.queue.head + 1) % MAXQUEUE;
+    pthread_cond_signal(&G.queue.cond_ins);
+    pthread_mutex_unlock(&G.queue.lock);
+}
+
+static void
+obtain_integrate_cmd(IntegrateCmd &cmd)
+{
+    pthread_mutex_lock(&G.queue.lock);
+    while (G.queue.head == G.queue.tail) {
+        pthread_cond_wait(&G.queue.cond_ins, &G.queue.lock);
+    }
+    cmd = G.queue.cmd[G.queue.tail];
+    G.queue.tail = (G.queue.tail + 1) % MAXQUEUE;
+    pthread_cond_signal(&G.queue.cond_rem);
+    pthread_mutex_unlock(&G.queue.lock);
 }
 
 // CUDA
@@ -173,8 +224,222 @@ cuda_fail(const char *what, CUresult code)
     exit(1);
 }
 
+// Commands
+
 static void
-cuda_init()
+cmd_start(uint64_t token, StartCmd &c)
+{
+    int r = chdir(c.dirname);
+    if (r != 0) {
+        printf("@[%zu,null,\"failed to chdir %s: %d\"]\n", token, c.dirname, r);
+        return;
+    }
+    CU(cuModuleLoad, &G.cuda.builtin_module, "./builtin.fatbin");
+    CU(cuModuleGetFunction, &G.cuda.fn_sum_d_b128_x1024, G.cuda.builtin_module, "sum_d_b128_x1024");
+    CU(cuModuleGetFunction, &G.cuda.fn_sum_c_b128_x1024, G.cuda.builtin_module, "sum_c_b128_x1024");
+    printf("@[%zu,\"%s\",null]\n", token, G.workername);
+}
+
+static void
+cmd_family(uint64_t token, FamilyCmd &c)
+{
+    assert(c.index == G.families.size());
+    Family fam = {};
+    char buf[MAXNAME+16];
+    snprintf(buf, sizeof(buf), "./%s.so", c.name);
+    fam.so_handle = dlopen(buf, RTLD_LAZY | RTLD_LOCAL);
+    if (fam.so_handle == NULL) {
+        printf("@[%zu,null,\"failed to open %s: %s\"]\n", token, buf, strerror(errno));
+        return;
+    }
+    snprintf(buf, sizeof(buf), "./%s.fatbin", c.name);
+    if (cuModuleLoad(&fam.cuda_module, buf) != 0) {
+        printf("@[%zu,null,\"failed to open %s\"]\n", token, buf);
+        return;
+    }
+    fam.dimension = c.dimension;
+    memcpy(fam.realp, c.realp, sizeof(fam.realp));
+    memcpy(fam.complexp, c.complexp, sizeof(fam.complexp));
+    fam.complex_result = c.complex_result;
+    memcpy(fam.name, c.name, sizeof(fam.name));
+    G.families.push_back(fam);
+    printf("@[%zu,null,null]\n", token);
+}
+
+static void
+cmd_kernel(uint64_t token, KernelCmd &c)
+{
+    assert(c.familyidx < G.families.size());
+    assert(c.index == G.kernels.size());
+    const Family &fam = G.families[c.familyidx];
+    char buf[2*MAXNAME+18];
+    Kernel ker = {};
+    ker.familyidx = c.familyidx;
+    snprintf(buf, sizeof(buf), "%s__%s", fam.name, c.name);
+    ker.fn_integrate = (IntegrateF)dlsym(fam.so_handle, buf);
+    if (ker.fn_integrate == NULL) {
+        printf("@[%zu,null,\"function not found: %s\"]\n", token, buf);
+        return;
+    }
+    if (cuModuleGetFunction(&ker.cuda_fn_integrate, fam.cuda_module, buf) != 0) {
+        printf("@[%zu,null,\"CUDA function not found: %s\"]\n", token, buf);
+        return;
+    }
+    snprintf(buf, sizeof(buf), "%s__%s__maxdeformp", fam.name, c.name);
+    ker.fn_maxdeformp = (MaxdeformpF)dlsym(fam.so_handle, buf);
+    snprintf(buf, sizeof(buf), "%s__%s__fpolycheck", fam.name, c.name);
+    ker.fn_fpolycheck = (FpolycheckF)dlsym(fam.so_handle, buf);
+    memcpy(ker.name, c.name, sizeof(ker.name));
+    G.kernels.push_back(ker);
+    printf("@[%zu,null,null]\n", token);
+}
+
+static void
+cmd_presample(uint64_t token, PresampleCmd &c)
+{
+    if (unlikely(c.kernelidx >= G.kernels.size())) {
+        printf("@[%zu,null,\"kernel %zu was not loaded\"]\n", token, c.kernelidx);
+        return;
+    }
+    const Kernel &ker = G.kernels[c.kernelidx];
+    const Family &fam = G.families[ker.familyidx];
+    if (unlikely(c.ndeformp == 0)) {
+        printf("@[%zu,[],null]\n", token);
+        return;
+    }
+    if (unlikely(ker.fn_maxdeformp == NULL)) {
+        printf("@[%zu,null,\"kernel %zu has no *__maxdefomp function\"]\n", token, c.kernelidx);
+        return;
+    }
+    if (unlikely(ker.fn_fpolycheck == NULL)) {
+        printf("@[%zu,null,\"kernel %zu has no *__fpolycheck function\"]\n", token, c.kernelidx);
+        return;
+    }
+    double deformp[MAXDIM] = {};
+    double t1 = timestamp();
+    ker.fn_maxdeformp(deformp,
+        c.lattice, 0, c.lattice, c.genvec, c.shift,
+        fam.realp, fam.complexp);
+    for (;;) {
+        int r =
+            ker.fn_fpolycheck(
+                c.lattice, 0, c.lattice, c.genvec, c.shift,
+                fam.realp, fam.complexp, deformp);
+        if (r == 0) break;
+        for (uint64_t i = 0; i < c.ndeformp; i++)
+            deformp[i] *= 0.9;
+    }
+    double t2 = timestamp();
+    printf("@[%zu,[", token);
+    for (uint64_t i = 0; i < c.ndeformp; i++) {
+        if (i != 0) putchar(',');
+        printf("%.16e", deformp[i]);
+    }
+    printf("],null]\n");
+    G.useful_time += t2-t1;
+}
+
+static void stupid_cuda_dummy(void *userdata)
+{ (void)userdata; }
+
+static void *
+worker_thread(void *ps)
+{
+    PerThreadState &s = *(PerThreadState*)ps;
+    for (;;) {
+        IntegrateCmd c;
+        obtain_integrate_cmd(c);
+        const Kernel &ker = G.kernels[c.kernelidx];
+        const Family &fam = G.families[ker.familyidx];
+        if (0) { // CPU path
+            complex_t result = {};
+            double t1 = timestamp();
+            int r = ker.fn_integrate(&result,
+                c.lattice, c.i1, c.i2, c.genvec, c.shift,
+                fam.realp, fam.complexp, c.deformp);
+            double t2 = timestamp();
+            if (unlikely((isnan(result.re) || isnan(result.im)) ^ (r != 0))) {
+                printf("@[%zu,[[NaN,NaN],%zu,%.4e],\"NaN != sign check error %d in %s.%s\"]", c.token, c.i2-c.i1, t2-t1, r, fam.name, ker.name);
+            } else if (isnan(result.re) || isnan(result.im)) {
+                printf("@[%zu,[[NaN,NaN],%zu,%.4e],null]\n", c.token, c.i2-c.i1, t2-t1);
+            } else {
+                printf("@[%zu,[[%.16e,%.16e],%zu,%.4e],null]\n", c.token, result.re, result.im, c.i2-c.i1, t2-t1);
+            }
+            s.useful_time += t2-t1;
+        }
+        if (1) { // CUDA path
+            uint64_t threads = 128, pt_per_thread = 8;
+            uint64_t blocks = (c.i2 - c.i1 + threads*pt_per_thread - 1)/(threads*pt_per_thread);
+            uint64_t bufsize = fam.complex_result ? blocks*sizeof(complex_t) : blocks*sizeof(real_t);
+            if (bufsize > s.buffer_size) {
+                fprintf(stderr, "%s] realloc CUDA buffer to %zuMB\n", G.workername, bufsize/1024/1024);
+                CU(cuMemFree, s.buffer_d);
+                s.buffer_size = bufsize;
+                CU(cuMemAlloc, &s.buffer_d, s.buffer_size);
+                CU(cuMemsetD8Async, s.buffer_d, 0, s.buffer_size, s.stream);
+                CU(cuStreamSynchronize, s.stream);
+            }
+            memcpy(s.params->genvec, c.genvec, sizeof(c.genvec));
+            memcpy(s.params->shift, c.shift, sizeof(c.shift));
+            memcpy(s.params->realp, fam.realp, sizeof(fam.realp));
+            memcpy(s.params->complexp, fam.complexp, sizeof(fam.complexp));
+            memcpy(s.params->deformp, c.deformp, sizeof(c.deformp));
+            double t1 = timestamp();
+            CU(cuMemcpyHtoDAsync, s.params_d, s.params, sizeof(CudaParameterData), s.stream);
+            CUdeviceptr genvec_d = s.params_d + offsetof(CudaParameterData, genvec);
+            CUdeviceptr shift_d = s.params_d + offsetof(CudaParameterData, shift);
+            CUdeviceptr realp_d = s.params_d + offsetof(CudaParameterData, realp);
+            CUdeviceptr complexp_d = s.params_d + offsetof(CudaParameterData, complexp);
+            CUdeviceptr deformp_d = s.params_d + offsetof(CudaParameterData, deformp);
+            void *args[] = {&s.buffer_d, &c.lattice, &c.i1, &c.i2, &genvec_d, &shift_d, &realp_d, &complexp_d, &deformp_d, NULL };
+            CU(cuLaunchKernel, ker.cuda_fn_integrate, blocks, 1, 1, threads, 1, 1, 0, s.stream, args, NULL);
+            void *sum_args[] = {&s.buffer_d, &s.buffer_d, &blocks, NULL};
+            CUfunction fn_sum = fam.complex_result ? G.cuda.fn_sum_c_b128_x1024 : G.cuda.fn_sum_d_b128_x1024;
+            while (blocks > 1) {
+                uint64_t reduced = (blocks + 1024-1)/1024;
+                CU(cuLaunchKernel, fn_sum, reduced, 1, 1, 128, 1, 1, 0, s.stream, sum_args, NULL);
+                blocks = reduced;
+            }
+            s.result->re = 0;
+            s.result->im = 0;
+            CU(cuMemcpyDtoHAsync, s.result, s.buffer_d, fam.complex_result ? sizeof(complex_t) : sizeof(real_t), s.stream);
+            // Without this CU_CTX_SCHED_BLOCKING_SYNC doesn't work,
+            // and cuStreamSynchronize spins with 100% CPU usage.
+            // With this, both CU_CTX_SCHED_BLOCKING_SYNC and
+            // CU_CTX_SCHED_YIELD have the same result: 0% CPU usage
+            // during cuStreamSynchronize.
+            // How is cuLaunchHostFunc related though?
+            // And how could one possibly find out about this?
+            CU(cuLaunchHostFunc, s.stream, stupid_cuda_dummy, NULL);
+            CU(cuStreamSynchronize, s.stream);
+            double t2 = timestamp();
+            complex_t result = *s.result;
+            if (isnan(result.re) || isnan(result.im)) {
+                printf("@[%zu,[[NaN,NaN],%zu,%.4e],null]\n", c.token, c.i2-c.i1, t2-t1);
+            } else {
+                printf("@[%zu,[[%.16e,%.16e],%zu,%.4e],null]\n", c.token, result.re, result.im, c.i2-c.i1, t2-t1);
+            }
+            s.useful_time += t2-t1;
+        }
+        fflush(stdout);
+    }
+    return NULL;
+}
+
+static void
+cmd_integrate(uint64_t token, IntegrateCmd &c)
+{
+    if (unlikely(c.kernelidx >= G.kernels.size())) {
+        printf("@[%zu,null,\"kernel %zu was not loaded\"]\n", token, c.kernelidx);
+        return;
+    }
+    submit_integrate_cmd(c);
+}
+
+// Initialization
+
+static void
+init()
 {
     CU(cuInit, 0);
     int ver = 0, ndev = 0;
@@ -190,225 +455,21 @@ cuda_init()
     CU(cuDevicePrimaryCtxSetFlags, G.cuda.device, CU_CTX_SCHED_BLOCKING_SYNC);
     CU(cuDevicePrimaryCtxRetain, &G.cuda.context, G.cuda.device);
     CU(cuCtxPushCurrent, G.cuda.context);
-    CU(cuStreamCreate, &G.cuda.stream, CU_STREAM_NON_BLOCKING);
-    CU(cuMemAlloc, &G.cuda.params_d, sizeof(CudaParameterData));
-    CU(cuMemAllocHost, (void**)&G.cuda.params, sizeof(*G.cuda.params));
-    CU(cuMemAllocHost, (void**)&G.cuda.result, sizeof(*G.cuda.result));
-    G.cuda.buffer_size = 128*1024*1024;
-    CU(cuMemAlloc, &G.cuda.buffer_d, G.cuda.buffer_size);
-    CU(cuMemsetD8Async, G.cuda.params_d, 0, sizeof(CudaParameterData), G.cuda.stream);
-    CU(cuMemsetD8Async, G.cuda.buffer_d, 0, G.cuda.buffer_size, G.cuda.stream);
-}
-
-// Commands
-
-static double
-cmd_start(uint64_t token, StartCmd &c)
-{
-    int r = chdir(c.dirname);
-    if (r != 0) {
-        printf("@[%zu,null,\"failed to chdir %s: %d\"]\n", token, c.dirname, r);
-        return 0;
-    }
-    CU(cuModuleLoad, &G.cuda.builtin_module, "./builtin.fatbin");
-    CU(cuModuleGetFunction, &G.cuda.fn_sum_d_b128_x1024, G.cuda.builtin_module, "sum_d_b128_x1024");
-    CU(cuModuleGetFunction, &G.cuda.fn_sum_c_b128_x1024, G.cuda.builtin_module, "sum_c_b128_x1024");
-    printf("@[%zu,\"%s\",null]\n", token, G.workername);
-    return 0;
-}
-
-static double
-cmd_family(uint64_t token, FamilyCmd &c)
-{
-    assert(c.index == G.families.size());
-    Family fam = {};
-    char buf[MAXNAME+16];
-    snprintf(buf, sizeof(buf), "./%s.so", c.name);
-    fam.so_handle = dlopen(buf, RTLD_LAZY | RTLD_LOCAL);
-    if (fam.so_handle == NULL) {
-        printf("@[%zu,null,\"failed to open %s: %s\"]\n", token, buf, strerror(errno));
-        return 0;
-    }
-    snprintf(buf, sizeof(buf), "./%s.fatbin", c.name);
-    if (cuModuleLoad(&fam.cuda_module, buf) != 0) {
-        printf("@[%zu,null,\"failed to open %s\"]\n", token, buf);
-        return 0;
-    }
-    fam.dimension = c.dimension;
-    memcpy(fam.realp, c.realp, sizeof(fam.realp));
-    memcpy(fam.complexp, c.complexp, sizeof(fam.complexp));
-    fam.complex_result = c.complex_result;
-    memcpy(fam.name, c.name, sizeof(fam.name));
-    G.families.push_back(fam);
-    printf("@[%zu,null,null]\n", token);
-    return 0;
-}
-
-static double
-cmd_kernel(uint64_t token, KernelCmd &c)
-{
-    assert(c.familyidx < G.families.size());
-    assert(c.index == G.kernels.size());
-    const Family &fam = G.families[c.familyidx];
-    char buf[2*MAXNAME+18];
-    Kernel ker = {};
-    ker.familyidx = c.familyidx;
-    snprintf(buf, sizeof(buf), "%s__%s", fam.name, c.name);
-    ker.fn_integrate = (IntegrateF)dlsym(fam.so_handle, buf);
-    if (ker.fn_integrate == NULL) {
-        printf("@[%zu,null,\"function not found: %s\"]\n", token, buf);
-        return 0;
-    }
-    if (cuModuleGetFunction(&ker.cuda_fn_integrate, fam.cuda_module, buf) != 0) {
-        printf("@[%zu,null,\"CUDA function not found: %s\"]\n", token, buf);
-        return 0;
-    }
-    snprintf(buf, sizeof(buf), "%s__%s__maxdeformp", fam.name, c.name);
-    ker.fn_maxdeformp = (MaxdeformpF)dlsym(fam.so_handle, buf);
-    snprintf(buf, sizeof(buf), "%s__%s__fpolycheck", fam.name, c.name);
-    ker.fn_fpolycheck = (FpolycheckF)dlsym(fam.so_handle, buf);
-    memcpy(ker.name, c.name, sizeof(ker.name));
-    G.kernels.push_back(ker);
-    printf("@[%zu,null,null]\n", token);
-    return 0;
-}
-
-static double
-cmd_presample(uint64_t token, PresampleCmd &c)
-{
-    if (unlikely(c.kernelidx >= G.kernels.size())) {
-        printf("@[%zu,null,\"kernel %zu was not loaded\"]\n", token, c.kernelidx);
-        return 0;
-    }
-    const Kernel &ker = G.kernels[c.kernelidx];
-    const Family &fam = G.families[ker.familyidx];
-    if (unlikely(c.ndeformp == 0)) {
-        printf("@[%zu,[],null]\n", token);
-        return 0;
-    }
-    if (unlikely(ker.fn_maxdeformp == NULL)) {
-        printf("@[%zu,null,\"kernel %zu has no *__maxdefomp function\"]\n", token, c.kernelidx);
-        return 0;
-    }
-    if (unlikely(ker.fn_fpolycheck == NULL)) {
-        printf("@[%zu,null,\"kernel %zu has no *__fpolycheck function\"]\n", token, c.kernelidx);
-        return 0;
-    }
-    double deformp[MAXDIM] = {};
-    double t1 = timestamp();
-    ker.fn_maxdeformp(deformp,
-        c.lattice, 0, c.lattice, c.genvec, c.shift,
-        fam.realp, fam.complexp);
-    for (;;) {
-        int r =
-            ker.fn_fpolycheck(
-                c.lattice, 0, c.lattice, c.genvec, c.shift,
-                fam.realp, fam.complexp, deformp);
-        if (r == 0) break;
-        for (int i = 0; i < c.ndeformp; i++) deformp[i] *= 0.9;
-    }
-    double t2 = timestamp();
-    printf("@[%zu,[", token);
-    for (int i = 0; i < c.ndeformp; i++) {
-        if (i != 0) putchar(',');
-        printf("%.16e", deformp[i]);
-    }
-    printf("],null]\n");
-    return t2-t1;
-}
-
-static void
-print_real(double x)
-{
-    if (isnan(x)) printf("NaN");
-    else printf("%.16e", x);
-}
-
-static void
-print_complex(complex_t x)
-{
-    putchar('[');
-    print_real(x.re);
-    putchar(',');
-    print_real(x.im);
-    putchar(']');
-}
-
-static void stupid_cuda_dummy(void *userdata)
-{ (void)userdata; }
-
-static double
-cmd_integrate(uint64_t token, IntegrateCmd &c)
-{
-    if (unlikely(c.kernelidx >= G.kernels.size())) {
-        printf("@[%zu,null,\"kernel %zu was not loaded\"]\n", token, c.kernelidx);
-        return 0;
-    }
-    const Kernel &ker = G.kernels[c.kernelidx];
-    const Family &fam = G.families[ker.familyidx];
-    if (0) { // CPU path
-        complex_t result = {};
-        double t1 = timestamp();
-        int r = ker.fn_integrate(&result,
-            c.lattice, c.i1, c.i2, c.genvec, c.shift,
-            fam.realp, fam.complexp, c.deformp);
-        double t2 = timestamp();
-        if (unlikely((isnan(result.re) || isnan(result.im)) ^ (r != 0))) {
-            printf("@[%zu,[[NaN,NaN],%zu,%.4e],\"NaN != sign check error %d in %s.%s\"]", token, c.i2-c.i1, t2-t1, r, fam.name, ker.name);
-        }
-        printf("@[%zu,[", token); print_complex(result); printf(",%zu,%.4e],null]\n", c.i2-c.i1, t2-t1);
-        return t2-t1;
-    }
-    if (1) { // CUDA path
-        uint64_t threads = 128, pt_per_thread = 8;
-        uint64_t blocks = (c.i2 - c.i1 + threads*pt_per_thread - 1)/(threads*pt_per_thread);
-        uint64_t bufsize = fam.complex_result ? blocks*sizeof(complex_t) : blocks*sizeof(real_t);
-        if (bufsize > G.cuda.buffer_size) {
-            fprintf(stderr, "%s] realloc CUDA buffer to %zuMB\n", G.workername, bufsize/1024/1024);
-            CU(cuMemFree, G.cuda.buffer_d);
-            G.cuda.buffer_size = bufsize;
-            CU(cuMemAlloc, &G.cuda.buffer_d, G.cuda.buffer_size);
-            CU(cuMemsetD8Async, G.cuda.buffer_d, 0, G.cuda.buffer_size, G.cuda.stream);
-            CU(cuStreamSynchronize, G.cuda.stream);
-        }
-        memcpy(G.cuda.params->genvec, c.genvec, sizeof(c.genvec)); 
-        memcpy(G.cuda.params->shift, c.shift, sizeof(c.shift)); 
-        memcpy(G.cuda.params->realp, fam.realp, sizeof(fam.realp)); 
-        memcpy(G.cuda.params->complexp, fam.complexp, sizeof(fam.complexp)); 
-        memcpy(G.cuda.params->deformp, c.deformp, sizeof(c.deformp)); 
-        double t1 = timestamp();
-        CU(cuMemcpyHtoDAsync, G.cuda.params_d, G.cuda.params, sizeof(CudaParameterData), G.cuda.stream);
-        CUdeviceptr genvec_d = G.cuda.params_d + offsetof(CudaParameterData, genvec);
-        CUdeviceptr shift_d = G.cuda.params_d + offsetof(CudaParameterData, shift);
-        CUdeviceptr realp_d = G.cuda.params_d + offsetof(CudaParameterData, realp);
-        CUdeviceptr complexp_d = G.cuda.params_d + offsetof(CudaParameterData, complexp);
-        CUdeviceptr deformp_d = G.cuda.params_d + offsetof(CudaParameterData, deformp);
-        void *args[] = {&G.cuda.buffer_d, &c.lattice, &c.i1, &c.i2, &genvec_d, &shift_d, &realp_d, &complexp_d, &deformp_d, NULL };
-        CU(cuLaunchKernel, ker.cuda_fn_integrate, blocks, 1, 1, threads, 1, 1, 0, G.cuda.stream, args, NULL);
-        void *sum_args[] = {&G.cuda.buffer_d, &G.cuda.buffer_d, &blocks, NULL};
-        CUfunction fn_sum = fam.complex_result ? G.cuda.fn_sum_c_b128_x1024 : G.cuda.fn_sum_d_b128_x1024;
-        while (blocks > 1) {
-            uint64_t reduced = (blocks + 1024-1)/1024;
-            CU(cuLaunchKernel, fn_sum, reduced, 1, 1, 128, 1, 1, 0, G.cuda.stream, sum_args, NULL);
-            blocks = reduced;
-        }
-        G.cuda.result->re = 0;
-        G.cuda.result->im = 0;
-        CU(cuMemcpyDtoHAsync, G.cuda.result, G.cuda.buffer_d, fam.complex_result ? sizeof(complex_t) : sizeof(real_t), G.cuda.stream);
-        // Without this CU_CTX_SCHED_BLOCKING_SYNC doesn't work,
-        // and cuStreamSynchronize spins with 100% CPU usage.
-        // With this, both CU_CTX_SCHED_BLOCKING_SYNC and
-        // CU_CTX_SCHED_YIELD have the same result: 0% CPU usage
-        // during cuStreamSynchronize.
-        // How is cuLaunchHostFunc related though?
-        // And how could one possibly find out about this?
-        CU(cuLaunchHostFunc, G.cuda.stream, stupid_cuda_dummy, NULL);
-        CU(cuStreamSynchronize, G.cuda.stream);
-        double t2 = timestamp();
-        printf("@[%zu,[", token); print_complex(*G.cuda.result); printf(",%zu,%.4e],null]\n", c.i2-c.i1, t2-t1);
-        return t2-t1;
+    for (int thr = 0; thr < NTHREADS; thr++) {
+        PerThreadState &ts = G.threads[thr];
+        CU(cuStreamCreate, &ts.stream, CU_STREAM_NON_BLOCKING);
+        CU(cuMemAlloc, &ts.params_d, sizeof(CudaParameterData));
+        CU(cuMemAllocHost, (void**)&ts.params, sizeof(*ts.params));
+        CU(cuMemAllocHost, (void**)&ts.result, sizeof(*ts.result));
+        ts.buffer_size = 128*1024*1024;
+        CU(cuMemAlloc, &ts.buffer_d, ts.buffer_size);
+        CU(cuMemsetD8Async, ts.params_d, 0, sizeof(CudaParameterData), ts.stream);
+        CU(cuMemsetD8Async, ts.buffer_d, 0, ts.buffer_size, ts.stream);
+        pthread_create(&ts.thread, NULL, &worker_thread, (void*)&G.threads[thr]);
     }
 }
+
+// Parsing
 
 static void
 parse_fail()
@@ -525,7 +586,7 @@ parse_str(char *str, size_t maxn)
 
 // Main RPC cycle
 
-static double
+static void
 handle_one_command()
 {
     match_c('[');
@@ -533,7 +594,7 @@ handle_one_command()
     match_c(','); match_c('"');
     int c = input_getchar();
     if (c == 'i') {
-        IntegrateCmd c = {};
+        IntegrateCmd c = {token};
         match_str("ntegrate\",[");
         c.kernelidx = parse_uint();
         match_c(',');
@@ -569,7 +630,7 @@ handle_one_command()
     if (c == 'p') {
         match_str("ing\",[]]\n");
         printf("@[%zu,null,null]\n", token);
-        return 0;
+        return;
     }
     if (c == 'f') {
         FamilyCmd c = {};
@@ -607,7 +668,6 @@ handle_one_command()
         return cmd_start(token, c);
     }
     parse_fail();
-    return 0;
 }
 
 static void
@@ -622,10 +682,9 @@ fill_workername()
 int main() {
     fill_workername();
     load_minicuda();
-    cuda_init();
+    init();
     setvbuf(stdout, NULL, _IOFBF, 1024*1024);
     double readt = 0;
-    double workt = 0;
     double lastt = 0;
     double t1 = timestamp();
     bool quit = false;
@@ -634,11 +693,13 @@ int main() {
         if (getline(&G.input_line, &G.input_linesize, stdin) < 0) break;
         readt += timestamp() - lastt;
         G.input_p = G.input_line;
-        workt += handle_one_command();
+        handle_one_command();
         fflush(stdout);
     }
     double t2 = timestamp();
+    for (int i = 0; i < NTHREADS; i++)
+        G.useful_time += G.threads[i].useful_time;
     fprintf(stderr, "%s] Done in %.3gs: %.3g%% useful time, %.3g%% read time; work ended %.3gs ago\n",
-            G.workername, lastt-t1, 100*workt/(lastt-t1), 100*readt/(lastt-t1), t2-lastt);
+            G.workername, lastt-t1, 100*G.useful_time/(lastt-t1), 100*readt/(lastt-t1), t2-lastt);
     fflush(stderr);
 }
