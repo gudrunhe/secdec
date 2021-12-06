@@ -674,10 +674,12 @@ def load_cluster_json(jsonfile, dirname):
     if ncuda > 0: ncpu = 0
     log(f"local CPU worker count: {ncpu}, GPU worker count: {ncuda}")
     return {
-        "cluster": [
-            {"count": ncpu, "command": f"nice python3 -m pySecDecContrib pysecdec_cpuworker"},
-            {"count": ncuda, "command": f"nice python3 -m pySecDecContrib pysecdec_cudaworker"},
-        ]
+        "cluster":
+            [{"count": ncpu, "command": f"nice python3 -m pySecDecContrib pysecdec_cpuworker"}] +
+            [
+                {"count": 1, "command": f"nice python3 -m pySecDecContrib pysecdec_cudaworker -d {i}"}
+                for i in range(ncuda)
+            ]
     }
 
 def load_coefficient(filename):

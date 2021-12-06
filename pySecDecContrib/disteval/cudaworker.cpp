@@ -439,19 +439,19 @@ cmd_integrate(uint64_t token, IntegrateCmd &c)
 // Initialization
 
 static void
-init()
+init(int devindex)
 {
     CU(cuInit, 0);
     int ver = 0, ndev = 0;
     size_t memsize = 0;
     CU(cuDriverGetVersion, &ver);
     CU(cuDeviceGetCount, &ndev);
-    CU(cuDeviceGet, &G.cuda.device, 0);
+    CU(cuDeviceGet, &G.cuda.device, devindex);
     char buf[256];
     CU(cuDeviceGetName, buf, sizeof(buf), G.cuda.device);
     CU(cuDeviceGetName, buf, sizeof(buf), G.cuda.device);
     CU(cuDeviceTotalMem, &memsize, G.cuda.device);
-    fprintf(stderr, "%s] CUDA v%d, %d devices, using '%s' with %zuMB of memory\n", G.workername, ver, ndev, buf, memsize/1024/1024);
+    fprintf(stderr, "%s] CUDA v%d, %d devices, using #%d: '%s' with %zuMB of memory\n", G.workername, ver, ndev, devindex, buf, memsize/1024/1024);
     CU(cuDevicePrimaryCtxSetFlags, G.cuda.device, CU_CTX_SCHED_BLOCKING_SYNC);
     CU(cuDevicePrimaryCtxRetain, &G.cuda.context, G.cuda.device);
     CU(cuCtxPushCurrent, G.cuda.context);
@@ -679,10 +679,27 @@ fill_workername()
     snprintf(G.workername, sizeof(G.workername), "%s:%ld:cuda", host, pid);
 }
 
-int main() {
+void
+usage(const char *argv0)
+{
+    fprintf(stderr, "%s] usage: %s [-d cuda-device-index]\n", G.workername, argv0);
+    exit(1);
+}
+
+int
+main(int argc, char *argv[])
+{
     fill_workername();
+    int devindex = 0;
+    for (int opt; (opt = getopt(argc, argv, "d:")) != -1;) {
+        switch (opt) {
+        case 'd': devindex = atoi(optarg); break;
+        default: usage(argv[0]); break;
+        }
+    }
+    if (optind < argc) usage(argv[0]);
     load_minicuda();
-    init();
+    init(devindex);
     setvbuf(stdout, NULL, _IOFBF, 1024*1024);
     double readt = 0;
     double lastt = 0;
