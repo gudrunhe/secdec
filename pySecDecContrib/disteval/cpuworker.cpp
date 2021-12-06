@@ -235,23 +235,6 @@ cmd_presample(uint64_t token, PresampleCmd &c)
     return t2-t1;
 }
 
-static void
-print_real(double x)
-{
-    if (isnan(x)) printf("NaN");
-    else printf("%.16e", x);
-}
-
-static void
-print_complex(complex_t x)
-{
-    putchar('[');
-    print_real(x.re);
-    putchar(',');
-    print_real(x.im);
-    putchar(']');
-}
-
 static double
 cmd_integrate(uint64_t token, IntegrateCmd &c)
 {
@@ -269,8 +252,11 @@ cmd_integrate(uint64_t token, IntegrateCmd &c)
     double t2 = timestamp();
     if (unlikely((isnan(result.re) || isnan(result.im)) ^ (r != 0))) {
         printf("@[%zu,[[NaN,NaN],%zu,%.4e],\"NaN != sign check error %d in %s.%s\"]", token, c.i2-c.i1, t2-t1, r, fam.name, ker.name);
+    } else if (isnan(result.re) || isnan(result.im)) {
+        printf("@[%zu,[[NaN,NaN],%zu,%.4e],null]\n", token, c.i2-c.i1, t2-t1);
+    } else {
+        printf("@[%zu,[[%.16e,%.16e],%zu,%.4e],null]\n", token, result.re, result.im, c.i2-c.i1, t2-t1);
     }
-    printf("@[%zu,[", token); print_complex(result); printf(",%zu,%.4e],null]\n", c.i2-c.i1, t2-t1);
     return t2-t1;
 }
 
@@ -282,7 +268,6 @@ parse_fail()
     for (char *p = input_line + 1; p < input_p; p++)
         putc('-', stderr);
     fprintf(stderr, "^\n");
-    fflush(stderr);
     exit(1);
 }
 
@@ -485,7 +470,9 @@ fill_workername()
 
 int main() {
     fill_workername();
-    setvbuf(stdout, NULL, _IOFBF, 1024*1024);
+    setvbuf(stdin, NULL, _IOFBF, 1024*1024);
+    setvbuf(stdout, NULL, _IOLBF, 1024*1024);
+    setvbuf(stderr, NULL, _IOLBF, 1024*1024);
     double readt = 0;
     double workt = 0;
     double lastt = 0;
@@ -497,10 +484,8 @@ int main() {
         readt += timestamp() - lastt;
         input_p = input_line;
         workt += handle_one_command();
-        fflush(stdout);
     }
     double t2 = timestamp();
     fprintf(stderr, "%s] Done in %.3gs: %.3g%% useful time, %.3g%% read time; work ended %.3gs ago\n",
             workername, lastt-t1, 100*workt/(lastt-t1), 100*readt/(lastt-t1), t2-lastt);
-    fflush(stderr);
 }

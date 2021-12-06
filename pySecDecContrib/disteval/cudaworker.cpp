@@ -220,7 +220,6 @@ cuda_fail(const char *what, CUresult code)
     cuGetErrorName(code, &n);
     cuGetErrorString(code, &s);
     fprintf(stderr, "%s] %s failed with code %d (%s): %s\n", G.workername, what, code, n, s);
-    fflush(stderr);
     exit(1);
 }
 
@@ -421,7 +420,6 @@ worker_thread(void *ps)
             }
             s.useful_time += t2-t1;
         }
-        fflush(stdout);
     }
     return NULL;
 }
@@ -479,7 +477,6 @@ parse_fail()
     for (char *p = G.input_line + 1; p < G.input_p; p++)
         putc('-', stderr);
     fprintf(stderr, "^\n");
-    fflush(stderr);
     exit(1);
 }
 
@@ -700,7 +697,9 @@ main(int argc, char *argv[])
     if (optind < argc) usage(argv[0]);
     load_minicuda();
     init(devindex);
-    setvbuf(stdout, NULL, _IOFBF, 1024*1024);
+    setvbuf(stdin, NULL, _IOFBF, 1024*1024);
+    setvbuf(stdout, NULL, _IOLBF, 1024*1024);
+    setvbuf(stderr, NULL, _IOLBF, 1024*1024);
     double readt = 0;
     double lastt = 0;
     double t1 = timestamp();
@@ -711,12 +710,10 @@ main(int argc, char *argv[])
         readt += timestamp() - lastt;
         G.input_p = G.input_line;
         handle_one_command();
-        fflush(stdout);
     }
     double t2 = timestamp();
     for (int i = 0; i < NTHREADS; i++)
         G.useful_time += G.threads[i].useful_time;
     fprintf(stderr, "%s] Done in %.3gs: %.3g%% useful time, %.3g%% read time; work ended %.3gs ago\n",
             G.workername, lastt-t1, 100*G.useful_time/(lastt-t1), 100*readt/(lastt-t1), t2-lastt);
-    fflush(stderr);
 }
