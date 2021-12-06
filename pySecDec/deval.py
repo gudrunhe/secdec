@@ -456,6 +456,7 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
     shift_rnd = np.empty((len(kernel2idx), nshifts), dtype=np.object)
     shift_tag = np.full((len(kernel2idx), nshifts), None, dtype=np.object)
     kern_db = np.ones(len(kernel2idx))
+    kern_dt = np.ones(len(kernel2idx))
     kern_di = np.ones(len(kernel2idx))
     kern_val = np.zeros(len(kernel2idx), dtype=np.complex128)
     kern_var = np.full(len(kernel2idx), np.inf, dtype=np.complex128)
@@ -473,6 +474,7 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
             if dt > 2*w.int_overhead:
                 kern_db[idx] += (dt - w.int_overhead)*w.speed
                 kern_di[idx] += di
+                kern_dt[idx] += dt
 
     def schedule_kernel(idx):
         for s in range(nshifts):
@@ -494,8 +496,6 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
         kern_absvar = np.real(kern_var) + np.imag(kern_var)
         if np.all(kern_absvar <= kern_maxvar):
             log("per-integral precision reached")
-            for i in range(len(kernel2idx)):
-                log(f"lattice[k{i}] = {lattices[i]:.3e}")
             oldlattices[:] = lattices
             return None
         n = lattices * (kern_absvar/kern_maxvar)**(1/scaling)
@@ -519,8 +519,6 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
         log("abserr K =", amp_abserr/amp_maxerr)
         if np.all(amp_abserr <= amp_maxerr):
             log("per-amplitude precision reached")
-            for i in range(len(kernel2idx)):
-                log(f"lattice[k{i}] = {lattices[i]:.3e}")
             oldlattices[:] = lattices
             return None
         tau = kern_db/kern_di
@@ -599,7 +597,7 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
                 return amp_val, amp_var
             for i, (l1, l2) in enumerate(zip(lattices, newlattices)):
                 if l1 != l2:
-                    log(f"lattice[k{i}] = {l1} -> {l2} ({l2/l1:.1f}x)")
+                    log(f"lattice[k{i}] = {l1:.0f} -> {l2:.0f} ({l2/l1:.1f}x)")
             oldlattices[:] = lattices
             lattices[:] = newlattices
             genvecs[:] = newgenvecs
@@ -617,6 +615,16 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
     log("worker startup time:", t2-t1)
     log("presampling time:", t3-t2)
     log("integration time:", t4-t3)
+
+    log(f"per-integral statistics:")
+    for f in set(fams):
+        mask = np.array([ff == f for ff in fams])
+        dt = np.sum(kern_dt[mask])
+        di = np.sum(kern_di[mask])
+        slow = kern_db[mask]/kern_di[mask]
+        minlattice = np.min(lattices[mask])
+        maxlattice = np.max(lattices[mask])
+        log(f"- {f}: {di:.4e} evals, {dt:.4e} sec, {np.min(slow):.4g} - {np.max(slow):.4g} bubbles, {minlattice:.4e} - {maxlattice:.4e} pts")
 
     ampids = sorted(set(a for a, p in ap2coeffs.keys()))
     relerrs = []
@@ -667,8 +675,8 @@ def load_cluster_json(jsonfile, dirname):
     log(f"local CPU worker count: {ncpu}, GPU worker count: {ncuda}")
     return {
         "cluster": [
-            {"count": ncpu, "command": f"nice python3 -m pySecDecWorker --cpu"},
-            {"count": ncuda, "command": f"nice python3 -m pySecDecWorker --cuda"}
+            {"count": ncpu, "command": f"nice python3 -m pySecDecContrib pysecdec_cpuworker"},
+            {"count": ncuda, "command": f"nice python3 -m pySecDecContrib pysecdec_cudaworker"},
         ]
     }
 
