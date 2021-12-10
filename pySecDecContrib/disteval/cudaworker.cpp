@@ -345,6 +345,7 @@ static void *
 worker_thread(void *ps)
 {
     PerThreadState &s = *(PerThreadState*)ps;
+    CU(cuCtxSetCurrent, G.cuda.context);
     for (;;) {
         IntegrateCmd c;
         obtain_integrate_cmd(c);
@@ -373,7 +374,7 @@ worker_thread(void *ps)
             if (bufsize > s.buffer_size) {
                 fprintf(stderr, "%s] realloc CUDA buffer to %zuMB\n", G.workername, bufsize/1024/1024);
                 CU(cuMemFree, s.buffer_d);
-                s.buffer_size = bufsize;
+                s.buffer_size = (bufsize + 1024*1024 - 1) & ~(1024*1024 - 1);
                 CU(cuMemAlloc, &s.buffer_d, s.buffer_size);
                 CU(cuMemsetD8Async, s.buffer_d, 0, s.buffer_size, s.stream);
                 CU(cuStreamSynchronize, s.stream);
@@ -452,7 +453,7 @@ init(int devindex)
     fprintf(stderr, "%s] CUDA v%d, %d devices, using #%d: '%s' with %zuMB of memory\n", G.workername, ver, ndev, devindex, buf, memsize/1024/1024);
     CU(cuDevicePrimaryCtxSetFlags, G.cuda.device, CU_CTX_SCHED_BLOCKING_SYNC);
     CU(cuDevicePrimaryCtxRetain, &G.cuda.context, G.cuda.device);
-    CU(cuCtxPushCurrent, G.cuda.context);
+    CU(cuCtxSetCurrent, G.cuda.context);
     for (int thr = 0; thr < NTHREADS; thr++) {
         PerThreadState &ts = G.threads[thr];
         CU(cuStreamCreate, &ts.stream, CU_STREAM_NON_BLOCKING);
