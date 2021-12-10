@@ -63,7 +63,7 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
     uint64_t index = index1 + (bid*128 + tid)*8;
     uint64_t li_x0 = mulmod(index, genvec[0], lattice);
     uint64_t li_x1 = mulmod(index, genvec[1], lattice);
-    for (int i = 0; (i < 8) && (index < index2); i++, index++) {
+    for (uint64_t i = 0; (i < 8) && (index < index2); i++, index++) {
         real_t x0 = warponce(li_x0*invlattice + shift[0], 1.0);
         li_x0 = warponce_i(li_x0 + genvec[0], lattice);
         real_t x1 = warponce(li_x1*invlattice + shift[1], 1.0);

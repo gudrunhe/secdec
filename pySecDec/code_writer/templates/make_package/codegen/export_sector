@@ -605,7 +605,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ for j, v in enumerate(intvars):
     uint64_t li_${v} = mulmod(index, genvec[${j}], lattice);
 @@ pass
-    for (int i = 0; (i < 8) && (index < index2); i++, index++) {
+    for (uint64_t i = 0; (i < 8) && (index < index2); i++, index++) {
 @@ for j, v in enumerate(intvars):
         real_t ${v} = warponce(li_${v}*invlattice + shift[${j}], 1.0);
         li_${v} = warponce_i(li_${v} + genvec[${j}], lattice);
