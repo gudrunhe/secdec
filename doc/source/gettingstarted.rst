@@ -242,7 +242,7 @@ Next, an integrator is configured for the numerical integration. The full list o
 .. code::
 
     # choose integrator
-    box.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
+    box1L.use_Vegas(flags=2) # ``flags=2``: verbose --> see Cuba manual
 
 If you want to use GPUs, change to the :mod:`CudaQmc<pySecDec.integral_interface.CudaQmc>` integrator. For example, to run on all available GPUs and CPU cores
 using the Korobov transform with weight 3, change the above lines to
@@ -250,7 +250,7 @@ using the Korobov transform with weight 3, change the above lines to
 .. code::
 
     # choose integrator
-    box.use_Qmc(transform='Korobov3')
+    box1L.use_Qmc(transform='Korobov3')
 
 
 Calling the ``box`` library numerically evaluates the integral.
@@ -262,7 +262,7 @@ can be added to the integrator argument list:
 .. code::
 
     # choose integrator
-    box.use_Vegas(flags=2,epsrel=0.01, epsabs=1e-07, maxeval=1000000)
+    box1L.use_Vegas(flags=2,epsrel=0.01, epsabs=1e-07, maxeval=1000000)
 
 .. code::
 
