@@ -24,7 +24,7 @@ typedef struct { real_t re, im; } complex_t;
 #define MAXPATH 4095
 #define MAXNAME 255
 #define MAXDIM 32
-#define NTHREADS 2
+#define NTHREADS 1
 #define MAXQUEUE 16
 
 typedef int (*IntegrateF)(
