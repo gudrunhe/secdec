@@ -628,21 +628,24 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
 
     ampids = sorted(set(a for a, p in ap2coeffs.keys()))
     relerrs = []
-    for ampid in ampids:
+    print("[")
+    for i, ampid in enumerate(ampids):
         relerr = []
-        print("(")
+        print("  (")
         for (a, p), val, var in sorted(zip(ap2coeffs.keys(), amp_val, amp_var)):
             if a != ampid: continue
             stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
             err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
-            print(f"  +{stem}*({val:+.16e})")
-            print(f"  +{stem}*({err:+.16e})*plusminus")
+            print(f"    +{stem}*({val:+.16e})")
+            print(f"    +{stem}*({err:+.16e})*plusminus")
             abserr = np.abs(err)
             relerr.append(abserr / np.abs(val) if abserr > epsabs else 0.0)
-        print(")")
+        print("  )," if i < len(ampids)-1 else "  )")
         sys.stdout.flush()
         log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
         relerrs.append(np.max(relerr))
+    print("]")
+    sys.stdout.flush()
     log(f"largest relative error: {np.max(relerrs):.2e} (amp{np.argmax(relerrs)})")
 
 def load_cluster_json(jsonfile, dirname):
