@@ -48,6 +48,9 @@ class Coefficient(object):
         self.denominators = list(denominators)
         self.parameters = sympify_symbols(parameters, 'All `parameters` must be symbols.')
 
+    def is_zero(self):
+        return self.numerators in ([0], ["0"])
+
     def process(self, regulators, form=None, workdir='form_tmp', keep_workdir=False):
         r'''
         Calculate and return the lowest orders of the coefficients in
@@ -573,8 +576,9 @@ def sum_package(name, package_generators, regulators, requested_orders,
             "integrals": [p.name for p in package_generators],
             "sums": [
                 [
-                    {"integral": p.name, "coefficient": f"coefficients/{p.name}_coefficient{i}.txt"}
-                    for p in package_generators
+                    {"integral": p.name, "coefficient": f"{p.name}_coefficient{i}.txt"}
+                    for j, p in enumerate(package_generators)
+                    if not c[j].is_zero()
                 ]
                 for i, c in enumerate(coefficients)
             ]
