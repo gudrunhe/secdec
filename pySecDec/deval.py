@@ -4,12 +4,13 @@ Distributed (and local) evaluator for pySecDec integrals.
 Usage:
     python3 -m pySecDec.deval integrand.json [options] param=value ...
 Options:
-    --cluster=X use this cluster.json file
-    --epsabs=X  stop if this absolute precision is achieved (default: 1e-10)
-    --epsrel=X  stop if this relative precision is achieved (default: 1e-4)
-    --points=X  begin integration with this lattice size (default: 1e4)
-    --shifts=X  use this many lattice shifts per integral (default: 32)
-    --help      show this help message
+    --epsabs=X          stop if this absolute precision is achieved (default: 1e-10)
+    --epsrel=X          stop if this relative precision is achieved (default: 1e-4)
+    --points=X          begin integration with this lattice size (default: 1e4)
+    --shifts=X          use this many lattice shifts per integral (default: 32)
+    --cluster=X         use this cluster.json file
+    --coefficients=X    use coefficients from this directory
+    --help              show this help message
 Arguments:
     param=value use this value for the given integral parameter
 """
@@ -343,7 +344,7 @@ def adjust_n(W2, V, w, a, tau, nmin, nmax, names=[]):
         assert not np.any(np.isnan(n))
     return n
 
-async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap):
+async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap):
     # Load the integrals from the requested json file
     t0 = time.time()
 
@@ -365,7 +366,7 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
         infos = {}
         kernel2idx = {}
         for i in info["integrals"]:
-            with open(os.path.join(dirname, f"{i}.json"), "r") as f:
+            with open(os.path.join(datadir, f"{i}.json"), "r") as f:
                 infos[i] = json.load(f)
                 assert infos[i]["name"] == i
             for k in infos[i]["kernels"]:
@@ -375,7 +376,7 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
         for a, terms in enumerate(info["sums"]):
             for t in terms:
                 log("-", t["coefficient"])
-                co = load_coefficient(os.path.join(dirname, t["coefficient"]))
+                co = load_coefficient(os.path.join(coeffsdir, t["coefficient"]))
                 split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], co, valuemap, sp_regulators, requested_orders)
     else:
         raise ValueError(f"unknown type: {info['type']}")
@@ -406,7 +407,7 @@ async def doeval(workers, dirname, intfile, epsabs, epsrel, npresample, npoints0
     par = RandomScheduler()
 
     async def add_worker(cmd):
-        w = await launch_worker(cmd, dirname)
+        w = await launch_worker(cmd, datadir)
         await w.call("family", 0, "builtin", 2, (2.0, 0.1, 0.2, 0.3), (), True)
         await w.call("kernel", 0, 0, "gauge")
         await w.multicall([
@@ -728,14 +729,16 @@ def main():
     epsrel = 1e-4
     nshifts = 32
     clusterfile = None
+    coeffsdir = None
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "epsabs=", "epsrel=", "points=", "shifts=", "help"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "shifts=", "help"])
     except getopt.GetoptError as e:
         print(e, file=sys.stderr)
         print("use --help to see the usage", file=sys.stderr)
         exit(1)
     for key, value in opts:
         if key == "--cluster": clusterfile = value
+        elif key == "--coefficients": coeffsdir = value
         elif key == "--epsabs": epsabs = float(value)
         elif key == "--epsrel": epsrel = float(value)
         elif key == "--points": npoints = int(float(value))
@@ -748,6 +751,7 @@ def main():
         exit(1)
     intfile = args[0]
     dirname = os.path.dirname(intfile)
+    if coeffsdir is None: coeffsdir = os.path.join(dirname, "coefficients")
     clusterfile = os.path.join(dirname, "cluster.json") if clusterfile is None else clusterfile
     log("Settings:")
     log(f"- file = {intfile}")
@@ -775,7 +779,7 @@ def main():
 
     # Begin evaluation
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(doeval(workers, dirname, intfile, epsabs, epsrel, npoints, npoints, nshifts, valuemap))
+    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npoints, npoints, nshifts, valuemap))
 
 if __name__ == "__main__":
     main()
