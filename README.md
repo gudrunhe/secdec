@@ -106,7 +106,10 @@ This will print the result of the integral evaluated with Mandelstam invariants 
     eps^0 : -0.425514350373418893 + 1.86892487760861536*I +/- ( 0.00706834403694714484 + 0.0186497890361357298*I )
 
 
-## List of examples
+## Examples
+
+Several examples of pySecDec usage can be found in the source
+code repository (`examples` directory). Here are some of them:
 
  * `easy`: a simple parametric integral, described in the manual in Section 2.1.
  * `box1L`: a simple 1-loop, 4-point, 4-propagator integral, described in the manual Section 2.2.
