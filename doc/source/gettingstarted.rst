@@ -670,3 +670,5 @@ Here we list the available examples. For more details regarding each example see
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **userdefined_cpp**:       | a collection of examples demonstrating how to combine polynomials to be decomposed with other user-defined functions           |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **regions**:               | prints a list of the regions obtained by applying expansion by regions to formfactor1L_massless                                |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
