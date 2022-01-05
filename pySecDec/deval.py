@@ -274,6 +274,25 @@ def ginsh_series(ex, var, order):
     assert result != ""
     return sp.sympify(result).subs(hashed)
 
+def ginsh_symplify(expr, valmap):
+    with tempfile.NamedTemporaryFile(prefix="psd_ginsh", mode="w") as f:
+        f.write("START;\n");
+        for k, v in valmap.items():
+            f.write(f"{k} = {v}:\n")
+        f.write("(")
+        f.write(expr)
+        f.write(");\nquit;\n")
+        f.flush()
+        subprocess.check_call(f"'{contrib_dirname}/bin/ginsh' '{f.name}' > '{f.name}.out'", shell=True)
+        with open(f"{f.name}.out", "r") as f2:
+            result = f2.read()
+        os.unlink(f"{f.name}.out")
+    result = re.sub(r".*START\n", "", result, flags=re.DOTALL)
+    result = re.sub(r"[+]Order\([^)]*\)", "", result, flags=re.DOTALL)
+    result = result.strip()
+    assert result != ""
+    return sp.sympify(result)
+
 def series_bracket(expr, varlist, orderlist):
     if expr == 0:
         return {}
@@ -356,13 +375,14 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     sp_regulators = sp.var(info["regulators"])
     requested_orders = info["requested_orders"]
     ap2coeffs = {} # (ampid, powerlist) -> coeflist
+    valuemap_rat = {k:sp.nsimplify(v) for k, v in valuemap.items()}
     if info["type"] == "integral":
         infos = {info["name"] : info}
         kernel2idx = {}
         for k in info["kernels"]:
             kernel2idx[info["name"], k] = len(kernel2idx)
         log(f"got the total of {len(kernel2idx)} kernels")
-        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, 1, valuemap, sp_regulators, requested_orders)
+        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, 1, valuemap_rat, sp_regulators, requested_orders)
     elif info["type"] == "sum":
         log(f"loading {len(info['integrals'])} integrals")
         infos = {}
@@ -378,8 +398,8 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         for a, terms in enumerate(info["sums"]):
             for t in terms:
                 log("-", t["coefficient"])
-                co = load_coefficient(os.path.join(coeffsdir, t["coefficient"]))
-                split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], co, valuemap, sp_regulators, requested_orders)
+                co = load_coefficient(os.path.join(coeffsdir, t["coefficient"]), valuemap_rat)
+                split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], co, valuemap_rat, sp_regulators, requested_orders)
     else:
         raise ValueError(f"unknown type: {info['type']}")
     korders = {}
@@ -687,7 +707,7 @@ def load_cluster_json(jsonfile, dirname):
             ]
     }
 
-def load_coefficient(filename):
+def load_coefficient(filename, valmap):
     tr = {ord(" "): None, ord("\n"): None, ord("\\"): None}
     coeff = sp.sympify(1)
     with open(filename, "r") as f:
@@ -697,7 +717,7 @@ def load_coefficient(filename):
         if not part: continue
         key, value = part.split("=")
         key = key.strip()
-        value = sp.sympify(value)
+        value = ginsh_symplify(value, valmap)
         if key == "numerator": coeff *= value
         if key == "denominator": coeff /= value
         if key == "regulator_factor": coeff *= value
@@ -705,8 +725,7 @@ def load_coefficient(filename):
 
 def split_integral_into_orders(orders, ampid, kernel2idx, info, coefficient, valmap, sp_regulators, requested_orders):
     highest_orders = np.min([o["regulator_powers"] for o in info["orders"]], axis=0)
-    valmap_rat = {k:sp.nsimplify(v) for k, v in valmap.items()}
-    prefactor = series_bracket(coefficient*sp.sympify(info["prefactor"]).subs(valmap_rat), sp_regulators, -highest_orders + requested_orders)
+    prefactor = series_bracket(coefficient*sp.sympify(info["prefactor"]).subs(valmap), sp_regulators, -highest_orders + requested_orders)
     prefactor = {p : complex(c) for p, c in prefactor.items()}
     oo = {}
     for o in info["orders"]:
