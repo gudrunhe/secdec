@@ -35,6 +35,8 @@ import traceback
 
 from .generating_vectors import generating_vector, max_lattice_size
 
+from pySecDecContrib import dirname as contrib_dirname
+
 log_starttime = time.time()
 def log(*args):
     t = time.time() - log_starttime
@@ -262,7 +264,7 @@ def ginsh_series(ex, var, order):
         f.write(str(order))
         f.write("));\nquit;")
         f.flush()
-        subprocess.check_call(f"ginsh {f.name} > {f.name}.out", shell=True)
+        subprocess.check_call(f"'{contrib_dirname}/bin/ginsh' '{f.name}' > '{f.name}.out'", shell=True)
         with open(f"{f.name}.out", "r") as f2:
             result = f2.read()
         os.unlink(f"{f.name}.out")
@@ -668,8 +670,7 @@ def load_cluster_json(jsonfile, dirname):
     ncuda = 0
     if os.path.exists(os.path.join(dirname, "builtin.fatbin")):
         try:
-            from pySecDecContrib import dirname
-            p = subprocess.run([os.path.join(dirname, "bin", "pysecdec_listcuda")], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            p = subprocess.run([os.path.join(contrib_dirname, "bin", "pysecdec_listcuda")], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             ncuda = len(p.stdout.splitlines())
         except Exception as e:
             log(f"Can't determine GPU count: {e}")
