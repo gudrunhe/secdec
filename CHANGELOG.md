@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2022-01-26
+
 ### Added
 - Example `nodist_examples/gggH1L`. Higgs plus jet production at 1-loop. (Thanks to @CpSquared)
 - Example `nodist_examples/banana4L`. A 4-loop banana integral.
