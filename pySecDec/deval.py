@@ -580,7 +580,10 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 precisionx = np.sqrt((np.real(kern_var) + np.imag(kern_var)) / (np.real(new_kern_var) + np.imag(new_kern_var)))
                 for i in mask_todo.nonzero()[0]:
                     i = int(i)
-                    log(f"k{i} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
+                    if precisionx[i] < 1.0:
+                        log(f"k{i} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({1/precisionx[i]:.4g}x worse at {latticex[i]:.1f}x lattice)")
+                    else:
+                        log(f"k{i} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
                 mask_lucky = np.logical_and(new_kern_var <= kern_var, mask_todo)
                 kern_val[mask_lucky] = new_kern_val[mask_lucky]
                 kern_var[mask_lucky] = new_kern_var[mask_lucky]
