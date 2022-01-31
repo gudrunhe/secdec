@@ -375,7 +375,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     sp_regulators = sp.var(info["regulators"])
     requested_orders = info["requested_orders"]
     ap2coeffs = {} # (ampid, powerlist) -> coeflist
-    valuemap_rat = {k:sp.nsimplify(v) for k, v in valuemap.items()}
+    valuemap_rat = {k:sp.nsimplify(v, rational=True, tolerance=np.abs(v)*1e-13) for k, v in valuemap.items()}
     if info["type"] == "integral":
         infos = {info["name"] : info}
         kernel2idx = {}
