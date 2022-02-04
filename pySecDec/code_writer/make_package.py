@@ -2221,6 +2221,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
             "complex_result": contour_deformation_polynomial is not None or bool(complex_parameters) or enforce_complex,
             "requested_orders": list(map(int, requested_orders)),
             "prefactor": str(expanded_prefactor).strip(),
+            "prefactor_lowest_orders": (-highest_prefactor_pole_orders).tolist(),
+            "prefactor_highest_orders": required_prefactor_orders.tolist(),
             "kernels": [
                 f"sector_{s}_order_{o}"
                 for powers, order_names in sector_orders.items()
@@ -2233,7 +2235,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 }
                 for powers, order_names in sector_orders.items()
             ]
-        }, f, indent=4)
+        }, f, indent=2)
 
     print('"' + name + '" done')
 

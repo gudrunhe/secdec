@@ -271,7 +271,7 @@ def _generate_one_term(coefficients, complex_parameters, form_executable, name, 
                             replacements_in_files)
 
     # Call make_package with its arguments
-    return make_package(**package_generator._asdict())
+    return lowest_coefficient_orders, make_package(**package_generator._asdict())
 
 
 def sum_package(name, package_generators, regulators, requested_orders,
@@ -553,7 +553,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
             ]
 
         replacements_in_files['number_of_integration_variables'] = \
-                max(t['number_of_integration_variables'] for t in template_replacements)
+                max(t['number_of_integration_variables'] for lo, t in template_replacements)
 
     finally:
         os.chdir(original_working_directory)
@@ -576,12 +576,16 @@ def sum_package(name, package_generators, regulators, requested_orders,
             "integrals": [p.name for p in package_generators],
             "sums": [
                 [
-                    {"integral": p.name, "coefficient": f"{p.name}_coefficient{i}.txt"}
+                    {
+                        "integral": p.name,
+                        "coefficient": f"{p.name}_coefficient{i}.txt",
+                        "coefficient_lowest_orders": template_replacements[j][0][i].tolist()
+                    }
                     for j, p in enumerate(package_generators)
                     if not c[j].is_zero()
                 ]
                 for i, c in enumerate(coefficients)
             ]
-        }, f, indent=4)
+        }, f, indent=2)
     # Return template replacements of last integral processed (for 1 integral case this emulates what code_writer.make_package does)
-    return template_replacements[-1]
+    return template_replacements[-1][1]
