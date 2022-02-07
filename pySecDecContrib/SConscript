@@ -8,6 +8,8 @@ gmp = "gmp-6.2.1"
 gsl = "gsl-2.5"
 nauty = "nauty26r7"
 normaliz = "normaliz-3.9.2"
+cln = "cln-1.3.6"
+ginac = "ginac-1.8.3"
 
 contrib_extra_source = File(Split(f"""
     SConscript
@@ -95,6 +97,21 @@ contrib += \
         extra_sources=gmp_files,
         pre_commands="env GMPXX_CPPFLAGS=\"-I$$PWD/../include\" GMPXX_LDFLAGS=\"-L$$PWD/../lib\" ",
         extra_configure_args="--enable-static --disable-shared --disable-openmp --with-gmp=\"$$PWD/..\" --with-cocoalib=no --with-flint=no --with-hashlibrary=no --with-nauty=no --with-e-antic=no",
+        install_target="install-strip")
+
+cln_files = open(f"{cln}.list").read().splitlines()
+contrib += \
+    ConfigureAndInstall(env, cln_files, cln, extension=".tar.bz2",
+        extra_configure_args="--disable-shared --enable-static --with-pic --without-gmp")
+
+ginac_files = open(f"{ginac}.list").read().splitlines()
+contrib += \
+    ConfigureAndInstall(env, ginac_files, ginac, extension=".tar.bz2",
+        extra_sources = cln_files,
+        extra_configure_args=f"--disable-shared --enable-static --with-pic --enable-excompiler=no "
+            f"CLN_CFLAGS=-I$$PWD/../include CLN_LIBS=\"-L$$PWD/../lib -lcln\" "
+            f"PYTHON='{sys.executable}'",
+        pre_commands="sed -i.bak 's/readline/NOreadline/g' configure && ",
         install_target="install-strip")
 
 Return("contrib")
