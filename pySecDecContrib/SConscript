@@ -114,8 +114,12 @@ contrib += \
         pre_commands="sed -i.bak 's/readline/NOreadline/g' configure && ",
         install_target="install-strip")
 
-contrib += env.Program("bin/pysecdec_cpuworker", [f"disteval/cpuworker.cpp"], CXXFLAGS="-std=c++14 -O3 -Wall", LIBS=["dl", "rt"])
-contrib += env.Program("bin/pysecdec_cudaworker", [f"disteval/cudaworker.cpp"], CXXFLAGS="-std=c++14 -O3 -Wall", LIBS=["dl", "rt", "pthread"])
+conf = Configure(env)
+librt = [] if conf.CheckFunc("clock_gettime") or not conf.CheckLib("rt") else ["rt"]
+env = conf.Finish()
+
+contrib += env.Program("bin/pysecdec_cpuworker", [f"disteval/cpuworker.cpp"], CXXFLAGS="-std=c++14 -O3 -Wall", LIBS=["dl", *librt])
+contrib += env.Program("bin/pysecdec_cudaworker", [f"disteval/cudaworker.cpp"], CXXFLAGS="-std=c++14 -O3 -Wall", LIBS=["dl", *librt, "pthread"])
 contrib += env.Program("bin/pysecdec_listcuda", [f"disteval/listcuda.cpp"], CXXFLAGS="-std=c++14 -O3 -Wall", LIBS=["dl"])
 File("disteval/minicuda.h")
 

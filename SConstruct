@@ -56,7 +56,9 @@ env = Environment(
     tools = ["default", "packaging", enscons.generate],
     PACKAGE_METADATA = pyproject["project"],
     WHEEL_TAG = get_universal_platform_tag(),
-    ENV = os.environ
+    ENV = os.environ,
+    CONFIGUREDIR = os.path.join(os.environ.get("TMP", "/tmp"), ".sconf_temp"),
+    CONFIGURELOG = "#/config.log"
 )
 
 contrib = SConscript("pySecDecContrib/SConscript", exports="env")
