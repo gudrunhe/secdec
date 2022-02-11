@@ -1305,3 +1305,40 @@ class IntegralLibrary(object):
         else:
             self._cuda = True
             self.high_dimensional_integrator = self.integrator = CudaQmc(self,*args,**kwargs)
+
+class DistevalLibrary(object):
+
+    def __init__(self, filename):
+        self.filename = filename
+
+    def __call__(self,
+            parameters={}, real_parameters=[], complex_parameters=[],
+            epsabs=1e-10, epsrel=1e-4, points=1e4, presamples=1e4, shifts=32,
+            cluster=None, coefficients=None, verbose=True):
+        import json
+        import subprocess
+        import sys
+        if real_parameters or complex_parameters:
+            with open(self.filename) as f:
+                spec = json.load(f)
+            realp = spec["realp"]
+            for i, val in enumerate(real_parameters):
+                parameters[realp[i]] = val
+            complexp = spec["realp"]
+            for i, val in enumerate(complex_parameters):
+                parameters[complexp[i]] = val
+        output = subprocess.check_output([
+            sys.executable, "-m", "pySecDec.deval",
+                self.filename,
+                "--epsabs", str(epsabs),
+                "--epsrel", str(epsrel),
+                "--points", str(points),
+                "--presamples", str(presamples),
+                "--shifts", str(shifts),
+                *(["--cluster", cluster] if cluster is not None else []),
+                *(["--coefficients", coefficients] if coefficients is not None else []),
+                *(f"{k}={v}" for k, v in parameters.values())
+            ],
+            encoding="utf8",
+            stderr=sys.stderr if verbose else subprocess.DEVNULL)
+        return output.strip()
