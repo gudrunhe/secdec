@@ -7,6 +7,7 @@ Options:
     --epsabs=X          stop if this absolute precision is achieved (default: 1e-10)
     --epsrel=X          stop if this relative precision is achieved (default: 1e-4)
     --points=X          begin integration with this lattice size (default: 1e4)
+    --presamples=X      use this many points for presampling (default: 1e4)
     --shifts=X          use this many lattice shifts per integral (default: 32)
     --cluster=X         use this cluster.json file
     --coefficients=X    use coefficients from this directory
@@ -733,13 +734,14 @@ def main():
 
     valuemap = {}
     npoints = 10**4
+    npresamples = 10**4
     epsabs = 1e-10
     epsrel = 1e-4
     nshifts = 32
     clusterfile = None
     coeffsdir = None
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "shifts=", "help"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "presamples=", "shifts=", "help"])
     except getopt.GetoptError as e:
         print(e, file=sys.stderr)
         print("use --help to see the usage", file=sys.stderr)
@@ -750,6 +752,7 @@ def main():
         elif key == "--epsabs": epsabs = float(value)
         elif key == "--epsrel": epsrel = float(value)
         elif key == "--points": npoints = int(float(value))
+        elif key == "--presamples": npresamples = int(float(value))
         elif key == "--shifts": nshifts = int(float(value))
         elif key == "--help":
             print(__doc__.strip())
@@ -766,6 +769,7 @@ def main():
     log(f"- epsabs = {epsabs}")
     log(f"- epsrel = {epsrel}")
     log(f"- points = {npoints}")
+    log(f"- presamples = {npresamples}")
     log(f"- shifts = {nshifts}")
     log("Invariants:")
     for arg in args[1:]:
@@ -787,7 +791,7 @@ def main():
 
     # Begin evaluation
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npoints, npoints, nshifts, valuemap))
+    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap))
 
 if __name__ == "__main__":
     main()
