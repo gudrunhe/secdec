@@ -147,7 +147,10 @@ def find_regions( exp_param_index , polynomial, indices = None, normaliz='normal
         polytope_vertices = [[vertex[i] for i in indices] for vertex in polytope_vertices]
 
     polytope = Polytope(vertices=polytope_vertices)
-    polytope.complete_representation(normaliz, workdir)
+    try:
+        polytope.complete_representation(normaliz, workdir)
+    except NotImplementedError:
+        raise NotImplementedError("Polytope is not full dimensional. Signals that the integrand is homogeneous in the expansion parameter (up to a rescaling of the integration variables) and therefore has a trivial expansion.")
 
     facets = polytope.facets[:,:-1] # do not need offset term "a_F"
 

@@ -353,7 +353,7 @@ class Polytope(object):
             current_str= f.readline()
 
             if not ('equations' in current_str or re.sub(r'[\n\t\s]*', '', current_str) == '0'):
-                raise NotImplementedError("Polytope is not full dimensional. Are you trying to compute a scaleless integral (which evaluates to zero)?")
+                raise NotImplementedError("Polytope is not full dimensional.")
 
             return np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)
 
