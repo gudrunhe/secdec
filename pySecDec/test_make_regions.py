@@ -163,3 +163,28 @@ class TestExpansionByRegions(unittest.TestCase):
         zeroth_power_poly.exponent = 1
 
         self.assertEqual((sympify_expression(zeroth_power_poly)-sympify_expression("x")).simplify(), 0)
+
+    #@attr('active')
+    def test_make_regions_numerator(self):
+        regions = make_regions(
+            name = 'test',
+            integration_variables = ['x'],
+            regulators = ['delta'],
+            requested_orders = [0],
+            smallness_parameter = 't',
+            polynomials_to_decompose = ['(x)**(delta)','(t + x + x**2)**(-1)'],
+            numerator = 't + A',
+            polynomial_names = ['A','B'],
+            expansion_by_regions_order = 1,
+        )
+        numerators = [region.other_polynomials[0] for region in regions]
+        target_numerators = [sympify_expression(num) for num in ['A','A*B-A**2','1+A']]
+        b_polys = [region.polynomials_to_decompose[1] for region in regions]
+        target_b_polys = [sympify_expression(b) for b in ['(x+x**2)**-1','(x+x**2)**-2','(1+x)**-1']]
+
+        if all([sympify_expression(b-target_b)==0 for b, target_b in zip(b_polys,target_b_polys)]):
+            for num, target_num in zip(numerators, target_numerators):
+                self.assertEqual(sympify_expression(num-target_num).simplify(), 0)
+        else:
+            for num, target_num in zip(numerators, target_numerators[-1:]+target_numerators[:-1]):
+                self.assertEqual(sympify_expression(num-target_num).simplify(), 0)

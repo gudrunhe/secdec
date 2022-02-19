@@ -350,8 +350,8 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
 
 
 def make_regions(name, integration_variables, regulators, requested_orders, smallness_parameter,
-                 polynomials_to_decompose, expansion_by_regions_order=0, real_parameters=[], complex_parameters=[],
-                 normaliz='normaliz', polytope_from_sum_of = None, **make_package_args):
+                 polynomials_to_decompose, numerator='1', expansion_by_regions_order=0, real_parameters=[],
+                 complex_parameters=[], normaliz='normaliz', polytope_from_sum_of = None, **make_package_args):
     r'''
     Applies the expansion by regions method
     (see e.g. [PS11]_) to a list of polynomials.
@@ -385,6 +385,15 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
         :class:`pySecDec.algebra.ExponentiatedPolynomial`
         or :class:`pySecDec.algebra.Polynomial`;
         The polynomials to be decomposed.
+
+    :param numerator:
+        String or :class:`pySecDec.algebra.Polynomial`;
+        Polynomial that is not included in the
+        determination of the regions.
+        The symbols defined in `polynomial_names`
+        can be used to reference the
+        `polynomials_to_decompose`.
+        Default: '1'
 
     :param expansion_by_regions_order:
         integer;
@@ -436,6 +445,12 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     # convert polynomials to ExponentedPolynomial with the proper variables
     polynomials_to_decompose = _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompose)
 
+    # include numerator
+    numerator = _parse_expressions([numerator], symbols_polynomials_to_decompose)[0]
+    if numerator.exponent.coeffs != [1] or (numerator.exponent.expolist != 0).any():
+        raise NotImplementedError("Input numerator for the asymptotic expansion is not allowed to be of the type `ExponentiatedPolynomial`.")
+    numerator = Polynomial(numerator.expolist, numerator.coeffs,numerator.polysymbols)
+
     if not ( all( [np.count_nonzero(poly.expolist[:,len(integration_variables)+len(regulators):-1]) == 0 for poly in polynomials_to_decompose] ) ):
         raise NotImplementedError("Input polynomials for the asymptotic expansion are not allowed to depend on unexpanded polynomials.")
 
@@ -465,6 +480,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
 
             # factor out the smallness_parameter and store its power
             polynomials_refactorized = []
+            polynomial_factors = []
             power_overall_smallness_parameter = 0
             for polynomial in polynomials_to_decompose_region_specific:
                 factor0 ,factor1 = polynomial.refactorize(smallness_parameter_index).factors
@@ -472,16 +488,21 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
                     exponent = factor0.exponent
                 except AttributeError:
                     exponent = 1
+                polynomial_factors.append(factor0)
                 power_overall_smallness_parameter +=factor0.expolist[0][smallness_parameter_index] * exponent
                 polynomials_refactorized.append(factor1)
+
+            # scaling of polynomials_to_decompose
+            poly_scaling = np.concatenate([np.zeros(len(integration_variables)+len(regulators),dtype=int) , [factor.expolist[0,smallness_parameter_index] for factor in polynomial_factors] , [0]])
+            # rescale and factor numerator
+            numerator_region_specific = apply_region([numerator], region + poly_scaling, smallness_parameter_index)[0]
+            factor0, numerator_refactorized = numerator_region_specific.refactorize(smallness_parameter_index).factors
+            power_overall_smallness_parameter +=factor0.expolist[0][smallness_parameter_index]
 
             # compute overall power of smallness_parameter with all regulators -> 0
             power_overall_smallness_parameter_no_regulators = sympify_expression(power_overall_smallness_parameter)
             for regulator in regulators:
                 power_overall_smallness_parameter_no_regulators = power_overall_smallness_parameter_no_regulators.subs(regulator,0)
-
-            # define a dummy numerator
-            numerator = Polynomial(np.zeros((1,len(symbols_polynomials_to_decompose)),dtype=int), np.array([1]), symbols_polynomials_to_decompose, copy=False)
 
             # exponent of the smallness parameter introduced by rescaling the integral measure
             power_smallness_parameter_measure = np.sum(region[:-1])
@@ -493,7 +514,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
             # expand the polynomials to the desired order:
             # expansion_by_regions_order - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
             expand_region_expansion_order = expansion_by_regions_order*region[smallness_parameter_index] - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
-            series = expand_region(polynomials_refactorized, numerator, smallness_parameter_index, expand_region_expansion_order, polynomial_name_indices)
+            series = expand_region(polynomials_refactorized, numerator_refactorized, smallness_parameter_index, expand_region_expansion_order, polynomial_name_indices)
 
             for i,term in enumerate(series):
                 package_args = make_package_args.copy()

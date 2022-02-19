@@ -192,7 +192,8 @@ def loop_regions(name, loop_integral, smallness_parameter,
 
 
     """
-    polynomials_to_decompose = [loop_integral.exponentiated_U, loop_integral.exponentiated_F] + loop_integral.measure.factors + [loop_integral.numerator]
+    polynomials_to_decompose = [loop_integral.exponentiated_U, loop_integral.exponentiated_F] + loop_integral.measure.factors
+    numerator = loop_integral.numerator
     
     # add regulators of the form x_i**(n/p_i), where n is a regulator
     if add_monomial_regulator_power is not None:
@@ -221,6 +222,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
         requested_orders = [],
         smallness_parameter = smallness_parameter,
         polynomials_to_decompose = polynomials_to_decompose,
+        numerator = numerator,
         expansion_by_regions_order = expansion_by_regions_order,
         real_parameters = [],
         complex_parameters = [],
