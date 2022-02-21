@@ -1307,18 +1307,109 @@ class IntegralLibrary(object):
             self.high_dimensional_integrator = self.integrator = CudaQmc(self,*args,**kwargs)
 
 class DistevalLibrary(object):
+    r'''
+    Interface to the integration library produced by
+    :func:`.make_package` or :func:`.loop_package` and built by
+    ``make disteval.done``.
 
-    def __init__(self, filename):
-        self.filename = filename
+    :param specification_path:
+        str;
+        The path to the file ``disteval/<name>.json`` that can
+        be built by the command
+
+        .. code::
+
+            $ make disteval.done
+
+        in the root directory of the integration library.
+
+    Instances of this class can be called with the
+    following arguments:
+
+    :param parameters:
+        dict of float, optional;
+        A map from parameter names to their values.
+
+    :param real_parameters:
+        iterable of float, optional;
+        The values of the real parameters of the library in
+        the same order as the real_parameters argument of
+        :func:`.make_package`. (Not needed if parameters are
+        given).
+
+    :param complex_parameters:
+        iterable of complex, optional;
+        The values of the complex parameters of the library in
+        the same order as the complex_parameters argument of
+        :func:`.make_package`. (Not needed if parameters are
+        given).
+
+    :param number_of_presamples:
+        unsigned int, optional;
+        The number of samples used for the
+        contour optimization.
+        This option is ignored if the integral
+        library was created without deformation.
+        Default: ``10000``.
+
+    :param epsrel:
+        float, optional;
+        The desired relative accuracy for the numerical
+        evaluation of the weighted sum of the sectors.
+        Default: epsrel of integrator (default 1e-4).
+
+    :param epsabs:
+        float, optional;
+        The desired absolute accuracy for the numerical
+        evaluation of the weighted sum of the sectors.
+        Default: epsabs of integrator (default 1e-10).
+
+    :param points:
+        unsigned int, optional;
+        The initial QMC lattice size.
+        Default: ``1e4``.
+
+    :param shifts:
+        unsigned int, optional;
+        The number of shifts of the QMC lattice.
+        Default: ``32``.
+
+    :param verbose:
+        bool, optional;
+        Print the integration log.
+        Default: ``True``.
+
+    :param coefficients:
+        string, optional;
+        Alternative path to the directory with the files containing
+        the coefficients for the evaluated amplitude.
+        Default: the ``coefficients/`` directory next to the
+        specification file.
+
+    :param workers:
+        list of string or dict, optional;
+        List of commands that start pySecDec workers.
+        Default: one ``"nice python3 -m pySecDecContrib pysecdec_cpuworker"``
+        per available CPU, or one
+        ``"nice python3 -m pySecDecContrib pysecdec_cudaworker -d <i>"``
+        for each available GPU.
+
+    The call operator returns a single string with the resulting
+    value as a series in the regulator powers.
+    '''
+
+    def __init__(self, specification_path):
+        self.filename = specification_path
 
     def __call__(self,
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, points=1e4,
-            number_of_presamples=1e4, shifts=32, cluster=None,
+            number_of_presamples=1e4, shifts=32, workers=None,
             coefficients=None, verbose=True):
         import json
         import subprocess
         import sys
+        import tempfile
         if real_parameters or complex_parameters:
             with open(self.filename) as f:
                 spec = json.load(f)
@@ -1328,6 +1419,16 @@ class DistevalLibrary(object):
             complexp = spec["realp"]
             for i, val in enumerate(complex_parameters):
                 parameters[complexp[i]] = val
+        if workers is not None:
+            clusterfile = tempfile.NamedTemporaryFile(prefix="pSD.", suffix=".json", mode="w", encoding="utf8")
+            json.dump({"cluster": [
+                w if isinstance(w, dict) else {"count": 1, "command": str(w)}
+                for w in workers
+            ]}, clusterfile)
+            clusterfile.flush()
+            clusteropt = ("--cluster", clusterfile.name)
+        else:
+            clusteropt = ()
         output = subprocess.check_output([
             sys.executable, "-m", "pySecDec.deval",
                 self.filename,
@@ -1336,7 +1437,7 @@ class DistevalLibrary(object):
                 "--points", str(points),
                 "--presamples", str(number_of_presamples),
                 "--shifts", str(shifts),
-                *(["--cluster", cluster] if cluster is not None else []),
+                *clusteropt,
                 *(["--coefficients", coefficients] if coefficients is not None else []),
                 *(f"{k}={v}" for k, v in parameters.values())
             ],
