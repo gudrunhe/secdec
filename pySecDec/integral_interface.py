@@ -1313,8 +1313,9 @@ class DistevalLibrary(object):
 
     def __call__(self,
             parameters={}, real_parameters=[], complex_parameters=[],
-            epsabs=1e-10, epsrel=1e-4, points=1e4, presamples=1e4, shifts=32,
-            cluster=None, coefficients=None, verbose=True):
+            epsabs=1e-10, epsrel=1e-4, points=1e4,
+            number_of_presamples=1e4, shifts=32, cluster=None,
+            coefficients=None, verbose=True):
         import json
         import subprocess
         import sys
@@ -1333,7 +1334,7 @@ class DistevalLibrary(object):
                 "--epsabs", str(epsabs),
                 "--epsrel", str(epsrel),
                 "--points", str(points),
-                "--presamples", str(presamples),
+                "--presamples", str(number_of_presamples),
                 "--shifts", str(shifts),
                 *(["--cluster", cluster] if cluster is not None else []),
                 *(["--coefficients", coefficients] if coefficients is not None else []),
