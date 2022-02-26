@@ -387,7 +387,7 @@ namespace secdecutil {
             bool call_get_device_functions_on_copy; // must call the slow function "get_device_functions" only after all other setup is finished
             std::string display_name = "INTEGRAND";
             std::shared_ptr<ResultInfo> result_info;
-            std::shared_ptr<ResultInfo> result_info_device;
+            ResultInfo* result_info_device;
 
             std::vector<std::vector<real_t*>> get_parameters() {return std::vector<std::vector<real_t*>>();}
             std::vector<std::vector<real_t>> get_extra_parameters() {return std::vector<std::vector<real_t>>();}
@@ -429,17 +429,23 @@ namespace secdecutil {
 
                 result_info = std::make_shared<ResultInfo>();
 
-                // create a pointer that works also on the GPU
-                ResultInfo* result_info_device_raw;
-                auto error = cudaMallocManaged((void**)&result_info_device_raw,sizeof(ResultInfo));
+                // create a pointer for the GPU to use
+                auto error = cudaMallocManaged((void**)&result_info_device,sizeof(ResultInfo));
                 if (error != cudaSuccess)
                     throw cuda_error(std::string(cudaGetErrorString(error)));
-                memset(result_info_device_raw, 0, sizeof(ResultInfo));
-                result_info_device = std::shared_ptr<ResultInfo>(result_info_device_raw, [](ResultInfo* result_info_device){
+                memset(result_info_device, 0, sizeof(ResultInfo));
+            }
+
+            // destructor
+            ~CudaIntegrandContainerWithoutDeformation()
+            {
+                // if result_info will be destroyed, also destruct result_info_device
+                if(result_info.use_count()==1)
+                {
                     auto error = cudaFree(result_info_device);
-                    if (error != cudaSuccess)
-                        throw cuda_error(std::string(cudaGetErrorString(error)));
-                });
+                    //if (error != cudaSuccess)
+                    //    throw cuda_error(std::string(cudaGetErrorString(error)));
+                }
             }
 
             // copy constructor
@@ -506,7 +512,7 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     #ifdef __CUDA_ARCH__
-                        res += device_functions[k](integration_variables, real_parameters, complex_parameters, result_info_device.get());
+                        res += device_functions[k](integration_variables, real_parameters, complex_parameters, result_info_device);
                     #else
                         res += host_functions[k](integration_variables, real_parameters, complex_parameters, result_info.get());
                     #endif
@@ -604,7 +610,7 @@ namespace secdecutil {
             bool call_get_device_functions_on_copy;
             std::string display_name = "INTEGRAND";
             std::shared_ptr<ResultInfo> result_info;
-            std::shared_ptr<ResultInfo> result_info_device;
+            ResultInfo* result_info_device;
 
             auto get_parameters() -> decltype(deformation_parameters_ptrs){return deformation_parameters_ptrs;}
             std::vector<std::vector<real_t>> get_extra_parameters(){return extra_parameters;}
@@ -656,16 +662,22 @@ namespace secdecutil {
                 result_info = std::make_shared<ResultInfo>();
 
                 // create a pointer for the GPU to use
-                ResultInfo* result_info_device_raw;
-                auto error = cudaMallocManaged((void**)&result_info_device_raw,sizeof(ResultInfo));
+                auto error = cudaMallocManaged((void**)&result_info_device,sizeof(ResultInfo));
                 if (error != cudaSuccess)
                     throw cuda_error(std::string(cudaGetErrorString(error)));
-                memset(result_info_device_raw, 0, sizeof(ResultInfo));
-                result_info_device = std::shared_ptr<ResultInfo>(result_info_device_raw, [](ResultInfo* result_info_device){
+                memset(result_info_device, 0, sizeof(ResultInfo));
+            }
+            
+            // destructor
+            ~CudaIntegrandContainerWithDeformation()
+            {
+                // if result_info will be destroyed, also destruct result_info_device
+                if(result_info.use_count()==1)
+                {
                     auto error = cudaFree(result_info_device);
-                    if (error != cudaSuccess)
-                        throw cuda_error(std::string(cudaGetErrorString(error)));
-                });
+                    //if (error != cudaSuccess)
+                    //    throw cuda_error(std::string(cudaGetErrorString(error)));
+                }
             }
 
             // copy constructor
@@ -756,7 +768,7 @@ namespace secdecutil {
                 for (unsigned long long k=0; k<number_of_functions; ++k)
                 {
                     #ifdef __CUDA_ARCH__
-                        res += device_functions[k](integration_variables, real_parameters, complex_parameters, deformation_parameters[k], result_info_device.get());
+                        res += device_functions[k](integration_variables, real_parameters, complex_parameters, deformation_parameters[k], result_info_device);
                     #else
                         res += host_functions[k](integration_variables, real_parameters, complex_parameters, deformation_parameters[k], result_info.get());
                     #endif
