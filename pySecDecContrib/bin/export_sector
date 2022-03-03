@@ -130,7 +130,7 @@ def template_writer(template_source, *argnames):
         else:
             line += '\n'
             line = "".join(
-                part if i %% 2 == 1 else \
+                part if i % 2 == 1 else \
                 part.replace("{", "{{").replace("}", "}}")
                 for i, part in enumerate(re.split(r"\$(\{[^}]*})", line))
             )
@@ -178,14 +178,14 @@ def make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sect
     def recursion(regulator_index):
         if regulator_index < last_regulator_index:
             outstr_body_snippets = []
-            outstr_head = '{%%i,%%i,{' %% (min_orders[regulator_index],max_orders[regulator_index])
+            outstr_head = '{%i,%i,{' % (min_orders[regulator_index],max_orders[regulator_index])
             for this_regulator_order in range(min_orders[regulator_index],max_orders[regulator_index]+1):
                 current_orders[regulator_index] = this_regulator_order
                 outstr_body_snippets.append( recursion(regulator_index + 1) )
-            outstr_tail = '},true,"%%s"}' %% (regulator_names[regulator_index],)
+            outstr_tail = '},true,"%s"}' % (regulator_names[regulator_index],)
             return ''.join( (outstr_head, ','.join(outstr_body_snippets), outstr_tail) )
         else: # regulator_index == last_regulator_index; i.e. processing last regulator
-            outstr_head = '{%%i,%%i,{{' %% (min_orders[regulator_index],max_orders[regulator_index])
+            outstr_head = '{%i,%i,{{' % (min_orders[regulator_index],max_orders[regulator_index])
             outstr_body_snippets = []
             for this_regulator_order in range(min_orders[regulator_index],max_orders[regulator_index]+1):
                 current_orders[regulator_index] = this_regulator_order
@@ -207,7 +207,7 @@ def make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sect
                         f',get_device_sector_{sector_ID}_order_{cpp_order}_integrand\n'
                         f'#endif\n'
                     )
-            outstr_tail = '}},true,"%%s"}' %% (regulator_names[regulator_index],)
+            outstr_tail = '}},true,"%s"}' % (regulator_names[regulator_index],)
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
     return recursion(0)
 

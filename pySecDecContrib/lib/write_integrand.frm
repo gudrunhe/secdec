@@ -896,7 +896,7 @@ Format 255;
 
 * write Abbreviations in c format
   #write <sector`sectorID'.info> "@order`shiftedOrderIndex'_integrandBody="
-  #write <sector`sectorID'.info> "%%O"
+  #write <sector`sectorID'.info> "%O"
 
 * Reload "toOptmize" such that the optimization symbols of the first
 * optimization are promoted to regular FORM variables.
@@ -1053,7 +1053,7 @@ Format 255;
       #redefine numberOfSecondAbbreviations "`optimmaxvar_'"
     #EndIf
 
-    #write <sector`sectorID'.info> "%%O"
+    #write <sector`sectorID'.info> "%O"
 
     #Do globalID = `parseNextGlobalIDMin', `parseNextGlobalIDMax'
       #redefine function "`parseNextFunction`globalID''"
@@ -1065,13 +1065,13 @@ Format 255;
         #If `numberOfArgs`function'Label`callIndex'' == 0
           Local expr = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ `SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'];
           .sort
-          #write <sector`sectorID'.info> "%%E;"  expr(#@FAIL@#)
+          #write <sector`sectorID'.info> "%E;"  expr(#@FAIL@#)
           drop expr;
         #ElseIf `function' == SecDecInternalPow
           Local base = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin')];
           Local exponent = SecDecInternalfDUMMY(parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+1)]);
           .sort
-          #write <sector`sectorID'.info> "pow(%%E," base(#@FAIL@#)
+          #write <sector`sectorID'.info> "pow(%E," base(#@FAIL@#)
           drop base;
           skip; nskip exponent;
           #redefine exponentIsInteger "0"
@@ -1082,7 +1082,7 @@ Format 255;
             Format rational;
             Format 255;
           #EndIf
-          #write <sector`sectorID'.info> "%%E);" exponent(#@FAIL@#)
+          #write <sector`sectorID'.info> "%E);" exponent(#@FAIL@#)
           Format C;
           Format float 20;
           Format 255;
@@ -1092,7 +1092,7 @@ Format 255;
           #Do argIndex = 1, `numberOfArgs`function'Label`callIndex''
             Local arg`argIndex' = parseNext[SecDecInternalLabelSecDecInternalGeneral ^ (`SecDecInternalLabel`function'Call`callIndex'GlobalIDMin'+`argIndex'-1)];
             .sort
-            #write <sector`sectorID'.info> "%%E"  arg`argIndex'(#@FAIL@#)
+            #write <sector`sectorID'.info> "%E"  arg`argIndex'(#@FAIL@#)
             drop arg`argIndex';
             #If `argIndex' != `numberOfArgs`function'Label`callIndex''
               #write <sector`sectorID'.info> ","
@@ -1152,7 +1152,7 @@ Format 255;
     #redefine numberOfSecondAbbreviations "`optimmaxvar_'"
   #EndIf
 
-  #write <sector`sectorID'.info> "%%O"
+  #write <sector`sectorID'.info> "%O"
 
 * write code for the sign checks
 * {
@@ -1170,7 +1170,7 @@ Format 255;
       .sort
 
       #If termsin(expr) > 0
-        #write <sector`sectorID'.info> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%%E);" expr(#@FAIL@#)
+        #write <sector`sectorID'.info> "SecDecInternalSignCheckExpression = SecDecInternalImagPart(%E);" expr(#@FAIL@#)
         #write <sector`sectorID'.info> "if (SecDecInternalSignCheckExpression > 0) SecDecInternalSignCheckErrorContourDeformation(`signCheckId');"
       #EndIf
 
@@ -1188,7 +1188,7 @@ Format 255;
       .sort
 
       #If termsin(expr) > 0
-        #write <sector`sectorID'.info> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%%E);" expr(#@FAIL@#)
+        #write <sector`sectorID'.info> "SecDecInternalSignCheckExpression = SecDecInternalRealPart(%E);" expr(#@FAIL@#)
         #write <sector`sectorID'.info> "if (SecDecInternalSignCheckExpression < 0)  SecDecInternalSignCheckErrorPositivePolynomial(`signCheckId');"
       #EndIf
 
@@ -1205,7 +1205,7 @@ Format 255;
 * }
 
 * write the integrand
-  #write <sector`sectorID'.info> "return(%%E);" toOptimize(#@FAIL@#)
+  #write <sector`sectorID'.info> "return(%E);" toOptimize(#@FAIL@#)
   #write <sector`sectorID'.info> "@end"
 
 * write the contour deformation optimize functions if required

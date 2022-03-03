@@ -41,8 +41,8 @@ endif
 
 codegen/sector%%.done: codegen/sector%%.h
 	@# generate c++ code
-	cd codegen && $(PYTHON) formwrapper $(FORMCALL) -D sectorID=$(patsubst codegen/sector%%.h,%%,$<) write_integrand.frm
-	$(PYTHON) codegen/export_sector $(patsubst %%.h,%%.info,$<) ./
+	cd codegen && $(PYTHON) '$(SECDEC_CONTRIB)/bin/formwrapper' $(FORMCALL) -D sectorID=$(patsubst codegen/sector%%.h,%%,$<) '$(SECDEC_CONTRIB)/lib/write_integrand.frm'
+	$(PYTHON) '$(SECDEC_CONTRIB)/bin/export_sector' $(patsubst %%.h,%%.info,$<) ./
 	touch $@
 
 # The following is for the distributed evaluation.

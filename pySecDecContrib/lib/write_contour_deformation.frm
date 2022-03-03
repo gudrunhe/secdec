@@ -162,7 +162,7 @@
 
 * Write the function to optimize the contour deformation parameters
   #write <sector`sectorID'.info> "@order`shiftedOrderIndex'_contourDeformationPolynomialBody="
-  #write <sector`sectorID'.info> "%%O"
+  #write <sector`sectorID'.info> "%O"
 
 * c++ define the calls to "SecDecInternalRealPart"
   #redefine function "SecDecInternalRealPart"
@@ -171,7 +171,7 @@
     .sort
     L realPart = expressionF[SecDecInternalLabel`function'Call`labelID'];
     .sort
-    #write <sector`sectorID'.info> "SecDecInternal`function'Call`labelID' = SecDecInternalRealPart(%%E);" realPart(#@FAIL@#)
+    #write <sector`sectorID'.info> "SecDecInternal`function'Call`labelID' = SecDecInternalRealPart(%E);" realPart(#@FAIL@#)
     multiply replace_(SecDecInternalLabel`function'Call`labelID', 0);
     .sort
   #EndDo
@@ -186,7 +186,7 @@
       .sort
       L deformedIV = expressionF[SecDecInternalLabelSecDecInternalDeformed`IV'];
       .sort
-      #write <sector`sectorID'.info> "SecDecInternalSecDecInternalDeformed`IV'Call = %%E;" deformedIV(#@FAIL@#)
+      #write <sector`sectorID'.info> "SecDecInternalSecDecInternalDeformed`IV'Call = %E;" deformedIV(#@FAIL@#)
       multiply replace_(SecDecInternalLabelSecDecInternalDeformed`IV', 0);
       .sort
 
@@ -195,7 +195,7 @@
   drop deformedIV;
 
 * write `SecDecInternalContourDeformationPolynomial'
-  #write <sector`sectorID'.info> "return(%%E);" expressionF(#@FAIL@#)
+  #write <sector`sectorID'.info> "return(%E);" expressionF(#@FAIL@#)
   #write <sector`sectorID'.info> "@end"
 
 * Delete "expressionF" since it is no longer needed.
@@ -267,7 +267,7 @@
   Format float 20;
   Format C;
   Format 255;
-  #write <sector`sectorID'.info> "%%O"
+  #write <sector`sectorID'.info> "%O"
 
 * set the output lambdas to ``1 / Abs(    Re(  x_k * (1-x_k) * dF_dx_k  )    )``
   #$cppidx = -1;
@@ -283,7 +283,7 @@
       Format float 20;
       Format C;
       Format 255;
-      #write <sector`sectorID'.info> "1.0/SecDecInternalAbs(SecDecInternalRealPart(%%E)));" expr(#@FAIL@#)
+      #write <sector`sectorID'.info> "1.0/SecDecInternalAbs(SecDecInternalRealPart(%E)));" expr(#@FAIL@#)
     #EndIf
   #EndDo
 

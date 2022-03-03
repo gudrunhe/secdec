@@ -35,14 +35,14 @@ try:
             exit(proc.returncode)
         else:
             newws = max(workspace*3, 10*1000*1000)
-            bstdout.write(b"=== Will increase WorkSpace in form.set to %%d, and rerun FORM.\n" %% (newws,))
+            bstdout.write(b"=== Will increase WorkSpace in form.set to %d, and rerun FORM.\n" % (newws,))
             try:
                 with open("form.set", "r") as f:
                     lines = [line for line in f if "workspace" not in line.lower()]
             except (OSError, IOError) as e:
-                bstdout.write(b"=== Error reading form.set: %%s\n" %% (str(e).encode("utf8"),))
+                bstdout.write(b"=== Error reading form.set: %s\n" % (str(e).encode("utf8"),))
                 lines = []
-            lines.append("WorkSpace %%d\n" %% newws)
+            lines.append("WorkSpace %d\n" % newws)
             # Try to write form.set atomically, just in case.
             fd, tmpname = tempfile.mkstemp(prefix="form.set.", dir=".")
             try:
