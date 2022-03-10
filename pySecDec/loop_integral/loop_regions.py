@@ -8,6 +8,8 @@ def loop_regions(name, loop_integral, smallness_parameter,
                 contour_deformation=True,
                 additional_prefactor=1, form_optimization_level=2,
                 form_work_space='500M',
+                form_memory_use=None,
+                form_threads=2,
                 add_monomial_regulator_power=None,
                 decomposition_method='iterative',
                 normaliz_executable='normaliz',
@@ -74,6 +76,22 @@ def loop_regions(name, loop_integral, smallness_parameter,
         work: it will fail with error message indicating that
         larger WorkSpace is needed, at which point WorkSpace
         will be adjusted and FORM will be re-run.
+
+    :param form_memory_use:
+        string, optional;
+        The target FORM memory usage. When specified, `form.set`
+        parameters will be adjusted so that FORM uses at most
+        approximately this much resident memory.
+
+        The minimum is approximately to 600M + 350M per worker
+        thread if ``form_work_space`` is left at ``'50M'``.
+        if form_work_space is increased to ``'500M'``, then
+        the minimum is 2.5G + 2.5G per worker thread.
+        Default: ``None``, meaning use the default FORM values.
+
+    :param form_threads:
+        integer, optional;
+        Number of threads (T)FORM will use. Default: ``2``.
 
     :param add_monomial_regulator_power:
         string or sympy symbol;
@@ -238,6 +256,8 @@ def loop_regions(name, loop_integral, smallness_parameter,
 
         form_optimization_level = form_optimization_level,
         form_work_space = form_work_space,
+        form_memory_use = form_memory_use,
+        form_threads = form_threads,
 
         decomposition_method = decomposition_method,
 
