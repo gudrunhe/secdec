@@ -386,9 +386,11 @@ def sum_package(name, package_generators, regulators, requested_orders,
     # for two regulators, the resulting code should read:
     # "secdecutil::Series<secdecutil::Series<T>>"
     nested_series_type = 'secdecutil::Series<' * len(requested_orders) + 'T' + '>' * len(requested_orders)
-    for package_generator in package_generators:
-        assert len(requested_orders) == len(package_generator.regulators), \
-            "The `requested_orders` must match the number of regulators"
+
+    # no need to check this, package_generator.regulators is ignored
+    #for package_generator in package_generators:
+    #    assert len(requested_orders) == len(package_generator.regulators), \
+    #        "The `requested_orders` must match the number of regulators"
 
     # define required listings of contributing integrals
     sub_integral_names = []

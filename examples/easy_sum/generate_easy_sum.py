@@ -5,11 +5,6 @@ from pySecDec import sum_package
 
 if __name__ == "__main__":
 
-    common_args = {}
-    common_args['real_parameters'] = ['s']
-    common_args['regulators'] = ['eps']
-    common_args['requested_orders'] = [0]
-
     coefficients = [
         [ # sum1
             Coefficient(['2*s'],['1'],['s']),   # easy1
@@ -25,13 +20,14 @@ if __name__ == "__main__":
         MakePackage('easy1',
             integration_variables = ['x','y'],
             polynomials_to_decompose = ['(x+y)^(-2+eps)'],
-            **common_args),
+            ),
         MakePackage('easy2',
             integration_variables = ['x','y'],
             polynomials_to_decompose = ['(2*x+3*y)^(-1+eps)'],
-            **common_args)
+            )
     ]
     
     # generate code sum of (int * coeff)
     sum_package('easy_sum', integrals,
-        coefficients = coefficients, **common_args)
+        coefficients = coefficients, real_parameters=['s'],
+        regulators=['eps'], requested_orders=[0])

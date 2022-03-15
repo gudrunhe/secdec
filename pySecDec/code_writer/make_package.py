@@ -2197,6 +2197,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
 # namedtuple representing a make_package type package_generator (for use with sum_package)
 MakePackage = namedtuple('MakePackage', list(inspect.signature(make_package).parameters))
-# python <3.7 compatibility
-MakePackage.__new__.__defaults__ = tuple([v.default for k,v in inspect.signature(make_package).parameters.items()
-                                    if v.default != inspect._empty])
+# python <3.7 compatibility, copy defaults and overwrite defaults for parameters not required in MakePackage
+MakePackage.__new__.__defaults__ = tuple([None if v.default == inspect._empty else v.default for k,v in inspect.signature(make_package).parameters.items()
+                                     if (v.default != inspect._empty or k in ('regulators', 'requested_orders', 'polynomials_to_decompose'))])

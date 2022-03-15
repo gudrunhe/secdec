@@ -39,6 +39,12 @@ def LoopPackage(name, loop_integral, requested_orders=None,
     (suitable for use in :func:`pySecDec.code_writer.sum_package`).
 
     All the arguments are the same as in :func:`pySecDec.loop_integral.loop_package`.
+
+    ..note::
+        The (optional) arguments `real_parameters`, `complex_parameters`,
+        `pylink_qmc_transforms`, `regulators`, `requested_orders` and
+        `requested_order` are ignored. These arguments should instead be passed to
+        the call to :func:`pySecDec.code_writer.sum_package`.
     '''
     # convert `contour_deformation` to bool
     contour_deformation = bool(contour_deformation)
@@ -72,14 +78,6 @@ def LoopPackage(name, loop_integral, requested_orders=None,
     if sympify_expression( measure ) != 1:
         # need ``loop_integral.measure`` only if it is nontrivial
         polynomials_to_decompose += measure.factors
-
-    if requested_orders is None:
-        if requested_order is None:
-            raise ValueError("LoopPackage() requires requested_orders xor requested_order")
-        requested_orders = [requested_order]
-    else:
-        if requested_order is not None:
-            raise ValueError("LoopPackage() requires requested_orders xor requested_order")
 
     return MakePackage(
         name = name,
@@ -359,6 +357,14 @@ def loop_package(name, loop_integral, requested_orders=None,
 
         Default: :func:`pySecDec.make_package`.
     """
+    if requested_orders is None:
+       if requested_order is None:
+           raise ValueError("loop_package() requires requested_orders xor requested_order")
+       requested_orders = [requested_order]
+    else:
+       if requested_order is not None:
+           raise ValueError("loop_package() requires requested_orders xor requested_order")
+
     make_package_return_value = package_generator(**LoopPackage(
         name=name,
         loop_integral=loop_integral,
