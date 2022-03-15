@@ -167,7 +167,7 @@ class TestExpansionByRegions(unittest.TestCase):
     #@attr('active')
     def test_make_regions_numerator(self):
         regions = make_regions(
-            name = 'test',
+            name = 'test_make_regions_numerator',
             integration_variables = ['x'],
             regulators = ['delta'],
             requested_orders = [0],

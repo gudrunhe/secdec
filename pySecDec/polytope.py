@@ -132,11 +132,19 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
             # the first two lines may contain the array dimensions
             try:
                 shape = int(f.readline()), int(f.readline())
+                if shape[0] == 0:
+                    original_cone = np.array([])
+                else:
+                    original_cone = np.loadtxt(f, dtype=int, ndmin = 2)
             except ValueError:
                 # more than a single number in first two lines
                 # --> file does not contain dimensions
                 f.seek(0)
-            original_cone = np.loadtxt(f, dtype=int, ndmin = 2)
+                if not f.read(1):
+                    original_cone = np.array([])
+                else:
+                    f.seek(0)
+                    original_cone = np.loadtxt(f, dtype=int, ndmin = 2)
 
         # the triangulation is given as indices of `original_cone`
         with open(os.path.join(workdir, 'normaliz.tri'),'r') as f:
@@ -156,9 +164,12 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
                 current_str = f.readline()
             array_as_str = ''.join(array_lines)
 
-        # `[:,:-1]` to delete the last column (last column are the determiants)
-        # `-1` normaliz starts counting at `1` while python starts at `0`
-        simplicial_cones_indices = np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)[:,:-1] - 1
+        if np.array_equal(original_cone, np.array([])):
+            simplicial_cones_indices = []
+        else:
+            # `[:,:-1]` to delete the last column (last column are the determiants)
+            # `-1` normaliz starts counting at `1` while python starts at `0`
+            simplicial_cones_indices = np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)[:,:-1] - 1
 
         return original_cone[simplicial_cones_indices]
 

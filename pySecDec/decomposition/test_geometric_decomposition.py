@@ -182,6 +182,12 @@ class TestGeomethod(unittest.TestCase):
         triangulated_cone = triangulate(cone, workdir='tmpdir_test_triangulate_1D_python' + python_major_version, switch_representation=True)
         np.testing.assert_array_equal(triangulated_cone, target_cone)
 
+    def test_triangulate_0D(self):
+        cone = np.array([[1,0],[-1,0],[0,1],[0,-1]])
+        target_cone = np.array([])
+        triangulated_cone = triangulate(cone, workdir='tmpdir_test_triangulate_0D_python' + python_major_version, switch_representation=True)
+        np.testing.assert_array_equal(triangulated_cone, target_cone)
+
     #@attr('active')
     def test_transform_variables(self):
         x0 = Polynomial.from_expression('x0',['x0','x1','x2'])
