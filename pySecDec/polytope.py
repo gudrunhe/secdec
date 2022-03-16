@@ -289,17 +289,11 @@ class Polytope(object):
                         raise
 
             # read file output from normaliz
-            if self.facets is None: # reduced vertices are in cst file
-                vertices = self._read_ext_file(os.path.join(workdir,run_card_file_prefix + '.ext'))
-                self.facets = self._read_cst_file(os.path.join(workdir,run_card_file_prefix + '.cst'))
-            elif self.vertices is None: # reduced facets are in cst file
-                self.facets = self._read_ext_file(os.path.join(workdir,run_card_file_prefix + '.ext'))
-                vertices = self._read_cst_file(os.path.join(workdir,run_card_file_prefix + '.cst'))
-            else:
-                raise RuntimeError()
+            self.vertices = self._read_ext_file(os.path.join(workdir,run_card_file_prefix + '.ext'))
+            self.facets = self._read_cst_file(os.path.join(workdir,run_card_file_prefix + '.cst'))
 
             # discard the last column that only consists of ones
-            self.vertices = vertices[:,:-1]
+            self.vertices = self.vertices[:,:-1]
 
         finally:
             if not keep_workdir:
@@ -325,9 +319,9 @@ class Polytope(object):
         old_np_printoptions = np.get_printoptions()
         try:
             np.set_printoptions(threshold=np.inf)
-            run_card_as_str  = str(self.vertices.shape[0]) + ' ' + str(self.vertices.shape[1]) + '\n\n'
+            run_card_as_str  = 'amb_space ' + str(self.vertices.shape[1]+1) + '\n'
+            run_card_as_str += 'polytope ' + str(self.vertices.shape[0]) + '\n'
             run_card_as_str += str(self.vertices).replace('[',' ').replace(']',' ')
-            run_card_as_str += '\n\npolytope\n'
             return run_card_as_str
         finally:
             np.set_printoptions(**old_np_printoptions)
@@ -336,9 +330,9 @@ class Polytope(object):
         old_np_printoptions = np.get_printoptions()
         try:
             np.set_printoptions(threshold=np.inf)
-            run_card_as_str  = str(self.facets.shape[0]) + ' ' + str(self.facets.shape[1]) + '\n'
+            run_card_as_str  = 'amb_space ' + str(self.facets.shape[1]) + '\n'
+            run_card_as_str += 'inequalities ' + str(self.facets.shape[0]) + '\n'
             run_card_as_str += str(self.facets).replace('[','').replace(']','').replace('\n ','\n')
-            run_card_as_str += 'integral_closure\n'
             return run_card_as_str
         finally:
             np.set_printoptions(**old_np_printoptions)
