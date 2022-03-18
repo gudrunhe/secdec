@@ -147,12 +147,21 @@ def find_regions( exp_param_index , polynomial, indices = None, normaliz='normal
         polytope_vertices = [[vertex[i] for i in indices] for vertex in polytope_vertices]
 
     polytope = Polytope(vertices=polytope_vertices)
-    try:
-        polytope.complete_representation(normaliz, workdir)
-    except NotImplementedError:
-        raise NotImplementedError("Polytope is not full dimensional. Signals that the integrand is homogeneous in the expansion parameter (up to a rescaling of the integration variables) and therefore has a trivial expansion.")
+    polytope.complete_representation(normaliz, workdir)
 
-    facets = polytope.facets[:,:-1] # do not need offset term "a_F"
+    equations = polytope.equations
+    if len(equations) == 0:
+        facets = polytope.facets[:,:-1] # do not need offset term "a_F"
+    elif len(equations) == 1:
+        texponent = equations[0,exp_param_index]
+        if texponent > 0:
+            facets = equations[:,:-1]
+        elif texponent < 0:
+            facets = -1*equations[:,:-1]
+        else:
+            raise NotImplementedError("Polytope is not full dimensional. One of the region integrals is scaleless.")
+    else:
+        raise NotImplementedError("Polytope is not full dimensional. One of the region integrals is scaleless.")
 
     regions = facets[ facets[:,exp_param_index] > 0 ]
 
@@ -514,6 +523,12 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
             # expand the polynomials to the desired order:
             # expansion_by_regions_order - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
             expand_region_expansion_order = expansion_by_regions_order*region[smallness_parameter_index] - power_overall_smallness_parameter_no_regulators - power_smallness_parameter_measure
+
+            #Avoid expansion if polynomials_refactorized and numerator_refactorized are independent of the expansion parameter
+            tindependent = np.all([not np.any(poly.expolist[:,smallness_parameter_index]) for poly in polynomials_refactorized + [numerator_refactorized] ])
+            if tindependent and expand_region_expansion_order >= 0:
+                expand_region_expansion_order = 0
+                
             series = expand_region(polynomials_refactorized, numerator_refactorized, smallness_parameter_index, expand_region_expansion_order, polynomial_name_indices)
 
             for i,term in enumerate(series):

@@ -35,6 +35,115 @@ def convex_hull(*polynomials):
 
     return product.expolist[np.where( product.coeffs == 1 )]
 
+def normaliz_runcard(data, keyword, dimension):
+    '''
+    Returns string containing normaliz input file.
+
+    :param data:
+        two dimensional array;
+        Input data.
+
+    :param keyword:
+        string;
+        Keyword specifying the type of input data.
+        For options see normaliz documentation.
+
+    :param dimension:
+        integer;
+        Dimension of the ambient space.
+
+    '''
+    old_np_printoptions = np.get_printoptions()
+    try:
+        np.set_printoptions(threshold=np.inf)
+        run_card_as_str  = 'amb_space ' + str(dimension) + '\n'
+        run_card_as_str += keyword + ' ' + str(data.shape[0]) + '\n'
+        run_card_as_str += str(data).replace('[','').replace(']','').replace('\n ','\n')
+        return run_card_as_str
+    finally:
+        np.set_printoptions(**old_np_printoptions)
+
+def read_normaliz_file(filepath, nofoutputs = 1):
+    '''
+    Read normaliz output.
+
+    :param filepath:
+        string;
+        Normaliz output file to be read.
+
+    :param nofoutputs:
+        integer;
+        Number of different types of output
+        in the file to be read in.
+
+    '''
+    with open(filepath, 'r') as f:
+        output = []
+        for i in range(nofoutputs):
+            array_as_str = ''
+            # the first two lines contain the array dimensions
+            shape = int(f.readline()), int(f.readline())
+            for j in range(shape[0]):
+                array_as_str += f.readline()
+            # skip output type line
+            f.readline()
+
+            if shape[0] == 0:
+                output.append(np.array([]))
+            else:
+                output.append(np.fromstring(array_as_str, sep=' ', dtype=int).reshape(shape))
+
+    return output
+
+def run_normaliz(normaliz='normaliz', workdir='normaliz_tmp', run_card_filename='normaliz.in', normaliz_args=[]):
+    '''
+    Run normaliz.
+
+    :param normaliz:
+        string;
+        The shell command to run `normaliz`.
+
+    :param workdir:
+        string;
+        The directory for the communication with `normaliz`.
+        A directory with the specified name will be created
+        in the current working directory. If the specified
+        directory name already exists, an :class:`OSError`
+        is raised.
+
+        .. note::
+            The communication with `normaliz` is done via
+            files.
+
+    :param run_card_filename:
+        string;
+        File name of normaliz input file.
+
+    :param normaliz_args:
+        list of strings;
+        Normaliz command line arguments.
+
+    '''
+    command_line_command = [normaliz] + normaliz_args + [run_card_filename]
+
+    # write additional information
+    with open(os.path.join(workdir, 'run_info'),'w') as infofile:
+        infofile.write('Normaliz run card: "%s"\n' % run_card_filename)
+        infofile.write('running "%s" ...\n' % ' '.join(command_line_command))
+
+    # redirect normaliz stdout
+    with open(os.path.join(workdir, 'stdout'),'w') as stdout:
+        # redirect normaliz stderr
+        with open(os.path.join(workdir, 'stderr'),'w') as stderr:
+            # run normaliz
+            #    subprocess.check_call --> run normaliz, block until it finishes and raise error on nonzero exit status
+            try:
+                subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir)
+            except OSError as error:
+                if normaliz not in str(error):
+                    error.filename = normaliz
+                raise
+
 def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False, switch_representation=False):
     '''
     Split a cone into simplicial cones; i.e.
@@ -85,96 +194,36 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
     if cone.shape[0] == cone.shape[1] and not switch_representation:
         raise ValueError("`cone` is simplicial already")
 
-    old_np_printoptions = np.get_printoptions()
-    np.set_printoptions(threshold=np.inf)
-
     os.mkdir(workdir)
     try:
-        # generate the normaliz run card
-        run_card_as_str  = str(cone.shape[0]) + ' ' + str(cone.shape[1]) + '\n'
-        run_card_as_str += str(cone).replace('[','').replace(']','').replace('\n ','\n')
         if switch_representation == False:
-            run_card_as_str += '\nintegral_closure\n'
+            run_card_as_str = normaliz_runcard(cone, 'cone', cone.shape[1])
         else:
-            run_card_as_str += '\ninequalities\n'
+            run_card_as_str = normaliz_runcard(cone, 'inequalities', cone.shape[1])
 
         run_card_file_prefix = 'normaliz'
         run_card_file_suffix = '.in'
         run_card_filename = run_card_file_prefix + run_card_file_suffix
-        normaliz_args = ['-T', '--verbose'] # create the triangulation
-        command_line_command = [normaliz] + normaliz_args + [run_card_filename]
 
         # dump run card to file
         with open(os.path.join(workdir, run_card_filename),'w') as f:
             f.write(run_card_as_str)
 
-        # write additional information
-        with open(os.path.join(workdir, 'run_info'),'w') as infofile:
-            infofile.write('Normaliz run card: "%s"\n' % run_card_filename)
-            infofile.write('running "%s" ...\n' % ' '.join(command_line_command))
+        run_normaliz(normaliz=normaliz, workdir=workdir, run_card_filename=run_card_filename, normaliz_args=['-T', '--verbose']) # create the triangulation
 
-        # redirect normaliz stdout
-        with open(os.path.join(workdir, 'stdout'),'w') as stdout:
-            # redirect normaliz stderr
-            with open(os.path.join(workdir, 'stderr'),'w') as stderr:
-                # run normaliz
-                #    subprocess.check_call --> run normaliz, block until it finishes and raise error on nonzero exit status
-                try:
-                    subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir)
-                except OSError as error:
-                    if normaliz not in str(error):
-                        error.filename = normaliz
-                    raise
-
-        # read normaliz output
-        # normaliz reorders the rays and defines its ordering in "normaliz.tgn"
-        with open(os.path.join(workdir, 'normaliz.tgn'),'r') as f:
-            # the first two lines may contain the array dimensions
-            try:
-                shape = int(f.readline()), int(f.readline())
-                if shape[0] == 0:
-                    original_cone = np.array([])
-                else:
-                    original_cone = np.loadtxt(f, dtype=int, ndmin = 2)
-            except ValueError:
-                # more than a single number in first two lines
-                # --> file does not contain dimensions
-                f.seek(0)
-                if not f.read(1):
-                    original_cone = np.array([])
-                else:
-                    f.seek(0)
-                    original_cone = np.loadtxt(f, dtype=int, ndmin = 2)
+        original_cone = read_normaliz_file(os.path.join(workdir,run_card_file_prefix + '.tgn'), 1)[0]
 
         # the triangulation is given as indices of `original_cone`
-        with open(os.path.join(workdir, 'normaliz.tri'),'r') as f:
-            # the first two lines may contain the array dimensions
-            try:
-                shape = int(f.readline()), int(f.readline())
-            except ValueError:
-                # more than a single number in first two lines
-                # --> file does not contain dimensions
-                f.seek(0)
-
-            # it is terminated by a line containing letters
-            array_lines = []
-            current_str = f.readline()
-            while re.match(r'^[\-0-9 ]+$', current_str) is not None:
-                array_lines.append(current_str)
-                current_str = f.readline()
-            array_as_str = ''.join(array_lines)
-
         if np.array_equal(original_cone, np.array([])):
             simplicial_cones_indices = []
         else:
             # `[:,:-1]` to delete the last column (last column are the determiants)
             # `-1` normaliz starts counting at `1` while python starts at `0`
-            simplicial_cones_indices = np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)[:,:-1] - 1
+            simplicial_cones_indices = read_normaliz_file(os.path.join(workdir,run_card_file_prefix + '.tri'), 1)[0][:,:-1] - 1
 
         return original_cone[simplicial_cones_indices]
 
     finally:
-        np.set_printoptions(**old_np_printoptions)
         if not keep_workdir:
             shutil.rmtree(workdir)
 
@@ -202,6 +251,12 @@ class Polytope(object):
         .. math::
             \bigcap_F \left( {\langle n_F, v \rangle} + a_F \right) \ge 0
 
+    :param equations:
+        two dimensional array;
+        Equations defining the hyperplanes the
+        polytope is contained in. Only non-empty for
+        polytopes that are not full-dimensional.
+
     '''
     def __init__(self, vertices=None, facets=None):
         if vertices is None and facets is None or vertices is not None and facets is not None:
@@ -217,6 +272,8 @@ class Polytope(object):
             self.facets = None
         else:
             self.facets = np.array(facets)
+
+        self.equations = None
 
     def complete_representation(self, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False):
         '''
@@ -254,43 +311,25 @@ class Polytope(object):
         os.mkdir(workdir)
         try:
             if self.facets is None:
-                run_card_as_str = self._make_run_card_vertices2facets()
+                run_card_as_str = normaliz_runcard(self.vertices, 'polytope', self.vertices.shape[1]+1)
             elif self.vertices is None:
-                run_card_as_str = self._make_run_card_facets2vertices()
+                run_card_as_str = normaliz_runcard(self.facets, 'inequalities', self.facets.shape[1])
             else:
                 raise ValueError('Both representations (facet and vertex) are already calculated')
 
             run_card_file_prefix = 'normaliz'
             run_card_file_suffix = '.in'
             run_card_filename = run_card_file_prefix + run_card_file_suffix
-            normaliz_args = ['--ext', '--cst', '--verbose'] # create the files 'normaliz.ext' (vertices) and 'normaliz.cst' (facets)
-            command_line_command = [normaliz] + normaliz_args + [run_card_filename]
 
             # dump run card to file
             with open(os.path.join(workdir, run_card_filename),'w') as f:
                 f.write(run_card_as_str)
 
-            # write additional information
-            with open(os.path.join(workdir, 'run_info'),'w') as infofile:
-                infofile.write('Normaliz run card: "%s"\n' % run_card_filename)
-                infofile.write('running "%s" ...\n' % ' '.join(command_line_command))
-
-            # redirect normaliz stdout
-            with open(os.path.join(workdir, 'stdout'),'w') as stdout:
-                # redirect normaliz stderr
-                with open(os.path.join(workdir, 'stderr'),'w') as stderr:
-                    # run normaliz
-                    #    subprocess.check_call --> run normaliz, block until it finishes and raise error on nonzero exit status
-                    try:
-                        subprocess.check_call(command_line_command, stdout=stdout, stderr=stderr, cwd=workdir)
-                    except OSError as error:
-                        if normaliz not in str(error):
-                            error.filename = normaliz
-                        raise
+            run_normaliz(normaliz=normaliz, workdir=workdir, run_card_filename=run_card_filename, normaliz_args=['--ext', '--cst', '--verbose']) # create the files 'normaliz.ext' (vertices) and 'normaliz.cst' (facets)
 
             # read file output from normaliz
-            self.vertices = self._read_ext_file(os.path.join(workdir,run_card_file_prefix + '.ext'))
-            self.facets = self._read_cst_file(os.path.join(workdir,run_card_file_prefix + '.cst'))
+            self.vertices = read_normaliz_file(os.path.join(workdir,run_card_file_prefix + '.ext'), 1)[0]
+            self.facets, self.equations = read_normaliz_file(os.path.join(workdir,run_card_file_prefix + '.cst'), 2)
 
             # discard the last column that only consists of ones
             self.vertices = self.vertices[:,:-1]
@@ -314,62 +353,3 @@ class Polytope(object):
         for i, vertex in enumerate(self.vertices):
             outdict[tuple(vertex)] = np.where(incidence_array[i])[0]
         return outdict
-
-    def _make_run_card_vertices2facets(self):
-        old_np_printoptions = np.get_printoptions()
-        try:
-            np.set_printoptions(threshold=np.inf)
-            run_card_as_str  = 'amb_space ' + str(self.vertices.shape[1]+1) + '\n'
-            run_card_as_str += 'polytope ' + str(self.vertices.shape[0]) + '\n'
-            run_card_as_str += str(self.vertices).replace('[',' ').replace(']',' ')
-            return run_card_as_str
-        finally:
-            np.set_printoptions(**old_np_printoptions)
-
-    def _make_run_card_facets2vertices(self):
-        old_np_printoptions = np.get_printoptions()
-        try:
-            np.set_printoptions(threshold=np.inf)
-            run_card_as_str  = 'amb_space ' + str(self.facets.shape[1]) + '\n'
-            run_card_as_str += 'inequalities ' + str(self.facets.shape[0]) + '\n'
-            run_card_as_str += str(self.facets).replace('[','').replace(']','').replace('\n ','\n')
-            return run_card_as_str
-        finally:
-            np.set_printoptions(**old_np_printoptions)
-
-    def _read_cst_file(self, filepath):
-        with open(filepath, 'r') as f:
-            # the first two lines may contain the array dimensions
-            try:
-                shape = int(f.readline()), int(f.readline())
-            except ValueError:
-                # more than a single number in first two lines
-                # --> file does not contain dimensions
-                f.seek(0)
-            # the reduced input comes next (space and newline separated) and is terminated by a line containing letters
-            array_lines = []
-            current_str = f.readline()
-            while 'inequalities' not in current_str:
-                array_lines.append(current_str)
-                current_str = f.readline()
-            array_as_str = ''.join(array_lines)
-            # check for equations that constrain the polytope to hyperplane (happens for scaleless integrals)
-            # if there are no equations the line is expected to be '0' or 'equations' depending on the normaliz version
-            current_str= f.readline()
-
-            if not ('equations' in current_str or re.sub(r'[\n\t\s]*', '', current_str) == '0'):
-                raise NotImplementedError("Polytope is not full dimensional.")
-
-            return np.fromstring(array_as_str, sep=' ', dtype=int).reshape(len(array_lines),-1)
-
-
-    def _read_ext_file(self, filepath):
-        with open(filepath, 'r') as f:
-            # the first two lines may contain the array dimensions
-            try:
-                shape = int(f.readline()), int(f.readline())
-            except ValueError:
-                # more than a single number in first two lines
-                # --> file does not contain dimensions
-                f.seek(0)
-            return np.loadtxt(f, dtype=int)

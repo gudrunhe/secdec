@@ -48,6 +48,16 @@ class  TestFindRegions(unittest.TestCase):
 
         np.testing.assert_array_equal(sort_2D_array(regions), target_regions)
 
+    #@attr('active')
+    def test_find_regions_trivial(self):
+        poly = Polynomial.from_expression('t + x', ['t','x'])
+        exp_param_index = 0
+        target_regions = sort_2D_array(np.array([[1,1]]))
+
+        regions = find_regions( exp_param_index, poly, workdir = 'tmpdir_test_find_regions_trivial_python' + python_major_version )
+
+        np.testing.assert_array_equal(sort_2D_array(regions), target_regions)
+
 #@attr('active')
 class TestExpansionByRegions(unittest.TestCase):
     #@attr('active')
@@ -188,3 +198,21 @@ class TestExpansionByRegions(unittest.TestCase):
         else:
             for num, target_num in zip(numerators, target_numerators[-1:]+target_numerators[:-1]):
                 self.assertEqual(sympify_expression(num-target_num).simplify(), 0)
+
+    #@attr('active')
+    def test_make_regions_trivial(self):
+        regions = make_regions(
+            name = 'test_make_regions_trivial',
+            integration_variables = ['x'],
+            regulators = ['delta'],
+            requested_orders = [0],
+            smallness_parameter = 't',
+            polynomials_to_decompose = ['(x)**(delta)','(t + x)**(-1)'],
+            numerator = '1',
+            polynomial_names = ['A','B'],
+            expansion_by_regions_order = 1,
+        )
+
+        self.assertEqual(len(regions), 1)
+        self.assertEqual(sympify_expression(regions[0].prefactor-sympify_expression('t**delta')).simplify(), 0)
+        self.assertEqual(sympify_expression(regions[0].polynomials_to_decompose[1]-sympify_expression('(1+x)**-1')).simplify(), 0)

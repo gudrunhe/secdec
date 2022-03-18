@@ -186,9 +186,9 @@ def geometric_decomposition(sector, indices=None, normaliz='normaliz', workdir='
 
     polytope_vertices = convex_hull( *(product.factors[1] for product in sector.cast) )
     polytope = Polytope(vertices=polytope_vertices)
-    try:
-        polytope.complete_representation(normaliz, workdir)
-    except NotImplementedError:
+    polytope.complete_representation(normaliz, workdir)
+
+    if len(polytope.equations) > 0:
         NotImplementedError("Polytope is not full dimensional. Are you trying to compute a scaleless integral (which evaluates to zero)?")
 
     transformation = polytope.facets.T[:-1] # do not need offset term "a_F"

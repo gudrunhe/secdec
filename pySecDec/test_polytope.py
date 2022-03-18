@@ -328,3 +328,105 @@ class TestPolytope(unittest.TestCase):
         np.testing.assert_array_equal( sort_2D_array(np.array(polytope2.vertices)), sort_2D_array(np.array(self.vertices)) )
         np.testing.assert_array_equal( sort_2D_array(np.array(polytope1.facets)), sort_2D_array(np.array(self.facets)) )
         np.testing.assert_array_equal( sort_2D_array(np.array(polytope2.facets)), sort_2D_array(np.array(self.facets)) )
+
+    #@attr('active')
+    def test_equations(self):
+        polytope1 = Polytope(vertices=[[0,1],[1,0]])
+        polytope2 = Polytope(vertices=[[0,1],[1,0],[1,1]])
+        polytope3 = Polytope(facets=[[0,1,0],[0,-1,0],[1,0,0],[-1,0,1]])
+
+        polytope1.complete_representation(workdir='tmpdir_test_equations1_python' + python_major_version)
+        polytope2.complete_representation(workdir='tmpdir_test_equations2_python' + python_major_version)
+        polytope3.complete_representation(workdir='tmpdir_test_equations3_python' + python_major_version)
+
+        np.testing.assert_array_equal(polytope1.equations, np.array([[1,1,-1]]))
+        np.testing.assert_array_equal(polytope2.equations, np.array([]))
+        np.testing.assert_array_equal(polytope3.equations, np.array([[0,1,0]]))
+        np.testing.assert_array_equal(sort_2D_array(polytope3.facets), sort_2D_array(np.array([[-1,0,1],[1,0,0]])))
+
+
+    #@attr('active')
+    def test_triangulate(self):
+        # basic consistency checks working?
+        simplicial_cone = [[ 1,  0,  0], [ 0,  1,  0], [ 0, -1, -1]]
+        self.assertRaisesRegexp(ValueError, 'simplicial.*already', triangulate, simplicial_cone)
+        wrong_dimensionality = [ 1,  0,  0]
+        self.assertRaisesRegexp(AssertionError, '(M|m)ust.*two.*dim', triangulate, wrong_dimensionality)
+        two_rays = [[ 1,  0,  0], [ 0,  1,  0]]
+        self.assertRaisesRegexp(AssertionError, '(M|m)ust.*at least.*dim', triangulate, two_rays)
+
+
+        cone = [[ 1,  0,  0], [ 0,  1,  0], [ 0, -1, -1], [-1,  0, -1]]
+        cone_normal = [[ -1, 1, 1], [ 1, 0, 0], [ 0, 1, 0], [ 0, 0, 1]]
+
+        # useful error message?
+        self.assertRaisesRegexp(
+                                    OSError, 'No such file or directory.*nonexistentNormalizExecutable',
+                                    triangulate, cone, normaliz='nonexistentNormalizExecutable',
+                                    workdir='tmpdir_test_triangulate_python' + python_major_version
+                               )
+
+        triangulated_cones = triangulate(cone, workdir='tmpdir_test_triangulate_python' + python_major_version)
+        triangulated_cones_normal = triangulate(cone_normal, workdir='tmpdir_test_triangulate_python' + python_major_version, switch_representation=True)
+
+        # there are two possibilities for the triangualtion
+        target_triangulated_cones1 = np.array([
+                                                [[ 1,  0,  0], [ 0,  1,  0], [-1,  0, -1]],
+                                                [[ 1,  0,  0], [ 0, -1, -1], [-1,  0, -1]]
+                                            ])
+        target_triangulated_cones2 = np.array([
+                                                [[ 0, -1, -1], [ 0,  1,  0], [ 1,  0,  0]],
+                                                [[ 0, -1, -1], [ 0,  1,  0], [-1,  0, -1]]
+                                            ])
+        target_triangulated_cones1_normal = np.array([
+                                                [[ 1,  1,  0], [ 1,  0,  1], [ 0,  0, 1]],
+                                                [[ 1,  1,  0], [ 0, 1, 0], [0,  0, 1]]
+                                            ])
+        target_triangulated_cones2_normal = np.array([
+                                                [[ 1, 0, 1], [ 0,  1,  0], [ 0,  0,  1]],
+                                                [[ 1, 0, 1], [ 0,  1,  0], [ 1,  1, 0]]
+                                            ])
+
+        # should get one of these triangulations
+        # The ordering is not important but must be fixed to compare the arrays
+        try:
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cones[0]), sort_2D_array(target_triangulated_cones1[0]))
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cones[1]), sort_2D_array(target_triangulated_cones1[1]))
+        except AssertionError:
+            try:
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cones[0]), sort_2D_array(target_triangulated_cones1[1]))
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cones[1]), sort_2D_array(target_triangulated_cones1[0]))
+            except AssertionError:
+                try:
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones[0]), sort_2D_array(target_triangulated_cones2[0]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones[1]), sort_2D_array(target_triangulated_cones2[1]))
+                except:
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones[0]), sort_2D_array(target_triangulated_cones2[1]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones[1]), sort_2D_array(target_triangulated_cones2[0]))
+
+        try:
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[0]), sort_2D_array(target_triangulated_cones1_normal[0]))
+            np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[1]), sort_2D_array(target_triangulated_cones1_normal[1]))
+        except AssertionError:
+            try:
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[0]), sort_2D_array(target_triangulated_cones1_normal[1]))
+                np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[1]), sort_2D_array(target_triangulated_cones1_normal[0]))
+            except AssertionError:
+                try:
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[0]), sort_2D_array(target_triangulated_cones2_normal[0]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[1]), sort_2D_array(target_triangulated_cones2_normal[1]))
+                except:
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[0]), sort_2D_array(target_triangulated_cones2_normal[1]))
+                    np.testing.assert_array_equal(sort_2D_array(triangulated_cones_normal[1]), sort_2D_array(target_triangulated_cones2_normal[0]))
+
+    def test_triangulate_1D(self):
+        cone = [[1]]
+        target_cone = np.array([[[1]]])
+        triangulated_cone = triangulate(cone, workdir='tmpdir_test_triangulate_1D_python' + python_major_version, switch_representation=True)
+        np.testing.assert_array_equal(triangulated_cone, target_cone)
+
+    def test_triangulate_0D(self):
+        cone = np.array([[1,0],[-1,0],[0,1],[0,-1]])
+        target_cone = np.array([])
+        triangulated_cone = triangulate(cone, workdir='tmpdir_test_triangulate_0D_python' + python_major_version, switch_representation=True)
+        np.testing.assert_array_equal(triangulated_cone, target_cone)
