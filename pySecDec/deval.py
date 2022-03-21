@@ -279,9 +279,13 @@ def product_series_bracket(factors, varlist, orderlist, substitute={}):
     """
     hashed = {}
     def hashfn(m):
-        v = f"__H{len(hashed)}"
-        hashed[v] = m.group(0)
-        return v
+        expr = m.group(0)
+        if expr in hashed:
+            return hashed[expr]
+        else:
+            v = f"__H{len(hashed)}"
+            hashed[v] = expr
+            return v
     hashedfactors = []
     for f in factors:
         f = f.replace("**", "^")
