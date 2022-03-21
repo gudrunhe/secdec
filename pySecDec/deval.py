@@ -245,69 +245,49 @@ def bracket(expr, varlist):
             result[(power,)] = coef
     return result
 
-def ginsh_series(ex, var, order):
-    if not ex.has(var):
-        return ex
+def ginsh_product_series(factors, varlist, orderlist, substitute={}):
+    """
+    Expand a product of terms into a series using ginsh (with
+    an optional variable substitution), return the result as a
+    string.
+    """
+    with tempfile.NamedTemporaryFile(prefix="psd_ginsh", mode="w") as f:
+        for k, v in substitute.items():
+            f.write(f"{k} = {v}:\n")
+        for i, factor in enumerate(factors):
+            f.write("__EXPR = __EXPR * (" if i > 0 else "__EXPR = (")
+            f.write(factor)
+            f.write("):\n")
+        for var, order in zip(varlist, orderlist):
+            f.write(f"__EXPR = series_to_poly(series(__EXPR, {var}, {order+1})):\n")
+        f.write("__START;\n");
+        f.write("__EXPR;\nquit:\n")
+        f.flush()
+        result = subprocess.check_output([f"{contrib_dirname}/bin/ginsh", f.name], encoding="utf8")
+    result = re.sub(r".*__START\n", "", result, flags=re.DOTALL)
+    result = re.sub(r"[+]Order\([^)]*\)", "", result, flags=re.DOTALL)
+    result = result.strip()
+    assert result != ""
+    assert "__EXPR" not in result
+    return result
+
+def product_series_bracket(factors, varlist, orderlist, substitute={}):
+    """
+    Expand a product of textual factors into a series (with an
+    optional variable substitution), return its bracket.
+    """
     hashed = {}
     def hashfn(m):
-        v = f"hash{len(hashed)}"
+        v = f"__H{len(hashed)}"
         hashed[v] = m.group(0)
         return v
-    text = str(ex).replace("**", "^")
-    text = re.sub(r"polygamma\(([^)]*)\)", hashfn, text)
-    with tempfile.NamedTemporaryFile(prefix="psd_ginsh", mode="w") as f:
-        f.write("START;\nseries((")
-        f.write(text)
-        f.write("),(")
-        f.write(str(var))
-        f.write("),(")
-        f.write(str(order))
-        f.write("));\nquit;")
-        f.flush()
-        subprocess.check_call(f"'{contrib_dirname}/bin/ginsh' '{f.name}' > '{f.name}.out'", shell=True)
-        with open(f"{f.name}.out", "r") as f2:
-            result = f2.read()
-        os.unlink(f"{f.name}.out")
-    result = re.sub(r".*START\n", "", result, flags=re.DOTALL)
-    result = re.sub(r"[+]Order\([^)]*\)", "", result, flags=re.DOTALL)
-    result = result.strip()
-    assert result != ""
-    return sp.sympify(result).subs(hashed)
-
-def ginsh_symplify(expr, valmap):
-    with tempfile.NamedTemporaryFile(prefix="psd_ginsh", mode="w") as f:
-        f.write("START;\n");
-        for k, v in valmap.items():
-            f.write(f"{k} = {v}:\n")
-        f.write("(")
-        f.write(expr)
-        f.write(");\nquit;\n")
-        f.flush()
-        subprocess.check_call(f"'{contrib_dirname}/bin/ginsh' '{f.name}' > '{f.name}.out'", shell=True)
-        with open(f"{f.name}.out", "r") as f2:
-            result = f2.read()
-        os.unlink(f"{f.name}.out")
-    result = re.sub(r".*START\n", "", result, flags=re.DOTALL)
-    result = re.sub(r"[+]Order\([^)]*\)", "", result, flags=re.DOTALL)
-    result = result.strip()
-    assert result != ""
-    return sp.sympify(result)
-
-def series_bracket(expr, varlist, orderlist):
-    if expr == 0:
-        return {}
-    result = {}
-    orders = sp.collect(ginsh_series(expr, varlist[0], orderlist[0]+1), varlist[0], evaluate=False)
-    othervars = varlist[1:]
-    otherorders = orderlist[1:]
-    for stem, coef in orders.items():
-        power = int(stem.exp) if stem.is_Pow else 0 if stem == 1 else 1
-        if othervars:
-            for powers, c in series_bracket(coef, othervars, otherorders).items():
-                result[(power,) + powers] = c
-        else:
-            result[(power,)] = coef
-    return result
+    hashedfactors = []
+    for f in factors:
+        f = f.replace("**", "^")
+        f = re.sub(r"polygamma\(([^)]*)\)", hashfn, f)
+        hashedfactors.append(f)
+    result = ginsh_product_series(hashedfactors, varlist, orderlist, substitute=substitute)
+    return bracket(sp.sympify(result).expand().subs(hashed), varlist)
 
 def adjust_1d_n(W2, V, w, a, tau, nmin, nmax):
     assert np.all(W2 > 0)
@@ -382,7 +362,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         for k in info["kernels"]:
             kernel2idx[info["name"], k] = len(kernel2idx)
         log(f"got the total of {len(kernel2idx)} kernels")
-        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, 1, valuemap_rat, sp_regulators, requested_orders)
+        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, [], valuemap_rat, sp_regulators, requested_orders)
     elif info["type"] == "sum":
         log(f"loading {len(info['integrals'])} integrals")
         infos = {}
@@ -398,7 +378,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         for a, terms in enumerate(info["sums"]):
             for t in terms:
                 log("-", t["coefficient"])
-                co = load_coefficient(os.path.join(coeffsdir, t["coefficient"]), valuemap_rat)
+                co = load_coefficients(os.path.join(coeffsdir, t["coefficient"]))
                 split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], co, valuemap_rat, sp_regulators, requested_orders)
     else:
         raise ValueError(f"unknown type: {info['type']}")
@@ -710,9 +690,9 @@ def load_cluster_json(jsonfile, dirname):
             ]
     }
 
-def load_coefficient(filename, valmap):
+def load_coefficients(filename):
     tr = {ord(" "): None, ord("\n"): None, ord("\\"): None}
-    coeff = sp.sympify(1)
+    coeff = []
     with open(filename, "r") as f:
         text = f.read().translate(tr)
     for part in text.split(";", 3):
@@ -720,15 +700,19 @@ def load_coefficient(filename, valmap):
         if not part: continue
         key, value = part.split("=")
         key = key.strip()
-        value = ginsh_symplify(value, valmap)
-        if key == "numerator": coeff *= value
-        if key == "denominator": coeff /= value
-        if key == "regulator_factor": coeff *= value
+        if key == "numerator": coeff.append(value)
+        elif key == "denominator": coeff.append("(" + value + ")^(-1)")
+        elif key == "regulator_factor": coeff.append(value)
+        else: raise ValueError(f"bad key in {filename!r}: {key!r}")
     return coeff
 
-def split_integral_into_orders(orders, ampid, kernel2idx, info, coefficient, valmap, sp_regulators, requested_orders):
+def split_integral_into_orders(orders, ampid, kernel2idx, info, coefficients, valmap, sp_regulators, requested_orders):
     highest_orders = np.min([o["regulator_powers"] for o in info["orders"]], axis=0)
-    prefactor = series_bracket(coefficient*sp.sympify(info["prefactor"]).subs(valmap), sp_regulators, -highest_orders + requested_orders)
+    prefactor = product_series_bracket(
+            coefficients + [info["prefactor"]],
+            sp_regulators,
+            -highest_orders + requested_orders,
+            substitute=valmap)
     prefactor = {p : complex(c) for p, c in prefactor.items()}
     oo = {}
     for o in info["orders"]:
