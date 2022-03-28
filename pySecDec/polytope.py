@@ -325,7 +325,7 @@ class Polytope(object):
             with open(os.path.join(workdir, run_card_filename),'w') as f:
                 f.write(run_card_as_str)
 
-            run_normaliz(normaliz=normaliz, workdir=workdir, run_card_filename=run_card_filename, normaliz_args=['--ext', '--cst', '--verbose']) # create the files 'normaliz.ext' (vertices) and 'normaliz.cst' (facets)
+            run_normaliz(normaliz=normaliz, workdir=workdir, run_card_filename=run_card_filename, normaliz_args=['--ext', '--cst', '-s', '--verbose']) # create the files 'normaliz.ext' (vertices) and 'normaliz.cst' (facets)
 
             # read file output from normaliz
             self.vertices = read_normaliz_file(os.path.join(workdir,run_card_file_prefix + '.ext'), 1)[0]
