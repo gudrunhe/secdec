@@ -122,15 +122,14 @@ def transform_variables(polynomial, transformation, polysymbols='y'):
     outpoly.number_of_variables = number_of_new_variables
     return outpoly
 
-def geometric_decomposition(sector, indices=None, normaliz='normaliz', workdir='normaliz_tmp'):
+def geometric_decomposition(sector, indices=None, normaliz=None, workdir='normaliz_tmp'):
     '''
     Run the sector decomposition using the geomethod
     as described in [BHJ+15]_.
 
     .. note::
         This function calls the command line executable of
-        `normaliz` [BIR]_. See :ref:`installation_normaliz`
-        for installation and a list of tested versions.
+        `normaliz` [BIR]_.
 
     :param sector:
         :class:`.Sector`;
@@ -146,6 +145,7 @@ def geometric_decomposition(sector, indices=None, normaliz='normaliz', workdir='
     :param normaliz:
         string;
         The shell command to run `normaliz`.
+        Default: use `normaliz` from pySecDecContrib
 
     :param workdir:
         string;
@@ -246,7 +246,7 @@ def geometric_decomposition(sector, indices=None, normaliz='normaliz', workdir='
         else:
             yield make_sector(cone_indices, cone)
 
-def geometric_decomposition_ku(sector, indices=None, normaliz='normaliz', workdir='normaliz_tmp'):
+def geometric_decomposition_ku(sector, indices=None, normaliz=None, workdir='normaliz_tmp'):
     '''
     Run the sector decomposition using the original geometric
     decomposition strategy by Kaneko and Ueda as described
@@ -254,8 +254,7 @@ def geometric_decomposition_ku(sector, indices=None, normaliz='normaliz', workdi
 
     .. note::
         This function calls the command line executable of
-        `normaliz` [BIR]_. See :ref:`installation_normaliz`
-        for installation and a list of tested versions.
+        `normaliz` [BIR]_.
 
     :param sector:
         :class:`.Sector`;
@@ -271,6 +270,7 @@ def geometric_decomposition_ku(sector, indices=None, normaliz='normaliz', workdi
     :param normaliz:
         string;
         The shell command to run `normaliz`.
+        Default: use `normaliz` from pySecDecContrib
 
     :param workdir:
         string;

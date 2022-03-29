@@ -37,22 +37,7 @@ and then running:
 [pypi]: https://pypi.org/project/pySecDec/
 [pip]: https://pypi.org/project/pip/
 
-## The geometric method and Normaliz
-
-If you want to use the geometric decomposition methods
-(`decomposition_method='geometric'` or `'geometric_ku'`),
-you need the `normaliz`  executable,
-which can be downloaded from https://www.normaliz.uni-osnabrueck.de
-[W. Bruns and B. Ichim and T. Römer and R. Sieg and C. Söger].
-The geometric decomposition module is
-designed for normaliz version 3 - currently versions
-``3.3.0``, ``3.4.0``, ``3.5.4``, ``3.6.0``, ``3.6.2``, ``3.7.3``,
-``3.7.4``, and ``3.8.1``
-are known to work. We recommend to set your $PATH such that the
-`normaliz` executable is found. Alternatively, you can pass the path to the `normaliz`
-executable directly to the functions that need it.
-
-## Additional dependencies for generated C++ packages
+## Additional dependencies
 
 The intended main usage of pySecDec is to make it write C++ packages using the functions
 `pySecDec.code_writer.make_package` and `pySecDec.loop_integral.loop_package`.
@@ -74,6 +59,11 @@ the number of sectors:
  * NAUTY (http://pallini.di.uniroma1.it/)
 [B. D. McKay and A. Piperno, Practical graph isomorphism, II, 2014, Journal of Symbolic Computation, 60, 94-112,
 doi:10.1016/j.jsc.2013.09.003]
+
+The geometric decomposition methods (`decomposition_method='geometric'` or `'geometric_ku'`) depend on:
+
+ * Normaliz (https://www.normaliz.uni-osnabrueck.de)
+   [W. Bruns and B. Ichim and T. Römer and R. Sieg and C. Söger]
 
 These packages are redistributed along with pySecDec itself,
 and will be built automatically during pySecDec installation.

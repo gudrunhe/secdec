@@ -11,6 +11,9 @@ from .algebra import Polynomial, ExponentiatedPolynomial, Product
 from .code_writer.make_package import MakePackage
 from .misc import sympify_expression
 import numpy as np
+import os
+
+import pySecDecContrib
 
 _sympy_one = sympify_expression(1)
 
@@ -93,15 +96,14 @@ def _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompos
         parsed.append(poly)
     return parsed
 
-def find_regions( exp_param_index , polynomial, indices = None, normaliz='normaliz', workdir='normaliz_tmp'):
+def find_regions( exp_param_index , polynomial, indices = None, normaliz=None, workdir='normaliz_tmp'):
     '''
     Find regions for the expansion by regions
     as described in [PS11]_.
 
     .. note::
         This function calls the command line executable of
-        `normaliz` [BIR]_. See :ref:`installation_normaliz`
-        for installation and a list of tested versions.
+        `normaliz` [BIR]_.
 
     :param exp_param_index:
         int;
@@ -122,6 +124,7 @@ def find_regions( exp_param_index , polynomial, indices = None, normaliz='normal
     :param normaliz:
         string;
         The shell command to run `normaliz`.
+        Default: use `normaliz` from pySecDecContrib
 
     :param workdir:
         string;
@@ -145,6 +148,9 @@ def find_regions( exp_param_index , polynomial, indices = None, normaliz='normal
         indices = list(indices)
         exp_param_index = indices.index(range(dim)[exp_param_index])
         polytope_vertices = [[vertex[i] for i in indices] for vertex in polytope_vertices]
+
+    if normaliz is None:
+        normaliz = os.path.join(pySecDecContrib.dirname, 'bin', 'normaliz')
 
     polytope = Polytope(vertices=polytope_vertices)
     polytope.complete_representation(normaliz, workdir)
@@ -360,7 +366,7 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
 
 def make_regions(name, integration_variables, regulators, requested_orders, smallness_parameter,
                  polynomials_to_decompose, numerator='1', expansion_by_regions_order=0, real_parameters=[],
-                 complex_parameters=[], normaliz='normaliz', polytope_from_sum_of = None, **make_package_args):
+                 complex_parameters=[], normaliz=None, polytope_from_sum_of = None, **make_package_args):
     r'''
     Applies the expansion by regions method
     (see e.g. [PS11]_) to a list of polynomials.
@@ -421,7 +427,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     :param normaliz:
         string;
         The shell command to run `normaliz`.
-        Default: 'normaliz'
+        Default: use `normaliz` from pySecDecContrib
 
     :param polytope_from_sum_of:
         iterable of integers;

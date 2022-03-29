@@ -1,2 +1,4 @@
 include/gmp.h
+include/gmpxx.h
 lib/libgmp.a
+lib/libgmpxx.a

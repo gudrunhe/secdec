@@ -12,7 +12,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
                 form_threads=2,
                 add_monomial_regulator_power=None,
                 decomposition_method='iterative',
-                normaliz_executable='normaliz',
+                normaliz_executable=None,
                 enforce_complex=False,
                 split=False, ibp_power_goal=-1,
                 use_iterative_sort=True, use_light_Pak=True,
@@ -108,17 +108,12 @@ def loop_regions(name, loop_integral, smallness_parameter,
         * 'geometric'
         * 'geometric_ku'
 
-        .. note::
-            For 'geometric' and 'geometric_ku', the
-            third-party program "normaliz" is needed.
-            See :ref:`installation_normaliz`.
-
     :param normaliz_executable:
         string, optional;
         The command to run `normaliz`. `normaliz` is only
-        required if `decomposition_method` is set to
-        'geometric' or 'geometric_ku'.
-        Default: 'normaliz'
+        required if `decomposition_method` starts with
+        'geometric'.
+        Default: use `normaliz` from pySecDecContrib
 
     :param enforce_complex:
         bool, optional;

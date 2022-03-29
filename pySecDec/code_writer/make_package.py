@@ -1415,7 +1415,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  complex_parameters=[], form_optimization_level=2, form_work_space='50M',
                  form_memory_use=None, form_threads=2,
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
-                 decomposition_method='iterative_no_primary', normaliz_executable='normaliz',
+                 decomposition_method='iterative_no_primary', normaliz_executable=None,
                  enforce_complex=False, split=False, ibp_power_goal=-1, use_iterative_sort=True,
                  use_light_Pak=True, use_dreadnaut=False, use_Pak=True, processes=None, pylink_qmc_transforms=['korobov3x3']):
     r'''
@@ -1622,7 +1622,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
         The command to run `normaliz`. `normaliz` is only
         required if `decomposition_method` starts with
         'geometric'.
-        Default: 'normaliz'
+        Default: use `normaliz` from pySecDecContrib
 
     :param enforce_complex:
         bool, optional;
@@ -1692,10 +1692,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
         :func:`.squash_symmetry_redundant_sectors_dreadnaut`
         to find sector symmetries.
         If given a string, interpret that string as the command
-        line executable `dreadnaut`. If ``True``, try
-        ``$SECDEC_CONTRIB/bin/dreadnaut`` and, if the
-        environment variable ``$SECDEC_CONTRIB`` is not set,
-        ``dreadnaut``.
+        line executable `dreadnaut`. If ``True``, use
+        `dreadnaut` from pySecDecContrib.
         Default: ``False``
 
     :param use_Pak:
@@ -1765,6 +1763,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     # compute the required expansion order accounting for the prefactor
     required_orders = requested_orders + highest_prefactor_pole_orders
+
+    # get the normaliz command
+    if normaliz_executable is None:
+        normaliz_executable = os.path.join(pySecDecContrib.dirname, 'bin', 'normaliz')
 
     # get the decomposition routines
     strategy = get_decomposition_routines(decomposition_method, normaliz_executable, os.path.join(name,'normaliz_workdir'))

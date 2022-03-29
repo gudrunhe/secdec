@@ -10,6 +10,8 @@ and :mod:`pySecDec.decomposition.geometric`.
 from .algebra import Polynomial
 import os, shutil, subprocess, re, numpy as np
 
+import pySecDecContrib
+
 def convex_hull(*polynomials):
     '''
     Calculate the convex hull of the Minkowski
@@ -95,13 +97,14 @@ def read_normaliz_file(filepath, nofoutputs = 1):
 
     return output
 
-def run_normaliz(normaliz='normaliz', workdir='normaliz_tmp', run_card_filename='normaliz.in', normaliz_args=[]):
+def run_normaliz(normaliz=None, workdir='normaliz_tmp', run_card_filename='normaliz.in', normaliz_args=[]):
     '''
     Run normaliz.
 
     :param normaliz:
         string;
         The shell command to run `normaliz`.
+        Default: use `normaliz` from pySecDecContrib
 
     :param workdir:
         string;
@@ -124,6 +127,8 @@ def run_normaliz(normaliz='normaliz', workdir='normaliz_tmp', run_card_filename=
         Normaliz command line arguments.
 
     '''
+    if normaliz is None:
+        normaliz = os.path.join(pySecDecContrib.dirname, 'bin', 'normaliz')
     command_line_command = [normaliz] + normaliz_args + [run_card_filename]
 
     # write additional information
@@ -144,7 +149,7 @@ def run_normaliz(normaliz='normaliz', workdir='normaliz_tmp', run_card_filename=
                     error.filename = normaliz
                 raise
 
-def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False, switch_representation=False):
+def triangulate(cone, normaliz=None, workdir='normaliz_tmp', keep_workdir=False, switch_representation=False):
     '''
     Split a cone into simplicial cones; i.e.
     cones defined by exactly :math:`D` rays
@@ -163,6 +168,7 @@ def triangulate(cone, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=
     :param normaliz:
         string;
         The shell command to run `normaliz`.
+        Default: use `normaliz` from pySecDecContrib
 
     :param workdir:
         string;
@@ -275,7 +281,7 @@ class Polytope(object):
 
         self.equations = None
 
-    def complete_representation(self, normaliz='normaliz', workdir='normaliz_tmp', keep_workdir=False):
+    def complete_representation(self, normaliz=None, workdir='normaliz_tmp', keep_workdir=False):
         '''
         Transform the vertex representation of a polytope
         to the facet representation or the other way round.
@@ -284,12 +290,12 @@ class Polytope(object):
 
         .. note::
             This function calls the command line executable of
-            `normaliz` [BIR]_. See :ref:`installation_normaliz`
-            for installation and a list of tested versions.
+            `normaliz` [BIR]_.
 
         :param normaliz:
             string;
             The shell command to run `normaliz`.
+            Default: use `normaliz` from pySecDecContrib
 
         :param workdir:
             string;
