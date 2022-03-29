@@ -93,6 +93,7 @@ normaliz_files = ["bin/normaliz"]
 contrib += \
     ConfigureAndInstall(env, normaliz_files, normaliz,
         extra_sources=gmp_files,
+        pre_commands="env GMPXX_CPPFLAGS=\"-I$$PWD/../include\" GMPXX_LDFLAGS=\"-L$$PWD/../lib\" ",
         extra_configure_args="--enable-static --disable-shared --disable-openmp --with-gmp=\"$$PWD/..\" --with-cocoalib=no --with-flint=no --with-hashlibrary=no --with-nauty=no --with-e-antic=no",
         install_target="install-strip")
 
