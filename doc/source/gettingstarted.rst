@@ -95,7 +95,6 @@ To explain the input format, let us look at ``generate_box1L.py`` from the one-l
 
 .. code::
 
-    from pySecDec.loop_integral import loop_package
     import pySecDec as psd
 
 They say that the module `pySecDec` should be imported with the alias `psd`, and that the
@@ -106,7 +105,7 @@ The following part contains the definition of the loop integral ``li``:
 
 .. code::
 
-    li = psd.loop_integral.LoopIntegralFromGraph(
+    li = psd.LoopIntegralFromGraph(
     # give adjacency list and indicate whether the propagator connecting the numbered vertices is massive or massless in the first entry of each list item.
     internal_lines = [['m',[1,2]],[0,[2,3]],[0,[3,4]],[0,[4,1]]],
     # contains the names of the external momenta and the label of the vertex they are attached to
@@ -145,7 +144,7 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 
 .. code::
 
-    loop_package(
+    psd.loop_package(
 
     name = 'box1L',
 
@@ -543,7 +542,7 @@ Poles in the extra regulator ``n1`` may appear in individual regions but are exp
 .. code::
 
         # here we define the Feynman diagram
-        li = psd.loop_integral.LoopIntegralFromGraph(
+        li = psd.LoopIntegralFromGraph(
         internal_lines = [['mt',[3,1]],['mt',[1,2]],['mt',[2,4]],['mt',[4,3]]],
         external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
         powerlist=["1+n1","1+n1/2","1+n1/3","1+n1/5"],
