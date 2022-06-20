@@ -91,6 +91,9 @@ class _Expression(object):
 
         '''
 
+    def _pysecdec_sympy_(self):
+        return sp.sympify(str(self))
+
 class Function(_Expression):
     '''
     Symbolic function that can take care of

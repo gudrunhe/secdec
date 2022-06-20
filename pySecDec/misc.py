@@ -429,17 +429,17 @@ def sympify_expression(a):
     :return:
     A sympy expression representing the object.
     '''
-    with warnings.catch_warnings():
-
-        # Promote Sympy "String fallback in sympify" (issue 18066) deprecation warning to error
-        warnings.filterwarnings(action='error', category=sp.utilities.exceptions.SymPyDeprecationWarning, module='sympy.core.sympify')
-
-        # Catch SymPyDeprecationWarning/SympifyError from sympify(e) and try sympify(str(e)) instead
-        try:
-            return sp.sympify(a)
-        except (sp.utilities.exceptions.SymPyDeprecationWarning, sp.SympifyError):
-            return sp.sympify(str(a))
-
+    if getattr(a, "_pysecdec_sympy_", None) is not None:
+        return a._pysecdec_sympy_()
+    if isinstance(a, list):
+        return [sympify_expression(el) for el in a]
+    if isinstance(a, tuple):
+        return tuple([sympify_expression(el) for el in a])
+    if isinstance(a, str):
+        from sympy.parsing.sympy_parser import parse_expr, standard_transformations, convert_xor
+        transformations = standard_transformations + (convert_xor,)
+        return parse_expr(a.replace('\n', ''), transformations=transformations)
+    return sp.sympify(a, strict=True)
 
 def sympify_symbols(iterable, error_message, allow_number=False):
     '''
