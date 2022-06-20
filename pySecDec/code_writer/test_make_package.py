@@ -464,13 +464,13 @@ class TestWriteCppCodePrefactor(unittest.TestCase):
             target_cpp_code += '        #undef r1\n'
             target_cpp_code += '        #undef c0'
 
-            print('i =', i)
-            print('cpp_code')
-            print(cpp_code)
-            print()
-            print('target_cpp_code')
-            print(target_cpp_code)
-            print('-----')
+            #print('i =', i)
+            #print('cpp_code')
+            #print(cpp_code)
+            #print()
+            #print('target_cpp_code')
+            #print(target_cpp_code)
+            #print('-----')
 
             self.assertEqual(cpp_code, target_cpp_code)
 
@@ -519,12 +519,12 @@ class TestWriteCppCodePrefactor(unittest.TestCase):
             target_cpp_code += '        #undef c0\n'
             target_cpp_code += '        #undef c1'
 
-            print('i =', i)
-            print(cpp_code)
-            print()
-            print(target_cpp_code)
-            print()
-            print('-------------------------')
+            #print('i =', i)
+            #print(cpp_code)
+            #print()
+            #print(target_cpp_code)
+            #print()
+            #print('-------------------------')
 
             self.assertEqual(cpp_code, target_cpp_code)
 
