@@ -1,5 +1,5 @@
 # packages required to build docs (needed by readthedocs)
-numpy==1.19.1
+numpy==1.22.0
 sphinx>=4.2.0
 sympy==1.8
 enscons==0.26
