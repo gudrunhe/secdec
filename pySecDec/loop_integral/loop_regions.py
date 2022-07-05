@@ -1,7 +1,9 @@
 import numpy as np
 import sympy as sp
+import tempfile
 from ..misc import sympify_expression
-from pySecDec.algebra import Polynomial, ExponentiatedPolynomial
+from ..algebra import Polynomial, ExponentiatedPolynomial
+from ..polytope import Polytope
 
 def loop_regions(name, loop_integral, smallness_parameter,
                 expansion_by_regions_order=0,
@@ -10,7 +12,8 @@ def loop_regions(name, loop_integral, smallness_parameter,
                 form_work_space='500M',
                 form_memory_use=None,
                 form_threads=2,
-                add_monomial_regulator_power=None,
+                extra_regulator_name=None,
+                extra_regulator_exponent=None,
                 decomposition_method='iterative',
                 normaliz_executable=None,
                 enforce_complex=False,
@@ -93,11 +96,15 @@ def loop_regions(name, loop_integral, smallness_parameter,
         integer, optional;
         Number of threads (T)FORM will use. Default: ``2``.
 
-    :param add_monomial_regulator_power:
-        string or sympy symbol;
-        Name of the regulator, using which monomial factors of the form
-        $x_i**(n/p_i)$ are added, to regulate the integrals arising from
+    :param extra_regulator_name:
+        string or sympy symbol, optional;
+        Name of the regulator using which monomial factors of the form
+        $x_i**(n*p_i)$ are added, to regulate the integrals arising from
         the expansion by regions.
+
+    :param extra_regulator_exponent:
+        list of integers or sympy rationals, optional;
+        List of the $p_i$ factors of the extra regulator.
 
     :param decomposition_method:
         string, optional;
@@ -205,22 +212,34 @@ def loop_regions(name, loop_integral, smallness_parameter,
 
 
     """
-    polynomials_to_decompose = [loop_integral.exponentiated_U, loop_integral.exponentiated_F] + loop_integral.measure.factors
-    numerator = loop_integral.numerator
+    polynomials_to_decompose = \
+            [loop_integral.exponentiated_U, loop_integral.exponentiated_F] + \
+            loop_integral.measure.factors
     
-    # add regulators of the form x_i**(n/p_i), where n is a regulator
-    if add_monomial_regulator_power is not None:
-        regulator = sympify_expression(add_monomial_regulator_power)
-        loop_integral.regulators.insert(0,regulator)
-        primes = [sp.prime(n+1) for n in range(len(loop_integral.integration_variables)-1)]
-        monomial_factors = []
-        for prime, variable in zip(primes,loop_integral.integration_variables[:-1]):
-            variable = Polynomial.from_expression(variable,loop_integral.integration_variables)
-            monomial = ExponentiatedPolynomial(variable.expolist,variable.coeffs,exponent=regulator/prime, polysymbols=variable.polysymbols)
-            monomial_factors.append(monomial)
-        variable = Polynomial.from_expression(loop_integral.integration_variables[-1],loop_integral.integration_variables)
-        monomial_factors.append(ExponentiatedPolynomial(variable.expolist,variable.coeffs,exponent=sum(-regulator/prime for prime in primes), polysymbols=variable.polysymbols))
-        polynomials_to_decompose = [loop_integral.exponentiated_U, loop_integral.exponentiated_F] + loop_integral.measure.factors + monomial_factors + [loop_integral.numerator]
+    # add regulators of the form x_i**(n*e_i), where n is the extra regulator
+    if extra_regulator_name is not None:
+        extra_regulator = sympify_expression(extra_regulator_name)
+        loop_integral.regulators.insert(0, extra_regulator)
+        if extra_regulator_exponent is not None:
+            exponents = extra_regulator_exponent
+            if len(exponents) != len(loop_integral.integration_variables):
+                raise ValueError(f"extra_regulator_exponent should be a list of {len(loop_integral.integration_variables)} numbers")
+        else:
+            exponents = suggested_extra_regulator_exponent(
+                    loop_integral, smallness_parameter,
+                    expansion_by_regions_order=expansion_by_regions_order,
+                    normaliz=normaliz_executable)
+        if exponents is not None:
+            for exponent, variable in zip(exponents, loop_integral.integration_variables):
+                if exponent != 0:
+                    variable = Polynomial.from_expression(
+                            variable, loop_integral.integration_variables)
+                    polynomials_to_decompose.append(ExponentiatedPolynomial(
+                        variable.expolist,
+                        variable.coeffs,
+                        exponent=extra_regulator*exponent,
+                        polysymbols=variable.polysymbols
+                    ))
 
     polynomial_names = ["U","F"] + ['Poly%i' % i for i in range(len(polynomials_to_decompose)-2)]
 
@@ -235,7 +254,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
         requested_orders = [],
         smallness_parameter = smallness_parameter,
         polynomials_to_decompose = polynomials_to_decompose,
-        numerator = numerator,
+        numerator = loop_integral.numerator,
         expansion_by_regions_order = expansion_by_regions_order,
         real_parameters = [],
         complex_parameters = [],
@@ -268,3 +287,165 @@ def loop_regions(name, loop_integral, smallness_parameter,
         split = split,
         processes = processes
     )
+
+def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expansion_by_regions_order=0, normaliz=None):
+    '''
+    Returns the suggested exponent coefficients for the extra
+    regulator needed by the given loop integral, or None if it
+    is not needed.
+
+    :param loop_integral:
+        :class:`pySecDec.loop_integral`;
+        The loop integral which is to be regulated.
+
+    :param loop_integral:
+        :class:`pySecDec.loop_integral`;
+        The loop integral which is to be regulated.
+
+    :param smallness_parameter:
+        string or sympy symbol;
+        The symbol of the variable in which the
+        expression is expanded.
+
+    :param expansion_by_regions_order:
+        integer;
+        The order up to which the expression is expanded
+        in the `smallness_parameter`.
+        Default: 0
+
+    :param normaliz:
+        string, optional;
+        The shell command to run `normaliz`.
+        Default: use `normaliz` from pySecDecContrib
+    '''
+    smallness_parameter = sp.sympify(smallness_parameter)
+    poly = Polynomial.from_expression(
+            str(loop_integral.preliminary_F + loop_integral.preliminary_U),
+            loop_integral.preliminary_F.symbols + [smallness_parameter])
+    assert poly.symbols[:-1] == loop_integral.integration_variables
+    idx = poly.symbols.index(smallness_parameter)
+    try:
+        constr = extra_regulator_constraints(idx, poly.expolist, expansion_by_regions_order,
+                loop_integral.regulators, loop_integral.powerlist, loop_integral.dimensionality,
+                indices=None, normaliz=normaliz)
+        if len(constr) == 0: return None
+    except ValueError as e:
+        if "need at least one array to concatenate" in str(e):
+            return None
+        raise e
+    assert not constr[:,-1].any()
+    constr = constr[:,:-1]
+    n = constr.shape[1]
+    needed = [constr[:,i].any() for i in range(n)]
+    exp = [0] * n
+    nzero = n
+    while True:
+        k = -nzero
+        lasti = None
+        for i in range(constr.shape[1]):
+            if needed[i]:
+                exp[i] = 0 if k < 0 else 1 if k < 1 else sp.sympify(1)/sp.prime(k)
+                lasti = i
+                k += 1
+        exp[lasti] = 0
+        exp[lasti] = -sum(exp)
+        if (constr @ exp).all():
+            return exp
+        nzero -= 1
+
+def extra_regulator_constraints(exp_param_index, polynomial_expolist, exp_order, regulators, powerlist, dimension, indices=None, normaliz=None):
+    '''
+    Returns list of vectors :\mathbf{n}_i: that give constraints
+    of the form :math:`\langle\mathbf{n_i},\bf{\nu}_{\delta} \neq 0`
+    on the coefficient of a regulator :math:`\delta` introduced by
+    multiplying the integrand with a monomial 
+    :math:`\mathbf{x}^{\delta\bf{\nu}_{\delta}}`. The vector 
+    :math:`\mathbf{x}` contains the variables of the input 
+    polynomial. Only exponents corresponding to integration
+    variables can be non-zero.
+
+    :param exp_param_index:
+        int;
+        The index of the expansion parameter in the expolist.
+
+    :param polynomial:
+        an instance of :class:`.Polynomial`, for which to
+        calculate the conditions for.
+
+    :param exp_order:
+        int;
+        desired expansion order in small parameter; corresponds
+        to expansion_by_regions_order in make_regions.
+
+    :param regulators:
+        list of regulators (loop_integral.regulators)
+
+    :param powerlist:
+        list of propagator exponents (loop_integral.powerlist)
+
+    :param dimension:
+        space-time dimension (loop_integral.dimensionality)
+
+    :param indices:
+        list of integers or None;
+        The indices of the parameters to be included
+        in the asymptotic expansion. This should include all
+        Feynman parameters (integration variables) and the
+        expansion parameter. By default (``indices=None``),
+        all parameters are considered.
+
+    :param normaliz:
+        string;
+        The shell command to run `normaliz`.
+        Default: use `normaliz` from pySecDecContrib
+    '''
+
+    powerlist = np.array(powerlist)
+    powerlist = powerlist[ powerlist > 0 ]
+    powerlist = np.insert(powerlist,exp_param_index,0)
+    powerlist = np.concatenate((powerlist,[dimension/2]))
+    powerlist = sympify_expression(powerlist)
+    for regulator in regulators:
+        powerlist = [x.subs(regulator,0) for x in powerlist]
+
+    polytope_vertices = polynomial_expolist
+
+    dim = len(polytope_vertices[0])
+    if indices is not None:
+        indices = list(indices)
+        exp_param_index = indices.index(range(dim)[exp_param_index])
+        polytope_vertices = np.array([[vertex[i] for i in indices] for vertex in polytope_vertices])
+
+    polytope = Polytope(vertices=polytope_vertices)
+    with tempfile.TemporaryDirectory("normaliz") as tmpdir:
+        polytope.complete_representation(normaliz=normaliz, workdir=tmpdir + "/x")
+
+    facets = polytope.facets
+
+    regions = facets[ facets[:,exp_param_index] > 0 ]
+
+    regions = regions[ np.dot(regions,powerlist)<= exp_order ] 
+
+    facets_sd_0 = []
+    for region in regions:
+        # vertices contained in region
+        vert = polytope_vertices[ np.inner(polytope_vertices, region[:-1]) + region[-1] == 0 ]
+        # project vertices to (small parameter)^0 hyperplane
+        vert = np.delete(vert, exp_param_index, 1)
+        polytope = Polytope(vertices=vert)
+        with tempfile.TemporaryDirectory("normaliz") as tmpdir:
+            polytope.complete_representation(normaliz=normaliz, workdir=tmpdir + "/x")
+        facets = polytope.facets
+        # facets with 0 in aff(facet)
+        facets = facets[facets[:,-1]==0][:,:-1]
+        facets_sd_0 = facets_sd_0 + [facets]
+    facets_sd_0 = np.concatenate(facets_sd_0)
+    # internal facets
+    facets_sd_int_0 = [ facet for facet in facets_sd_0  if any([np.array_equal(facet, -fac) for fac in facets_sd_0]) and facet[facet!=0][0]>0 ]
+
+    if indices is not None:
+        facets_sd_int_0 = np.array([[next(facet) if i in indices and i != exp_param_index else 0 for i in range(dim)] for facet in [iter(f) for f in facets_sd_int_0]])
+    else:
+        facets_sd_int_0 = np.array([[next(facet) if i != exp_param_index else 0 for i in range(dim)] for facet in [iter(f) for f in facets_sd_int_0]])
+
+    return facets_sd_int_0
