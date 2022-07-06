@@ -39,7 +39,8 @@ mathfn real_t exp(int n) { return exp(real_t(n)); }
 mathfn real_t clamp01(const real_t &a)
 { real_t b = a < 1 ? a : 1; return b > 0 ? b : 0; }
 
-#define SecDecInternalDenominator(x) 1.0/(x)
+#define SecDecInternalDenominator(x) (1.0/(x))
+#define i_ (complex_t{0,1})
 
 #define likely(x) __builtin_expect((x), 1)
 #define unlikely(x) __builtin_expect((x), 0)

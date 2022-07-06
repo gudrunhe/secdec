@@ -49,7 +49,8 @@ typedef std::complex<real_t> complex_t;
 mathfn int_t warponce_i(const int_t a, const int_t b)
 { int_t ab = a - b; return ab >= 0 ? ab : a; }
 
-#define SecDecInternalDenominator(x) 1/(x)
+#define SecDecInternalDenominator(x) (1.0/(x))
+#define i_ (complex_t{0,1})
 
 mathfn real_t SecDecInternalRealPart(const real_t &a) { return a; }
 mathfn real_t SecDecInternalImagPart(const real_t &a) { return 0; }

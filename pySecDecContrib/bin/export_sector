@@ -424,7 +424,6 @@ DIST_SECTOR_ORDER_CPP = template_writer("""\
 
 #define SecDecInternalSignCheckErrorPositivePolynomial(id) {*presult = nan("U"); return 1; }
 #define SecDecInternalSignCheckErrorContourDeformation(id) {*presult = nan("F"); return 2; }
-#define i_ (complex_t{0,1})
 
 extern "C" int
 ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
