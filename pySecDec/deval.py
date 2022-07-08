@@ -368,6 +368,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             kernel2idx[info["name"], k] = len(kernel2idx)
         log(f"got the total of {len(kernel2idx)} kernels")
         split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, [], valuemap_rat, sp_regulators, requested_orders)
+        ampcount = 1
     elif info["type"] == "sum":
         log(f"loading {len(info['integrals'])} integrals")
         infos = {}
@@ -385,6 +386,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 log("-", t["coefficient"])
                 co = load_coefficients(os.path.join(coeffsdir, t["coefficient"]))
                 split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], co, valuemap_rat, sp_regulators, requested_orders)
+        ampcount = len(info["sums"])
     else:
         raise ValueError(f"unknown type: {info['type']}")
     korders = {}
@@ -637,10 +639,9 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         maxlattice = np.max(lattices[mask])
         log(f"- {f}: {di:.4e} evals, {dt:.4e} sec, {np.min(slow):.4g} - {np.max(slow):.4g} bubbles, {minlattice:.4e} - {maxlattice:.4e} pts")
 
-    ampids = sorted(set(a for a, p in ap2coeffs.keys()))
     relerrs = []
     print("[")
-    for i, ampid in enumerate(ampids):
+    for ampid in range(ampcount):
         relerr = []
         print("  (")
         for (a, p), val, var in sorted(zip(ap2coeffs.keys(), amp_val, amp_var)):
@@ -651,10 +652,16 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             print(f"    +{stem}*({err:+.16e})*plusminus")
             abserr = np.abs(err)
             relerr.append(abserr / np.abs(val) if abserr > epsabs else 0.0)
-        print("  )," if i < len(ampids)-1 else "  )")
-        sys.stdout.flush()
-        log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
-        relerrs.append(np.max(relerr))
+        if len(relerr) != 0:
+            print("  )," if ampid < ampcount-1 else "  )")
+            sys.stdout.flush()
+            log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
+            relerrs.append(np.max(relerr))
+        else:
+            print("    0\n  )," if ampid < ampcount-1 else "    0\n  )")
+            sys.stdout.flush()
+            log(f"amp{ampid} has no terms")
+            relerrs.append(0.0)
     print("]")
     sys.stdout.flush()
     log(f"largest relative error: {np.max(relerrs):.2e} (amp{np.argmax(relerrs)})")
