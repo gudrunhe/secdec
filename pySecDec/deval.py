@@ -160,7 +160,7 @@ async def launch_worker(command, dirname, maxtimeout=10):
         except ProcessLookupError:
             pass
         log(f"will retry after {timeout}s")
-        time.sleep(timeout)
+        await asyncio.sleep(timeout)
         timeout = min(timeout*2, maxtimeout)
 
 # Generic scheduling
@@ -461,8 +461,8 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     for i in range(len(kernel2idx)):
         lattices[i], genvecs[i] = generating_vector(dims[i], npoints0)
     shift_val = np.zeros((len(kernel2idx), nshifts), dtype=np.complex128)
-    shift_rnd = np.empty((len(kernel2idx), nshifts), dtype=np.object)
-    shift_tag = np.full((len(kernel2idx), nshifts), None, dtype=np.object)
+    shift_rnd = np.empty((len(kernel2idx), nshifts), dtype=object)
+    shift_tag = np.full((len(kernel2idx), nshifts), None, dtype=object)
     kern_db = np.ones(len(kernel2idx))
     kern_dt = np.ones(len(kernel2idx))
     kern_di = np.ones(len(kernel2idx))
@@ -548,7 +548,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 log(f"distributing {np.count_nonzero(mask_todo)*nshifts} integration jobs")
                 for i in mask_todo.nonzero()[0]:
                     schedule_kernel(int(i))
-                    asyncio.sleep(0)
+                    await asyncio.sleep(0)
                 log("worker queue sizes:")
                 for w in par.workers:
                     log(f"- {w.name}: {w.queue_size()}")
