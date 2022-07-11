@@ -700,9 +700,10 @@ def load_coefficients(filename):
         if not part: continue
         key, value = part.split("=")
         key = key.strip()
-        if key == "numerator": coeff.append(value)
-        elif key == "denominator": coeff.append("(" + value + ")^(-1)")
-        elif key == "regulator_factor": coeff.append(value)
+        factors = [x for x in value.split(",") if x != "1"]
+        if key == "numerator": coeff.extend(factors)
+        elif key == "denominator": coeff.extend(f"({x})^(-1)" for x in factors)
+        elif key == "regulator_factor": coeff.extend(factors)
         else: raise ValueError(f"bad key in {filename!r}: {key!r}")
     return coeff
 
