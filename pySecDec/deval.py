@@ -397,6 +397,9 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             for ker in oo["kernels"]:
                 korders.setdefault((fam, ker), i)
 
+    for p in info["realp"] + info["complexp"]:
+        if p not in valuemap:
+            raise ValueError(f"missing integral parameter: {p}")
     realp = {
         i : [valuemap[p] for p in info["realp"]]
         for i, info in infos.items()
