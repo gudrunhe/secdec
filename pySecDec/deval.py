@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Distributed (and local) evaluator for pySecDec integrals.
+Distributed and/or local evaluator for pySecDec integrals.
 Usage:
-    python3 -m pySecDec.deval integrand.json [options] param=value ...
+    python3 -m pySecDec.deval integrand.json [options] <var>=value ...
 Options:
-    --epsabs=X          stop if this absolute precision is achieved (default: 1e-10)
-    --epsrel=X          stop if this relative precision is achieved (default: 1e-4)
+    --epsabs=X          stop if this absolute precision is reached (default: 1e-10)
+    --epsrel=X          stop if this relative precision is reached (default: 1e-4)
     --points=X          begin integration with this lattice size (default: 1e4)
     --presamples=X      use this many points for presampling (default: 1e4)
     --shifts=X          use this many lattice shifts per integral (default: 32)
@@ -13,7 +13,9 @@ Options:
     --coefficients=X    use coefficients from this directory
     --help              show this help message
 Arguments:
-    param=value use this value for the given integral parameter
+    <var>=X             set this integral or coefficient variable to a given value
+    int-<var>=X         set this integral variable to a given value
+    coeff-<var>=X       set this coefficient variable to a given value
 """
 
 import asyncio
@@ -350,7 +352,7 @@ def adjust_n(W2, V, w, a, tau, nmin, nmax, names=[]):
         assert not np.any(np.isnan(n))
     return n
 
-async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap):
+async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap, valuemap_coeff):
     # Load the integrals from the requested json file
     t0 = time.time()
 
@@ -360,7 +362,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     sp_regulators = sp.var(info["regulators"])
     requested_orders = info["requested_orders"]
     ap2coeffs = {} # (ampid, powerlist) -> coeflist
-    valuemap_rat = {k:sp.nsimplify(v, rational=True, tolerance=np.abs(v)*1e-13) for k, v in valuemap.items()}
+    valuemap_rat = {k:sp.nsimplify(v, rational=True, tolerance=np.abs(v)*1e-13) for k, v in valuemap_coeff.items()}
     if info["type"] == "integral":
         infos = {info["name"] : info}
         kernel2idx = {}
@@ -744,6 +746,8 @@ def split_integral_into_orders(orders, ampid, kernel2idx, info, coefficients, va
 def main():
 
     valuemap = {}
+    valuemap_coeff = {}
+    valuemap_int = {}
     npoints = 10**4
     npresamples = 10**4
     epsabs = 1e-10
@@ -782,14 +786,29 @@ def main():
     log(f"- points = {npoints}")
     log(f"- presamples = {npresamples}")
     log(f"- shifts = {nshifts}")
-    log("Invariants:")
     for arg in args[1:]:
         if "=" not in arg: raise ValueError(f"Bad argument: {arg}")
         key, value = arg.split("=", 1)
         value = complex(value)
         value = value.real if value.imag == 0 else value
-        valuemap[key] = value
-        log(f"- {key} = {value}")
+        if key.startswith("coeff-"):
+            valuemap_coeff[key[6:]] = value
+        elif key.startswith("int-"):
+            valuemap_int[key[4:]] = value
+        else:
+            valuemap[key] = value
+    valuemap_int = {**valuemap, **valuemap_int}
+    valuemap_coeff = {**valuemap, **valuemap_coeff}
+    log("Invariants:")
+    for key, value in valuemap_int.items():
+        if valuemap_coeff.get(key, None) == value:
+            log(f"- {key} = {value}")
+    for key, value in valuemap_int.items():
+        if valuemap_coeff.get(key, None) != value:
+            log(f"- integral {key} = {value}")
+    for key, value in valuemap_coeff.items():
+        if valuemap_int.get(key, None) != value:
+            log(f"- coefficient {key} = {value}")
 
     # Load worker list
     cluster = load_cluster_json(clusterfile, dirname)
@@ -802,7 +821,7 @@ def main():
 
     # Begin evaluation
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap))
+    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap_int, valuemap_coeff))
 
 if __name__ == "__main__":
     main()
