@@ -32,7 +32,6 @@ if __name__ == "__main__":
     form_optimization_level = 2,
     form_work_space = '2G',
     decomposition_method = 'iterative',
-    normaliz_executable='normaliz',
     contour_deformation = True,
     split = True,
     )
