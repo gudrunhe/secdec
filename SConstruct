@@ -73,7 +73,7 @@ sdist_extra_source = File(Split("""
 
 if os.path.exists(".git"):
     git_id = subprocess.check_output(["git", "rev-parse", "HEAD"], encoding="utf8").strip()
-    source = File(subprocess.check_output(["git", "ls-files", "pySecDec", "pySecDecWorker"], encoding="utf8").splitlines())
+    source = File(subprocess.check_output(["git", "ls-files", "pySecDec"], encoding="utf8").splitlines())
     generated_source = env.Textfile(target="pySecDec/metadata.py", source=[
         f'__version__ = version = "{pyproject["project"]["version"]}"',
         f'__authors__ = authors = "{pyproject["project"]["author"]}"',
@@ -83,7 +83,7 @@ if os.path.exists(".git"):
 else:
     # We are in a giless sdist. Lets hope that metadata.py was
     # included in it.
-    source = DirectoryFiles("pySecDec") + DirectoryFiles("pySecDecWorker")
+    source = DirectoryFiles("pySecDec")
     generated_source = []
 
 platformlib = env.Whl("platlib", source + generated_source + contrib, root="")
