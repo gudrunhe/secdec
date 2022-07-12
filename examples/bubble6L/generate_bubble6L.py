@@ -30,10 +30,6 @@ if __name__ == "__main__":
     # the method to be used for the sector decomposition
     # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
     decomposition_method = 'geometric',
-    # if you choose ``geometric[_ku]`` and 'normaliz' is not in your
-    # $PATH, you can set the path to the 'normaliz' command-line
-    # executable here
-    #normaliz_executable='/path/to/normaliz',
 
     # whether or not to produce code to perform the contour deformation
     # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)

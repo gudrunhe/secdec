@@ -44,10 +44,6 @@ if __name__ == "__main__":
     # the method to be used for the sector decomposition
     # valid values are ``iterative`` and ``geometric``
     decomposition_method = 'geometric',
-    # if you choose ``geometric`` and 'normaliz' is not in your
-    # $PATH, you can set the path to the 'normaliz' command-line
-    # executable here
-    #normaliz_executable='/path/to/normaliz',
 
     # whether or not to produce code to perform the contour deformation
     contour_deformation = True,

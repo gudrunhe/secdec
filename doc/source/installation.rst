@@ -21,30 +21,6 @@ and then running:
 .. _PyPI: https://pypi.org/project/pySecDec/
 .. _pip: https://pypi.org/project/pip/
 
-.. _installation_normaliz:
-
-The Geomethod and Normaliz
---------------------------
-
-.. note::
-    If you are not urgently interested in using the
-    :mod:`geometric decomposition <pySecDec.decomposition.geometric>`, you
-    can ignore this section for the beginning. The instructions below are
-    not essential for a `pySecDec` installation. You can still install
-    `normaliz` **after** installing `pySecDec`. All but the
-    :mod:`geometric decomposition <pySecDec.decomposition.geometric>`
-    routines work without `normaliz`.
-
-If you want to use the :mod:`geometric decomposition <pySecDec.decomposition.geometric>`
-module, you need the `normaliz` [BIR]_ command line executable.
-The :mod:`geometric decomposition <pySecDec.decomposition.geometric>` module is
-designed for `normaliz` version 3 - currently versions
-``3.3.0``, ``3.4.0``, ``3.5.4``, ``3.6.0``, ``3.6.2``, ``3.7.3``,
-``3.7.4``, and ``3.8.1``
-are known to work. We recommend to set your ``$PATH`` such that the
-`normaliz` executable is found. Alternatively, you can pass the path to the `normaliz`
-executable directly to the functions that need it.
-
 .. _installation_neato:
 
 Drawing Feynman Diagrams with `neato`
@@ -86,6 +62,11 @@ can use the external program `nauty` [MP+14]_ to find all sector symmetries and 
 sectors:
 
  * NAUTY (http://pallini.di.uniroma1.it/)
+
+The :mod:`geometric decomposition <pySecDec.decomposition.geometric>`
+module depends on the `normaliz` [BIR]_ command line executable:
+
+ * Normaliz (https://www.normaliz.uni-osnabrueck.de)
 
 These packages are redistributed along with pySecDec itself,
 and will be built automatically during pySecDec installation.

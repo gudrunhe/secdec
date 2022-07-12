@@ -163,11 +163,7 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 
     # the method to be used for the sector decomposition
     # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
-    decomposition_method = 'iterative',
-    # if you choose ``geometric[_ku]`` and 'normaliz' is not in your
-    # $PATH, you can set the path to the 'normaliz' command-line
-    # executable here
-    #normaliz_executable='/path/to/normaliz',
+    decomposition_method = 'iterative'
 
     )
 

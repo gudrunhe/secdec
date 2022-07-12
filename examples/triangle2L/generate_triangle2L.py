@@ -45,9 +45,5 @@ if __name__ == "__main__":
     # the method to be used for the sector decomposition
     # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
     decomposition_method = 'iterative',
-    # if you choose ``geometric[_ku]`` and 'normaliz' is not in your
-    # $PATH, you can set the path to the 'normaliz' command-line
-    # executable here
-    #normaliz_executable='/path/to/normaliz',
 
     )
