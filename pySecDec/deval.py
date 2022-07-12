@@ -264,11 +264,10 @@ def ginsh_product_series(factors, varlist, orderlist, substitute={}):
         for var, order in zip(varlist, orderlist):
             f.write(f"__EXPR = series_to_poly(series(__EXPR, {var}, {order+1})):\n")
         f.write("__START;\n");
-        f.write("__EXPR;\nquit:\n")
+        f.write("evalf(__EXPR);\nquit:\n")
         f.flush()
         result = subprocess.check_output([f"{contrib_dirname}/bin/ginsh", f.name], encoding="utf8")
     result = re.sub(r".*__START\n", "", result, flags=re.DOTALL)
-    result = re.sub(r"[+]Order\([^)]*\)", "", result, flags=re.DOTALL)
     result = result.strip()
     assert result != ""
     assert "__EXPR" not in result
