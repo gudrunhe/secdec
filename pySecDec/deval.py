@@ -143,7 +143,10 @@ async def launch_worker(command, dirname, maxtimeout=10):
     timeout = min(1, maxtimeout/10)
     while True:
         log(f"running: {command}")
-        p = await asyncio.create_subprocess_shell(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        if isinstance(command, str):
+            p = await asyncio.create_subprocess_shell(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        else:
+            p = await asyncio.create_subprocess_exec(*command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         p.stdin.write(encode_message((0, "start", (dirname,))))
         answer = await p.stdout.readline()
         try:
@@ -699,9 +702,9 @@ def load_cluster_json(jsonfile, dirname):
     log(f"local CPU worker count: {ncpu}, GPU worker count: {ncuda}")
     return {
         "cluster":
-            [{"count": ncpu, "command": f"nice python3 -m pySecDecContrib pysecdec_cpuworker"}] +
+            [{"count": ncpu, "command": ["nice", sys.executable, "-m", "pySecDecContrib", "pysecdec_cpuworker"]}] +
             [
-                {"count": 1, "command": f"nice python3 -m pySecDecContrib pysecdec_cudaworker -d {i}"}
+                {"count": 1, "command": ["nice", sys.executable, "-m", "pySecDecContrib", "pysecdec_cudaworker", "-d", str(i)]}
                 for i in range(ncuda)
             ]
     }
