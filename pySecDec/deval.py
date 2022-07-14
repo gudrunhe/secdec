@@ -232,71 +232,19 @@ async def benchmark_worker(w):
             break
     w.speed = dn/(dt - dt0)
 
-def bracket(expr, varlist):
+def bracket_mul(br1, br2, maxorders):
     """
-    Collect terms in the SymPy expression by powers of the
-    variables; return a dict. Example:
-    >>> bracket(sp.sympify("1 + 2*a + 3*b + 4*a*b"), sp.var(["a", "b"]))
-    {(0, 0): 1, (1, 0): 2, (0, 1): 3, (1, 1): 4}
+    Multiply two multivariate polynomials represented in the form
+    of {exponent: coefficient} dictionaries; skip any terms with
+    the combined exponent higher than the specified maximum.
     """
-    result = {}
-    orders = sp.collect(expr, varlist[0], evaluate=False)
-    othervars = varlist[1:]
-    for stem, coef in orders.items():
-        power = int(stem.exp) if stem.is_Pow else 0 if stem == 1 else 1
-        if othervars:
-            for powers, c in bracket(coef, othervars).items():
-                result[(power,) + powers] = c
-        else:
-            result[(power,)] = coef
-    return result
-
-def ginsh_product_series(factors, varlist, orderlist, substitute={}):
-    """
-    Expand a product of terms into a series using ginsh (with
-    an optional variable substitution), return the result as a
-    string.
-    """
-    with tempfile.NamedTemporaryFile(prefix="psd_ginsh", mode="w") as f:
-        for k, v in substitute.items():
-            f.write(f"{k} = {v}:\n")
-        for i, factor in enumerate(factors):
-            f.write("__EXPR = __EXPR * (" if i > 0 else "__EXPR = (")
-            f.write(factor)
-            f.write("):\n")
-        for var, order in zip(varlist, orderlist):
-            f.write(f"__EXPR = series_to_poly(series(__EXPR, {var}, {order+1})):\n")
-        f.write("__START;\n");
-        f.write("evalf(__EXPR);\nquit:\n")
-        f.flush()
-        result = subprocess.check_output([f"{contrib_dirname}/bin/ginsh", f.name], encoding="utf8")
-    result = re.sub(r".*__START\n", "", result, flags=re.DOTALL)
-    result = result.strip()
-    assert result != ""
-    assert "__EXPR" not in result
-    return result
-
-def product_series_bracket(factors, varlist, orderlist, substitute={}):
-    """
-    Expand a product of textual factors into a series (with an
-    optional variable substitution), return its bracket.
-    """
-    hashed = {}
-    def hashfn(m):
-        expr = m.group(0)
-        if expr in hashed:
-            return hashed[expr]
-        else:
-            v = f"__H{len(hashed)}"
-            hashed[v] = expr
-            return v
-    hashedfactors = []
-    for f in factors:
-        f = f.replace("**", "^")
-        f = re.sub(r"polygamma\(([^)]*)\)", hashfn, f)
-        hashedfactors.append(f)
-    result = ginsh_product_series(hashedfactors, varlist, orderlist, substitute=substitute)
-    return bracket(sp.sympify(result).expand().subs(hashed), varlist)
+    br = {}
+    for k1, v1 in br1.items():
+        for k2, v2 in br2.items():
+            key = tuple(x + y for x, y in zip(k1, k2))
+            if all(x <= y for x, y in zip(key, maxorders)):
+                br[key] = br.get(key, 0) + v1*v2
+    return br
 
 def adjust_1d_n(W2, V, w, a, tau, nmin, nmax):
     assert np.all(W2 > 0)
@@ -361,22 +309,29 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     with open(intfile, "r") as f:
         info = json.load(f)
 
+    if info["type"] not in ("integral", "sum"):
+        raise ValueError(f"unknown type: {info['type']}")
+
+    for p in info["realp"] + info["complexp"]:
+        if p not in valuemap:
+            raise ValueError(f"missing integral parameter: {p}")
+
     sp_regulators = sp.var(info["regulators"])
     requested_orders = info["requested_orders"]
-    ap2coeffs = {} # (ampid, powerlist) -> coeflist
-    valuemap_rat = {k:sp.nsimplify(v, rational=True, tolerance=np.abs(v)*1e-13) for k, v in valuemap_coeff.items()}
+    kernel2idx = {}
+    valuemap_rat = {
+        k:sp.nsimplify(v, rational=True, tolerance=np.abs(v)*1e-13)
+        for k, v in valuemap_coeff.items()
+    }
     if info["type"] == "integral":
         infos = {info["name"] : info}
-        kernel2idx = {}
         for k in info["kernels"]:
             kernel2idx[info["name"], k] = len(kernel2idx)
         log(f"got the total of {len(kernel2idx)} kernels")
-        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, [], valuemap_rat, sp_regulators, requested_orders)
         ampcount = 1
     elif info["type"] == "sum":
         log(f"loading {len(info['integrals'])} integrals")
         infos = {}
-        kernel2idx = {}
         for i in info["integrals"]:
             with open(os.path.join(datadir, f"{i}.json"), "r") as f:
                 infos[i] = json.load(f)
@@ -384,12 +339,6 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             for k in infos[i]["kernels"]:
                 kernel2idx[i, k] = len(kernel2idx)
         log(f"got the total of {len(kernel2idx)} kernels")
-        log("loading amplitude coefficients")
-        for a, terms in enumerate(info["sums"]):
-            for t in terms:
-                log("-", t["coefficient"])
-                co = load_coefficients(os.path.join(coeffsdir, t["coefficient"]))
-                split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], co, valuemap_rat, sp_regulators, requested_orders)
         ampcount = len(info["sums"])
     else:
         raise ValueError(f"unknown type: {info['type']}")
@@ -399,9 +348,6 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             for ker in oo["kernels"]:
                 korders.setdefault((fam, ker), i)
 
-    for p in info["realp"] + info["complexp"]:
-        if p not in valuemap:
-            raise ValueError(f"missing integral parameter: {p}")
     realp = {
         i : [valuemap[p] for p in info["realp"]]
         for i, info in infos.items()
@@ -411,11 +357,6 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         for i, info in infos.items()
     }
     family2idx = {fam:i for i, fam in enumerate(infos.keys())}
-    W = np.stack([w for w in ap2coeffs.values()])
-    W2 = abs2(W)
-    log(f"will consider {len(ap2coeffs)} sums:")
-    for a, p in sorted(ap2coeffs.keys()):
-        log(f"- amp{a},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
 
     # Launch all the workers
     t1 = time.time()
@@ -440,6 +381,46 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     log("workers:")
     for w in par.workers:
         log(f"- {w.name}: int speed={w.speed:.2e}bps, int overhead={w.int_overhead:.2e}s, total overhead={w.overhead:.2e}s, latency={w.latency:.2e}s")
+
+    # Load the integral coefficients
+    ap2coeffs = {} # (ampid, powerlist) -> coeflist
+    if info["type"] == "integral":
+        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, {}, valuemap, sp_regulators, requested_orders)
+    elif info["type"] == "sum":
+        log("loading amplitude coefficients")
+        done_evalf = asyncio.Future()
+        done_evalf.todo = sum(len(terms) for terms in info["sums"])
+        def evalf_cb(br_coef, exception, w, a, t):
+            if exception is not None:
+                done_evalf.set_exception(exception)
+                return
+            log("-", t["coefficient"])
+            br_coef = {tuple(k):sp.sympify(v) for k,v in br_coef}
+            split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], br_coef, valuemap, sp_regulators, requested_orders)
+            done_evalf.todo -= 1
+            if done_evalf.todo == 0:
+                done_evalf.set_result(None)
+        for a, terms in enumerate(info["sums"]):
+            for t in terms:
+                intinfo = infos[t["integral"]]
+                pref_lord = np.min([o["regulator_powers"] for o in intinfo["expanded_prefactor"]], axis=0)
+                kern_lord = np.min([o["regulator_powers"] for o in intinfo["orders"]], axis=0)
+                coef_ord = - kern_lord - pref_lord + requested_orders
+                par.call_cb("evalf", (
+                        os.path.relpath(os.path.join(coeffsdir, t["coefficient"]), datadir),
+                        {k:str(v) for k,v in valuemap_rat.items()},
+                        [[str(var), int(order)] for var, order in zip(sp_regulators, coef_ord)]
+                    ),
+                    evalf_cb,
+                    (a, t)
+                )
+        await done_evalf
+
+    W = np.stack([w for w in ap2coeffs.values()])
+    W2 = abs2(W)
+    log(f"will consider {len(ap2coeffs)} sums:")
+    for a, p in sorted(ap2coeffs.keys()):
+        log(f"- amp{a},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
 
     # Presample all kernels
     kern_rng = [np.random.RandomState(0) for fam, ker in kernel2idx.keys()]
@@ -726,20 +707,19 @@ def load_coefficients(filename):
         else: raise ValueError(f"bad key in {filename!r}: {key!r}")
     return coeff
 
-def split_integral_into_orders(orders, ampid, kernel2idx, info, coefficients, valmap, sp_regulators, requested_orders):
-    highest_orders = np.min([o["regulator_powers"] for o in info["orders"]], axis=0)
-    prefactor = product_series_bracket(
-            coefficients + [info["prefactor"]],
-            sp_regulators,
-            -highest_orders + requested_orders,
-            substitute=valmap)
-    prefactor = {p : complex(c) for p, c in prefactor.items()}
+def split_integral_into_orders(orders, ampid, kernel2idx, info, br_coef, valmap, sp_regulators, requested_orders):
+    br_pref = {
+        tuple(t["regulator_powers"]) : complex(sp.sympify(t["coefficient"]).subs(valmap))
+        for t in info["expanded_prefactor"]
+    }
+    kern_leading_orders = np.min([o["regulator_powers"] for o in info["orders"]], axis=0)
+    prefactor = bracket_mul(br_pref, br_coef, -kern_leading_orders + requested_orders)
+    prefactor = {p : complex(c.together()) for p, c in prefactor.items()}
     oo = {}
     for o in info["orders"]:
         powers = np.array(o["regulator_powers"])
         for pow, coef in prefactor.items():
             p = powers + pow
-            c = complex(coef)
             if np.all(p <= requested_orders):
                 key = (ampid, tuple(p.tolist()))
                 orders.setdefault(key, np.zeros(len(kernel2idx), dtype=np.complex128))

@@ -118,9 +118,18 @@ conf = Configure(env)
 librt = [] if conf.CheckFunc("clock_gettime") or not conf.CheckLib("rt") else ["rt"]
 env = conf.Finish()
 
-contrib += env.Program("bin/pysecdec_cpuworker", [f"disteval/cpuworker.cpp"], CXXFLAGS="-std=c++14 -O3 -Wall", LIBS=["dl", *librt])
-contrib += env.Program("bin/pysecdec_cudaworker", [f"disteval/cudaworker.cpp"], CXXFLAGS="-std=c++14 -O3 -Wall", LIBS=["dl", *librt, "pthread"])
-contrib += env.Program("bin/pysecdec_listcuda", [f"disteval/listcuda.cpp"], CXXFLAGS="-std=c++14 -O3 -Wall", LIBS=["dl"])
+contrib += env.Program("bin/pysecdec_cpuworker", [f"disteval/cpuworker.cpp"],
+    CXXFLAGS="-std=c++14 -O3 -Wall",
+    LIBS=["ginac", "cln", "dl", *librt],
+    LIBPATH=["lib"], LINKFLAGS="-s")
+contrib += env.Program("bin/pysecdec_cudaworker", [f"disteval/cudaworker.cpp"],
+    CXXFLAGS="-std=c++14 -O3 -Wall",
+    LIBS=["ginac", "cln", "dl", *librt, "pthread"],
+    LIBPATH=["lib"], LINKFLAGS="-s")
+contrib += env.Program("bin/pysecdec_listcuda", [f"disteval/listcuda.cpp"],
+    CXXFLAGS="-std=c++14 -O3 -Wall",
+    LIBS=["dl"],
+    LINKFLAGS="-s")
 File("disteval/minicuda.h")
 
 File("bin/export_sector")

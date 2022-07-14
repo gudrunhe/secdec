@@ -763,6 +763,27 @@ class Polynomial(_Expression):
         refactorize(prod, *parameters)
         return prod
 
+    def denest(self):
+        """
+        Returns a flattened version of a nested :class:`.Polynomial`
+        of :class:`.Polynomial`s.
+        """
+        expolist = []
+        coeffs = []
+        for expo, coeff in zip(self.expolist, self.coeffs):
+            if isinstance(coeff, Polynomial) and self.polysymbols == coeff.polysymbols:
+                coeff = coeff.denest()
+                for e, c in zip(coeff.expolist, coeff.coeffs):
+                    expolist.append(expo + e)
+                    coeffs.append(c)
+            else:
+                expolist.append(expo)
+                coeffs.append(coeff)
+        result = Polynomial(expolist, coeffs, self.polysymbols)
+        result.simplify()
+        return result
+
+
 class ExponentiatedPolynomial(Polynomial):
     '''
     Like :class:`.Polynomial`, but with a global exponent.

@@ -231,7 +231,7 @@ cmd_start(uint64_t token, StartCmd &c)
 {
     int r = chdir(c.dirname);
     if (r != 0) {
-        printf("@[%zu,null,\"failed to chdir %s: %d\"]\n", token, c.dirname, r);
+        printf("@[%zu,null,\"failed to chdir '%s': %d\"]\n", token, c.dirname, r);
         return;
     }
     CU(cuModuleLoad, &G.cuda.builtin_module, "./builtin.fatbin");
@@ -249,12 +249,12 @@ cmd_family(uint64_t token, FamilyCmd &c)
     snprintf(buf, sizeof(buf), "./%s.so", c.name);
     fam.so_handle = dlopen(buf, RTLD_LAZY | RTLD_LOCAL);
     if (fam.so_handle == NULL) {
-        printf("@[%zu,null,\"failed to open %s: %s\"]\n", token, buf, strerror(errno));
+        printf("@[%zu,null,\"failed to open '%s': %s\"]\n", token, buf, strerror(errno));
         return;
     }
     snprintf(buf, sizeof(buf), "./%s.fatbin", c.name);
     if (cuModuleLoad(&fam.cuda_module, buf) != 0) {
-        printf("@[%zu,null,\"failed to open %s\"]\n", token, buf);
+        printf("@[%zu,null,\"failed to open '%s'\"]\n", token, buf);
         return;
     }
     fam.dimension = c.dimension;
@@ -511,10 +511,20 @@ static uint64_t
 parse_uint()
 {
     char *end = NULL;
-    long x = strtol(G.input_p, &end, 10);
+    long long x = strtoll(G.input_p, &end, 10);
     if (unlikely(G.input_p == end)) parse_fail();
     G.input_p = end;
     return (uint64_t)x;
+}
+
+static int64_t
+parse_int()
+{
+    char *end = NULL;
+    long long x = strtoll(G.input_p, &end, 10);
+    if (unlikely(G.input_p == end)) parse_fail();
+    G.input_p = end;
+    return (int64_t)x;
 }
 
 static real_t
@@ -576,11 +586,206 @@ parse_str(char *str, size_t maxn)
                 default: parse_fail();
             }
         } else if (unlikely(c == '"')) {
+            str[i] = 0;
             break;
         } else {
             str[i] = c;
         }
     }
+}
+
+// GiNaC-related code
+
+#include <ginac/ginac.h>
+#include <ginac/parser.h>
+#include <streambuf>
+#include <istream>
+#include <fstream>
+
+struct FixedStreamBuf : public std::streambuf {
+    FixedStreamBuf(char* s, size_t n) { setg(s, s, s + n); }
+};
+
+static GiNaC::ex
+ginac_read_string(GiNaC::parser &reader, char *str, size_t size)
+{
+    FixedStreamBuf buf(str, size);
+    std::istream i(&buf);
+    return reader(i);
+}
+
+static GiNaC::ex
+ginac_read_string(GiNaC::parser &reader, char *str)
+{
+    return ginac_read_string(reader, str, strlen(str));
+}
+
+template <typename F> void
+term_iter(const GiNaC::ex &e, F yield)
+{
+    if (GiNaC::is_a<GiNaC::add>(e)) {
+        for (const auto &t : e) {
+            yield(t);
+        }
+    } else {
+        yield(e);
+    }
+}
+
+template <typename F> void
+factor_iter(const GiNaC::ex &e, F yield)
+{
+    if (GiNaC::is_a<GiNaC::mul>(e)) {
+        for (const auto &f : e) {
+            if (GiNaC::is_a<GiNaC::power>(f)) {
+                yield(f.op(0), GiNaC::ex_to<GiNaC::numeric>(f.op(1)).to_int());
+            } else {
+                yield(f, 1);
+            }
+        }
+    } else {
+        if (GiNaC::is_a<GiNaC::power>(e)) {
+            yield(e.op(0), GiNaC::ex_to<GiNaC::numeric>(e.op(1)).to_int());
+        } else {
+            yield(e, 1);
+        }
+    }
+}
+
+static std::map<std::vector<int>, GiNaC::ex>
+ginac_bracket(const GiNaC::ex &expr, const GiNaC::exvector &X)
+{
+    std::map<std::vector<int>, GiNaC::ex> result;
+    std::map<GiNaC::ex, int, GiNaC::ex_is_less> x2id;
+    for (unsigned i = 0; i < X.size(); i++) {
+        x2id[X[i]] = i;
+    }
+    term_iter(expr.expand(), [&](const GiNaC::ex &term) {
+        std::vector<int> stemidx(X.size());
+        GiNaC::exvector coef;
+        factor_iter(term, [&](const GiNaC::ex &factor, int power) {
+            auto it = x2id.find(factor);
+            if (it != x2id.end()) {
+                stemidx[it->second] = power;
+            } else {
+                if (power == 1) {
+                    coef.push_back(factor);
+                } else {
+                    coef.push_back(pow(factor, power));
+                }
+            }
+        });
+        result[stemidx] += GiNaC::mul(coef);
+    });
+    return result;
+}
+
+static void
+parse_cmd_evalf(uint64_t token)
+{
+    char filename[MAXPATH];
+    parse_str(filename, sizeof(filename));
+    GiNaC::parser reader;
+    double t1 = timestamp();
+    std::ifstream inf(filename);
+    if (!inf) {
+        printf("@[%zu,null,\"failed to open '%s'\"]\n", token, filename);
+        exit(1);
+    }
+    GiNaC::ex expr = 1;
+    std::string data;
+    for (;;) {
+        while (std::isspace(inf.peek())) inf.get();
+        if (inf.eof()) break;
+        std::getline(inf, data, '=');
+        if (data == "numerator ") {
+            std::getline(inf, data, ';');
+            for (char *p = &data[0];;) {
+                char *e = strchr(p, ',');
+                if (e == NULL) {
+                    expr *= ginac_read_string(reader, p, &data[0] + data.size() - p);
+                    break;
+                } else {
+                    expr *= ginac_read_string(reader, p, e - p);
+                    p = e + 1;
+                }
+            }
+        } else if (data == "denominator ") {
+            std::getline(inf, data, ';');
+            for (char *p = &data[0];;) {
+                char *e = strchr(p, ',');
+                if (e == NULL) {
+                    expr /= ginac_read_string(reader, p, &data[0] + data.size() - p);
+                    break;
+                } else {
+                    expr /= ginac_read_string(reader, p, e - p);
+                    p = e + 1;
+                }
+            }
+        } else if (data == "regulator_factor ") {
+            std::getline(inf, data, ';');
+            for (char *p = &data[0];;) {
+                char *e = strchr(p, ',');
+                if (e == NULL) {
+                    expr *= ginac_read_string(reader, p, &data[0] + data.size() - p);
+                    break;
+                } else {
+                    expr *= ginac_read_string(reader, p, e - p);
+                    p = e + 1;
+                }
+            }
+        } else {
+            printf("@[%zu,null,\"unknown key in %s: '%s'\"]\n", token, filename, data.c_str());
+            exit(1);
+        }
+    }
+    data.erase();
+    GiNaC::exmap table;
+    match_str(",{");
+    char varname[MAXNAME];
+    if (input_peekchar() != '}') {
+        char value[MAXPATH];
+        for (;;) {
+            parse_str(varname, sizeof(varname));
+            match_c(':');
+            parse_str(value, sizeof(value));
+            table[ginac_read_string(reader, varname)] = ginac_read_string(reader, value);
+            if (input_peekchar() != ',') break;
+            input_getchar();
+        }
+    }
+    match_str("},[");
+    expr = expr.subs(table);
+    GiNaC::exvector varlist;
+    for (;;) {
+        match_c('[');
+        parse_str(varname, sizeof(varname));
+        match_c(',');
+        int64_t order = parse_int();
+        match_c(']');
+        auto x = ginac_read_string(reader, varname);
+        varlist.push_back(x);
+        expr = GiNaC::series_to_poly(expr.series(x, order+1));
+        if (input_peekchar() != ',') break;
+        input_getchar();
+    }
+    match_str("]]]\n");
+    double t2 = timestamp();
+    std::ostringstream s;
+    auto br = ginac_bracket(expr.expand(), varlist);
+    bool first = true;
+    for (auto &&kv : br) {
+        if (first) { first = false; } else { s << ','; }
+        s << "[[";
+        bool first2 = true;
+        for (auto &&i : kv.first) {
+            if (first2) { first2 = false; } else { s << ','; }
+            s << i;
+        }
+        s << "],\"" << kv.second.evalf() << "\"]";
+    }
+    printf("@[%zu,[%s],null]\n", token, s.str().c_str());
+    G.useful_time += t2 - t1;
 }
 
 // Main RPC cycle
@@ -665,6 +870,10 @@ handle_one_command()
         parse_str(c.dirname, sizeof(c.dirname));
         match_str("]]\n");
         return cmd_start(token, c);
+    }
+    if (c == 'e') {
+        match_str("valf\",[");
+        return parse_cmd_evalf(token);
     }
     parse_fail();
 }

@@ -2208,6 +2208,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                             os.path.join(name,             'pylink', pylink_qmc_transform['dest']),
                             pylink_qmc_transform_replacements)
 
+    expanded_prefactor = expanded_prefactor.denest()
     os.mkdir(os.path.join(name, "disteval"))
     with open(os.path.join(name, "disteval", name + ".json"), "w") as f:
         json.dump({
@@ -2220,9 +2221,16 @@ def make_package(name, integration_variables, regulators, requested_orders,
             "deformp_count": 0 if contour_deformation_polynomial is None else len(integration_variables),
             "complex_result": contour_deformation_polynomial is not None or bool(complex_parameters) or enforce_complex,
             "requested_orders": list(map(int, requested_orders)),
-            "prefactor": str(expanded_prefactor).strip(),
+            "prefactor": str(expanded_prefactor).replace(" ", ""),
             "prefactor_lowest_orders": (-highest_prefactor_pole_orders).tolist(),
             "prefactor_highest_orders": required_prefactor_orders.tolist(),
+            "expanded_prefactor": [
+                {
+                    "regulator_powers": tuple(map(int, e)),
+                    "coefficient": str(c).replace(" ", "")
+                }
+                for e, c in zip(expanded_prefactor.expolist, expanded_prefactor.coeffs)
+            ],
             "kernels": [
                 f"sector_{s}_order_{o}"
                 for powers, order_names in sector_orders.items()

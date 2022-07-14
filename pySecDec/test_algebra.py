@@ -410,6 +410,41 @@ class TestPolynomial(unittest.TestCase):
         np.testing.assert_array_equal(zero.coeffs, [0])
         np.testing.assert_array_equal(zero.expolist, [[0,0,0]])
 
+    #@attr('active')
+    def test_denest2(self):
+        poly_x0 = Polynomial([(0,0),(0,1),(0,2)],['C00','C01','C02'],['x','y'])
+        poly_x1 = Polynomial([(0,0),(0,1),(0,2)],['C10','C11','C12'],['x','y'])
+        poly_x2 = Polynomial([(0,0),(0,1),(0,2)],['C20','C21','C22'],['x','y'])
+        poly = Polynomial([(0,0),(1,0),(2,0)],[poly_x0,poly_x1,poly_x2],['x','y'])
+
+        self.assertEqual(str(poly_x0), ' + (C00) + (C01)*y + (C02)*y**2')
+        self.assertEqual(str(poly_x1), ' + (C10) + (C11)*y + (C12)*y**2')
+        self.assertEqual(str(poly_x2), ' + (C20) + (C21)*y + (C22)*y**2')
+        self.assertEqual(str(poly),
+            ' + ( + (C00) + (C01)*y + (C02)*y**2) + ( + (C10) + (C11)*y + (C12)*y**2)*x + ( + (C20) + (C21)*y + (C22)*y**2)*x**2'
+        )
+        self.assertEqual(str(poly.denest()),
+            ' + (C00) + (C01)*y + (C02)*y**2 + (C10)*x + (C11)*x*y + (C12)*x*y**2 + (C20)*x**2 + (C21)*x**2*y + (C22)*x**2*y**2'
+        )
+
+    #@attr('active')
+    def test_denest3(self):
+        poly_11x = Polynomial([(0,0,1),(0,0,2)],['C111','C112'],['x','y','z'])
+        poly_12x = Polynomial([(0,0,1),(0,0,2)],['C121','C122'],['x','y','z'])
+        poly_21x = Polynomial([(0,0,1),(0,0,2)],['C211','C212'],['x','y','z'])
+        poly_22x = Polynomial([(0,0,1),(0,0,2)],['C221','C222'],['x','y','z'])
+        poly_1xx = Polynomial([(0,1,0),(0,2,0)],[poly_11x,poly_12x],['x','y','z'])
+        poly_2xx = Polynomial([(0,1,0),(0,2,0)],[poly_21x,poly_22x],['x','y','z'])
+        poly = Polynomial([(1,0,0),(2,0,0)],[poly_1xx,poly_2xx],['x','y','z'])
+
+        self.assertEqual(str(poly),
+            ' + ( + ( + (C111)*z + (C112)*z**2)*y + ( + (C121)*z + (C122)*z**2)*y**2)*x + ( + ( + (C211)*z + (C212)*z**2)*y + ( + (C221)*z + (C222)*z**2)*y**2)*x**2'
+        )
+        self.assertEqual(str(poly.denest()),
+            ' + (C111)*x*y*z + (C112)*x*y*z**2 + (C121)*x*y**2*z + (C122)*x*y**2*z**2 + (C211)*x**2*y*z + (C212)*x**2*y*z**2 + (C221)*x**2*y**2*z + (C222)*x**2*y**2*z**2'
+        )
+
+
 class TestFormerSNCPolynomial(unittest.TestCase):
     def setUp(self):
         self.p0 = Polynomial([(0,1),(1,0),(1,1)],[1,1,3])
