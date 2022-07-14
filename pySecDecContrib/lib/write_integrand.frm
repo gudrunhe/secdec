@@ -1,5 +1,5 @@
 #-
-#: ContinuationLines 32000
+#: ContinuationLines 0
 * Despite what the docs say, ContinuationLines is used not only
 * for Fortran, but for everything.
 Off statistics;
