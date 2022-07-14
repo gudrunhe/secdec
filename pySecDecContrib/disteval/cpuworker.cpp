@@ -10,6 +10,16 @@
 #include <unistd.h>
 #include <vector>
 
+#include <ginac/ginac.h>
+#include <ginac/parser.h>
+#include <streambuf>
+#include <istream>
+#include <fstream>
+
+#ifdef unlikely
+    #undef unlikely
+#endif
+
 #if __GNUC__
     #define unlikely(x) __builtin_expect((x), 0)
 #else
@@ -385,12 +395,6 @@ parse_str(char *str, size_t maxn)
 }
 
 // GiNaC-related code
-
-#include <ginac/ginac.h>
-#include <ginac/parser.h>
-#include <streambuf>
-#include <istream>
-#include <fstream>
 
 struct FixedStreamBuf : public std::streambuf {
     FixedStreamBuf(char* s, size_t n) { setg(s, s, s + n); }

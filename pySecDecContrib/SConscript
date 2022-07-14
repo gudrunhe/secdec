@@ -121,11 +121,11 @@ env = conf.Finish()
 contrib += env.Program("bin/pysecdec_cpuworker", [f"disteval/cpuworker.cpp"],
     CXXFLAGS="-std=c++14 -O3 -Wall",
     LIBS=["ginac", "cln", "dl", *librt],
-    LIBPATH=["lib"], LINKFLAGS="-s")
+    LIBPATH=["lib"], CPPPATH=["include"], LINKFLAGS="-s")
 contrib += env.Program("bin/pysecdec_cudaworker", [f"disteval/cudaworker.cpp"],
     CXXFLAGS="-std=c++14 -O3 -Wall",
     LIBS=["ginac", "cln", "dl", *librt, "pthread"],
-    LIBPATH=["lib"], LINKFLAGS="-s")
+    LIBPATH=["lib"], CPPPATH=["include"], LINKFLAGS="-s")
 contrib += env.Program("bin/pysecdec_listcuda", [f"disteval/listcuda.cpp"],
     CXXFLAGS="-std=c++14 -O3 -Wall",
     LIBS=["dl"],
