@@ -1,6 +1,8 @@
+#define __STDC_FORMAT_MACROS
 #include <assert.h>
 #include <dlfcn.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <math.h>
 #include <pthread.h>
 #include <stddef.h>
@@ -242,13 +244,13 @@ cmd_start(uint64_t token, StartCmd &c)
 {
     int r = chdir(c.dirname);
     if (r != 0) {
-        printf("@[%zu,null,\"failed to chdir '%s': %d\"]\n", token, c.dirname, r);
+        printf("@[%" PRIu64 ",null,\"failed to chdir '%s': %d\"]\n", token, c.dirname, r);
         return;
     }
     CU(cuModuleLoad, &G.cuda.builtin_module, "./builtin.fatbin");
     CU(cuModuleGetFunction, &G.cuda.fn_sum_d_b128_x1024, G.cuda.builtin_module, "sum_d_b128_x1024");
     CU(cuModuleGetFunction, &G.cuda.fn_sum_c_b128_x1024, G.cuda.builtin_module, "sum_c_b128_x1024");
-    printf("@[%zu,\"%s\",null]\n", token, G.workername);
+    printf("@[%" PRIu64 ",\"%s\",null]\n", token, G.workername);
 }
 
 static void
@@ -260,12 +262,12 @@ cmd_family(uint64_t token, FamilyCmd &c)
     snprintf(buf, sizeof(buf), "./%s.so", c.name);
     fam.so_handle = dlopen(buf, RTLD_LAZY | RTLD_LOCAL);
     if (fam.so_handle == NULL) {
-        printf("@[%zu,null,\"failed to open '%s': %s\"]\n", token, buf, strerror(errno));
+        printf("@[%" PRIu64 ",null,\"failed to open '%s': %s\"]\n", token, buf, strerror(errno));
         return;
     }
     snprintf(buf, sizeof(buf), "./%s.fatbin", c.name);
     if (cuModuleLoad(&fam.cuda_module, buf) != 0) {
-        printf("@[%zu,null,\"failed to open '%s'\"]\n", token, buf);
+        printf("@[%" PRIu64 ",null,\"failed to open '%s'\"]\n", token, buf);
         return;
     }
     fam.dimension = c.dimension;
@@ -274,7 +276,7 @@ cmd_family(uint64_t token, FamilyCmd &c)
     fam.complex_result = c.complex_result;
     memcpy(fam.name, c.name, sizeof(fam.name));
     G.families.push_back(fam);
-    printf("@[%zu,null,null]\n", token);
+    printf("@[%" PRIu64 ",null,null]\n", token);
 }
 
 static void
@@ -289,11 +291,11 @@ cmd_kernel(uint64_t token, KernelCmd &c)
     snprintf(buf, sizeof(buf), "%s__%s", fam.name, c.name);
     ker.fn_integrate = (IntegrateF)dlsym(fam.so_handle, buf);
     if (ker.fn_integrate == NULL) {
-        printf("@[%zu,null,\"function not found: %s\"]\n", token, buf);
+        printf("@[%" PRIu64 ",null,\"function not found: %s\"]\n", token, buf);
         return;
     }
     if (cuModuleGetFunction(&ker.cuda_fn_integrate, fam.cuda_module, buf) != 0) {
-        printf("@[%zu,null,\"CUDA function not found: %s\"]\n", token, buf);
+        printf("@[%" PRIu64 ",null,\"CUDA function not found: %s\"]\n", token, buf);
         return;
     }
     snprintf(buf, sizeof(buf), "%s__%s__maxdeformp", fam.name, c.name);
@@ -302,28 +304,28 @@ cmd_kernel(uint64_t token, KernelCmd &c)
     ker.fn_fpolycheck = (FpolycheckF)dlsym(fam.so_handle, buf);
     memcpy(ker.name, c.name, sizeof(ker.name));
     G.kernels.push_back(ker);
-    printf("@[%zu,null,null]\n", token);
+    printf("@[%" PRIu64 ",null,null]\n", token);
 }
 
 static void
 cmd_presample(uint64_t token, PresampleCmd &c)
 {
     if (unlikely(c.kernelidx >= G.kernels.size())) {
-        printf("@[%zu,null,\"kernel %zu was not loaded\"]\n", token, c.kernelidx);
+        printf("@[%" PRIu64 ",null,\"kernel %" PRIu64 " was not loaded\"]\n", token, c.kernelidx);
         return;
     }
     const Kernel &ker = G.kernels[c.kernelidx];
     const Family &fam = G.families[ker.familyidx];
     if (unlikely(c.ndeformp == 0)) {
-        printf("@[%zu,[],null]\n", token);
+        printf("@[%" PRIu64 ",[],null]\n", token);
         return;
     }
     if (unlikely(ker.fn_maxdeformp == NULL)) {
-        printf("@[%zu,null,\"kernel %zu has no *__maxdefomp function\"]\n", token, c.kernelidx);
+        printf("@[%" PRIu64 ",null,\"kernel %" PRIu64 " has no *__maxdefomp function\"]\n", token, c.kernelidx);
         return;
     }
     if (unlikely(ker.fn_fpolycheck == NULL)) {
-        printf("@[%zu,null,\"kernel %zu has no *__fpolycheck function\"]\n", token, c.kernelidx);
+        printf("@[%" PRIu64 ",null,\"kernel %" PRIu64 " has no *__fpolycheck function\"]\n", token, c.kernelidx);
         return;
     }
     double deformp[MAXDIM] = {};
@@ -341,7 +343,7 @@ cmd_presample(uint64_t token, PresampleCmd &c)
             deformp[i] *= 0.9;
     }
     double t2 = timestamp();
-    printf("@[%zu,[", token);
+    printf("@[%" PRIu64 ",[", token);
     for (uint64_t i = 0; i < c.ndeformp; i++) {
         if (i != 0) putchar(',');
         printf("%.16e", deformp[i]);
@@ -371,11 +373,11 @@ worker_thread(void *ps)
                 fam.realp, fam.complexp, c.deformp);
             double t2 = timestamp();
             if (unlikely((isnan(result.re) || isnan(result.im)) ^ (r != 0))) {
-                printf("@[%zu,[[NaN,NaN],%zu,%.4e],\"NaN != sign check error %d in %s.%s\"]", c.token, c.i2-c.i1, t2-t1, r, fam.name, ker.name);
+                printf("@[%" PRIu64 ",[[NaN,NaN],%" PRIu64 ",%.4e],\"NaN != sign check error %d in %s.%s\"]", c.token, c.i2-c.i1, t2-t1, r, fam.name, ker.name);
             } else if (isnan(result.re) || isnan(result.im)) {
-                printf("@[%zu,[[NaN,NaN],%zu,%.4e],null]\n", c.token, c.i2-c.i1, t2-t1);
+                printf("@[%" PRIu64 ",[[NaN,NaN],%" PRIu64 ",%.4e],null]\n", c.token, c.i2-c.i1, t2-t1);
             } else {
-                printf("@[%zu,[[%.16e,%.16e],%zu,%.4e],null]\n", c.token, result.re, result.im, c.i2-c.i1, t2-t1);
+                printf("@[%" PRIu64 ",[[%.16e,%.16e],%" PRIu64 ",%.4e],null]\n", c.token, result.re, result.im, c.i2-c.i1, t2-t1);
             }
             s.useful_time += t2-t1;
         }
@@ -384,7 +386,7 @@ worker_thread(void *ps)
             uint64_t blocks = (c.i2 - c.i1 + threads*pt_per_thread - 1)/(threads*pt_per_thread);
             uint64_t bufsize = fam.complex_result ? blocks*sizeof(complex_t) : blocks*sizeof(real_t);
             if (bufsize > s.buffer_size) {
-                fprintf(stderr, "%s] realloc CUDA buffer to %zuMB\n", G.workername, bufsize/1024/1024);
+                fprintf(stderr, "%s] realloc CUDA buffer to %" PRIu64 "MB\n", G.workername, bufsize/1024/1024);
                 CU(cuMemFree, s.buffer_d);
                 s.buffer_size = (bufsize + 1024*1024 - 1) & ~(1024*1024 - 1);
                 CU(cuMemAlloc, &s.buffer_d, s.buffer_size);
@@ -427,9 +429,9 @@ worker_thread(void *ps)
             double t2 = timestamp();
             complex_t result = *s.result;
             if (isnan(result.re) || isnan(result.im)) {
-                printf("@[%zu,[[NaN,NaN],%zu,%.4e],null]\n", c.token, c.i2-c.i1, t2-t1);
+                printf("@[%" PRIu64 ",[[NaN,NaN],%" PRIu64 ",%.4e],null]\n", c.token, c.i2-c.i1, t2-t1);
             } else {
-                printf("@[%zu,[[%.16e,%.16e],%zu,%.4e],null]\n", c.token, result.re, result.im, c.i2-c.i1, t2-t1);
+                printf("@[%" PRIu64 ",[[%.16e,%.16e],%" PRIu64 ",%.4e],null]\n", c.token, result.re, result.im, c.i2-c.i1, t2-t1);
             }
             s.useful_time += t2-t1;
         }
@@ -441,7 +443,7 @@ static void
 cmd_integrate(uint64_t token, IntegrateCmd &c)
 {
     if (unlikely(c.kernelidx >= G.kernels.size())) {
-        printf("@[%zu,null,\"kernel %zu was not loaded\"]\n", token, c.kernelidx);
+        printf("@[%" PRIu64 ",null,\"kernel %" PRIu64 " was not loaded\"]\n", token, c.kernelidx);
         return;
     }
     submit_integrate_cmd(c);
@@ -462,7 +464,7 @@ init(int devindex)
     CU(cuDeviceGetName, buf, sizeof(buf), G.cuda.device);
     CU(cuDeviceGetName, buf, sizeof(buf), G.cuda.device);
     CU(cuDeviceTotalMem, &memsize, G.cuda.device);
-    fprintf(stderr, "%s] CUDA v%d, %d devices, using #%d: '%s' with %zuMB of memory\n", G.workername, ver, ndev, devindex, buf, memsize/1024/1024);
+    fprintf(stderr, "%s] CUDA v%d, %d devices, using #%d: '%s' with %" PRIu64 "MB of memory\n", G.workername, ver, ndev, devindex, buf, memsize/1024/1024);
     CU(cuDevicePrimaryCtxSetFlags, G.cuda.device, CU_CTX_SCHED_BLOCKING_SYNC);
     CU(cuDevicePrimaryCtxRetain, &G.cuda.context, G.cuda.device);
     CU(cuCtxSetCurrent, G.cuda.context);
@@ -694,7 +696,7 @@ parse_cmd_evalf(uint64_t token)
     double t1 = timestamp();
     std::ifstream inf(filename);
     if (!inf) {
-        printf("@[%zu,null,\"failed to open '%s'\"]\n", token, filename);
+        printf("@[%" PRIu64 ",null,\"failed to open '%s'\"]\n", token, filename);
         exit(1);
     }
     GiNaC::ex expr = 1;
@@ -740,7 +742,7 @@ parse_cmd_evalf(uint64_t token)
                 }
             }
         } else {
-            printf("@[%zu,null,\"unknown key in %s: '%s'\"]\n", token, filename, data.c_str());
+            printf("@[%" PRIu64 ",null,\"unknown key in %s: '%s'\"]\n", token, filename, data.c_str());
             exit(1);
         }
     }
@@ -789,7 +791,7 @@ parse_cmd_evalf(uint64_t token)
         }
         s << "],\"" << kv.second.evalf() << "\"]";
     }
-    printf("@[%zu,[%s],null]\n", token, s.str().c_str());
+    printf("@[%" PRIu64 ",[%s],null]\n", token, s.str().c_str());
     G.useful_time += t2 - t1;
 }
 
@@ -838,7 +840,7 @@ handle_one_command()
     }
     if (c == 'p') {
         match_str("ing\",[]]\n");
-        printf("@[%zu,null,null]\n", token);
+        printf("@[%" PRIu64 ",null,null]\n", token);
         return;
     }
     if (c == 'f') {
