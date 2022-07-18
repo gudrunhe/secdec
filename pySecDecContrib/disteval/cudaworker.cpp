@@ -464,7 +464,7 @@ init(int devindex)
     CU(cuDeviceGetName, buf, sizeof(buf), G.cuda.device);
     CU(cuDeviceGetName, buf, sizeof(buf), G.cuda.device);
     CU(cuDeviceTotalMem, &memsize, G.cuda.device);
-    fprintf(stderr, "%s] CUDA v%d, %d devices, using #%d: '%s' with %" PRIu64 "MB of memory\n", G.workername, ver, ndev, devindex, buf, memsize/1024/1024);
+    fprintf(stderr, "%s] CUDA v%d, %d devices, using #%d: '%s' with %zu MB of memory\n", G.workername, ver, ndev, devindex, buf, memsize/1024/1024);
     CU(cuDevicePrimaryCtxSetFlags, G.cuda.device, CU_CTX_SCHED_BLOCKING_SYNC);
     CU(cuDevicePrimaryCtxRetain, &G.cuda.context, G.cuda.device);
     CU(cuCtxSetCurrent, G.cuda.context);
