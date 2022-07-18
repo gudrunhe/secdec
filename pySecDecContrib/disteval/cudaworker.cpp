@@ -18,6 +18,7 @@
 #include <streambuf>
 #include <istream>
 #include <fstream>
+#include <sstream>
 
 #ifdef unlikely
     #undef unlikely
