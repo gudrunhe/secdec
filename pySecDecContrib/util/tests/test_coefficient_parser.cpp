@@ -47,7 +47,7 @@ TEST_CASE( "Read a basic coefficient", "[read_coefficient]" ) {
         );
 
     REQUIRE( parsed_coefficient.get_order_min() == 0 );
-    REQUIRE( parsed_coefficient.get_order_max() == 1 );
+    REQUIRE( parsed_coefficient.get_order_max() >= 1 );
 
     REQUIRE( parsed_coefficient.at(0).real() == Approx(-150.705) );
     REQUIRE( parsed_coefficient.at(0).imag() == Approx(169.55) );

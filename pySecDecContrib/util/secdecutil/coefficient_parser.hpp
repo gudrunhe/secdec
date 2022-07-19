@@ -40,7 +40,7 @@ namespace secdecutil
                 const std::vector<int>& numbers_of_orders,
                 const std::vector<int>& offsets = {},
                 size_t current_regulator_index = 0,
-                bool truncated = true
+                bool truncated = false
             )
             {
                 assert(current_regulator_index == numbers_of_orders.size());
@@ -59,7 +59,7 @@ namespace secdecutil
                 const std::vector<int>& numbers_of_orders,
                 const std::vector<int>& offsets = {},
                 size_t current_regulator_index = 0,
-                bool truncated = true
+                bool truncated = false
             )
             {
                 int offset = offsets.empty() ? 0 : offsets.at(current_regulator_index);
@@ -124,8 +124,8 @@ namespace secdecutil
             for(int i = 0; i<names_of_complex_parameters.size(); i++)
                 parser.substitution_table[names_of_complex_parameters.at(i)] = rational_t(complex_parameters.at(i).real(),complex_parameters.at(i).imag());
             
-            nested_series_t<rational_t> numerator = ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression("1"), parser.symbol_table, std::vector<int>(required_orders.size(),1),{},0,false); // = 1
-            nested_series_t<rational_t> denominator = ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression("1"), parser.symbol_table, std::vector<int>(required_orders.size(),1),{},0,false); // = 1
+            nested_series_t<rational_t> numerator = ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression("1"), parser.symbol_table, std::vector<int>(required_orders.size(),1),{},0); // = 1
+            nested_series_t<rational_t> denominator = ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression("1"), parser.symbol_table, std::vector<int>(required_orders.size(),1),{},0); // = 1
 
             std::vector<int> offsets;
             offsets.reserve(names_of_regulators.size());
@@ -173,7 +173,7 @@ namespace secdecutil
                         //std::cout << "#regulator_factor_processed: ";
                         //for(auto elem: offsets) std::cout << elem << " ";
                         //std::cout << std::endl;
-                        numerator *= ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression("1"), parser.symbol_table, std::vector<int>(required_orders.size(),1),offsets,0,false); // = regulator_factor
+                        numerator *= ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression("1"), parser.symbol_table, std::vector<int>(required_orders.size(),1),offsets,0); // = regulator_factor
                     }
                 } else {
                     // Step 2: Process numerators and denominators
