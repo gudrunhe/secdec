@@ -9,8 +9,10 @@ from time import strftime
 import json
 import numpy as np
 import os
+import re
 import shutil
 import subprocess
+import sympy as sp
 import sys
 import tempfile
 
@@ -20,219 +22,102 @@ class Coefficient(object):
     in the numerator and a product of terms in the
     denominator.
 
-    :param numerators:
-        iterable of str;
-        The terms in the numerator.
+    :param numerator:
+        str, or iterable of str;
+        The numerator, or the terms in the numerator.
 
-    :param denominators:
-        iterable of str;
-        The terms in the denominator.
+    :param denominator:
+        str, or iterable of str;
+        The denominator, or the terms in the denominator.
 
     :param parameters:
         iterable of strings or sympy symbols;
         The symbols other parameters.
 
         '''
-    def __init__(self, numerators, denominators, parameters):
-        for input_value, input_name in \
-            zip(
-                    ( numerators ,  denominators ,  parameters ),
-                    ('numerators', 'denominators', 'parameters')
-               ):
-            assert np.iterable(input_value), "`%s` must be iterable." % input_name
-            if input_name in ('numerators', 'denominators'):
-                for item in input_value:
-                    assert isinstance(item, str), "All `%s` must be strings." % input_name
+    def __init__(self, numerator, denominator, parameters):
+        if not np.iterable(parameters):
+            raise ValueError("parameters must be iterable")
+        if np.iterable(numerator):
+            numerator = "*".join(f"({f})" for f in numerator) or "1"
+        if np.iterable(denominator):
+            denominator = "*".join(f"({f})" for f in denominator) or "1"
+        self.expression = f"{numerator}/({denominator})"
+        self.parameters = parameters
 
-        self.numerators = list(numerators)
-        self.denominators = list(denominators)
-        self.parameters = sympify_symbols(parameters, 'All `parameters` must be symbols.')
-
-    def is_zero(self):
-        return self.numerators in ([0], ["0"])
-
-    def process(self, regulators, form=None, workdir='form_tmp', keep_workdir=False):
+    def leading_orders(self, regulators, maxorder=999999):
         r'''
-        Calculate and return the lowest orders of the coefficients in
-        the regulators and a string defining the expressions "numerator",
-        "denominator", and "regulator_factor".
+        Calculate and return the lowest orders of the coefficients
+        in the regulators. If the whole coefficient is zero, return
+        a list of the maximal orders.
 
         :param regulators:
             iterable of strings or sympy symbols;
             The symbols denoting the regulators.
 
-        :param form:
-            string or None;
-            If given a string, interpret that string as the command
-            line executable `form`. If ``None``, try ``$FORM``
-            (if the environment variable ``$FORM`` is set),
-            ``$SECDEC_CONTRIB/bin/form`` (if ``$SECDEC_CONTRIB``
-            is set), and ``form``.
-
-        :param workdir:
-            string;
-            The directory for the communication with `form`.
-            A directory with the specified name will be created
-            in the current working directory. If the specified
-            directory name already exists, an :class:`OSError`
-            is raised.
-
-            .. note::
-                The communication with `form` is done via
-                files.
-
-        :param keep_workdir:
-            bool;
-            Whether or not to delete the `workdir` after execution.
-
+        :param maxorder:
+            int;
+            The maximum order of the regulators; if the actual
+            order is higher, this value is used instead.
         '''
         regulators = sympify_symbols(regulators, 'All `regulators` must be symbols.')
-        # get the name of FORM command-line executable
-        if form is None:
-            form_var = os.environ.get('FORM', None)
-            form = \
-                form_var if form_var else \
-                os.path.join(pySecDecContrib.dirname, 'bin', 'form')
-        else:
-            assert isinstance(form, str), "`form` must be a string."
+        ginsh = os.path.join(pySecDecContrib.dirname, 'bin', 'ginsh')
+        # Because ginsh only expands *up to a fixed order*, we
+        # need to iteratively increase the order until the
+        # expansion is non-zero.
+        orders = [0 for reg in regulators]
+        rvars = [sp.randprime(2**30, 2**31) for x in self.parameters]
+        rregs = [sp.randprime(2**30, 2**31) for reg in regulators]
+        while True:
+            with tempfile.NamedTemporaryFile("w", encoding="utf8") as f:
+                f.write("__START;\n")
+                for x, rand in zip(self.parameters, rvars):
+                    f.write(f"{x}={rand}:\n")
+                f.write("__EXPR=(")
+                f.write(self.expression)
+                f.write("):\n")
+                # Is the whole expression zero?
+                f.write("is(subs(__EXPR,{");
+                f.write(",".join(f"{reg}=={rand}" for reg, rand in zip(regulators, rregs)))
+                f.write("})==0);\n")
+                for i, reg in enumerate(regulators):
+                    f.write("__EXPRi=subs(__EXPR,{");
+                    f.write(",".join(
+                            f"{reg}=={rregs[j]}"
+                            for j, reg in enumerate(regulators)
+                            if j != i
+                        ))
+                    f.write("}):\n")
+                    f.write(f"__EXPRi=series_to_poly(series(__EXPRi,{reg},{orders[i]+1})):\n")
+                    # Is the expression zero after expanding in the regulator #i?
+                    f.write(f"is(__EXPRi==0);\n")
+                    # The leading order in the regulator #i.
+                    f.write(f"ldegree(__EXPRi,{reg});\n")
+                f.write("exit\n")
+                f.flush()
+                result = subprocess.check_output([ginsh, f.name], encoding="utf8")
+            result = re.sub(r".*__START\n", "", result, flags=re.DOTALL)
+            assert "__" not in result
+            result = result.splitlines()
+            assert len(result) == 1 + len(regulators)*2
+            result = [int(line) for line in result]
+            if result[0]:
+                return [maxorder for reg in regulators]
+            done = True
+            for i in range(len(regulators)):
+                if result[1 + i*2 + 0] and orders[i] <= maxorder:
+                    orders[i] += 1
+                    done = False
+            if done:
+                return [result[1 + i*2 + 1] for i in range(len(regulators))]
 
-        # define the form program to run
-        program = '''
-            #: Parentheses 1001
+    def write(self, file):
+        """
+        Write the coefficient into a given file object.
+        """
+        file.write(self.expression)
 
-            #Define OUTFILE "%(outfile)s"
-            #Define regulators "%(regulators)s"
-            #Define parameters "%(parameters)s"
-            #Define numberOfnum "%(number_of_num)i"
-            #Define numberOfden "%(number_of_den)i"
-
-            Symbols SecDecInternalsDUMMY,`regulators';
-            Symbols I,`parameters';
-
-            %(expression_definitions)s
-
-            * convert I to i_
-            multiply replace_(I,i_);
-            .sort:read;
-
-            * factor out the global power of each regulator from each numerator and denominator
-            #Do regulator = {`regulators',}
-              #If x`regulator' != x
-                #Do nORd = {num,den}
-                  #Do idx = 1,`numberOf`nORd''
-                    skip; nskip `nORd'`idx';
-                    #$min`regulator'`nORd'`idx' = maxpowerof_(`regulator');
-                    if( match(`regulator'^SecDecInternalsDUMMY?$this`regulator'pow) );
-                        if($min`regulator'`nORd'`idx' > $this`regulator'pow) $min`regulator'`nORd'`idx' = $this`regulator'pow;
-                    else;
-                        if($min`regulator'`nORd'`idx' > 0) $min`regulator'`nORd'`idx' = 0;
-                    endif;
-                    ModuleOption,local,$this`regulator'pow;
-                    ModuleOption,minimum,$min`regulator'`nORd'`idx';
-                    .sort:min`nORd'`idx';
-                    skip; nskip `nORd'`idx';
-                    multiply `regulator'^(-(`$min`regulator'`nORd'`idx''));
-                    .sort:mul`nORd'`idx';
-                  #EndDo
-                #EndDo
-
-                #$global`regulator'fac =
-                  #Do idx = 1,`numberOfnum'
-                    + $min`regulator'num`idx'
-                  #EndDo
-                  #Do idx = 1,`numberOfden'
-                    - $min`regulator'den`idx'
-                  #EndDo
-                ;
-
-              #EndIf
-            #EndDo
-
-            * convert i_ to I
-            multiply replace_(i_,I);
-            .sort:beforeWrite;
-            
-            #write <`OUTFILE'> "regulator_factor = 1"
-            #Do regulator = {`regulators',}
-              #If x`regulator' != x
-                #write <`OUTFILE'> "*`regulator'^`$global`regulator'fac'"
-              #EndIf
-            #EndDo
-            #write <`OUTFILE'> ";"
-
-            #write <`OUTFILE'> "numerator = 1"
-            #Do idx = 1,`numberOfnum'
-              #write <`OUTFILE'> ",%%E", num`idx'
-            #EndDo
-            #write <`OUTFILE'> ";"
-
-            #write <`OUTFILE'> "denominator = 1"
-            #Do idx = 1,`numberOfden'
-              #write <`OUTFILE'> ",%%E", den`idx'
-            #EndDo
-            #write <`OUTFILE'> ";"
-
-            .end
-
-        '''.replace('\n            ','\n')
-        expression_definitions = []
-        for idx, numerator in enumerate(self.numerators):
-            expression_definitions.append('Local num%i = %s;' % (idx+1,numerator))
-        for idx, denominator in enumerate(self.denominators):
-            expression_definitions.append('Local den%i = %s;' % (idx+1,denominator))
-        outfile = 'results.txt'
-        program = program % dict(
-                                     expression_definitions='\n'.join(expression_definitions),
-                                     outfile=outfile,
-                                     number_of_num=len(self.numerators),
-                                     number_of_den=len(self.denominators),
-                                     parameters=','.join(map(str,self.parameters)),
-                                     regulators=','.join(map(str, regulators))
-        )
-
-        # run form program
-        os.mkdir(workdir)
-        try:
-            # dump program to file
-            with open(os.path.join(workdir, 'program.frm'), 'w') as f:
-                f.write(program)
-
-            # redirect stdout
-            with open(os.path.join(workdir, 'stdout'), 'w') as stdout:
-                # redirect stderr
-                with open(os.path.join(workdir, 'stderr'), 'w') as stderr:
-                    # run form
-                    #    subprocess.check_call --> run form, block until it finishes and raise error on nonzero exit status
-                    try:
-                        subprocess.check_call([form, 'program'], stdout=stdout, stderr=stderr, cwd=workdir)
-                    except OSError as error:
-                        if form not in str(error):
-                            error.filename = form
-                        raise
-
-            # collect output
-            with open(os.path.join(workdir, outfile), 'r') as f:
-                form_output = f.read()
-            assert len(form_output) > 0, "form output file (" + outfile + ") empty"
-
-        finally:
-            if not keep_workdir:
-                shutil.rmtree(workdir)
-
-        # read lowest_orders from form output
-        lowest_orders = np.empty(len(regulators), dtype=int)
-        regulator_factor = form_output[form_output.rfind('regulator_factor'):]
-        regulator_factor = regulator_factor[:regulator_factor.find(';')].replace('\n','').replace(' ','')
-        regulator_factors = regulator_factor.split('=')[1].split('*')[1:]
-        assert len(regulator_factors) == len(regulators)
-        for idx,(regulator,factor) in enumerate(zip(regulators,regulator_factors)):
-            form_regulator, power = factor.split('^')
-            assert form_regulator == str(regulator), '%s != %s' % (form_regulator, regulator)
-            lowest_orders[idx] = int(power.lstrip('(').rstrip(')'))
-
-        return lowest_orders, form_output
-
-def _generate_one_term(coefficients, complex_parameters, form_executable, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
+def _generate_one_term(coefficients, complex_parameters, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
 
     sub_name = package_generator.name
     replacements_in_files['sub_integral_name'] = sub_name
@@ -248,15 +133,15 @@ def _generate_one_term(coefficients, complex_parameters, form_executable, name, 
     for i in range(len(coefficients)):
         #coefficient = coefficients[i][j]
         coefficient = coefficients[i]
-        with tempfile.TemporaryDirectory(prefix="pSD") as tempdir:
-            this_coefficients_lowest_coefficient_orders, coefficient_expressions = \
-                    coefficient.process(regulators, form=form_executable, workdir=os.path.join(tempdir, "form"))
-        lowest_coefficient_orders.append(this_coefficients_lowest_coefficient_orders)
-        filename = os.path.join(coeffsdir, f"{sub_name}_coefficient{i}.txt")
-        filename2 = os.path.join("disteval", "coefficients", f"{sub_name}_coefficient{i}.txt")
-        with open(filename,'w') as coeffile:
-            coeffile.write(coefficient_expressions)
-        os.link(filename, filename2)
+        lowest_orders = coefficient.leading_orders(regulators, maxorder=999999)
+        lowest_coefficient_orders.append(lowest_orders)
+        is_nonzero = any(lo < 999999 for lo in lowest_orders)
+        if is_nonzero:
+            filename = os.path.join(coeffsdir, f"{sub_name}_coefficient{i}.txt")
+            filename2 = os.path.join("disteval", "coefficients", f"{sub_name}_coefficient{i}.txt")
+            with open(filename,'w') as coeffile:
+                coefficient.write(coeffile)
+            os.link(filename, filename2)
     replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
 
     minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
@@ -331,14 +216,6 @@ def sum_package(name, package_generators, regulators, requested_orders,
         The coefficients :math:`c_{ij}` of the integrals.
         :math:`c_{ij} = 1` with :math:`i \in \{0\}` is assumed if
         not provided.
-
-    :param form_executable:
-        string or None, optional;
-        The path to the form exectuable. The argument is passed
-        to :meth:`.Coefficient.process`. If ``None``, then either
-        ``$FORM``, ``$SECDEC_CONTRIB/bin/form``, or just ``form``
-        is used, depending on which environment variable is set.
-        Default: ``None``.
 
     :param pylink_qmc_transforms:
         list or None, optional;
@@ -534,7 +411,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
             with Pool(processes) as pool:
                 template_replacements = pool.starmap(_generate_one_term, [(
                         [c[j] for c in coefficients], complex_parameters,
-                        form_executable, name, package_generator._replace(processes=1),
+                        name, package_generator._replace(processes=1),
                         pylink_qmc_transforms, real_parameters, regulators,
                         replacements_in_files, requested_orders,
                         template_sources
@@ -544,7 +421,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
         else:
             template_replacements = [_generate_one_term(
                     [c[j] for c in coefficients], complex_parameters,
-                    form_executable, name, package_generator,
+                    name, package_generator,
                     pylink_qmc_transforms, real_parameters, regulators,
                     replacements_in_files, requested_orders,
                     template_sources
@@ -579,10 +456,10 @@ def sum_package(name, package_generators, regulators, requested_orders,
                     {
                         "integral": p.name,
                         "coefficient": f"{p.name}_coefficient{i}.txt",
-                        "coefficient_lowest_orders": template_replacements[j][0][i].tolist()
+                        "coefficient_lowest_orders": template_replacements[j][0][i]
                     }
                     for j, p in enumerate(package_generators)
-                    if not c[j].is_zero()
+                    if any(lo < 999999 for lo in template_replacements[j][0][i])
                 ]
                 for i, c in enumerate(coefficients)
             ]

@@ -699,54 +699,7 @@ parse_cmd_evalf(uint64_t token)
         printf("@[%" PRIu64 ",null,\"failed to open '%s'\"]\n", token, filename);
         exit(1);
     }
-    GiNaC::ex expr = 1;
-    std::string data;
-    for (;;) {
-        while (std::isspace(inf.peek())) inf.get();
-        if (inf.eof()) break;
-        std::getline(inf, data, '=');
-        if (data == "numerator ") {
-            std::getline(inf, data, ';');
-            for (char *p = &data[0];;) {
-                char *e = strchr(p, ',');
-                if (e == NULL) {
-                    expr *= ginac_read_string(reader, p, &data[0] + data.size() - p);
-                    break;
-                } else {
-                    expr *= ginac_read_string(reader, p, e - p);
-                    p = e + 1;
-                }
-            }
-        } else if (data == "denominator ") {
-            std::getline(inf, data, ';');
-            for (char *p = &data[0];;) {
-                char *e = strchr(p, ',');
-                if (e == NULL) {
-                    expr /= ginac_read_string(reader, p, &data[0] + data.size() - p);
-                    break;
-                } else {
-                    expr /= ginac_read_string(reader, p, e - p);
-                    p = e + 1;
-                }
-            }
-        } else if (data == "regulator_factor ") {
-            std::getline(inf, data, ';');
-            for (char *p = &data[0];;) {
-                char *e = strchr(p, ',');
-                if (e == NULL) {
-                    expr *= ginac_read_string(reader, p, &data[0] + data.size() - p);
-                    break;
-                } else {
-                    expr *= ginac_read_string(reader, p, e - p);
-                    p = e + 1;
-                }
-            }
-        } else {
-            printf("@[%" PRIu64 ",null,\"unknown key in %s: '%s'\"]\n", token, filename, data.c_str());
-            exit(1);
-        }
-    }
-    data.erase();
+    GiNaC::ex expr = reader(inf);
     GiNaC::exmap table;
     match_str(",{");
     char varname[MAXNAME];

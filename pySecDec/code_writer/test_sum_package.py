@@ -62,21 +62,15 @@ class TestCoefficient(unittest.TestCase):
     @attr('slow')
     def test_coefficient_order_num_den(self):
         coeff = Coefficient([self.numerator],[self.denominator], self.parameters)
-        lowest_orders, coefficient_definition = coeff.process(self.regulators, workdir='tmpdir_test_coefficient_order_num_den' + python_major_version)
+        lowest_orders = coeff.leading_orders(self.regulators)
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [-1])
 
-        # check coefficient_definition
-        processed_expressions = coefficient_definition.split(';')
-        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
-        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
-        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
-        
         self.assertEqual(
             (
                 (self.sympified_numerator / self.sympified_denominator) / \
-                (processed_numerator / processed_denominator * processed_regulator_factor)
+                sp.sympify(coeff.expression)
             ).simplify()
             , 1
         )
@@ -85,82 +79,36 @@ class TestCoefficient(unittest.TestCase):
     @attr('slow')
     def test_coefficient_order_empty(self):
         coeff = Coefficient([],[], self.parameters)
-        lowest_orders, coefficient_definition = coeff.process(self.regulators, workdir='tmpdir_test_coefficient_order_empty' + python_major_version)
+        lowest_orders = coeff.leading_orders(self.regulators)
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [0])
-
-        # check coefficient_definition
-        processed_expressions = coefficient_definition.split(';')
-        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
-        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
-        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
-        for item in (processed_numerator, processed_denominator, processed_regulator_factor):
-            self.assertEqual(item, 1)
 
     #@attr('active')
     @attr('slow')
     def test_coefficient_order_no_numerator(self):
         coeff = Coefficient([],[self.denominator,'eps^2'], self.parameters)
-        lowest_orders, coefficient_definition = coeff.process(self.regulators, workdir='tmpdir_test_coefficient_order_no_numerator' + python_major_version)
+        lowest_orders = coeff.leading_orders(self.regulators)
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [-3])
-
-        # check coefficient_definition
-        processed_expressions = coefficient_definition.split(';')
-        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
-        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
-        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
-        self.assertEqual(
-            (
-                (1 / self.sympified_denominator / sympify_expression('eps^2')) / \
-                (processed_numerator / processed_denominator * processed_regulator_factor)
-            ).simplify()
-            , 1
-        )
 
     #@attr('active')
     @attr('slow')
     def test_coefficient_order_no_denominator(self):
         coeff = Coefficient([self.numerator,'eps^2'], [], self.parameters)
-        lowest_orders, coefficient_definition = coeff.process(self.regulators, workdir='tmpdir_test_coefficient_order_no_denominator' + python_major_version)
+        lowest_orders = coeff.leading_orders(self.regulators)
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [2])
 
-        # check coefficient_definition
-        processed_expressions = coefficient_definition.split(';')
-        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
-        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
-        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
-        self.assertEqual(
-            (
-                (self.sympified_numerator * sympify_expression('eps^2')) / \
-                (processed_numerator / processed_denominator * processed_regulator_factor)
-            ).simplify()
-            , 1
-        )
-
     #@attr('active')
     def test_coefficient_with_imaginary_unit(self):
         coeff = Coefficient(['I*(5+I*8)'], [], [])
-        lowest_orders, coefficient_definition = coeff.process([], workdir='tmpdir_test_coefficient_with_imaginary_unit' + python_major_version)
+        lowest_orders = coeff.leading_orders([])
 
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [])
-
-        # check coefficient_definition
-        processed_expressions = coefficient_definition.split(';')
-        processed_regulator_factor = sympify_expression( processed_expressions[0].split('=')[1] )
-        processed_numerator = sympify_expression( '('+')*('.join(processed_expressions[1].split('=')[1].split(','))+')' )
-        processed_denominator = sympify_expression( '('+')*('.join(processed_expressions[2].split('=')[1].split(','))+')' )
-        
-        self.assertFalse( '^2' in str(processed_numerator) )
-
-        self.assertEqual( sympify_expression(processed_numerator) - sympify_expression('5*I-8') , 0)
-        self.assertEqual( sympify_expression(processed_denominator) - sympify_expression('1') , 0)
-        self.assertEqual( sympify_expression(processed_regulator_factor) - sympify_expression('1') , 0)
 
 # --------------------------------- mid-level tests ---------------------------------
 class TestSumPackage(unittest.TestCase):
