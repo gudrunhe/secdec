@@ -35,7 +35,7 @@ class Coefficient(object):
         The symbols other parameters.
 
         '''
-    def __init__(self, numerator, denominator, parameters):
+    def __init__(self, numerator, denominator=(), parameters=()):
         if not np.iterable(parameters):
             raise ValueError("parameters must be iterable")
         if np.iterable(numerator):
@@ -116,6 +116,12 @@ class Coefficient(object):
         Write the coefficient into a given file object.
         """
         file.write(self.expression)
+
+    @staticmethod
+    def from_string(expression, exclude_parameters=()):
+        expression = expression.replace("**", "^")
+        parameters = list(set(re.findall("[a-zA-Z_][a-zA-Z_0-9]*", expression)) - set(exclude_parameters))
+        return Coefficient((expression,), parameters=parameters)
 
 def _generate_one_term(coefficients, complex_parameters, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
 
@@ -257,14 +263,20 @@ def sum_package(name, package_generators, regulators, requested_orders,
     pylink_qmc_transforms = validate_pylink_qmc_transforms(pylink_qmc_transforms)
 
     # prepare coefficients
-    empty_coefficient = Coefficient((), (), ())
+    coefficient_1 = Coefficient((), (), ())
     if coefficients is None:
-        coefficients = [[empty_coefficient] * len(package_generators)]
+        coefficients = [[coefficient_1] * len(package_generators)]
     else:
-        coefficients = [[empty_coefficient if c is None else c for c in c_i] for c_i in coefficients]
         for c_i in coefficients:
             assert len(c_i) == len(package_generators), \
                 "`coefficients` must either be ``None`` be a list of lists which all have the same length as `package_generators`."
+        coefficients = [[
+                coefficient_1 if c is None else
+                c if isinstance(c, Coefficient) else
+                Coefficient.from_string(str(c), exclude_parameters=regulators)
+                for c in c_i
+            ]
+            for c_i in coefficients]
 
     # construct the c++ type "nested_series_t"
     # for two regulators, the resulting code should read:

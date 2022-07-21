@@ -6,15 +6,15 @@ coeff = [
     # M++--
     [
         # bubble (u) coefficient
-        Coefficient(['-8*(t-u)'],['-u-t'],['t','u']),
+        '-8*(t-u)/(-u-t)',
         
         # bubble (t) coefficient
-        Coefficient(['-8*(u-t)'],['-u-t'],['t','u']),
+        '-8*(u-t)/(-u-t)',
 
         # box6 coefficient
-        Coefficient(['-8*(t**2+u**2)'],['-u-t'],['t','u']),
+        '-8*(t^2+u^2)/(-u-t)',
         
         # box8 coefficient
-        Coefficient(['-8*3*(2*eps)'],['1'],['t','u'])
+        '-8*3*(2*eps)'
     ]
 ]

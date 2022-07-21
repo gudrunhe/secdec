@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from pySecDec import Coefficient
 from pySecDec import MakePackage
 from pySecDec import sum_package
 
@@ -7,12 +6,12 @@ if __name__ == "__main__":
 
     coefficients = [
         [ # sum1
-            Coefficient(['2*s'],['1'],['s']),   # easy1
-            Coefficient(['3*s'],['1'],['s'])    # easy2
+            '2*s',   # easy1
+            '3*s'    # easy2
         ],
         [ # sum2
-            Coefficient(['s'],['2*eps'],['s']), # easy1
-            Coefficient(['s*eps'],['3'],['s'])  # easy2
+            's/(2*eps)', # easy1
+            's*eps/3'  # easy2
         ]
     ]
 

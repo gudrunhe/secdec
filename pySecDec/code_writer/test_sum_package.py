@@ -110,6 +110,21 @@ class TestCoefficient(unittest.TestCase):
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [])
 
+    #@attr('active')
+    def test_coefficient_from_string(self):
+        coeff = Coefficient.from_string(f"({self.numerator})/({self.denominator})", exclude_parameters=["eps"])
+
+        # check lowest_orders
+        np.testing.assert_array_equal(coeff.parameters, list(set(self.parameters)))
+
+        self.assertEqual(
+            (
+                (self.sympified_numerator / self.sympified_denominator) / \
+                sp.sympify(coeff.expression)
+            ).together()
+            , 1
+        )
+
 # --------------------------------- mid-level tests ---------------------------------
 class TestSumPackage(unittest.TestCase):
     'Base class to define the tearDown method.'
