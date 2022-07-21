@@ -38,11 +38,11 @@ class Coefficient(object):
     def __init__(self, numerator, denominator=(), parameters=()):
         if not np.iterable(parameters):
             raise ValueError("parameters must be iterable")
-        if np.iterable(numerator):
+        if not isinstance(numerator, str):
             numerator = "*".join(f"({f})" for f in numerator) or "1"
-        if np.iterable(denominator):
-            denominator = "*".join(f"({f})" for f in denominator) or "1"
-        self.expression = f"{numerator}/({denominator})"
+        if not isinstance(denominator, str):
+            denominator = "*".join(f"({f})" for f in denominator) or ""
+        self.expression = f"({numerator})/({denominator})" if denominator else numerator
         self.parameters = parameters
 
     def leading_orders(self, regulators, maxorder=999999):
@@ -121,7 +121,7 @@ class Coefficient(object):
     def from_string(expression, exclude_parameters=()):
         expression = expression.replace("**", "^")
         parameters = list(set(re.findall("[a-zA-Z_][a-zA-Z_0-9]*", expression)) - set(exclude_parameters))
-        return Coefficient((expression,), parameters=parameters)
+        return Coefficient(expression, parameters=parameters)
 
 def _generate_one_term(coefficients, complex_parameters, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
 

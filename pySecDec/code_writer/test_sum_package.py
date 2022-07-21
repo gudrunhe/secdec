@@ -114,7 +114,6 @@ class TestCoefficient(unittest.TestCase):
     def test_coefficient_from_string(self):
         coeff = Coefficient.from_string(f"({self.numerator})/({self.denominator})", exclude_parameters=["eps"])
 
-        # check lowest_orders
         np.testing.assert_array_equal(coeff.parameters, list(set(self.parameters)))
 
         self.assertEqual(
@@ -122,6 +121,38 @@ class TestCoefficient(unittest.TestCase):
                 (self.sympified_numerator / self.sympified_denominator) / \
                 sp.sympify(coeff.expression)
             ).together()
+            , 1
+        )
+
+    #@attr('active')
+    def test_coefficient_without_brackets_1(self):
+        coeff = Coefficient(["1+eps"], ["1-eps"], [])
+        self.assertEqual(
+            (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together()
+            , 1
+        )
+
+    #@attr('active')
+    def test_coefficient_without_brackets_2(self):
+        coeff = Coefficient("1+eps", ["1-eps"], [])
+        self.assertEqual(
+            (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together()
+            , 1
+        )
+
+    #@attr('active')
+    def test_coefficient_without_brackets_3(self):
+        coeff = Coefficient(["1+eps"], "1-eps", [])
+        self.assertEqual(
+            (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together()
+            , 1
+        )
+
+    #@attr('active')
+    def test_coefficient_without_brackets_4(self):
+        coeff = Coefficient("1+eps", "1-eps", [])
+        self.assertEqual(
+            (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together()
             , 1
         )
 
