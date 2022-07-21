@@ -22,11 +22,11 @@ class Coefficient(object):
     in the numerator and a product of terms in the
     denominator.
 
-    :param numerator:
+    :param numerators:
         str, or iterable of str;
         The numerator, or the terms in the numerator.
 
-    :param denominator:
+    :param denominators:
         str, or iterable of str;
         The denominator, or the terms in the denominator.
 
@@ -35,14 +35,14 @@ class Coefficient(object):
         The symbols other parameters.
 
         '''
-    def __init__(self, numerator, denominator=(), parameters=()):
+    def __init__(self, numerators, denominators=(), parameters=()):
         if not np.iterable(parameters):
             raise ValueError("parameters must be iterable")
-        if not isinstance(numerator, str):
-            numerator = "*".join(f"({f})" for f in numerator) or "1"
-        if not isinstance(denominator, str):
-            denominator = "*".join(f"({f})" for f in denominator) or ""
-        self.expression = f"({numerator})/({denominator})" if denominator else numerator
+        if not isinstance(numerators, str):
+            numerators = "*".join(f"({f})" for f in numerators) or "1"
+        if not isinstance(denominators, str):
+            denominators = "*".join(f"({f})" for f in denominators) or ""
+        self.expression = f"({numerators})/({denominators})" if denominators else numerators
         self.parameters = parameters
 
     def leading_orders(self, regulators, maxorder=999999):
