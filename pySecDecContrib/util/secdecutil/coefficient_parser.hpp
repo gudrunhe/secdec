@@ -1,9 +1,16 @@
+#include <stdlib.h> // mkstemp
+#include <unistd.h> // write
+
 #include <cassert> // assert
 #include <cmath> // std::frexp
-#include <istream> // std::istream
-#include <sstream> // std::stringstream
 #include <string> // std::string
 #include <vector> // std::vector
+#include <limits> // std::numeric_limits
+#include <fstream> // std::ifstream
+#include <algorithm> // std::erase
+#include <array> // std::array
+
+#include <gmp.h> // mpq_get_str
 
 #include <secdecutil/series.hpp> // secdecutil::Series
 #include <secdecutil/deep_apply.hpp> // secdecutil::deep_apply
@@ -17,7 +24,6 @@ namespace secdecutil
     
         struct unknown_expression_error : public std::runtime_error { using std::runtime_error::runtime_error; };
     
-        //namespace g = GiNaC;
         typedef std::vector<long long int> powerlist_t;
         typedef mpqc_class rational_t;
         typedef std::map<powerlist_t, rational_t> expression_t;
@@ -37,13 +43,9 @@ namespace secdecutil
             (
                 expression_t expression,
                 const std::vector<std::string>& expansion_parameters,
-                const std::vector<int>& numbers_of_orders,
-                const std::vector<int>& offsets = {},
-                size_t current_regulator_index = 0,
-                bool truncated = false
+                size_t current_regulator_index = 0
             )
             {
-                assert(current_regulator_index == numbers_of_orders.size());
                 assert(current_regulator_index == expansion_parameters.size());
                 return expression.begin()->second;
             }
@@ -56,20 +58,25 @@ namespace secdecutil
             (
                 expression_t expression,
                 const std::vector<std::string>& expansion_parameters,
-                const std::vector<int>& numbers_of_orders,
-                const std::vector<int>& offsets = {},
-                size_t current_regulator_index = 0,
-                bool truncated = false
+                size_t current_regulator_index = 0
             )
             {
-                int offset = offsets.empty() ? 0 : offsets.at(current_regulator_index);
+                // Print exponent vectors : coefficient
+                // for(auto it = expression.cbegin(); it != expression.cend(); ++it)
+                // {
+                //     for(auto elem : it->first)
+                //         std::cout << elem << " ";
+                //     std::cout << ": " << it->second << std::endl;
+                // }
+                int min_order = expression.begin()->first[0];
+                int max_order = expression.rbegin()->first[0];
                 std::vector<T> content;
-                content.reserve(numbers_of_orders.at(current_regulator_index));
-                for (int i = 0; i < numbers_of_orders.at(current_regulator_index); ++i)
+                content.reserve(max_order - min_order + 1);
+                for (int i = min_order; i <= max_order; ++i)
                 {
                     // Get terms of order i in regulator current_regulator_index (dropping current regulator)
-                    powerlist_t lower_bound( expression.begin()->first.size(), 0);
-                    powerlist_t upper_bound( expression.begin()->first.size(), 0);
+                    powerlist_t lower_bound( expression.begin()->first.size(), std::numeric_limits<long long int>::min());
+                    powerlist_t upper_bound( expression.begin()->first.size(), std::numeric_limits<long long int>::min());
                     lower_bound[0] = i;
                     upper_bound[0] = i+1;
                     expression_t::iterator itlow = expression.lower_bound(lower_bound);
@@ -87,23 +94,19 @@ namespace secdecutil
                         ex_to_nested_series<T>::convert
                         (
                             subexpression,
-                            expansion_parameters, numbers_of_orders, offsets,
+                            expansion_parameters,
                             current_regulator_index + 1
                         )
                     );
                 }
-                return {
-                            offset,
-                            numbers_of_orders.at(current_regulator_index)+offset-1,
-                            content, truncated, expansion_parameters.at(current_regulator_index)
-                        };
+                return {min_order, max_order, content, false, expansion_parameters.at(current_regulator_index)};
             }
         };
-
-        template<template<typename> class nested_series_t, typename real_t, typename complex_t>
-        nested_series_t<complex_t> read_coefficient
+    
+        template<typename real_t, typename complex_t>
+        std::string run_ginsh
         (
-            std::istream& stream,
+            const std::string& filename,
             const std::vector<int>& required_orders,
             const std::vector<std::string>& names_of_regulators,
             const std::vector<std::string>& names_of_real_parameters,
@@ -112,94 +115,133 @@ namespace secdecutil
             const std::vector<complex_t>& complex_parameters
         )
         {
-            std::string line_in, line, exprname, exprval, remainder;
-            
-            Exparse parser;
-            
-            parser.symbol_table = names_of_regulators;
+            // Get SECDEC_CONTRIB
+            std::string secdec_contrib;
+            char *secdec_contrib_char = std::getenv("SECDEC_CONTRIB");
+            if(secdec_contrib_char == nullptr) {
+                secdec_contrib = std::string(SECDEC_CONTRIB);
+            } else {
+                secdec_contrib = std::string(secdec_contrib_char);
+            }
 
-            parser.substitution_table["I"] = rational_t("0","1");// imaginary unit
+            // Get tmp directory
+            std::string tmp_file;
+            char *tmp_file_char = std::getenv("TMP");
+            if(tmp_file_char == nullptr) {
+                tmp_file = std::string("/tmp");
+            } else {
+                tmp_file = std::string(tmp_file_char);
+            }
+            tmp_file += "/ginsh_tmp.XXXXXXXXXXXXXXXXXXXX";
+
+            // Create tmp ginsh file
+            char *tmp_ginsh_filename = &tmp_file[0]; // template for our file.        
+            int fd = mkstemp(&tmp_file[0]);    // Creates and opens a new temp file r/w.
+            if(fd<1)
+                throw std::runtime_error("failed to open temporary file" + tmp_file + " in coefficient_parser");
+
+            // Populate ginsh file
+            std::stringstream ginsh_ss;
+            for(const auto& regulator_name : names_of_regulators)
+            {
+                ginsh_ss << "real_symbols('" << regulator_name << "'):\n";
+            }
+            for(int i = 0; i < names_of_real_parameters.size(); i++)
+                ginsh_ss << names_of_real_parameters.at(i) << "=" << mpq_get_str(NULL,10,rational_t(real_parameters.at(i)).re) << ":\n";
+            for(int i = 0; i < names_of_complex_parameters.size(); i++)
+                ginsh_ss << names_of_complex_parameters.at(i) << "=" << mpq_get_str(NULL,10,rational_t(complex_parameters.at(i).real(),0).re) << "+I*(" <<  mpq_get_str(NULL,10,rational_t(0,complex_parameters.at(i).imag()).im) << "):\n";
+            std::ifstream coefficient_file(filename);
+            if (coefficient_file.is_open())
+            {
+                std::string line;
+                while (std::getline(coefficient_file, line)) {
+                    ginsh_ss << "EXPR=" << strip(line) << ":\n";
+                }
+                coefficient_file.close();
+            }
+            ginsh_ss << "EXPR2=expand(";
+            for(int i = 0; i < names_of_regulators.size(); i++)
+            {
+                ginsh_ss << "series_to_poly(series(";
+            }
+            ginsh_ss << "EXPR";
+            for(int i = 0; i < names_of_regulators.size(); i++)
+            {
+                ginsh_ss << "," << names_of_regulators.at(i) << "," << required_orders.at(i)+1 << "))";
+            }
+            ginsh_ss << "):\n";
+            ginsh_ss << "START;" << std::endl;
+            ginsh_ss << "expand(real_part(EXPR2)+I_*imag_part(EXPR2));\n";
+            ginsh_ss << "quit;\n";
+            std::string ginsh_str = ginsh_ss.str();
+            write(fd, ginsh_str.c_str(), ginsh_str.size());
+            //std::cout << ginsh_str;
+
+            // Run ginsh
+            std::string cmd = secdec_contrib + "/bin/ginsh " + std::string(tmp_ginsh_filename);
+            std::string result;
+            std::array<char, 256> buffer;
+            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+            if (!pipe) {
+                // Delete ginsh file
+                close(fd);
+                unlink(tmp_ginsh_filename);
+                throw std::runtime_error("popen() failed when launching ginsh");
+            }
+            while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                result += buffer.data();
+            }
+
+            // Delete ginsh file
+            close(fd);
+            unlink(tmp_ginsh_filename);
+
+            // Strip nonsense from ginsh output
+            size_t start = result.find("START");
+            if (start==std::string::npos)
+                throw std::runtime_error("failed to parse ginsh output in coefficient_parser");
+            result.erase(0,start+6); // welcome message
+            result.pop_back(); // final newline
+            result.erase(std::remove(result.begin(), result.end(), '('), result.end()); // (
+            result.erase(std::remove(result.begin(), result.end(), ')'), result.end()); // )
+
+            //std::cout << result << std::endl;
+            return result;
+        }
+
+        template<template<typename> class nested_series_t, typename real_t, typename complex_t>
+        nested_series_t<complex_t> read_coefficient
+        (
+            const std::string& filename,
+            const std::vector<int>& required_orders,
+            const std::vector<std::string>& names_of_regulators,
+            const std::vector<std::string>& names_of_real_parameters,
+            const std::vector<std::string>& names_of_complex_parameters,
+            const std::vector<real_t>& real_parameters,
+            const std::vector<complex_t>& complex_parameters
+        )
+        {
+            Exparse parser;
+            parser.symbol_table = names_of_regulators;
+            parser.substitution_table["I_"] = rational_t("0","1");// imaginary unit
             for(int i = 0; i<names_of_real_parameters.size(); i++)
                 parser.substitution_table[names_of_real_parameters.at(i)] = rational_t(real_parameters.at(i));
             for(int i = 0; i<names_of_complex_parameters.size(); i++)
                 parser.substitution_table[names_of_complex_parameters.at(i)] = rational_t(complex_parameters.at(i).real(),complex_parameters.at(i).imag());
-            
-            nested_series_t<rational_t> numerator = ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression("1"), parser.symbol_table, std::vector<int>(required_orders.size(),1),{},0); // = 1
-            nested_series_t<rational_t> denominator = ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression("1"), parser.symbol_table, std::vector<int>(required_orders.size(),1),{},0); // = 1
-
-            std::vector<int> offsets;
-            offsets.reserve(names_of_regulators.size());
-            bool regulator_factor_processed = false;
-            bool last_processed = false;
-            while (std::getline(stream, line_in, ';'))
-            {
-                assert( !last_processed );
-
-                secdecutil::exparse::strip(line_in);
-                if (line_in.empty()) {
-                    last_processed = true;
-                    continue; // std::getline should return false which breaks the loop
-                }
-                
-                // replace newline by spaces
-                line.clear();
-                for (auto& c : line_in)
-                {
-                    if (c != '\\' && secdecutil::exparse::blankchars.find(c) == std::string::npos)
-                        line += c;
-                }
-
-                // split by equal sign (=)
-                std::istringstream linestream(line);
-                std::getline(linestream, exprname, '=');
-                secdecutil::exparse::strip(exprname);
-                assert(std::getline(linestream, exprval, '='));
-                linestream >> remainder;
-                assert(remainder.length() == 0);
-
-                //std::cout << "line_in " << line_in << std::endl;
-                //std::cout << "exprname " << exprname << std::endl;
-                //std::cout << "exprval " << exprval << std::endl;
-                
-                if(!regulator_factor_processed)
-                {
-                    // Step 1: Get regulator_factor
-                    if(exprname == "regulator_factor")
-                    {
-                        expression_t regulator_factor_expression = parser.parse_expression(exprval);
-                        assert(regulator_factor_expression.size()==1); // Expect only 1 term
-                        offsets = std::vector<int>(regulator_factor_expression.begin()->first.begin(), regulator_factor_expression.begin()->first.end());
-                        regulator_factor_processed = true;
-                        //std::cout << "#regulator_factor_processed: ";
-                        //for(auto elem: offsets) std::cout << elem << " ";
-                        //std::cout << std::endl;
-                        numerator *= ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression("1"), parser.symbol_table, std::vector<int>(required_orders.size(),1),offsets,0); // = regulator_factor
-                    }
-                } else {
-                    // Step 2: Process numerators and denominators
-                    std::string token;
-                    std::istringstream exprval_stream(exprval);
-                    while(std::getline(exprval_stream, token, ',')) {
-                        if(exprname == "numerator")
-                        {
-                            numerator *= ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression(token), parser.symbol_table, required_orders);
-                            //std::cout << "#numerator: " << numerator << std::endl;
-                        } else if (exprname == "denominator")
-                        {
-                            denominator *= ex_to_nested_series<nested_series_t<rational_t>>::convert(parser.parse_expression(token), parser.symbol_table, required_orders);
-                            //std::cout << "#denominator: " << denominator << std::endl;
-                        } else
-                        {
-                            throw unknown_expression_error("Encountered unknown expression name while parsing coefficient: " + exprname);
-                        }
-                    }
-                }
-            }
-            nested_series_t<rational_t> coefficient = numerator/denominator;
-
-            //std::cout << numerator << std::endl;
-            //std::cout << denominator << std::endl;
-            //std::cout << coefficient << std::endl;
+            nested_series_t<rational_t> coefficient = ex_to_nested_series<nested_series_t<rational_t>>::convert(
+                                                        parser.parse_expression(
+                                                                                run_ginsh(
+                                                                                            filename,
+                                                                                            required_orders,
+                                                                                            names_of_regulators,
+                                                                                            names_of_real_parameters,
+                                                                                            names_of_complex_parameters,
+                                                                                            real_parameters,
+                                                                                            complex_parameters
+                                                                                        )
+                                                                            ), 
+                                                        names_of_regulators
+                                                    );
             
             const std::function<complex_t(const rational_t&)> to_complex =
                         [](const rational_t& arg)
@@ -207,7 +249,6 @@ namespace secdecutil
                             return complex_t{mpq_get_d(arg.re), mpq_get_d(arg.im)};
                         };
             return secdecutil::deep_apply(coefficient,to_complex);
-
         }
     };
 };

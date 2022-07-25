@@ -48,11 +48,10 @@ namespace %(sub_integral_name)s
 
     nested_series_t<complex_t> coefficient(const std::vector<real_t>& real_parameters, const std::vector<complex_t>& complex_parameters, const unsigned int amp_idx, const std::string& lib_path)
     {
-        std::ifstream coeffile(lib_path + "/%(sub_integral_name)s_coefficient" + std::to_string(amp_idx) + ".txt");
-        assert( coeffile.is_open() );
+        std::string coeff_filename(lib_path + "/%(sub_integral_name)s_coefficient" + std::to_string(amp_idx) + ".txt");
         return secdecutil::exparse::read_coefficient<nested_series_t>
                (
-                    coeffile, compute_required_orders(amp_idx),
+                    coeff_filename, compute_required_orders(amp_idx),
                     names_of_regulators, names_of_real_parameters, names_of_complex_parameters,
                     real_parameters, complex_parameters
                );
