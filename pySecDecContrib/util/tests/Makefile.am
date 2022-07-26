@@ -38,7 +38,7 @@ test_amplitude_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
 test_amplitude_LDADD += -L$(SECDEC_CONTRIB)/lib
 
 test_coefficient_parser_LDADD = -lgmp
-test_coefficient_parser_CXXFLAGS = -I$(SECDEC_CONTRIB)/include
+test_coefficient_parser_CXXFLAGS = -I$(SECDEC_CONTRIB)/include -DSECDEC_CONTRIB=\"$(SECDEC_CONTRIB)\"
 test_coefficient_parser_LDADD += -L$(SECDEC_CONTRIB)/lib
 
 TESTS = $(check_PROGRAMS)
