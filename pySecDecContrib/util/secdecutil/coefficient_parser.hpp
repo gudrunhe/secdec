@@ -9,6 +9,7 @@
 #include <fstream> // std::ifstream
 #include <algorithm> // std::erase
 #include <array> // std::array
+#include <regex>  // std::regex, std::regex_replace
 
 #include <gmp.h> // mpq_get_str
 
@@ -153,8 +154,10 @@ namespace secdecutil
             std::ifstream coefficient_file(filename);
             if (coefficient_file.is_open())
             {
+                std::regex e_power("(\\*\\*)");
                 std::string line;
                 while (std::getline(coefficient_file, line)) {
+                    line = std::regex_replace(line, e_power, "^"); // replace ** -> ^ (maintains backwards compatibility)
                     ginsh_ss << "EXPR=" << strip(line) << ":\n";
                 }
                 coefficient_file.close();
