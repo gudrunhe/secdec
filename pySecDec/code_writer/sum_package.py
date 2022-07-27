@@ -120,7 +120,7 @@ class Coefficient(object):
     @staticmethod
     def from_string(expression, exclude_parameters=()):
         expression = expression.replace("**", "^")
-        parameters = list(set(re.findall("[a-zA-Z_][a-zA-Z_0-9]*", expression)) - set(exclude_parameters))
+        parameters = sorted(list(set(re.findall("[a-zA-Z_][a-zA-Z_0-9]*", expression)) - set(exclude_parameters)))
         return Coefficient(expression, parameters=parameters)
 
 def _generate_one_term(coefficients, complex_parameters, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):

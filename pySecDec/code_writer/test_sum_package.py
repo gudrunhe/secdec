@@ -114,7 +114,7 @@ class TestCoefficient(unittest.TestCase):
     def test_coefficient_from_string(self):
         coeff = Coefficient.from_string(f"({self.numerator})/({self.denominator})", exclude_parameters=["eps"])
 
-        np.testing.assert_array_equal(coeff.parameters, list(set(self.parameters)))
+        np.testing.assert_array_equal(coeff.parameters, self.parameters)
 
         self.assertEqual(
             (
