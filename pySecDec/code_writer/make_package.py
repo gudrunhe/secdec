@@ -2210,8 +2210,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     expanded_prefactor = expanded_prefactor.denest()
     os.mkdir(os.path.join(name, "disteval"))
-    with open(os.path.join(name, "disteval", name + ".json"), "w") as f:
-        json.dump({
+    descr = {
             "name": name,
             "type": "integral",
             "dimension": len(integration_variables),
@@ -2231,6 +2230,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 }
                 for e, c in zip(expanded_prefactor.expolist, expanded_prefactor.coeffs)
             ],
+            "lowest_orders": list(map(int, lowest_orders)),
             "kernels": [
                 f"sector_{s}_order_{o}"
                 for powers, order_names in sector_orders.items()
@@ -2243,7 +2243,10 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 }
                 for powers, order_names in sector_orders.items()
             ]
-        }, f, indent=2)
+    }
+    with open(os.path.join(name, "disteval", name + ".json"), "w") as f:
+        json.dump(descr, f, indent=2)
+    template_replacements["description"] = descr
 
     print('"' + name + '" done')
 

@@ -162,7 +162,12 @@ def _generate_one_term(coefficients, complex_parameters, name, package_generator
                             replacements_in_files)
 
     # Call make_package with its arguments
-    return lowest_coefficient_orders, make_package(**package_generator._asdict())
+    mp = make_package(**package_generator._asdict())
+    highest_coefficient_orders = [
+        np.asarray(requested_orders) - mp["description"]["prefactor_lowest_orders"] - mp["description"]["lowest_orders"]
+        for lo in lowest_coefficient_orders
+    ]
+    return lowest_coefficient_orders, highest_coefficient_orders, mp
 
 
 def sum_package(name, package_generators, regulators, requested_orders,
@@ -441,8 +446,10 @@ def sum_package(name, package_generators, regulators, requested_orders,
                 for j, package_generator in enumerate(package_generators)
             ]
 
-        replacements_in_files['number_of_integration_variables'] = \
-                max(t['number_of_integration_variables'] for lo, t in template_replacements)
+        replacements_in_files['number_of_integration_variables'] = max(
+            t['number_of_integration_variables']
+            for coeff_lo, coeff_ho, t in template_replacements
+        )
 
     finally:
         os.chdir(original_working_directory)
@@ -458,17 +465,18 @@ def sum_package(name, package_generators, regulators, requested_orders,
             "type": "sum",
             "max_dimension": replacements_in_files["number_of_integration_variables"],
             "regulators": [str(p) for p in regulators],
-            "requested_orders": requested_orders,
             "realp": [str(p) for p in real_parameters],
             "complexp": [str(p) for p in complex_parameters],
             "complex_result": bool(need_complex),
+            "requested_orders": requested_orders,
             "integrals": [p.name for p in package_generators],
             "sums": [
                 [
                     {
                         "integral": p.name,
                         "coefficient": f"{p.name}_coefficient{i}.txt",
-                        "coefficient_lowest_orders": template_replacements[j][0][i]
+                        "coefficient_lowest_orders": template_replacements[j][0][i],
+                        "coefficient_highest_orders": list(map(int, template_replacements[j][1][i]))
                     }
                     for j, p in enumerate(package_generators)
                     if any(lo < 999999 for lo in template_replacements[j][0][i])
@@ -477,4 +485,4 @@ def sum_package(name, package_generators, regulators, requested_orders,
             ]
         }, f, indent=2)
     # Return template replacements of last integral processed (for 1 integral case this emulates what code_writer.make_package does)
-    return template_replacements[-1][1]
+    return template_replacements[-1][2]
