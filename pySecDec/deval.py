@@ -392,7 +392,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         done_evalf.todo = sum(len(terms) for terms in info["sums"])
         def evalf_cb(br_coef, exception, w, a, t):
             if exception is not None:
-                done_evalf.set_exception(exception)
+                done_evalf.set_exception(WorkerException(exception))
                 return
             log("-", t["coefficient"])
             br_coef = {tuple(k):sp.sympify(v) for k,v in br_coef}
