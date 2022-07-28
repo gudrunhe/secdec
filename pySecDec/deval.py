@@ -690,23 +690,6 @@ def load_cluster_json(jsonfile, dirname):
             ]
     }
 
-def load_coefficients(filename):
-    tr = {ord(" "): None, ord("\n"): None, ord("\\"): None}
-    coeff = []
-    with open(filename, "r") as f:
-        text = f.read().translate(tr)
-    for part in text.split(";", 3):
-        part = part.strip()
-        if not part: continue
-        key, value = part.split("=")
-        key = key.strip()
-        factors = [x for x in value.split(",") if x != "1"]
-        if key == "numerator": coeff.extend(factors)
-        elif key == "denominator": coeff.extend(f"({x})^(-1)" for x in factors)
-        elif key == "regulator_factor": coeff.extend(factors)
-        else: raise ValueError(f"bad key in {filename!r}: {key!r}")
-    return coeff
-
 def split_integral_into_orders(orders, ampid, kernel2idx, info, br_coef, valmap, sp_regulators, requested_orders):
     br_pref = {
         tuple(t["regulator_powers"]) : complex(sp.sympify(t["coefficient"]).subs(valmap))
