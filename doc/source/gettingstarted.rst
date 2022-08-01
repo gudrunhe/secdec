@@ -398,7 +398,6 @@ First, we import the necessary python packages and open the ``if __name__ == "__
 .. code::
 
     #!/usr/bin/env python3
-    from pySecDec import Coefficient
     from pySecDec import MakePackage
     from pySecDec import sum_package
 
@@ -414,19 +413,20 @@ The common arguments for the integrals are collected in the ``common_args`` dict
         common_args['requested_orders'] = [0]
 
 Next, the coefficients of the integrals for each weighted sum are specified.
-Each :class:`Coefficient <pySecDec.code_writer.sum_package.Coefficient>` is specified as a list of numerator factors, list of denominator factors and a list of real or complex parameters on which the coefficient depends.
-Coefficients can depend also depend the regulators, the :func:`sum_package <pySecDec.code_writer.sum_package.sum_package>` function will automatically determine the correct orders to which the coefficients and integrals should be expanded in order to obtain the ``requested_orders``.
+Each coefficient is specified as a string with an arbitrary arithmetic (i.e. rational) expression.
+Coefficients can also be specified as instances of the :class:`Coefficient <pySecDec.code_writer.sum_package.Coefficient>` class.
+Coefficients can depend on the regulators, the :func:`sum_package <pySecDec.code_writer.sum_package.sum_package>` function will automatically determine the correct orders to which the coefficients and integrals should be expanded in order to obtain the ``requested_orders``.
 
 .. code::
 
         coefficients = [
             [ # sum1
-                Coefficient(['2*s'],['1'],['s']),   # easy1
-                Coefficient(['3*s'],['1'],['s'])    # easy2
+                '2*s',       # easy1
+                '3*s'        # easy2
             ],
             [ # sum2
-                Coefficient(['s'],['2*eps'],['s']), # easy1
-                Coefficient(['s*eps'],['3'],['s'])  # easy2
+                's/(2*eps)', # easy1
+                's*eps/3'    # easy2
             ]
         ]
 
