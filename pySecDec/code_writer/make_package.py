@@ -524,7 +524,7 @@ def _make_FORM_function_definition(name, expression, args, limit):
                 codelines.append(
                     "  Id %s = %s * (%s);\n" % (
                         name+FORM_args_left_hand_side,
-                        name_next_level+str(0)+FORM_args_right_hand_side, Polynomial(expression.expolist, [1], copy=False) )
+                        name_next_level+str(0)+FORM_args_right_hand_side, Polynomial(expression.expolist, [1], expression.polysymbols, copy=False) )
                     )
                 recursion(name_next_level+str(0), expression.coeffs[0])
                 return
