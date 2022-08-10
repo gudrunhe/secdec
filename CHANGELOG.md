@@ -3,7 +3,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.4] - 2022-09-10
+
+### Fixed
+- Critical bug in `_make_FORM_function_definition` introduced in v1.5, which could lead to subtly incorrect numerical results when polynomials with one term and a large coefficient (more than 10^6 characters) were encountered in intermediate stages of the decomposition (Thanks to Christoph Greub).
 
 ## [1.5.3] - 2022-01-26
 
