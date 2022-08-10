@@ -400,6 +400,26 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
+    #@attr('active')
+    def test_polynomial_coefficient(self):
+        symbols = ['x','y','z']
+
+        name = 'myName'
+        coeff = Polynomial([[1,1,1],[1,1,2],[1,1,3],[1,1,4]], [1,2,3,4], ['a','b','c'])
+        expression = Polynomial([[0,1,1]], [coeff], symbols)
+        limit = 20
+        FORM_code = _make_FORM_function_definition(name, expression, symbols, limit)
+        FORM_code = ''.join(FORM_code)
+
+        target_FORM_code  = "  Id myName(x?,y?,z?) = SecDecInternalfDUMMYmyNamePart0(x,y,z) * ( + (1)*y*z);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYmyNamePart0(x?,y?,z?) = SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x,y,z)+SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x,y,z)+SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part2(x,y,z)+SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part3(x,y,z);\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part0(x?,y?,z?) =  + (1)*a*b*c;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part1(x?,y?,z?) =  + (2)*a*b*c^2;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part2(x?,y?,z?) =  + (3)*a*b*c^3;\n"
+        target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part3(x?,y?,z?) =  + (4)*a*b*c^4;\n"
+
+        self.assertEqual(FORM_code, target_FORM_code)    
+
 class TestMiscellaneous(unittest.TestCase):
     #@attr('active')
     def test_derivative_muliindex_to_name(self):
