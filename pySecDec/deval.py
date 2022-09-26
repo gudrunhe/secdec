@@ -385,7 +385,8 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     # Load the integral coefficients
     ap2coeffs = {} # (ampid, powerlist) -> coeflist
     if info["type"] == "integral":
-        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, {}, valuemap, sp_regulators, requested_orders)
+        br_coef = {(0,)*len(info["regulators"]): sp.sympify(1)}
+        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, br_coef, valuemap, sp_regulators, requested_orders)
     elif info["type"] == "sum":
         log("loading amplitude coefficients")
         done_evalf = asyncio.Future()
