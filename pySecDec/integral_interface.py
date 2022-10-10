@@ -1306,6 +1306,22 @@ class IntegralLibrary(object):
             self._cuda = True
             self.high_dimensional_integrator = self.integrator = CudaQmc(self,*args,**kwargs)
 
+def _runlength_encode(values):
+    result = []
+    prev_val = None
+    repeat = 1
+    for val in values:
+        if val == prev_val:
+            repeat += 1
+        else:
+            if prev_val is not None:
+                result.append((repeat, prev_val))
+            prev_val = val
+            repeat = 1
+    if prev_val is not None:
+        result.append((repeat, prev_val))
+    return result
+
 class DistevalLibrary(object):
     r'''
     Interface to the integration library produced by
@@ -1429,6 +1445,16 @@ class DistevalLibrary(object):
             clusteropt = ("--cluster", clusterfile.name)
         else:
             clusteropt = ()
+        if isinstance(epsabs, list):
+            epsabs = ",".join([
+                f"{v:.1e}" if n == 1 else f"{n}x{v:.1e}"
+                for n, v in _runlength_encode(epsabs)
+            ])
+        if isinstance(epsrel, list):
+            epsrel = ",".join([
+                f"{v:.1e}" if n == 1 else f"{n}x{v:.1e}"
+                for n, v in _runlength_encode(epsrel)
+            ])
         output = subprocess.check_output([
             sys.executable, "-m", "pySecDec.deval",
                 self.filename,
