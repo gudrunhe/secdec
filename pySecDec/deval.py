@@ -423,6 +423,9 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     for a, p in sorted(ap2coeffs.keys()):
         log(f"- amp{a},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
 
+    epsrel = [epsrel[a] if a < len(epsrel) else epsrel[-1] for a, p in ap2coeffs.keys()]
+    epsabs = [epsabs[a] if a < len(epsabs) else epsabs[-1] for a, p in ap2coeffs.keys()]
+
     # Presample all kernels
     kern_rng = [np.random.RandomState(0) for fam, ker in kernel2idx.keys()]
     t2 = time.time()
@@ -582,7 +585,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                         log(f"  +{stem}*({val:+.16e})")
                         log(f"  +{stem}*({err:+.16e})*plusminus")
                         abserr = np.abs(err)
-                        relerr.append(abserr / np.abs(val) if abserr > epsabs else 0.0)
+                        relerr.append(abserr / np.abs(val) if abserr > epsabs[ampid] else 0.0)
                     log(")")
                     log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
                     relerrs.append(np.max(relerr))
@@ -604,7 +607,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             lattices[:] = newlattices
             genvecs[:] = newgenvecs
 
-    if epsrel < 0.1:
+    if np.min(epsrel) < 0.1:
         log(f"trying to achieve epsrel={perkern_epsrel} and epsabs={perkern_epsabs} for each kernel")
         await iterate_integration(propose_lattices1)
 
@@ -640,7 +643,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             print(f"    +{stem}*({val:+.16e})")
             print(f"    +{stem}*({err:+.16e})*plusminus")
             abserr = np.abs(err)
-            relerr.append(abserr / np.abs(val) if abserr > epsabs else 0.0)
+            relerr.append(abserr / np.abs(val) if abserr > epsabs[ampid] else 0.0)
         if len(relerr) != 0:
             print("  )," if ampid < ampcount-1 else "  )")
             sys.stdout.flush()
@@ -712,6 +715,26 @@ def split_integral_into_orders(orders, ampid, kernel2idx, info, br_coef, valmap,
                     orders[key][kernel2idx[info["name"], k]] += coef
                     oo[key][kernel2idx[info["name"], k]] += coef
 
+def parse_array_shorthand(text):
+    """
+    Parse a shorthand notation for a array:
+        array ::= item [ "," item ]*
+        item ::= [ repetition-count "x" ]? value
+    Example:
+        >>> parse_array_shorthand("2x1,3x2,3")
+        [1,1,2,2,2,3]
+    """
+    result = []
+    for item in text.split(","):
+        if "x" in item:
+            repeat, value = item.split("x", 1)
+            value = float(value)
+            for i in range(int(repeat)):
+                result.append(value)
+        else:
+            result.append(float(item))
+    return result
+
 def main():
 
     valuemap = {}
@@ -719,8 +742,8 @@ def main():
     valuemap_int = {}
     npoints = 10**4
     npresamples = 10**4
-    epsabs = 1e-10
-    epsrel = 1e-4
+    epsabs = [1e-10]
+    epsrel = [1e-4]
     nshifts = 32
     clusterfile = None
     coeffsdir = None
@@ -733,8 +756,8 @@ def main():
     for key, value in opts:
         if key == "--cluster": clusterfile = value
         elif key == "--coefficients": coeffsdir = value
-        elif key == "--epsabs": epsabs = float(value)
-        elif key == "--epsrel": epsrel = float(value)
+        elif key == "--epsabs": epsabs = parse_array_shorthand(value)
+        elif key == "--epsrel": epsrel = parse_array_shorthand(value)
         elif key == "--points": npoints = int(float(value))
         elif key == "--presamples": npresamples = int(float(value))
         elif key == "--shifts": nshifts = int(float(value))
