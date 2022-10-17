@@ -488,7 +488,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
                         "coefficient_highest_orders": list(map(int, coeff_ho))
                     }
                     for genidx, (coeffs_lo, coeff_ho, t) in enumerate(template_replacements)
-                    if (ampidx in coeffs_lo) and any(lo < 999999 for lo in coeffs_lo[ampidx])
+                    if ampidx in coeffs_lo
                 ]
                 for ampidx in range(len(coefficients))
             ]
