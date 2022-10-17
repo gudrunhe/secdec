@@ -123,7 +123,7 @@ class Coefficient(object):
         parameters = sorted(list(set(re.findall("[a-zA-Z_][a-zA-Z_0-9]*", expression)) - set(exclude_parameters)))
         return Coefficient(expression, parameters=parameters)
 
-def _generate_one_term(coefficients, gen_index, complex_parameters, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
+def _generate_one_term(gen_index, coefficients, complex_parameters, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
 
     sub_name = package_generator.name
     replacements_in_files['sub_integral_name'] = sub_name
@@ -133,23 +133,26 @@ def _generate_one_term(coefficients, gen_index, complex_parameters, name, packag
                                                    pylink_qmc_transforms = pylink_qmc_transforms)
 
     # process coefficients
-    lowest_coefficient_orders = []
+    lowest_coefficient_orders = {}
     coeffsdir = name + '_data'
     os.makedirs(coeffsdir, exist_ok=True)
-    for (sumidx, genidx), coefficient in coefficients.items():
-        if genidx != gen_index: continue
+    for sumidx, amp in enumerate(coefficients):
+        if gen_index not in amp: continue
+        coefficient = amp[gen_index]
         lowest_orders = coefficient.leading_orders(regulators, maxorder=999999)
-        lowest_coefficient_orders.append(lowest_orders)
-        is_nonzero = any(lo < 999999 for lo in lowest_orders)
-        if is_nonzero:
+        if any(lo < 999999 for lo in lowest_orders):
+            lowest_coefficient_orders[sumidx] = lowest_orders
             filename = os.path.join(coeffsdir, f"{sub_name}_coefficient{sumidx}.txt")
             filename2 = os.path.join("disteval", "coefficients", f"{sub_name}_coefficient{sumidx}.txt")
             with open(filename,'w') as coeffile:
                 coefficient.write(coeffile)
             os.link(filename, filename2)
-    replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(','.join(map(str,amp_coeff_orders)) for amp_coeff_orders in lowest_coefficient_orders) + '}'
+    replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(
+            ','.join(map(str,lowest_coefficient_orders.get(i, "999999")))
+            for i in range(len(coefficients))
+        ) + '}'
 
-    minimal_lowest_coefficient_orders = np.min(lowest_coefficient_orders, axis=0)
+    minimal_lowest_coefficient_orders = min(lowest_coefficient_orders.values(), default=999999)
     package_generator = package_generator._replace(regulators = regulators)
     package_generator = package_generator._replace(requested_orders = np.asarray(requested_orders) - minimal_lowest_coefficient_orders)
 
@@ -162,10 +165,7 @@ def _generate_one_term(coefficients, gen_index, complex_parameters, name, packag
 
     # Call make_package with its arguments
     mp = make_package(**package_generator._asdict())
-    highest_coefficient_orders = [
-        np.asarray(requested_orders) - mp["description"]["prefactor_lowest_orders"] - mp["description"]["lowest_orders"]
-        for lo in lowest_coefficient_orders
-    ]
+    highest_coefficient_orders = np.asarray(requested_orders) - mp["description"]["prefactor_lowest_orders"] - mp["description"]["lowest_orders"]
     return lowest_coefficient_orders, highest_coefficient_orders, mp
 
 
@@ -223,9 +223,9 @@ def sum_package(name, package_generators, regulators, requested_orders,
 
     :param coefficients:
         iterable of iterable of :class:`.Coefficient` or
-        dict of (int, int) -> :class:`.Coefficient`, optional;
+        iterable of dict of int -> :class:`.Coefficient`, optional;
         The coefficients :math:`c_{ij}` of the integrals given
-        as a table or as a :math:`(i,j) \to c_{ij}` dictionary.
+        as a table or as a list of :math:`j \to c_{ij}` dictionaries.
         :math:`c_{ij} = 1` with :math:`i \in \{0\}` is assumed if
         not provided.
 
@@ -271,32 +271,28 @@ def sum_package(name, package_generators, regulators, requested_orders,
     # prepare coefficients
     coefficient_1 = Coefficient((), (), ())
     if coefficients is None:
-        coefficients = {(0, i) : coefficient_1 for i in range(len(package_generators))}
-    elif isinstance(coefficients, dict):
-        namplitudes = max(sumidx for sumidx, genidx in coefficients.keys()) + 1
-        coefficients = {
-            (sumidx, genidx) : (
-                c if isinstance(c, Coefficient) else
-                Coefficient.from_string(str(c), exclude_parameters=regulators)
-            )
-            for (sumidx, genidx), c in coefficients.items()
-            if c != 0 and c != "0"
-        }
+        coefficients = [{i : coefficient_1 for i in range(len(package_generators))}]
     else:
         for c_i in coefficients:
-            assert len(c_i) == len(package_generators), \
-                "`coefficients` must either be ``None`` be a list of lists which all have the same length as `package_generators`."
-        namplitudes = len(coefficients)
-        coefficients = {
-            (sumidx, genidx) : (
-                coefficient_1 if c is None else
-                c if isinstance(c, Coefficient) else
-                Coefficient.from_string(str(c), exclude_parameters=regulators)
-            )
+            if isinstance(c_i, dict):
+                for genidx in c_i.keys():
+                    if not (0 <= genidx < len(package_generators)):
+                        raise ValueError(f"coefficient for generator {genidx} is provided, but there are only {len(pacakge_generators)}")
+            else:
+                if len(c_i) != len(package_generators):
+                    raise ValueError(f"`coefficients` must have list of the same length as `package_generators`.")
+        coefficients = [
+            {
+                genidx : (
+                    coefficient_1 if c is None else
+                    c if isinstance(c, Coefficient) else
+                    Coefficient.from_string(str(c), exclude_parameters=regulators)
+                )
+                for genidx, c in (c_i.items() if isinstance(c_i, dict) else enumerate(c_i))
+                if c != 0 and c != "0"
+            }
             for sumidx, c_i in enumerate(coefficients)
-            for genidx, c in enumerate(c_i)
-            if c != 0 and c != "0"
-        }
+        ]
 
     # construct the c++ type "nested_series_t"
     # for two regulators, the resulting code should read:
@@ -377,7 +373,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
                                 'number_of_complex_parameters' : len(complex_parameters),
                                 'names_of_complex_parameters' : make_cpp_list(complex_parameters),
                                 'have_complex_parameters': len(complex_parameters) > 0,
-                                'number_of_amplitudes' : namplitudes,
+                                'number_of_amplitudes' : len(coefficients),
                                 'integral_names' : sub_integral_names,
                                 'integral_initialization' : integral_initialization,
                                 'integral_initialization_with_contour_deformation': integral_initialization_with_contour_deformation,
@@ -437,12 +433,10 @@ def sum_package(name, package_generators, regulators, requested_orders,
             f.write(name+"\n\n"+"\n".join(sub_integral_names.split()))
 
         # call package generator for every integral
-        template_replacements = {}
-
         if processes > 1:
             with Pool(processes) as pool:
                 template_replacements = pool.starmap(_generate_one_term, [(
-                        coefficients, j, complex_parameters,
+                        j, coefficients, complex_parameters,
                         name, package_generator._replace(processes=1),
                         pylink_qmc_transforms, real_parameters, regulators,
                         replacements_in_files, requested_orders,
@@ -452,7 +446,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
                 ])
         else:
             template_replacements = [_generate_one_term(
-                    coefficients, j, complex_parameters,
+                    j, coefficients, complex_parameters,
                     name, package_generator,
                     pylink_qmc_transforms, real_parameters, regulators,
                     replacements_in_files, requested_orders,
@@ -463,7 +457,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
 
         replacements_in_files['number_of_integration_variables'] = max(
             t['number_of_integration_variables']
-            for coeff_lo, coeff_ho, t in template_replacements
+            for coeffs_lo, coeff_ho, t in template_replacements
         )
 
     finally:
@@ -488,15 +482,15 @@ def sum_package(name, package_generators, regulators, requested_orders,
             "sums": [
                 [
                     {
-                        "integral": p.name,
-                        "coefficient": f"{p.name}_coefficient{i}.txt",
-                        "coefficient_lowest_orders": template_replacements[j][0][i],
-                        "coefficient_highest_orders": list(map(int, template_replacements[j][1][i]))
+                        "integral": package_generators[genidx].name,
+                        "coefficient": f"{package_generators[genidx].name}_coefficient{ampidx}.txt",
+                        "coefficient_lowest_orders": coeffs_lo[ampidx],
+                        "coefficient_highest_orders": list(map(int, coeff_ho))
                     }
-                    for j, p in enumerate(package_generators)
-                    if any(lo < 999999 for lo in template_replacements[j][0][i])
+                    for genidx, (coeffs_lo, coeff_ho, t) in enumerate(template_replacements)
+                    if (ampidx in coeffs_lo) and any(lo < 999999 for lo in coeffs_lo[ampidx])
                 ]
-                for i in range(namplitudes)
+                for ampidx in range(len(coefficients))
             ]
         }, f, indent=2)
     # Return template replacements of last integral processed (for 1 integral case this emulates what code_writer.make_package does)
