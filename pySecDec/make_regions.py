@@ -465,7 +465,6 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     if numerator.exponent.coeffs != [1] or (numerator.exponent.expolist != 0).any():
         raise NotImplementedError("Input numerator for the asymptotic expansion is not allowed to be of the type `ExponentiatedPolynomial`.")
     numerator = Polynomial(numerator.expolist, numerator.coeffs,numerator.polysymbols)
-
     if not ( all( [np.count_nonzero(poly.expolist[:,len(integration_variables)+len(regulators):-1]) == 0 for poly in polynomials_to_decompose] ) ):
         raise NotImplementedError("Input polynomials for the asymptotic expansion are not allowed to depend on unexpanded polynomials.")
 
@@ -510,7 +509,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
             # scaling of polynomials_to_decompose
             poly_scaling = np.concatenate([np.zeros(len(integration_variables)+len(regulators),dtype=int) , [factor.expolist[0,smallness_parameter_index] for factor in polynomial_factors] , [0]])
             # rescale and factor numerator
-            numerator_region_specific = apply_region([numerator], region + poly_scaling, smallness_parameter_index)[0]
+            numerator_region_specific = apply_region([numerator.copy()], region + poly_scaling, smallness_parameter_index)[0]
             factor0, numerator_refactorized = numerator_region_specific.refactorize(smallness_parameter_index).factors
             power_overall_smallness_parameter +=factor0.expolist[0][smallness_parameter_index]
 
