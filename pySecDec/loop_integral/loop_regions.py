@@ -405,7 +405,7 @@ def extra_regulator_constraints(exp_param_index, polynomial_expolist, exp_order,
     powerlist = powerlist[ powerlist > 0 ]
     powerlist = np.insert(powerlist,exp_param_index,0)
     powerlist = np.concatenate((powerlist,[dimension/2]))
-    powerlist = sympify_expression(powerlist)
+    powerlist = sympify_expression(powerlist.tolist())
     for regulator in regulators:
         powerlist = [x.subs(regulator,0) for x in powerlist]
 
