@@ -3,4 +3,4 @@ from .make_package import make_package
 from .loop_integral import loop_package, LoopPackage, loop_regions, LoopIntegralFromPropagators, LoopIntegralFromGraph
 from .code_writer import sum_package, MakePackage, Coefficient
 from .make_regions import make_regions
-from .metadata import __authors__, __version__, git_id
+from .metadata import __authors__, __version__, __commit__
