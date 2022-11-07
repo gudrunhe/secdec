@@ -229,6 +229,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
                     loop_integral, smallness_parameter,
                     expansion_by_regions_order=expansion_by_regions_order,
                     normaliz=normaliz_executable)
+            print('suggested extra regulator exponents: ', exponents)
         if exponents is not None:
             for exponent, variable in zip(exponents, loop_integral.integration_variables):
                 if exponent != 0:
