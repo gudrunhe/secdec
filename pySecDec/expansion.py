@@ -145,6 +145,7 @@ def _expand_singular_step(product, index, order):
     nonsingular_series_coeffs = [Product(this_order_numerator, this_order_denominator)]
     nonsingular_series_expolist = np.zeros((1 + order + highest_pole, N), dtype=int)
     nonsingular_series_expolist[:,index] = np.arange(1 + order + highest_pole) - highest_pole
+    nonsingular_series_zero_coeffs = []
 
     # nonsingular expansion order is shifted by the (potentially) singular prefactor (`highest_pole`)
     i_factorial = 1
@@ -154,17 +155,29 @@ def _expand_singular_step(product, index, order):
         numerator, denominator = derive_polyrational(numerator, denominator, index)
         this_order_numerator = numerator.replace(index, 0).simplify()
 
-        # if the numerator is zero at one order, all higher orders vanish as well
+        # if the numerator is zero, skip calculating denominator
+        # remember that this term was zero (may need to add it if we encounter a non-zero term later in the series)
         if (this_order_numerator.coeffs == 0).all():
-            nonsingular_series_expolist = nonsingular_series_expolist[:i+1]
-            break
+            nonsingular_series_zero_coeffs.append(Product(this_order_numerator))
+            continue
 
+        # we encountered a non-zero term
+        # if there are zero terms prior to this non-zero term, add them to the list of coeffs now
+        if nonsingular_series_zero_coeffs:
+            nonsingular_series_coeffs = nonsingular_series_coeffs + nonsingular_series_zero_coeffs
+            nonsingular_series_zero_coeffs = []
+
+        # process the denominator
         this_order_denominator = denominator.replace(index, 0).simplify()
 
         # convert denominator to ``<polynomial>**-1``
         this_order_denominator = ExponentiatedPolynomial(this_order_denominator.expolist, this_order_denominator.coeffs  * i_factorial, -1, this_order_denominator.polysymbols, copy=False)
 
         nonsingular_series_coeffs.append(Product(this_order_numerator, this_order_denominator))
+
+    # if last terms are zero, adjust length of expolist
+    if nonsingular_series_zero_coeffs:
+        nonsingular_series_expolist  = nonsingular_series_expolist[:len(nonsingular_series_coeffs)]
 
     return Polynomial(nonsingular_series_expolist, nonsingular_series_coeffs, numerator.polysymbols)
 

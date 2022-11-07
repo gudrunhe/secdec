@@ -15,6 +15,12 @@ class TestSingularExpansion(unittest.TestCase):
         self.p3 = ExponentiatedPolynomial([(0,1),(1,0)], coeffs=[36, 12], polysymbols=['eps0','eps1'], exponent=-1)
         self.p4 = LogOfPolynomial([(0,1),(1,0)], coeffs=[36, 12], polysymbols=['eps0','eps1'])
         self.p5 = ExponentiatedPolynomial([(0,1),(1,0)], coeffs=[36, 12], polysymbols=['eps0','eps1'], exponent='eps0')
+        self.p6_1 = Polynomial([(0,),(1,),(2,)], coeffs=['3/16','3/16','-9/16'], polysymbols=['eps'])
+        self.p6_2 = ExponentiatedPolynomial([(2,),(3,),(4,)], coeffs=['9/16','-9/8','9/16'], polysymbols=['eps'], exponent=-1)
+        self.p6 = Product(self.p6_1,self.p6_2)
+        self.p7 = ExponentiatedPolynomial([(1,1),(1,2),(2,0),(2,1),(2,2),(3,0),(3,1),(4,0)],  
+            coeffs=['3/4','-3/4','-3/16','-3/16','9/16','3/32','-9/32','9/256'],
+            polysymbols=['n1','eps'], exponent=-1)
 
         self.numerator = self.unit_polynomial
         self.denominator = self.p0 * self.p1 * self.p2
@@ -125,6 +131,18 @@ class TestSingularExpansion(unittest.TestCase):
     def test_high_level_function_two_regulators_higher_order(self):
         expanded = expand_singular(self.rational_polynomial, indices=[1,0], orders=[3,2])
         target = sympify_expression('1/(12*eps0**2*eps1) - 1/(2*eps0**3) + 9*eps1/(4*eps0**4) -  9*eps1**2/eps0**5 + 135*eps1**3/(4*eps0**6)')
+        self.assertEqual( (sympify_expression(expanded) - target).simplify() , 0)
+
+    #@attr('active')
+    def test_high_level_function_one_regulator_christoph_greub(self):
+        expanded = expand_singular(self.p6, indices=[0], orders=[4])
+        target = sympify_expression('1/(3*eps**2)+1/eps+2/3+eps/3-eps**3/3-(2*eps**4)/3')
+        self.assertEqual( (sympify_expression(expanded) - target).simplify() , 0)
+
+    #@attr('active')
+    def test_high_level_function_two_regulators_christoph_greub(self):
+        expanded = expand_singular(Product(self.p7, copy=False), indices=[0,1], orders=[0,4])
+        target = sympify_expression('2/3+1/(3*eps**2)+1/eps+eps/3-eps**3/3-2*eps**4/3+4/(3*n1)+4/(3*eps*n1)+(4*eps)/(3*n1)+(4*eps**2)/(3*n1)+(4*eps**3)/(3*n1)+(4*eps**4)/(3*n1)')
         self.assertEqual( (sympify_expression(expanded) - target).simplify() , 0)
 
 class TestTaylorExpansion(unittest.TestCase):
