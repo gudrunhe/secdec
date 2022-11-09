@@ -1465,7 +1465,7 @@ class DistevalLibrary(object):
                 "--shifts", str(shifts),
                 *clusteropt,
                 *(["--coefficients", coefficients] if coefficients is not None else []),
-                *(f"{k}={v}" for k, v in parameters.values())
+                *(f"{k}={v}" for k, v in parameters.items())
             ],
             encoding="utf8",
             stderr=sys.stderr if verbose else subprocess.DEVNULL)
