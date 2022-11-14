@@ -5,6 +5,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.6] - 2022-11-15
+
+### Fixed
+- Critical bug in `expand_singular` introduced in alpha_v0.1, which could lead to subtly incorrect analytic and numerical results. The series expansion of rational functions was incorrectly truncated if the expansion happened to be zero at some order in the expansion (Thanks to Christoph Greub).
+
 ## [1.5.5] - 2022-09-12
 
 ### Fixed
