@@ -1,4 +1,4 @@
-#pragma diag_suppress 177 // disable the "function was declared but never referenced" warning
+#pragma nv_diag_suppress 177 // disable the "function was declared but never referenced" warning
 
 #include <cinttypes>
 #include <cub/block/block_reduce.cuh>
