@@ -45,6 +45,9 @@ test_suite/catch.o :
 # ================
 .SILENT .PHONY : summarize
 summarize :
+	# print out test.log for failed tests
+	for dir in $(ALL_EXAMPLES); do if test -e $$dir/test/test.log; then grep -q "@@@ SUCCESS @@@" $$dir/test/test.log 2>&1 >/dev/null || cat $$dir/test/test.log; fi; done
+
 	printf "\n"
 	printf "\033[0;32m"
 	find . -type d -name 'test' -exec grep -Hl "@@@ SUCCESS @@@" \{}/test.log \
@@ -68,6 +71,9 @@ summarize :
 
 .SILENT .PHONY : summarize-selected
 summarize-selected :
+	# print out test.log for failed tests
+	for dir in $(SELECTED_TESTS); do if test -e $$dir/test/test.log; then grep -q "@@@ SUCCESS @@@" $$dir/test/test.log 2>&1 >/dev/null || cat $$dir/test/test.log; fi; done
+
 	printf "\n"
 	printf "\033[0;32m"
 	find $(SELECTED_TESTS) -type d -name 'test' -exec grep -Hl "@@@ SUCCESS @@@" \{}/test.log \
