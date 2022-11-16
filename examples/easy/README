@@ -1,0 +1,44 @@
+# Basic usage
+
+To integrate this example, first generate the library:
+
+    ./generate_easy.py
+
+then build it:
+
+    cd easy && make -j4
+
+and finally integrate it:
+
+    ./integrate_easy.py
+
+
+
+# Distributed evaluator
+
+Alternatively build the distributed evaluator:
+
+    cd easy && make -j4 disteval
+
+and integrate (locally) using it:
+
+    ./integrate_easy_disteval.py
+
+or directly from the command line:
+
+    python3 -m pySecDec.deval easy/disteval/easy.json
+
+
+
+# GPU support
+
+For GPU support first figure out the correct GPU architecture flags:
+
+    print-cuda-arch.sh
+
+The output will be something like `-gencode arch=compute_75,code=sm_75`;
+these flags should be passed during the build like this:
+
+    cd easy && env CXX=nvcc SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_75,code=sm_75" make -j4
+
+When build like this, GPU support is automatic.
