@@ -106,24 +106,23 @@ The following part contains the definition of the loop integral ``li``:
 .. code::
 
     li = psd.LoopIntegralFromGraph(
-    # give adjacency list and indicate whether the propagator connecting the numbered vertices is massive or massless in the first entry of each list item.
-    internal_lines = [['m',[1,2]],[0,[2,3]],[0,[3,4]],[0,[4,1]]],
-    # contains the names of the external momenta and the label of the vertex they are attached to
-    external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
-
-    # define the kinematics and the names for the kinematic invariants
-    replacement_rules = [
-                            ('p1*p1', 's1'),
-                            ('p2*p2', 0),
-                            ('p3*p3', 0),
-                            ('p4*p4', 0),
-                            ('p3*p2', 't/2'),
-                            ('p1*p2', 's/2-s1/2'),
-                            ('p1*p4', 't/2-s1/2'),
-                            ('p2*p4', 's1/2-t/2-s/2'),
-                            ('p3*p4', 's/2'),
-                            ('m**2', 'msq')
-                       ]
+        # give adjacency list and indicate whether the propagator connecting the numbered vertices is massive or massless in the first entry of each list item.
+        internal_lines = [['m',[1,2]],[0,[2,3]],[0,[3,4]],[0,[4,1]]],
+        # contains the names of the external momenta and the label of the vertex they are attached to
+        external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
+        # define the kinematics and the names for the kinematic invariants
+        replacement_rules = [
+            ('p1*p1', 's1'),
+            ('p2*p2', 0),
+            ('p3*p3', 0),
+            ('p4*p4', 0),
+            ('p3*p2', 't/2'),
+            ('p1*p2', 's/2-s1/2'),
+            ('p1*p4', 't/2-s1/2'),
+            ('p2*p4', 's1/2-t/2-s/2'),
+            ('p3*p4', 's/2'),
+            ('m**2', 'msq')
+        ]
     )
 
 Here the class :class:`LoopIntegralFromGraph <pySecDec.loop_integral.LoopIntegralFromGraph>` is used to Feynman parametrize the loop integral given the adjacency list. Alternatively, the class :class:`LoopIntegralFromPropagators <pySecDec.loop_integral.LoopIntegralFromPropagators>` can be used to construct the Feynman integral given the momentum representation.
@@ -145,47 +144,46 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 .. code::
 
     psd.loop_package(
+        name = 'box1L',
 
-    name = 'box1L',
+        loop_integral = li,
 
-    loop_integral = li,
+        real_parameters = Mandelstam_symbols + mass_symbols,
 
-    real_parameters = Mandelstam_symbols + mass_symbols,
+        # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
+        requested_orders = [0],
 
-    # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
-    requested_orders = [0],
+        # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
+        form_optimization_level = 2,
 
-    # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
-    form_optimization_level = 2,
+        # the WorkSpace parameter for FORM
+        form_work_space = '100M',
 
-    # the WorkSpace parameter for FORM
-    form_work_space = '100M',
-
-    # the method to be used for the sector decomposition
-    # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
-    decomposition_method = 'iterative'
-
+        # the method to be used for the sector decomposition
+        # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
+        decomposition_method = 'iterative'
     )
 
-.. _building_the_cpp_lib:
+.. _building_the_integration_lib:
 
-Building the C++ Library
-^^^^^^^^^^^^^^^^^^^^^^^^
+Building the integration Library
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-After running the python script `generate_box1L.py` the folder `box1L` is created and should contain the following files and subdirectories
+After running the python script ``generate_box1L.py`` the folder ``box1L`` is created and should contain the following files and subdirectories
 
 .. code::
 
-    Makefile    README    box1L.pdf    box1L_integral    integral_names.txt    pylink
-    Makefile.conf    box1L.hpp    box1L_coefficients    integrate_box1L.cpp    src
+    Makefile       box1L.hpp           integrate_box1L.cpp  disteval/
+    Makefile.conf  box1L.pdf           box1L_data/          pylink/
+    README         integral_names.txt  box1L_integral/      src/
 
-in the folder `box1L`, typing
+In the folder ``box1L``, typing
 
 .. code::
 
     $ make
 
-will create the static library ``box1L_integral/libbox1L_integral.a`` and ``box1L_pylink.so`` which can be linked to external programs.
+will create the static library ``box1L_integral/libbox1L_integral.a`` and the shared library ``box1L_pylink.so`` which can be linked to external programs.
 The ``make`` command can also be run in parallel by using the ``-j`` option. The number of threads each instance of ``tform`` uses can be
 set via the environment variable `FORMTHREADS`.
 
@@ -199,13 +197,20 @@ To build the dynamic library ``libbox1L.so`` set ``dynamic`` as build target:
 
     $ make dynamic
 
-To build the library with `nvcc` for GPU support, type
+.. versionadded:: 1.6
+   To build the *disteval* library (which consists of multiple files in ``box1L/disteval/`` directory) set ``disteval`` as build target:
+
+.. code::
+
+    $ make disteval
+
+To build the libraries with `nvcc` (NVidia C Compiler) for GPU support, type
 
 .. code::
 
     $ CXX=nvcc SECDEC_WITH_CUDA_FLAGS="-arch=sm_XX" make
 
-where ``sm_XX`` must be replaced by the target GPU architechtures, see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
+where ``sm_XX`` must be replaced by the target GPU architechtures; see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
 The ``SECDEC_WITH_CUDA_FLAGS`` environment variable, which enables GPU code compilation, contains flags which are passed to NVCC during code compilation and linking.
 Multiple GPU architectures may be specified as described in the `NVCC manual <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_, for example
 ``SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_XX,code=sm_XX -gencode arch=compute_YY,code=sm_YY"`` where ``XX`` and ``YY`` are the target GPU architectures. The script 
@@ -217,15 +222,14 @@ Alternatively, a C++ program can be produced as explained in the section :ref:`C
 
 ..  _python_interface:
 
-Python Interface (basic)
-^^^^^^^^^^^^^^^^^^^^^^^^
+Python Interface
+^^^^^^^^^^^^^^^^
 
 To evaluate the integral for a given numerical point we can use ``integrate_box1L.py``.
 First it imports the necessary python packages and loads the C++ library.
 
 .. code::
 
-    from __future__ import print_function
     from pySecDec.integral_interface import IntegralLibrary
     import sympy as sp
 
@@ -248,7 +252,7 @@ using the Korobov transform with weight 3, change the above lines to
     box1L.use_Qmc(transform='Korobov3')
 
 
-Calling the ``box`` library numerically evaluates the integral.
+Calling the ``box1L`` library numerically evaluates the integral.
 Note that the order of the real parameters must match that specified in ``generate_box1L.py``.
 A list of possible settings for the library, in particular details of how to set the contour deformation parameters, is given in :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
 To change the accuracy settings of the integration, the most important parameters are ``epsrel``, ``epsabs`` and ``maxeval``, which
@@ -295,10 +299,92 @@ In the ``integrate_box1L.py`` an example is shown how to parse the expression wi
 
 An example of how to loop over several kinematic points is shown in the example `integrate_box1L_multiple_points.py`.
 
+Command-line interface with *disteval*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 1.6
+
+The *disteval* library, once built, can be used directly from the command line via the `pySecDec.deval` Python module:
+
+.. code::
+
+    $ python3 -m pySecDec.deval box1L/disteval/box1L.json s=4.0 t=-0.75 s1=1.25 msq=1.0
+    [...]
+    [
+      (
+        +eps^-2*(-1.4285714285714279e-01+9.0159338621354360e-18j)
+        +eps^-2*(+3.4562234592930473e-17+1.4290950719747641e-17j)*plusminus
+        +eps^-1*(+6.3843370937935406e-01+2.5048341561937569e-10j)
+        +eps^-1*(+4.4293092326873179e-10+4.6245608965315405e-10j)*plusminus
+        +eps^0*(-4.2634981062934296e-01+1.8664974523210687e+00j)
+        +eps^0*(+5.5826851229628189e-06+4.8099553795389634e-06j)*plusminus
+      )
+    ]
+
+Note that the output is a list of expressions; here a list of a single item.
+This is because as we shall see in :ref:`evaluating_a_weighted_sum_of_integrals`, a single library can produce multiple resulting expressions.
+
+The general usage of the command-line interface is:
+
+.. code::
+
+    $ python3 -m pySecDec.deval integrand.json [options] <var>=value ...
+
+The evaluation can be controlled via the provided command-line options:
+
+* ``--epsabs=<number>``: stop if this absolute precision is reached (default: ``1e-10``);
+* ``--epsrel=<number>``: stop if this relative precision is reached (default: ``1e-4``);
+* ``--points=<number>``: use this initial Quasi-Monte-Carlo lattice size (default: ``1e4``);
+* ``--presamples=<number>``: use this many points for presampling (default: ``1e4``);
+* ``--shifts=<number>``: use this many lattice shifts per integral (default: ``32``);
+* ``--coefficients=<path>``: use coefficients from this directory.
+
+This list of options can also be obtained from within the command line by running:
+
+.. code::
+
+    $ python3 -m pySecDec.deval --help
+
+Python interface with *disteval*
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Similarly to :ref:`python_interface`, *disteval* libraries can be used from Python, this time via the :class:`DistevalLibrary <pySecDec.integral_interface.DistevalLibrary>` class.
+An example of this usage be found in ``integrate_box1L_disteval.py``.
+The example starts by importing the necessary packages and loading the library:
+
+.. code::
+
+    from pySecDec.integral_interface import DistevalLibrary
+    import sympy as sp
+
+    box1L = DistevalLibrary('box1L/disteval/box1L.json')
+
+Then, calling the ``box1L`` library to perform the evaluation at the given parameter values:
+
+.. code::
+
+    # integrate
+    str_result = box1L(parameters={"s": 4.0, "t": -0.75, "s1": 1.25, "msq": 1.0}, verbose=False)
+
+And finally, converting the result to a `sympy` object and printing it:
+
+.. code::
+
+    # convert result to sympy expressions
+    result = sp.sympify(str_result)
+    value = result[0].subs({"plusminus": 0})
+    error = result[0].coeff("plusminus")
+
+    # examples how to access individual orders
+    print('Numerical Result')
+    print('eps^-2:', value.coeff('eps',-2), '+/- (', error.coeff('eps',-2), ')')
+    print('eps^-1:', value.coeff('eps',-1), '+/- (', error.coeff('eps',-1), ')')
+    print('eps^0 :', value.coeff('eps',0), '+/- (', error.coeff('eps',0), ')')
+
 ..  _cpp_interface:
 
-C++ Interface (advanced)
-^^^^^^^^^^^^^^^^^^^^^^^^
+C++ Interface
+^^^^^^^^^^^^^
 
 Usually it is easier to obtain a numerical result using the :ref:`Python Interface <python_interface>`.
 However, the library can also be used directly from C++.
