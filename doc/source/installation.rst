@@ -1,6 +1,21 @@
 Installation
 ============
 
+Obtain a Compiler
+-----------------
+
+`pySecDec` works on Unix-like systems, specifically Linux and macOS. It requires a working c++ compiler and a Python 3 (>=3.8) installation.
+
+On Linux systems, users can install compilers (we recommend the latest GCC or Clang compiler) and Python 3 using the package manager provided with their Linux distribution (usually one of : `apk`, `apt-get`, `apt`, `yum`).
+
+On macOS systems, users can install a compiler via the App Store:
+
+* Download `Xcode` via the App Store
+* Open a terminal window and enter :code:`xcode-select --install` then follow the prompts to install command line tools.
+
+This procedure will make the `clang` compiler available on the system. Python 3 is shipped with macOS, you can check the version available on your system using :code:`python3 --version`. Later versions of Python can be installed on macOS using third-party package managers (e.g. the Homebrew package manager).
+
+
 Download the Program and Install
 --------------------------------
 
