@@ -9,7 +9,7 @@ if __name__ == "__main__":
     easy = DistevalLibrary('easy/disteval/easy.json')
 
     # integrate
-    result = easy()
+    result = easy(epsrel=1e-5)
 
     # print result
     print('Numerical Result:', result)

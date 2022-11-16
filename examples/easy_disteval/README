@@ -1,0 +1,53 @@
+# Basic usage
+
+To integrate this example using the distributed evaluator, first
+generate the library:
+
+    ./generate_easy.py
+
+then build it:
+
+    cd easy && make -j4 disteval.done
+
+and finally integrate (locally):
+
+    ./integrate_easy.py
+
+or, alternatively:
+
+    python3 -m pySecDec.deval easy/disteval/easy.json --epsrel=1e-5
+
+The option `--epsrel=1e-5` will make the evaluator integrate
+in the adaptive mode untill this precision is reached. Other
+options can be listed via `python3 -m pySecDec.deval --help`.
+
+# Faster CPU workers
+
+Advanced users that want maximum performance will want to
+compile the CPU worker with the AVX2 and FMA/FMA4 instruction
+sets allowed, and also using Clang instead of GCC (because Clang
+produces better AVX code):
+
+    cd easy && make -j4  disteval.done CXXFLAGS="-mavx2 -mfma" CXX=clang++
+
+Of course, your processors should support these instruction sets.
+Search for "avx2" and "fma" in /proc/cpuinfo to verify.
+
+If you are only running locally, consider using CXXFLAGS="-march=native"
+to allow the compiler to use all instructions your processor
+supports (beware that libraries built this way will likely not
+work on other machines).
+
+# GPU workers
+
+Users with GPUs will want to compile CUDA support. For this one
+needs to specify which CUDA architectures should the code be
+generated for. Multiple architectures can be used simultaneously:
+
+    cd easy && make -j4 disteval.done \
+        SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_75,code=sm_75 -gencode arch=compute_80,code=sm_80"
+
+Note that SECDEC_WITH_CUDA_FLAGS is separate from CXXFLAGS and
+CXX, and in principle all of them should be specified, so that
+both the fastest CPU worker code and the GPU worker code would
+be built.
