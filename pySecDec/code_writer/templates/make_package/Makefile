@@ -50,6 +50,8 @@ codegen/sector%%.done: codegen/sector%%.h
 SECTOR_ORDERS:=$(patsubst src/sector_%%.cpp,%%,$(filter src/sector_%%.cpp,$(SECTOR_CPP)))
 SECTOR_ORDERS:=$(foreach a,$(SECTOR_ORDERS),$(if $(findstring _,$a),$a,))
 
+disteval: disteval.done
+
 ifdef SECDEC_WITH_CUDA_FLAGS
 disteval.done: disteval/$(NAME).fatbin disteval/builtin.fatbin disteval/$(NAME).so disteval/builtin.so
 else

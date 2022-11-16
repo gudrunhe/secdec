@@ -58,6 +58,8 @@ disteval/builtin.fatbin: $(word 1,$(INTEGRALS))/disteval.done; ln -f $(word 1,$(
 $(foreach I,$(INTEGRALS),$I/disteval.done)::
 	$(MAKE) -C $(dir $@) disteval.done
 
+disteval: disteval.done 
+
 ifdef SECDEC_WITH_CUDA_FLAGS
 disteval.done: $(foreach I,$(INTEGRALS),disteval/$I.json disteval/$I.so disteval/$I.fatbin) disteval/builtin.so disteval/builtin.fatbin
 else
