@@ -524,3 +524,15 @@ class TestExpandGinac(unittest.TestCase):
             "+(2*(pi^4 - 12*pi^2*(7 - 12*log(2) + 8*log(2)^2) + 3*(93 - 180*log(2) + 168*log(2)^2 - 96*log(2)^3 + 32*log(2)^4 - 50*(-3 + log(16))*zeta(3))))/(9*pi)"
         )
         self.assertEqual((sp.sympify(str(expansion)) - sp.sympify(target)).simplify(), 0)
+
+    #@attr('active')
+    def test_sympy_issue_24266_1(self):
+        exp = expand_ginac("exp(-I*pi*(2*x+1))", ["x"], [2])
+        val = "-1 + 2*I*pi*x + 2*pi**2*x**2"
+        self.assertEqual((sp.sympify(str(exp)) - sp.sympify(val)).simplify(), 0)
+
+    #@attr('active')
+    def test_sympy_issue_24266_2(self):
+        exp = expand_ginac("exp(-I*pi*(2*x+1))*gamma(1+x)", ["x"], [2])
+        val = "-1 + x*(EulerGamma + 2*I*pi) + x**2*(-EulerGamma**2/2 + 23*pi**2/12 - 2*EulerGamma*I*pi)"
+        self.assertEqual((sp.sympify(str(exp)) - sp.sympify(val)).simplify(), 0)
