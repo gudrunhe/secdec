@@ -345,3 +345,182 @@ class TestExpandSympy(unittest.TestCase):
 
         for coeff in expansion.coeffs:
             self.assertTrue(isinstance(coeff, sp.Expr))
+
+#@attr('active')
+class TestExpandGinac(unittest.TestCase):
+    #@attr('active')
+    def test_error_messages(self):
+        expression = 'a + b'
+        variables = ['a', 'b']
+        orders = [1,3]
+
+        self.assertRaisesRegexp(AssertionError, '(N|n)umber of variables \(2\).*must.*equal.*number of orders \(3\)', expand_ginac, expression, variables, [0,0,1])
+        self.assertRaisesRegexp(AssertionError, 'variables.*must.*symbols', expand_ginac, expression, ['a+b','x'], orders)
+        self.assertRaisesRegexp(AssertionError, 'orders.*must.*vector', expand_ginac, expression, variables, [[0,1],[1,2]])
+
+        expand_ginac(expression, variables, orders) # should be ok
+
+    #@attr('active')
+    def test_requested_order_too_low(self):
+        with self.assertRaises(OrderError): expand_ginac('x**3', ['x'], [0])
+        with self.assertRaises(OrderError): expand_ginac('x**3', ['x'], [1])
+        with self.assertRaises(OrderError): expand_ginac('x**3', ['x'], [2])
+        expand_ginac('x**3', ['x'], [3])
+
+    #@attr('active')
+    def test_nested_requested_order_too_low(self):
+        with self.assertRaises(OrderError): expand_ginac('x**3*y**2', ['x','y'], [2,1])
+        with self.assertRaises(OrderError): expand_ginac('x**3*y**2', ['x','y'], [2,2])
+        with self.assertRaises(OrderError): expand_ginac('x**3*y**2', ['x','y'], [3,1])
+        with self.assertRaises(OrderError): expand_ginac('x**3*y**2', ['x','y'], [2,2])
+        expand_ginac('x**3*y**2', ['x','y'], [3,2])
+
+    #@attr('active')
+    def test_1d(self):
+        poly = expand_ginac('exp(x)/x', ['x'], [1])
+
+        self.assertTrue(type(poly) is Polynomial)
+        np.testing.assert_array_equal(poly.expolist, [[-1],[0],[1]])
+        np.testing.assert_array_equal(poly.coeffs, sympify_expression([1, 1, '1/2']))
+
+    #@attr('active')
+    def test_2d(self):
+        expression = '1/(eps+alpha)'
+        variables = sympify_expression(['alpha', 'eps'])
+        orders = [0,1]
+
+        # expansion in 'alpha' first
+        alpha_first = expand_ginac(expression, variables, orders)
+        target_alpha_first = sympify_expression('1/eps')
+
+        self.assertEqual(  (sympify_expression(alpha_first) - target_alpha_first).simplify() , 0  )
+
+        self.assertTrue( type(alpha_first) is Polynomial )
+        self.assertEqual(alpha_first.polysymbols, variables)
+        np.testing.assert_array_equal(alpha_first.expolist, [[0,0]])
+
+        alpha_poly = alpha_first.coeffs[0]
+        self.assertTrue( type(alpha_poly) is Polynomial )
+        np.testing.assert_array_equal( alpha_poly.expolist, [[0,-1]] )
+        np.testing.assert_array_equal( alpha_poly.coeffs, [1] )
+
+        # expansion in 'eps' first
+        variables = sympify_expression(['eps', 'alpha'])
+        orders = [1,0]
+        eps_first = expand_ginac(expression, variables, orders)
+        target_eps_first = sympify_expression('1/alpha - eps/alpha**2')
+
+        self.assertEqual(  (sympify_expression(eps_first) - target_eps_first).simplify() , 0  )
+
+        self.assertTrue( type(eps_first) is Polynomial )
+        self.assertEqual(eps_first.polysymbols, variables)
+        np.testing.assert_array_equal(eps_first.expolist, [[0,0],[1,0]])
+
+        eps_to_the_0 = eps_first.coeffs[0]
+        eps_to_the_1 = eps_first.coeffs[1]
+        self.assertTrue( type(eps_to_the_0) is Polynomial )
+        self.assertTrue( type(eps_to_the_1) is Polynomial )
+        np.testing.assert_array_equal( eps_to_the_0.expolist, [[0,-1]] )
+        np.testing.assert_array_equal( eps_to_the_1.expolist, [[0,-2]] )
+        np.testing.assert_array_equal( eps_to_the_0.coeffs, [ 1] )
+        np.testing.assert_array_equal( eps_to_the_1.coeffs, [-1] )
+
+    #@attr('active')
+    def test_truncation_field(self):
+        expression = 'x + x**2'
+        variables = ['x']
+
+        expansion = expand_ginac(expression, variables, orders=[1])
+        target_expansion = Polynomial([[1]],[1],['x'])
+        self.assertEqual(  (sympify_expression(expansion) - sympify_expression(target_expansion)).simplify() , 0  )
+        #self.assertTrue(expansion.truncated is True)
+
+        expansion = expand_ginac(expression, variables, orders=[4])
+        target_expansion = Polynomial([[1],[2]],[1,1],['x'])
+        self.assertEqual(  (sympify_expression(expansion) - sympify_expression(target_expansion)).simplify() , 0  )
+        #self.assertTrue(expansion.truncated is False)
+
+    #@attr('active')
+    def test_missing_intermediate_order(self):
+        expression = 'exp(3*EulerGamma*eps)*gamma(3*eps)'
+        variables = ['eps']
+
+        expansion = expand_ginac(expression, variables, orders=[4])
+
+        target_expansion_expolist = np.arange(6).reshape([6,1]) - 1
+        target_expansion_coeffs = [
+                                      '1/(3)',                                       # eps ** -1
+                                      0,                                             # eps **  0
+                                      'pi**2/4',                                     # eps **  1
+                                      '3*(-2*zeta(3))/2',                            # eps **  2
+                                      '27*pi**4/160',                                # eps **  3
+                                      '9/40*(5*pi**2*(-2*zeta(3))+3*(-24*zeta(5)))'  # eps **  4
+                                  ]
+        target_expansion = Polynomial(target_expansion_expolist, target_expansion_coeffs, ['eps'])
+
+        self.assertEqual( sympify_expression(expansion - target_expansion).simplify() , 0 )
+
+        np.testing.assert_array_equal(expansion.expolist, target_expansion.expolist)
+        np.testing.assert_array_equal(expansion.coeffs, target_expansion.coeffs)
+        #self.assertTrue(expansion.truncated is True)
+
+        for coeff in expansion.coeffs:
+            self.assertTrue(isinstance(coeff, sp.Expr))
+
+    #@attr('active')
+    def test_higher_pole(self):
+        expression = 'gamma(eps)/eps'
+        variables = ['eps']
+
+        expansion = expand_ginac(expression, variables, orders=[0])
+
+        target_expansion_expolist = np.arange(3).reshape([3,1]) - 2
+        target_expansion_coeffs = [
+                                      '1',                         # eps ** -2
+                                      '-EulerGamma',               # eps ** -1
+                                      'EulerGamma**2/2 + pi**2/12' # eps **  0
+                                  ]
+        target_expansion = Polynomial(target_expansion_expolist, target_expansion_coeffs, ['eps'])
+
+        self.assertEqual( sympify_expression(expansion - target_expansion).simplify() , 0 )
+
+        np.testing.assert_array_equal(expansion.expolist, target_expansion.expolist)
+        np.testing.assert_array_equal(expansion.coeffs, target_expansion.coeffs)
+        #self.assertTrue(expansion.truncated is True)
+
+        for coeff in expansion.coeffs:
+            self.assertTrue(isinstance(coeff, sp.Expr))
+
+    #@attr('active')
+    def test_nontrivial_higher_pole(self):
+        expansion = expand_ginac('gamma(eps+2)/eps^2 + a/eps^2', ['eps'], orders=[1])
+
+        target_expansion_expolist = np.arange(4).reshape([4,1]) - 2
+        target_expansion_coeffs = [
+                                      '1 + a',                                                                                        # eps ** -2
+                                      '-EulerGamma+1',                                                                                # eps ** -1
+                                      'pi**2/12 + EulerGamma**2/2 - EulerGamma',                                                      # eps **  0
+                                      '-EulerGamma*pi**2/12 - 1/3 + (2-2*zeta(3))/6 - EulerGamma**3/6 + EulerGamma**2/2 + pi**2/12' # eps **  1
+                                  ]
+        target_expansion = Polynomial(target_expansion_expolist, target_expansion_coeffs, ['eps'])
+
+        self.assertEqual( sympify_expression(expansion - target_expansion).simplify() , 0 )
+
+        np.testing.assert_array_equal(expansion.expolist, target_expansion.expolist)
+        np.testing.assert_array_equal(expansion.coeffs, target_expansion.coeffs)
+        #self.assertTrue(expansion.truncated is True)
+
+        for coeff in expansion.coeffs:
+            self.assertTrue(isinstance(coeff, sp.Expr))
+
+    #@attr('active')
+    def test_issue_23(self):
+        expansion = expand_ginac('-cos(2*pi*eps)*pi*cot(pi*eps)*exp(-2*EulerGamma*eps) * (2**(1-4*eps))/(eps**2)*csc(pi*eps) * gamma(1-4*eps)*(gamma(1-eps))**2/(gamma(1-2*eps))**2 *1/(1-eps)/(2*eps-1)', ['alp', 'eps'], [0, 0])
+        target = (
+            "+2/pi/eps^4"
+            "+(6 - 8*log(2))/pi/eps^3"
+            "+(42 - 8*pi^2 - 72*log(2) + 48*log(2)^2)/(3*pi)/eps^2"
+            "+(2*(45 - 84*log(2) + 72*log(2)^2 - 32*log(2)^3 + 4*pi^2*(-3 + log(16)) + 50*zeta(3)))/(3*pi)/eps"
+            "+(2*(pi^4 - 12*pi^2*(7 - 12*log(2) + 8*log(2)^2) + 3*(93 - 180*log(2) + 168*log(2)^2 - 96*log(2)^3 + 32*log(2)^4 - 50*(-3 + log(16))*zeta(3))))/(9*pi)"
+        )
+        self.assertEqual((sp.sympify(str(expansion)) - sp.sympify(target)).simplify(), 0)

@@ -12,7 +12,7 @@ from ..algebra import _Expression, Expression, Polynomial, \
 from .. import decomposition
 from ..matrix_sort import iterative_sort, Pak_sort, light_Pak_sort
 from ..subtraction import integrate_pole_part, integrate_by_parts, pole_structure as compute_pole_structure
-from ..expansion import expand_singular, expand_Taylor, expand_sympy, OrderError
+from ..expansion import expand_singular, expand_Taylor, expand_ginac, OrderError
 from ..misc import lowest_order, parallel_det, det
 from .template_parser import validate_pylink_qmc_transforms, generate_pylink_qmc_macro_dict, parse_template_file, parse_template_tree
 from itertools import chain, repeat
@@ -636,7 +636,7 @@ def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parame
             outstr_head = '{%i,%i,{' % (min_order,max_order)
             for coeff in expression.coeffs:
                 outstr_body_snippets.append( recursion(regulator_index + 1, coeff) )
-            outstr_tail = '},true' if expression.truncated else '},false'
+            outstr_tail = '},true' if getattr(expression, "truncated", True) else '},false'
             outstr_tail += ',"%s"}' % regulators[regulator_index]
             return ''.join( (outstr_head, ','.join(outstr_body_snippets), outstr_tail) )
         else: # regulator_index == last_regulator_index; i.e. processing last regulator
@@ -644,7 +644,7 @@ def _make_prefactor_function(expanded_prefactor, real_parameters, complex_parame
             outstr_body_snippets = []
             for coeff in expression.coeffs:
                 outstr_body_snippets.append( sp.printing.ccode(coeff.evalf(20)) )
-            outstr_tail = '}},true' if expression.truncated else '}},false'
+            outstr_tail = '}},true' if getattr(expression, "truncated", True) else '}},false'
             outstr_tail += ',"%s"}' % regulators[regulator_index]
             return ''.join( (outstr_head, '},{'.join(outstr_body_snippets), outstr_tail) )
 
@@ -2135,7 +2135,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # expand the `prefactor` to the required orders
     required_prefactor_orders = requested_orders - lowest_orders
     print('expanding the prefactor', prefactor, '(regulators:', regulators, ', orders:', required_prefactor_orders, ')')
-    expanded_prefactor = expand_sympy(prefactor, regulators, required_prefactor_orders)
+    expanded_prefactor = expand_ginac(prefactor, regulators, required_prefactor_orders)
     print(repr(expanded_prefactor))
 
     # pack the `prefactor` into c++ function that returns a nested `Series`

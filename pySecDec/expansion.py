@@ -8,9 +8,14 @@ Routines to series expand singular and nonsingular expressions.
 
 from .algebra import Product, Polynomial, ExponentiatedPolynomial
 from .misc import sympify_symbols, flatten, sympify_expression
-from numpy import iterable
+import pySecDecContrib
+
 import numpy as np
 import sympy as sp
+import os.path
+import re
+import subprocess
+import tempfile
 
 _sympy_zero = sympify_expression(0)
 
@@ -19,7 +24,6 @@ class OrderError(ValueError):
     This exception is raised if an expansion
     to a lower than the lowest order of an
     expression is requested.
-
     '''
     pass
 
@@ -191,8 +195,8 @@ def _expand_and_flatten(expression, indices, orders, expansion_one_variable):
     '''
     # basic consistency check
     # Note: More checks are done by `_expand_Taylor_step` or `_expand_singular_step`
-    indices = list(indices) if iterable(indices) else [indices]
-    orders = list(orders) if iterable(orders) else [orders]
+    indices = list(indices) if np.iterable(indices) else [indices]
+    orders = list(orders) if np.iterable(orders) else [orders]
     assert len(indices) == len(orders), '`indices` and `orders` must have the same length'
 
     # reverse lists because popping the last element of a list is cheaper (order one) than the first (order N)
@@ -379,3 +383,72 @@ def expand_sympy(expression, variables, orders):
 
     # initialize the recursion
     return recursion(expression, variables, orders, 0)
+
+def _sympy_to_ginsh(expr):
+    """
+    Convert a sympy expression to a ginsh string.
+    """
+    if not isinstance(expr, sp.Expr):
+        expr = sympify_expression(expr)
+    funcmap = {
+        sp.cot: lambda x: 1/sp.tan(x),
+        sp.csc: lambda x: 1/sp.sin(x),
+        sp.sec: lambda x: 1/sp.cos(x),
+        sp.coth: lambda x: 1/sp.tanh(x),
+        sp.csch: lambda x: 1/sp.sinh(x),
+        sp.sech: lambda x: 1/sp.cosh(x),
+        sp.gamma: sp.Function("tgamma"),
+        sp.loggamma: sp.Function("lgamma"),
+        sp.polygamma: sp.Function("psi"),
+        sp.EulerGamma: sp.var("Euler"),
+        sp.pi: sp.var("Pi")
+    }
+    for k, v in funcmap.items():
+        expr = expr.replace(k, v)
+    return str(expr).replace("**", "^")
+
+def _ginsh_to_sympy(text):
+    """
+    Convert a ginsh string to a sympy expression.
+    """
+    revfuncmap = {
+        sp.Function("tgamma"): sp.gamma,
+        sp.Function("lgamma"): sp.loggamma,
+        sp.Function("psi"): lambda *args: (sp.digamma if len(args) == 1 else sp.polygamma)(*args),
+        sp.var("Euler"): sp.EulerGamma,
+        sp.var("Pi"): sp.pi
+    }
+    expr = sp.sympify(text.replace("^", "**"))
+    for k, v in revfuncmap.items():
+        expr = expr.replace(k, v)
+    return expr
+
+def expand_ginac(expression, variables, orders):
+    """
+    Same as :func:`.expand_sympy`, but using GiNaC (via ``ginsh``).
+    """
+    if not isinstance(expression, sp.Expr):
+        expression = sympify_expression(expression)
+    variables = sympify_symbols(variables, 'All `variables` must be symbols.')
+    orders = np.asarray(orders)
+    assert len(orders.shape) == 1, '`orders` must be vector-like'
+    assert len(variables) == len(orders), 'The number of variables (%i) must equal the number of orders (%i).' % (len(variables), len(orders))
+    expression = _sympy_to_ginsh(expression)
+    ginsh = os.path.join(pySecDecContrib.dirname, "bin", "ginsh")
+    with tempfile.NamedTemporaryFile(prefix="psd_ginsh", mode="w") as f:
+        f.write("__EXPR = (")
+        f.write(expression)
+        f.write("):\n")
+        for var, order in zip(variables, orders):
+            f.write(f"__EXPR = series_to_poly(series(__EXPR, {var}, {order+1})):\n")
+        f.write("__START;\n__EXPR;\nquit:\n");
+        f.flush()
+        result = subprocess.check_output([ginsh, f.name], encoding="utf8")
+    result = re.sub(r".*__START\n", "", result, flags=re.DOTALL)
+    result = result.strip()
+    if result == "" or "__EXPR" in result:
+        raise ValueError("ginsh fail")
+    if result == "0":
+        raise OrderError(f"The requested orders {orders} in {variables} are too low")
+    #return Polynomial.from_expression(_ginsh_to_sympy(result), variables).nest()
+    return expand_sympy(_ginsh_to_sympy(result), variables, orders)
