@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Physics"
 ]
-dependencies = ["numpy>=1.16", "sympy>=1.10.1"]
+dependencies = ["numpy>=1.16", "sympy>=1.10.1,!=1.11.0,!=1.11.1"]
 description = 'Numerical evaluator of integrals implementing the "Sector Decomposition" method (arXiv:2108.10807, arXiv:1703.09692, arXiv:hep-ph/0004013, arXiv:0803.4177).'
 license = "GPLv3"
 readme = "README.md"
