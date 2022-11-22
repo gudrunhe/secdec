@@ -401,8 +401,8 @@ class TestExpandGinac(unittest.TestCase):
 
         alpha_poly = alpha_first.coeffs[0]
         self.assertTrue( type(alpha_poly) is Polynomial )
-        np.testing.assert_array_equal( alpha_poly.expolist, [[0,-1]] )
-        np.testing.assert_array_equal( alpha_poly.coeffs, [1] )
+        np.testing.assert_array_equal( alpha_poly.expolist, [[0,-1],[0,0],[0,1]] )
+        np.testing.assert_array_equal( alpha_poly.coeffs, [1,0,0] )
 
         # expansion in 'eps' first
         variables = sympify_expression(['eps', 'alpha'])
@@ -420,10 +420,10 @@ class TestExpandGinac(unittest.TestCase):
         eps_to_the_1 = eps_first.coeffs[1]
         self.assertTrue( type(eps_to_the_0) is Polynomial )
         self.assertTrue( type(eps_to_the_1) is Polynomial )
-        np.testing.assert_array_equal( eps_to_the_0.expolist, [[0,-1]] )
-        np.testing.assert_array_equal( eps_to_the_1.expolist, [[0,-2]] )
-        np.testing.assert_array_equal( eps_to_the_0.coeffs, [ 1] )
-        np.testing.assert_array_equal( eps_to_the_1.coeffs, [-1] )
+        np.testing.assert_array_equal( eps_to_the_0.expolist, [[0,-1],[0,0]] )
+        np.testing.assert_array_equal( eps_to_the_1.expolist, [[0,-2],[0,-1],[0,0]] )
+        np.testing.assert_array_equal( eps_to_the_0.coeffs, [ 1, 0] )
+        np.testing.assert_array_equal( eps_to_the_1.coeffs, [-1, 0, 0] )
 
     #@attr('active')
     def test_truncation_field(self):

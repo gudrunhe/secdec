@@ -423,6 +423,23 @@ def _ginsh_to_sympy(text):
         expr = expr.replace(k, v)
     return expr
 
+def sympy_to_nested_Polynomial(expr, variables, orders):
+    sp_zero = sp.sympify(0)
+    def rec(expr, i):
+        po = sp.poly(expr, gens=(variables[i], 1/variables[i]), domain="EX")
+        co = {
+            pplus - pminus : c
+            for (pplus, pminus), c in po.terms()
+        }
+        expolist = []
+        coeffs = []
+        for p in range(min(co.keys()), orders[i] + 1):
+            expolist.append([p if j == i else 0 for j in range(len(variables))])
+            coeff = co.get(p, sp_zero)
+            coeffs.append(rec(coeff, i+1) if i+1 < len(variables) else coeff)
+        return Polynomial(np.array(expolist), np.array(coeffs), variables)
+    return rec(expr, 0)
+
 def expand_ginac(expression, variables, orders):
     """
     Same as :func:`.expand_sympy`, but using GiNaC (via ``ginsh``).
@@ -450,5 +467,4 @@ def expand_ginac(expression, variables, orders):
         raise ValueError("ginsh fail")
     if result == "0":
         raise OrderError(f"The requested orders {orders} in {variables} are too low")
-    #return Polynomial.from_expression(_ginsh_to_sympy(result), variables).nest()
-    return expand_sympy(_ginsh_to_sympy(result), variables, orders)
+    return sympy_to_nested_Polynomial(_ginsh_to_sympy(result), variables, orders)
