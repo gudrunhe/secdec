@@ -83,6 +83,49 @@ def _parse_series(text):
         return terms, variable, order
     return series(text)
 
+def _parse_deval_series(text):
+    """
+    Parse a series in the deval format, return a list of entries
+    arranged the same way as in _parse_series().
+    """
+    import re
+    rx_term = re.compile(r"\+([^(]*)\*\(([+-].*[0-9])([+-].*[0-9])j\)(\*plusminus)?")
+    result = []
+    # Parse the text into a {(expo, ...): (value, error)} dictionary.
+    coeffs = {}
+    variables = None
+    for line in text.splitlines():
+        line = line.strip()
+        m = rx_term.fullmatch(line)
+        if m is not None:
+            stem, real, imag, pm = m.groups()
+            if variables is None:
+                variables = [x.split("^")[0] for x in stem.split("*")]
+            powers = tuple(int(x.split("^")[1]) for x in stem.split("*"))
+            real = float(real)
+            imag = float(imag)
+            coeffs.setdefault(powers, [0, 0])
+            coeffs[powers][0 if pm is None else 1] = \
+                real if imag == 0 else complex(real, imag)
+        elif line == "),":
+            result.append({k:tuple(v) for k,v in coeffs.items()})
+            coeffs = {}
+        else:
+            pass
+    result.append({k:tuple(v) for k,v in coeffs.items()})
+    # Turn it into a nested series.
+    def rec(expmap, i):
+        if i >= len(variables):
+            assert(len(expmap) == 1)
+            return next(iter(expmap.values()))
+        co = {}
+        for powers, coeff in expmap.items():
+            power = powers[i]
+            co.setdefault(power, {})
+            co[power][powers] = coeff
+        return [(rec(c, i+1), p) for p, c in co.items()], variables[i], max(co.keys()) + 1
+    return [rec(expr, 0) for expr in result]
+
 def _convert_series(series, power, Order):
     def fmt_value(val, mean):
         if isinstance(val, complex):
@@ -107,8 +150,14 @@ def _convert_series(series, power, Order):
                 " + %s(%s%s%d)" % (Order, var, power, order) if order > 0 else \
                 " + %s(%s%s(%d))" % (Order, var, power, order)
         return " + ".join(fmt_term(val, var, exp, mean) for val, exp in terms) + order
-    terms, variable, order = _parse_series(series)
-    return fmt_series(terms, variable, order, True), fmt_series(terms, variable, order, False)
+    tvolist = \
+            _parse_deval_series(series) if series.startswith("[") else \
+            [_parse_series(line) for line in series.splitlines()]
+    results = [
+        ( fmt_series(terms, variable, order, True), fmt_series(terms, variable, order, False) )
+        for terms, variable, order in tvolist
+    ]
+    return results if len(results) > 1 else results[0]
 
 def series_to_ginac(series):
     """
@@ -122,6 +171,8 @@ def series_to_ginac(series):
         The format of each returned value may look like this::
 
             (0+0.012665*I)/eps + (0+0.028632*I) + Order(eps)
+
+        If there are multiple series specified, return a list of string pairs.
     """
     def fmt_order(var, order):
         return " + Order(%s)" % (var,) if order == 1 else \
@@ -140,6 +191,8 @@ def series_to_sympy(series):
         The format of each returned value may look like this::
 
             (0+0.012665*I)/eps + (0+0.028632*I) + O(eps)
+
+        If there are multiple series specified, return a list of string pairs.
     """
     return _convert_series(series, "**", "O")
 
@@ -155,6 +208,8 @@ def series_to_mathematica(series):
         The format of each returned value may look like this::
 
             (0+0.012665*I)/eps + (0+0.028632*I) + O[eps]
+
+        If there are multiple series specified, return a list of string pairs.
     """
     def fmt_value(val, mean):
         if isinstance(val, float):
@@ -189,8 +244,14 @@ def series_to_mathematica(series):
                     " + O[%s]^%d" % (var, order) if order > 0 else \
                     " + O[%s]/%s^%d" % (var, var, 1-order)
             return " + ".join(fmt_term(val, var, exp, mean) for val, exp in terms) + order
-    terms, variable, order = _parse_series(series)
-    return fmt_series(terms, variable, order, True), fmt_series(terms, variable, order, False)
+    tvolist = \
+            _parse_deval_series(series) if series.startswith("[") else \
+            [_parse_series(line) for line in series.splitlines()]
+    results = [
+        ( fmt_series(terms, variable, order, True), fmt_series(terms, variable, order, False) )
+        for terms, variable, order in tvolist
+    ]
+    return results if len(results) > 1 else results[0]
 
 def series_to_maple(series):
     """
@@ -204,6 +265,8 @@ def series_to_maple(series):
         The format of each returned value may look like this::
 
             (0+0.012665*I)/eps + (0+0.028632*I) + O(eps)
+
+        If there are multiple series specified, return a list of string pairs.
     """
     return _convert_series(series, "^", "O")
 

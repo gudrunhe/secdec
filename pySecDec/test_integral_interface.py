@@ -1,6 +1,8 @@
 from . import integral_interface as ii
+from nose.plugins.attrib import attr
 import unittest
 
+#@attr('active')
 class TestParsing(unittest.TestCase):
     def test_parse_series_coefficient(self):
         self.assertEqual(ii._parse_series_coefficient("1"), 1)
@@ -124,4 +126,70 @@ class TestParsing(unittest.TestCase):
                 "(-1/eps + -10 + O(eps))/alpha + (5/eps^2 + -19 + O(eps)) + O(alpha)",
                 "(2/eps + 8 + O(eps))/alpha + (1/eps^2 + 9 + O(eps)) + O(alpha)"
             )
+        )
+
+    def test_multi_series_to_sympy(self):
+        self.assertEqual(
+            ii.series_to_sympy(" + (1)*ep^-1 + (2)\n + (1)*ep^-2 + (2)*ep^-1"),
+            [('1/ep + 2', '0/ep + 0'), ('1/ep**2 + 2/ep', '0/ep**2 + 0/ep')]
+        )
+
+    def test_multi_series_to_mathematica(self):
+        self.assertEqual(
+            ii.series_to_mathematica(" + (1)*ep^-1 + (2)\n + (1)*ep^-2 + (2)*ep^-1"),
+            [('1/ep + 2', '0/ep + 0'), ('1/ep^2 + 2/ep', '0/ep^2 + 0/ep')]
+        )
+
+    def test_deval_series_to_x(self):
+        series = """[
+          (
+            +eta^0*eps^0*(+1.0e+00+0.0e+00j)
+            +eta^0*eps^0*(+2.0e+00+0.0e+00j)*plusminus
+            +eta^0*eps^1*(-3.0e+00+0.0e+00j)
+            +eta^0*eps^1*(+4.0e+00+0.0e+00j)*plusminus
+            +eta^1*eps^0*(+5.0e+00-9.0e+00j)
+            +eta^1*eps^0*(+6.0e+00+0.0e+00j)*plusminus
+            +eta^1*eps^1*(-7.0e+00-1.0e+01j)
+            +eta^1*eps^1*(+8.0e+00+0.0e+00j)*plusminus
+          )
+        ]
+        """
+        self.assertEqual(
+            ii.series_to_sympy(series),
+            ('(1 + -3*eps + O(eps**2)) + ((5-9*I) + (-7-10*I)*eps + O(eps**2))*eta + O(eta**2)',
+             '(2 + 4*eps + O(eps**2)) + (6 + 8*eps + O(eps**2))*eta + O(eta**2)')
+        )
+        self.assertEqual(
+            ii.series_to_mathematica(series),
+            ('SeriesData[eta, 0, {1 + -3*eps + O[eps]^2, (5-9*I) + (-7-10*I)*eps + O[eps]^2}, 0, 2, 1]',
+             'SeriesData[eta, 0, {2 + 4*eps + O[eps]^2, 6 + 8*eps + O[eps]^2}, 0, 2, 1]')
+        )
+
+    def test_deval_multi_series_to_x(self):
+        series = """[
+          (
+            +eps^0*(+1.0e+01+2.0e+01j)
+            +eps^0*(+3.0e+00+4.0e+00j)*plusminus
+            +eps^1*(+5.0e+01+6.0e+01j)
+            +eps^1*(+7.0e+00+8.0e+00j)*plusminus
+          ),
+          (
+            +eps^1*(-9.0e+01-1.0e+01j)
+            +eps^1*(-2.0e+00-3.0e+00j)*plusminus
+          )
+        ]
+        """
+        self.assertEqual(
+            ii.series_to_sympy(series),
+            [('(10+20*I) + (50+60*I)*eps + O(eps**2)',
+              '(3+4*I) + (7+8*I)*eps + O(eps**2)'),
+             ('(-90-10*I)*eps + O(eps**2)',
+              '(-2-3*I)*eps + O(eps**2)')]
+        )
+        self.assertEqual(
+            ii.series_to_mathematica(series),
+            [('(10+20*I) + (50+60*I)*eps + O[eps]^2',
+              '(3+4*I) + (7+8*I)*eps + O[eps]^2'),
+             ('(-90-10*I)*eps + O[eps]^2',
+              '(-2-3*I)*eps + O[eps]^2')]
         )
