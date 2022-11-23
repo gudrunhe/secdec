@@ -786,33 +786,6 @@ class Polynomial(_Expression):
         result.simplify()
         return result
 
-    def nest(self, index=0):
-        """
-        Returns a nested version of :class:`.Polynomial`.
-        This is the inverse of of :func:`.denest`.
-        """
-        if index >= self.number_of_variables - 1:
-            expolist, coeffs = zip(*sorted(zip(self.expolist, self.coeffs), key=lambda ec: tuple(ec[0])))
-            return Polynomial(np.array(expolist), np.array(coeffs), self.polysymbols)
-        expo2expolist = {}
-        expo2coeffs = {}
-        for i in range(len(self.expolist)):
-            e = np.zeros(self.number_of_variables, dtype=int)
-            e[index] = self.expolist[i, index]
-            e = tuple(e)
-            expo2expolist.setdefault(e, [])
-            expo2coeffs.setdefault(e, [])
-            expolist = self.expolist[i].copy()
-            expolist[index] = 0
-            expo2expolist[e].append(expolist)
-            expo2coeffs[e].append(self.coeffs[i])
-        expolist = sorted(expo2expolist.keys())
-        coeffs = np.array([
-            Polynomial(np.array(expo2expolist[e]), np.array(expo2coeffs[e]), self.polysymbols).nest(index+1)
-            for e in expolist
-        ])
-        return Polynomial(np.array(expolist), coeffs, self.polysymbols)
-
 class ExponentiatedPolynomial(Polynomial):
     '''
     Like :class:`.Polynomial`, but with a global exponent.
