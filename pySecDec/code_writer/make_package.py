@@ -1433,7 +1433,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  polynomials_to_decompose, polynomial_names=[], other_polynomials=[],
                  prefactor=1, remainder_expression=1, functions=[], real_parameters=[],
                  complex_parameters=[], form_optimization_level=2, form_work_space='50M',
-                 form_memory_use=None, form_threads=2,
+                 form_memory_use=None, form_threads=1,
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
                  decomposition_method='iterative_no_primary', normaliz_executable=None,
                  enforce_complex=False, split=False, ibp_power_goal=-1, use_iterative_sort=True,
@@ -1585,7 +1585,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     :param form_threads:
         integer, optional;
-        Number of threads (T)FORM will use. Default: ``2``.
+        Number of threads (T)FORM will use. Default: ``1``.
 
     :param form_insertion_depth:
         nonnegative integer, optional;
