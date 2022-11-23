@@ -177,7 +177,10 @@ namespace secdecutil
             ginsh_ss << "expand(real_part(EXPR2)+I_*imag_part(EXPR2));\n";
             ginsh_ss << "quit;\n";
             std::string ginsh_str = ginsh_ss.str();
-            write(fd, ginsh_str.c_str(), ginsh_str.size());
+            ssize_t w = write(fd, ginsh_str.c_str(), ginsh_str.size());
+            if (w != ginsh_str.size()) {
+                throw std::runtime_error("failed to write to ginsh in coefficient_parser");
+            }
             //std::cout << ginsh_str;
 
             // Run ginsh
