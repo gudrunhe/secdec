@@ -5,6 +5,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Numerator support for expansion by regions.
+- `form_memory_use` argument for  `loop_regions`, tailors `form.set` to use approximately the requested amount of memory.
+- `form_threads` argument for `loop_regions`, the number of threads TFORM will use.
+-  `extra_regulator_name`, `extra_regulator_exponent` for `loop_regions`, the name to be used for the extra regulator required to obtain well defined integrals and a list of exponents of the extra regulator.
+- Documentation for `prefactor` in `IntegralLibrary` output.
+- `ginsh` binary built for GiNaC, now used for coefficient parsing.
+
+### Changed
+- Vastly improved computation of the Newton polytopes, speeding up some steps required for expansion by regions and geometric sector decomposition.
+- Prefactors now expanded with `ginsh` rather than sympy.
+- Coefficient parsing now relies on `ginsh`, allows much more general coefficients than the previously required `num/den` rational function form.
+- `sum_package` accepts much more general coefficients, can be provided simply as a string that can be parsed by `ginsh` rather than the old `[num,den]` syntax.
+- `sum_package` accepts coefficients as dictionaries of the form `(i,j) -> coefficient`, where `i,j` are the indices of the amplitude and master integral, respectively.
+- `sum_package` accepts sparse coefficient matrices (missing entires are assumed `0`).
+- Use `form` and `form_threads=1` by default, parallelisation is provided by the build system instead.
+- Disabled `ContinuationLines` in FORM output.
+- Various scripts `export_sector`, `formwrapper`, `write_contour_deformation`, `write_integrand` moved to `pySecDecContrib`
+- `git_id` changed to `__commit__` to be more consistent with naming of other metadata (e.g. `__authors__` and `__version__`).
+- Print `test.log` for failed high level tests.
+- Require recent version of `sympy>=1.10.1`.
+- Require recent version of `numpy>=1.23`.
+- [Normaliz](https://www.normaliz.uni-osnabrueck.de/) updated to 3.9.2, interface simplified.
+- [GiNaC](https://www.ginac.de/) updated to 1.8.3.
+- [CLN](https://www.ginac.de/CLN/) updated to 1.3.6.
+- [FORM](https://github.com/vermaseren/form) updated to 4.2.1-982111.
+
+### Removed
+- `normaliz` executable
+- Testing for Python versions below 3.6 (support removed in `v1.5`)
+- `add_monomial_reglator_power` argument for `loop_regions`, replaced by `extra_regulator_name` and `extra_regulator_exponent`.
+- `Polynomial.nest()` an unused function for converting from sparse to dense polynomial representations.
+
+### Fixed
+- GPU support for CUDA 11, removed incorrect use of `shared_ptr` in device functions.
+- `geometric_ku` now corrrectly handles 0-dimensional cones.
+- Handling of the imaginary unit `i_` when they appear e.g. in user-provided polynomials.
+- Expansion by regions for cases where the resulting expansion is trivial.
+- Provide more useful error messages in `polytope` class, relevant when using expansion by regions or geometric sector decomposition methods.
+- Deprecation warnings emitted by sympy due to calls of type `sympify(str)`
+
 ## [1.5.6] - 2022-11-15
 
 ### Fixed
