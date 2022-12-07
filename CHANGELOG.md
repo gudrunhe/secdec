@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require recent version of `sympy>=1.10.1`.
 - Require recent version of `numpy>=1.23`.
 - [Normaliz](https://www.normaliz.uni-osnabrueck.de/) updated to 3.9.2, interface simplified.
-- [GiNaC](https://www.ginac.de/) updated to 1.8.3.
+- [GiNaC](https://www.ginac.de/) updated to 1.8.4.
 - [CLN](https://www.ginac.de/CLN/) updated to 1.3.6.
 - [FORM](https://github.com/vermaseren/form) updated to 4.3.0.
 
