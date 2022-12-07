@@ -3,7 +3,7 @@ import sys
 Import("env")
 
 cuba = "Cuba-4.2.1"
-form = "form-4.2.1"
+form = "form-4.3.0"
 gmp = "gmp-6.2.1"
 gsl = "gsl-2.5"
 nauty = "nauty26r7"
