@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [GiNaC](https://www.ginac.de/) updated to 1.8.4.
 - [CLN](https://www.ginac.de/CLN/) updated to 1.3.6-b4d44895.
 - [FORM](https://github.com/vermaseren/form) updated to 4.3.0.
+- [Cuba](https://feynarts.de/cuba/) updated to 4.2.2.
 
 ### Removed
 - Support for Python version 3.6.
