@@ -26,7 +26,7 @@ def LoopPackage(name, loop_integral, requested_orders=None,
                  form_optimization_level=2,
                  form_work_space='50M',
                  form_memory_use=None,
-                 form_threads=2,
+                 form_threads=1,
                  decomposition_method='iterative',
                  normaliz_executable=None,
                  enforce_complex=False,
@@ -129,7 +129,7 @@ def loop_package(name, loop_integral, requested_orders=None,
                  form_optimization_level=2,
                  form_work_space='50M',
                  form_memory_use=None,
-                 form_threads=2,
+                 form_threads=1,
                  decomposition_method='iterative',
                  normaliz_executable=None,
                  enforce_complex=False,
@@ -227,7 +227,7 @@ def loop_package(name, loop_integral, requested_orders=None,
 
     :param form_threads:
         integer, optional;
-        Number of threads (T)FORM will use. Default: ``2``.
+        Number of threads (T)FORM will use. Default: ``1``.
 
     :param decomposition_method:
         string, optional;
