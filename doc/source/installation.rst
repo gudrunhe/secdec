@@ -73,6 +73,6 @@ during the normal installation procedure. These packages are:
  * CUBA (http://www.feynarts.de/cuba/), used for :mod:`Vegas<pySecDec.integral_interface.Vegas>`, :mod:`Suave<pySecDec.integral_interface.Suave>`, :mod:`Divonne<pySecDec.integral_interface.Divonne>`, and :mod:`Cuhre<pySecDec.integral_interface.Cuhre>` integrators.
  * GSL (http://www.gnu.org/software/gsl/), used for the :mod:`CQuad<pySecDec.integral_interface.CQuad>` integrator.
  * FORM (http://www.nikhef.nl/~form/), used to optimize the integrands.
- * Nauty and Traces (http://pallini.di.uniroma1.it/), used by :func:`pySecDec.code_writer.make_package` to find symmetries between sectors (if `use_dreadnaut` is set to `True`).
+ * Nauty and Traces (http://pallini.di.uniroma1.it/), used by :func:`pySecDec.make_package` to find symmetries between sectors (if `use_dreadnaut` is set to `True`).
  * Normaliz (https://www.normaliz.uni-osnabrueck.de), used by the :mod:`geometric decomposition <pySecDec.decomposition.geometric>` module.
  * Catch (https://github.com/philsquared/Catch) used by :ref:`SedDecUtil<chapter_secdecutil>` for unit testing.

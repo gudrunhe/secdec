@@ -34,40 +34,31 @@ and then running:
 
     $ python3 -m pip install --user --upgrade pySecDec
 
+This command will install the prebuild version of `pySecDec` if it
+is available; if not, then the dependencies will be compiled from
+source (this might take a while). One can also force building
+from source like this:
+
+    $ python3 -m pip install --user --upgrade --no-binary :all: pySecDec
+
 [pypi]: https://pypi.org/project/pySecDec/
 [pip]: https://pypi.org/project/pip/
 
 ## Additional dependencies
 
-The intended main usage of pySecDec is to make it write C++ packages using the functions
-`pySecDec.code_writer.make_package` and `pySecDec.loop_integral.loop_package`.
-In order to build these C++ packages, the following additional non-python-based libraries
-and programs are required:
+`pySecDec` and the integration libraries it produces depend
+on multiple third-party non-Python packages, all of which are
+contained in `pySecDecContrib/` folder and will be automatally
+built during the normal installation procedure. These packages
+are:
 
- * CUBA (http://www.feynarts.de/cuba/)
- * FORM (http://www.nikhef.nl/~form/)
- * GSL (http://www.gnu.org/software/gsl/)
- * SecDecUtil (part of pySecDec), and its dependency:
-
-   * Catch (https://github.com/philsquared/Catch)
-
-The functions `pySecDec.code_writer.make_package` and
-`pySecDec.loop_integral.loop_package` can use the external program
-`dreadnaut` to find all sector symmetries and therefore reduce
-the number of sectors:
-
- * NAUTY (http://pallini.di.uniroma1.it/)
-[B. D. McKay and A. Piperno, Practical graph isomorphism, II, 2014, Journal of Symbolic Computation, 60, 94-112,
-doi:10.1016/j.jsc.2013.09.003]
-
-The geometric decomposition methods (`decomposition_method='geometric'` or `'geometric_ku'`) depend on:
-
- * Normaliz (https://www.normaliz.uni-osnabrueck.de)
-   [W. Bruns and B. Ichim and T. Römer and R. Sieg and C. Söger]
-
-These packages are redistributed along with pySecDec itself,
-and will be built automatically during pySecDec installation.
-
+ * QMC (https://github.com/mppmu/qmc), used for the `Qmc` integrator.
+ * CUBA (http://www.feynarts.de/cuba/), used for `Vegas`, `Suave`, `Divonne`, and `Cuhre` integrators.
+ * GSL (http://www.gnu.org/software/gsl/), used for the `CQuad` integrator.
+ * FORM (http://www.nikhef.nl/~form/), used to optimize the integrands.
+ * Nauty and Traces (http://pallini.di.uniroma1.it/), used by `pySecDec.make_package` to find symmetries between sectors (if `use_dreadnaut` is set to `True`).
+ * Normaliz (https://www.normaliz.uni-osnabrueck.de), used by the geometric decomposition module (`decomposition_method` set to `'geometric'` or `'geometric_ku'`).
+ * Catch (https://github.com/philsquared/Catch) used by SedDecUtil (part of pySecDec) for unit testing.
 
 Basic Usage
 ===========
