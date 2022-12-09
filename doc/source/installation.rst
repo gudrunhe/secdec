@@ -19,7 +19,7 @@ This procedure will make the `clang` compiler available on the system. Python 3 
 Download the Program and Install
 --------------------------------
 
-`pySecDec` works under Python version 3.6 or newer on
+`pySecDec` works under Python version 3.8 or newer on
 unix-like systems.  The latest release can be installed from
 `PyPI`_ by first (optionally) upgrading `pip`_:
 
