@@ -15,6 +15,8 @@ contrib_extra_source = File(Split(f"""
     SConscript
     {gmp}.list
     {gsl}.list
+    {cln}.list
+    {ginac}.list
 """))
 
 contrib = []
