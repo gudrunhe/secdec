@@ -33,6 +33,15 @@ and then running:
 
    $ python3 -m pip install --user --upgrade pySecDec
 
+This command will install the prebuild version of pySecDec if it
+is available; if not, then the dependencies will be compiled from
+source (this might take a while). One can also force building
+from source like this:
+
+.. code::
+
+   $ python3 -m pip install --user --upgrade --no-binary :all: pySecDec
+
 .. _PyPI: https://pypi.org/project/pySecDec/
 .. _pip: https://pypi.org/project/pip/
 
