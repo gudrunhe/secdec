@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+import sympy as sp
+
+if __name__ == "__main__":
+
+    # load c++ library
+    from pySecDec.integral_interface import DistevalLibrary
+    name = 'threeloop_EBR_zeroth_order' #name of directory
+    loop_integral = DistevalLibrary('{0}/disteval/{0}.json'.format(name))
+
+    #integrate
+    str_result = loop_integral(parameters={'mwsq' : 0.78, 'mzsq' : 1.0, 'mtsq' : 0.019}, verbose=True)
