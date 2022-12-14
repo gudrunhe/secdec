@@ -10,4 +10,4 @@ if __name__ == "__main__":
     loop_integral = DistevalLibrary('{0}/disteval/{0}.json'.format(name))
 
     #integrate
-    str_result = loop_integral(parameters={'mwsq' : 0.78, 'mzsq' : 1.0, 'mtsq' : 0.019}, verbose=True)
+    str_result = loop_integral(parameters={'mwsq' : 0.78, 'mzsq' : 1.0, 'mtsq' : 0.00038}, verbose=True)
