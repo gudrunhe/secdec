@@ -658,7 +658,7 @@ class Qmc(CPPIntegrator):
             errormode_enum = 2
         else:
             raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
-            
+
         self.c_integrator_ptr = self.c_lib.allocate_integrators_Qmc(epsrel,epsabs,maxeval,errormode_enum,evaluateminn,minn,
                                                                     minm,maxnperpackage,maxmperpackage,cputhreads,
                                                                     cudablocks,cudathreadsperblock,verbosity,
@@ -1030,7 +1030,7 @@ class IntegralLibrary(object):
         str, optional;
         Allowed values: ``abs``, ``all``, ``largest``, ``real``, ``imag``.
         Defines how epsrel and epsabs should be applied to complex values.
-        With the choice  ``largest``, the relative uncertainty is defined as 
+        With the choice  ``largest``, the relative uncertainty is defined as
         ``max( |Re(error)|, |Im(error)|)/max( |Re(result)|, |Im(result)|)``.
         Choosing ``all`` will apply epsrel and epsabs to both the real
         and imaginary part separately.
@@ -1254,7 +1254,7 @@ class IntegralLibrary(object):
                                 epsrel, epsabs, maxeval,
                                 mineval, maxincreasefac, min_epsrel, min_epsabs,
                                 max_epsrel, max_epsabs, min_decrease_factor,
-                                decrease_to_percentage, wall_clock_limit, 
+                                decrease_to_percentage, wall_clock_limit,
                                 number_of_threads, reset_cuda_after, verbose, errormode_enum
                             ):
         # Passed in correct number of parameters?
@@ -1293,7 +1293,7 @@ class IntegralLibrary(object):
                                                  epsrel, epsabs, maxeval,
                                                  mineval, maxincreasefac, min_epsrel, min_epsabs,
                                                  max_epsrel, max_epsabs, min_decrease_factor,
-                                                 decrease_to_percentage, wall_clock_limit, 
+                                                 decrease_to_percentage, wall_clock_limit,
                                                  number_of_threads, reset_cuda_after, verbose,errormode_enum,
                                                  self.c_lib_path.encode("utf-8")
                                             )
@@ -1309,7 +1309,7 @@ class IntegralLibrary(object):
                                             epsrel, epsabs, maxeval,
                                             mineval, maxincreasefac, min_epsrel, min_epsabs,
                                             max_epsrel, max_epsabs, min_decrease_factor,
-                                            decrease_to_percentage, wall_clock_limit, 
+                                            decrease_to_percentage, wall_clock_limit,
                                             number_of_threads, reset_cuda_after, verbose,errormode_enum,
                                             self.c_lib_path.encode("utf-8")
                                     )
@@ -1495,7 +1495,7 @@ class DistevalLibrary(object):
             realp = spec["realp"]
             for i, val in enumerate(real_parameters):
                 parameters[realp[i]] = val
-            complexp = spec["realp"]
+            complexp = spec["complexp"]
             for i, val in enumerate(complex_parameters):
                 parameters[complexp[i]] = val
         if workers is not None:
