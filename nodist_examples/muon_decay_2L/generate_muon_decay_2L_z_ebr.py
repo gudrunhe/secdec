@@ -22,7 +22,7 @@ if __name__ == "__main__":
     )
 
     # find the regions
-    generators_args = loop_regions(
+    terms = loop_regions(
         name = "twoloop_EBR_z",
         loop_integral=li,
         smallness_parameter = 'z',
@@ -34,16 +34,14 @@ if __name__ == "__main__":
     first_order_contributions = []
 
     # Separate the zeroth and first order contributions to integrate separately later
-    for packages in generators_args:
-        print(packages.name[-1])
-        order = packages.name[-1]
-        print(packages)
+    for term in terms:
+        order = term.name[-1]
         if order == '0':
             print('appending zero order')
-            zeroth_order_contributions.append(packages)
+            zeroth_order_contributions.append(term)
         if order == '1':
             print('appending first order')
-            first_order_contributions.append(packages)
+            first_order_contributions.append(term)
 
     # write the code to sum up the regions
     if zeroth_order_contributions:

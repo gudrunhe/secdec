@@ -8,12 +8,12 @@ if __name__ == "__main__":
         internal_lines = [['mt',[1,4]],['mw',[4,2]],[0,[2,3]],[0,[4,5]], [0, [1,6]], [0, [6,7]], [0, [5,7]], ['mz', [7,3]],['mz', [6,5]]],
         external_lines = [['p1',1],['p2',2],['p3',3]],
         replacement_rules = [
-            ('p1*p1', 'mwsq'),
+            ('p1*p1', 's'),
             ('p2*p2', 0),
             ('p3*p3', 0),
-            ('p1*p2', 'mwsq/2'),
-            ('p1*p3', 'mwsq/2'),
-            ('p2*p3', 'mwsq/2'),
+            ('p1*p2', 's/2'),
+            ('p1*p3', 's/2'),
+            ('p2*p3', 's/2'),
             ('mw**2', 'mwsq'),
             ('mz**2', 'mzsq'),
             ('mt**2', 'mtsq')
@@ -21,8 +21,8 @@ if __name__ == "__main__":
     )
 
     # find the regions
-    generators_args = loop_regions(
-        name = name,
+    terms = loop_regions(
+        name = 'threeloop_EBR',
         loop_integral=li,
         smallness_parameter = "mtsq",
         decomposition_method = 'geometric',
@@ -33,12 +33,12 @@ if __name__ == "__main__":
     first_order_contributions = []
 
     # Separate the zeroth and first order contributions to integrate separately later
-    for packages in generators_args:
-        order = packages.name[-1]
+    for term in terms:
+        order = term.name[-1]
         if order == '0':
-            zeroth_order_contributions.append(packages)
+            zeroth_order_contributions.append(term)
         if order == '1':
-            first_order_contributions.append(packages)
+            first_order_contributions.append(term)
 
     if zeroth_order_contributions:
         sum_package("threeloop_EBR_zeroth_order",
