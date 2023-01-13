@@ -359,6 +359,13 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     }
     family2idx = {fam:i for i, fam in enumerate(infos.keys())}
 
+    log(f"parsing {len(infos)} integral prefactors")
+    for ii in infos.values():
+        ii["expanded_prefactor_value"] = {
+            tuple(t["regulator_powers"]) : complex(sp.sympify(t["coefficient"]).subs(valuemap))
+            for t in ii["expanded_prefactor"]
+        }
+
     # Launch all the workers
     t1 = time.time()
 
@@ -397,7 +404,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 done_evalf.set_exception(WorkerException(exception))
                 return
             log("-", t["coefficient"])
-            br_coef = {tuple(k):sp.sympify(v) for k,v in br_coef}
+            br_coef = {tuple(k):complex(re, im) for k, (re, im) in br_coef}
             split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], br_coef, valuemap, sp_regulators, requested_orders)
             done_evalf.todo -= 1
             if done_evalf.todo == 0:
@@ -710,14 +717,9 @@ def load_cluster_json(jsonfile, dirname):
     }
 
 def split_integral_into_orders(orders, ampid, kernel2idx, info, br_coef, valmap, sp_regulators, requested_orders):
-    br_pref = {
-        tuple(t["regulator_powers"]) : complex(sp.sympify(t["coefficient"]).subs(valmap))
-        for t in info["expanded_prefactor"]
-    }
+    br_pref = info["expanded_prefactor_value"]
     kern_leading_orders = np.min([o["regulator_powers"] for o in info["orders"]], axis=0)
     prefactor = bracket_mul(br_pref, br_coef, -kern_leading_orders + requested_orders)
-    prefactor = {p : complex(c.together()) for p, c in prefactor.items()}
-    oo = {}
     for o in info["orders"]:
         powers = np.array(o["regulator_powers"])
         for pow, coef in prefactor.items():
@@ -725,10 +727,8 @@ def split_integral_into_orders(orders, ampid, kernel2idx, info, br_coef, valmap,
             if np.all(p <= requested_orders):
                 key = (ampid, tuple(p.tolist()))
                 orders.setdefault(key, np.zeros(len(kernel2idx), dtype=np.complex128))
-                oo.setdefault(key, np.zeros(len(kernel2idx), dtype=np.complex128))
                 for k in o["kernels"]:
                     orders[key][kernel2idx[info["name"], k]] += coef
-                    oo[key][kernel2idx[info["name"], k]] += coef
 
 def parse_array_shorthand(text):
     """

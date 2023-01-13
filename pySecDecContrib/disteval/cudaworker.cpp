@@ -730,21 +730,35 @@ parse_cmd_evalf(uint64_t token)
         input_getchar();
     }
     match_str("]]]\n");
-    double t2 = timestamp();
-    std::ostringstream s;
     auto br = ginac_bracket(expr.expand(), varlist);
-    bool first = true;
+    std::map<std::vector<int>, complex_t> brc;
     for (auto &&kv : br) {
-        if (first) { first = false; } else { s << ','; }
-        s << "[[";
+        GiNaC::ex val = kv.second.evalf();
+        GiNaC::ex val_re = val.real_part();
+        GiNaC::ex val_im = val.imag_part();
+        if (GiNaC::is_a<GiNaC::numeric>(val_re) && GiNaC::is_a<GiNaC::numeric>(val_im)) {
+            double re = GiNaC::ex_to<GiNaC::numeric>(val_re).to_double();
+            double im = GiNaC::ex_to<GiNaC::numeric>(val_im).to_double();
+            brc[kv.first] = complex_t{re, im};
+        } else {
+            printf("@[%" PRIu64 ",null,\"the coefficient is not numeric after substitution\"]\n", token);
+            return;
+        }
+    }
+    double t2 = timestamp();
+    printf("@[%" PRIu64 ",[", token);
+    bool first = true;
+    for (auto &&kv : brc) {
+        if (first) { first = false; } else { putchar(','); }
+        printf("[[");
         bool first2 = true;
         for (auto &&i : kv.first) {
-            if (first2) { first2 = false; } else { s << ','; }
-            s << i;
+            if (first2) { first2 = false; } else { putchar(','); }
+            printf("%d", i);
         }
-        s << "],\"" << kv.second.evalf() << "\"]";
+        printf("],[%.16e,%.16e]]", kv.second.re, kv.second.im);
     }
-    printf("@[%" PRIu64 ",[%s],null]\n", token, s.str().c_str());
+    printf("],null]\n");
     G.useful_time += t2 - t1;
 }
 
