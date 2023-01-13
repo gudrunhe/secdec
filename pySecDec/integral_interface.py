@@ -1435,13 +1435,20 @@ class DistevalLibrary(object):
         float, optional;
         The desired relative accuracy for the numerical
         evaluation of the weighted sum of the sectors.
-        Default: epsrel of integrator (default 1e-4).
+        Default: ``1e-4``.
 
     :param epsabs:
         float, optional;
         The desired absolute accuracy for the numerical
         evaluation of the weighted sum of the sectors.
         Default: epsabs of integrator (default 1e-10).
+
+    :param timeout:
+        float, optional;
+        The maximal integration time (in seconds) after which
+        the integration will stop, and the current result will
+        be returned (no matter which precision is reached).
+        Default: ``None``.
 
     :param points:
         unsigned int, optional;
@@ -1482,7 +1489,7 @@ class DistevalLibrary(object):
 
     def __call__(self,
             parameters={}, real_parameters=[], complex_parameters=[],
-            epsabs=1e-10, epsrel=1e-4, points=1e4,
+            epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
             number_of_presamples=1e4, shifts=32, workers=None,
             coefficients=None, verbose=True):
         import json
@@ -1523,6 +1530,7 @@ class DistevalLibrary(object):
                 self.filename,
                 "--epsabs", str(epsabs),
                 "--epsrel", str(epsrel),
+                *(["--timeout", str(timeout)] if timeout is not None else []),
                 "--points", str(points),
                 "--presamples", str(number_of_presamples),
                 "--shifts", str(shifts),

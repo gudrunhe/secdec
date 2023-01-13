@@ -334,6 +334,7 @@ The evaluation can be controlled via the provided command-line options:
 
 * ``--epsabs=<number>``: stop if this absolute precision is reached (default: ``1e-10``);
 * ``--epsrel=<number>``: stop if this relative precision is reached (default: ``1e-4``);
+* ``--timeout=<number>``: stop after at most this many seconds (defaul: ``inf``);
 * ``--points=<number>``: use this initial Quasi-Monte-Carlo lattice size (default: ``1e4``);
 * ``--presamples=<number>``: use this many points for presampling (default: ``1e4``);
 * ``--shifts=<number>``: use this many lattice shifts per integral (default: ``32``);

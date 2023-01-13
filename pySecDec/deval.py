@@ -6,6 +6,7 @@ Usage:
 Options:
     --epsabs=X          stop if this absolute precision is reached (default: 1e-10)
     --epsrel=X          stop if this relative precision is reached (default: 1e-4)
+    --timeout=X         stop after at most this many seconds (defaul: inf)
     --points=X          begin integration with this lattice size (default: 1e4)
     --presamples=X      use this many points for presampling (default: 1e4)
     --shifts=X          use this many lattice shifts per integral (default: 32)
@@ -302,7 +303,7 @@ def adjust_n(W2, V, w, a, tau, nmin, nmax, names=[]):
         assert not np.any(np.isnan(n))
     return n
 
-async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap, valuemap_coeff):
+async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap, valuemap_coeff, deadline):
     # Load the integrals from the requested json file
     t0 = time.time()
 
@@ -454,7 +455,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     lattices = np.zeros(len(kernel2idx), dtype=np.float64)
     for i in range(len(kernel2idx)):
         lattices[i], genvecs[i] = generating_vector(dims[i], npoints0)
-    shift_val = np.zeros((len(kernel2idx), nshifts), dtype=np.complex128)
+    shift_val = np.full((len(kernel2idx), nshifts), np.nan, dtype=np.complex128)
     shift_rnd = np.empty((len(kernel2idx), nshifts), dtype=object)
     shift_tag = np.full((len(kernel2idx), nshifts), None, dtype=object)
     kern_db = np.ones(len(kernel2idx))
@@ -535,11 +536,14 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             n[toosmall] = lattices[toosmall]
         return n
 
+    early_exit = False
+
     async def iterate_integration(propose_lattices):
+        nonlocal early_exit
         while True:
             mask_todo = lattices != oldlattices
             if np.any(mask_todo):
-                log(f"distributing {np.count_nonzero(mask_todo)*nshifts} integration jobs")
+                log(f"distributing {np.count_nonzero(mask_todo)}*{nshifts} integration jobs")
                 for i in mask_todo.nonzero()[0]:
                     schedule_kernel(int(i))
                     await asyncio.sleep(0)
@@ -548,27 +552,32 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                     log(f"- {w.name}: {w.queue_size()}")
                 while par.queue_size() > 0:
                     log(f"still todo: {par.queue_size()}")
+                    early_exit = time.time() > deadline
+                    if early_exit:
+                        log("WARNING: timeout reached, will stop soon")
+                        break
                     await asyncio.sleep(1)
-                log("integration done")
-                new_kern_val = np.mean(shift_val, axis=1)
-                new_kern_val /= lattices
-                new_kern_var = np.var(np.real(shift_val), axis=1) + (1j)*np.var(np.imag(shift_val), axis=1)
-                new_kern_var /= lattices**2 * nshifts
+                mask_done = np.logical_and(mask_todo, ~np.any(np.isnan(shift_val), axis=1))
+                log(f"integration done, updated {np.count_nonzero(mask_done)} kernels")
+                shift_val_done = shift_val[mask_done]
+                shift_val[mask_todo] = np.nan
+                new_kern_val = np.mean(shift_val_done, axis=1)
+                new_kern_val /= lattices[mask_done]
+                new_kern_var = np.var(np.real(shift_val_done), axis=1) + (1j)*np.var(np.imag(shift_val_done), axis=1)
+                new_kern_var /= lattices[mask_done]**2 * nshifts
 
                 latticex = lattices/oldlattices
-                precisionx = np.sqrt((np.real(kern_var) + np.imag(kern_var)) / (np.real(new_kern_var) + np.imag(new_kern_var)))
-                for i in mask_todo.nonzero()[0]:
-                    i = int(i)
+                precisionx = np.sqrt((np.real(kern_var[mask_done]) + np.imag(kern_var[mask_done])) / (np.real(new_kern_var) + np.imag(new_kern_var)))
+                for i, idx in enumerate(mask_done.nonzero()[0]):
+                    idx = int(idx)
                     if precisionx[i] < 1.0:
-                        log(f"k{i} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({1/precisionx[i]:.4g}x worse at {latticex[i]:.1f}x lattice)")
+                        log(f"k{idx} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({1/precisionx[i]:.4g}x worse at {latticex[i]:.1f}x lattice)")
                     else:
-                        log(f"k{i} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
-                mask_lucky = np.logical_and(new_kern_var <= kern_var, mask_todo)
-                kern_val[mask_lucky] = new_kern_val[mask_lucky]
-                kern_var[mask_lucky] = new_kern_var[mask_lucky]
-                mask_unlucky = np.logical_and(~mask_lucky, mask_todo)
-                log(f"unlucky results: {np.count_nonzero(mask_unlucky)} out of {np.count_nonzero(mask_todo)}")
-
+                        log(f"k{idx} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
+                submask_lucky = new_kern_var <= kern_var[mask_done]
+                kern_val[mask_done] = np.where(submask_lucky, new_kern_val, kern_val[mask_done])
+                kern_var[mask_done] = np.where(submask_lucky, new_kern_var, kern_var[mask_done])
+                log(f"unlucky results: {np.count_nonzero(~submask_lucky)} out of {np.count_nonzero(mask_done)}")
             amp_val = W @ kern_val
             amp_var = W2 @ kern_var
             # Report results
@@ -590,6 +599,10 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                     log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
                     relerrs.append(np.max(relerr))
                 log(f"largest relative error: {np.max(relerrs):.2e} (amp{np.argmax(relerrs)})")
+
+            if early_exit:
+                return amp_val, amp_var
+
             n = propose_lattices(amp_val, amp_var)
             if n is None:
                 return amp_val, amp_var
@@ -607,12 +620,14 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             lattices[:] = newlattices
             genvecs[:] = newgenvecs
 
-    if np.min(epsrel) < 0.1:
-        log(f"trying to achieve epsrel={perkern_epsrel} and epsabs={perkern_epsabs} for each kernel")
-        await iterate_integration(propose_lattices1)
+    if not early_exit:
+        if np.min(epsrel) < 0.1:
+            log(f"trying to achieve epsrel={perkern_epsrel} and epsabs={perkern_epsabs} for each kernel")
+            amp_val, amp_var = await iterate_integration(propose_lattices1)
 
-    log(f"trying to achieve epsrel={epsrel} and epsabs={epsabs} for each amplitude")
-    amp_val, amp_var = await iterate_integration(propose_lattices2)
+    if not early_exit:
+        log(f"trying to achieve epsrel={epsrel} and epsabs={epsabs} for each amplitude")
+        amp_val, amp_var = await iterate_integration(propose_lattices2)
 
     # Report the results
     t4 = time.time()
@@ -735,6 +750,12 @@ def parse_array_shorthand(text):
             result.append(float(item))
     return result
 
+def parse_unit(text, units):
+    for unit, magnitude in units.items():
+        if text.endswith(unit):
+            return float(text[:-len(unit)])*magnitude
+    return float(text)
+
 def main():
 
     valuemap = {}
@@ -747,8 +768,9 @@ def main():
     nshifts = 32
     clusterfile = None
     coeffsdir = None
+    deadline = math.inf
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "presamples=", "shifts=", "help"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "presamples=", "shifts=", "timeout=", "help"])
     except getopt.GetoptError as e:
         print(e, file=sys.stderr)
         print("use --help to see the usage", file=sys.stderr)
@@ -761,6 +783,7 @@ def main():
         elif key == "--points": npoints = int(float(value))
         elif key == "--presamples": npresamples = int(float(value))
         elif key == "--shifts": nshifts = int(float(value))
+        elif key == "--timeout": deadline = time.time() + parse_unit(value, {"s": 1, "m": 60, "h": 60*60, "d": 24*60*60})
         elif key == "--help":
             print(__doc__.strip())
             exit(0)
@@ -813,7 +836,7 @@ def main():
 
     # Begin evaluation
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap_int, valuemap_coeff))
+    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap_int, valuemap_coeff, deadline))
 
 if __name__ == "__main__":
     main()
