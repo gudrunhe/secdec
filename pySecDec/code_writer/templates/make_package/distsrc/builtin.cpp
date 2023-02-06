@@ -41,14 +41,14 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
         int_t li_x1_3 = li_x1; li_x1 = warponce_i(li_x1 + genvec[1], lattice);
         realvec_t x1 = {{ li_x1_0*invlattice, li_x1_1*invlattice, li_x1_2*invlattice, li_x1_3*invlattice }};
         x1 = warponce(x1 + shift[1], 1);
-        auto w_x0 = korobov3_w(x0);
-        auto w_x1 = korobov3_w(x1);
+        auto w_x0 = korobov3x3_w(x0);
+        auto w_x1 = korobov3x3_w(x1);
         auto w = w_x0*w_x1;
         if (unlikely(index + 1 >= index2)) w.x[1] = 0;
         if (unlikely(index + 2 >= index2)) w.x[2] = 0;
         if (unlikely(index + 3 >= index2)) w.x[3] = 0;
-        x0 = korobov3_f(x0);
-        x1 = korobov3_f(x1);
+        x0 = korobov3x3_f(x0);
+        x1 = korobov3x3_f(x1);
         auto tmp1_1 = -q2 + m2sq + m3sq + m1sq;
         auto tmp1_2 = 2*m3sq;
         auto tmp1_3 = tmp1_2*x0;

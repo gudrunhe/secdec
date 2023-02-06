@@ -22,6 +22,8 @@ Symbols `integrationVariables'
         `complexParameters'
         `regulators';
 
+#define defaultQmcTransform "%(default_qmc_transform)s"
+
 * Define the imaginary unit in sympy notation.
 Symbol I;
 

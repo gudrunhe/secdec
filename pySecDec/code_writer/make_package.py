@@ -886,6 +886,7 @@ def _process_secondary_sector(environment):
     error_token = environment['error_token']
     template_replacements = environment['template_replacements']
     prefactor = environment['prefactor']
+    pylink_qmc_transforms = environment['pylink_qmc_transforms']
     if contour_deformation_polynomial is not None:
         contourdef_Jacobian_determinant = environment['contourdef_Jacobian_determinant']
         contourdef_Jacobian = environment['contourdef_Jacobian']
@@ -1375,6 +1376,7 @@ def _process_secondary_sector(environment):
     template_replacements['sector_codegen_sources'] = \
             "codegen/sector%i.h" % sector_index if contour_deformation_polynomial is None else \
             "codegen/sector%i.h codegen/contour_deformation_sector%i.h" % (sector_index, sector_index)
+    template_replacements['default_qmc_transform'] = pylink_qmc_transforms[0]
     parse_template_file(os.path.join(template_sources, 'codegen', 'sector.h'), # source
                         os.path.join(name,             'codegen', 'sector%i.h' % sector_index), # dest
                         template_replacements)

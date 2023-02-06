@@ -461,13 +461,13 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
         ${v} = warponce(${v} + shift[${j}], 1);
 @@ pass
 @@ for j, v in enumerate(intvars):
-        auto w_${v} = korobov3_w(${v});
+        auto w_${v} = ${i.qmcTransform}_w(${v});
 @@ pass
         realvec_t w = ${"*".join("w_" + v for v in intvars) if intvars else "REALVEC_CONST(1)"};
 @@ for k in range(1, VECSIZE):
         if (unlikely(index + ${k} >= index2)) w.x[${k}] = 0;
 @@ for j, v in enumerate(intvars):
-        ${v} = clamp01(korobov3_f(${v}));
+        ${v} = clamp01(${i.qmcTransform}_f(${v}));
 @@ for line in cleanup_code(i.order_integrandBody).splitlines():
         ${line.replace("return(", "acc = acc + w*(")}
 @@ pass
@@ -512,7 +512,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__maxdeformp(
         realvec_t ${v} = {{ ${li_list} }};
         ${v} = warponce(${v} + shift[${j}], 1);
 @@     for j, v in enumerate(intvars):
-        ${v} = clamp01(korobov3_f(${v}));
+        ${v} = clamp01(${i.qmcTransform}_f(${v}));
 @@     code = cleanup_code(i.order_optimizeDeformationParametersBody)
 @@     for line in code.splitlines():
         ${line}
@@ -556,7 +556,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__fpolycheck(
         realvec_t ${v} = {{ ${li_list} }};
         ${v} = warponce(${v} + shift[${j}], 1);
 @@     for j, v in enumerate(intvars):
-        ${v} = clamp01(korobov3_f(${v}));
+        ${v} = clamp01(${i.qmcTransform}_f(${v}));
 @@     code = cleanup_code(i.order_contourDeformationPolynomialBody)
 @@     for line in code.splitlines():
         ${line.replace("return(", "auto fpoly_im = SecDecInternalImagPart(")}
@@ -610,11 +610,11 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
         real_t ${v} = warponce(li_${v}*invlattice + shift[${j}], 1.0);
         li_${v} = warponce_i(li_${v} + genvec[${j}], lattice);
 @@ for j, v in enumerate(intvars):
-        real_t w_${v} = korobov3_w(${v});
+        real_t w_${v} = ${i.qmcTransform}_w(${v});
 @@ pass
         real_t w = ${"*".join("w_" + v for v in intvars) if intvars else "1"};
 @@ for j, v in enumerate(intvars):
-        ${v} = clamp01(korobov3_f(${v}));
+        ${v} = clamp01(${i.qmcTransform}_f(${v}));
 @@ for line in cleanup_code(i.order_integrandBody).splitlines():
         ${line.replace("return(", "val += w*(")}
 @@ pass

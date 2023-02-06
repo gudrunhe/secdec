@@ -160,6 +160,7 @@ Format 255;
 #write <sector`sectorID'.info> "@highestPoles=`highestPoles'"
 #write <sector`sectorID'.info> "@requiredOrders=`requiredOrders'"
 #write <sector`sectorID'.info> "@numOrders=`numOrders'"
+#write <sector`sectorID'.info> "@qmcTransform=`defaultQmcTransform'"
 
 * Optimize each order in epsilon separately.
 * The orders to be processed are enumerated in python. The shifted power
