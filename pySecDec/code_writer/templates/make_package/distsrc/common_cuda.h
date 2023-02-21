@@ -45,6 +45,10 @@ mathfn real_t clamp01(const real_t &a)
 #define likely(x) __builtin_expect((x), 1)
 #define unlikely(x) __builtin_expect((x), 0)
 
+mathfn real_t none_f(real_t x) { return x; }
+mathfn real_t none_w(real_t x) { return 1; }
+mathfn real_t baker_f(real_t x) { auto a = 2*x; auto b = 2-a; return (a <= b) ? a : b; }
+mathfn real_t baker_w(real_t x) { return 1; }
 mathfn real_t korobov1x1_f(real_t x) { return x*x*((-2)*x + 3); }
 mathfn real_t korobov1x1_w(real_t x) { return (1 - x)*x*6; }
 mathfn real_t korobov2x2_f(real_t x) { return x*x*x*((6*x - 15)*x + 10); }

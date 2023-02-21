@@ -206,6 +206,10 @@ mathfn real_t componentmin(const realvec_t &a)
 mathfn realvec_t clamp01(const realvec_t &a)
 { return vec_max(vec_min(a, REALVEC_CONST(1)), REALVEC_CONST(0)); }
 
+mathfn realvec_t none_f(const realvec_t &x) { return x; }
+mathfn realvec_t none_w(const realvec_t &x) { return REALVEC_CONST(1); }
+mathfn realvec_t baker_f(const realvec_t &x) { return vec_min(2*x, 2-2*x); }
+mathfn realvec_t baker_w(const realvec_t &x) { return REALVEC_CONST(1); }
 mathfn realvec_t korobov1x1_f(const realvec_t &x) { return x*x*((-2)*x + 3); }
 mathfn realvec_t korobov1x1_w(const realvec_t &x) { return (1 - x)*x*6; }
 mathfn realvec_t korobov2x2_f(const realvec_t &x) { return x*x*x*((6*x - 15)*x + 10); }
