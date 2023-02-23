@@ -6,9 +6,12 @@ include $(wildcard codegen/sector*.d)
 source : $(SECTOR_CPP)
 
 lib$(NAME).a : $(patsubst %%.cpp,%%.o,$(SECTOR_CPP)) src/integrands.o src/pole_structures.o src/prefactor.o
-	ar rs $@ $+
+	@rm -f $@
+	@echo src/*.o >$@.sourcelist
+	$(AR) -c -r -s $@ @$@.sourcelist
+	@rm -f $@.sourcelist
 
-lib$(NAME).so : $(patsubst %%.cpp,%%.o,$(SECTOR_CPP)) src/integrands.o src/pole_structures.o src/prefactor.o
+lib$(NAME).so : lib$(NAME).a
 	$(CXX) -o $@ -shared $+
 
 QMC_TEMPLATE_OBJECTS = $(patsubst %%.cpp,%%.o,$(wildcard pylink/qmc_template_instantiations_*.cpp))
@@ -69,7 +72,9 @@ distsrc/%%.o: distsrc/%%.cpp
 	$(CXX) -c -o $@ -fPIC $(XCXXFLAGS) $^
 
 disteval/$(NAME).so: $(DIST_SO_OBJECTS)
-	$(CXX) -shared -o $@ $^
+	@echo distsrc/sector_*.o >$@.sourcelist
+	$(CXX) -shared -o $@ @$@.sourcelist
+	@rm -f $@.sourcelist
 
 disteval/builtin.so: distsrc/builtin.o
 	$(CXX) -shared -o $@ $^
@@ -85,7 +90,9 @@ distsrc/%%.fatbin: distsrc/%%.cu
 	$(NVCC) $(NVCCFLAGS) -dc -fatbin -o $@ $^
 
 disteval/$(NAME).fatbin: $(DIST_FATBIN_OBJECTS)
-	$(NVCC) $(NVCCFLAGS) -dlink -fatbin -o $@ $^
+	@echo distsrc/sector_*.fatbin >$@.sourcelist
+	$(NVCC) $(NVCCFLAGS) -dlink -fatbin -o $@ --options-file $@.sourcelist
+	@rm -f $@.sourcelist
 
 disteval/builtin.fatbin: distsrc/builtin.fatbin
 	$(NVCC) $(NVCCFLAGS) -dlink -fatbin -o $@ $^
