@@ -23,18 +23,20 @@ if __name__ == "__main__":
         ]
     )
 
-    name = 'twoloop_EBR_mass_expansion'
+    name = 'muon_decay2L_mass_expansion'
+    smallness_parameter = 'mtsq'
+
     terms = loop_regions(
-        name = 'twoloop_EBR',
+        name = name,
         loop_integral=li,
-        smallness_parameter = 'mtsq',
+        smallness_parameter = smallness_parameter,
         decomposition_method = 'geometric',
-        form_optimization_level = 4,
+        form_optimization_level = 2,
         expansion_by_regions_order=1)
 
     term_by_prefactor_exponent = {}
     for term in terms:
-        prefactor_coefficient, prefactor_smallvar_exponent = sp.sympify(str(term.prefactor)).as_coeff_exponent(sp.sympify('mtsq'))
+        prefactor_coefficient, prefactor_smallvar_exponent = sp.sympify(str(term.prefactor)).as_coeff_exponent(sp.sympify(smallness_parameter))
         term = term._replace(prefactor = prefactor_coefficient) #remove mass prefactor from full prefactor
         term_by_prefactor_exponent.setdefault(str(prefactor_smallvar_exponent), [])
         term_by_prefactor_exponent[str(prefactor_smallvar_exponent)].append(term)

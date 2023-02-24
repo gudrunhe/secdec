@@ -5,7 +5,7 @@ import sympy as sp
 if __name__ == "__main__":
 
     # load c++ library
-    vertex3L = IntegralLibrary('vertex3L/vertex3L_pylink.so')
+    vertex3L = IntegralLibrary('g2_3L/g2_3L_pylink.so')
 
     # choose integrator
     vertex3L.use_Qmc()

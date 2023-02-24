@@ -6,13 +6,13 @@ from pySecDec.integral_interface import DistevalLibrary
 
 if __name__ == "__main__":
 
-    with open('twoloop_EBR_mass_expansion2/prefactor_exponent_by_name.json') as f:
+    with open('muon_decay3L_mass_expansion/prefactor_exponent_by_name.json') as f:
         prefactor_exponent_by_name = json.load(f)
 
     final_result = ''
     #integrate and format outputs
     for name, exponent in prefactor_exponent_by_name.items():
-        loop_integral = DistevalLibrary('twoloop_EBR_mass_expansion2/{0}/disteval/{0}.json'.format(name))
+        loop_integral = DistevalLibrary('muon_decay3L_mass_expansion/{0}/disteval/{0}.json'.format(name))
         str_result = loop_integral(parameters={'s' : 3, 'mwsq' : 0.78, 'mzsq' : 1.0}, verbose=True)
         result = sp.sympify(str_result)
         value = result[0].subs({"plusminus": 0})

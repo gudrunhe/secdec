@@ -17,7 +17,7 @@ if __name__ == "__main__":
     error = result[0].coeff("plusminus")
     errorN = result[1].coeff("plusminus")
 
-    #Express results in terms of fine structure constant (and common pi factors of coefficients)
+    #Express results in terms of fine structure constant (and add back common pi factors of coefficients)
     value *= np.pi**5 * 4**3
     error *= np.pi**5 * 4**3 
     valueN *= np.pi**5 * 4**3
