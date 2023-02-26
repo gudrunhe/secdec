@@ -348,6 +348,10 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         for i, oo in enumerate(ii["orders"]):
             for ker in oo["kernels"]:
                 korders.setdefault((fam, ker), i)
+    
+    log("Kernel ids:")
+    for (fam, ker), i in kernel2idx.items():
+        log(f"- ({fam}, {ker}) = k{i}")
 
     realp = {
         i : [valuemap[p] for p in info["realp"]]
