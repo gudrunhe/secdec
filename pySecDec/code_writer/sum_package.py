@@ -233,6 +233,8 @@ def sum_package(name, package_generators, regulators, requested_orders,
         list or None, optional;
         Required qmc integral transforms, options are:
 
+        * ``none``
+        * ``baker``
         * ``korobov<i>x<j>`` for 1 <= i,j <= 6
         * ``korobov<i>`` for 1 <= i <= 6 (same as ``korobov<i>x<i>``)
         * ``sidi<i>`` for 1 <= i <= 6

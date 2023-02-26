@@ -46,6 +46,6 @@ if __name__ == "__main__":
     # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)
     contour_deformation = True,
     
-    pylink_qmc_transforms=['korobov3','korobov6']
+    pylink_qmc_transforms=['none','baker','korobov3','korobov6']
 
     )

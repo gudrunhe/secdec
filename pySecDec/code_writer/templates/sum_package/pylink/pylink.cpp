@@ -27,6 +27,48 @@
 
 // delegate some template instatiations to separate translation units
 #ifdef SECDEC_WITH_CUDA
+    #define EXTERN_NONE_QMC_SEPARATE() \
+        extern template class secdecutil::integrators::Qmc< \
+                                                                INTEGRAL_NAME::integrand_return_t, \
+                                                                INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                                ::integrators::transforms::None::type, \
+                                                                INTEGRAL_NAME::cuda_integrand_t \
+                                                        >; \
+        extern template class secdecutil::integrators::Qmc< \
+                                                                INTEGRAL_NAME::integrand_return_t, \
+                                                                INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                                ::integrators::transforms::None::type, \
+                                                                INTEGRAL_NAME::cuda_integrand_t, \
+                                                                ::integrators::fitfunctions::None::type \
+                                                        >; \
+        extern template class secdecutil::integrators::Qmc< \
+                                                                INTEGRAL_NAME::integrand_return_t, \
+                                                                INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                                ::integrators::transforms::None::type, \
+                                                                INTEGRAL_NAME::cuda_integrand_t, \
+                                                                ::integrators::fitfunctions::PolySingular::type \
+                                                        >;
+    #define EXTERN_BAKER_QMC_SEPARATE() \
+        extern template class secdecutil::integrators::Qmc< \
+                                                            INTEGRAL_NAME::integrand_return_t, \
+                                                            INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                            ::integrators::transforms::Baker::type, \
+                                                            INTEGRAL_NAME::cuda_integrand_t \
+                                                        >; \
+        extern template class secdecutil::integrators::Qmc< \
+                                                            INTEGRAL_NAME::integrand_return_t, \
+                                                            INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                            ::integrators::transforms::Baker::type, \
+                                                            INTEGRAL_NAME::cuda_integrand_t, \
+                                                            ::integrators::fitfunctions::None::type \
+                                                        >; \
+        extern template class secdecutil::integrators::Qmc< \
+                                                            INTEGRAL_NAME::integrand_return_t, \
+                                                            INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                            ::integrators::transforms::Baker::type, \
+                                                            INTEGRAL_NAME::cuda_integrand_t, \
+                                                            ::integrators::fitfunctions::PolySingular::type \
+                                                        >;
     #define EXTERN_KOROBOV_QMC_SEPARATE(KOROBOVDEGREE1,KOROBOVDEGREE2) \
         extern template class secdecutil::integrators::Qmc< \
                                                                INTEGRAL_NAME::integrand_return_t, \
@@ -72,6 +114,50 @@
                                                                ::integrators::fitfunctions::PolySingular::type \
                                                           >;
     #if %(name)s_number_of_sectors != 1
+        #define EXTERN_NONE_QMC() \
+            EXTERN_NONE_QMC_SEPARATE() \
+            extern template class secdecutil::integrators::Qmc< \
+                                                                    INTEGRAL_NAME::integrand_return_t, \
+                                                                    INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                                    ::integrators::transforms::None::type, \
+                                                                    INTEGRAL_NAME::cuda_together_integrand_t \
+                                                            >; \
+            extern template class secdecutil::integrators::Qmc< \
+                                                                    INTEGRAL_NAME::integrand_return_t, \
+                                                                    INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                                    ::integrators::transforms::None::type, \
+                                                                    INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                                    ::integrators::fitfunctions::None::type \
+                                                            >; \
+            extern template class secdecutil::integrators::Qmc< \
+                                                                    INTEGRAL_NAME::integrand_return_t, \
+                                                                    INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                                    ::integrators::transforms::None::type, \
+                                                                    INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                                    ::integrators::fitfunctions::PolySingular::type \
+                                                            >;
+        #define EXTERN_BAKER_QMC() \
+            EXTERN_BAKER_QMC_SEPARATE()
+            extern template class secdecutil::integrators::Qmc< \
+                                                            INTEGRAL_NAME::integrand_return_t, \
+                                                            INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                            ::integrators::transforms::Baker::type, \
+                                                            INTEGRAL_NAME::cuda_together_integrand_t \
+                                                        >; \
+            extern template class secdecutil::integrators::Qmc< \
+                                                            INTEGRAL_NAME::integrand_return_t, \
+                                                            INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                            ::integrators::transforms::Baker::type, \
+                                                            INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                            ::integrators::fitfunctions::None::type \
+                                                        >; \
+            extern template class secdecutil::integrators::Qmc< \
+                                                            INTEGRAL_NAME::integrand_return_t, \
+                                                            INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                            ::integrators::transforms::Baker::type, \
+                                                            INTEGRAL_NAME::cuda_together_integrand_t, \
+                                                            ::integrators::fitfunctions::PolySingular::type \
+                                                        >;
         #define EXTERN_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
             EXTERN_KOROBOV_QMC_SEPARATE(KOROBOVDEGREE1,KOROBOVDEGREE2) \
             extern template class secdecutil::integrators::Qmc< \
@@ -119,10 +205,54 @@
                                                                    ::integrators::fitfunctions::PolySingular::type \
                                                               >;
     #else
+        #define EXTERN_NONE_QMC() EXTERN_NONE_QMC_SEPARATE()
+        #define EXTERN_BAKER_QMC() EXTERN_BAKER_QMC_SEPARATE()
         #define EXTERN_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) EXTERN_KOROBOV_QMC_SEPARATE(KOROBOVDEGREE1,KOROBOVDEGREE2)
         #define EXTERN_SIDI_QMC(SIDIDEGREE) EXTERN_SIDI_QMC_SEPARATE(SIDIDEGREE)
     #endif
 #else
+    #define EXTERN_NONE_QMC() \
+        extern template class secdecutil::integrators::Qmc< \
+                                                                INTEGRAL_NAME::integrand_return_t, \
+                                                                INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                                ::integrators::transforms::None::type, \
+                                                                INTEGRAL_NAME::integrand_t \
+                                                        >; \
+        extern template class secdecutil::integrators::Qmc< \
+                                                                INTEGRAL_NAME::integrand_return_t, \
+                                                                INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                                ::integrators::transforms::None::type, \
+                                                                INTEGRAL_NAME::integrand_t, \
+                                                                ::integrators::fitfunctions::None::type \
+                                                        >; \
+        extern template class secdecutil::integrators::Qmc< \
+                                                                INTEGRAL_NAME::integrand_return_t, \
+                                                                INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                                ::integrators::transforms::None::type, \
+                                                                INTEGRAL_NAME::integrand_t, \
+                                                                ::integrators::fitfunctions::PolySingular::type \
+                                                        >;
+    #define EXTERN_BAKER_QMC() \
+        extern template class secdecutil::integrators::Qmc< \
+                                                        INTEGRAL_NAME::integrand_return_t, \
+                                                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                        ::integrators::transforms::Baker::type, \
+                                                        INTEGRAL_NAME::integrand_t \
+                                                    >; \
+        extern template class secdecutil::integrators::Qmc< \
+                                                        INTEGRAL_NAME::integrand_return_t, \
+                                                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                        ::integrators::transforms::Baker::type, \
+                                                        INTEGRAL_NAME::integrand_t, \
+                                                        ::integrators::fitfunctions::None::type \
+                                                    >; \
+        extern template class secdecutil::integrators::Qmc< \
+                                                        INTEGRAL_NAME::integrand_return_t, \
+                                                        INTEGRAL_NAME::maximal_number_of_integration_variables, \
+                                                        ::integrators::transforms::Baker::type, \
+                                                        INTEGRAL_NAME::integrand_t, \
+                                                        ::integrators::fitfunctions::PolySingular::type \
+                                                    >;
     #define EXTERN_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
         extern template class secdecutil::integrators::Qmc< \
                                                                INTEGRAL_NAME::integrand_return_t, \
@@ -171,8 +301,12 @@
 
 %(pylink_qmc_externs)s
 
+#undef EXTERN_NONE_QMC
+#undef EXTERN_BAKER_QMC
 #undef EXTERN_KOROBOV_QMC
 #undef EXTERN_SIDI_QMC
+#undef EXTERN_NONE_QMC_SEPARATE
+#undef EXTERN_BAKER_QMC_SEPARATE
 #undef EXTERN_KOROBOV_QMC_SEPARATE
 #undef EXTERN_SIDI_QMC_SEPARATE
 #undef %(name)s_number_of_sectors
@@ -286,8 +420,40 @@ enum qmc_generatingvectors_t : int
     cbcpt_cfftw2_10 = 4
 };
 
+#define CASE_NONE_QMC() \
+    if (transform_id == no_transform) { \
+        if (fitfunction_id == default_fitfunction) { \
+            auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::QMC_INTEGRAND_TYPENAME>; \
+            QMC_RETURN_STATEMENT \
+        } else if (fitfunction_id == no_fit) { \
+            auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::QMC_INTEGRAND_TYPENAME,::integrators::fitfunctions::None::type>; \
+            QMC_RETURN_STATEMENT \
+        } else if (fitfunction_id == polysingular) { \
+            auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::QMC_INTEGRAND_TYPENAME,::integrators::fitfunctions::PolySingular::type>; \
+            QMC_RETURN_STATEMENT \
+        } else { \
+            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
+        } \
+    }
+
+#define CASE_BAKER_QMC() \
+    if (transform_id == baker) { \
+        if (fitfunction_id == default_fitfunction) { \
+            auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::QMC_INTEGRAND_TYPENAME>; \
+            QMC_RETURN_STATEMENT \
+        } else if (fitfunction_id == no_fit) { \
+            auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::QMC_INTEGRAND_TYPENAME,::integrators::fitfunctions::None::type>; \
+            QMC_RETURN_STATEMENT \
+        } else if (fitfunction_id == polysingular) { \
+            auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::QMC_INTEGRAND_TYPENAME,::integrators::fitfunctions::PolySingular::type>; \
+            QMC_RETURN_STATEMENT \
+        } else { \
+            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
+        } \
+    }
+
 #define CASE_KOROBOV_QMC(KOROBOVDEGREE1,KOROBOVDEGREE2) \
-    } else if (transform_id == korobov##KOROBOVDEGREE1##x##KOROBOVDEGREE2) { \
+    if (transform_id == korobov##KOROBOVDEGREE1##x##KOROBOVDEGREE2) { \
         if (fitfunction_id == default_fitfunction) { \
             auto integrator = new secdecutil::integrators::Qmc< \
                                                                   INTEGRAL_NAME::integrand_return_t, \
@@ -316,10 +482,11 @@ enum qmc_generatingvectors_t : int
             QMC_RETURN_STATEMENT \
         } else { \
             throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
-        }
+        } \
+    }
 
 #define CASE_SIDI_QMC(SIDIDEGREE) \
-    } else if (transform_id == sidi##SIDIDEGREE) { \
+    if (transform_id == sidi##SIDIDEGREE) { \
         if (fitfunction_id == default_fitfunction) { \
             auto integrator = new secdecutil::integrators::Qmc< \
                                                                   INTEGRAL_NAME::integrand_return_t, \
@@ -348,7 +515,8 @@ enum qmc_generatingvectors_t : int
             QMC_RETURN_STATEMENT \
         } else { \
             throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ")."); \
-        }
+        } \
+    }
 
 // qmc allocate functions implementation
 #ifdef SECDEC_WITH_CUDA
@@ -359,43 +527,14 @@ enum qmc_generatingvectors_t : int
                                                int devices[]
                                           )
     {
-        if (transform_id == no_transform) {
-
-            if (fitfunction_id == default_fitfunction) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::cuda_together_integrand_t>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else if (fitfunction_id == no_fit) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::cuda_together_integrand_t,::integrators::fitfunctions::None::type>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else if (fitfunction_id == polysingular) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::cuda_together_integrand_t,::integrators::fitfunctions::PolySingular::type>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else {
-                throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
-            }
-
-        } else if (transform_id == baker) {
-            if (fitfunction_id == default_fitfunction) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::cuda_together_integrand_t>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else if (fitfunction_id == no_fit) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::cuda_together_integrand_t,::integrators::fitfunctions::None::type>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else if (fitfunction_id == polysingular) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::cuda_together_integrand_t,::integrators::fitfunctions::PolySingular::type>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else {
-                throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
-            }
             
         #define QMC_INTEGRAND_TYPENAME cuda_together_integrand_t
         #define QMC_RETURN_STATEMENT SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
         %(pylink_qmc_cases)s
         #undef QMC_INTEGRAND_TYPENAME
             
-        } else {
-            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + "). The transform you requested in the call to IntegralLibrary (transform='...') must match a transform requested in the generate script (pylink_qmc_transforms=['...']). You may wish to regenerate the library with pylink_qmc_transforms set.");
-        }
+        throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + "). The transform you requested in the call to IntegralLibrary (transform='...') must match a transform requested in the generate script (pylink_qmc_transforms=['...']). You may wish to regenerate the library with pylink_qmc_transforms set.");
+
     }
     secdecutil::Integrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t,INTEGRAL_NAME::cuda_integrand_t> *
     allocate_cuda_integrators_Qmc_separate(
@@ -404,91 +543,27 @@ enum qmc_generatingvectors_t : int
                                                int devices[]
                                           )
     {
-        if (transform_id == no_transform) {
-
-            if (fitfunction_id == default_fitfunction) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::cuda_integrand_t>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else if (fitfunction_id == no_fit) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::cuda_integrand_t,::integrators::fitfunctions::None::type>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else if (fitfunction_id == polysingular) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::cuda_integrand_t,::integrators::fitfunctions::PolySingular::type>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else {
-                throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
-            }
-
-        } else if (transform_id == baker) {
-            if (fitfunction_id == default_fitfunction) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,cuda_integrand_t>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else if (fitfunction_id == no_fit) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::cuda_integrand_t,::integrators::fitfunctions::None::type>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else if (fitfunction_id == polysingular) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::cuda_integrand_t,::integrators::fitfunctions::PolySingular::type>;
-                SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
-            } else {
-                throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
-            }
 
         #define QMC_INTEGRAND_TYPENAME cuda_integrand_t
         #define QMC_RETURN_STATEMENT SET_QMC_ARGS_WITH_DEVICES_AND_RETURN
         %(pylink_qmc_cases)s
         #undef QMC_INTEGRAND_TYPENAME
 
-        } else {
-            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + "). The transform you requested in the call to IntegralLibrary (transform='...') must match a transform requested in the generate script (pylink_qmc_transforms=['...']). You may wish to regenerate the library with pylink_qmc_transforms set.");
-        }
+        throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + "). The transform you requested in the call to IntegralLibrary (transform='...') must match a transform requested in the generate script (pylink_qmc_transforms=['...']). You may wish to regenerate the library with pylink_qmc_transforms set.");
+
     }
 #else
     secdecutil::Integrator<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::real_t> *
     allocate_integrators_Qmc(COMMON_ALLOCATE_QMC_ARGS)
     {
-        if (transform_id == no_transform) {
-
-            if (fitfunction_id == default_fitfunction) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::integrand_t>;
-                SET_COMMON_QMC_ARGS
-                return integrator;
-            } else if (fitfunction_id == no_fit) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::integrand_t,::integrators::fitfunctions::None::type>;
-                SET_COMMON_QMC_ARGS
-                return integrator;
-            } else if (fitfunction_id == polysingular) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::None::type,INTEGRAL_NAME::integrand_t,::integrators::fitfunctions::PolySingular::type>;
-                SET_COMMON_QMC_ARGS
-                return integrator;
-            } else {
-                throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
-            }
-
-        } else if (transform_id == baker) {
-            if (fitfunction_id == default_fitfunction) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::integrand_t>;
-                SET_COMMON_QMC_ARGS
-                return integrator;
-            } else if (fitfunction_id == no_fit) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::integrand_t,::integrators::fitfunctions::None::type>;
-                SET_COMMON_QMC_ARGS
-                return integrator;
-            } else if (fitfunction_id == polysingular) {
-                auto integrator = new secdecutil::integrators::Qmc<INTEGRAL_NAME::integrand_return_t,INTEGRAL_NAME::maximal_number_of_integration_variables,::integrators::transforms::Baker::type,INTEGRAL_NAME::integrand_t,::integrators::fitfunctions::PolySingular::type>;
-                SET_COMMON_QMC_ARGS
-                return integrator;
-            } else {
-                throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"fitfunction_id\" (" + std::to_string(fitfunction_id) + ").");
-            }
             
         #define QMC_INTEGRAND_TYPENAME integrand_t
         #define QMC_RETURN_STATEMENT SET_QMC_ARGS_AND_RETURN
         %(pylink_qmc_cases)s
         #undef QMC_INTEGRAND_TYPENAME
 
-        } else {
-            throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + "). The transform you requested in the call to IntegralLibrary (transform='...') must match a transform requested in the generate script (pylink_qmc_transforms=['...']). You may wish to regenerate the library with pylink_qmc_transforms set.");
-        }
+        throw std::invalid_argument("Trying to allocate \"secdecutil::Qmc\" with unregistered \"transform_id\" (" + std::to_string(transform_id) + "). The transform you requested in the call to IntegralLibrary (transform='...') must match a transform requested in the generate script (pylink_qmc_transforms=['...']). You may wish to regenerate the library with pylink_qmc_transforms set.");
+
     }
 #endif
 #undef COMMON_ALLOCATE_QMC_ARGS

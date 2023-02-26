@@ -160,7 +160,7 @@ namespace %(name)s
 
         // Note: for the CUDA-compatible integrators we take an integrator with INTEGRAL_NAME::(cuda_)integrand_t
         // and return one with ::%(sub_integral_name)s::(cuda_)integrand_t instead
-        #define INSTANTIATE_AMPLITUDE_INTEGRAL_NONE_QMC \
+        #define INSTANTIATE_AMPLITUDE_INTEGRAL_NONE_QMC() \
             template<typename integrand_return_t, typename real_t, typename integrand_t> \
             struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
                  INTEGRAL_NAME::integrand_return_t, \
@@ -219,7 +219,7 @@ namespace %(name)s
                 using amplitude_integral_t = secdecutil::amplitude::QmcIntegral<integrand_return_t,real_t,amplitude_integrator_t,integrand_t>; \
             };
 
-        #define INSTANTIATE_AMPLITUDE_INTEGRAL_BAKER_QMC \
+        #define INSTANTIATE_AMPLITUDE_INTEGRAL_BAKER_QMC() \
             template<typename integrand_return_t, typename real_t, typename integrand_t> \
             struct AmplitudeIntegral<integrand_return_t, real_t, secdecutil::integrators::Qmc< \
                  INTEGRAL_NAME::integrand_return_t, \
@@ -398,8 +398,6 @@ namespace %(name)s
         
         // secdecutil::integrators::Qmc
         %(pylink_qmc_instantiate_amplitude_integral)s
-        INSTANTIATE_AMPLITUDE_INTEGRAL_NONE_QMC
-        INSTANTIATE_AMPLITUDE_INTEGRAL_BAKER_QMC
         
         // Note: we define make_integrands with %(name)s_contour_deformation
         // but call ::sub_integral_name::make_integrands with %(sub_integral_name)s_contour_deformation
@@ -476,7 +474,7 @@ namespace %(name)s
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
                         const INTEGRATOR&, unsigned, real_t, real_t, real_t);
 
-            #define INSTANTIATE_MAKE_INTEGRAL_NONE_QMC \
+            #define INSTANTIATE_MAKE_INTEGRAL_NONE_QMC() \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
                     const secdecutil::integrators::Qmc< \
                          INTEGRAL_NAME::integrand_return_t, \
@@ -505,7 +503,7 @@ namespace %(name)s
                     >&, \
                     unsigned, real_t, real_t, real_t);
         
-            #define INSTANTIATE_MAKE_INTEGRAL_BAKER_QMC \
+            #define INSTANTIATE_MAKE_INTEGRAL_BAKER_QMC() \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
                     const secdecutil::integrators::Qmc< \
                          INTEGRAL_NAME::integrand_return_t, \
@@ -597,7 +595,7 @@ namespace %(name)s
             #define INSTANTIATE_MAKE_INTEGRAL(INTEGRATOR) \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, const INTEGRATOR&);
   
-            #define INSTANTIATE_MAKE_INTEGRAL_NONE_QMC \
+            #define INSTANTIATE_MAKE_INTEGRAL_NONE_QMC() \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
                     const secdecutil::integrators::Qmc< \
                          INTEGRAL_NAME::integrand_return_t, \
@@ -623,7 +621,7 @@ namespace %(name)s
                         ::integrators::fitfunctions::PolySingular::type \
                     >&);
         
-            #define INSTANTIATE_MAKE_INTEGRAL_BAKER_QMC \
+            #define INSTANTIATE_MAKE_INTEGRAL_BAKER_QMC() \
                 template std::vector<nested_series_t<sum_t>> make_integral(const std::vector<real_t>&, const std::vector<complex_t>&, \
                     const secdecutil::integrators::Qmc< \
                          INTEGRAL_NAME::integrand_return_t, \
@@ -715,8 +713,6 @@ namespace %(name)s
         
         // secdecutil::integrators::Qmc
         %(pylink_qmc_instantiate_make_integral)s
-        INSTANTIATE_MAKE_INTEGRAL_NONE_QMC
-        INSTANTIATE_MAKE_INTEGRAL_BAKER_QMC
         
         #undef INSTANTIATE_AMPLITUDE_INTEGRAL_NONE_QMC
         #undef INSTANTIATE_AMPLITUDE_INTEGRAL_BAKER_QMC

@@ -64,7 +64,7 @@ namespace %(name)s
     // Specialisation for pylink interface
     #if %(name)s_contour_deformation
     
-        #define DYNAMIC_CAST_INTEGRATOR_NONE_QMC \
+        #define DYNAMIC_CAST_INTEGRATOR_NONE_QMC() \
             if(dynamic_cast<const secdecutil::integrators::Qmc< \
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -141,7 +141,7 @@ namespace %(name)s
                 ); \
             }
     
-        #define DYNAMIC_CAST_INTEGRATOR_BAKER_QMC \
+        #define DYNAMIC_CAST_INTEGRATOR_BAKER_QMC() \
             if(dynamic_cast<const secdecutil::integrators::Qmc< \
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -389,7 +389,7 @@ namespace %(name)s
     
     #else
     
-        #define DYNAMIC_CAST_INTEGRATOR_NONE_QMC \
+        #define DYNAMIC_CAST_INTEGRATOR_NONE_QMC() \
             if(dynamic_cast<const secdecutil::integrators::Qmc< \
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -454,7 +454,7 @@ namespace %(name)s
                 ); \
             }
 
-        #define DYNAMIC_CAST_INTEGRATOR_BAKER_QMC \
+        #define DYNAMIC_CAST_INTEGRATOR_BAKER_QMC() \
             if(dynamic_cast<const secdecutil::integrators::Qmc< \
                 INTEGRAL_NAME::integrand_return_t, \
                 INTEGRAL_NAME::maximal_number_of_integration_variables, \
@@ -689,8 +689,6 @@ namespace %(name)s
         
         // secdecutil::integrators::Qmc
         %(pylink_qmc_dynamic_cast_integrator)s
-        DYNAMIC_CAST_INTEGRATOR_NONE_QMC
-        DYNAMIC_CAST_INTEGRATOR_BAKER_QMC
         
         // None of the above dynamic_casts succeeded, throw and give up
         throw std::invalid_argument("Trying to call \"" EXPAND_STRINGIFY(INTEGRAL_NAME) "::make_amplitudes\" with unknown \"secdecutil::Integrator\" derived type: " + std::string(typeid(*integrator).name()));
@@ -713,8 +711,6 @@ namespace %(name)s
         {
             // secdecutil::integrators::Qmc
             %(pylink_qmc_dynamic_cast_integrator)s
-            DYNAMIC_CAST_INTEGRATOR_NONE_QMC
-            DYNAMIC_CAST_INTEGRATOR_BAKER_QMC
             
             // None of the above dynamic_casts succeeded, throw and give up
             throw std::invalid_argument("Trying to call \"" EXPAND_STRINGIFY(INTEGRAL_NAME) "::make_amplitudes\" with unknown \"secdecutil::Integrator\" derived type: " + std::string(typeid(*integrator).name()));
@@ -727,7 +723,7 @@ namespace %(name)s
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                     const INTEGRATOR&, unsigned, real_t, real_t, real_t);
 
-        #define INSTANTIATE_MAKE_AMPLITUDES_NONE_QMC \
+        #define INSTANTIATE_MAKE_AMPLITUDES_NONE_QMC() \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
@@ -756,7 +752,7 @@ namespace %(name)s
                 >&, \
                 unsigned, real_t, real_t, real_t);
 
-        #define INSTANTIATE_MAKE_AMPLITUDES_BAKER_QMC \
+        #define INSTANTIATE_MAKE_AMPLITUDES_BAKER_QMC() \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
@@ -848,7 +844,7 @@ namespace %(name)s
         #define INSTANTIATE_MAKE_AMPLITUDES(INTEGRATOR) \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, const INTEGRATOR&);
     
-        #define INSTANTIATE_MAKE_AMPLITUDES_NONE_QMC \
+        #define INSTANTIATE_MAKE_AMPLITUDES_NONE_QMC() \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
@@ -874,7 +870,7 @@ namespace %(name)s
                     ::integrators::fitfunctions::PolySingular::type \
                 >&);
     
-        #define INSTANTIATE_MAKE_AMPLITUDES_BAKER_QMC \
+        #define INSTANTIATE_MAKE_AMPLITUDES_BAKER_QMC() \
             template std::vector<nested_series_t<sum_t>> make_amplitudes(const std::vector<real_t>&, const std::vector<complex_t>&, const std::string&, \
                 const secdecutil::integrators::Qmc< \
                      INTEGRAL_NAME::integrand_return_t, \
@@ -966,8 +962,6 @@ namespace %(name)s
     
     // secdecutil::integrators::Qmc
     %(pylink_qmc_instantiate_make_amplitudes)s
-    INSTANTIATE_MAKE_AMPLITUDES_NONE_QMC
-    INSTANTIATE_MAKE_AMPLITUDES_BAKER_QMC
     
     #undef INTEGRAL_NAME
     #undef INTEGRAND_TYPE

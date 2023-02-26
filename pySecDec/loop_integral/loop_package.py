@@ -330,6 +330,8 @@ def loop_package(name, loop_integral, requested_orders=None,
         list or None, optional;
         Required qmc integral transforms, options are:
 
+        * ``none``
+        * ``baker``
         * ``korobov<i>x<j>`` for 1 <= i,j <= 6
         * ``korobov<i>`` for 1 <= i <= 6 (same as ``korobov<i>x<i>``)
         * ``sidi<i>`` for 1 <= i <= 6

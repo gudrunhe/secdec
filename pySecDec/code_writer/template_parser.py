@@ -14,29 +14,37 @@ def validate_pylink_qmc_transforms(pylink_qmc_transforms):
         list or None;
         Required qmc integral transforms, options are:
 
+        * ``none``
+        * ``baker``
         * ``korobov<i>x<j>`` for 1 <= i,j <= 6
         * ``korobov<i>`` for 1 <= i <= 6 (same as ``korobov<i>x<i>``)
         * ``sidi<i>`` for 1 <= i <= 6
 
     :return:
-        Sorted set of pylink_qmc_transforms
+        List of pylink_qmc_transforms
     '''
     pylink_qmc_transforms_available_options = set(
+        ['none'] + 
+        ['baker'] +
         ['korobov'+str(i)+'x'+str(j) for i in range(1,7) for j in range(1,7)] +
         ['sidi'+str(i) for i in range(1,7)]
     )
-    if pylink_qmc_transforms != None:
+    if pylink_qmc_transforms: # Not an empty list or None
         # korobov%i -> korobov%ix%i
         korobov_symmetric_transforms = ['korobov%i' % i for i in range(1,7)]
         pylink_qmc_transforms = [ x if x not in korobov_symmetric_transforms else 'korobov'+x[7:]+'x'+x[7:] for x in pylink_qmc_transforms]
-        # remove duplicates
-        pylink_qmc_transforms = set(pylink_qmc_transforms)
+        # remove duplicates, preserving order
+        new_pylink_qmc_transforms = []
+        for i in pylink_qmc_transforms:
+            if i not in new_pylink_qmc_transforms:
+                new_pylink_qmc_transforms.append(i)
+        pylink_qmc_transforms = new_pylink_qmc_transforms
     else:
-        pylink_qmc_transforms = set(['korobov3x3']) # Default
-    assert pylink_qmc_transforms.issubset(pylink_qmc_transforms_available_options), \
+        pylink_qmc_transforms = ['korobov3x3'] # Default
+    assert set(pylink_qmc_transforms).issubset(pylink_qmc_transforms_available_options), \
         '"%s" found in `pylink_qmc_transforms` but not in `pylink_qmc_transforms_available_options`' % \
-        pylink_qmc_transforms.difference(pylink_qmc_transforms_available_options)
-    return sorted(pylink_qmc_transforms)
+        set(pylink_qmc_transforms).difference(pylink_qmc_transforms_available_options)
+    return pylink_qmc_transforms
 
 def generate_pylink_qmc_macro_dict(macro_function_name):
     '''
@@ -53,6 +61,8 @@ def generate_pylink_qmc_macro_dict(macro_function_name):
 
     '''
     pylink_qmc_translation = {}
+    pylink_qmc_translation['none'] = macro_function_name + '_NONE_QMC()'
+    pylink_qmc_translation['baker'] = macro_function_name + '_BAKER_QMC()'
     for i in range(1, 7):
         for j in range(1, 7):
             pylink_qmc_translation['korobov' + str(i) + 'x' + str(j)] = macro_function_name + '_KOROBOV_QMC(%i,%i)' % (i, j)

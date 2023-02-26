@@ -21,5 +21,5 @@ if __name__ == "__main__":
     polynomials_to_decompose = ['(x)**(-1+eps)'],
     polynomial_names = ['p'],
     other_polynomials = ['p**-2'],
-    pylink_qmc_transforms=['korobov2x1', 'sidi3']
+    pylink_qmc_transforms=['none', 'korobov2x1', 'sidi3']
     )
