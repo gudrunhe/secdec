@@ -27,6 +27,9 @@ htmlcov/
 # Ignore PyCharm Cache
 .idea
 
+# Ignore vscode Cache
+*.vscode
+
 # ignore built examples (i.e. folders within examples/nodist_examples folders)
 examples/*/*/
 nodist_examples/*/*/
