@@ -165,9 +165,9 @@ def find_regions( exp_param_index , polynomial, indices = None, normaliz=None, w
         elif texponent < 0:
             facets = -1*equations[:,:-1]
         else:
-            raise NotImplementedError("Polytope is not full dimensional. One of the region integrals is scaleless.")
+            raise NotImplementedError("Polytope is not full dimensional in find_regions. Input integral is scaleless.")
     else:
-        raise NotImplementedError("Polytope is not full dimensional. One of the region integrals is scaleless.")
+        raise NotImplementedError("Polytope is not full dimensional in find_regions. Input integral is scaleless.")
 
     regions = facets[ facets[:,exp_param_index] > 0 ]
 
