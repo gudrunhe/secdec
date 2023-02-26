@@ -357,7 +357,7 @@ def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expan
 def extra_regulator_constraints(exp_param_index, polynomial_expolist, exp_order, regulators, powerlist, dimension, indices=None, normaliz=None):
     '''
     Returns list of vectors :\mathbf{n}_i: that give constraints
-    of the form :math:`\langle\mathbf{n_i},\bf{\nu}_{\delta} \neq 0`
+    of the form :math:`\langle\mathbf{n_i},\bf{\nu}_{\delta}\rangle \neq 0`
     on the coefficient of a regulator :math:`\delta` introduced by
     multiplying the integrand with a monomial 
     :math:`\mathbf{x}^{\delta\bf{\nu}_{\delta}}`. The vector 
