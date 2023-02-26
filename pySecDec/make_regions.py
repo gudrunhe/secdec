@@ -263,7 +263,7 @@ def derive_prod(poly_list,numerator,index,polynomial_name_indices):
         explicit_poly_list.append(explicit_poly)
 
         # define the polynomials as just 1*p1, 1*p2 etc. as only want to evaluate derivatives explicitly
-        expolist = np.zeros(number_of_symbols,dtype=np.int)
+        expolist = np.zeros(number_of_symbols,dtype=int)
         expolist[polynomial_name_indices[i]] = 1
         dummy_poly = Polynomial([expolist], [1], symbols)
         dummy_poly_list.append(dummy_poly)

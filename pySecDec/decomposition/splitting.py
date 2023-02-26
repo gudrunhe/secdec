@@ -49,7 +49,7 @@ def remap_one_to_zero(polynomial, *indices):
         # and multiply the polynomials to the rest of the term
         for index in indices:
             n = expos[index]
-            binomexpolist = np.zeros((n+1, len(polynomial.polysymbols)), dtype=np.int)
+            binomexpolist = np.zeros((n+1, len(polynomial.polysymbols)), dtype=int)
             binomexpolist[:,index] = range(n+1)
             binomcoeffs = [pow(-1,k) * math.factorial(n) // math.factorial(n-k) // math.factorial(k) for k in range(n+1)]
             binompoly = Polynomial(binomexpolist, binomcoeffs, polynomial.polysymbols)
