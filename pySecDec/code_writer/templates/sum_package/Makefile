@@ -21,11 +21,16 @@ $(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRAL
 
 lib$(NAME).a : src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A)
 	@rm -f $@
-	ar -c -q $@ src/amplitude.o $(WINTEGRALS_OBJS)
 	dir=$$(mktemp -d) && \
-	cd $$dir && \
-	$(foreach A,$(INTEGRALS_A),ar -x "$(CURDIR)/$(A)" && ar -q "$(CURDIR)/$@" *.o && rm -f *.o && ) \
-	rm -rf $$dir
+		$(AR) -c -q "$$dir/lib.ar" src/amplitude.o $(WINTEGRALS_OBJS) && \
+		cd "$$dir" && \
+		$(foreach A,$(INTEGRALS_A),\
+			$(AR) -x "$(CURDIR)/$(A)" && \
+			echo *.o | xargs $(AR) -q lib.ar && \
+			rm -f *.o && ) \
+		$(AR) -s lib.ar && \
+		mv lib.ar "$(CURDIR)/$@" && \
+		rm -rf "$$dir"
 
 lib$(NAME).so : src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A)
 ifdef SECDEC_WITH_CUDA_FLAGS

@@ -7,9 +7,11 @@ source : $(SECTOR_CPP)
 
 lib$(NAME).a : $(patsubst %%.cpp,%%.o,$(SECTOR_CPP)) src/integrands.o src/pole_structures.o src/prefactor.o
 	@rm -f $@
-	@echo src/*.o >$@.sourcelist
-	$(AR) -c -r -s $@ @$@.sourcelist
-	@rm -f $@.sourcelist
+	lib=$$(mktemp) && \
+		rm -f "$$lib" && \
+		echo src/*.o | xargs $(AR) -c -q "$$lib" && \
+		$(AR) -s "$$lib" && \
+		mv "$$lib" $@
 
 lib$(NAME).so : lib$(NAME).a
 	$(CXX) -o $@ -shared $+
