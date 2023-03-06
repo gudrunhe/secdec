@@ -105,6 +105,8 @@ code repository (`examples` directory). Here are some of them:
  * `two_regulators`: an integral involving poles in two different regulators.
  * `userdefined_cpp`: a collection of examples demonstrating how to combine polynomials to be decomposed with other user-defined functions.
 
+Note that the examples are not installed via the normal installation
+procedure. They can only be found in the source code repository.
 
 Development
 ===========
