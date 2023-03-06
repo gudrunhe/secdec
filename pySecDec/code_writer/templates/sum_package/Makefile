@@ -17,7 +17,7 @@ $(INTEGRALS_A):
 	$(MAKE) -C $(dir $@) $(notdir $@)
 
 $(NAME)_pylink.so: pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(QMC_TEMPLATE_OBJECTS)
-	$(CXX) -shared -o $@ pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(QMC_TEMPLATE_OBJECTS) $(SUM_LDFLAGS)
+	$(XCC) -shared -o $@ pylink/pylink.o src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(QMC_TEMPLATE_OBJECTS) $(XLDFLAGS)
 
 lib$(NAME).a : src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A)
 	@rm -f $@
@@ -34,14 +34,14 @@ lib$(NAME).a : src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A)
 
 lib$(NAME).so : src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A)
 ifdef SECDEC_WITH_CUDA_FLAGS
-	$(CXX) -shared -o $@ src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(SUM_LDFLAGS)
+	$(XCC) -shared -o $@ src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(XLDFLAGS)
 else
-	$(CXX) -shared -o $@ src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(SUM_LDFLAGS) -Wl,-undefined,dynamic_lookup
+	$(XCC) -shared -o $@ src/amplitude.o $(WINTEGRALS_OBJS) $(INTEGRALS_A) $(XLDFLAGS) -Wl,-undefined,dynamic_lookup
 endif
 
 # build the example executable
 integrate_$(NAME) : integrate_$(NAME).o lib$(NAME).a
-	$(CXX) -o $@ integrate_$(NAME).o lib$(NAME).a $(SUM_LDFLAGS)
+	$(XCC) -o $@ integrate_$(NAME).o lib$(NAME).a $(XLDFLAGS)
 
 very-clean :: clean
 	for dir in */; do if [ -e "$$dir/Makefile" ]; then $(MAKE) -C "$$dir" $@; fi; done
@@ -50,6 +50,15 @@ clean ::
 	for dir in */; do if [ -e "$$dir/Makefile" ]; then $(MAKE) -C "$$dir" $@; fi; done
 	rm -f *.o *.so *.a pylink/*.o src/*.o integrate_$(NAME)
 	rm -f disteval.done disteval/*.so disteval/*.fatbin $(foreach I,$(INTEGRALS),disteval/$I.json)
+
+# implicit rule to build object files
+ifdef SECDEC_WITH_CUDA_FLAGS
+%%.o : %%.cpp
+	$(XCC) -dc $(XCCFLAGS) -Xcompiler -fPIC $< -o $@
+else
+%%.o : %%.cpp
+	$(XCC) -c $(XCCFLAGS) -fPIC $< -o $@
+endif
 
 # The following is for the distributed evaluation.
 

@@ -1,5 +1,3 @@
-ORIG_CXXFLAGS:=$(CXXFLAGS)
-
 include Makefile.conf
 include $(wildcard codegen/sector*.d)
 
@@ -14,19 +12,19 @@ lib$(NAME).a : $(patsubst %%.cpp,%%.o,$(SECTOR_CPP)) src/integrands.o src/pole_s
 		mv "$$lib" $@
 
 lib$(NAME).so : lib$(NAME).a
-	$(CXX) -o $@ -shared $+
+	$(XCC) -o $@ -shared $+ $(XLDFLAGS)
 
 QMC_TEMPLATE_OBJECTS = $(patsubst %%.cpp,%%.o,$(wildcard pylink/qmc_template_instantiations_*.cpp))
 
 $(NAME)_pylink.so : pylink/pylink.o lib$(NAME).a $(QMC_TEMPLATE_OBJECTS)
-	$(CXX) -shared -o $@ $+ $(LDFLAGS)
+	$(XCC) -shared -o $@ $+ $(XLDFLAGS)
 
 integrate_$(NAME) : integrate_$(NAME).o lib$(NAME).a
-	$(CXX) -o $@ integrate_$(NAME).o lib$(NAME).a $(LDFLAGS)
+	$(XCC) -o $@ integrate_$(NAME).o lib$(NAME).a $(XLDFLAGS)
 
 ifdef SECDEC_WITH_CUDA_FLAGS
 cuda_integrate_$(NAME) : cuda_integrate_$(NAME).o lib$(NAME).a
-	$(CXX) -o $@ cuda_integrate_$(NAME).o lib$(NAME).a $(LDFLAGS)
+	$(XCC) -o $@ cuda_integrate_$(NAME).o lib$(NAME).a $(XLDFLAGS)
 endif
 
 very-clean:: clean
@@ -39,9 +37,9 @@ clean::
 # implicit rule to build object files
 %%.o : %%.cpp
 ifdef SECDEC_WITH_CUDA_FLAGS
-	$(CXX) -dc $(CXXFLAGS) -Xptxas -O0 -Xptxas --disable-optimizer-constants -Xcompiler -fPIC $< -o $@
+	$(XCC) -dc $(XCCFLAGS) -Xptxas "-O0 --disable-optimizer-constants" -Xcompiler -fPIC $< -o $@
 else
-	$(CXX) -c $(CXXFLAGS) -fPIC $< -o $@
+	$(XCC) -c $(XCCFLAGS) -fPIC $< -o $@
 endif
 
 codegen/sector%%.done: codegen/sector%%.h
@@ -66,7 +64,7 @@ endif
 
 # CPU files (.so)
 
-XCXXFLAGS=-std=c++14 -O3 -funsafe-math-optimizations $(ORIG_CXXFLAGS)
+XCXXFLAGS=-std=c++14 -O3 -funsafe-math-optimizations $(CXXFLAGS)
 
 DIST_SO_OBJECTS = $(patsubst %%,distsrc/sector_%%.o,$(SECTOR_ORDERS))
 
@@ -83,7 +81,6 @@ disteval/builtin.so: distsrc/builtin.o
 
 # CUDA files (.fatbin)
 
-NVCC?=nvcc
 NVCCFLAGS=-std=c++14 $(SECDEC_WITH_CUDA_FLAGS)
 
 DIST_FATBIN_OBJECTS = $(patsubst %%,distsrc/sector_%%.fatbin,$(SECTOR_ORDERS))
