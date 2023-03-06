@@ -198,20 +198,26 @@ To build the dynamic library ``libbox1L.so`` set ``dynamic`` as build target:
     $ make dynamic
 
 .. versionadded:: 1.6
-   To build the *disteval* library (which consists of multiple files in ``box1L/disteval/`` directory) set ``disteval`` as build target:
+   To build the *disteval* library (which will consist of multiple files in ``box1L/disteval/`` directory) set ``disteval`` as build target:
 
 .. code::
 
     $ make disteval
 
-To build the libraries with `nvcc` (NVidia C Compiler) for GPU support, type
+Note that *disteval* libraries are designed to make use of `AVX2 <https://en.wikipedia.org/wiki/AVX2>`_ and `FMA <https://en.wikipedia.org/wiki/FMA_instruction_set>`_ instruction sets. For CPUs that support these, best performance is achieved if the compiler is instructed to enable their support, like so:
 
 .. code::
 
-    $ CXX=nvcc SECDEC_WITH_CUDA_FLAGS="-arch=sm_XX" make
+    $ make disteval CXXFLAGS="-mavx2 -mfma"
 
-where ``sm_XX`` must be replaced by the target GPU architechtures; see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
-The ``SECDEC_WITH_CUDA_FLAGS`` environment variable, which enables GPU code compilation, contains flags which are passed to NVCC during code compilation and linking.
+To build the libraries with NVidia C Compiler (NVCC) for GPU support, type
+
+.. code::
+
+    $ make SECDEC_WITH_CUDA_FLAGS="-arch=sm_XX"
+
+where ``sm_XX`` must be replaced by the target NVidia GPU architechtures; see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
+The ``SECDEC_WITH_CUDA_FLAGS`` variable, which enables GPU code compilation, contains flags which are passed to NVCC during code compilation and linking.
 Multiple GPU architectures may be specified as described in the `NVCC manual <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_, for example
 ``SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_XX,code=sm_XX -gencode arch=compute_YY,code=sm_YY"`` where ``XX`` and ``YY`` are the target GPU architectures. The script 
 ``examples/easy/print-cuda-arch.sh`` can be used to obtain the compute architecture of your current machine.  
