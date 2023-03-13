@@ -204,11 +204,13 @@ To build the dynamic library ``libbox1L.so`` set ``dynamic`` as build target:
 
     $ make disteval
 
-Note that *disteval* libraries are designed to make use of `AVX2 <https://en.wikipedia.org/wiki/AVX2>`_ and `FMA <https://en.wikipedia.org/wiki/FMA_instruction_set>`_ instruction sets. For CPUs that support these, best performance is achieved if the compiler is instructed to enable their support, like so:
+Note that *disteval* libraries are designed with a focus on optimization for modern processors by making use of `AVX2 <https://en.wikipedia.org/wiki/AVX2>`_ and `FMA <https://en.wikipedia.org/wiki/FMA_instruction_set>`_ instruction sets.
+For CPUs that support these, best performance is achieved by using the newest compiler available on the system (chosen via the ``CXX`` variable), and by enabling the support of AVX2 and FMA (via the ``CXXFLAGS`` variable).
+For example:
 
 .. code::
 
-    $ make disteval CXXFLAGS="-mavx2 -mfma"
+    $ make disteval CXX="g++-12" CXXFLAGS="-mavx2 -mfma"
 
 To build the libraries with NVidia C Compiler (NVCC) for GPU support, type
 
