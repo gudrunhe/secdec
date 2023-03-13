@@ -34,7 +34,7 @@ contrib += \
     Install("include/secdecutil", Glob("util/secdecutil/*hpp")) + \
     Install("include/secdecutil/integrators", Glob("util/secdecutil/integrators/*hpp"))
 
-def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", extra_sources=[], pre_commands="", post_commands="", extra_configure_args="", install_target="install"):
+def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", extra_sources=[], pre_commands="", post_commands="", extra_configure_args="", build_target="", install_target="install"):
     return env.Command(target, [f"{packagename}{extension}"] + extra_sources, f"""
         cd pySecDecContrib && \
         tar -xf {packagename}{extension} && \
@@ -47,7 +47,7 @@ def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", extra_sou
             --bindir="$$PWD/../bin" \
             {extra_configure_args} && \
         {post_commands} \
-        make && \
+        make {build_target} && \
         make {install_target} && \
         cd .. && \
         rm -rf */*.la {packagename}
@@ -57,12 +57,13 @@ cuba_files = ["lib/libcuba.a", "include/cuba.h"]
 contrib += \
     ConfigureAndInstall(env, cuba_files, cuba,
         pre_commands="""\
-            sed -i.bak 's/mcc/false/g' configure && \
+            sed -i.bak -e 's/mcc/NOmcc/g' -e 's/qmake/NOqmake/g' configure && \
             sed -i.bak \
                 -e 's/puts(s)/fputs(s,stderr); putc(10,stderr)/' \
                 -e 's/stdout/stderr/g' src/common/stddecl.h && \
         """,
-        extra_configure_args="CFLAGS='-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'")
+        extra_configure_args="CFLAGS='-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'",
+        build_target="all")
 
 form_files = ["bin/form", "bin/tform"]
 contrib += \
