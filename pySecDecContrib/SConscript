@@ -72,6 +72,7 @@ contrib += \
 gmp_files = open(f"{gmp}.list").read().splitlines()
 contrib += \
     ConfigureAndInstall(env, gmp_files, gmp, extension=".tar.bz2",
+        pre_commands="mv config.guess config.guess.orig && ln -sf configfsf.guess config.guess && ",
         extra_configure_args="--enable-cxx --enable-fat --disable-shared --enable-static --with-pic --exec-prefix=\"$$PWD/..\"")
 
 gsl_files = open(f"{gsl}.list").read().splitlines()
