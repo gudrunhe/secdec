@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import pySecDec as psd
-from pySecDec import sum_package, loop_regions
 
 if __name__ == "__main__":
 

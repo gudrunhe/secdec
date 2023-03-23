@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
-from pySecDec import LoopPackage
-from pySecDec import sum_package
+import pySecDec as psd
 
 # import integrals and coefficients
 import integrals
@@ -15,15 +14,11 @@ if __name__ == '__main__':
     names = ['bubble_u', 'bubble_t', 'box_6', 'box_8']
     for name, integral in zip(names, integrals.I):
         package_generators.append(
-            LoopPackage(
-                name = name,
-                loop_integral = integral,
-                requested_orders = [0]
-                )
+            psd.LoopPackage(name=name, loop_integral=integral)
         )
 
     # generate code sum of (int * coeff)
-    sum_package(
+    psd.sum_package(
         'yyyy1L',
         package_generators,
         regulators = ['eps'],
@@ -32,4 +27,3 @@ if __name__ == '__main__':
         coefficients = coefficients.coeff,
         complex_parameters = []
     )
-
