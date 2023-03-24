@@ -234,7 +234,7 @@ class TestPolynomial(unittest.TestCase):
             Polynomial([(0,1),(1,0),(2,1)], ['A','B','C','D'])
 
         # entries of expolist have variable length
-        with pytest.raises( (ValueError, AttributeError), match="(inhomogeneous shape|all entries* same length)"):
+        with pytest.raises( (ValueError, AssertionError), match=r"(inhomogeneous shape|All entries in `expolist` must have the same length)"):
             Polynomial([(0,1,2),(1,0),(2,1)], ['A','B','C'])
 
         # same number of variables in coeff if coeffs are `_Expression`s
