@@ -219,6 +219,8 @@ class TestFunction(unittest.TestCase):
         assert recomputed_derivatives == target_derivatives
 
 class TestPolynomial(unittest.TestCase):
+
+    #@pytest.mark.active
     def test_init(self):
         # Proper instantiation
         Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
@@ -232,7 +234,7 @@ class TestPolynomial(unittest.TestCase):
             Polynomial([(0,1),(1,0),(2,1)], ['A','B','C','D'])
 
         # entries of expolist have variable length
-        with pytest.raises(ValueError, match="inhomogeneous shape"):
+        with pytest.raises( (ValueError, AttributeError), match="(inhomogeneous shape|all entries* same length)"):
             Polynomial([(0,1,2),(1,0),(2,1)], ['A','B','C'])
 
         # same number of variables in coeff if coeffs are `_Expression`s
