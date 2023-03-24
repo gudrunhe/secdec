@@ -2,11 +2,11 @@ from .geometric import *
 from .common import Sector
 from ..algebra import Polynomial, ExponentiatedPolynomial, LogOfPolynomial
 from ..misc import argsort_2D_array, sympify_expression
-from nose.plugins.attrib import attr
 import numpy as np
 import sympy as sp
 import sys
 import unittest
+import pytest
 
 python_major_version = sys.version[0]
 
@@ -14,7 +14,7 @@ def sort_2D_array(array):
     'Use the .misc.argsort_2D_array function to sort an array'
     return array[argsort_2D_array(array)]
 
-#@attr('active')
+#@pytest.mark.active
 class TestGeomethod(unittest.TestCase):
     def setUp(self):
         self.p0 = Polynomial.from_expression('x0+x1+x0*x1', ['x0','x1'])
@@ -34,7 +34,7 @@ class TestGeomethod(unittest.TestCase):
                               [(-1,1,1),(1,0,0),(0,1,0),(0,0,1)]]
         self.sorted_target_fan_p2 = sorted([sorted(cone) for cone in self.target_fan_p2])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_Cheng_Wu(self):
         Feynman_parameters = ['x1', 'x2', 'x3']
         x1, x2, x3 = sp.symbols(Feynman_parameters)
@@ -56,7 +56,7 @@ class TestGeomethod(unittest.TestCase):
         self.assertEqual( (sympify_expression(primary_x1.cast[0].factors[1]) - (poly_sympy/x2).subs('x1',1)).simplify() , 0 )
         self.assertEqual( (sympify_expression(primary_x1.other[0]) - other_sympy.subs('x1',1)).simplify() , 0 )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_Cheng_Wu_one_variable(self):
         U = Polynomial([[1]], [  1  ], ['x0'])
         F = Polynomial([[2]], ['msq'], ['x0'])
@@ -91,7 +91,7 @@ class TestGeomethod(unittest.TestCase):
         for cone, target_cone in zip(fan_p, target_fan_p):
             np.testing.assert_array_equal(cone, target_cone)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_convex_hull_exponentiated_polynomial(self):
         p0 = ExponentiatedPolynomial(self.p0.expolist, self.p0.coeffs, polysymbols=self.p0.polysymbols, exponent='8-3*eps')
         p1 = ExponentiatedPolynomial(self.p1.expolist, self.p1.coeffs, polysymbols=self.p1.polysymbols, exponent='1-2*eps')
@@ -102,7 +102,7 @@ class TestGeomethod(unittest.TestCase):
         sorted_hull = sort_2D_array(hull)
         np.testing.assert_array_equal(sorted_hull, self.sorted_target_hull)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_transform_variables(self):
         x0 = Polynomial.from_expression('x0',['x0','x1','x2'])
         x1 = Polynomial.from_expression('x1',['x0','x1','x2'])
@@ -139,7 +139,7 @@ class TestGeomethod(unittest.TestCase):
         self.assertTrue(type(transform_variables(log_of_polynomial, transformation)) is LogOfPolynomial)
         self.assertEqual( (sympify_expression(transformed_log_of_polynomial) - sympify_expression(transform_variables(log_of_polynomial, transformation))).simplify() , 0)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_2D_geometric_decomposition(self):
         poly = Polynomial.from_expression('x1 + x2 + x1*x2', ['dummy','x1','x2'])
         sector = Sector([poly])
@@ -164,7 +164,7 @@ class TestGeomethod(unittest.TestCase):
             self.assertEqual( (poly-target_poly).simplify() , 0)
             self.assertEqual( (Jacobian-target_Jacobian).simplify() , 0)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_2D_geometric_decomposition_ku(self):
         poly = Polynomial.from_expression('A*x1 + B*x2 + C*x1*x2', ['dummy','x1','x2'])
         sector = Sector([poly])
@@ -193,7 +193,7 @@ class TestGeomethod(unittest.TestCase):
                     self.assertEqual( (sympify_expression(subsector.cast[0])-target_poly.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
                     self.assertEqual( (sympify_expression(subsector.Jacobian)-target_Jacobian.subs([('x1','x2'),('x2','x1')],simultaneous=True)).simplify() , 0)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_geometric_ku_lower_dimensional_cones(self):
         polysymbols = ['x0','x1','x3','x4','x5']
         poly1 = Polynomial.from_expression(
@@ -219,14 +219,14 @@ class TestGeomethod(unittest.TestCase):
         # should not error
         subsectors = list( geometric_decomposition_ku(sector, workdir='tmpdir_test_geometric_ku_lower_dimensional_cones_python' + python_major_version) )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_3D_geometric_decomposition(self):
         # 3D test case where triangulation is needed
         poly = Polynomial.from_expression('A*1 + B*x1 + C*x2 + D*x3 + E*x1*x2', ['x1','x2','x3']) # pyramid
         sector = Sector([poly])
         subsectors = list( geometric_decomposition(sector, workdir='tmpdir_test_3D_geometric_decomposition_python' + python_major_version) )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_3D_geometric_decomposition_selected_indices(self):
         # 3D test case where triangulation is needed
         poly = Polynomial.from_expression('A*1 + B*x1 + C*x2 + D*x3 + E*x1*x2', ['x1','dummy','x2','x3']) # pyramid

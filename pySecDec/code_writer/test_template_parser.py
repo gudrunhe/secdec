@@ -1,7 +1,7 @@
 from .template_parser import *
-from nose.plugins.attrib import attr
 import sys, os, shutil
 import unittest
+import pytest
 
 python_major_version = sys.version[0]
 
@@ -25,7 +25,7 @@ class TestTemplateParsing(unittest.TestCase):
         # delete the temporary directory
         shutil.rmtree(self.tmpdir)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_parse_template_file(self):
         # create a template file
         path_to_template_file = os.path.join(self.tmpdir, 'template')
@@ -54,7 +54,7 @@ class TestTemplateParsing(unittest.TestCase):
 
         self.assertEqual(parsed, target_parsed)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_parse_template_tree(self):
         # create template file tree
         path_to_template_tree = os.path.join(self.tmpdir, 'templates')

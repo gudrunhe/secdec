@@ -6,7 +6,7 @@ import numpy as np
 import sympy as sp
 
 import unittest
-from nose.plugins.attrib import attr
+import pytest
 
 class TestPrimaryDecomposition(unittest.TestCase):
     def setUp(self):
@@ -21,7 +21,7 @@ class TestPrimaryDecomposition(unittest.TestCase):
 
         self.initial_sector = Sector([self.F,self.U])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_one_variable(self):
         U = Polynomial([[1]], [  1  ], ['x0'])
         F = Polynomial([[2]], ['msq'], ['x0'])
@@ -36,7 +36,7 @@ class TestPrimaryDecomposition(unittest.TestCase):
         self.assertEqual(  ( sympify_expression(primary_sectors[0].cast[0]) - target_decomposed_U ).simplify() , 0   )
         self.assertEqual(  ( sympify_expression(primary_sectors[0].cast[1]) - target_decomposed_F ).simplify() , 0   )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_primary_decomposition(self):
         primary_sectors = primary_decomposition(self.initial_sector)
 
@@ -64,7 +64,7 @@ class TestPrimaryDecomposition(unittest.TestCase):
         np.testing.assert_array_equal(U_primary[2].expolist, np.array([(1,0,0),(0,1,0),(0,0,0),(0,0,1)]))
         np.testing.assert_array_equal(U_primary[3].expolist, np.array([(1,0,0),(0,1,0),(0,0,1),(0,0,0)]))
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_select_indices(self):
         # do not consider the first and the last parameters
         indices = [1,2]
@@ -88,7 +88,7 @@ class TestPrimaryDecomposition(unittest.TestCase):
         np.testing.assert_array_equal(U_primary[0].expolist, np.array([(1,0,0),(0,0,0),(0,1,0),(0,0,1)]))
         np.testing.assert_array_equal(U_primary[1].expolist, np.array([(1,0,0),(0,1,0),(0,0,0),(0,0,1)]))
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_keep_type(self):
         exponentiated_U = ExponentiatedPolynomial(self.U.expolist, self.U.coeffs, 'expoF', 'z')
         exponentiated_F = ExponentiatedPolynomial(self.F.expolist, self.F.coeffs, 'expoF', 'z')
@@ -123,7 +123,7 @@ class TestPrimaryDecomposition(unittest.TestCase):
         np.testing.assert_array_equal(U_primary[2].expolist, np.array([(1,0,0),(0,1,0),(0,0,0),(0,0,1)]))
         np.testing.assert_array_equal(U_primary[3].expolist, np.array([(1,0,0),(0,1,0),(0,0,1),(0,0,0)]))
 
-#@attr('active')
+#@pytest.mark.active
 class TestIterativeDecomposition(unittest.TestCase):
     def setUp(self):
         # Feynman parameters are the ti
@@ -147,7 +147,7 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(self.F), " + (-s12)*x1 + (-s23)*x0*x1*x2")
         self.assertEqual(str(self.U), " + (1) + (1)*x0 + (1)*x1 + (1)*x1*x2")
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_find_singular_set(self):
         variables = ['x%i' %i for i in range(3)]
 
@@ -234,7 +234,7 @@ class TestIterativeDecomposition(unittest.TestCase):
         self.assertEqual(str(s1_U.factors[0]), " + (1)")
         self.assertEqual(str(s1_U.factors[1]), " + (1) + (1)*x0*x1 + (1)*x1 + (1)*x2")
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_multiple_iterative_decomposition(self):
         variables = ['x0', 'x1', 'x2']
         x0, x1, x2 = [Polynomial.from_expression('x%i' % i, variables) for i in range(3)]
@@ -257,7 +257,7 @@ class TestIterativeDecomposition(unittest.TestCase):
         for stringify in (str, repr):
             self.assertEqual(stringify(psd_decomposition), stringify(target_decomposition))
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_iterative_decomposition_selected_indices(self):
         variables = ['dummy0', 'x0', 'x1', 'dummy1', 'x2', 'eps']
         integration_variable_indices = [1,2,4]

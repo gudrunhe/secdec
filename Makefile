@@ -63,7 +63,7 @@ clean:
 
 	# remove files created by coverage
 	rm -f .coverage
-	rm -rf coverage
+	rm -rf htmlcov
 
 	# remove egg-info
 	rm -rf pySecDec.egg-info
@@ -91,15 +91,15 @@ check : check3 doctest util-check
 .PHONY : check3
 check3 :
 	@ # run tests
-	python3 -m nose --processes=-1 --process-timeout=$(TIMEOUT)
+	python3 -m pytest pySecDec --timeout=$(TIMEOUT)
 
 .PHONY : active-check
 active-check :
-	python3 -m nose -a 'active' --processes=-1 --process-timeout=$(TIMEOUT)
+	python3 -m pytest pySecDec -m 'active' --timeout=$(TIMEOUT)
 
 .PHONY : fast-check
 fast-check :
-	python3 -m nose -a '!slow' --processes=-1 --process-timeout=$(TIMEOUT)
+	python3 -m pytest pySecDec -m 'not slow' --timeout=$(TIMEOUT)
 
 .PHONY : util-check
 util-check :
@@ -163,6 +163,6 @@ show-todos :
 
 .PHONY : coverage
 coverage :
-	rm -rf coverage
-	python3 -m nose --with-coverage --cover-package=pySecDec --cover-html --cover-html-dir=coverage
-	xdg-open coverage/index.html
+	rm -rf htmlcov
+	python3 -m pytest pySecDec --cov=pySecDec --cov-report=html --cov-branch
+	xdg-open htmlcov/index.html

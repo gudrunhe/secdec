@@ -6,8 +6,9 @@ import os
 import shutil
 import tempfile
 import unittest
+import pytest
+
 from math import floor
-from nose.plugins.attrib import attr
 
 def uf_from_propagators_generic(test_case, loop_momenta, propagators, result_u, result_f):
     loop_integral = LoopIntegralFromPropagators(propagators, loop_momenta, Feynman_parameters='Feynman')
@@ -30,7 +31,7 @@ def uf_from_propagators_generic(test_case, loop_momenta, propagators, result_u, 
     test_case.assertEqual(expo_u, len(propagators) - sympify_expression('2-eps') * (1 + len(loop_momenta)))
     test_case.assertEqual(expo_f, -(len(propagators) - sympify_expression('2-eps') * len(loop_momenta)))
 
-#@attr('active')
+#@pytest.mark.active
 class TestUF_FromPropagators(unittest.TestCase):
     def test_massive(self):
         # from SecDec: loop -> demos -> 6_geomethod_2L
@@ -115,7 +116,7 @@ class TestUF_FromPropagators(unittest.TestCase):
                            p3**2*x1*x5*x6 - p3**2*x2*x3*x6 - p3**2*x2*x4*x6 -
                            p3**2*x2*x5*x6 - p3**2*x3*x4*x6 - p3**2*x3*x5*x6""")
 
-    @attr('slow')
+    @pytest.mark.slow
     def test_formfactor_4l(self):
         uf_from_propagators_generic(self,
             loop_momenta = ['k1','k2','k3','k4'],
@@ -273,28 +274,28 @@ class TestUF_FromPropagators(unittest.TestCase):
                               p2**2*x3*x7*x9*x10*x11 - p2**2*x4*x7*x9*x10*x11 - p2**2*x5*x7*x9*x10*x11 - p2**2*x0*x8*x9*x10*x11 - p2**2*x1*x8*x9*x10*x11 - p2**2*x4*x8*x9*x10*x11 -
                               p2**2*x5*x8*x9*x10*x11 - p2**2*x7*x8*x9*x10*x11""")
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_error_messages(self):
-        self.assertRaisesRegexp(AssertionError, '(M|m)ismatch.*propagators.*Feynman_parameters', \
+        self.assertRaisesRegex(AssertionError, '(M|m)ismatch.*propagators.*Feynman_parameters', \
                                 LoopIntegralFromPropagators, ['k1**2'], ['k1'], Feynman_parameters=['z0','z1'])
-        self.assertRaisesRegexp(AssertionError, '.*loop_momenta.*symbol', \
+        self.assertRaisesRegex(AssertionError, '.*loop_momenta.*symbol', \
                                 LoopIntegralFromPropagators, ['k1**2', '(k1+k2)**2'], ['k1', '2*k2'], Feynman_parameters=['z0','z1'])
-        self.assertRaisesRegexp(AssertionError, '.*external_momenta.*symbol', \
+        self.assertRaisesRegex(AssertionError, '.*external_momenta.*symbol', \
                                 LoopIntegralFromPropagators, ['k1**2'], ['k1', 'k2'], ['alpha*p1'], Feynman_parameters=['z0','z1'])
-        self.assertRaisesRegexp(AssertionError, '.*Lorentz_indices.*symbol.*number', \
+        self.assertRaisesRegex(AssertionError, '.*Lorentz_indices.*symbol.*number', \
                                 LoopIntegralFromPropagators, ['k1**2'], ['k1', 'k2'], Lorentz_indices=['alpha*delta'])
-        self.assertRaisesRegexp(AssertionError, '.*metric_tensor.*symbol', \
+        self.assertRaisesRegex(AssertionError, '.*metric_tensor.*symbol', \
                                 LoopIntegralFromPropagators, ['k1**2'], ['k1', 'k2'], metric_tensor='4')
-        self.assertRaisesRegexp(AssertionError, '.*propagators.*at most quadratic', \
+        self.assertRaisesRegex(AssertionError, '.*propagators.*at most quadratic', \
                                 LoopIntegralFromPropagators, ['k1**2', 'p1*(k1+k2)**2'], ['k1','k2'], ['p1','p2'])
-        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of pairs', \
+        self.assertRaisesRegex(AssertionError, '.*replacement_rules.*list of pairs', \
                                 LoopIntegralFromPropagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=['z0','z1'])
-        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*list of pairs', \
+        self.assertRaisesRegex(AssertionError, '.*replacement_rules.*list of pairs', \
                                 LoopIntegralFromPropagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1', 0,'z1')])
-        self.assertRaisesRegexp(AssertionError, '.*replacement_rules.*at most quadratic', \
+        self.assertRaisesRegex(AssertionError, '.*replacement_rules.*at most quadratic', \
                                 LoopIntegralFromPropagators, ['k1**2', '(k1+k2)**2'], ['k1','k2'], replacement_rules=[('k1*k1*k2', 0)])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_replacement_rules_box_2L(self):
         k1, k2, p1, p2, p3, p4, s, t = sp.symbols('k1 k2 p1 p2 p3 p4 s t')
 
@@ -325,7 +326,7 @@ class TestUF_FromPropagators(unittest.TestCase):
         self.assertEqual(target_exponent_U, loop_integral.exponent_U)
         self.assertEqual(target_exponent_F, loop_integral.exponent_F)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_replacement_rules_box_1L(self):
         loop_momenta = ['k1']
         props = ['(k1+p1)**2 - m**2', '(k1+p1+p2)**2', '(k1+p1+p2+p3)**2', '(k1+p1+p2+p3+p4)**2']
@@ -349,7 +350,7 @@ class TestUF_FromPropagators(unittest.TestCase):
         self.assertEqual( (target_U - U).simplify() , 0)
         self.assertEqual( (target_F - F).simplify() , 0)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_linear_propagator(self):
         # SecDec3 -> loop/demos/8_linearprop_1L
         loop_momenta = ['k']
@@ -367,7 +368,7 @@ class TestUF_FromPropagators(unittest.TestCase):
 
 
 class TestNumerator(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_double_index_notation(self):
         mu, nu = sp.symbols('mu nu')
         numerator = 'k1(mu)*(k2(mu) + p1(mu)) + k2(mu)*k2(nu)*p1(mu)*p2(nu)'
@@ -402,7 +403,7 @@ class TestNumerator(unittest.TestCase):
             print(i)
             self.assertEqual(external_tensors[i], target_external_tensors[i])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_double_index_notation_special_case(self):
         mu = sp.symbols('mu')
         numerator = 'k1(mu)'
@@ -434,7 +435,7 @@ class TestNumerator(unittest.TestCase):
             print(i)
             self.assertEqual(tensors[i], target_tensors[i])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_tensor_numerator_bubble_1L(self):
         numerator = sympify_expression('k(1)*k(2)*k(3)*k(4)')
         contracted_numerator = numerator * sympify_expression('p(1)*p(2)*p(3)*p(4)*const')
@@ -508,7 +509,7 @@ class TestNumerator(unittest.TestCase):
         self.assertEqual( (contracted_numerator - target_contracted_numerator).simplify() , 0 )
         self.assertEqual( (partially_contracted_numerator - target_partially_contracted_numerator).simplify() , 0 )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_replacement_rules_in_numerator_bubble_1L(self):
         numerator = sympify_expression('k(1)*k(2)*k(3)*k(4)*p(1)*p(2)*p(3)*p(4)')
         indices = [1, 2, 3, 4]
@@ -538,7 +539,7 @@ class TestNumerator(unittest.TestCase):
 
         self.assertEqual( (sympify_expression(li.numerator)*li.Gamma_factor - target_numerator).simplify() , 0 )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_2L_box_with_numerator(self):
         propagators = ['k1**2','(k1+p2)**2','(k1-p1)**2','(k1-k2)**2','(k2+p2)**2','(k2-p1)**2','(k2+p2+p3)**2']
         numerator = '2*k1(mu)*p3(mu) + eps'
@@ -615,8 +616,8 @@ class TestNumerator(unittest.TestCase):
 
         self.assertEqual( (sympify_expression(li_with_replacement_rules.numerator) * li.Gamma_factor - target_numerator_with_replacements).simplify() , 0 )
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_rank3_numerator_2L_double_triangle(self):
         k1,  k2,  p1,  p2,  p3,  p4, s, t, mu, nu, scalar_factor, eps, F = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu nu scalar_factor eps F')
         k1f, k2f, p1f, p2f, p3f, p4f = sp.symbols('k1 k2 p1 p2 p3 p4', cls=sp.Function)
@@ -722,8 +723,8 @@ class TestNumerator(unittest.TestCase):
         self.assertEqual( (sympify_expression(li.exponentiated_U) - target_exponentiated_U).simplify() , 0 )
         self.assertEqual( (sympify_expression(li.exponentiated_F) - target_exponentiated_F).simplify() , 0 )
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_rank2_numerator_2L_box(self):
         k1,  k2,  p1,  p2,  p3,  p4, s, t, mu, scalar_factor, D, eps = sp.symbols('k1 k2 p1 p2 p3 p4 s t mu scalar_factor D eps')
         k1f, k2f, p1f, p2f, p3f, p4f = sp.symbols('k1 k2 p1 p2 p3 p4', cls=sp.Function)
@@ -891,7 +892,7 @@ class TestNumerator(unittest.TestCase):
 
             self.assertEqual( (sympify_expression(Feynman_parametrized_numerator) - target_numerators[i]).simplify() , 0 )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_numerator_without_external_momenta(self):
         double_tadpole = LoopIntegralFromPropagators(
             loop_momenta = ['k1','k2'],
@@ -914,7 +915,7 @@ class TestNumerator(unittest.TestCase):
         self.assertEqual( (sympify_expression(double_tadpole.exponent_U) - target_exponent_U).simplify() , 0 )
         self.assertEqual( (sympify_expression(double_tadpole.numerator) - target_numerator).simplify() , 0 )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_error_if_index_too_often_loop_momenta(self):
         li = LoopIntegralFromPropagators(
             Lorentz_indices = ('mu', 1, 2),
@@ -923,14 +924,14 @@ class TestNumerator(unittest.TestCase):
             external_momenta = ['p1', 'p2'],
             propagators = ['(k1-p1)^2','(k2-p1-p2)^2']
         )
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             AssertionError,
             str(li.numerator_input.args[0]).replace('(',r'\(').replace(')','\)').replace('*',r'\*') + \
                 '.*Lorentz_indices.*1.*more than.*(twice|two times)',
             lambda: li.numerator
         )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_error_if_index_too_often_external_momenta(self):
         li = LoopIntegralFromPropagators(
             Lorentz_indices = ('mu', 1, 2),
@@ -939,14 +940,14 @@ class TestNumerator(unittest.TestCase):
             external_momenta = ['p1', 'p2'],
             propagators = ['(k1-p1)^2','(k2-p1-p2)^2']
         )
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             AssertionError,
             str(li.numerator_input.args[0]).replace('(',r'\(').replace(')','\)').replace('*',r'\*') + \
                 '.*Lorentz_indices.*1.*more than.*(twice|two times)',
             lambda: li.numerator
         )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_error_if_index_too_often_mixed(self):
         li = LoopIntegralFromPropagators(
             Lorentz_indices = ('mu', 1, 2),
@@ -955,7 +956,7 @@ class TestNumerator(unittest.TestCase):
             external_momenta = ['p1', 'p2'],
             propagators = ['(k1-p1)^2','(k2-p1-p2)^2']
         )
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             AssertionError,
             str(li.numerator_input).replace('(',r'\(').replace(')','\)').replace('*',r'\*') + \
                 '.*Lorentz_indices.*mu.*more than.*(twice|two times)',
@@ -987,7 +988,7 @@ def uf_from_graph_generic(test_case, int_lines, ext_lines, result_L, result_u, r
     test_case.assertEqual(expo_u, len(int_lines) - sympify_expression('2-eps') * (1 + loop_integral.L))
     test_case.assertEqual(expo_f, -(len(int_lines) - sympify_expression('2-eps') * loop_integral.L))
 
-#@attr('active')
+#@pytest.mark.active
 class TestUF_FromGraph(unittest.TestCase):
     def test_tadpole_1l(self):
         uf_from_graph_generic(self,
@@ -997,7 +998,7 @@ class TestUF_FromGraph(unittest.TestCase):
                               result_u = "x0",
                               result_f = "m**2*x0**2")
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_bubble_1l(self):
         uf_from_graph_generic(self,
                               int_lines = [['m',(1,2)], [0,(1,2)]],
@@ -1103,29 +1104,29 @@ class TestUF_FromGraph(unittest.TestCase):
                               )
 
     def test_error_messages(self):
-        self.assertRaisesRegexp(AssertionError,
+        self.assertRaisesRegex(AssertionError,
                                 "To define a loop integral please input a graph with at least one internal line.",
                                 LoopIntegralFromGraph, internal_lines = [], external_lines = [['p1',1]])
-        self.assertRaisesRegexp(AssertionError,
+        self.assertRaisesRegex(AssertionError,
                                 "To define a loop integral please input a graph with at least one closed loop.",
                                 LoopIntegralFromGraph, internal_lines = [['m',[1,2]]],
                                 external_lines = [['p1',1],['p2',2]])
-        self.assertRaisesRegexp(AssertionError,
+        self.assertRaisesRegex(AssertionError,
                                 '.*(I|i)nternal.*lines.*form', LoopIntegralFromGraph,
                                 internal_lines = [['m',1,1]], external_lines = [])
-        self.assertRaisesRegexp(AssertionError,
+        self.assertRaisesRegex(AssertionError,
                                 '.*mass.*symbol', LoopIntegralFromGraph,
                                 internal_lines = [['m1+m2',[1,1]]], external_lines = [])
-        self.assertRaisesRegexp(AssertionError,
+        self.assertRaisesRegex(AssertionError,
                                 '.*vertices.*symbol', LoopIntegralFromGraph,
                                 internal_lines = [['m',['sin(x)',1]]], external_lines = [])
-        self.assertRaisesRegexp(AssertionError,
+        self.assertRaisesRegex(AssertionError,
                                 '.*vertices.*symbol', LoopIntegralFromGraph,
                                 internal_lines = [['m',[1,1]]], external_lines = [['p1','cos(x)']])
-        self.assertRaisesRegexp(AssertionError,
+        self.assertRaisesRegex(AssertionError,
                                 '.*propagator.*powers.*vanishing.*regulator', LoopIntegralFromGraph,
                                 internal_lines = [['m',[1,1]]], external_lines = [['p1',1]], powerlist=['a+eps'])
-        self.assertRaisesRegexp(AssertionError,
+        self.assertRaisesRegex(AssertionError,
                                 ".external.*line.*linear.*combination",
                                 LoopIntegralFromGraph, internal_lines = [['m',[1,2]], ['m',[1,2]]],
                                 external_lines = [['p1',1],['p1**2',2]])
@@ -1152,7 +1153,7 @@ def compare_two_loop_integrals(testcase, li1, li2):
     testcase.assertEqual( (result_expoF_1 - result_expoF_2).simplify() , 0 )
 
 
-#@attr('active')
+#@pytest.mark.active
 class TestPowerlist(unittest.TestCase):
 
     def tri1L_powers(self, power):
@@ -1331,19 +1332,19 @@ class TestPowerlist(unittest.TestCase):
     def test_zero_power(self):
         self.tri1L_powers('0')
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_negative_powers1(self):
         self.tri1L_powers('-1')
 
     def test_negative_powers2(self):
         self.tri1L_powers('-2')
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_negative_powers3(self):
         self.tri1L_powers('-3/2')
 
-    @attr('slow')
+    @pytest.mark.slow
     def test_negative_powers4(self):
         self.tri1L_powers('-3')
 
@@ -1359,15 +1360,15 @@ class TestPowerlist(unittest.TestCase):
     def test_eps_power4(self):
         self.tri1L_powers('-2+eps')
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_eps_power5(self):
         self.tri1L_powers('1/2+eps')
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_eps_power6(self):
         self.tri1L_powers('-1/2+eps')
 
-    @attr('slow')
+    @pytest.mark.slow
     def test_box_withnumerator2L(self):
         # SecDec3 -> loop/demos/4_box_withnumerator_2L
         loop_momenta = ['k1','k2']
@@ -1425,8 +1426,8 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_Nu - sympify_expression(target_Nu)).simplify() , 0 )
         self.assertEqual( (result_gamma_factor - sympify_expression(target_gamma_factor)).simplify() , 0 )
 
-    @attr('slow')
-    #@attr('active')
+    @pytest.mark.slow
+    #@pytest.mark.active
     def test_powerlist_with_mass(self):
         loop_momenta = ['k']
         propagators = ['k**2', '(k-p1)**2', '(k+p2)**2 - m**2']
@@ -1533,7 +1534,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_Nu - sympify_expression(target_Nu)).simplify() , 0 )
         self.assertEqual( (result_gamma  - target_gamma ).simplify() , 0 )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_multiple_negative_powers(self):
         internal_lines = [[0,[1,2]], [0,[2,3]], [0,[3,4]], [0,[4,1]]]
         external_lines = [['p1',1], ['p2',2], ['p3',3], ['-p1-p2-p3',4]]
@@ -1579,7 +1580,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_measure - sympify_expression(target_measure)).simplify() , 0 )
         self.assertEqual( result_measure_symbols, target_measure_symbols)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_one_zero_and_one_negative_power(self):
         external_lines = [['p1',1], ['p2',2], ['p3',3], ['-p1-p2-p3',4]]
 
@@ -1629,8 +1630,8 @@ class TestPowerlist(unittest.TestCase):
             self.assertEqual( (result_measure - sympify_expression(target_measure)).simplify() , 0 )
             self.assertEqual( result_measure_symbols, target_measure_symbols)
 
-    @attr('slow')
-    #@attr('active')
+    @pytest.mark.slow
+    #@pytest.mark.active
     def test_compare_tensor_integral_to_inverse_propagator(self):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2', '(l+p2+p3)**2','l*l']
@@ -1670,8 +1671,8 @@ class TestPowerlist(unittest.TestCase):
         compare_two_loop_integrals(self, li1, li3)
         compare_two_loop_integrals(self, li2, li3)
 
-    @attr('slow')
-    #@attr('active')
+    @pytest.mark.slow
+    #@pytest.mark.active
     def test_compare_tensor_integral_to_inverse_propagator2(self):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
@@ -1702,8 +1703,8 @@ class TestPowerlist(unittest.TestCase):
 
         compare_two_loop_integrals(self, li1, li2)
 
-    @attr('slow')
-    #@attr('active')
+    @pytest.mark.slow
+    #@pytest.mark.active
     def test_combined_tensor_integral_and_inverse_propagator_1(self):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2', '(l+p2+p3)**2']
@@ -1735,7 +1736,7 @@ class TestPowerlist(unittest.TestCase):
         compare_two_loop_integrals(self, li1, li2)
 
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_combined_tensor_integral_and_inverse_propagator_2(self):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
@@ -1764,7 +1765,7 @@ class TestPowerlist(unittest.TestCase):
         compare_two_loop_integrals(self, li1, li2)
 
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_combined_tensor_integral_and_inverse_propagator_3(self):
         loop_momenta = ['l']
         propagators = ['l**2', '(l-p1)**2', '(l+p2)**2']
@@ -1793,8 +1794,8 @@ class TestPowerlist(unittest.TestCase):
         compare_two_loop_integrals(self, li1, li2)
 
 
-    @attr('slow')
-    #@attr('active')
+    @pytest.mark.slow
+    #@pytest.mark.active
     def test_combined_tensor_integral_and_inverse_propagator_4(self):
         loop_momenta = ['l', 'k']
 
@@ -1822,7 +1823,7 @@ class TestPowerlist(unittest.TestCase):
         compare_two_loop_integrals(self, li1, li2)
 
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_inverse_linear_propagator(self):
         loop_momenta = ['l']
 
@@ -1850,7 +1851,7 @@ class TestPowerlist(unittest.TestCase):
         compare_two_loop_integrals(self, li1, li2)
 
 
-    #@attr('active')
+    #@pytest.mark.active
     # this integral is known analytically -> candidate to check numerical result
     def test_Y_integral(self):
 
@@ -1896,7 +1897,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual( (result_F  - target_F ).simplify() , 0 )
         self.assertEqual( (result_Nu - target_Nu).simplify() , 0 )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_powerlist_regulators_bubble_1L_from_graph(self):
         internal_lines = [['mt',[1,2]],['mt',[2,1]]]
         external_lines = [['p1',1],['p2',2]]
@@ -1922,7 +1923,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual((sympify_expression(loop_integral.exponent_F)-sympify_expression(result_exponent_F)).simplify(),0)
         self.assertEqual((sympify_expression(loop_integral.measure)-sympify_expression(result_measure)).simplify(),0)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_powerlist_regulators_bubble_1L_from_propagators(self):
         propagators = ["(k**2-mtsq)", "((p1-k)**2-mtsq)"]
         powerlist=['1+n1','1+n2']
@@ -1947,7 +1948,7 @@ class TestPowerlist(unittest.TestCase):
         self.assertEqual((sympify_expression(loop_integral.exponent_F)-sympify_expression(result_exponent_F)).simplify(),0)
         self.assertEqual((sympify_expression(loop_integral.measure)-sympify_expression(result_measure)).simplify(),0)
 
-#@attr('active')
+#@pytest.mark.active
 class TestUF_LoopPackageFromPropagators(unittest.TestCase):
     def test_loop_package_twice(self):
         cwd = os.getcwd()

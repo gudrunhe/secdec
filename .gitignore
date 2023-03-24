@@ -6,7 +6,7 @@ doc/source/cpp_doctest/*
 !doc/source/cpp_doctest/*.cpp
 !doc/source/cpp_doctest/*.cu
 !doc/source/cpp_doctest/Makefile
-.coverage
+.coverage*
 coverage
 *.swp
 

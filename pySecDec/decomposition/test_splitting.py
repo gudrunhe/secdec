@@ -5,7 +5,7 @@ from ..misc import sympify_expression
 import numpy as np
 import sympy as sp
 import unittest
-from nose.plugins.attrib import attr
+import pytest
 
 class TestRemapOneToZero(unittest.TestCase):
     def setUp(self):
@@ -37,7 +37,7 @@ class TestRemapOneToZero(unittest.TestCase):
 
         self.initial_sector = Sector([self.U,self.F])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_remap_one_to_zero_U(self):
         x0, x1, x2, x3, x4, x5 = self.Feynman_parameters
         s = self.s
@@ -49,7 +49,7 @@ class TestRemapOneToZero(unittest.TestCase):
                             + (1)*x0*x2
         self.assertEqual( (remapped_U - target_remapped_U).simplify() , 0 )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_remap_one_to_zero_F(self):
         x0, x1, x2, x3, x4, x5 = self.Feynman_parameters
         s = self.s
@@ -62,7 +62,7 @@ class TestRemapOneToZero(unittest.TestCase):
                             + (-s)*(1-x0)*(1-x1)*x4 + (-s)*(1-x0)*(1-x1)*x3 + (-s)*(1-x0)*(1-x1)*(1-x2)
         self.assertEqual( (remapped_F - target_remapped_F).simplify() , 0 )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_remap_exponentiated(self):
         x0, x1, x2, x3, x4, x5 = self.Feynman_parameters
         polynomial = Polynomial.from_expression(x0 - x1, self.Feynman_parameters)
@@ -75,7 +75,7 @@ class TestRemapOneToZero(unittest.TestCase):
 
         self.assertEqual(  (remapped_exponentiated_polynomial - target_remapped_exponentiated_polynomial).simplify() , 0  )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_remap_constant(self):
         polynomial = Polynomial.from_expression('coeff', self.Feynman_parameters)
         remapped = remap_one_to_zero(polynomial, 0,1)
@@ -85,25 +85,25 @@ class TestRemapOneToZero(unittest.TestCase):
         self.assertEqual(  (sympify_expression(remapped) - target_remapped).simplify() , 0  )
 
 class TestFindSingularSetsAtOne(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_find_singular_sets_at_one_empty(self):
         poly = Polynomial.from_expression('x0 - x1', ['x0','x1'])
         singular_set = find_singular_sets_at_one(poly)
         self.assertEqual(singular_set, [tuple(),(0,1)])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_find_singular_sets_at_one_simple(self):
         poly = Polynomial.from_expression('1 - x0 + x1', ['x0','x1'])
         singular_set = find_singular_sets_at_one(poly)
         self.assertEqual(singular_set, [(0,)])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_find_singular_sets_at_one_medium(self):
         poly = Polynomial.from_expression('2 - x0 + a*x1**2*x5**4 - x3*x0**8', ['x0','x1','x2','x3','x4','x5'])
         singular_set = find_singular_sets_at_one(poly)
         self.assertEqual(singular_set, [(0,3),(0,1,3),(0,3,5)])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_find_singular_sets_at_one_complicated(self):
         s, x0, x1, x2, x3, x4, x5 = sp.symbols('s, x0, x1, x2, x3, x4, x5')
         poly = + (-s)*x0*x2 + (-s)*x0*x1*x3 + (-s)*x4 + (-s) + (s)*x0*x2*x3 \
@@ -114,17 +114,17 @@ class TestFindSingularSetsAtOne(unittest.TestCase):
         singular_set = find_singular_sets_at_one(poly)
         self.assertEqual(singular_set, [(2,3),(0,2,3),(2,3,4),(0,2,3,4)])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_find_singular_sets_only_at_one(self):
         poly = Polynomial.from_expression('2 - x0 - x2*x0**8', ['x0','x1','x2'])
         singular_set = find_singular_sets_at_one(poly)
         self.assertEqual(singular_set, [(0,2)])
 
-#@attr('active')
+#@pytest.mark.active
 class TestSplit(unittest.TestCase):
     seed = 138
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_nontrivial_Jacobian(self):
         sector = Sector(
                            cast     = [Polynomial.from_expression('1 -   x0 + x1', ['x0','x1'])],
@@ -149,7 +149,7 @@ class TestSplit(unittest.TestCase):
         self.assertEqual( (  sympify_expression(split_sectors[1].cast[0]) - target_split_cast_1  ).simplify() , 0)
         self.assertEqual( (  sympify_expression(split_sectors[1].Jacobian) - target_split_Jacobian_1 ).simplify() , 0)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_splitting(self):
         polysymbols = ['x0','x1','x2']
 
@@ -204,11 +204,11 @@ class TestSplit(unittest.TestCase):
         self.assertEqual( (  sympify_expression(subsectors[3].other[1]) - target_split_other_2_3  ).simplify() , 0)
         self.assertEqual( (  sympify_expression(subsectors[3].Jacobian) - target_split_Jacobian_3 ).simplify() , 0)
 
-#@attr('active')
+#@pytest.mark.active
 class TestSplitSingular(unittest.TestCase):
     seed = 138
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_split_singular(self):
         poly = Polynomial.from_expression('1 - x0 + A*x1 - x2', ['x0','x1','x2'])
         initial_sector = Sector([poly])
@@ -238,7 +238,7 @@ class TestSplitSingular(unittest.TestCase):
             sympyfied_split_Jacobian = sympify_expression(split_sectors[i].Jacobian)
             self.assertEqual(  (sympyfied_split_Jacobian - target_Jacobians[i]).simplify() , 0  )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_selected_parameters(self):
         polysymbols = ['x0','x1','x2','eps']
         poly = Polynomial.from_expression('1 - x0 + A*x1 - x2', polysymbols)

@@ -3,9 +3,9 @@ from .algebra import *
 from .misc import sympify_expression
 import sympy as sp
 import unittest
-from nose.plugins.attrib import attr
+import pytest
 
-#@attr('active')
+#@pytest.mark.active
 class TestIntegratePolePart(unittest.TestCase):
     def setUp(self):
         self.Feynman_parameter_symbols = ['x0','x1']
@@ -45,15 +45,15 @@ class TestIntegratePolePart(unittest.TestCase):
                         for summand in I_j_pole_part.summands:
                             np.testing.assert_array_equal(summand.factors[0].factors[0].expolist, [(0,2,0,0)])
                             np.testing.assert_array_equal(summand.factors[0].factors[0].coeffs, [1])
-                            self.assertEqual(  sympify_expression( str(summand.factors[0].factors[0].exponent) )  -  sympify_expression('-2 - eps0 - 3*eps1'),  0  )
+                            assert sympify_expression( str(summand.factors[0].factors[0].exponent) )  -  sympify_expression('-2 - eps0 - 3*eps1') == 0
                     elif i == 1:
                         for summand in I_j_pole_part.summands:
                             np.testing.assert_array_equal(summand.factors[0].factors[0].expolist, [(0,2,0,0)])
                             np.testing.assert_array_equal(summand.factors[0].factors[1].expolist, [(0,4,0,0)])
                             np.testing.assert_array_equal(summand.factors[0].factors[0].coeffs, [1])
                             np.testing.assert_array_equal(summand.factors[0].factors[1].coeffs, [1])
-                            self.assertEqual(  sympify_expression( str(summand.factors[0].factors[0].exponent) )  -  sympify_expression(-2),  0  )
-                            self.assertEqual(  sympify_expression( str(summand.factors[0].factors[1].exponent) )  -  sympify_expression('- eps0 - 3*eps1')/2,  0  )
+                            assert sympify_expression( str(summand.factors[0].factors[0].exponent) )  -  sympify_expression(-2) == 0
+                            assert sympify_expression( str(summand.factors[0].factors[1].exponent) )  -  sympify_expression('- eps0 - 3*eps1')/2 == 0
                     else:
                         raise IndexError('`i` should only run over `(0,1)`!')
 
@@ -69,24 +69,24 @@ class TestIntegratePolePart(unittest.TestCase):
                 else:
                     raise IndexError('`j` should only run over `(0,1)`!')
 
-                self.assertEqual( sp.powdenest((sympify_expression(str(I_j_pole_part)) - expected_pole_part), force=True).simplify() , 0)
+                assert sp.powdenest((sympify_expression(str(I_j_pole_part)) - expected_pole_part), force=True).simplify() == 0
                 for summand in I_j_pole_part.summands:
-                    self.assertEqual(type(summand), Product)
-                    self.assertEqual(type(summand.factors[0]), Product)
+                    assert type(summand) == Product
+                    assert type(summand.factors[0]) == Product
                     for factor in summand.factors[0].factors:
-                        self.assertEqual(type(factor), ExponentiatedPolynomial)
+                        assert type(factor) == ExponentiatedPolynomial
 
-                self.assertEqual(type(I_j_numerically_integrable_part), Product)
-                self.assertEqual(type(I_j_numerically_integrable_part.factors[0]), Product)
+                assert type(I_j_numerically_integrable_part) == Product
+                assert type(I_j_numerically_integrable_part.factors[0]) == Product
                 for factor in I_j_numerically_integrable_part.factors[0].factors:
-                    self.assertEqual(type(factor), ExponentiatedPolynomial)
+                    assert type(factor) == ExponentiatedPolynomial
                 should_be_zero = (sympify_expression(I_j_numerically_integrable_part) - expected_numerical_integrand).simplify()
                 if i == 1:
                     # need some simplifications that are not generally true for all complex numbers
                     # see http://docs.sympy.org/dev/tutorial/simplification.html#powers for a discussion
                     should_be_zero = sp.expand_power_base(should_be_zero, force=True)
                     should_be_zero = sp.powdenest(should_be_zero, force=True)
-                self.assertEqual( should_be_zero , 0)
+                assert should_be_zero == 0
 
     def test_integrate_multiple_pole_parts(self):
         I_j_before = Product(self.monomial_product1,self.regulator_poles,self.cal_I)
@@ -108,7 +108,7 @@ class TestIntegratePolePart(unittest.TestCase):
 
                                              C*x0**2*x0**(-eps0 - 3*eps1 - 2) / (-2*eps0 - 6*eps1 - 3+1)
                                         ''')
-        self.assertEqual( (sympify_expression(str(I_j_after)) - expected_after_0_1).simplify() , 0)
+        assert (sympify_expression(str(I_j_after)) - expected_after_0_1).simplify() == 0
 
     def test_subsequent_call(self):
         # should be able to walk through all variables
@@ -117,21 +117,22 @@ class TestIntegratePolePart(unittest.TestCase):
         for i,term in enumerate(I_0):
             integrate_pole_part(term,1)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_catch_one_over_zero(self):
         minus_one = Polynomial([[0]], [-1])
         monomial = ExponentiatedPolynomial([[1]], [1], exponent=minus_one) # "x0**(-1)" without regulator --> leads to "1/0" in subtraction
         pole_part_initializer = Pow(Polynomial([[0]],[1]), exponent=minus_one)
         cal_I = Function('cal_I', Polynomial([[1]],[1])) # "cal_I(x0)"
         prod = Product(Product(monomial), pole_part_initializer, cal_I)
-        self.assertRaisesRegexp(ValueError, '1/0', integrate_pole_part, prod, 0)
+        with pytest.raises(ValueError, match='1/0'):
+            integrate_pole_part(prod, 0)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_pole_structure(self):
-        self.assertEqual( pole_structure(self.monomial_product1,0,1) , [-2,-4] )
-        self.assertEqual( pole_structure(self.monomial_product2,0,1) , [-2,-4] )
+        assert pole_structure(self.monomial_product1,0,1) == [-2,-4]
+        assert pole_structure(self.monomial_product2,0,1) == [-2,-4]
 
-#@attr('active')
+#@pytest.mark.active
 class TestIntegrateByParts(unittest.TestCase):
     def setUp(self):
         self.symbols = ['x0', 'x1', 'x2', 'eps1', 'eps2']
@@ -154,19 +155,20 @@ class TestIntegrateByParts(unittest.TestCase):
         self.ibp_input = Product(monomials, pole_part_initializer, cal_I)
 
     def check_terms(self, computed, expected):
-        self.assertEqual( len(computed) , len(expected) )
+        assert len(computed) == len(expected)
         for index,(term,target_term) in enumerate(zip(computed, expected)):
             print('index: %i' % index)
             sympified_term = sympify_expression(term)
             sympified_target_term = sympify_expression(target_term)
             difference = (sympified_term - sympified_target_term).simplify()
-            self.assertEqual(difference,0)
+            assert difference == 0
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_error_messages(self):
-        self.assertRaisesRegexp(AssertionError, 'number of .*power_goals.* \(1\).* (match|equal) .*number of .*indices.* \(2\)', integrate_by_parts, self.ibp_input, [-1], [0,2])
+        with pytest.raises(AssertionError, match=r"number of .*power_goals.* \(1\).* (match|equal) .*number of .*indices.* \(2\)"):
+            integrate_by_parts(self.ibp_input, [-1], [0,2])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_power_goal_minus1(self):
         terms_after_ibp = integrate_by_parts(self.ibp_input, -1, [0,1,2])
         target_terms_after_ibp = \
@@ -176,7 +178,7 @@ class TestIntegrateByParts(unittest.TestCase):
         ]
         self.check_terms(terms_after_ibp, target_terms_after_ibp)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_power_goal_0(self):
         terms_after_ibp_input_together = integrate_by_parts(self.ibp_input, 0, (0,1,2))
         terms_after_ibp_input_separate = integrate_by_parts(self.ibp_input, (0,0,0), (0,1,2))
@@ -192,7 +194,7 @@ class TestIntegrateByParts(unittest.TestCase):
         self.check_terms(terms_after_ibp_input_together, target_terms_after_ibp)
         self.check_terms(terms_after_ibp_input_separate, target_terms_after_ibp)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_power_goals_0_minus1_1(self):
         terms_after_ibp = integrate_by_parts(self.ibp_input, [0,-1,1], [0,1,2])
         target_terms_after_ibp = \
@@ -204,7 +206,7 @@ class TestIntegrateByParts(unittest.TestCase):
         ]
         self.check_terms(terms_after_ibp, target_terms_after_ibp)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_select_index(self):
         terms_after_ibp = integrate_by_parts(self.ibp_input, 0, [0])
         target_terms_after_ibp = \

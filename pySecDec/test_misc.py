@@ -3,23 +3,23 @@ from .algebra import Polynomial
 from multiprocessing import Pool
 import numpy as np
 import unittest
-from nose.plugins.attrib import attr
+import pytest
 
-#@attr('active')
+#@pytest.mark.active
 class TestMakeCPPList(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_make_cpp_list(self):
         python_list = ['a', 'b', 'c']
         cpp_list = make_cpp_list(python_list)
         target_cpp_list = '"a","b","c"'
-        self.assertEqual(cpp_list, target_cpp_list)
+        assert cpp_list == target_cpp_list
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_make_cpp_list_empty(self):
         python_list = []
         cpp_list = make_cpp_list(python_list)
         target_cpp_list = str() # empty string
-        self.assertEqual(cpp_list, target_cpp_list)
+        assert cpp_list == target_cpp_list
 
 
 class TestSort(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestSort(unittest.TestCase):
         in_array = np.asarray(in_array)
         np.testing.assert_array_equal(in_array[calculated_sort_indices], target_sorted_array)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sort_ND(self):
         in_array =          [[[0, 2],
                               [1, 0]],
@@ -70,47 +70,54 @@ class TestSort(unittest.TestCase):
         calculated_sort_indices = argsort_ND_array(in_array)
         np.testing.assert_array_equal(np.array(in_array)[calculated_sort_indices], target_sorted_array)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_error_message(self):
-        self.assertRaisesRegexp(AssertionError, 'array.*two dimensional', argsort_2D_array, [1,2,3,4])
-        self.assertRaisesRegexp(AssertionError, 'array.*two or higher dimensional', argsort_ND_array, [1,2,3,4])
+        with pytest.raises(AssertionError, match='array.*two dimensional'):
+            argsort_2D_array([1,2,3,4])
+        with pytest.raises(AssertionError, match='array.*two or higher dimensional'):
+            argsort_ND_array([1,2,3,4])
 
 class TestPowerset(unittest.TestCase):
     def test_powerset_range(self):
-        self.assertEqual(list(powerset(range(0))), [()])
-        self.assertEqual(list(powerset(range(1))), [(),(0,)])
-        self.assertEqual(list(powerset(range(2))), [(),(0,),(1,),(0,1)])
-        self.assertEqual(list(powerset(range(3))), [(),(0,),(1,),(2,),(0,1),(0,2),(1,2),(0,1,2)])
-        self.assertEqual(list(powerset(range(4))), [(),(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
+        assert list(powerset(range(0))) == [()]
+        assert list(powerset(range(1))) == [(),(0,)]
+        assert list(powerset(range(2))) == [(),(0,),(1,),(0,1)]
+        assert list(powerset(range(3))) == [(),(0,),(1,),(2,),(0,1),(0,2),(1,2),(0,1,2)]
+        assert list(powerset(range(4))) == [(),(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)]
 
     def test_powerset_without_empty(self):
-        self.assertEqual(list(powerset(range(0),min_length=1)), [])
-        self.assertEqual(list(powerset(range(1),min_length=1)), [(0,)])
-        self.assertEqual(list(powerset(range(2),min_length=1)), [(0,),(1,),(0,1)])
-        self.assertEqual(list(powerset(range(3),min_length=1)), [(0,),(1,),(2,),(0,1),(0,2),(1,2),(0,1,2)])
-        self.assertEqual(list(powerset(range(4),min_length=1)), [(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
+        assert list(powerset(range(0),min_length=1)) == []
+        assert list(powerset(range(1),min_length=1)) == [(0,)]
+        assert list(powerset(range(2),min_length=1)) == [(0,),(1,),(0,1)]
+        assert list(powerset(range(3),min_length=1)) == [(0,),(1,),(2,),(0,1),(0,2),(1,2),(0,1,2)]
+        assert list(powerset(range(4),min_length=1)) == [(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)]
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_strided_powerset(self):
-        self.assertEqual(list(powerset(range(4),stride=2)), [(),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)])
-        self.assertEqual(list(powerset(range(4),stride=3)), [(),(0,1,2),(0,1,3),(0,2,3),(1,2,3)])
-        self.assertEqual(list(powerset(range(4),stride=2,min_length=2)), [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)])
+        assert list(powerset(range(4),stride=2)) == [(),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)]
+        assert list(powerset(range(4),stride=3)) == [(),(0,1,2),(0,1,3),(0,2,3),(1,2,3)]
+        assert list(powerset(range(4),stride=2,min_length=2)) == [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2,3)]
 
     def test_minimal_powerset(self):
-        self.assertEqual(list(powerset(range(4),min_length=1)), [(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
-        self.assertEqual(list(powerset(range(4),min_length=2)), [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)])
-        self.assertEqual(list(powerset(range(4),stride=2,min_length=3)), [(0,1,2),(0,1,3),(0,2,3),(1,2,3)])
+        assert list(powerset(range(4),min_length=1)) == [(0,),(1,),(2,),(3,),(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)]
+        assert list(powerset(range(4),min_length=2)) == [(0,1),(0,2),(0,3),(1,2),(1,3),(2,3),(0,1,2),(0,1,3),(0,2,3),(1,2,3),(0,1,2,3)]
+        assert list(powerset(range(4),stride=2,min_length=3)) == [(0,1,2),(0,1,3),(0,2,3),(1,2,3)]
 
 class TestRangecomb(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_error_messages(self):
-        self.assertRaises(TypeError, rangecomb, ['a','b','c'], [1,2,3])
-        self.assertRaises(TypeError, rangecomb, [1,2,3], ['a','b','c'])
-        self.assertRaisesRegexp(AssertionError, 'low.*vector', rangecomb, [[-1,-2],[1,2]], [-1,-2])
-        self.assertRaisesRegexp(AssertionError, 'high.*vector', rangecomb, [-1,-2], [[-1,-2],[1,2]])
-        self.assertRaisesRegexp(AssertionError, 'low.*high.*length', rangecomb, [-1,-2], [0])
+        with pytest.raises(TypeError):
+            rangecomb(['a','b','c'], [1,2,3])
+        with pytest.raises(TypeError):
+            rangecomb([1,2,3], ['a','b','c'])
+        with pytest.raises(AssertionError, match='low.*vector'):
+            rangecomb([[-1,-2],[1,2]], [-1,-2])
+        with pytest.raises(AssertionError, match='high.*vector'):
+            rangecomb([-1,-2], [[-1,-2],[1,2]])
+        with pytest.raises(AssertionError, match='low.*high.*length'):
+            rangecomb([-1,-2], [0])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_3_dimensions(self):
         low = [-2,-2, 1]
         high = [0, 1, 2]
@@ -125,18 +132,19 @@ class TestRangecomb(unittest.TestCase):
                          (0, -1, 1), (0, -1, 2), (0, 0, 1),
                          (0, 0, 2), (0, 1, 1), (0, 1, 2)]
 
-        self.assertEqual(orders, target_orders)
+        assert orders == target_orders
 
 class TestMissing(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_missing(self):
-        self.assertEqual(missing([1,2,3], [1]), [2,3])
-        self.assertEqual(missing([1,2,3], [1,2]), [3])
-        self.assertEqual(missing([1,2,3,1], [1,2]), [3,1])
-        self.assertEqual(missing(['a','b','c','d','e','f'], ['a','e','d']), ['b','c','f'])
-        self.assertRaises(ValueError, missing, [1,2,3], [1,'a'])
+        assert missing([1,2,3], [1]) == [2,3]
+        assert missing([1,2,3], [1,2]) == [3]
+        assert missing([1,2,3,1], [1,2]) == [3,1]
+        assert missing(['a','b','c','d','e','f'], ['a','e','d']) == ['b','c','f']
+        with pytest.raises(ValueError):
+            missing([1,2,3], [1,'a'])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_in_combination_with_powerset(self):
         full_set = list(range(4))
         powerset_4_generator = powerset(full_set)
@@ -147,25 +155,26 @@ class TestMissing(unittest.TestCase):
 
         for i, powerset_item in enumerate(powerset_4_generator):
             print(i)
-            self.assertEqual(powerset_item, target_powerset_4[i])
-            self.assertEqual(missing(full_set, powerset_item), list(target_missing_in_powerset_4[i]))
+            assert powerset_item == target_powerset_4[i]
+            assert missing(full_set, powerset_item) == list(target_missing_in_powerset_4[i])
 
 class TestAllPairs(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_error_input_not_even(self):
-        self.assertRaisesRegexp(AssertionError, 'even', all_pairs, [1,2,3])
+        with pytest.raises(AssertionError, match='even'):
+            all_pairs([1,2,3])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_partitioning(self):
         # list input
         lst = [1,2,3,4]
-        self.assertEqual(list(all_pairs(lst)), [[(1,2),(3,4)], [(1,3),(2,4)], [(1,4),(2,3)]])
+        assert list(all_pairs(lst)) == [[(1,2),(3,4)], [(1,3),(2,4)], [(1,4),(2,3)]]
 
         # iterator input
         generator = (i for i in lst)
-        self.assertEqual(list(all_pairs(generator)), [[(1,2),(3,4)], [(1,3),(2,4)], [(1,4),(2,3)]])
+        assert list(all_pairs(generator)) == [[(1,2),(3,4)], [(1,3),(2,4)], [(1,4),(2,3)]]
 
-#@attr('active')
+#@pytest.mark.active
 class TestDet(unittest.TestCase):
     def check_calculation(self, parallel):
         if parallel:
@@ -176,13 +185,13 @@ class TestDet(unittest.TestCase):
         M1 = [[1,1],
               [2,2]]
         target_det_M1 = 0
-        self.assertEqual(f(M1), target_det_M1)
+        assert f(M1) == target_det_M1
 
         M2 = [[1,2,3],
               [0,2,2],
               [0,0,2]]
         target_det_M2 = 4
-        self.assertEqual(f(M2), target_det_M2)
+        assert f(M2) == target_det_M2
 
     def test_sequential(self):
         self.check_calculation(parallel=False)
@@ -195,17 +204,19 @@ class TestDet(unittest.TestCase):
         M1 = [1,2,3]
         M2 = [[[1,2],[3,4]],[[5,6],[7,8]],[[9,10],[11,12]]]
         for M in (M1,M2):
-            self.assertRaisesRegexp(AssertionError, 'M.*two dimensional', det, M)
+            with pytest.raises(AssertionError, match='M.*two dimensional'):
+                det(M)
 
         # not square
         M3 = [[1,2,3],
               [0,2,2]]
-        self.assertRaisesRegexp(AssertionError, 'M.*square', det, M3)
+        with pytest.raises(AssertionError, match='M.*square'):
+            det(M3)
 
     def test_1x1_special_case(self):
         M = [[1]]
-        self.assertEqual(det(M), 1)
-        self.assertTrue(np.issubdtype(type(det(M)), np.array(M).dtype))
+        assert det(M) == 1
+        assert np.issubdtype(type(det(M)), np.array(M).dtype)
 
 class TestAdjugate(unittest.TestCase):
     def test_calculation(self):
@@ -222,12 +233,14 @@ class TestAdjugate(unittest.TestCase):
         M1 = [1,2,3]
         M2 = [[[1,2],[3,4]],[[5,6],[7,8]],[[9,10],[11,12]]]
         for M in (M1,M2):
-            self.assertRaisesRegexp(AssertionError, 'M.*two dimensional', adjugate, M)
+            with pytest.raises(AssertionError, match='M.*two dimensional'):
+                adjugate(M)
 
         # not square
         M3 = [[1,2,3],
               [0,2,2]]
-        self.assertRaisesRegexp(AssertionError, 'M.*square', adjugate, M3)
+        with pytest.raises(AssertionError, match='M.*square'):
+            adjugate(M3)
 
     def test_1x1_special_case(self):
         M1 = [[1 ]]
@@ -235,16 +248,16 @@ class TestAdjugate(unittest.TestCase):
         M3 = [[2.]]
         for M in (M1,M2,M3):
             adj_M = adjugate(M)
-            self.assertEqual(adj_M, 1)
-            self.assertTrue(isinstance(adj_M, np.ndarray))
+            assert adj_M == 1
+            assert isinstance(adj_M, np.ndarray)
 
         # should keep data type of input
-        self.assertTrue(np.issubdtype(adjugate(M1).dtype, np.array(M1).dtype))
-        self.assertTrue(np.issubdtype(adjugate(M2).dtype, np.array(M2).dtype))
-        self.assertTrue(np.issubdtype(adjugate(M3).dtype, np.array(M3).dtype))
+        assert np.issubdtype(adjugate(M1).dtype, np.array(M1).dtype)
+        assert np.issubdtype(adjugate(M2).dtype, np.array(M2).dtype)
+        assert np.issubdtype(adjugate(M3).dtype, np.array(M3).dtype)
 
 class TestCachedProperty(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_usability(self):
         class C(object):
             'Sum up the numbers from one to `N`.'
@@ -257,9 +270,9 @@ class TestCachedProperty(unittest.TestCase):
                     result += i
                 return result
         to_ten = C(10)
-        self.assertEqual(to_ten.sum, 1+2+3+4+5+6+7+8+9+10)
+        assert to_ten.sum == 1+2+3+4+5+6+7+8+9+10
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_called_only_once(self):
         class C(object):
             def __init__(self):
@@ -270,11 +283,11 @@ class TestCachedProperty(unittest.TestCase):
                 return 5 + 5
         instance = C()
 
-        self.assertEqual(instance.counter, 0)
+        assert instance.counter == 0
         for i in range(10):
             # the method should be called only once
-            self.assertEqual(instance.prop, 10)
-            self.assertEqual(instance.counter, 1)
+            assert instance.prop == 10
+            assert instance.counter == 1
 
 class TestFlatten(unittest.TestCase):
     def setUp(self):
@@ -301,48 +314,49 @@ class TestFlatten(unittest.TestCase):
 
         self.target_flattened_pmix =  Polynomial([[0,2], [-1,0], [-1,0]], ['A','B','B'])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_plain_with_depth(self):
         flattened_p1 = flatten(self.p1, 1)
         np.testing.assert_array_equal(flattened_p1.expolist, self.target_flattened_polynomial_1.expolist)
         np.testing.assert_array_equal(flattened_p1.coeffs, self.target_flattened_polynomial_1.coeffs)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_plain_without_depth(self):
         flattened_p1 = flatten(self.p1)
         np.testing.assert_array_equal(flattened_p1.expolist, self.target_flattened_polynomial_1.expolist)
         np.testing.assert_array_equal(flattened_p1.coeffs, self.target_flattened_polynomial_1.coeffs)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_mixed_with_depth(self):
         flattened_p2 = flatten(self.p2, 1)
         np.testing.assert_array_equal(flattened_p2.expolist, self.target_flattened_polynomial_2.expolist)
         np.testing.assert_array_equal(flattened_p2.coeffs, self.target_flattened_polynomial_2.coeffs)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_mixed_without_depth(self):
         flattened_p2 = flatten(self.p2)
         np.testing.assert_array_equal(flattened_p2.expolist, self.target_flattened_polynomial_2.expolist)
         np.testing.assert_array_equal(flattened_p2.coeffs, self.target_flattened_polynomial_2.coeffs)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_multi_mixed_with_depth(self):
         flattened_pmix = flatten(self.pmix, 1)
         np.testing.assert_array_equal(flattened_pmix.expolist, self.target_flattened_pmix.expolist)
         np.testing.assert_array_equal(flattened_pmix.coeffs, self.target_flattened_pmix.coeffs)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_multi_mixed_without_depth(self):
         flattened_pmix = flatten(self.pmix)
         np.testing.assert_array_equal(flattened_pmix.expolist, self.target_flattened_pmix.expolist)
         np.testing.assert_array_equal(flattened_pmix.coeffs, self.target_flattened_pmix.coeffs)
 
 class TestPrefactorExpansion(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_error_message(self):
-        self.assertRaisesRegexp(AssertionError, 'variable.*symbol', lowest_order, 'a+b', 'a+b')
+        with pytest.raises(AssertionError, match='variable.*symbol'):
+            lowest_order('a+b', 'a+b')
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_lowest_order_one_variable_constant(self):
         expression = '''
                             -1 * 2**6 * exp(EulerGamma)**(-2*eps) / sqrt(pi) * gamma(-4*eps)
@@ -350,28 +364,28 @@ class TestPrefactorExpansion(unittest.TestCase):
                             / pi / 2 * (-1) * eps * 2**(-4*eps) * 4**(1+eps) * 64
                      '''
         expression_lowest_eps_order = lowest_order(expression, 'eps')
-        self.assertEqual(expression_lowest_eps_order, 0) # no pole, expasion starts at constant order
+        assert expression_lowest_eps_order == 0 # no pole, expasion starts at constant order
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_lowest_order_one_variable_simple_pole(self):
         expression = '''
                             gamma(-5*eps - 2) * exp(EulerGamma * eps)
                      '''
         expression_lowest_eps_order = lowest_order(expression, 'eps')
-        self.assertEqual(expression_lowest_eps_order, -1) # 1/eps pole from gamma function
+        assert expression_lowest_eps_order == -1 # 1/eps pole from gamma function
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_lowest_order_one_variable_double_pole(self):
         expression = '''
                             gamma(-5*eps - 2)**2 * exp(EulerGamma * eps)
                      '''
         expression_lowest_eps_order = lowest_order(expression, 'eps')
-        self.assertEqual(expression_lowest_eps_order, -2) # 1/eps**2 pole from the squared gamma function
+        assert expression_lowest_eps_order == -2 # 1/eps**2 pole from the squared gamma function
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_lowest_order_one_variable_no_constant_order(self):
         expression = '''
                             gamma(-5*eps - 2) * exp(EulerGamma * eps) * (eps**3 + 15 * eps**2)
                      '''
         expression_lowest_eps_order = lowest_order(expression, 'eps')
-        self.assertEqual(expression_lowest_eps_order, +1) # starts at ``eps**1`` order
+        assert expression_lowest_eps_order == +1 # starts at ``eps**1`` order

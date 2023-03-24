@@ -28,9 +28,9 @@ jobs:
     - name: Build
       run: |
         make build
-    - name: Nose Check
+    - name: pytest Check
       run: |
-        python3 -m nose --processes=2 --process-timeout=600 pySecDec
+        python3 -m pytest --timeout=600 pySecDec
     - name: Doc Test
       run: |
         export PYTHONPATH=$PWD

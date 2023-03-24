@@ -6,9 +6,9 @@ from .make_package import _convert_input, _make_FORM_definition, \
                           _make_CXX_function_declaration
 from ..algebra import Function, Polynomial, Product, ProductRule, Sum
 from ..misc import sympify_expression
-from nose.plugins.attrib import attr
 import sys, shutil
 import unittest
+import pytest
 
 python_major_version = sys.version[0]
 
@@ -52,27 +52,27 @@ class TestMidLevel(TestMakePackage):
 
         self.assertEqual(template_replacements['number_of_sectors'],6 if primary_decomposition else 2) # should ignore the symmetry involving `polynomial_names`
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_no_polynomial_names_symmetry(self):
         self.check_no_polynomial_names_symmetry()
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_no_polynomial_names_symmetry_split(self):
         self.check_no_polynomial_names_symmetry(split=True)
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_no_polynomial_names_symmetry_primary(self):
         self.check_no_polynomial_names_symmetry(primary_decomposition=True)
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_no_polynomial_names_symmetry_split_primary(self):
         self.check_no_polynomial_names_symmetry(split=True, primary_decomposition=True)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_pole_structures(self):
         self.tmpdir = 'tmpdir_test_pole_structures_python' + python_major_version
 
@@ -88,7 +88,7 @@ class TestMidLevel(TestMakePackage):
 
         self.assertEqual(template_replacements['pole_structures_initializer'], '{{-1,0}}')
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_pole_structures_serial(self):
         self.tmpdir = 'tmpdir_test_pole_structures_python' + python_major_version
 
@@ -134,21 +134,21 @@ class TestConvertInput(TestMakePackage):
                                       pylink_qmc_transforms=['korobov3x3']
                                  )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_convert_input(self):
         _convert_input(**self.correct_input) # should be ok
 
         requested_orders_wrong_shape = self.correct_input.copy()
         requested_orders_wrong_shape['requested_orders'] = [[1,1],[0,0]]
-        self.assertRaisesRegexp(AssertionError, r'requested_orders.*wrong shape.*is \(2, 2\).*should be \(2,\)', _convert_input, **requested_orders_wrong_shape)
+        self.assertRaisesRegex(AssertionError, r'requested_orders.*wrong shape.*is \(2, 2\).*should be \(2,\)', _convert_input, **requested_orders_wrong_shape)
 
         requested_orders_wrong_length = self.correct_input.copy()
         requested_orders_wrong_length['requested_orders'] = [1,1,1]
-        self.assertRaisesRegexp(AssertionError, 'length.*requested_orders.*match.*length.*regulators', _convert_input, **requested_orders_wrong_length)
+        self.assertRaisesRegex(AssertionError, r'length.*requested_orders.*match.*length.*regulators', _convert_input, **requested_orders_wrong_length)
 
         polynomials_to_decompose_unrelated_polysymbols = self.correct_input.copy()
         polynomials_to_decompose_unrelated_polysymbols['polynomials_to_decompose'] = ['1', Polynomial([[0,0,0],[1,1,1]],['-s','-t'],['x0','x1','x2'])]
-        self.assertRaisesRegexp(ValueError, r"\(\-s\) \+ \(\-t\)\*x0\*x1\*x2.*polynomials_to_decompose.*symbols.*\(is.*x0, x1, x2.*should.*z0, z1, z2, eps, alpha", _convert_input, **polynomials_to_decompose_unrelated_polysymbols)
+        self.assertRaisesRegex(ValueError, r"\(\-s\) \+ \(\-t\)\*x0\*x1\*x2.*polynomials_to_decompose.*symbols.*\(is.*x0, x1, x2.*should.*z0, z1, z2, eps, alpha", _convert_input, **polynomials_to_decompose_unrelated_polysymbols)
 
         polynomials_to_decompose_wrong_polysymbols_in_exponent = self.correct_input.copy()
         polynomials_to_decompose_wrong_polysymbols_in_exponent['polynomials_to_decompose'] = ['1', ExponentiatedPolynomial([[0,0,0,0,0,0,0],[1,1,1,0,0,0,0]],['-s','-t'],polysymbols=['z0','z1','z2','eps','alpha','U','F'],exponent=Polynomial([[0,0,1]],[1],['x0','x1','x2']))]
@@ -168,49 +168,49 @@ class TestConvertInput(TestMakePackage):
 
         polynomials_to_decompose_negative_insertion_depth = self.correct_input.copy()
         polynomials_to_decompose_negative_insertion_depth['form_insertion_depth'] = -3
-        self.assertRaisesRegexp(AssertionError, 'form_insertion_depth.*negative', _convert_input, **polynomials_to_decompose_negative_insertion_depth)
+        self.assertRaisesRegex(AssertionError, r'form_insertion_depth.*negative', _convert_input, **polynomials_to_decompose_negative_insertion_depth)
 
         polynomials_to_decompose_noninteger_insertion_depth = self.correct_input.copy()
         polynomials_to_decompose_noninteger_insertion_depth['form_insertion_depth'] = 1.2
-        self.assertRaisesRegexp(AssertionError, 'form_insertion_depth.*integer', _convert_input, **polynomials_to_decompose_noninteger_insertion_depth)
+        self.assertRaisesRegex(AssertionError, r'form_insertion_depth.*integer', _convert_input, **polynomials_to_decompose_noninteger_insertion_depth)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_input_check_exponent(self):
         args = self.correct_input.copy()
 
         args['polynomials_to_decompose'] = ['(a * z0) ** (eps + z1)']
-        self.assertRaisesRegexp(AssertionError, 'exponents.*not depend on the .integration_variables', _convert_input, **args)
+        self.assertRaisesRegex(AssertionError, r'exponents.*not depend on the .integration_variables', _convert_input, **args)
 
         args['polynomials_to_decompose'] = ['(a * z0) ** (DummyFunction(eps) + 5)']
-        self.assertRaisesRegexp(sp.PolynomialError, 'polynomials.*regulators.*Error while checking: "\( \+ \(a\)\*z0\)\*\*\(DummyFunction\(eps\) \+ 5\)"', _convert_input, **args)
+        self.assertRaisesRegex(sp.PolynomialError, r'polynomials.*regulators.*Error while checking: "\( \+ \(a\)\*z0\)\*\*\(DummyFunction\(eps\) \+ 5\)"', _convert_input, **args)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_validate_basic(self):
-        self.assertRaisesRegexp(NameError, 'not begin with.*SecDecInternal', _validate, 'SecDecInternalFunction')
-        self.assertRaisesRegexp(NameError, '1a.*cannot be used', _validate, '1a')
-        self.assertRaisesRegexp(NameError, 'my_symbol.*cannot contain.*underscore.*_', _validate, 'my_symbol')
+        self.assertRaisesRegex(NameError, r'not begin with.*SecDecInternal', _validate, 'SecDecInternalFunction')
+        self.assertRaisesRegex(NameError, r'1a.*cannot be used', _validate, '1a')
+        self.assertRaisesRegex(NameError, r'my_symbol.*cannot contain.*underscore.*_', _validate, 'my_symbol')
         _validate('symbol1') # should be ok
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_validate_allow_underscore(self):
-        self.assertRaisesRegexp(NameError, '^"my_name" cannot contain an underscore character "_"$', _validate, 'my_name')
+        self.assertRaisesRegex(NameError, r'^"my_name" cannot contain an underscore character "_"$', _validate, 'my_name')
         _validate('my_name', True) # should be ok
-        self.assertRaisesRegexp(NameError, '^"with_underscore" cannot contain an underscore character "_"$', _validate, 'with_underscore', allow_underscore=False)
+        self.assertRaisesRegex(NameError, r'^"with_underscore" cannot contain an underscore character "_"$', _validate, 'with_underscore', allow_underscore=False)
         _validate('with_underscore', allow_underscore=True) # should be ok
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_validate_bans(self):
         for allow_underscore in [True, False]:
-            self.assertRaisesRegexp(NameError, '^"double" cannot be used as symbol$', _validate, 'double', allow_underscore)
-            self.assertRaisesRegexp(NameError, '^"cubareal" cannot be used as symbol$', _validate, 'cubareal', allow_underscore)
-            self.assertRaisesRegexp(NameError, '^"float" cannot be used as symbol$', _validate, 'float', allow_underscore)
-            self.assertRaisesRegexp(NameError, '^"sqrt" cannot be used as symbol$', _validate, 'sqrt', allow_underscore)
-            self.assertRaisesRegexp(NameError, '^"AtomicThing" cannot be used as symbol \(must not begin with "atomic"\)$', _validate, 'AtomicThing', allow_underscore)
+            self.assertRaisesRegex(NameError, r'^"double" cannot be used as symbol$', _validate, 'double', allow_underscore)
+            self.assertRaisesRegex(NameError, r'^"cubareal" cannot be used as symbol$', _validate, 'cubareal', allow_underscore)
+            self.assertRaisesRegex(NameError, r'^"float" cannot be used as symbol$', _validate, 'float', allow_underscore)
+            self.assertRaisesRegex(NameError, r'^"sqrt" cannot be used as symbol$', _validate, 'sqrt', allow_underscore)
+            self.assertRaisesRegex(NameError, r'^"AtomicThing" cannot be used as symbol \(must not begin with "atomic"\)$', _validate, 'AtomicThing', allow_underscore)
 
-        self.assertRaisesRegexp(NameError, '^"_my_name" cannot be used as symbol \(must not begin with "_"\)$', _validate, '_my_name', allow_underscore=True)
-        self.assertRaisesRegexp(NameError, '^"_my_name" cannot contain an underscore character "_"$', _validate, '_my_name', allow_underscore=False)
+        self.assertRaisesRegex(NameError, r'^"_my_name" cannot be used as symbol \(must not begin with "_"\)$', _validate, '_my_name', allow_underscore=True)
+        self.assertRaisesRegex(NameError, r'^"_my_name" cannot contain an underscore character "_"$', _validate, '_my_name', allow_underscore=False)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_remainder_expression_with_polynomial_reference(self):
         # `make_package` should raise an error if the `remainder_expression`
         # refers to any of the `polynomial_names`
@@ -218,42 +218,42 @@ class TestConvertInput(TestMakePackage):
         keyword_arguments['remainder_expression'] = 'firstPolynomialName'
         keyword_arguments['polynomial_names'] = ['firstPolynomialName']
         keyword_arguments['polynomials_to_decompose'] = ['z0 + z1 + z2']
-        self.assertRaisesRegexp(ValueError, r'polynomial_names.*firstPolynomialName.*not.*remainder_expression', _convert_input, **keyword_arguments)
+        self.assertRaisesRegex(ValueError, r'polynomial_names.*firstPolynomialName.*not.*remainder_expression', _convert_input, **keyword_arguments)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_polynomials_to_decompose_self_reference(self):
         # `make_package` should raise an error if any of the `polynomials_to_decompose`
         # refers to any of the `polynomial_names`
         keyword_arguments = self.correct_input.copy()
         keyword_arguments['polynomial_names'] = ['firstPolynomialName']
         keyword_arguments['polynomials_to_decompose'] = ['z0 + firstPolynomialName']
-        self.assertRaisesRegexp(ValueError, r'polynomial_names.*firstPolynomialName.*not.*polynomials_to_decompose', _convert_input, **keyword_arguments)
+        self.assertRaisesRegex(ValueError, r'polynomial_names.*firstPolynomialName.*not.*polynomials_to_decompose', _convert_input, **keyword_arguments)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_positive_polynomials(self):
         keyword_arguments = self.correct_input.copy()
         keyword_arguments['positive_polynomials'] = ['U','missingInPolynomialNames','F']
-        self.assertRaisesRegexp(AssertionError, r'missingInPolynomialNames.*positive_polynomials.*not.*polynomial_names', _convert_input, **keyword_arguments)
+        self.assertRaisesRegex(AssertionError, r'missingInPolynomialNames.*positive_polynomials.*not.*polynomial_names', _convert_input, **keyword_arguments)
 
         keyword_arguments = self.correct_input.copy()
         keyword_arguments['positive_polynomials'] = ['U','not_a + symbol','F']
-        self.assertRaisesRegexp(AssertionError, r'All.*positive_polynomials.*symbols', _convert_input, **keyword_arguments)
+        self.assertRaisesRegex(AssertionError, r'All.*positive_polynomials.*symbols', _convert_input, **keyword_arguments)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_regulator_in_polynomial_to_decompose(self):
         keyword_arguments = self.correct_input.copy()
         keyword_arguments['polynomials_to_decompose'] = ['z0 + firstPolynomialName', 'z0*z1 + (eps+1)*z1*z2']
-        self.assertRaisesRegexp(AssertionError, r'polynomials_to_decompose.*not depend.*regulators', _convert_input, **keyword_arguments)
+        self.assertRaisesRegex(AssertionError, r'polynomials_to_decompose.*not depend.*regulators', _convert_input, **keyword_arguments)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_selective_ibp_power_goals_error_message(self):
         keyword_arguments = self.correct_input.copy()
         integration_variables = ['z0','z1','z2']
         keyword_arguments['integration_variables'] = list(integration_variables)
         keyword_arguments['ibp_power_goal'] = [-1,0]
-        self.assertRaisesRegexp(AssertionError, r'number of .*ibp_power_goal.* \(2\).* (match|equal) .*number of .*integration_variables.* \(3\)', _convert_input, **keyword_arguments)
+        self.assertRaisesRegex(AssertionError, r'number of .*ibp_power_goal.* \(2\).* (match|equal) .*number of .*integration_variables.* \(3\)', _convert_input, **keyword_arguments)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_selective_ibp_power_goals(self):
         keyword_arguments = self.correct_input.copy()
         integration_variables = ['z0','z1','z2']
@@ -267,7 +267,7 @@ class TestConvertInput(TestMakePackage):
             self.assertEqual(converted_integration_variables[i],sp.symbols(integration_variables[i]))
             self.assertEqual(converted_ibp_power_goal[converted_integration_variables[i]], ibp_power_goal[i])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_old_single_ibp_power_goal(self):
         keyword_arguments = self.correct_input.copy()
         integration_variables = ['z0','z1','z2']
@@ -283,7 +283,7 @@ class TestConvertInput(TestMakePackage):
 
 # --------------------------------- write FORM code ---------------------------------
 class TestMakeFORMDefinition(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_function(self):
         polysymbols = sp.symbols("x y z")
         x = Polynomial([[1,0,0]], [1], polysymbols)
@@ -297,9 +297,9 @@ class TestMakeFORMDefinition(unittest.TestCase):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
-#@attr('active')
+#@pytest.mark.active
 class TestMakeFORMFunctionDefinition(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_no_args(self):
         symbols = ['x','y']
         x = Polynomial([[1,0]], [1], symbols)
@@ -317,7 +317,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sum(self):
         symbols = ['x','y']
         x = Polynomial([[1,0]], [1], symbols)
@@ -337,7 +337,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sum_product(self):
         symbols = ['x','y']
         x = Polynomial([[1,0]], [1], symbols)
@@ -357,7 +357,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_product_rule(self):
         symbols = ['x','y']
         x = Polynomial([[1,0]], [1], symbols)
@@ -379,7 +379,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_polynomial(self):
         symbols = ['x','y']
         x = Polynomial([[1,0]], [1], symbols)
@@ -400,7 +400,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
 
         self.assertEqual(FORM_code, target_FORM_code)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_polynomial_coefficient(self):
         symbols = ['x','y','z']
 
@@ -421,7 +421,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         self.assertEqual(FORM_code, target_FORM_code)    
 
 class TestMiscellaneous(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_derivative_muliindex_to_name(self):
         basename = 'f'
         multiindex = (1,2,1)
@@ -430,14 +430,14 @@ class TestMiscellaneous(unittest.TestCase):
         target_result = 'ddddfd0d1d1d2'
         self.assertEqual(result, target_result)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_make_FORM_list(self):
         python_list = ['a', 'b', 'c']
         FORM_list = _make_FORM_list(python_list)
         target_FORM_list = 'a,b,c'
         self.assertEqual(FORM_list, target_FORM_list)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_make_FORM_shifted_orders(self):
         powers = [(0,0,0), (1,0,0), (0,1,1)]
 
@@ -458,7 +458,7 @@ class TestMiscellaneous(unittest.TestCase):
         self.assertEqual(FORM_code, target_FORM_code)
 
 class TestWriteCppCodePrefactor(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_one_regulator(self):
         expanded_prefactor = Polynomial([[-1],[0],[1]],['-c0','r0','r1'], ['eps'])
         real_parameters = sympify_expression(['r0','r1'])
@@ -494,7 +494,7 @@ class TestWriteCppCodePrefactor(unittest.TestCase):
 
             self.assertEqual(cpp_code, target_cpp_code)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_two_regulators(self):
         symbols = sympify_expression(['alpha','eps'])
         alpha_coeffs = [
@@ -549,13 +549,13 @@ class TestWriteCppCodePrefactor(unittest.TestCase):
             self.assertEqual(cpp_code, target_cpp_code)
 
 class TestWriteCppCodeFunctionDeclaration(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_zero_args(self):
         code = _make_CXX_function_declaration(function_name = 'f', number_of_arguments = 0)
         target_code = '    integrand_return_t f();\n'
         self.assertEqual(code, target_code)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_one_arg(self):
         code = _make_CXX_function_declaration(function_name = 'f', number_of_arguments = 1)
 
@@ -564,7 +564,7 @@ class TestWriteCppCodeFunctionDeclaration(unittest.TestCase):
 
         self.assertEqual(code, target_code)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_two_args(self):
         code = _make_CXX_function_declaration(function_name = 'f', number_of_arguments = 2)
 
@@ -580,12 +580,12 @@ class TestRealPartFunction(unittest.TestCase):
         self.polysymbols = ['x%i' % i for i in range(self.number_of_polysymbols)]
         self.variables = [Polynomial.from_expression('x%i' % i, self.polysymbols) for i in range(self.number_of_polysymbols)]
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_base_function(self):
         Re_x0 = RealPartFunction('Re', self.variables[0])
         self.assertEqual( sympify_expression(Re_x0) , sympify_expression('Re(x0)') )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_derivatives(self):
         Re_x0 = RealPartFunction('Re', self.variables[0]*self.variables[1]*self.variables[1])
         dRe_x0d1 = Re_x0.derive(1)
@@ -602,7 +602,7 @@ class TestMaxDegreeFunction(unittest.TestCase):
         self.variables = [Polynomial.from_expression(x, polysymbols) for x in polysymbols]
         self.variables[-1] = self.variables[-1]**2
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_derivative_and_copy(self):
         maxdegrees = np.array([0,1,2])
         f = MaxDegreeFunction('f', *self.variables, maxdegrees=maxdegrees)
@@ -644,7 +644,7 @@ class TestMaxDegreeFunction(unittest.TestCase):
         self.assertEqual( sympify_expression(derivative.derive(1)) , sympify_expression('0') )
         self.assertEqual( sympify_expression(derivative.derive(2)) , sympify_expression('0') )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_replace(self):
         maxdegrees = np.array([0,1,2])
         f0 = MaxDegreeFunction('f', *self.variables, maxdegrees=maxdegrees).replace(1,1,remove=True)
@@ -668,7 +668,7 @@ class TestMaxDegreeFunction(unittest.TestCase):
             derivative = derivative.derive(-1).copy()
             self.assertEqual( sympify_expression(derivative) , sympify_expression('0') )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_get_maxdegrees(self):
         np.testing.assert_array_equal(
             MaxDegreeFunction.get_maxdegrees(self.polynomial, ignore_subclass=False),

@@ -3,15 +3,15 @@ from ..algebra import Polynomial, ExponentiatedPolynomial
 from ..misc import sympify_expression
 from ..make_package import MakePackage
 from ..loop_integral import LoopIntegralFromGraph, LoopPackage
-from nose.plugins.attrib import attr
 import sys
 import numpy as np
 import sympy as sp
 import unittest
+import pytest
 
 python_major_version = sys.version[0]
 
-#@attr('active')
+#@pytest.mark.active
 class TestCoefficient(unittest.TestCase):
     def setUp(self):
         self.regulators = ['eps']
@@ -58,8 +58,8 @@ class TestCoefficient(unittest.TestCase):
         '''
         self.sympified_denominator = sympify_expression(self.denominator)
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_coefficient_order_num_den(self):
         coeff = Coefficient([self.numerator],[self.denominator], self.parameters)
         lowest_orders = coeff.leading_orders(self.regulators)
@@ -67,16 +67,13 @@ class TestCoefficient(unittest.TestCase):
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [-1])
 
-        self.assertEqual(
-            (
+        assert (
                 (self.sympified_numerator / self.sympified_denominator) / \
                 sp.sympify(coeff.expression)
-            ).simplify()
-            , 1
-        )
+            ).simplify() == 1
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_coefficient_order_empty(self):
         coeff = Coefficient([],[], self.parameters)
         lowest_orders = coeff.leading_orders(self.regulators)
@@ -84,8 +81,8 @@ class TestCoefficient(unittest.TestCase):
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [0])
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_coefficient_order_no_numerator(self):
         coeff = Coefficient([],[self.denominator,'eps^2'], self.parameters)
         lowest_orders = coeff.leading_orders(self.regulators)
@@ -93,8 +90,8 @@ class TestCoefficient(unittest.TestCase):
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [-3])
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_coefficient_order_no_denominator(self):
         coeff = Coefficient([self.numerator,'eps^2'], [], self.parameters)
         lowest_orders = coeff.leading_orders(self.regulators)
@@ -102,7 +99,7 @@ class TestCoefficient(unittest.TestCase):
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [2])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_coefficient_with_imaginary_unit(self):
         coeff = Coefficient(['I*(5+I*8)'], [], [])
         lowest_orders = coeff.leading_orders([])
@@ -110,51 +107,36 @@ class TestCoefficient(unittest.TestCase):
         # check lowest_orders
         np.testing.assert_array_equal(lowest_orders, [])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_coefficient_from_string(self):
         coeff = Coefficient.from_string(f"({self.numerator})/({self.denominator})", exclude_parameters=["eps"])
 
         np.testing.assert_array_equal(coeff.parameters, self.parameters)
 
-        self.assertEqual(
-            (
+        assert (
                 (self.sympified_numerator / self.sympified_denominator) / \
                 sp.sympify(coeff.expression)
-            ).together()
-            , 1
-        )
+            ).together() == 1
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_coefficient_without_brackets_1(self):
         coeff = Coefficient(["1+eps"], ["1-eps"], [])
-        self.assertEqual(
-            (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together()
-            , 1
-        )
+        assert (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together() == 1
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_coefficient_without_brackets_2(self):
         coeff = Coefficient("1+eps", ["1-eps"], [])
-        self.assertEqual(
-            (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together()
-            , 1
-        )
+        assert (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together() == 1
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_coefficient_without_brackets_3(self):
         coeff = Coefficient(["1+eps"], "1-eps", [])
-        self.assertEqual(
-            (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together()
-            , 1
-        )
+        assert (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together() == 1
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_coefficient_without_brackets_4(self):
         coeff = Coefficient("1+eps", "1-eps", [])
-        self.assertEqual(
-            (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together()
-            , 1
-        )
+        assert (sp.sympify("(1+eps)/(1-eps)")/sp.sympify(coeff.expression)).together() == 1
 
 # --------------------------------- mid-level tests ---------------------------------
 class TestSumPackage(unittest.TestCase):
@@ -169,7 +151,7 @@ class TestSumPackage(unittest.TestCase):
                 else: # reraise error otherwise
                     raise
 
-#@attr('active')
+#@pytest.mark.active
 class TestSumPackageCall(TestSumPackage):
     def setUp(self):
         self.tmpdirs = ['tmpdir_test_sum_package_python' + python_major_version + '_0',
@@ -250,7 +232,7 @@ class TestSumPackageCall(TestSumPackage):
                                           requested_orders=[0]
                                       )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sum_package_one_make_package(self):
         result = sum_package(
             self.tmpdirs[0],
@@ -262,9 +244,9 @@ class TestSumPackageCall(TestSumPackage):
             coefficients=None,
             pylink_qmc_transforms=['korobov3x3']
         )
-        self.assertEqual(result['name'], 'make_package_1') # Should match name of last package_generator
+        assert result['name'] == 'make_package_1' # Should match name of last package_generator
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sum_package_two_make_package(self):
         result = sum_package(
             self.tmpdirs[1],
@@ -276,9 +258,9 @@ class TestSumPackageCall(TestSumPackage):
             coefficients=None,
             pylink_qmc_transforms=['korobov3x3']
         )
-        self.assertEqual(result['name'], 'make_package_2') # Should match name of last package_generator
+        assert result['name'] == 'make_package_2' # Should match name of last package_generator
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sum_package_one_loop_package(self):
         result = sum_package(
             self.tmpdirs[2],
@@ -289,9 +271,9 @@ class TestSumPackageCall(TestSumPackage):
             coefficients=None,
             pylink_qmc_transforms=['korobov3x3']
         )
-        self.assertEqual(result['name'], 'loop_package_1')  # Should match name of last package_generator
+        assert result['name'] == 'loop_package_1'  # Should match name of last package_generator
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sum_package_mixed_package(self):
         result = sum_package(
             self.tmpdirs[3],
@@ -302,4 +284,4 @@ class TestSumPackageCall(TestSumPackage):
             coefficients=None,
             pylink_qmc_transforms=['korobov3x3']
         )
-        self.assertEqual(result['name'], 'make_package_3')  # Should match name of last package_generator
+        assert result['name'] == 'make_package_3'  # Should match name of last package_generator

@@ -7,9 +7,9 @@ import unittest
 import sympy as sp
 import numpy as np
 from itertools import permutations
-from nose.plugins.attrib import attr
 import sys, os
 import shutil
+import pytest
 
 python_major_version = sys.version[0]
 
@@ -25,7 +25,7 @@ class TestSector(unittest.TestCase):
         self.poly = Polynomial([(1,0,0,4),(0,1,0,1),(0,0,1,0)],[1,1,1])
         self.sector = Sector([self.poly])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_init(self):
         # Feynman parameters are the ti
         # input is part of the 1Loop box
@@ -42,11 +42,11 @@ class TestSector(unittest.TestCase):
 
         other_polynomial = Polynomial([(0,1,2),(1,0,5),(1,2,3),(9,4,2)],[1,'A','C','g'], polysymbols=['x','y','z'])
 
-        self.assertRaisesRegexp(AssertionError, 'number of variables.*equal', Sector, [F], [self.poly])
-        self.assertRaisesRegexp(AssertionError, '(f|F)irst factor.*monomial', Sector, [Product(F,U)])
-        self.assertRaisesRegexp(AssertionError, 'two factors', Sector, [Product(F,U,Jacobian)])
-        self.assertRaisesRegexp(AssertionError, 'at least one', Sector, [])
-        self.assertRaisesRegexp(AssertionError, 'other.*type.*Polynomial', Sector, [F], other=[Product(Jacobian,U)])
+        self.assertRaisesRegex(AssertionError, 'number of variables.*equal', Sector, [F], [self.poly])
+        self.assertRaisesRegex(AssertionError, '(f|F)irst factor.*monomial', Sector, [Product(F,U)])
+        self.assertRaisesRegex(AssertionError, 'two factors', Sector, [Product(F,U,Jacobian)])
+        self.assertRaisesRegex(AssertionError, 'at least one', Sector, [])
+        self.assertRaisesRegex(AssertionError, 'other.*type.*Polynomial', Sector, [F], other=[Product(Jacobian,U)])
         Sector([Product(Jacobian,F)])
 
         sector = Sector([F])
@@ -78,7 +78,7 @@ class TestSector(unittest.TestCase):
         sector.cast[0].factors[1].expolist += 1
         self.assertNotEqual(str(self.sector.cast[0].factors[1]),sector.cast[0].factors[1])
 
-#@attr('active')
+#@pytest.mark.active
 class TestSymmetryFinding(unittest.TestCase):
     def setUp(self):
         eps = sp.symbols('eps')
@@ -108,7 +108,7 @@ class TestSymmetryFinding(unittest.TestCase):
 
         self.a, self.b, self.c, self.d, self.e, self.f, self.g = sp.symbols('a b c d e f g')
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sector2array(self):
         SecDecInternalCast, SecDecInternalOther = sp.symbols('SecDecInternalCast SecDecInternalOther', cls=sp.Function)
 
@@ -138,7 +138,7 @@ class TestSymmetryFinding(unittest.TestCase):
         np.testing.assert_array_equal(combined_expolists, target_combined_expolists)
         np.testing.assert_array_equal(combined_coeffs, target_combined_coeffs)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sector2array_cancelling(self):
         SecDecInternalCast = sp.symbols('SecDecInternalCast', cls=sp.Function)
         a = sp.symbols('a')
@@ -165,7 +165,7 @@ class TestSymmetryFinding(unittest.TestCase):
         np.testing.assert_array_equal(combined_expolists, target_combined_expolists)
         np.testing.assert_array_equal(combined_coeffs, target_combined_coeffs)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_sector2array_other_exponent(self):
 
         SecDecInternalCast, SecDecInternalOther = sp.symbols('SecDecInternalCast SecDecInternalOther', cls=sp.Function)
@@ -199,7 +199,7 @@ class TestSymmetryFinding(unittest.TestCase):
         np.testing.assert_array_equal(combined_expolists, target_combined_expolists)
         np.testing.assert_array_equal(combined_coeffs, target_combined_coeffs)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_collision_safe_hash(self):
         class CustomHash(object):
             def __init__(self, hash, value):
@@ -234,7 +234,7 @@ class TestSymmetryFinding(unittest.TestCase):
             else:
                 self.assertNotEqual(array_collisions_resolved[i], array_collisions_resolved[j])
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_squash_symmetry_redundant_sectors_2D(self):
         sectors = [self.sector_p0.copy(), self.sector_swapped_p0.copy()]
 
@@ -252,8 +252,8 @@ class TestSymmetryFinding(unittest.TestCase):
         self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sympify_expression('a+swapped_Jacobian_coeff'))
         self.assertEqual((sympify_expression(reduced_sectors[0].cast[0]) - sympify_expression(self.p0.copy())).simplify(), 0)
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_squash_symmetry_hard(self):
 
         # In python3, the hashes of symbols are random.
@@ -316,7 +316,7 @@ class TestSymmetryFinding(unittest.TestCase):
         self.assertEqual(len(reduced_sectors), 1)
         self.assertEqual(reduced_sectors[0].Jacobian.coeffs[0], sympify_expression('2*a'))
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_indices(self):
         # sectors are related by permutation of x0 <--> x1
         sector0_p0 = Polynomial([(1,0,1,3),(2,2,4,3)], ['a','b'])
@@ -384,7 +384,7 @@ class TestSymmetryFinding(unittest.TestCase):
                 self.assertTrue( (repr(reduced_sectors) == repr(sectors_with_redundancy)) or
                                  (repr(reduced_sectors) == repr(sectors_with_redundancy_reversed)) )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_symmetry_4D(self):
         # sectors 0 and 2 are related by permutation, sector 1 is unrelated
         sector0_p0 = Polynomial([(0,1,1,3),(2,2,4,3)], ['a','b'])
@@ -433,7 +433,7 @@ class TestSymmetryFinding(unittest.TestCase):
             self.assertTrue((str(reduced_sectors[0].Jacobian) == ' + (2)' and str(reduced_sectors[1]) == str(sector1))
                         or (str(reduced_sectors[1].Jacobian) == ' + (2)' and str(reduced_sectors[0]) == str(sector1)))
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_symmetry_special_sorting(self):
         # sectors 0 and 1 are related by permutation
         sector0_p0 = Polynomial([(0,1,2,3),(3,2,1,0)], ['a','a'])
@@ -470,7 +470,7 @@ class TestSymmetryFinding(unittest.TestCase):
             target_reduced_sectors[0].Jacobian.coeffs[0] = 2
             self.assertEqual(str(reduced_sectors), str(target_reduced_sectors))
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_symmetry_same_term_in_different_polynomials(self):
         eps = sp.symbols('eps')
 
@@ -524,7 +524,7 @@ class TestSymmetryFinding(unittest.TestCase):
 
 
 class TestOther(unittest.TestCase):
-    #@attr('active')
+    #@pytest.mark.active
     def test_array_to_dreadnaut(self):
         workdir = 'tmpdir_test_array_to_dreadnaut_python' + python_major_version
         dreadnaut_canonical_file = 'canonical'

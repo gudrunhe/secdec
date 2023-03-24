@@ -1,9 +1,9 @@
 from .matrix_sort import *
 import unittest
+import pytest
 import sympy as sp
 import numpy as np
 from itertools import permutations
-from nose.plugins.attrib import attr
 
 class TestMatrixSorting(unittest.TestCase):
     def setUp(self):
@@ -34,7 +34,7 @@ class TestMatrixSorting(unittest.TestCase):
                 if not found_solution:
                     raise AssertionError('Did not find an expected solution.')
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_iterative_algorithm(self):
         expected_solutions = [
                                  [[2, 0, 0, 2],
@@ -47,7 +47,7 @@ class TestMatrixSorting(unittest.TestCase):
                              ]
         self.check_algorithm(iterative_sort, self.matrix_3_by_4, expected_solutions)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_light_Pak_algorithm(self):
         expected_solutions = [
                                  [[2, 0, 2, 0],
@@ -60,7 +60,7 @@ class TestMatrixSorting(unittest.TestCase):
                              ]
         self.check_algorithm(light_Pak_sort, self.matrix_3_by_4, expected_solutions)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_Pak_algorithm(self):
         expected_solutions = [
                                  [[2, 0, 0, 2],

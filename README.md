@@ -129,7 +129,7 @@ targets with the command
 
 `pySecDec` comes with a self test suite written in the `python
 unittest` framework. The most convenient way to run all test is
-using [Nose]. If Nose is installed (as it would be after `make
+using [pytest]. If pytest is installed (as it would be after `make
 dependencies`), type
 
     $ make check
@@ -138,7 +138,7 @@ in the source repository to run all tests. Developers should write test cases fo
 ALL functions they implement and make sure that ALL tests pass before uploading a
 commit.
 
-[nose]: http://nose.readthedocs.org
+[pytest]: https://docs.pytest.org/
 
 ## Building the Documentation
 

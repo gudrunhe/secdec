@@ -1,8 +1,8 @@
 from .polytope import *
 from .misc import argsort_2D_array
-from nose.plugins.attrib import attr
 import sys
 import unittest
+import pytest
 
 python_major_version = sys.version[0]
 
@@ -10,7 +10,7 @@ def sort_2D_array(array):
     'Use the .misc.argsort_2D_array function to sort an array'
     return array[argsort_2D_array(array)]
 
-#@attr('active')
+#@pytest.mark.active
 class TestPolytope(unittest.TestCase):
     def setUp(self):
         self.vertices = [[2,1],
@@ -33,8 +33,10 @@ class TestPolytope(unittest.TestCase):
 
     def test_init(self):
         # must provide either facets or vertices
-        self.assertRaisesRegexp(TypeError, 'either.*vertices.*or.*facets', Polytope, facets=self.facets, vertices=self.vertices)
-        self.assertRaisesRegexp(TypeError, 'either.*vertices.*or.*facets', Polytope)
+        with pytest.raises(TypeError, match='either.*vertices.*or.*facets'):
+            Polytope(facets=self.facets, vertices=self.vertices)
+        with pytest.raises(TypeError, match='either.*vertices.*or.*facets'):
+            Polytope()
 
         inarray = np.array([[1,2,3],
                             [4,5,6]])
@@ -44,11 +46,11 @@ class TestPolytope(unittest.TestCase):
 
         inarray[0,0] = 10
 
-        self.assertEqual(polytope1.facets[0,0], 1)
-        self.assertEqual(polytope2.vertices[0,0], 1)
+        assert polytope1.facets[0,0] == 1
+        assert polytope2.vertices[0,0] == 1
 
-    #@attr('active')
-    @attr('slow')
+    #@pytest.mark.active
+    @pytest.mark.slow
     def test_large_array(self):
         # numpy abbreviates long output by default, but we do not want that
         from numpy import array
@@ -247,7 +249,7 @@ class TestPolytope(unittest.TestCase):
         Polytope(vertices=long_array).complete_representation(workdir='tmpdir_test_large_array_vertices_python' + python_major_version)
         Polytope(facets=long_array).complete_representation(workdir='tmpdir_test_large_array_facets_python' + python_major_version)
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_vertex_incidence_lists(self):
         polytopes = [
                         Polytope(vertices=self.vertices_with_inside),
@@ -259,7 +261,8 @@ class TestPolytope(unittest.TestCase):
         incidences = []
         for polytope in polytopes:
             # sensible error message if `complete_representaion` not run before?
-            self.assertRaisesRegexp(AssertionError, 'complete_representation.*first', polytope.vertex_incidence_lists)
+            with pytest.raises(AssertionError, match='complete_representation.*first'):
+                polytope.vertex_incidence_lists()
 
             polytope.complete_representation(workdir='tmpdir_test_vertex_incidence_lists_python' + python_major_version)
             incidences.append(polytope.vertex_incidence_lists())
@@ -273,31 +276,31 @@ class TestPolytope(unittest.TestCase):
                                      (1,2): np.array([[ 0,-1, 2], [-1,-1, 3]])
                                  }
         for polytope, incidence in zip(polytopes,incidences):
-            self.assertEqual(len(incidence.keys()), 6)
+            assert len(incidence.keys()) == 6
             for key, value in incidence.items():
-                self.assertTrue(key in target_incidence_lists.keys())
+                assert key in target_incidence_lists.keys()
 
                 # The ordering is not important but must be fixed to compare the arrays
                 np.testing.assert_array_equal(sort_2D_array(polytope.facets[value]), sort_2D_array(target_incidence_lists[key]))
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_vertex2facet(self):
         polytope1 = Polytope(vertices=self.vertices)
         polytope2 = Polytope(vertices=self.vertices_with_inside)
 
         # useful error message?
         for polytope in (polytope1, polytope2):
-            self.assertRaisesRegexp(
-                                        OSError, 'No such file or directory.*nonexistentNormalizExecutable',
-                                        polytope.complete_representation, normaliz='nonexistentNormalizExecutable',
-                                        workdir='tmpdir_test_vertex2facet_python' + python_major_version
-                                   )
+            with pytest.raises(OSError, match='No such file or directory.*nonexistentNormalizExecutable'):
+                polytope.complete_representation(normaliz='nonexistentNormalizExecutable',
+                                        workdir='tmpdir_test_vertex2facet_python' + python_major_version)
 
         polytope1.complete_representation(workdir='tmpdir1_test_vertex2facet_python' + python_major_version)
         polytope2.complete_representation(workdir='tmpdir2_test_vertex2facet_python' + python_major_version)
 
-        self.assertRaisesRegexp(ValueError, '(B|b)oth.*already', polytope1.complete_representation, workdir='tmpdir3_test_vertex2facet_python' + python_major_version)
-        self.assertRaisesRegexp(ValueError, '(B|b)oth.*already', polytope2.complete_representation, workdir='tmpdir4_test_vertex2facet_python' + python_major_version)
+        with pytest.raises(ValueError, match='(B|b)oth.*already'):
+            polytope1.complete_representation(workdir='tmpdir3_test_vertex2facet_python' + python_major_version)
+        with pytest.raises(ValueError, match='(B|b)oth.*already'):
+            polytope2.complete_representation(workdir='tmpdir4_test_vertex2facet_python' + python_major_version)
 
         # The ordering is not important but must be fixed to compare the arrays
         np.testing.assert_array_equal( sort_2D_array(np.array(polytope1.vertices)), sort_2D_array(np.array(self.vertices)) )
@@ -311,17 +314,17 @@ class TestPolytope(unittest.TestCase):
 
         # useful error message?
         for polytope in (polytope1, polytope2):
-            self.assertRaisesRegexp(
-                                        OSError, 'No such file or directory.*nonexistentNormalizExecutable',
-                                        polytope.complete_representation, normaliz='nonexistentNormalizExecutable',
-                                        workdir='tmpdir_test_facet2vertex_python' + python_major_version
-                                   )
+            with pytest.raises(OSError, match='No such file or directory.*nonexistentNormalizExecutable'):
+                polytope.complete_representation(normaliz='nonexistentNormalizExecutable',
+                                        workdir='tmpdir_test_facet2vertex_python' + python_major_version)
 
         polytope1.complete_representation(workdir='tmpdir1_test_facet2vertex_python' + python_major_version)
         polytope2.complete_representation(workdir='tmpdir2_test_facet2vertex_python' + python_major_version)
 
-        self.assertRaisesRegexp(ValueError, '(B|b)oth.*already', polytope1.complete_representation, workdir='tmpdir3_test_facet2vertex_python' + python_major_version)
-        self.assertRaisesRegexp(ValueError, '(B|b)oth.*already', polytope2.complete_representation, workdir='tmpdir4_test_facet2vertex_python' + python_major_version)
+        with pytest.raises(ValueError, match='(B|b)oth.*already'):
+            polytope1.complete_representation(workdir='tmpdir3_test_facet2vertex_python' + python_major_version)
+        with pytest.raises(ValueError, match='(B|b)oth.*already'):
+            polytope2.complete_representation(workdir='tmpdir4_test_facet2vertex_python' + python_major_version)
 
         # The ordering is not important but must be fixed to compare the arrays
         np.testing.assert_array_equal( sort_2D_array(np.array(polytope1.vertices)), sort_2D_array(np.array(self.vertices)) )
@@ -329,7 +332,7 @@ class TestPolytope(unittest.TestCase):
         np.testing.assert_array_equal( sort_2D_array(np.array(polytope1.facets)), sort_2D_array(np.array(self.facets)) )
         np.testing.assert_array_equal( sort_2D_array(np.array(polytope2.facets)), sort_2D_array(np.array(self.facets)) )
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_equations(self):
         polytope1 = Polytope(vertices=[[0,1],[1,0]])
         polytope2 = Polytope(vertices=[[0,1],[1,0],[1,1]])
@@ -345,26 +348,27 @@ class TestPolytope(unittest.TestCase):
         np.testing.assert_array_equal(sort_2D_array(polytope3.facets), sort_2D_array(np.array([[-1,0,1],[1,0,0]])))
 
 
-    #@attr('active')
+    #@pytest.mark.active
     def test_triangulate(self):
         # basic consistency checks working?
         simplicial_cone = [[ 1,  0,  0], [ 0,  1,  0], [ 0, -1, -1]]
-        self.assertRaisesRegexp(ValueError, 'simplicial.*already', triangulate, simplicial_cone)
+        with pytest.raises(ValueError, match='simplicial.*already'):
+            triangulate(simplicial_cone)
         wrong_dimensionality = [ 1,  0,  0]
-        self.assertRaisesRegexp(AssertionError, '(M|m)ust.*two.*dim', triangulate, wrong_dimensionality)
+        with pytest.raises(AssertionError, match='(M|m)ust.*two.*dim'):
+            triangulate(wrong_dimensionality)
         two_rays = [[ 1,  0,  0], [ 0,  1,  0]]
-        self.assertRaisesRegexp(AssertionError, '(M|m)ust.*at least.*dim', triangulate, two_rays)
+        with pytest.raises(AssertionError, match='(M|m)ust.*at least.*dim'):
+            triangulate(two_rays)
 
 
         cone = [[ 1,  0,  0], [ 0,  1,  0], [ 0, -1, -1], [-1,  0, -1]]
         cone_normal = [[ -1, 1, 1], [ 1, 0, 0], [ 0, 1, 0], [ 0, 0, 1]]
 
         # useful error message?
-        self.assertRaisesRegexp(
-                                    OSError, 'No such file or directory.*nonexistentNormalizExecutable',
-                                    triangulate, cone, normaliz='nonexistentNormalizExecutable',
-                                    workdir='tmpdir_test_triangulate_python' + python_major_version
-                               )
+        with pytest.raises(OSError, match='No such file or directory.*nonexistentNormalizExecutable'):
+            triangulate(cone, normaliz='nonexistentNormalizExecutable',
+                                    workdir='tmpdir_test_triangulate_python' + python_major_version)
 
         triangulated_cones = triangulate(cone, workdir='tmpdir_test_triangulate_python' + python_major_version)
         triangulated_cones_normal = triangulate(cone_normal, workdir='tmpdir_test_triangulate_python' + python_major_version, switch_representation=True)
