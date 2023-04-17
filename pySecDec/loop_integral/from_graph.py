@@ -243,7 +243,7 @@ class LoopIntegralFromGraph(LoopIntegral):
                     expolist[i]=1
                 # sum the momenta flowing through the cuts, square it, and use replacement rules
                 sumsqr = sum(self.external_lines[i-self.V][0] for i in cutmomenta)**2
-                sumsqr = sumsqr.expand().subs(self.replacement_rules)
+                sumsqr = rec_subs(sumsqr, self.replacement_rules)
                 expolists.append(expolist)
                 coeffs.append(-sumsqr)
 
