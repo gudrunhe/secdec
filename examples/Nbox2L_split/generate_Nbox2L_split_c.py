@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     # the method to be used for the sector decomposition
     # valid values are ``iterative`` and ``geometric``
-    decomposition_method = 'iterative',
+    decomposition_method = 'geometric',
 
     contour_deformation=True,
 

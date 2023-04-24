@@ -27,7 +27,7 @@ def LoopPackage(name, loop_integral, requested_orders=None,
                  form_work_space='50M',
                  form_memory_use=None,
                  form_threads=1,
-                 decomposition_method='iterative',
+                 decomposition_method='geometric',
                  normaliz_executable=None,
                  enforce_complex=False,
                  split=False, ibp_power_goal=-1,
@@ -234,8 +234,8 @@ def loop_package(name, loop_integral, requested_orders=None,
         The strategy for decomposing the polynomials. The
         following strategies are available:
 
-        * 'iterative' (default)
-        * 'geometric'
+        * 'iterative'
+        * 'geometric' (default)
         * 'geometric_ku'
 
     :param enforce_complex:

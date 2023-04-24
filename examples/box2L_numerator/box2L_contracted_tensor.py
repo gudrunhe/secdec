@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     # the method to be used for the sector decomposition
     # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
-    decomposition_method = 'iterative',
+    decomposition_method = 'geometric',
 
     # whether or not to produce code to perform the contour deformation
     # contour deformation is not required if we only want to compute euclidean points (all Mandelstam invariants negative)

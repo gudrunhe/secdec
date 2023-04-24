@@ -44,6 +44,6 @@ if __name__ == "__main__":
 
     # the method to be used for the sector decomposition
     # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
-    decomposition_method = 'iterative',
+    decomposition_method = 'geometric',
 
     )

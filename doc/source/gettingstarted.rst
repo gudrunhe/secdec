@@ -161,7 +161,7 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 
         # the method to be used for the sector decomposition
         # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
-        decomposition_method = 'iterative'
+        decomposition_method = 'geometric'
     )
 
 .. _building_the_integration_lib:

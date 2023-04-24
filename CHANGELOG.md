@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `sum_package` accepts much more general coefficients, can be provided simply as a string that can be parsed by `ginsh` rather than the old `[num,den]` syntax.
 - `sum_package` accepts coefficients as dictionaries of the form `(i,j) -> coefficient`, where `i,j` are the indices of the amplitude and master integral, respectively.
 - `sum_package` accepts sparse coefficient matrices (missing entires are assumed `0`).
+- The default sector decomposition method in `loop_package` changed from `iterative` to `geometric`.
 - Use `form` and `form_threads=1` by default, parallelisation is provided by the build system instead.
 - Disabled `ContinuationLines` in FORM output.
 - Various scripts `export_sector`, `formwrapper`, `write_contour_deformation`, `write_integrand` moved to `pySecDecContrib`
