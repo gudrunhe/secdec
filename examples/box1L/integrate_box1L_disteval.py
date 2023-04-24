@@ -8,18 +8,14 @@ if __name__ == "__main__":
     box1L = DistevalLibrary('box1L/disteval/box1L.json')
 
     # integrate
-    str_result = box1L(parameters={"s": 4.0, "t": -0.75, "s1": 1.25, "msq": 1.0}, verbose=False)
-
-    # convert result to sympy expressions
-    result = sp.sympify(str_result)
-    value = result[0].subs({"plusminus": 0})
-    error = result[0].coeff("plusminus")
+    result = box1L(parameters={"s": 4.0, "t": -0.75, "s1": 1.25, "msq": 1.0}, verbose=False, format="json")
+    values = result["sums"]["box1L"]
 
     # examples how to access individual orders
     print('Numerical Result')
-    print('eps^-2:', value.coeff('eps',-2), '+/- (', error.coeff('eps',-2), ')')
-    print('eps^-1:', value.coeff('eps',-1), '+/- (', error.coeff('eps',-1), ')')
-    print('eps^0 :', value.coeff('eps',0), '+/- (', error.coeff('eps',0), ')')
+    print('eps^-2:', values[(-2,)][0], '+/- (', values[(-2,)][1], ')')
+    print('eps^-1:', values[(-1,)][0], '+/- (', values[(-1,)][1], ')')
+    print('eps^0 :', values[( 0,)][0], '+/- (', values[( 0,)][1], ')')
 
     print('Analytic Result')
     print('eps^-2: -0.1428571429')
