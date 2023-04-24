@@ -17,11 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vastly improved computation of the Newton polytopes, speeding up some steps required for expansion by regions and geometric sector decomposition.
 - Prefactors now expanded with `ginsh` rather than SymPy (while still using the SymPy syntax).
 - Coefficient parsing now relies on `ginsh`, allows much more general coefficients than the previously required `num/den` rational function form.
-- `sum_package` accepts much more general coefficients, can be provided simply as a string that can be parsed by `ginsh` rather than the old `[num,den]` syntax.
-- `sum_package` accepts coefficients as dictionaries of the form `(i,j) -> coefficient`, where `i,j` are the indices of the amplitude and master integral, respectively.
-- `sum_package` accepts sparse coefficient matrices (missing entires are assumed `0`).
+- `sum_package` accepts much more general coefficients, which can be provided simply as strings with arbitrary arithmetic expressions (to be parsed by `ginsh`).
+- `sum_package` accepts sum coefficients as dictionaries of the form `{'sum name' : terms}`, where `terms` is either a list of coefficient expressions (one per integral), or a dictionary of the form `{integral_index : coefficient}`, allowing for sparse coefficient matrices.
 - The default sector decomposition method in `loop_package` changed from `iterative` to `geometric`.
-- Use `form` and `form_threads=1` by default, parallelisation is provided by the build system instead.
+- Use `form` instead of `tform` and `form_threads=1` by default, parallelisation is provided by the build system instead.
 - Disabled `ContinuationLines` in FORM output.
 - Various scripts `export_sector`, `formwrapper`, `write_contour_deformation`, `write_integrand` moved to `pySecDecContrib`
 - `git_id` changed to `__commit__` to be more consistent with naming of other metadata (e.g. `__authors__` and `__version__`).
