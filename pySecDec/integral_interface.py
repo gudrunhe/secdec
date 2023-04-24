@@ -1480,6 +1480,11 @@ class DistevalLibrary(object):
         ``"nice python3 -m pySecDecContrib pysecdec_cudaworker -d <i>"``
         for each available GPU.
 
+    :param format:
+        string;
+        The format of the returned result, ``"sympy"`` or
+        ``"json"``. Default: `"sympy"`.
+
     The call operator returns a single string with the resulting
     value as a series in the regulator powers.
     '''
@@ -1491,7 +1496,7 @@ class DistevalLibrary(object):
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
             number_of_presamples=1e4, shifts=32, workers=None,
-            coefficients=None, verbose=True):
+            coefficients=None, verbose=True, format="sympy"):
         import json
         import subprocess
         import sys
@@ -1528,6 +1533,7 @@ class DistevalLibrary(object):
         output = subprocess.check_output([
             sys.executable, "-m", "pySecDec.deval",
                 self.filename,
+                "--format", str(format),
                 "--epsabs", str(epsabs),
                 "--epsrel", str(epsrel),
                 *(["--timeout", str(timeout)] if timeout is not None else []),
@@ -1540,4 +1546,15 @@ class DistevalLibrary(object):
             ],
             encoding="utf8",
             stderr=sys.stderr if verbose else subprocess.DEVNULL)
-        return output.strip()
+        if format == "json":
+            result = json.loads(output.strip())
+            result["sums"] = {
+                sum_name : {
+                    tuple(exp) : (complex(val_re, val_im), complex(err_re, err_im))
+                    for exp, (val_re, val_im), (err_re, err_im) in sum_terms
+                }
+                for sum_name, sum_terms in result["sums"].items()
+            }
+            return result
+        else:
+            return output.strip()
