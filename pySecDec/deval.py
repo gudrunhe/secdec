@@ -12,6 +12,7 @@ Options:
     --shifts=X          use this many lattice shifts per integral (default: 32)
     --cluster=X         use this cluster.json file
     --coefficients=X    use coefficients from this directory
+    --format=X          output the result in this format ("sympy" or "json")
     --help              show this help message
 Arguments:
     <var>=X             set this integral or coefficient variable to a given value
@@ -340,6 +341,8 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             for k in infos[i]["kernels"]:
                 kernel2idx[i, k] = len(kernel2idx)
         log(f"got the total of {len(kernel2idx)} kernels")
+        if isinstance(info["sums"], list):
+            info["sums"] = {f"sum{sumidx}" : sum for sumidx, sum in enumerate(info["sums"])}
         ampcount = len(info["sums"])
     else:
         raise ValueError(f"unknown type: {info['type']}")
@@ -397,12 +400,14 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     # Load the integral coefficients
     ap2coeffs = {} # (ampid, powerlist) -> coeflist
     if info["type"] == "integral":
+        sum_names = ["sum0"]
         br_coef = {(0,)*len(info["regulators"]): sp.sympify(1)}
         split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, br_coef, valuemap, sp_regulators, requested_orders)
     elif info["type"] == "sum":
         log("loading amplitude coefficients")
+        sum_names = list(info["sums"].keys())
         done_evalf = asyncio.Future()
-        done_evalf.todo = sum(len(terms) for terms in info["sums"])
+        done_evalf.todo = sum(len(terms) for terms in info["sums"].values())
         def evalf_cb(br_coef, exception, w, a, t):
             if exception is not None:
                 done_evalf.set_exception(WorkerException(exception))
@@ -413,7 +418,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             done_evalf.todo -= 1
             if done_evalf.todo == 0:
                 done_evalf.set_result(None)
-        for a, terms in enumerate(info["sums"]):
+        for a, terms in enumerate(info["sums"].values()):
             for t in terms:
                 intinfo = infos[t["integral"]]
                 pref_lord = np.min([o["regulator_powers"] for o in intinfo["expanded_prefactor"]], axis=0)
@@ -433,7 +438,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     W2 = abs2(W)
     log(f"will consider {len(ap2coeffs)} sums:")
     for a, p in sorted(ap2coeffs.keys()):
-        log(f"- amp{a},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
+        log(f"- {sum_names[a]!r},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
 
     epsrel = [epsrel[a] if a < len(epsrel) else epsrel[-1] for a, p in ap2coeffs.keys()]
     epsabs = [epsabs[a] if a < len(epsabs) else epsabs[-1] for a, p in ap2coeffs.keys()]
@@ -597,7 +602,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 relerrs = []
                 for ampid in ampids:
                     relerr = []
-                    log(f"amp{ampid}=(")
+                    log(f"{sum_names[ampid]!r}=(")
                     for (a, p), val, var in sorted(zip(ap2coeffs.keys(), amp_val, amp_var)):
                         if a != ampid: continue
                         stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
@@ -607,9 +612,9 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                         abserr = np.abs(err)
                         relerr.append(abserr / np.abs(val) if abserr > epsabs[ampid] else 0.0)
                     log(")")
-                    log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
+                    log(f"{sum_names[ampid]!r} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
                     relerrs.append(np.max(relerr))
-                log(f"largest relative error: {np.max(relerrs):.2e} (amp{np.argmax(relerrs)})")
+                log(f"largest relative error: {np.max(relerrs):.2e} ({sum_names[np.argmax(relerrs)]!r})")
 
             if early_exit:
                 return amp_val, amp_var
@@ -657,32 +662,44 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         maxlattice = np.max(lattices[mask])
         log(f"- {f}: {di:.4e} evals, {dt:.4e} sec, {np.min(slow):.4g} - {np.max(slow):.4g} bubbles, {minlattice:.4e} - {maxlattice:.4e} pts")
 
-    relerrs = []
-    print("[")
-    for ampid in range(ampcount):
-        relerr = []
-        print("  (")
-        for (a, p), val, var in sorted(zip(ap2coeffs.keys(), amp_val, amp_var)):
-            if a != ampid: continue
-            stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
-            err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
-            print(f"    +{stem}*({val:+.16e})")
-            print(f"    +{stem}*({err:+.16e})*plusminus")
-            abserr = np.abs(err)
-            relerr.append(abserr / np.abs(val) if abserr > epsabs[ampid] else 0.0)
-        if len(relerr) != 0:
-            print("  )," if ampid < ampcount-1 else "  )")
-            sys.stdout.flush()
-            log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
-            relerrs.append(np.max(relerr))
-        else:
-            print("    0\n  )," if ampid < ampcount-1 else "    0\n  )")
-            sys.stdout.flush()
-            log(f"amp{ampid} has no terms")
-            relerrs.append(0.0)
-    print("]")
-    sys.stdout.flush()
-    log(f"largest relative error: {np.max(relerrs):.2e} (amp{np.argmax(relerrs)})")
+    def report_sympy():
+        relerrs = []
+        print("[")
+        for ampid in range(ampcount):
+            relerr = []
+            print("  (")
+            for (a, p), val, var in sorted(zip(ap2coeffs.keys(), amp_val, amp_var)):
+                if a != ampid: continue
+                stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
+                err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
+                print(f"    +{stem}*({val:+.16e})")
+                print(f"    +{stem}*({err:+.16e})*plusminus")
+                abserr = np.abs(err)
+                relerr.append(abserr / np.abs(val) if abserr > epsabs[ampid] else 0.0)
+            if len(relerr) != 0:
+                print("  )," if ampid < ampcount-1 else "  )")
+                sys.stdout.flush()
+                log(f"{sum_names[ampid]!r} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
+                relerrs.append(np.max(relerr))
+            else:
+                print("    0\n  )," if ampid < ampcount-1 else "    0\n  )")
+                sys.stdout.flush()
+                log(f"{sum_names[ampid]!r} has no terms")
+                relerrs.append(0.0)
+        print("]")
+        log(f"largest relative error: {np.max(relerrs):.2e} ({sum_names[np.argmax(relerrs)]!r})")
+
+    return {
+        "regulators": info["regulators"],
+        "sums": {
+            sum_names[ampid] : [
+                [p, ((np.real(val), np.imag(val))), (np.sqrt(np.real(var)), np.sqrt(np.imag(var)))]
+                for (a, p), val, var in sorted(zip(ap2coeffs.keys(), amp_val, amp_var))
+                if a == ampid
+            ]
+            for ampid in range(ampcount)
+        }
+    }
 
 def load_cluster_json(jsonfile, dirname):
     try:
@@ -769,12 +786,13 @@ def main():
     npresamples = 10**4
     epsabs = [1e-10]
     epsrel = [1e-4]
+    result_format = "sympy"
     nshifts = 32
     clusterfile = None
     coeffsdir = None
     deadline = math.inf
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "presamples=", "shifts=", "timeout=", "help"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "format=", "points=", "presamples=", "shifts=", "timeout=", "help"])
     except getopt.GetoptError as e:
         print(e, file=sys.stderr)
         print("use --help to see the usage", file=sys.stderr)
@@ -784,6 +802,7 @@ def main():
         elif key == "--coefficients": coeffsdir = value
         elif key == "--epsabs": epsabs = parse_array_shorthand(value)
         elif key == "--epsrel": epsrel = parse_array_shorthand(value)
+        elif key == "--format": result_format = value
         elif key == "--points": npoints = int(float(value))
         elif key == "--presamples": npresamples = int(float(value))
         elif key == "--shifts": nshifts = int(float(value))
@@ -840,7 +859,28 @@ def main():
 
     # Begin evaluation
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap_int, valuemap_coeff, deadline))
+    result = loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap_int, valuemap_coeff, deadline))
+
+    # Report the result
+    def report_sympy(result):
+        print("[")
+        for ampid, (sum_name, sum_terms) in enumerate(result["sums"].items()):
+            print("  (")
+            for p, (val_re, val_im), (err_re, err_im) in sum_terms:
+                stem = "*".join(f"{r}^{p}" for r, p in zip(result["regulators"], p))
+                print(f"    +{stem}*({val_re:+.16e}{val_re:+.16e}j)")
+                print(f"    +{stem}*({err_re:+.16e}{err_re:+.16e}j)*plusminus")
+            if len(sum_terms) > 0:
+                print("  )," if ampid < len(result)-1 else "  )")
+            else:
+                print("    0\n  )," if ampid < len(result)-1 else "    0\n  )")
+        print("]")
+
+    if result_format == "json":
+        json.dump(result, sys.stdout, indent=2)
+        sys.stdout.flush()
+    else:
+        report_sympy(result)
 
 if __name__ == "__main__":
     main()

@@ -4,16 +4,16 @@ from pySecDec import sum_package
 
 if __name__ == "__main__":
 
-    coefficients = [
-        [ # sum1
+    coefficients = {
+        "sum1": [
             '2*s',   # easy1
             '3*s'    # easy2
         ],
-        [ # sum2
+        "sum2": [
             's/(2*eps)', # easy1
             's*eps/3'  # easy2
         ]
-    ]
+    }
 
     integrals = [
         MakePackage('easy1',

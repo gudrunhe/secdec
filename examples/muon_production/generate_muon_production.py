@@ -31,8 +31,6 @@ if __name__ == "__main__":
         formatted_coeff = raw_N_coeff.replace('^', '**')
         formatted_coeff = formatted_coeff.replace(' ', '')
         N_coeffs.append(formatted_coeff)
-    
-    coefficients = [coeffs, N_coeffs]
 
     additional_prefactor = 'gamma(1-2*eps)/(gamma(1-eps)*gamma(1-eps)*gamma(1 + eps))'
     
@@ -89,7 +87,7 @@ if __name__ == "__main__":
     sum_package(
             'full_amplitude',
             all_terms,
-            coefficients = coefficients,
+            coefficients = {'O(1)': coeffs, 'O(Nf)': N_coeffs}
             regulators = ['eps'],
             requested_orders = [0],
             real_parameters = ['s', 't', 'u'],

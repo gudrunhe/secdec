@@ -123,7 +123,7 @@ class Coefficient(object):
         parameters = sorted(list(set(re.findall("[a-zA-Z_][a-zA-Z_0-9]*", expression)) - set(exclude_parameters)))
         return Coefficient(expression, parameters=parameters)
 
-def _generate_one_term(gen_index, coefficients, complex_parameters, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
+def _generate_one_term(gen_index, sums, complex_parameters, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
 
     sub_name = package_generator.name
     replacements_in_files['sub_integral_name'] = sub_name
@@ -136,7 +136,7 @@ def _generate_one_term(gen_index, coefficients, complex_parameters, name, packag
     lowest_coefficient_orders = {}
     coeffsdir = name + '_data'
     os.makedirs(coeffsdir, exist_ok=True)
-    for sumidx, amp in enumerate(coefficients):
+    for sumidx, (sum_name, amp) in enumerate(sums.items()):
         if gen_index not in amp: continue
         coefficient = amp[gen_index]
         lowest_orders = coefficient.leading_orders(regulators, maxorder=999999)
@@ -149,7 +149,7 @@ def _generate_one_term(gen_index, coefficients, complex_parameters, name, packag
             os.link(filename, filename2)
     replacements_in_files['lowest_coefficient_orders'] = '{' + '},{'.join(
             ','.join(map(str,lowest_coefficient_orders.get(i, "999999")))
-            for i in range(len(coefficients))
+            for i in range(len(sums))
         ) + '}'
 
     minimal_lowest_coefficient_orders = min(lowest_coefficient_orders.values(), default=999999)
@@ -222,12 +222,14 @@ def sum_package(name, package_generators, regulators, requested_orders,
         Symbols to be interpreted as complex variables.
 
     :param coefficients:
-        iterable of iterable of :class:`.Coefficient` or
-        iterable of dict of int -> :class:`.Coefficient`, optional;
-        The coefficients :math:`c_{ij}` of the integrals given
-        as a table or as a list of :math:`j \to c_{ij}` dictionaries.
-        :math:`c_{ij} = 1` with :math:`i \in \{0\}` is assumed if
-        not provided.
+        dict of str -> list of strings, optional;
+        A map from the (unique) names of the sums to coefficient
+        vectors :math:`c_{i}` defining them.
+
+        For backward compatibility, iterable of iterable of
+        :class:`.Coefficient`, and iterable of dict of int ->
+        :class:`.Coefficient` are accepted as well, with names
+        of the sums names set to default values.
 
     :param pylink_qmc_transforms:
         list or None, optional;
@@ -273,9 +275,11 @@ def sum_package(name, package_generators, regulators, requested_orders,
     # prepare coefficients
     coefficient_1 = Coefficient((), (), ())
     if coefficients is None:
-        coefficients = [{i : coefficient_1 for i in range(len(package_generators))}]
-    else:
-        for c_i in coefficients:
+        sums = {
+            name: {i : coefficient_1 for i in range(len(package_generators))}
+        }
+    elif isinstance(coefficients, dict):
+        for sum_name, c_i in coefficients.items():
             if isinstance(c_i, dict):
                 for genidx in c_i.keys():
                     if not (0 <= genidx < len(package_generators)):
@@ -283,8 +287,29 @@ def sum_package(name, package_generators, regulators, requested_orders,
             else:
                 if len(c_i) != len(package_generators):
                     raise ValueError(f"`coefficients` must have list of the same length as `package_generators`.")
-        coefficients = [
-            {
+        sums = {
+            sum_name : {
+                genidx : (
+                    coefficient_1 if c is None else
+                    c if isinstance(c, Coefficient) else
+                    Coefficient.from_string(str(c), exclude_parameters=regulators)
+                )
+                for genidx, c in (c_i.items() if isinstance(c_i, dict) else enumerate(c_i))
+                if c != 0 and c != "0"
+            }
+            for sum_name, c_i in coefficients.items()
+        }
+    else:
+        for i, c_i in enumerate(coefficients):
+            if isinstance(c_i, dict):
+                for genidx in c_i.keys():
+                    if not (0 <= genidx < len(package_generators)):
+                        raise ValueError(f"coefficient for generator {genidx} is provided, but there are only {len(pacakge_generators)}")
+            else:
+                if len(c_i) != len(package_generators):
+                    raise ValueError(f"`coefficients` must have list of the same length as `package_generators`.")
+        sums = {
+            f"sum{sumidx}": {
                 genidx : (
                     coefficient_1 if c is None else
                     c if isinstance(c, Coefficient) else
@@ -294,7 +319,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
                 if c != 0 and c != "0"
             }
             for sumidx, c_i in enumerate(coefficients)
-        ]
+        }
 
     # construct the c++ type "nested_series_t"
     # for two regulators, the resulting code should read:
@@ -375,7 +400,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
                                 'number_of_complex_parameters' : len(complex_parameters),
                                 'names_of_complex_parameters' : make_cpp_list(complex_parameters),
                                 'have_complex_parameters': len(complex_parameters) > 0,
-                                'number_of_amplitudes' : len(coefficients),
+                                'number_of_amplitudes' : len(sums),
                                 'integral_names' : sub_integral_names,
                                 'integral_initialization' : integral_initialization,
                                 'integral_initialization_with_contour_deformation': integral_initialization_with_contour_deformation,
@@ -439,7 +464,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
         if processes > 1:
             with Pool(processes) as pool:
                 template_replacements = pool.starmap(_generate_one_term, [(
-                        j, coefficients, complex_parameters,
+                        j, sums, complex_parameters,
                         name, package_generator._replace(processes=1),
                         pylink_qmc_transforms, real_parameters, regulators,
                         replacements_in_files, requested_orders,
@@ -449,7 +474,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
                 ])
         else:
             template_replacements = [_generate_one_term(
-                    j, coefficients, complex_parameters,
+                    j, sums, complex_parameters,
                     name, package_generator,
                     pylink_qmc_transforms, real_parameters, regulators,
                     replacements_in_files, requested_orders,
@@ -482,19 +507,19 @@ def sum_package(name, package_generators, regulators, requested_orders,
             "complex_result": bool(need_complex),
             "requested_orders": requested_orders,
             "integrals": [p.name for p in package_generators],
-            "sums": [
-                [
+            "sums": {
+                sum_name : [
                     {
                         "integral": package_generators[genidx].name,
-                        "coefficient": f"{package_generators[genidx].name}_coefficient{ampidx}.txt",
-                        "coefficient_lowest_orders": coeffs_lo[ampidx],
+                        "coefficient": f"{package_generators[genidx].name}_coefficient{sumidx}.txt",
+                        "coefficient_lowest_orders": coeffs_lo[sumidx],
                         "coefficient_highest_orders": list(map(int, coeff_ho))
                     }
                     for genidx, (coeffs_lo, coeff_ho, t) in enumerate(template_replacements)
-                    if ampidx in coeffs_lo
+                    if sumidx in coeffs_lo
                 ]
-                for ampidx in range(len(coefficients))
-            ]
+                for sumidx, sum_name in enumerate(sums.keys())
+            }
         }, f, indent=2)
     # Return template replacements of last integral processed (for 1 integral case this emulates what code_writer.make_package does)
     return template_replacements[-1][2]
