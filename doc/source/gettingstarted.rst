@@ -91,14 +91,14 @@ The content of the python files is described in detail in the following sections
 Defining a Loop Integral
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-To explain the input format, let us look at ``generate_box1L.py`` from the one-loop box example. The first two lines read
+To explain the input format, let us look at ``generate_box1L.py`` from the one-loop box example. The first line reads
 
 .. code::
 
     import pySecDec as psd
 
-They say that the module `pySecDec` should be imported with the alias `psd`, and that the
-function :func:`loop_package <pySecDec.loop_integral.loop_package>` from the module :mod:`loop_integral <pySecDec.loop_integral>` is needed.
+This line specifies that the module `pySecDec` should be imported with the alias `psd`.
+The functions :func:`loop_package <pySecDec.loop_integral.loop_package>` and :mod:`loop_integral <pySecDec.loop_integral>` from this module will be needed shortly.
 
 
 The following part contains the definition of the loop integral ``li``:
@@ -106,16 +106,20 @@ The following part contains the definition of the loop integral ``li``:
 .. code::
 
     li = psd.LoopIntegralFromGraph(
-        # give adjacency list and indicate whether the propagator connecting the numbered vertices is massive or massless in the first entry of each list item.
-        internal_lines = [['m',[1,2]],[0,[2,3]],[0,[3,4]],[0,[4,1]]],
-        # contains the names of the external momenta and the label of the vertex they are attached to
-        external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
-        # define the kinematics and the names for the kinematic invariants
+        # Give adjacency list and indicate whether the propagator
+        # connecting the numbered vertices is massive or massless
+        # in the first entry of each list item.
+        internal_lines = [['m',[1,2]], ['0',[2,3]], ['0',[3,4]], ['0',[4,1]]],
+        # List the names of the external momenta and the labels
+        # of the vertecies they are attached to.
+        external_lines = [['p1',1], ['p2',2], ['p3',3], ['p4',4]],
+        # Define the kinematics and the names of the kinematic
+        # invariants.
         replacement_rules = [
             ('p1*p1', 's1'),
-            ('p2*p2', 0),
-            ('p3*p3', 0),
-            ('p4*p4', 0),
+            ('p2*p2', '0'),
+            ('p3*p3', '0'),
+            ('p4*p4', '0'),
             ('p3*p2', 't/2'),
             ('p1*p2', 's/2-s1/2'),
             ('p1*p4', 't/2-s1/2'),
@@ -150,14 +154,9 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
 
         real_parameters = Mandelstam_symbols + mass_symbols,
 
-        # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
+        # the highest order of the final epsilon expansion -->
+        # change this value to whatever you think is appropriate
         requested_orders = [0],
-
-        # the optimization level to use in FORM (can be 0, 1, 2, 3, 4)
-        form_optimization_level = 2,
-
-        # the WorkSpace parameter for FORM
-        form_work_space = '100M',
 
         # the method to be used for the sector decomposition
         # valid values are ``iterative`` or ``geometric`` or ``geometric_ku``
@@ -493,8 +492,7 @@ First, we import the necessary python packages and open the ``if __name__ == "__
 .. code::
 
     #!/usr/bin/env python3
-    from pySecDec import MakePackage
-    from pySecDec import sum_package
+    import pySecDec as psd
 
     if __name__ == "__main__":
 
@@ -502,10 +500,11 @@ The common arguments for the integrals are collected in the ``common_args`` dict
 
 .. code::
 
-        common_args = {}
-        common_args['real_parameters'] = ['s']
-        common_args['regulators'] = ['eps']
-        common_args['requested_orders'] = [0]
+        common_args = {
+            'real_parameters': ['s'],
+            'regulators': ['eps'],
+            'requested_orders': [0]
+        }
 
 Next, the coefficients of the integrals for each weighted sum are specified.
 Each coefficient is specified as a string with an arbitrary arithmetic (i.e. rational) expression.
@@ -514,16 +513,16 @@ Coefficients can depend on the regulators, the :func:`sum_package <pySecDec.code
 
 .. code::
 
-        coefficients = [
-            [ # sum1
+        coefficients = {
+            "sum1" : [
                 '2*s',       # easy1
                 '3*s'        # easy2
             ],
-            [ # sum2
+            "sum2" : {
                 's/(2*eps)', # easy1
                 's*eps/3'    # easy2
-            ]
-        ]
+            }
+        }
 
 
 The integrals are specified using the `MakePackage` wrapper function (which has the same arguments as :func:`make_package <pySecDec.code_writer.make_package>`), for loop integrals the `LoopPackage` wrapper may be used (it has the same arguments as :func:`loop_package <pySecDec.loop_integral.loop_package>`).
@@ -531,11 +530,11 @@ The integrals are specified using the `MakePackage` wrapper function (which has 
 .. code::
 
         integrals = [
-            MakePackage('easy1',
+            psd.MakePackage('easy1',
                 integration_variables = ['x','y'],
                 polynomials_to_decompose = ['(x+y)^(-2+eps)'],
                 **common_args),
-            MakePackage('easy2',
+            psd.MakePackage('easy2',
                 integration_variables = ['x','y'],
                 polynomials_to_decompose = ['(2*x+3*y)^(-1+eps)'],
                 **common_args)
@@ -546,7 +545,7 @@ Finally, the list of integrals and coefficients are passed to :func:`sum_package
 .. code::
 
         # generate code sum of (int * coeff)
-        sum_package('easy_sum', integrals,
+        psd.sum_package('easy_sum', integrals,
             coefficients = coefficients, **common_args)
 
 The generated C++ library can be :ref:`compiled <building_the_cpp_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
@@ -566,7 +565,7 @@ The necessary packages are loaded and the ``if __name__ == "__main__"`` guard is
 .. code::
 
     #!/usr/bin/env python3
-    from pySecDec import sum_package, make_regions
+    import pySecDec as psd
 
     if __name__ == "__main__":
 
@@ -574,7 +573,7 @@ Expansion by regions is applied to a generic integral using the :func:`make_regi
 
 .. code::
 
-        regions_generators = make_regions(
+        regions_generators = psd.make_regions(
             name = 'make_regions_ebr',
             integration_variables = ['x'],
             regulators = ['delta'],
@@ -592,7 +591,7 @@ The output of :func:`make_regions <pySecDec.make_regions.make_regions>` can be p
 
 .. code::
 
-        sum_package(
+        psd.sum_package(
             'make_regions_ebr',
             regions_generators,
             regulators = ['delta'],
@@ -618,7 +617,6 @@ First, the necessary packages are loaded and the ``if __name__ == "__main__"`` g
 
     #!/usr/bin/env python3
 
-    from pySecDec import sum_package, loop_regions
     import pySecDec as psd
 
     # This example is the one-loop box example in Go Mishima's paper arXiv:1812.04373
@@ -634,34 +632,35 @@ Poles in the extra regulator ``n1`` may appear in individual regions but are exp
 
         # here we define the Feynman diagram
         li = psd.LoopIntegralFromGraph(
-        internal_lines = [['mt',[3,1]],['mt',[1,2]],['mt',[2,4]],['mt',[4,3]]],
-        external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
-        powerlist=["1+n1","1+n1/2","1+n1/3","1+n1/5"],
-        regulators=["eps","n1"],
-        Feynman_parameters=["x%i" % i for i in range(1,5)], # renames the parameters to get the same polynomials as in 1812.04373
+            internal_lines = [['mt',[3,1]],['mt',[1,2]],['mt',[2,4]],['mt',[4,3]]],
+            external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
+            powerlist=["1+n1","1+n1/2","1+n1/3","1+n1/5"],
+            regulators=["eps","n1"],
+            # renames the parameters to get the same polynomials as in 1812.04373
+            Feynman_parameters=["x%i" % i for i in range(1,5)],
 
         replacement_rules = [
-                                # note that in those relations all momenta are incoming
-                                # general relations:
-                                ('p1*p1', 'm1sq'),
-                                ('p2*p2', 'm2sq'),
-                                ('p3*p3', 'm3sq'),
-                                ('p4*p4', 'm4sq'),
-                                ('p1*p2', 's/2-(m1sq+m2sq)/2'),
-                                ('p1*p3', 't/2-(m1sq+m3sq)/2'),
-                                ('p1*p4', 'u/2-(m1sq+m4sq)/2'),
-                                ('p2*p3', 'u/2-(m2sq+m3sq)/2'),
-                                ('p2*p4', 't/2-(m2sq+m4sq)/2'),
-                                ('p3*p4', 's/2-(m3sq+m4sq)/2'),
-                                ('u', '(m1sq+m2sq+m3sq+m4sq)-s-t'),
-                                # relations for our specific case:
-                                ('mt**2', 'mtsq'),
-                                ('m1sq',0),
-                                ('m2sq',0),
-                                ('m3sq','mHsq'),
-                                ('m4sq','mHsq'),
-                                ('mHsq', 0),
-                            ])
+            # note that in those relations all momenta are incoming
+            # general relations:
+            ('p1*p1', 'm1sq'),
+            ('p2*p2', 'm2sq'),
+            ('p3*p3', 'm3sq'),
+            ('p4*p4', 'm4sq'),
+            ('p1*p2', 's/2-(m1sq+m2sq)/2'),
+            ('p1*p3', 't/2-(m1sq+m3sq)/2'),
+            ('p1*p4', 'u/2-(m1sq+m4sq)/2'),
+            ('p2*p3', 'u/2-(m2sq+m3sq)/2'),
+            ('p2*p4', 't/2-(m2sq+m4sq)/2'),
+            ('p3*p4', 's/2-(m3sq+m4sq)/2'),
+            ('u', '(m1sq+m2sq+m3sq+m4sq)-s-t'),
+            # relations for our specific case:
+            ('mt**2', 'mtsq'),
+            ('m1sq',0),
+            ('m2sq',0),
+            ('m3sq','mHsq'),
+            ('m4sq','mHsq'),
+            ('mHsq', 0),
+        ])
 
 Expansion by regions is applied to a loop integral using the :func:`loop_regions <pySecDec.loop_integral.loop_regions>` function.
 We expand around a small mass `mtsq`.
@@ -669,7 +668,7 @@ We expand around a small mass `mtsq`.
 .. code::
 
         # find the regions
-        generators_args = loop_regions(
+        terms = psd.loop_regions(
             name = "box1L_ebr",
             loop_integral=li,
             smallness_parameter = "mtsq",
@@ -680,12 +679,13 @@ The output of :func:`loop_regions <pySecDec.loop_integral.loop_regions>` can be 
 .. code::
 
         # write the code to sum up the regions
-        sum_package("box1L_ebr",
-                    generators_args,
-                    li.regulators,
-                    requested_orders = [0,0],
-                    real_parameters = ['s','t','u','mtsq'],
-                    complex_parameters = [])
+        psd.sum_package(
+            "box1L_ebr",
+            terms,
+            li.regulators,
+            requested_orders = [0,0],
+            real_parameters = ['s','t','u','mtsq'],
+            complex_parameters = [])
 
 
 The generated C++ library can be :ref:`compiled <building_the_cpp_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.

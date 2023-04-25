@@ -4,8 +4,8 @@ import pySecDec as psd
 if __name__ == "__main__":
 
     li = psd.LoopIntegralFromGraph(
-        internal_lines = [['m',[1,2]],[0,[2,3]],[0,[3,4]],[0,[4,1]]],
-        external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
+        internal_lines = [['m',[1,2]], ['0',[2,3]], ['0',[3,4]], ['0',[4,1]]],
+        external_lines = [['p1',1], ['p2',2], ['p3',3], ['p4',4]],
         replacement_rules = [
             ('p1*p1', 's1'),
             ('p2*p2', 0),
