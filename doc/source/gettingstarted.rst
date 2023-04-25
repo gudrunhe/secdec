@@ -311,11 +311,11 @@ Command-line interface with *disteval*
 
 .. versionadded:: 1.6
 
-The *disteval* library, once built, can be used directly from the command line via the `pySecDec.deval` Python module:
+The *disteval* library, once built, can be used directly from the command line via the `pySecDec.disteval` Python module:
 
 .. code::
 
-    $ python3 -m pySecDec.deval box1L/disteval/box1L.json s=4.0 t=-0.75 s1=1.25 msq=1.0
+    $ python3 -m pySecDec.disteval box1L/disteval/box1L.json s=4.0 t=-0.75 s1=1.25 msq=1.0
     [...]
     [
       (
@@ -335,7 +335,7 @@ The general usage of the command-line interface is:
 
 .. code::
 
-    $ python3 -m pySecDec.deval integrand.json [options] <var>=value ...
+    $ python3 -m pySecDec.disteval integrand.json [options] <var>=value ...
 
 The evaluation can be controlled via the provided command-line options:
 
@@ -351,7 +351,7 @@ This list of options can also be obtained from within the command line by runnin
 
 .. code::
 
-    $ python3 -m pySecDec.deval --help
+    $ python3 -m pySecDec.disteval --help
 
 Python interface with *disteval*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

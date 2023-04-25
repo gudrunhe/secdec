@@ -83,9 +83,9 @@ def _parse_series(text):
         return terms, variable, order
     return series(text)
 
-def _parse_deval_series(text):
+def _parse_disteval_series(text):
     """
-    Parse a series in the deval format, return a list of entries
+    Parse a series in the disteval format, return a list of entries
     arranged the same way as in _parse_series().
     """
     import re
@@ -151,7 +151,7 @@ def _convert_series(series, power, Order):
                 " + %s(%s%s(%d))" % (Order, var, power, order)
         return " + ".join(fmt_term(val, var, exp, mean) for val, exp in terms) + order
     tvolist = \
-            _parse_deval_series(series) if series.startswith("[") else \
+            _parse_disteval_series(series) if series.startswith("[") else \
             [_parse_series(line) for line in series.splitlines()]
     results = [
         ( fmt_series(terms, variable, order, True), fmt_series(terms, variable, order, False) )
@@ -245,7 +245,7 @@ def series_to_mathematica(series):
                     " + O[%s]/%s^%d" % (var, var, 1-order)
             return " + ".join(fmt_term(val, var, exp, mean) for val, exp in terms) + order
     tvolist = \
-            _parse_deval_series(series) if series.startswith("[") else \
+            _parse_disteval_series(series) if series.startswith("[") else \
             [_parse_series(line) for line in series.splitlines()]
     results = [
         ( fmt_series(terms, variable, order, True), fmt_series(terms, variable, order, False) )
@@ -1531,7 +1531,7 @@ class DistevalLibrary(object):
                 for n, v in _runlength_encode(epsrel)
             ])
         output = subprocess.check_output([
-            sys.executable, "-m", "pySecDec.deval",
+            sys.executable, "-m", "pySecDec.disteval",
                 self.filename,
                 "--format", str(format),
                 "--epsabs", str(epsabs),

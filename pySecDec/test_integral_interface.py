@@ -88,7 +88,7 @@ class TestParsing(unittest.TestCase):
         assert ii.series_to_mathematica(" + (1)*ep^-1 + (2)\n + (1)*ep^-2 + (2)*ep^-1") == \
             [('1/ep + 2', '0/ep + 0'), ('1/ep^2 + 2/ep', '0/ep^2 + 0/ep')]
 
-    def test_deval_series_to_x(self):
+    def test_disteval_series_to_x(self):
         series = """[
           (
             +eta^0*eps^0*(+1.0e+00+0.0e+00j)
@@ -109,7 +109,7 @@ class TestParsing(unittest.TestCase):
             ('SeriesData[eta, 0, {1 + -3*eps + O[eps]^2, (5-9*I) + (-7-10*I)*eps + O[eps]^2}, 0, 2, 1]',
              'SeriesData[eta, 0, {2 + 4*eps + O[eps]^2, 6 + 8*eps + O[eps]^2}, 0, 2, 1]')
 
-    def test_deval_multi_series_to_x(self):
+    def test_disteval_multi_series_to_x(self):
         series = """[
           (
             +eps^0*(+1.0e+01+2.0e+01j)

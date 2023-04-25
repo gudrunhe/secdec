@@ -2,7 +2,7 @@
 """
 Distributed and/or local evaluator for pySecDec integrals.
 Usage:
-    python3 -m pySecDec.deval integrand.json [options] <var>=value ...
+    python3 -m pySecDec.disteval integrand.json [options] <var>=value ...
 Options:
     --epsabs=X          stop if this absolute precision is reached (default: 1e-10)
     --epsrel=X          stop if this relative precision is reached (default: 1e-4)
