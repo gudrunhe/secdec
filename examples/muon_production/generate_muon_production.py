@@ -40,7 +40,7 @@ if __name__ == "__main__":
                 external_lines = [['p',1],['p',2]],
                 replacement_rules = [('p*p', p_sq)])
         real_parameters = []
-        if not p_sq == 0:
+        if not p_sq == 0: #Pass the momentum as a symbolic parameter if it is not 0
             real_parameters.append(p_sq)
         return LoopPackage(name, loop_integral = li, real_parameters = real_parameters, 
                             decomposition_method = 'geometric', requested_orders = [0], additional_prefactor = additional_prefactor)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
                                     ('p2*p2', p2_sq),
                                     ('p3*p3', p12_sq)
                                     ])
-        real_parameters = [p for p in [p1_sq, p2_sq, p12_sq] if p != 0]
+        real_parameters = [p for p in [p1_sq, p2_sq, p12_sq] if p != 0] #Pass the momenta as symbolic parameters if they are not 0
         return LoopPackage(name, loop_integral = li, real_parameters = real_parameters, 
                             decomposition_method = 'geometric', requested_orders = [0], additional_prefactor = additional_prefactor)
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
                                                 ('p1*p3', '-' + str(p12_sq) + '/2' + '-' + str(p23_sq) + '/2' + '-' + str(p1_sq) + '/2' + '-' + str(p3_sq) + '/2'),
                                                 ('p3*p4', str(p12_sq) + '/2' + '-' + str(p3_sq) + '/2' + '-' + str(p4_sq) + '/2')
                                                 ])
-        real_parameters = [p for p in [p1_sq, p2_sq, p3_sq, p4_sq, p12_sq, p23_sq] if p != 0]                                    
+        real_parameters = [p for p in [p1_sq, p2_sq, p3_sq, p4_sq, p12_sq, p23_sq] if p != 0] #Pass the momenta as symbolic parameters if they are not 0
         return LoopPackage(name, loop_integral = li, real_parameters = real_parameters, 
                             decomposition_method = 'geometric', requested_orders = [0], additional_prefactor = additional_prefactor)
 
@@ -90,6 +90,6 @@ if __name__ == "__main__":
             coefficients = {'O(1)': coeffs, 'O(Nf)': N_coeffs}
             regulators = ['eps'],
             requested_orders = [0],
-            real_parameters = ['s', 't', 'u'],
+            real_parameters = ['s', 't', 'u'], #Make sure that the list of real parameters contain every symbolic kinematic invariant defined in 'all_integrals'
             complex_parameters = [],
             processes = 30)

@@ -9,7 +9,7 @@ if __name__ == "__main__":
     amplitude = DistevalLibrary('full_amplitude/disteval/full_amplitude.json')
 
     # integrate
-    str_result = amplitude(parameters={"s": 4.0, "t": -1.0, "u": 1.25}, verbose=True)
+    str_result = amplitude(parameters={"s": 3.0, "t": -1.0, "u": -2.0}, verbose=True, epsrel = 1e-10)
     
     result = sp.sympify(str_result)
     value = result[0].subs({"plusminus": 0})
