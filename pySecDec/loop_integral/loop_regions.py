@@ -324,7 +324,7 @@ def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expan
     try:
         constr = extra_regulator_constraints(idx, poly, expansion_by_regions_order,
                 loop_integral.regulators, loop_integral.powerlist, loop_integral.dimensionality,
-                indices=None, normaliz=normaliz)
+                indices=None, normaliz=normaliz)['all']
         if len(constr) == 0: return None
     except ValueError as e:
         if "need at least one array to concatenate" in str(e):
@@ -352,14 +352,15 @@ def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expan
 
 def extra_regulator_constraints(exp_param_index, polynomial, exp_order, regulators, powerlist, dimension, indices=None, normaliz=None):
     '''
-    Returns list of vectors :\mathbf{n}_i: that give constraints
+    Returns a dictionary of vectors :\mathbf{n}_i: that give constraints
     of the form :math:`\langle\mathbf{n_i},\bf{\nu}_{\delta}\rangle \neq 0`
     on the coefficient of a regulator :math:`\delta` introduced by
     multiplying the integrand with a monomial 
-    :math:`\mathbf{x}^{\delta\bf{\nu}_{\delta}}`. The vector 
-    :math:`\mathbf{x}` contains the variables of the input 
-    polynomial. Only exponents corresponding to integration
-    variables can be non-zero.
+    :math:`\mathbf{x}^{\delta\bf{\nu}_{\delta}}`, where :math:`\mathbf{x}`
+    are the variables of the input polynomial. The dictionary contains 
+    entries for each region individually and a list of all constraints 
+    (entry `all`). Only exponents corresponding to integration variables 
+    can be non-zero.
 
     :param exp_param_index:
         int;
@@ -420,10 +421,10 @@ def extra_regulator_constraints(exp_param_index, polynomial, exp_order, regulato
     facets = polytope.facets
 
     regions = facets[ facets[:,exp_param_index] > 0 ]
-
     regions = regions[ np.dot(regions,powerlist)<= exp_order ] 
 
-    facets_sd_0 = []
+    region_facets_sd_0 = {}
+    all_facets_sd_0 = []
     for region in regions:
         # vertices contained in region
         vert = polytope_vertices[ np.inner(polytope_vertices, region[:-1]) + region[-1] == 0 ]
@@ -435,14 +436,23 @@ def extra_regulator_constraints(exp_param_index, polynomial, exp_order, regulato
         facets = polytope.facets
         # facets with 0 in aff(facet)
         facets = facets[facets[:,-1]==0][:,:-1]
-        facets_sd_0 = facets_sd_0 + [facets]
-    facets_sd_0 = np.concatenate(facets_sd_0)
+        region_facets_sd_0[tuple(region[:-1])] = facets
+        all_facets_sd_0 = all_facets_sd_0 + [facets]
+    all_facets_sd_0 = np.concatenate(all_facets_sd_0)
+    
     # internal facets
-    facets_sd_int_0 = [ facet for facet in facets_sd_0  if any([np.array_equal(facet, -fac) for fac in facets_sd_0]) and facet[facet!=0][0]>0 ]
+    facets_sd_int_0 = [facet for facet in all_facets_sd_0  if any([np.array_equal(facet, -fac) for fac in all_facets_sd_0])]
+    # store only internal facets for each region
+    for region, facets in region_facets_sd_0.items():
+        region_facets_sd_0[region] = np.array([facet for facet in facets if any([np.array_equal(facet, fac) for fac in facets_sd_int_0])])
+    # select one normal vector for each internal facet
+    region_facets_sd_0['all'] = np.array([ facet for facet in facets_sd_int_0 if facet[facet!=0][0]>0 ])
 
     if indices is not None:
-        facets_sd_int_0 = np.array([[next(facet) if i in indices and i != exp_param_index else 0 for i in range(dim)] for facet in [iter(f) for f in facets_sd_int_0]])
+        for region, facets in region_facets_sd_0.items():
+            region_facets_sd_0[region] = np.array([[next(facet) if i in indices and i != exp_param_index else 0 for i in range(dim)] for facet in [iter(f) for f in facets]])
     else:
-        facets_sd_int_0 = np.array([[next(facet) if i != exp_param_index else 0 for i in range(dim)] for facet in [iter(f) for f in facets_sd_int_0]])
+        for region, facets in region_facets_sd_0.items():
+            region_facets_sd_0[region] = np.array([[next(facet) if i != exp_param_index else 0 for i in range(dim)] for facet in [iter(f) for f in facets]])
 
-    return facets_sd_int_0
+    return region_facets_sd_0
