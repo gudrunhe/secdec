@@ -69,7 +69,7 @@ class TestExpansionByRegions(unittest.TestCase):
         target_polys = [sympify_expression('z*t + u + u**2'), sympify_expression('z*t + z*u + (z*u)**2')]
 
         for region, target_poly in zip(regions,target_polys):
-            polys = apply_region([poly.copy()], region, expansion_parameter_index)
+            polys = apply_region(expansion_parameter_index, [poly.copy()], region)
             assert sympify_expression(polys[0]-target_poly).simplify() == 0
 
     #@pytest.mark.active
@@ -84,7 +84,7 @@ class TestExpansionByRegions(unittest.TestCase):
         target_polynomials=[target_polynomial1, target_polynomial2, target_polynomial3]
 
         for region_vector,target_polynomial in zip(region_vectors,target_polynomials):
-            polys=apply_region([poly_u.copy(),poly_f.copy()],region_vector,expansion_parameter_index)
+            polys=apply_region(expansion_parameter_index,[poly_u.copy(),poly_f.copy()],region_vector)
             print(polys)
             assert sympify_expression(polys[0]-target_polynomial[0]).simplify() == 0
             assert sympify_expression(polys[1]-target_polynomial[1]).simplify() == 0

@@ -299,10 +299,6 @@ def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expan
         :class:`pySecDec.loop_integral`;
         The loop integral which is to be regulated.
 
-    :param loop_integral:
-        :class:`pySecDec.loop_integral`;
-        The loop integral which is to be regulated.
-
     :param smallness_parameter:
         string or sympy symbol;
         The symbol of the variable in which the
@@ -319,14 +315,14 @@ def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expan
         The shell command to run `normaliz`.
         Default: use `normaliz` from pySecDecContrib
     '''
-    smallness_parameter = sp.sympify(smallness_parameter)
+    smallness_parameter = sympify_expression(smallness_parameter)
     poly = Polynomial.from_expression(
             str(loop_integral.preliminary_F + loop_integral.preliminary_U),
             loop_integral.preliminary_F.symbols + [smallness_parameter])
     assert poly.symbols[:-1] == loop_integral.integration_variables
     idx = poly.symbols.index(smallness_parameter)
     try:
-        constr = extra_regulator_constraints(idx, poly.expolist, expansion_by_regions_order,
+        constr = extra_regulator_constraints(idx, poly, expansion_by_regions_order,
                 loop_integral.regulators, loop_integral.powerlist, loop_integral.dimensionality,
                 indices=None, normaliz=normaliz)
         if len(constr) == 0: return None
@@ -354,7 +350,7 @@ def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expan
             return exp
         nzero -= 1
 
-def extra_regulator_constraints(exp_param_index, polynomial_expolist, exp_order, regulators, powerlist, dimension, indices=None, normaliz=None):
+def extra_regulator_constraints(exp_param_index, polynomial, exp_order, regulators, powerlist, dimension, indices=None, normaliz=None):
     '''
     Returns list of vectors :\mathbf{n}_i: that give constraints
     of the form :math:`\langle\mathbf{n_i},\bf{\nu}_{\delta}\rangle \neq 0`
@@ -409,7 +405,7 @@ def extra_regulator_constraints(exp_param_index, polynomial_expolist, exp_order,
     for regulator in regulators:
         powerlist = [x.subs(regulator,0) for x in powerlist]
 
-    polytope_vertices = polynomial_expolist
+    polytope_vertices = polynomial.expolist
 
     dim = len(polytope_vertices[0])
     if indices is not None:

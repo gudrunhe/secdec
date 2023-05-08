@@ -96,7 +96,7 @@ def _parse_expressions(polynomials_to_decompose, symbols_polynomials_to_decompos
         parsed.append(poly)
     return parsed
 
-def find_regions( exp_param_index , polynomial, indices = None, normaliz=None, workdir='normaliz_tmp'):
+def find_regions(exp_param_index , polynomial, indices = None, normaliz=None, workdir='normaliz_tmp'):
     '''
     Find regions for the expansion by regions
     as described in [PS11]_.
@@ -176,7 +176,7 @@ def find_regions( exp_param_index , polynomial, indices = None, normaliz=None, w
 
     return regions
 
-def apply_region(polynomials, region_vector, expansion_parameter_index):
+def apply_region(exp_param_index, polynomials, region_vector):
     r'''
     Apply the `region_vector` to the input `polynomials`.
 
@@ -188,6 +188,10 @@ def apply_region(polynomials, region_vector, expansion_parameter_index):
     .. note::
         `apply_region` modifies the input
         `polynomials`.
+
+    :param exp_param_index:
+        integer;
+        Index of the expansion parameter in the list of symbols.
 
     :param polynomials:
         iterable of polynomials;
@@ -203,13 +207,9 @@ def apply_region(polynomials, region_vector, expansion_parameter_index):
         x1 -> rho^k * x1 and rho -> rho^n, then the region vector
         needs to be [i,k,n]
 
-    :param expansion_parameter_index:
-        integer;
-        Index of the expansion parameter in the list of symbols.
-
     '''
     for polynomial in polynomials:
-        polynomial.expolist[:,expansion_parameter_index] = np.dot(polynomial.expolist, region_vector)
+        polynomial.expolist[:,exp_param_index] = np.dot(polynomial.expolist, region_vector)
 
     return polynomials
 
@@ -490,7 +490,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
     if regions.size > 0:
         for region in regions:
             # decompose the polynomials in the respective region
-            polynomials_to_decompose_region_specific = apply_region([poly.copy() for poly in polynomials_to_decompose], region, smallness_parameter_index)
+            polynomials_to_decompose_region_specific = apply_region(smallness_parameter_index, [poly.copy() for poly in polynomials_to_decompose], region)
 
             # factor out the smallness_parameter and store its power
             polynomials_refactorized = []
@@ -509,7 +509,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
             # scaling of polynomials_to_decompose
             poly_scaling = np.concatenate([np.zeros(len(integration_variables)+len(regulators),dtype=int) , [factor.expolist[0,smallness_parameter_index] for factor in polynomial_factors] , [0]])
             # rescale and factor numerator
-            numerator_region_specific = apply_region([numerator.copy()], region + poly_scaling, smallness_parameter_index)[0]
+            numerator_region_specific = apply_region(smallness_parameter_index, [numerator.copy()], region + poly_scaling)[0]
             factor0, numerator_refactorized = numerator_region_specific.refactorize(smallness_parameter_index).factors
             power_overall_smallness_parameter +=factor0.expolist[0][smallness_parameter_index]
 
