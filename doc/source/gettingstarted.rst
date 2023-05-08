@@ -345,7 +345,8 @@ The evaluation can be controlled via the provided command-line options:
 * ``--points=<number>``: use this initial Quasi-Monte-Carlo lattice size (default: ``1e4``);
 * ``--presamples=<number>``: use this many points for presampling (default: ``1e4``);
 * ``--shifts=<number>``: use this many lattice shifts per integral (default: ``32``);
-* ``--coefficients=<path>``: use coefficients from this directory.
+* ``--coefficients=<path>``: use coefficients from this directory;
+* ``--format=<path>``: output the result in this format (``sympy``, ``mathematica``, or ``json``; default: ``sympy``).
 
 This list of options can also be obtained from within the command line by running:
 
