@@ -344,7 +344,8 @@ known_qmc_generatingvectors = dict(
     cbcpt_dn1_100 = 1,
     cbcpt_dn2_6 = 2,
     cbcpt_cfftw1_6 = 3,
-    cbcpt_cfftw2_10 = 4
+    cbcpt_cfftw2_10 = 4,
+    none = 5
 )
 
 class CPPIntegrator(object):
@@ -584,11 +585,29 @@ class Qmc(CPPIntegrator):
         The possible choices correspond to the available generating
         vectors of the underlying Qmc implementation. Possible values
         are ``"default"``, ``"cbcpt_dn1_100"``, ``"cbcpt_dn2_6"``,
-        ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``.
+        ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``, ``"none"``.
 
         The ``"default"`` value will use all available generating
         vectors suitable for the highest dimension integral
         appearing in the library.
+
+    :param useMedianQmc:
+        bool;
+        Specifies if list of generating vectors should be extended using
+        Median Qmc rule, if required.
+        Default: ``"True"``
+
+    :param keepMedianGV:
+        bool;
+        Specifies if list of generating vectors generated using
+        median Qmc rule should be kept for other integrals
+        Default: ``"False"``
+
+    :param numMedianLattices:
+        int;
+        Number of candidate generating vectors for applying the
+        median Qmc rule.
+        Default: ``"11"``
 
     :param cputhreads:
         int;
@@ -615,7 +634,7 @@ class Qmc(CPPIntegrator):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],useMedianQmc=True,keepMedianGV=False,numMedianLattices=11):
         if cputhreads is None:
             try:
                 cputhreads = len(os.sched_getaffinity(0))
@@ -641,7 +660,10 @@ class Qmc(CPPIntegrator):
                                                             c_longlong, # seed
                                                             c_int, # transform_id
                                                             c_int, # fitfunction_id
-                                                            c_int # generatingvectors_id
+                                                            c_int, # generatingvectors_id
+                                                            c_bool, # useMedianQmc
+                                                            c_bool, # keepMedianGV
+                                                            c_ulonglong # numMedianLattices
                                                       ]
 
         # assuming:
@@ -664,7 +686,8 @@ class Qmc(CPPIntegrator):
                                                                     cudablocks,cudathreadsperblock,verbosity,
                                                                     seed,known_qmc_transforms[str(transform).lower()],
                                                                     known_qmc_fitfunctions[str(fitfunction).lower()],
-                                                                    known_qmc_generatingvectors[str(generatingvectors).lower()]
+                                                                    known_qmc_generatingvectors[str(generatingvectors).lower()],
+                                                                    useMedianQmc,keepMedianGV,numMedianLattices
                                                                    )
         self._epsrel=epsrel
         self._epsabs=epsabs
@@ -715,6 +738,24 @@ class CudaQmc(object):
         are ``"default"``, ``"cbcpt_dn1_100"``, ``"cbcpt_dn2_6"``,
         ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``.
 
+    :param useMedianQmc:
+        bool;
+        Specifies if list of generating vectors should be extended using
+        Median Qmc rule, if required.
+        Default: ``"True"``
+
+    :param keepMedianGV:
+        bool;
+        Specifies if list of generating vectors generated using
+        Median Qmc rule, should be kept for other integrals
+        Default: ``"True"``
+
+    :param numMedianLattices:
+        int;
+        Number of candidate generating vectors for applying the
+        Median Qmc rule.
+        Default: ``"11"``
+
     :param cputhreads:
         int;
         The number of CPU threads that should be used to evaluate
@@ -740,7 +781,7 @@ class CudaQmc(object):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],useMedianQmc=True,keepMedianGV=True,numMedianLattices=11):
         devices_t = c_int * len(devices)
         if cputhreads is None:
             try:
@@ -765,6 +806,9 @@ class CudaQmc(object):
                         c_int, # transform_id
                         c_int, # fitfunction_id
                         c_int, # generatingvectors_id
+                        c_bool, # useMedianQmc
+                        c_bool, # keepMedianGV
+                        c_ulonglong, # numMedianLattices
                         c_ulonglong, # number_of_devices
                         devices_t # devices[]
                    ]
@@ -795,6 +839,7 @@ class CudaQmc(object):
                                                                                                seed,known_qmc_transforms[str(transform).lower()],
                                                                                                known_qmc_fitfunctions[str(fitfunction).lower()],
                                                                                                known_qmc_generatingvectors[str(generatingvectors).lower()],
+                                                                                               useMedianQmc,keepMedianGV,numMedianLattices,
                                                                                                len(devices),devices_t(*devices)
                                                                                           )
         self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(
@@ -804,6 +849,7 @@ class CudaQmc(object):
                                                                                                seed,known_qmc_transforms[str(transform).lower()],
                                                                                                known_qmc_fitfunctions[str(fitfunction).lower()],
                                                                                                known_qmc_generatingvectors[str(generatingvectors).lower()],
+                                                                                               useMedianQmc,keepMedianGV,numMedianLattices,
                                                                                                len(devices),devices_t(*devices)
                                                                                           )
         self._epsrel=epsrel
@@ -1038,6 +1084,7 @@ class IntegralLibrary(object):
         the choices ``all``, ``real`` or ``imag`` might prevent the integration
         from stopping since the requested precision epsrel cannot be reached.
         Default: ``abs``.
+
 
     .. seealso::
         A more detailed description of these parameters and

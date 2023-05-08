@@ -436,6 +436,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         log(f"- amp{a},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
 
     epsrel = [epsrel[a] if a < len(epsrel) else epsrel[-1] for a, p in ap2coeffs.keys()]
+    epsabsOrig = epsabs.copy()
     epsabs = [epsabs[a] if a < len(epsabs) else epsabs[-1] for a, p in ap2coeffs.keys()]
 
     # Presample all kernels
@@ -605,7 +606,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                         log(f"  +{stem}*({val:+.16e})")
                         log(f"  +{stem}*({err:+.16e})*plusminus")
                         abserr = np.abs(err)
-                        relerr.append(abserr / np.abs(val) if abserr > epsabs[ampid] else 0.0)
+                        relerr.append(abserr / np.abs(val) if abserr > epsabsOrig[ampid] else 0.0)
                     log(")")
                     log(f"amp{ampid} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
                     relerrs.append(np.max(relerr))
@@ -669,7 +670,8 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             print(f"    +{stem}*({val:+.16e})")
             print(f"    +{stem}*({err:+.16e})*plusminus")
             abserr = np.abs(err)
-            relerr.append(abserr / np.abs(val) if abserr > epsabs[ampid] else 0.0)
+            #print(abserr, epsabs[ampid], ampid)
+            relerr.append(abserr / np.abs(val) if abserr > epsabsOrig[ampid] else 0.0)
         if len(relerr) != 0:
             print("  )," if ampid < ampcount-1 else "  )")
             sys.stdout.flush()
