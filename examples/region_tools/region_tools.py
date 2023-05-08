@@ -10,6 +10,7 @@ from pySecDec.misc import sympify_expression
 
 if __name__ == "__main__":
 
+    # scalar integral
     name = 'box'
     smallness_parameter = sp.sympify('m')
     internal_lines = [['m', [1, 2]], ['m', [2, 3]], ['m', [3, 4]], ['m', [4, 1]]] 
@@ -35,6 +36,7 @@ if __name__ == "__main__":
 
     print('-- suggested_extra_regulator_exponent --')
     regulator_exponents = suggested_extra_regulator_exponent(loop_integral, smallness_parameter)
+
     # pretty print
     print('  regulator_exponents: ', regulator_exponents)
     print('  I[' + ','.join(['v'+str(i) for i in range(len(regulator_exponents))]) + '] -> ', 
@@ -46,12 +48,15 @@ if __name__ == "__main__":
     # Construct Lee-Pomeransky (U+F) polytope with variables [x0,...,xn,m]
     poly = Polynomial.from_expression( str(loop_integral.F + loop_integral.U), loop_integral.preliminary_F.symbols + [smallness_parameter])
     idx = poly.symbols.index(smallness_parameter)
-    constraints = extra_regulator_constraints(idx, poly, 0, loop_integral.regulators, loop_integral.powerlist, loop_integral.dimensionality)
-   # pretty print
-    print('  constraints: ', constraints.tolist())
-    for constraint in constraints:
-        print(' ', constraint, '=>', 
-              '(' + str(sympify_expression('+'.join([ '(' + str(e) + ')*v'+str(i) for i,e in enumerate(constraint) if e != 0]))) + ') != 0' )
+    all_constraints = extra_regulator_constraints(idx, poly, 0, loop_integral.regulators, loop_integral.powerlist, loop_integral.dimensionality)
+
+    # pretty print
+    for region, constraints in all_constraints.items():
+        print('  region: ', region)
+        print('    constraints: ', constraints.tolist())
+        for constraint in constraints:
+            print('     ', constraint, '=>', 
+                '(' + str(sympify_expression('+'.join([ '(' + str(e) + ')*v'+str(i) for i,e in enumerate(constraint) if e != 0]))) + ') != 0' )
     print()
 
     print('-- find_regions --')
