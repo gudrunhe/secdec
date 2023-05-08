@@ -519,10 +519,10 @@ Coefficients can depend on the regulators, the :func:`sum_package <pySecDec.code
                 '2*s',       # easy1
                 '3*s'        # easy2
             ],
-            "sum2" : {
+            "sum2" : [
                 's/(2*eps)', # easy1
                 's*eps/3'    # easy2
-            }
+            ]
         }
 
 
