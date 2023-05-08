@@ -15,8 +15,8 @@ class bcolors:
 
 def expand_integral(integral,smallness_parameters):
     common_args = {
-        'integration_variables' : li.integration_variables,
-        'regulators' : li.regulators,
+        'integration_variables' : integral.integration_variables,
+        'regulators' : integral.regulators,
         'requested_orders' : [],
         'expansion_by_regions_order' : 0,
         'polytope_from_sum_of' : [0,1],
@@ -24,15 +24,15 @@ def expand_integral(integral,smallness_parameters):
     }
     print(bcolors.OKBLUE)
     print('-- ' + name + ' --')
-    print('  U: ',li.exponentiated_U)
-    print('  F:',li.exponentiated_F)
+    print('  U: ',integral.exponentiated_U)
+    print('  F:',integral.exponentiated_F)
     print('  expanding in:',smallness_parameters[0])
-    #print('  measure',li.measure)
-    #print('  numerator',li.numerator)
+    #print('  measure',integral.measure)
+    #print('  numerator',integral.numerator)
     generators_args = psd.make_regions(
         name = name,
         smallness_parameter = smallness_parameters[0],
-        polynomials_to_decompose = [li.exponentiated_U,li.exponentiated_F],
+        polynomials_to_decompose = [integral.exponentiated_U,integral.exponentiated_F],
         **common_args
     )
     print(bcolors.ENDC)
