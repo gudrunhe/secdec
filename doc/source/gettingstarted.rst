@@ -762,3 +762,5 @@ Here we list the available examples. For more details regarding each example see
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **regions**:               | prints a list of the regions obtained by applying expansion by regions to formfactor1L_massless                                |
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
+| **region_tools**:          | demonstrates the standalone usage of suggested_extra_regulator_exponent, extra_regulator_constraints and find_regions          |
++----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
