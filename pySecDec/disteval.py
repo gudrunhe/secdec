@@ -12,7 +12,7 @@ Options:
     --shifts=X          use this many lattice shifts per integral (default: 32)
     --cluster=X         use this cluster.json file
     --coefficients=X    use coefficients from this directory
-    --format=X          output the result in this format ("sympy" or "json")
+    --format=X          output the result in this format ("sympy", "mathematica", "json")
     --help              show this help message
 Arguments:
     <var>=X             set this integral or coefficient variable to a given value
@@ -862,7 +862,9 @@ def main():
     result = loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap_int, valuemap_coeff, deadline))
 
     # Report the result
+
     def report_sympy(result):
+        namps = len(result["sums"])
         print("[")
         for ampid, (sum_name, sum_terms) in enumerate(result["sums"].items()):
             print("  (")
@@ -871,16 +873,33 @@ def main():
                 print(f"    +{stem}*({val_re:+.16e}{val_re:+.16e}j)")
                 print(f"    +{stem}*({err_re:+.16e}{err_re:+.16e}j)*plusminus")
             if len(sum_terms) > 0:
-                print("  )," if ampid < len(result)-1 else "  )")
+                print("  )," if ampid < namps-1 else "  )")
             else:
-                print("    0\n  )," if ampid < len(result)-1 else "    0\n  )")
+                print("    0\n  )," if ampid < namps-1 else "    0\n  )")
         print("]")
+
+    def report_mathematica(result):
+        namps = len(result["sums"])
+        print("{")
+        for ampid, (sum_name, sum_terms) in enumerate(result["sums"].items()):
+            print("  (")
+            for p, (val_re, val_im), (err_re, err_im) in sum_terms:
+                stem = "*".join(f"{r}^{p}" for r, p in zip(result["regulators"], p))
+                print(f"    +{stem}*" + f"({val_re:+.16e}{val_re:+.16e}*I)".replace("e", "*10^"))
+                print(f"    +{stem}*" + f"({err_re:+.16e}{err_re:+.16e}*I)*plusminus".replace("e", "*10^"))
+            if len(sum_terms) > 0:
+                print("  )," if ampid < namps-1 else "  )")
+            else:
+                print("    0\n  )," if ampid < namps-1 else "    0\n  )")
+        print("}")
 
     if result_format == "json":
         json.dump(result, sys.stdout, indent=2)
-        sys.stdout.flush()
+    elif result_format == "mathematica":
+        report_mathematica(result)
     else:
         report_sympy(result)
+    sys.stdout.flush()
 
 if __name__ == "__main__":
     main()
