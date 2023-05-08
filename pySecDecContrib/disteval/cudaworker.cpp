@@ -373,7 +373,7 @@ worker_thread(void *ps)
                 fam.realp, fam.complexp, c.deformp);
             double t2 = timestamp();
             if (unlikely((isnan(result.re) || isnan(result.im)) ^ (r != 0))) {
-                printf("@[%" PRIu64 ",[[NaN,NaN],%" PRIu64 ",%.4e],\"NaN != sign check error %d in %s.%s\"]", c.token, c.i2-c.i1, t2-t1, r, fam.name, ker.name);
+                printf("@[%" PRIu64 ",[[NaN,NaN],%" PRIu64 ",%.4e],\"NaN != sign check error %d in %s.%s\"]\n", c.token, c.i2-c.i1, t2-t1, r, fam.name, ker.name);
             } else if (isnan(result.re) || isnan(result.im)) {
                 printf("@[%" PRIu64 ",[[NaN,NaN],%" PRIu64 ",%.4e],null]\n", c.token, c.i2-c.i1, t2-t1);
             } else {
