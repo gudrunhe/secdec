@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Numerator support for expansion by regions.
+- `suggested_extra_regulator_exponent`  function, returns a list of suggested extra regulators sufficient to regularise a loop integral
+- `extra_regulator_constraints` function, returns a list of inequalities which must be obeyed by the extra regulators in order to regularise a loop integral
 - `form_memory_use` argument for  `loop_regions`, tailors `form.set` to use approximately the requested amount of memory.
 - `form_threads` argument for `loop_regions`, the number of threads TFORM will use.
 - `extra_regulator_name`, `extra_regulator_exponent` for `loop_regions`, the name to be used for the extra regulator required to obtain well defined integrals and a list of exponents of the extra regulator.
