@@ -87,6 +87,8 @@ class Worker:
     def cancel_cb(self, token):
         if token in self.callbacks:
             self.callbacks[token] = (lambda a,b,c:None, ())
+            return True
+        return False
 
     def call(self, method, *args):
         fut = asyncio.futures.Future()
@@ -171,6 +173,9 @@ class RandomScheduler:
     def __init__(self):
         self.workers = []
         self.wspeed = []
+        self.npending = 0
+        self.drained = asyncio.Event()
+        self.drained.set()
 
     def add_worker(self, worker):
         self.workers.append(worker)
@@ -187,11 +192,30 @@ class RandomScheduler:
     def call_cb(self, method, args, callback, callback_args):
         w = min(random.choices(self.workers, weights=self.wspeed, k=3),
                 key=lambda w: w.queue_size())#/w.speed)
-        return (w, w.call_cb(method, args, callback, callback_args))
+        self.npending += 1
+        return (w, w.call_cb(method, args, self._cb, (callback, callback_args)))
+
+    def _cb(self, result, exception, worker, callback, callback_args):
+        self.npending -= 1
+        if self.npending == 0:
+            self.drained.set()
+        return callback(result, exception, worker, *callback_args)
 
     def cancel_cb(self, token):
         w, t = token
-        w.cancel_cb(t)
+        if w.cancel_cb(t):
+            self.npending -= 1
+            if self.npending == 0:
+                self.drained.set()
+            return True
+        else:
+            return False
+
+    async def drain(self):
+        assert self.npending <= sum(len(w.callbacks) for w in self.workers)
+        if self.npending > 0:
+            self.drained.clear()
+            await self.drained.wait()
 
 # Main
 
@@ -561,13 +585,16 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 log("worker queue sizes:")
                 for w in par.workers:
                     log(f"- {w.name}: {w.queue_size()}")
-                while par.queue_size() > 0:
-                    log(f"still todo: {par.queue_size()}")
-                    early_exit = time.time() > deadline
-                    if early_exit:
-                        log("WARNING: timeout reached, will stop soon")
-                        break
-                    await asyncio.sleep(1)
+
+                log(f"working on {par.queue_size()} jobs across {len(par.workers)} workers...")
+                try:
+                    tilldeadline = deadline - time.time()
+                    if tilldeadline <= 0: raise asyncio.TimeoutError()
+                    await asyncio.wait_for(par.drain(), timeout=tilldeadline)
+                except asyncio.TimeoutError:
+                    log("WARNING: timeout reached, will stop soon")
+                    early_exit = True
+
                 mask_done = np.logical_and(mask_todo, ~np.any(np.isnan(shift_val), axis=1))
                 log(f"integration done, updated {np.count_nonzero(mask_done)} kernels")
                 shift_val_done = shift_val[mask_done]
