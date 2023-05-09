@@ -37,19 +37,20 @@ from .generating_vectors import generating_vector, max_lattice_size
 
 from pySecDecContrib import dirname as contrib_dirname
 
+log_file = sys.stderr
 log_starttime = time.time()
 def log(*args):
     t = time.time() - log_starttime
     if t < 60:
-        print(f"{t:.3f}]", *args, file=sys.stderr)
+        print(f"{t:.3f}]", *args, file=log_file)
     else:
         m, s = divmod(t, 60)
         if m < 60:
-            print(f"{m:.0f}:{s:06.3f}]", *args, file=sys.stderr)
+            print(f"{m:.0f}:{s:06.3f}]", *args, file=log_file)
         else:
             h, m = divmod(m, 60)
-            print(f"{h:.0f}:{m:02.0f}:{s:06.3f}]", *args, file=sys.stderr)
-    sys.stderr.flush()
+            print(f"{h:.0f}:{m:02.0f}:{s:06.3f}]", *args, file=log_file)
+    log_file.flush()
 
 def abs2(x):
     return np.real(x)**2 + np.imag(x)**2
@@ -83,7 +84,7 @@ class Worker:
         message = encode_message((token, method, args))
         self.process.stdin.write(message)
         return token
-    
+
     def cancel_cb(self, token):
         if token in self.callbacks:
             self.callbacks[token] = (lambda a,b,c:None, ())
@@ -97,7 +98,7 @@ class Worker:
             else: fut.set_exception(WorkerException(error))
         self.call_cb(method, args, call_return)
         return fut
-    
+
     def multicall(self, calls):
         fut = asyncio.futures.Future()
         results = [None]*len(calls)
@@ -323,7 +324,7 @@ def adjust_n(W2, V, w, a, tau, nmin, nmax, names=[]):
         assert not np.any(np.isnan(n))
     return n
 
-async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap, valuemap_coeff, deadline):
+async def prepare_eval(workers, datadir, intfile):
     # Load the integrals from the requested json file
     t0 = time.time()
 
@@ -333,17 +334,8 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     if info["type"] not in ("integral", "sum"):
         raise ValueError(f"unknown type: {info['type']}")
 
-    for p in info["realp"] + info["complexp"]:
-        if p not in valuemap:
-            raise ValueError(f"missing integral parameter: {p}")
-
-    sp_regulators = sp.var(info["regulators"])
     requested_orders = info["requested_orders"]
     kernel2idx = {}
-    valuemap_rat = {
-        k:sp.nsimplify(v, rational=True, tolerance=np.abs(v)*1e-13)
-        for k, v in valuemap_coeff.items()
-    }
     if info["type"] == "integral":
         infos = {info["name"] : info}
         for k in info["kernels"]:
@@ -370,27 +362,12 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         for i, oo in enumerate(ii["orders"]):
             for ker in oo["kernels"]:
                 korders.setdefault((fam, ker), i)
-    
+
     log("Kernel ids:")
     for (fam, ker), i in kernel2idx.items():
         log(f"- ({fam}, {ker}) = k{i}")
 
-    realp = {
-        i : [valuemap[p] for p in info["realp"]]
-        for i, info in infos.items()
-    }
-    complexp = {
-        i : [(np.real(valuemap[p]), np.imag(valuemap[p])) for p in info["complexp"]]
-        for i, info in infos.items()
-    }
     family2idx = {fam:i for i, fam in enumerate(infos.keys())}
-
-    log(f"parsing {len(infos)} integral prefactors")
-    for ii in infos.values():
-        ii["expanded_prefactor_value"] = {
-            tuple(t["regulator_powers"]) : complex(sp.sympify(t["coefficient"]).subs(valuemap))
-            for t in ii["expanded_prefactor"]
-        }
 
     # Launch all the workers
     t1 = time.time()
@@ -402,7 +379,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         await w.call("family", 0, "builtin", 2, (2.0, 0.1, 0.2, 0.3), (), True)
         await w.call("kernel", 0, 0, "gauge")
         await w.multicall([
-            ("family", (i+1, fam, info["dimension"], realp[fam], complexp[fam], info["complex_result"]))
+            ("family", (i+1, fam, info["dimension"], (), (), info["complex_result"]))
             for i, (fam, info) in enumerate(infos.items())
         ])
         await w.multicall([
@@ -415,6 +392,60 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     log("workers:")
     for w in par.workers:
         log(f"- {w.name}: int speed={w.speed:.2e}bps, int overhead={w.int_overhead:.2e}s, total overhead={w.overhead:.2e}s, latency={w.latency:.2e}s")
+
+    t2 = time.time()
+
+    return (
+        datadir,
+        info,
+        requested_orders,
+        kernel2idx,
+        infos,
+        ampcount,
+        korders,
+        family2idx,
+        par,
+        t1 - t0,
+        t2 - t1)
+
+async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nshifts, valuemap, valuemap_coeff, deadline):
+
+    datadir, info, requested_orders, kernel2idx, infos, ampcount, korders, family2idx, par, t_init, t_worker = prepared
+
+    t1 = time.time()
+
+    for p in info["realp"] + info["complexp"]:
+        if p not in valuemap:
+            raise ValueError(f"missing integral parameter: {p}")
+
+    sp_regulators = sp.var(info["regulators"])
+
+    valuemap_rat = {
+        k:sp.nsimplify(v, rational=True, tolerance=np.abs(v)*1e-13)
+        for k, v in valuemap_coeff.items()
+    }
+    realp = {
+        i : [valuemap[p] for p in info["realp"]]
+        for i, info in infos.items()
+    }
+    complexp = {
+        i : [(np.real(valuemap[p]), np.imag(valuemap[p])) for p in info["complexp"]]
+        for i, info in infos.items()
+    }
+
+    log(f"parsing {len(infos)} integral prefactors")
+    for ii in infos.values():
+        ii["expanded_prefactor_value"] = {
+            tuple(t["regulator_powers"]) : complex(sp.sympify(t["coefficient"]).subs(valuemap))
+            for t in ii["expanded_prefactor"]
+        }
+
+    await asyncio.gather(*[
+        w.multicall([
+            ("changefamily", (i+1, realp[fam], complexp[fam]))
+            for i, (fam, info) in enumerate(infos.items())
+        ])
+        for w in par.workers])
 
     # Load the integral coefficients
     ap2coeffs = {} # (ampid, powerlist) -> coeflist
@@ -669,8 +700,9 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
 
     # Report the results
     t4 = time.time()
-    log("integral load time:", t1-t0)
-    log("worker startup time:", t2-t1)
+    log("integral load time:", t_init)
+    log("worker startup time:", t_worker)
+    log("parameter substitution time:", t2-t1)
     log("presampling time:", t3-t2)
     log("integration time:", t4-t3)
 
@@ -684,33 +716,6 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         maxlattice = np.max(lattices[mask])
         log(f"- {f}: {di:.4e} evals, {dt:.4e} sec, {np.min(slow):.4g} - {np.max(slow):.4g} bubbles, {minlattice:.4e} - {maxlattice:.4e} pts")
 
-    def report_sympy():
-        relerrs = []
-        print("[")
-        for ampid in range(ampcount):
-            relerr = []
-            print("  (")
-            for (a, p), val, var in sorted(zip(ap2coeffs.keys(), amp_val, amp_var)):
-                if a != ampid: continue
-                stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
-                err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
-                print(f"    +{stem}*({val:+.16e})")
-                print(f"    +{stem}*({err:+.16e})*plusminus")
-                abserr = np.abs(err)
-                relerr.append(abserr / np.abs(val) if abserr > epsabs[ampid] else 0.0)
-            if len(relerr) != 0:
-                print("  )," if ampid < ampcount-1 else "  )")
-                sys.stdout.flush()
-                log(f"{sum_names[ampid]!r} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
-                relerrs.append(np.max(relerr))
-            else:
-                print("    0\n  )," if ampid < ampcount-1 else "    0\n  )")
-                sys.stdout.flush()
-                log(f"{sum_names[ampid]!r} has no terms")
-                relerrs.append(0.0)
-        print("]")
-        log(f"largest relative error: {np.max(relerrs):.2e} ({sum_names[np.argmax(relerrs)]!r})")
-
     return {
         "regulators": info["regulators"],
         "sums": {
@@ -723,17 +728,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         }
     }
 
-def load_cluster_json(jsonfile, dirname):
-    try:
-        with open(jsonfile, "r") as f:
-            cluster_json = json.load(f)
-            assert "cluster" in cluster_json
-            assert isinstance(cluster_json["cluster"], list)
-            log(f"Using cluster configuration from {jsonfile!r}")
-            return cluster_json
-    except FileNotFoundError:
-        log(f"Can't find {jsonfile}; will run locally")
-        pass
+def default_worker_commands(dirname):
     ncpu = 0
     try:
         ncpu = max(1, len(os.sched_getaffinity(0)) - 1)
@@ -750,14 +745,23 @@ def load_cluster_json(jsonfile, dirname):
         log(f"CUDA worker data was not built, skipping")
     if ncuda > 0: ncpu = 0
     log(f"local CPU worker count: {ncpu}, GPU worker count: {ncuda}")
-    return {
-        "cluster":
-            [{"count": ncpu, "command": ["nice", sys.executable, "-m", "pySecDecContrib", "pysecdec_cpuworker"]}] +
-            [
-                {"count": 1, "command": ["nice", sys.executable, "-m", "pySecDecContrib", "pysecdec_cudaworker", "-d", str(i)]}
-                for i in range(ncuda)
-            ]
-    }
+    return [["nice", sys.executable, "-m", "pySecDecContrib", "pysecdec_cpuworker"]] * ncpu + \
+        [["nice", sys.executable, "-m", "pySecDecContrib", "pysecdec_cudaworker", "-d", str(i)] for i in range(ncuda)]
+
+def load_worker_commands(jsonfile, dirname):
+    try:
+        with open(jsonfile, "r") as f:
+            cluster_json = json.load(f)
+            assert "cluster" in cluster_json
+            assert isinstance(cluster_json["cluster"], list)
+            log(f"Using cluster configuration from {jsonfile!r}")
+            workers = []
+            for w in cluster_json["cluster"]:
+                workers.extend([w["command"]] * w.get("count", 1))
+            return workers
+    except FileNotFoundError:
+        log(f"Can't find {jsonfile}; will run locally")
+    return default_worker_commands(dirname)
 
 def split_integral_into_orders(orders, ampid, kernel2idx, info, br_coef, valmap, sp_regulators, requested_orders):
     br_pref = info["expanded_prefactor_value"]
@@ -798,6 +802,40 @@ def parse_unit(text, units):
         if text.endswith(unit):
             return float(text[:-len(unit)])*magnitude
     return float(text)
+
+def result_to_sympy(result):
+    namps = len(result["sums"])
+    text = []
+    text.append("[\n")
+    for ampid, (sum_name, sum_terms) in enumerate(result["sums"].items()):
+        text.append("  (\n")
+        for p, (val_re, val_im), (err_re, err_im) in sum_terms:
+            stem = "*".join(f"{r}^{p}" for r, p in zip(result["regulators"], p))
+            text.append(f"    +{stem}*({val_re:+.16e}{val_re:+.16e}j)\n")
+            text.append(f"    +{stem}*({err_re:+.16e}{err_re:+.16e}j)*plusminus\n")
+        if len(sum_terms) > 0:
+            text.append("  ),\n" if ampid < namps-1 else "  )\n")
+        else:
+            text.append("    0\n  ),\n" if ampid < namps-1 else "    0\n  )\n")
+    text.append("]")
+    return "".join(text)
+
+def result_to_mathematica(result):
+    namps = len(result["sums"])
+    text = []
+    text.append("{\n")
+    for ampid, (sum_name, sum_terms) in enumerate(result["sums"].items()):
+        text.append("  (\n")
+        for p, (val_re, val_im), (err_re, err_im) in sum_terms:
+            stem = "*".join(f"{r}^{p}" for r, p in zip(result["regulators"], p))
+            text.append(f"    +{stem}*" + f"({val_re:+.16e}{val_re:+.16e}*I)\n".replace("e", "*10^"))
+            text.append(f"    +{stem}*" + f"({err_re:+.16e}{err_re:+.16e}*I)*plusminus\n".replace("e", "*10^"))
+        if len(sum_terms) > 0:
+            text.append("  ),\n" if ampid < namps-1 else "  )\n")
+        else:
+            text.append("    0\n  ),\n" if ampid < namps-1 else "    0\n  )\n")
+    text.append("}")
+    return "".join(text)
 
 def main():
 
@@ -871,56 +909,23 @@ def main():
             log(f"- coefficient {key} = {value}")
 
     # Load worker list
-    cluster = load_cluster_json(clusterfile, dirname)
-    workers = []
-    for w in cluster["cluster"]:
-        workers.extend([w["command"]] * w.get("count", 1))
+    workers = load_worker_commands(clusterfile, dirname)
     if len(workers) == 0:
         log("No workers defined")
         exit(1)
 
     # Begin evaluation
     loop = asyncio.get_event_loop()
-    result = loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap_int, valuemap_coeff, deadline))
+    prepared = loop.run_until_complete(prepare_eval(workers, dirname, intfile))
+    result = loop.run_until_complete(do_eval(prepared, coeffsdir, epsabs, epsrel, npresamples, npoints, nshifts, valuemap_int, valuemap_coeff, deadline))
 
     # Report the result
-
-    def report_sympy(result):
-        namps = len(result["sums"])
-        print("[")
-        for ampid, (sum_name, sum_terms) in enumerate(result["sums"].items()):
-            print("  (")
-            for p, (val_re, val_im), (err_re, err_im) in sum_terms:
-                stem = "*".join(f"{r}^{p}" for r, p in zip(result["regulators"], p))
-                print(f"    +{stem}*({val_re:+.16e}{val_re:+.16e}j)")
-                print(f"    +{stem}*({err_re:+.16e}{err_re:+.16e}j)*plusminus")
-            if len(sum_terms) > 0:
-                print("  )," if ampid < namps-1 else "  )")
-            else:
-                print("    0\n  )," if ampid < namps-1 else "    0\n  )")
-        print("]")
-
-    def report_mathematica(result):
-        namps = len(result["sums"])
-        print("{")
-        for ampid, (sum_name, sum_terms) in enumerate(result["sums"].items()):
-            print("  (")
-            for p, (val_re, val_im), (err_re, err_im) in sum_terms:
-                stem = "*".join(f"{r}^{p}" for r, p in zip(result["regulators"], p))
-                print(f"    +{stem}*" + f"({val_re:+.16e}{val_re:+.16e}*I)".replace("e", "*10^"))
-                print(f"    +{stem}*" + f"({err_re:+.16e}{err_re:+.16e}*I)*plusminus".replace("e", "*10^"))
-            if len(sum_terms) > 0:
-                print("  )," if ampid < namps-1 else "  )")
-            else:
-                print("    0\n  )," if ampid < namps-1 else "    0\n  )")
-        print("}")
-
     if result_format == "json":
         json.dump(result, sys.stdout, indent=2)
     elif result_format == "mathematica":
-        report_mathematica(result)
+        print(result_to_mathematica(result))
     else:
-        report_sympy(result)
+        print(result_to_sympy(result))
     sys.stdout.flush()
 
 if __name__ == "__main__":

@@ -1385,11 +1385,15 @@ def _runlength_encode(values):
         result.append((repeat, prev_val))
     return result
 
+class DevNullWriter:
+    def write(self, s): pass
+    def flush(self): pass
+
 class DistevalLibrary(object):
     r'''
     Interface to the integration library produced by
     :func:`.make_package` or :func:`.loop_package` and built by
-    ``make disteval.done``.
+    ``make disteval``.
 
     :param specification_path:
         str;
@@ -1398,9 +1402,22 @@ class DistevalLibrary(object):
 
         .. code::
 
-            $ make disteval.done
+            $ make disteval
 
         in the root directory of the integration library.
+
+    :param workers:
+        list of string or list of list of string, optional;
+        List of commands that start pySecDec workers.
+        Default: one ``"nice python3 -m pySecDecContrib pysecdec_cpuworker"``
+        per available CPU, or one
+        ``"nice python3 -m pySecDecContrib pysecdec_cudaworker -d <i>"``
+        for each available GPU.
+
+    :param verbose:
+        bool, optional;
+        Print the set up log.
+        Default: ``True``.
 
     Instances of this class can be called with the
     following arguments:
@@ -1472,14 +1489,6 @@ class DistevalLibrary(object):
         Default: the ``coefficients/`` directory next to the
         specification file.
 
-    :param workers:
-        list of string or dict, optional;
-        List of commands that start pySecDec workers.
-        Default: one ``"nice python3 -m pySecDecContrib pysecdec_cpuworker"``
-        per available CPU, or one
-        ``"nice python3 -m pySecDecContrib pysecdec_cudaworker -d <i>"``
-        for each available GPU.
-
     :param format:
         string;
         The format of the returned result, ``"sympy"`` or
@@ -1489,65 +1498,57 @@ class DistevalLibrary(object):
     value as a series in the regulator powers.
     '''
 
-    def __init__(self, specification_path):
+    def __init__(self, specification_path, workers=None, verbose=True):
+        import asyncio
+        import sys
+        from . import disteval
+        disteval.log_file = sys.stderr if verbose else DevNullWriter()
+        dirname = os.path.dirname(specification_path)
+        if workers is None:
+            workers = disteval.default_worker_commands(dirname)
+        loop = asyncio.get_event_loop()
         self.filename = specification_path
+        self.dirname = dirname
+        self.prepared = loop.run_until_complete(disteval.prepare_eval(workers, dirname, specification_path))
 
     def __call__(self,
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
-            number_of_presamples=1e4, shifts=32, workers=None,
+            number_of_presamples=1e4, shifts=32,
             coefficients=None, verbose=True, format="sympy"):
+        import asyncio
         import json
-        import subprocess
+        import math
         import sys
-        import tempfile
+        import time
+        from . import disteval
         if real_parameters or complex_parameters:
             with open(self.filename) as f:
                 spec = json.load(f)
             realp = spec["realp"]
             for i, val in enumerate(real_parameters):
-                parameters[realp[i]] = val
+                parameters[realp[i]] = float(val)
             complexp = spec["complexp"]
             for i, val in enumerate(complex_parameters):
-                parameters[complexp[i]] = val
-        if workers is not None:
-            clusterfile = tempfile.NamedTemporaryFile(prefix="pSD.", suffix=".json", mode="w", encoding="utf8")
-            json.dump({"cluster": [
-                w if isinstance(w, dict) else {"count": 1, "command": str(w)}
-                for w in workers
-            ]}, clusterfile)
-            clusterfile.flush()
-            clusteropt = ("--cluster", clusterfile.name)
+                parameters[complexp[i]] = complex(val)
+        if not isinstance(epsabs, list) and not isinstance(epsabs, tuple):
+            epsabs = [epsabs]
+        if not isinstance(epsrel, list) and not isinstance(epsrel, tuple):
+            epsrel = [epsrel]
+        if coefficients is None:
+            coefficients = os.path.join(self.dirname, "coefficients")
+        deadline = math.inf if timeout is None else time.time() + timeout
+        loop = asyncio.get_event_loop()
+        disteval.log_file = sys.stderr if verbose else DevNullWriter()
+        result = loop.run_until_complete(disteval.do_eval(
+            self.prepared, coefficients, epsabs, epsrel,
+            int(number_of_presamples), int(points), int(shifts),
+            parameters, parameters, deadline))
+        if format == "sympy":
+            return disteval.result_to_sympy(result)
+        elif format == "mathematica":
+            return disteval.result_to_mathematica(result)
         else:
-            clusteropt = ()
-        if isinstance(epsabs, list):
-            epsabs = ",".join([
-                f"{v:.1e}" if n == 1 else f"{n}x{v:.1e}"
-                for n, v in _runlength_encode(epsabs)
-            ])
-        if isinstance(epsrel, list):
-            epsrel = ",".join([
-                f"{v:.1e}" if n == 1 else f"{n}x{v:.1e}"
-                for n, v in _runlength_encode(epsrel)
-            ])
-        output = subprocess.check_output([
-            sys.executable, "-m", "pySecDec.disteval",
-                self.filename,
-                "--format", str(format),
-                "--epsabs", str(epsabs),
-                "--epsrel", str(epsrel),
-                *(["--timeout", str(timeout)] if timeout is not None else []),
-                "--points", str(points),
-                "--presamples", str(number_of_presamples),
-                "--shifts", str(shifts),
-                *clusteropt,
-                *(["--coefficients", coefficients] if coefficients is not None else []),
-                *(f"{k}={v}" for k, v in parameters.items())
-            ],
-            encoding="utf8",
-            stderr=sys.stderr if verbose else subprocess.DEVNULL)
-        if format == "json":
-            result = json.loads(output.strip())
             result["sums"] = {
                 sum_name : {
                     tuple(exp) : (complex(val_re, val_im), complex(err_re, err_im))
@@ -1556,5 +1557,3 @@ class DistevalLibrary(object):
                 for sum_name, sum_terms in result["sums"].items()
             }
             return result
-        else:
-            return output.strip()

@@ -181,6 +181,17 @@ cmd_family(uint64_t token, FamilyCmd &c)
 }
 
 static double
+cmd_change_family_parameters(uint64_t token, FamilyCmd &c)
+{
+    assert(c.index < families.size());
+    Family &fam = families[c.index];
+    memcpy(fam.realp, c.realp, sizeof(fam.realp));
+    memcpy(fam.complexp, c.complexp, sizeof(fam.complexp));
+    printf("@[%" PRIu64 ",null,null]\n", token);
+    return 0;
+}
+
+static double
 cmd_kernel(uint64_t token, KernelCmd &c)
 {
     assert(c.familyidx < families.size());
@@ -616,6 +627,17 @@ handle_one_command()
         c.complex_result = parse_bool();
         match_str("]]\n");
         return cmd_family(token, c);
+    }
+    if (c == 'c') {
+        FamilyCmd c = {};
+        match_str("hangefamily\",[");
+        c.index = parse_uint();
+        match_c(',');
+        parse_real_array(c.realp, MAXDIM);
+        match_c(',');
+        parse_complex_array(c.complexp, MAXDIM);
+        match_str("]]\n");
+        return cmd_change_family_parameters(token, c);
     }
     if (c == 'k') {
         KernelCmd c = {};
