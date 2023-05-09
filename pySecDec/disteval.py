@@ -528,7 +528,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         amp_relerr = amp_abserr/amp_absval
         amp_relerr[amp_abserr == 0] = 0
         log("relerr =", amp_relerr)
-        amp_maxerr = np.maximum(epsabs, amp_absval*epsrel)
+        amp_maxerr = np.maximum(epsabs, np.maximum(amp_absval, amp_abserr)*epsrel)
         log("max abserr =", amp_maxerr)
         log("abserr K =", amp_abserr/amp_maxerr)
         if np.all(amp_abserr <= amp_maxerr):
