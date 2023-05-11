@@ -811,8 +811,8 @@ def result_to_sympy(result):
         text.append("  (\n")
         for p, (val_re, val_im), (err_re, err_im) in sum_terms:
             stem = "*".join(f"{r}^{p}" for r, p in zip(result["regulators"], p))
-            text.append(f"    +{stem}*({val_re:+.16e}{val_re:+.16e}j)\n")
-            text.append(f"    +{stem}*({err_re:+.16e}{err_re:+.16e}j)*plusminus\n")
+            text.append(f"    +{stem}*({val_re:+.16e}{val_im:+.16e}j)\n")
+            text.append(f"    +{stem}*({err_re:+.16e}{err_im:+.16e}j)*plusminus\n")
         if len(sum_terms) > 0:
             text.append("  ),\n" if ampid < namps-1 else "  )\n")
         else:
@@ -828,8 +828,8 @@ def result_to_mathematica(result):
         text.append("  (\n")
         for p, (val_re, val_im), (err_re, err_im) in sum_terms:
             stem = "*".join(f"{r}^{p}" for r, p in zip(result["regulators"], p))
-            text.append(f"    +{stem}*" + f"({val_re:+.16e}{val_re:+.16e}*I)\n".replace("e", "*10^"))
-            text.append(f"    +{stem}*" + f"({err_re:+.16e}{err_re:+.16e}*I)*plusminus\n".replace("e", "*10^"))
+            text.append(f"    +{stem}*" + f"({val_re:+.16e}{val_im:+.16e}*I)\n".replace("e", "*10^"))
+            text.append(f"    +{stem}*" + f"({err_re:+.16e}{err_im:+.16e}*I)*plusminus\n".replace("e", "*10^"))
         if len(sum_terms) > 0:
             text.append("  ),\n" if ampid < namps-1 else "  )\n")
         else:
