@@ -1416,7 +1416,7 @@ class DistevalLibrary(object):
 
     :param verbose:
         bool, optional;
-        Print the set up log.
+        Print the set up and the integration log.
         Default: ``True``.
 
     Instances of this class can be called with the
@@ -1480,7 +1480,7 @@ class DistevalLibrary(object):
     :param verbose:
         bool, optional;
         Print the integration log.
-        Default: ``True``.
+        Default: whatever was used in the __init__() call.
 
     :param coefficients:
         string, optional;
@@ -1520,13 +1520,14 @@ class DistevalLibrary(object):
             workers = disteval.default_worker_commands(dirname)
         self.filename = specification_path
         self.dirname = dirname
+        self.verbose = verbose
         self.prepared = asyncio.run(disteval.prepare_eval(workers, dirname, specification_path))
 
     def __call__(self,
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
             number_of_presamples=1e4, shifts=32,
-            coefficients=None, verbose=True, format="sympy"):
+            coefficients=None, verbose=None, format="sympy"):
         import asyncio
         import json
         import math
@@ -1549,6 +1550,7 @@ class DistevalLibrary(object):
         if coefficients is None:
             coefficients = os.path.join(self.dirname, "coefficients")
         deadline = math.inf if timeout is None else time.time() + timeout
+        if verbose is None: verbose = self.verbose
         disteval.log_file = sys.stderr if verbose else DevNullWriter()
         result = asyncio.run(disteval.do_eval(
             self.prepared, coefficients, epsabs, epsrel,
