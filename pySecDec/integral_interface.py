@@ -1502,14 +1502,25 @@ class DistevalLibrary(object):
         import asyncio
         import sys
         from . import disteval
+        # Normally this code is not supposed to be called from
+        # within an asyncio event loop, but e.g. Jupyter notebook
+        # kernel insists on starting it automatically, breaking
+        # any internal asyncio usage. See [1,2,3].
+        #
+        # The only solution at the moment is to patch asyncio to
+        # allow nested event loop execution via nest_asyncio.
+        #
+        # [1] https://github.com/jupyter/notebook/issues/3397
+        # [2] https://github.com/ipython/ipykernel/issues/548
+        # [3] https://github.com/python/cpython/issues/66435
+        import nest_asyncio; nest_asyncio.apply()
         disteval.log_file = sys.stderr if verbose else DevNullWriter()
         dirname = os.path.dirname(specification_path)
         if workers is None:
             workers = disteval.default_worker_commands(dirname)
-        loop = asyncio.get_event_loop()
         self.filename = specification_path
         self.dirname = dirname
-        self.prepared = loop.run_until_complete(disteval.prepare_eval(workers, dirname, specification_path))
+        self.prepared = asyncio.run(disteval.prepare_eval(workers, dirname, specification_path))
 
     def __call__(self,
             parameters={}, real_parameters=[], complex_parameters=[],
@@ -1538,9 +1549,8 @@ class DistevalLibrary(object):
         if coefficients is None:
             coefficients = os.path.join(self.dirname, "coefficients")
         deadline = math.inf if timeout is None else time.time() + timeout
-        loop = asyncio.get_event_loop()
         disteval.log_file = sys.stderr if verbose else DevNullWriter()
-        result = loop.run_until_complete(disteval.do_eval(
+        result = asyncio.run(disteval.do_eval(
             self.prepared, coefficients, epsabs, epsrel,
             int(number_of_presamples), int(points), int(shifts),
             parameters, parameters, deadline))
