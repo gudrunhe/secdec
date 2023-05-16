@@ -5,32 +5,33 @@ import numpy as np
 
 if __name__ == "__main__":
     
-    raw_coeffs = ['8*((4 - 2*eps)^2*s^2 - 3*(4 - 2*eps)*t^2 - 10*(4 - 2*eps)*t*u - 3*(4 - 2*eps)*u^2 + 2*t^2 + 8*t*u + 2*u^2)/((3 - 2*eps)*s^2)',
-    '2*((4 - 2*eps)^3*s^2 - 11*(4 - 2*eps)^2*t^2 + 26*(4 - 2*eps)*t^2 - 24*(4 - 2*eps)^2*t*u + 78*(4 - 2*eps)*t*u - 9*(4 - 2*eps)^2*u^2 + 20*(4 - 2*eps)*u^2 - 16*t^2 - 56*t*u - 12*u^2)/((3 - 2*eps)*s^2)',
-    '((4 - 2*eps)*t + 3*(4 - 2*eps)*u - 4*t - 8*u)/s',
-    '-(3*(4 - 2*eps)*t + (4 - 2*eps)*u - 8*t - 4*u)/s',
-    '-2*((4 - 2*eps)^2*s^2 - 5*(4 - 2*eps)*s^2 + 4*(4 - 2*eps)*u^2 + 4*t^2 + 8*t*u)/((3 - 2*eps)*s)',
-    '-t*((4 - 2*eps)^2*s + 9*(4 - 2*eps)*t + (4 - 2*eps)*u - 8*t)/(2*(3 - 2*eps)*s)',
-    'u*((4 - 2*eps)^2*s + (4 - 2*eps)*t + 9*(4 - 2*eps)*u - 8*u)/(2*(3 - 2*eps)*s)',
-    '-2*((4 - 2*eps)^2*s^2 - 5*(4 - 2*eps)*s^2 + 4*(4 - 2*eps)*u^2 + 4*t^2 + 8*t*u)/((3 - 2*eps)*s)',
-    '-t*((4 - 2*eps)^2*s + 9*(4 - 2*eps)*t + (4 - 2*eps)*u - 8*t)/(2*(3 - 2*eps)*s)',
-    'u*((4 - 2*eps)^2*s + (4 - 2*eps)*t + 9*(4 - 2*eps)*u - 8*u)/(2*(3 - 2*eps)*s)',
-    '-t*(3*(4 - 2*eps)^2*s^2 - 3*(4 - 2*eps)*t^2 - 30*(4 - 2*eps)*t*u - 11*(4 - 2*eps)*u^2 + 24*t*u + 8*u^2)/(2*(3 - 2*eps)*s)',
-    'u*(3*(4 - 2*eps)^2*s^2 - 11*(4 - 2*eps)*t^2 - 30*(4 - 2*eps)*t*u - 3*(4 - 2*eps)*u^2 + 8*t^2 + 24*t*u)/(2*(3 - 2*eps)*s)']
+    coeffs = [
+        '8*((4 - 2*eps)^2*s^2 - 3*(4 - 2*eps)*t^2 - 10*(4 - 2*eps)*t*u - 3*(4 - 2*eps)*u^2 + 2*t^2 + 8*t*u + 2*u^2)/((3 - 2*eps)*s^2)',
+        '2*((4 - 2*eps)^3*s^2 - 11*(4 - 2*eps)^2*t^2 + 26*(4 - 2*eps)*t^2 - 24*(4 - 2*eps)^2*t*u + 78*(4 - 2*eps)*t*u - 9*(4 - 2*eps)^2*u^2 + 20*(4 - 2*eps)*u^2 - 16*t^2 - 56*t*u - 12*u^2)/((3 - 2*eps)*s^2)',
+        '((4 - 2*eps)*t + 3*(4 - 2*eps)*u - 4*t - 8*u)/s',
+        '-(3*(4 - 2*eps)*t + (4 - 2*eps)*u - 8*t - 4*u)/s',
+        '-2*((4 - 2*eps)^2*s^2 - 5*(4 - 2*eps)*s^2 + 4*(4 - 2*eps)*u^2 + 4*t^2 + 8*t*u)/((3 - 2*eps)*s)',
+        '-t*((4 - 2*eps)^2*s + 9*(4 - 2*eps)*t + (4 - 2*eps)*u - 8*t)/(2*(3 - 2*eps)*s)',
+        'u*((4 - 2*eps)^2*s + (4 - 2*eps)*t + 9*(4 - 2*eps)*u - 8*u)/(2*(3 - 2*eps)*s)',
+        '-2*((4 - 2*eps)^2*s^2 - 5*(4 - 2*eps)*s^2 + 4*(4 - 2*eps)*u^2 + 4*t^2 + 8*t*u)/((3 - 2*eps)*s)',
+        '-t*((4 - 2*eps)^2*s + 9*(4 - 2*eps)*t + (4 - 2*eps)*u - 8*t)/(2*(3 - 2*eps)*s)',
+        'u*((4 - 2*eps)^2*s + (4 - 2*eps)*t + 9*(4 - 2*eps)*u - 8*u)/(2*(3 - 2*eps)*s)',
+        '-t*(3*(4 - 2*eps)^2*s^2 - 3*(4 - 2*eps)*t^2 - 30*(4 - 2*eps)*t*u - 11*(4 - 2*eps)*u^2 + 24*t*u + 8*u^2)/(2*(3 - 2*eps)*s)',
+        'u*(3*(4 - 2*eps)^2*s^2 - 11*(4 - 2*eps)*t^2 - 30*(4 - 2*eps)*t*u - 3*(4 - 2*eps)*u^2 + 8*t^2 + 24*t*u)/(2*(3 - 2*eps)*s)']
 
-    raw_N_coeffs = ['0', '2*(-(4 - 2*eps)^2*s^2 + 4*(4 - 2*eps)*t^2 + 12*(4 - 2*eps)*t*u + 4*(4 - 2*eps)*u^2 - 4*t^2 - 16*t*u - 4*u^2)/((3 - 2*eps)*s^2)', '0', '0', '0', '0', '0', '0', '0', '0' ,'0' ,'0']
-
-    coeffs = []
-    for raw_coeff in raw_coeffs:
-        formatted_coeff = raw_coeff.replace('^', '**')
-        formatted_coeff = formatted_coeff.replace(' ', '')
-        coeffs.append(formatted_coeff)
-    
-    N_coeffs = []
-    for raw_N_coeff in raw_N_coeffs:
-        formatted_coeff = raw_N_coeff.replace('^', '**')
-        formatted_coeff = formatted_coeff.replace(' ', '')
-        N_coeffs.append(formatted_coeff)
+    N_coeffs = [
+        '0',
+        '2*(-(4 - 2*eps)^2*s^2 + 4*(4 - 2*eps)*t^2 + 12*(4 - 2*eps)*t*u + 4*(4 - 2*eps)*u^2 - 4*t^2 - 16*t*u - 4*u^2)/((3 - 2*eps)*s^2)',
+        '0',
+        '0',
+        '0',
+        '0',
+        '0',
+        '0',
+        '0',
+        '0',
+        '0',
+        '0']
 
     additional_prefactor = 'gamma(1-2*eps)/(gamma(1-eps)*gamma(1-eps)*gamma(1 + eps))'
     
@@ -77,17 +78,25 @@ if __name__ == "__main__":
         return LoopPackage(name, loop_integral = li, real_parameters = real_parameters, 
                             decomposition_method = 'geometric', requested_orders = [0], additional_prefactor = additional_prefactor)
 
-
-    B0_terms = [B0(0, 'B00'), B0('s', 'B0s'), B0('t', 'B0t'), B0('u', 'B0u')]
-    C0_terms = [C0(0, 0, 's', 'C00s'), C0(0, 0, 't', 'C00t'), C0(0, 0, 'u', 'C00u'), C0(0, 's', 0, 'C0s0'), C0(0, 't', 0, 'C0t0'), C0(0, 'u', 0, 'C0u0')]
-    D0_terms = [D0(0,0,0,0, 's', 't', 'D0000st'), D0(0,0,0,0, 's', 'u', 'D0000su')]
-
-    all_terms = B0_terms + C0_terms + D0_terms #term[0] corresponds to coefficient[0] etc.
+    integrals = [
+        B0(0, 'B00'),
+        B0('s', 'B0s'),
+        B0('t', 'B0t'),
+        B0('u', 'B0u'),
+        C0(0, 0, 's', 'C00s'),
+        C0(0, 0, 't', 'C00t'),
+        C0(0, 0, 'u', 'C00u'),
+        C0(0, 's', 0, 'C0s0'),
+        C0(0, 't', 0, 'C0t0'),
+        C0(0, 'u', 0, 'C0u0'),
+        D0(0,0,0,0, 's', 't', 'D0000st'),
+        D0(0,0,0,0, 's', 'u', 'D0000su')
+    ]
 
     sum_package(
             'full_amplitude',
-            all_terms,
-            coefficients = {'O(1)': coeffs, 'O(Nf)': N_coeffs}
+            integrals,
+            coefficients = {'O(1)': coeffs, 'O(Nf)': N_coeffs},
             regulators = ['eps'],
             requested_orders = [0],
             real_parameters = ['s', 't', 'u'], #Make sure that the list of real parameters contain every symbolic kinematic invariant defined in 'all_integrals'
