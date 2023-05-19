@@ -1507,6 +1507,12 @@ class DistevalLibrary(object):
         The number of shifts of the QMC lattice.
         Default: ``32``.
 
+    :param gvCandidates:
+        unsigned int, optional;
+        The number of generating vectors tested for median QMC rule.
+        If set to 0: use precomputed generating vectors.
+        Default: ``11``.
+
     :param verbose:
         bool, optional;
         Print the integration log.
@@ -1537,7 +1543,7 @@ class DistevalLibrary(object):
     def __call__(self,
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
-            number_of_presamples=1e4, shifts=32, workers=None,
+            number_of_presamples=1e4, shifts=32, gvCandidates=11, workers=None,
             coefficients=None, verbose=True):
         import json
         import subprocess
@@ -1581,6 +1587,7 @@ class DistevalLibrary(object):
                 "--points", str(points),
                 "--presamples", str(number_of_presamples),
                 "--shifts", str(shifts),
+                "--gvCandidates", str(gvCandidates),
                 *clusteropt,
                 *(["--coefficients", coefficients] if coefficients is not None else []),
                 *(f"{k}={v}" for k, v in parameters.items())

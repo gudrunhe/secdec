@@ -12,6 +12,7 @@ Options:
     --shifts=X          use this many lattice shifts per integral (default: 32)
     --cluster=X         use this cluster.json file
     --coefficients=X    use coefficients from this directory
+    --gvCandidates=X    number of  generating vectors candidates for median Qmc rule, use predefined generating vectors if set to 0 (default: 11)
     --help              show this help message
 Arguments:
     <var>=X             set this integral or coefficient variable to a given value
@@ -303,7 +304,7 @@ def adjust_n(W2, V, w, a, tau, nmin, nmax, names=[]):
         assert not np.any(np.isnan(n))
     return n
 
-async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresample, npoints0, nshifts, valuemap, valuemap_coeff, deadline):
+async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresample, npoints0, nshifts, gvCandidates, valuemap, valuemap_coeff, deadline):
     # Load the integrals from the requested json file
     t0 = time.time()
 
@@ -463,7 +464,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     dims = [infos[fam]["dimension"] for fam in fams]
     genvecs = [None] * len(kernel2idx)
     oldlattices = np.zeros(len(kernel2idx), dtype=np.float64)
-    maxlattices = np.array([max_lattice_size(d) for d in dims], dtype=np.float64)
+    maxlattices = np.array([(np.inf if gvCandidates else max_lattice_size(d)) for d in dims], dtype=np.float64)
     lattices = np.zeros(len(kernel2idx), dtype=np.float64)
     for i in range(len(kernel2idx)):
         lattices[i], genvecs[i] = generating_vector(dims[i], npoints0)
@@ -475,6 +476,8 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     kern_di = np.ones(len(kernel2idx))
     kern_val = np.zeros(len(kernel2idx), dtype=np.complex128)
     kern_var = np.full(len(kernel2idx), np.inf, dtype=np.complex128)
+
+    genvec_candidates = dict()
 
     def shift_done_cb(result, exception, w, idx, shift):
         (re, im), di, dt = result
@@ -497,6 +500,23 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             shift_rnd[idx, s] = shift
             shift_tag[idx, s] = par.call_cb("integrate",
                 (idx+1, int(lattices[idx]), 0, int(lattices[idx]), genvecs[idx],
+                shift.tolist(),
+                deformp[idx]),
+                shift_done_cb, (idx, s))
+
+
+    def schedule_kernel_medianGV(idx):
+        for s in range(gvCandidates):
+            shift = kern_rng[idx].rand(dims[idx])
+            shift_rnd[idx, s] = shift
+            def rand():
+                r = 0
+                while math.gcd(int(lattices[idx]),r) != 1:
+                    r = kern_rng[idx].randint(1,(lattices[idx])-1)
+                return r
+            genvec_candidates[(idx, s)] = tuple( rand() for _ in range(dims[idx]) )
+            shift_tag[idx, s] = par.call_cb("integrate",
+                (idx+1, int(lattices[idx]), 0, int(lattices[idx]), genvec_candidates[(idx,s)],
                 shift.tolist(),
                 deformp[idx]),
                 shift_done_cb, (idx, s))
@@ -555,6 +575,32 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         while True:
             mask_todo = lattices != oldlattices
             if np.any(mask_todo):
+                if gvCandidates:
+                    log(f"distributing {np.count_nonzero(mask_todo)}*{gvCandidates} jobs to construct generating vectors")
+                    for i in mask_todo.nonzero()[0]:
+                        schedule_kernel_medianGV(int(i))
+                        await asyncio.sleep(0)
+                    log("worker queue sizes:")
+                    for w in par.workers:
+                        log(f"- {w.name}: {w.queue_size()}")
+                    while par.queue_size() > 0:
+                        log(f"still todo: {par.queue_size()}")
+                        early_exit = time.time() > deadline
+                        if early_exit:
+                            log("WARNING: timeout reached, will stop soon")
+                            break
+                        await asyncio.sleep(1)
+                    def signedMax(x):
+                        if isinstance(x,complex):
+                            return x.real if abs(x.real) > abs(x.imag) else x.imag
+                        else: return x
+                    for i in mask_todo.nonzero()[0]:
+                        median = np.median([signedMax(x) for x in shift_val[i,:gvCandidates]])
+                        for s in range(gvCandidates):
+                            if signedMax(shift_val[i,s]) == median:
+                                genvecs[i] = list(genvec_candidates[(i,s)])
+                            shift_val[i,s] = np.nan
+
                 log(f"distributing {np.count_nonzero(mask_todo)}*{nshifts} integration jobs")
                 for i in mask_todo.nonzero()[0]:
                     schedule_kernel(int(i))
@@ -618,18 +664,18 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             n = propose_lattices(amp_val, amp_var)
             if n is None:
                 return amp_val, amp_var
-            newlattices = np.zeros(len(kernel2idx), dtype=np.float64)
             newgenvecs = [None] * len(kernel2idx)
-            for i in range(len(kernel2idx)):
-                newlattices[i], newgenvecs[i] = generating_vector(dims[i], n[i])
-            if not np.any(newlattices != lattices):
+            if gvCandidates == 0: 
+                for i in range(len(kernel2idx)):
+                    n[i], newgenvecs[i] = generating_vector(dims[i], n[i])
+            if not np.any(n != lattices):
                 log("can't increase the lattice sizes any more; giving up")
                 return amp_val, amp_var
-            for i, (l1, l2) in enumerate(zip(lattices, newlattices)):
+            for i, (l1, l2) in enumerate(zip(lattices, n)):
                 if l1 != l2:
                     log(f"lattice[k{i}] = {l1:.0f} -> {l2:.0f} ({l2/l1:.1f}x)")
             oldlattices[:] = lattices
-            lattices[:] = newlattices
+            lattices[:] = n
             genvecs[:] = newgenvecs
 
     if not early_exit:
@@ -774,9 +820,10 @@ def main():
     nshifts = 32
     clusterfile = None
     coeffsdir = None
+    gvCandidates = 11
     deadline = math.inf
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "presamples=", "shifts=", "timeout=", "help"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "presamples=", "shifts=", "timeout=", "gvCandidates=", "help"])
     except getopt.GetoptError as e:
         print(e, file=sys.stderr)
         print("use --help to see the usage", file=sys.stderr)
@@ -790,6 +837,7 @@ def main():
         elif key == "--presamples": npresamples = int(float(value))
         elif key == "--shifts": nshifts = int(float(value))
         elif key == "--timeout": deadline = time.time() + parse_unit(value, {"s": 1, "m": 60, "h": 60*60, "d": 24*60*60})
+        elif key == "--gvCandidates": gvCandidates = int(float(value))
         elif key == "--help":
             print(__doc__.strip())
             exit(0)
@@ -800,6 +848,9 @@ def main():
     dirname = os.path.dirname(intfile)
     if coeffsdir is None: coeffsdir = os.path.join(dirname, "coefficients")
     clusterfile = os.path.join(dirname, "cluster.json") if clusterfile is None else clusterfile
+    assert gvCandidates >= 0
+    if gvCandidates and gvCandidates % 2 == 0:
+        gvCandidates += 1
     log("Settings:")
     log(f"- file = {intfile}")
     log(f"- epsabs = {epsabs}")
@@ -807,6 +858,7 @@ def main():
     log(f"- points = {npoints}")
     log(f"- presamples = {npresamples}")
     log(f"- shifts = {nshifts}")
+    log(f"- gvCandidates = {gvCandidates}")
     for arg in args[1:]:
         if "=" not in arg: raise ValueError(f"Bad argument: {arg}")
         key, value = arg.split("=", 1)
@@ -842,7 +894,7 @@ def main():
 
     # Begin evaluation
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, valuemap_int, valuemap_coeff, deadline))
+    loop.run_until_complete(doeval(workers, dirname, coeffsdir, intfile, epsabs, epsrel, npresamples, npoints, nshifts, gvCandidates, valuemap_int, valuemap_coeff, deadline))
 
 if __name__ == "__main__":
     main()
