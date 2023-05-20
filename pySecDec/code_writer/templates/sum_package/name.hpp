@@ -136,4 +136,17 @@ namespace %(name)s
     #endif
     // --}
 };
+
+#ifdef SECDEC_WITH_CUDA
+// provide custom common_type (together + integral) = together
+namespace std 
+{
+    template <>
+    struct common_type<%(name)s::cuda_together_integrand_t, %(name)s::cuda_integrand_t> 
+    {
+        using type = %(name)s::cuda_together_integrand_t;
+    };
+}
+#endif
+
 #endif
