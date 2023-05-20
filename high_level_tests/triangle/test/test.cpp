@@ -103,12 +103,12 @@ void check_pySecDec_triangle(double s, double msq, secdecutil::Series<std::compl
             std::cout << "checking order \"eps^" << order << "\" ..." << std::endl;
 
             // check that the uncertainties are reasonable
-            REQUIRE( result_with_prefactor.at(order).uncertainty.real() <= std::abs(2*epsrels.at(order) * target_result_with_prefactor.at(order).real()) );
-            REQUIRE( result_with_prefactor.at(order).uncertainty.imag() <= std::abs(2*epsrels.at(order) * target_result_with_prefactor.at(order).imag()) );
+            REQUIRE( result_with_prefactor.at(order).uncertainty.real() <= abs(2*epsrels.at(order) * target_result_with_prefactor.at(order).real()) );
+            REQUIRE( result_with_prefactor.at(order).uncertainty.imag() <= abs(2*epsrels.at(order) * target_result_with_prefactor.at(order).imag()) );
 
             // check that the desired uncertainties are reached
-            REQUIRE( result_with_prefactor.at(order).uncertainty.real() <= std::abs(epsrels.at(order) * result_with_prefactor.at(order).value) );
-            REQUIRE( result_with_prefactor.at(order).uncertainty.imag() <= std::abs(epsrels.at(order) * result_with_prefactor.at(order).value) );
+            REQUIRE( result_with_prefactor.at(order).uncertainty.real() <= abs(epsrels.at(order) * result_with_prefactor.at(order).value) );
+            REQUIRE( result_with_prefactor.at(order).uncertainty.imag() <= abs(epsrels.at(order) * result_with_prefactor.at(order).value) );
 
             // check integral value
             REQUIRE(  result_with_prefactor.at(order).value.real() == Approx( target_result_with_prefactor.at(order).real() ).epsilon( epsrels.at(order) )  );
