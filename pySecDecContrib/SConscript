@@ -63,7 +63,7 @@ contrib += \
                 -e 's/stdout/stderr/g' src/common/stddecl.h && \
         """,
         extra_configure_args="CFLAGS='-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'",
-        build_target="all")
+        build_target="lib")
 
 form_files = ["bin/form", "bin/tform"]
 contrib += \
