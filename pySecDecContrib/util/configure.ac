@@ -20,7 +20,7 @@ AC_CONFIG_MACRO_DIR([acinclude.d])
 
 AC_PROG_CXX
 
-dnl noext: use -std=c++14 rather than -std=gnu++14
-AX_CXX_COMPILE_STDCXX_14([noext])
+dnl noext: use -std=c++17 rather than -std=gnu++14
+AX_CXX_COMPILE_STDCXX_17([noext])
 
 AC_OUTPUT(Makefile secdecutil/Makefile tests/Makefile)

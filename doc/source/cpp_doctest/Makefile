@@ -13,7 +13,7 @@ CXX ?= g++
 
 # c++ compiler flags
 SECDEC_CONTRIB = $(shell ${PYTHON} -m pySecDecContrib --dirname)
-CXXFLAGS = -std=c++14 -O2 -I. -I$(TOPDIR) -I$(SECDEC_CONTRIB)/include
+CXXFLAGS = -std=c++17 -O2 -I. -I$(TOPDIR) -I$(SECDEC_CONTRIB)/include
 
 # linker flags
 LDFLAGS = -L$(SECDEC_CONTRIB)/lib
