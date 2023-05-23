@@ -516,7 +516,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     kers = [ker for fam, ker in kernel2idx.keys()]
     dims = [infos[fam]["dimension"] for fam in fams]
     genvecs = [None] * len(kernel2idx)
-    oldlattices = np.zeros(len(kernel2idx), dtype=np.float64)
+    oldlattices = np.full(len(kernel2idx), np.nan, dtype=np.float64)
     maxlattices = np.array([max_lattice_size(d) for d in dims], dtype=np.float64)
     lattices = np.zeros(len(kernel2idx), dtype=np.float64)
     for i in range(len(kernel2idx)):
@@ -609,6 +609,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
         while True:
             mask_todo = lattices != oldlattices
             if np.any(mask_todo):
+                # Schedule all kernels in mask_todo
                 log(f"distributing {np.count_nonzero(mask_todo)}*{nshifts} integration jobs")
                 for i in mask_todo.nonzero()[0]:
                     schedule_kernel(int(i))
@@ -617,6 +618,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 for w in par.workers:
                     log(f"- {w.name}: {w.queue_size()}")
 
+                # Wait for the results
                 log(f"working on {par.queue_size()} jobs across {len(par.workers)} workers...")
                 try:
                     tilldeadline = deadline - time.time()
@@ -626,6 +628,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                     log("WARNING: timeout reached, will stop soon")
                     early_exit = True
 
+                # Not all kernels might be done due to an early exit
                 mask_done = np.logical_and(mask_todo, ~np.any(np.isnan(shift_val), axis=1))
                 log(f"integration done, updated {np.count_nonzero(mask_done)} kernels")
                 shift_val_done = shift_val[mask_done]
@@ -635,14 +638,14 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 new_kern_var = np.var(np.real(shift_val_done), axis=1) + (1j)*np.var(np.imag(shift_val_done), axis=1)
                 new_kern_var /= lattices[mask_done]**2 * nshifts
 
-                latticex = lattices/oldlattices
+                latticex = lattices[mask_done]/oldlattices[mask_done]
                 precisionx = np.sqrt((np.real(kern_var[mask_done]) + np.imag(kern_var[mask_done])) / (np.real(new_kern_var) + np.imag(new_kern_var)))
                 for i, idx in enumerate(mask_done.nonzero()[0]):
                     idx = int(idx)
                     if precisionx[i] < 1.0:
-                        log(f"k{idx} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({1/precisionx[i]:.4g}x worse at {latticex[i]:.1f}x lattice)")
+                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({1/precisionx[i]:.4g}x worse at {latticex[i]:.1f}x lattice)")
                     else:
-                        log(f"k{idx} @ {lattices[i]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
+                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
                 submask_lucky = new_kern_var <= kern_var[mask_done]
                 kern_val[mask_done] = np.where(submask_lucky, new_kern_val, kern_val[mask_done])
                 kern_var[mask_done] = np.where(submask_lucky, new_kern_var, kern_var[mask_done])
