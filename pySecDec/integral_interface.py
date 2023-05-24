@@ -1511,7 +1511,7 @@ class DistevalLibrary(object):
         unsigned int, optional;
         The number of generating vectors tested for median QMC rule.
         If set to 0: use precomputed generating vectors.
-        Default: ``11``.
+        Default: ``0``.
 
     :param verbose:
         bool, optional;
@@ -1543,7 +1543,7 @@ class DistevalLibrary(object):
     def __call__(self,
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
-            number_of_presamples=1e4, shifts=32, gvCandidates=11, workers=None,
+            number_of_presamples=1e4, shifts=32, gvCandidates=0, workers=None,
             coefficients=None, verbose=True):
         import json
         import subprocess

@@ -12,7 +12,7 @@ Options:
     --shifts=X          use this many lattice shifts per integral (default: 32)
     --cluster=X         use this cluster.json file
     --coefficients=X    use coefficients from this directory
-    --gvCandidates=X    number of  generating vectors candidates for median Qmc rule, use predefined generating vectors if set to 0 (default: 11)
+    --gvCandidates=X    number of  generating vectors candidates for median Qmc rule, use predefined generating vectors if set to 0 (default: 0)
     --help              show this help message
 Arguments:
     <var>=X             set this integral or coefficient variable to a given value
@@ -834,7 +834,7 @@ def main():
     nshifts = 32
     clusterfile = None
     coeffsdir = None
-    gvCandidates = 11
+    gvCandidates = 0
     deadline = math.inf
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "presamples=", "shifts=", "timeout=", "gvCandidates=", "help"])
