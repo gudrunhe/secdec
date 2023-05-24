@@ -12,7 +12,9 @@ Options:
     --shifts=X          use this many lattice shifts per integral (default: 32)
     --cluster=X         use this cluster.json file
     --coefficients=X    use coefficients from this directory
-    --gvCandidates=X    number of  generating vectors candidates for median Qmc rule, use predefined generating vectors if set to 0 (default: 0)
+    --gvCandidates=X    number of  generating vector candidates for median Qmc rule. (default: -11)
+                        If gvCandidates=0: Use predefined generating vectors
+                        If gvCandidates<0: Use predefined generating vectors by default, but construct larger lattices using median Qmc rule, if required.
     --help              show this help message
 Arguments:
     <var>=X             set this integral or coefficient variable to a given value
@@ -248,7 +250,7 @@ def bracket_mul(br1, br2, maxorders):
                 br[key] = br.get(key, 0) + v1*v2
     return br
 
-def adjust_1d_n(W2, V, w, a, tau, nmin, nmax):
+def adjust_1d_n(W2, V, w, a, tau, nmin, nmax, gvCandidates):
     assert np.all(W2 > 0)
     assert np.all(w > 0)
     assert np.all(tau > 0)
@@ -260,7 +262,8 @@ def adjust_1d_n(W2, V, w, a, tau, nmin, nmax):
     n *= (1/V * (W2 @ (w/n**a)))**(1/a)
     assert not np.any(np.isinf(n))
     assert not np.any(np.isnan(n))
-    # Enforce nmax, raising the rest
+    # if not using medianQMC: Enforce nmax, raising the rest
+    if gvCandidates != 0: return n
     mask = (n > nmax)
     while True:
         n[mask] = nmax[mask]
@@ -294,13 +297,13 @@ def adjust_1d_n(W2, V, w, a, tau, nmin, nmax):
         mask |= add
     return n
 
-def adjust_n(W2, V, w, a, tau, nmin, nmax, names=[]):
+def adjust_n(W2, V, w, a, tau, nmin, nmax, gvCandidates, names=[]):
     assert np.all(V>0)
     assert len(W2) == len(V)
     n = nmin.copy()
     for i in range(len(W2)-1, -1, -1):
         mask = (w != 0) & (W2[i,:] != 0)
-        n[mask] = adjust_1d_n(W2[i,mask], V[i], w[mask], a, tau[mask], n[mask], nmax[mask])
+        n[mask] = adjust_1d_n(W2[i,mask], V[i], w[mask], a, tau[mask], n[mask], nmax[mask], gvCandidates)
         assert not np.any(np.isnan(n))
     return n
 
@@ -464,7 +467,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     dims = [infos[fam]["dimension"] for fam in fams]
     genvecs = [None] * len(kernel2idx)
     oldlattices = np.zeros(len(kernel2idx), dtype=np.float64)
-    maxlattices = np.array([(np.inf if gvCandidates else max_lattice_size(d)) for d in dims], dtype=np.float64)
+    maxlattices = np.array([max_lattice_size(d) for d in dims], dtype=np.float64)
     lattices = np.zeros(len(kernel2idx), dtype=np.float64)
     for i in range(len(kernel2idx)):
         lattices[i], genvecs[i] = generating_vector(dims[i], npoints0)
@@ -507,7 +510,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
     def shift_done_cb(result, exception, w, idx, shift):
         (re, im), di, dt = result
         if math.isnan(re) or math.isnan(im):
-            for s in range(gvCandidates):
+            for s in range(abs(gvCandidates)):
                 par.cancel_cb(shift_tag[idx, s])
             deformp[idx] = tuple(p*0.9 for p in deformp[idx])
             log(f"got NaN from k{idx}; decreasing deformp by 0.9 to {deformp[idx]}")
@@ -520,7 +523,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 kern_dt[idx] += dt
 
     def schedule_kernel_medianGV(idx):
-        for s in range(gvCandidates):
+        for s in range(abs(gvCandidates)):
             shift = kern_rng[idx].rand(dims[idx])
             shift_rnd[idx, s] = shift
             def rand():
@@ -573,7 +576,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         tau = kern_db/kern_di
         kern_absvar = np.real(kern_var) + np.imag(kern_var)
         v0 = kern_absvar * lattices**scaling
-        n = adjust_n(W2, amp_maxerr**2, v0, scaling, tau, lattices, maxlattices)
+        n = adjust_n(W2, amp_maxerr**2, v0, scaling, tau, lattices, maxlattices, gvCandidates)
         n = np.clip(n, lattices, lattices*K)
         toobig = n >= lattices*K
         if np.any(toobig):
@@ -589,14 +592,16 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
         while True:
             mask_todo = lattices != oldlattices
             if np.any(mask_todo):
-                if gvCandidates:
-                    log(f"distributing {np.count_nonzero(mask_todo)}*{gvCandidates} jobs to construct generating vectors")
+                if gvCandidates != 0:
                     for i in mask_todo.nonzero()[0]:
-                        schedule_kernel_medianGV(int(i))
-                        await asyncio.sleep(0)
-                    log("worker queue sizes:")
-                    for w in par.workers:
-                        log(f"- {w.name}: {w.queue_size()}")
+                        if(gvCandidates > 0 or lattices[i] > maxlattices[i]):
+                            schedule_kernel_medianGV(int(i))
+                            await asyncio.sleep(0)
+                    if par.queue_size() > 0:
+                        log(f"distributing {par.queue_size()} jobs to construct generating vectors")
+                        log("worker queue sizes:")
+                        for w in par.workers:
+                            log(f"- {w.name}: {w.queue_size()}")
                     while par.queue_size() > 0:
                         log(f"still todo: {par.queue_size()}")
                         early_exit = time.time() > deadline
@@ -609,11 +614,12 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                             return x.real if abs(x.real) > abs(x.imag) else x.imag
                         else: return x
                     for i in mask_todo.nonzero()[0]:
-                        median = np.median([signedMax(x) for x in shift_val[i,:gvCandidates]])
-                        for s in range(gvCandidates):
-                            if signedMax(shift_val[i,s]) == median:
-                                genvecs[i] = list(genvec_candidates[(i,s)])
-                            shift_val[i,s] = np.nan
+                        if(gvCandidates > 0 or lattices[i] > maxlattices[i]):
+                            median = np.median([signedMax(x) for x in shift_val[i,:abs(gvCandidates)]])
+                            for s in range(abs(gvCandidates)):
+                                if signedMax(shift_val[i,s]) == median:
+                                    genvecs[i] = list(genvec_candidates[(i,s)])
+                                shift_val[i,s] = np.nan
 
                 log(f"distributing {np.count_nonzero(mask_todo)}*{nshifts} integration jobs")
                 for i in mask_todo.nonzero()[0]:
@@ -679,9 +685,11 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
             if n is None:
                 return amp_val, amp_var
             newgenvecs = [None] * len(kernel2idx)
-            if gvCandidates == 0: 
+            if gvCandidates <= 0: 
                 for i in range(len(kernel2idx)):
-                    n[i], newgenvecs[i] = generating_vector(dims[i], n[i])
+                    try: n[i], newgenvecs[i] = generating_vector(dims[i], n[i])
+                    except ValueError: 
+                        if gvCandidates < 0: pass
             if not np.any(n != lattices):
                 log("can't increase the lattice sizes any more; giving up")
                 return amp_val, amp_var
@@ -834,7 +842,7 @@ def main():
     nshifts = 32
     clusterfile = None
     coeffsdir = None
-    gvCandidates = 0
+    gvCandidates = -11
     deadline = math.inf
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "points=", "presamples=", "shifts=", "timeout=", "gvCandidates=", "help"])
@@ -862,9 +870,8 @@ def main():
     dirname = os.path.dirname(intfile)
     if coeffsdir is None: coeffsdir = os.path.join(dirname, "coefficients")
     clusterfile = os.path.join(dirname, "cluster.json") if clusterfile is None else clusterfile
-    assert gvCandidates >= 0
-    if gvCandidates and gvCandidates % 2 == 0:
-        gvCandidates += 1
+    if gvCandidates!=0 and gvCandidates % 2 == 0:
+        gvCandidates += 1 if gvCandidates > 0 else -1
     log("Settings:")
     log(f"- file = {intfile}")
     log(f"- epsabs = {epsabs}")
