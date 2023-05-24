@@ -393,16 +393,9 @@ worker_thread(void *ps)
         }
         if (1) { // CUDA path
             uint64_t threads = 128, pt_per_thread = 8;
-            uint64_t blocks = (c.i2 - c.i1 + threads*pt_per_thread - 1)/(threads*pt_per_thread);
-            uint64_t bufsize = fam.complex_result ? blocks*sizeof(complex_t) : blocks*sizeof(real_t);
-            if (bufsize > s.buffer_size) {
-                fprintf(stderr, "%s] realloc CUDA buffer to %" PRIu64 "MB\n", G.workername, bufsize/1024/1024);
-                CU(cuMemFree, s.buffer_d);
-                s.buffer_size = (bufsize + 1024*1024 - 1) & ~(1024*1024 - 1);
-                CU(cuMemAlloc, &s.buffer_d, s.buffer_size);
-                CU(cuMemsetD8Async, s.buffer_d, 0, s.buffer_size, s.stream);
-                CU(cuStreamSynchronize, s.stream);
-            }
+            uint64_t blocksperbatch = fam.complex_result ? s.buffer_size/sizeof(complex_t) : s.buffer_size/sizeof(real_t);
+            uint64_t ptperbatch = blocksperbatch * (threads*pt_per_thread);
+            complex_t result = {0, 0};
             memcpy(s.params->genvec, c.genvec, sizeof(c.genvec));
             memcpy(s.params->shift, c.shift, sizeof(c.shift));
             memcpy(s.params->realp, fam.realp, sizeof(fam.realp));
@@ -415,29 +408,34 @@ worker_thread(void *ps)
             CUdeviceptr realp_d = s.params_d + offsetof(CudaParameterData, realp);
             CUdeviceptr complexp_d = s.params_d + offsetof(CudaParameterData, complexp);
             CUdeviceptr deformp_d = s.params_d + offsetof(CudaParameterData, deformp);
-            void *args[] = {&s.buffer_d, &c.lattice, &c.i1, &c.i2, &genvec_d, &shift_d, &realp_d, &complexp_d, &deformp_d, NULL };
-            CU(cuLaunchKernel, ker.cuda_fn_integrate, blocks, 1, 1, threads, 1, 1, 0, s.stream, args, NULL);
-            void *sum_args[] = {&s.buffer_d, &s.buffer_d, &blocks, NULL};
-            CUfunction fn_sum = fam.complex_result ? G.cuda.fn_sum_c_b128_x1024 : G.cuda.fn_sum_d_b128_x1024;
-            while (blocks > 1) {
-                uint64_t reduced = (blocks + 1024-1)/1024;
-                CU(cuLaunchKernel, fn_sum, reduced, 1, 1, 128, 1, 1, 0, s.stream, sum_args, NULL);
-                blocks = reduced;
+            for (uint64_t i1 = c.i1; i1 < c.i2; i1 += ptperbatch) {
+                uint64_t i2 = i1 + ptperbatch < c.i2 ? i1 + ptperbatch : c.i2;
+                uint64_t blocks = (i2 - i1 + threads*pt_per_thread - 1)/(threads*pt_per_thread);
+                void *args[] = {&s.buffer_d, &c.lattice, &i1, &i2, &genvec_d, &shift_d, &realp_d, &complexp_d, &deformp_d, NULL };
+                CU(cuLaunchKernel, ker.cuda_fn_integrate, blocks, 1, 1, threads, 1, 1, 0, s.stream, args, NULL);
+                void *sum_args[] = {&s.buffer_d, &s.buffer_d, &blocks, NULL};
+                CUfunction fn_sum = fam.complex_result ? G.cuda.fn_sum_c_b128_x1024 : G.cuda.fn_sum_d_b128_x1024;
+                while (blocks > 1) {
+                    uint64_t reduced = (blocks + 1024-1)/1024;
+                    CU(cuLaunchKernel, fn_sum, reduced, 1, 1, 128, 1, 1, 0, s.stream, sum_args, NULL);
+                    blocks = reduced;
+                }
+                s.result->re = 0;
+                s.result->im = 0;
+                CU(cuMemcpyDtoHAsync, s.result, s.buffer_d, fam.complex_result ? sizeof(complex_t) : sizeof(real_t), s.stream);
+                // Without this CU_CTX_SCHED_BLOCKING_SYNC doesn't work,
+                // and cuStreamSynchronize spins with 100% CPU usage.
+                // With this, both CU_CTX_SCHED_BLOCKING_SYNC and
+                // CU_CTX_SCHED_YIELD have the same result: 0% CPU usage
+                // during cuStreamSynchronize.
+                // It's not clear how cuLaunchHostFunc is related here
+                // at all, and the whole thing is completely undocumented.
+                CU(cuLaunchHostFunc, s.stream, stupid_cuda_dummy, NULL);
+                CU(cuStreamSynchronize, s.stream);
+                result.re += s.result->re;
+                result.im += s.result->im;
             }
-            s.result->re = 0;
-            s.result->im = 0;
-            CU(cuMemcpyDtoHAsync, s.result, s.buffer_d, fam.complex_result ? sizeof(complex_t) : sizeof(real_t), s.stream);
-            // Without this CU_CTX_SCHED_BLOCKING_SYNC doesn't work,
-            // and cuStreamSynchronize spins with 100% CPU usage.
-            // With this, both CU_CTX_SCHED_BLOCKING_SYNC and
-            // CU_CTX_SCHED_YIELD have the same result: 0% CPU usage
-            // during cuStreamSynchronize.
-            // How is cuLaunchHostFunc related though?
-            // And how could one possibly find out about this?
-            CU(cuLaunchHostFunc, s.stream, stupid_cuda_dummy, NULL);
-            CU(cuStreamSynchronize, s.stream);
             double t2 = timestamp();
-            complex_t result = *s.result;
             if (isnan(result.re) || isnan(result.im)) {
                 printf("@[%" PRIu64 ",[[NaN,NaN],%" PRIu64 ",%.4e],null]\n", c.token, c.i2-c.i1, t2-t1);
             } else {

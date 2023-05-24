@@ -23,7 +23,7 @@
         value_t val6 = (idx+5 < n) ? src[idx+5] : value_t(0); \
         value_t val7 = (idx+6 < n) ? src[idx+6] : value_t(0); \
         value_t val8 = (idx+7 < n) ? src[idx+7] : value_t(0); \
-        value_t val = val1 + val2 + val3 + val4 + val5 + val6 + val7 + val8; \
+        value_t val = ((val1 + val2) + (val3 + val4)) + ((val5 + val6) + (val7 + val8)); \
         typedef cub::BlockReduce<value_t, 128, cub::BLOCK_REDUCE_RAKING_COMMUTATIVE_ONLY> Reduce; \
         __shared__ typename Reduce::TempStorage shared; \
         value_t sum = Reduce(shared).Sum(val); \
