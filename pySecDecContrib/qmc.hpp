@@ -1,11 +1,15 @@
 /*
  * Qmc Single Header
- * Commit: 17be92c422ebdaea7d5ea5e5dd6178c160eeae2c
- * Generated: 19-05-2023 17:58:38
+ * Commit: af8f1fcf2daa12221f3a400a430e3aa8b533a784
+ * Generated: 24-05-2023 12:07:38
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
  * Please don't edit it directly
+ * ----------------------------------------------------------
+ * This file has been edited to disable batching in pySecDec,
+ * since the check implemented in has_batching_impl also matches
+ * the pysecdec integrand_container.
  * ----------------------------------------------------------
  */
 #ifndef QMC_H
@@ -169,8 +173,8 @@ namespace integrators
     {
         template <typename I, typename T, typename D, typename U, typename = void>
         struct has_batching_impl : std::false_type {};
-        template <typename I, typename T, typename D, typename U>
-        struct has_batching_impl<I,T,D,U,std::void_t<decltype(std::declval<I>().operator()(std::declval<D*>(),std::declval<T*>(),std::declval<U>()))>> : std::true_type {};
+        //template <typename I, typename T, typename D, typename U>
+        //struct has_batching_impl<I,T,D,U,std::void_t<decltype(std::declval<I>().operator()(std::declval<D*>(),std::declval<T*>(),std::declval<U>()))>> : std::true_type {};
 
         // Helper function for detecting if the user's functor has a operator(D* x, T* r, U batchsize) used for computing batches of points on CPU
         template <typename I, typename T, typename D, typename U> inline constexpr bool has_batching = has_batching_impl<I,T,D,U>::value;
@@ -2171,13 +2175,15 @@ namespace integrators
                         }
                     }
 
-                    if (batching)
-                    {
-                        func(x.data(), points, batchsize);
-                        D wgt = 1.;
-                        for ( U i = 0; i != batchsize; ++i)
+                    if constexpr (integrators::core::has_batching<I, decltype(func(x.data())), D, U>) {
+                        if (batching)
                         {
-                            r_element[k*r_size_over_m] += wgt*points[i];
+                            func(x.data(), points, batchsize);
+                            D wgt = 1.;
+                            for ( U i = 0; i != batchsize; ++i)
+                            {
+                                r_element[k*r_size_over_m] += wgt*points[i];
+                            }
                         }
                     }
                 }
@@ -3409,6 +3415,7 @@ namespace integrators
 
                 return genVecs[i];
             }
+        throw std::logic_error("unexpected median");
     }
 
     template <typename T, typename D, U M, template<typename,typename,U> class P, template<typename,typename,U> class F, typename G, typename H>
