@@ -489,7 +489,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 par.cancel_cb(shift_tag[idx, s])
             deformp[idx] = tuple(p*0.9 for p in deformp[idx])
             log(f"got NaN from k{idx}; decreasing deformp by 0.9 to {deformp[idx]}")
-            schedule_kernerl(idx)
+            schedule_kernel(idx)
         else:
             shift_val[idx, shift] = complex(re, im)
             if dt > 2*w.int_overhead:
@@ -507,7 +507,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 deformp[idx]),
                 shift_done_cb, (idx, s))
 
-    def shift_done_cb(result, exception, w, idx, shift):
+    def shift_done_cb_medianGV(result, exception, w, idx, shift):
         (re, im), di, dt = result
         if math.isnan(re) or math.isnan(im):
             for s in range(abs(gvCandidates)):
@@ -536,7 +536,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 (idx+1, int(lattices[idx]), 0, int(lattices[idx]), genvec_candidates[(idx,s)],
                 shift.tolist(),
                 deformp[idx]),
-                shift_done_cb, (idx, s))
+                shift_done_cb_medianGV, (idx, s))
 
     perkern_epsrel = 0.2
     perkern_epsabs = 1e-4
