@@ -330,9 +330,8 @@
     int transform_id, \
     int fitfunction_id, \
     int generatingvectors_id, \
-    bool useMedianQmc, \
-    bool keepMedianGV, \
-    unsigned long long int numMedianLattices
+    unsigned long long int lattice_candidates, \
+    bool keep_lattices
 #define SET_COMMON_QMC_ARGS \
     /* If an argument is set to 0 then use the default of the Qmc library */ \
     if ( epsrel != 0 ) \
@@ -374,9 +373,8 @@
     if ( generatingvectors_id == none ) \
         integrator->generatingvectors = ::integrators::generatingvectors::none(); \
     integrator->logger = std::cerr; \
-    integrator->useMedianQmc = useMedianQmc; \
-    integrator->keepMedianGV = keepMedianGV; \
-    integrator->numMedianLattices = numMedianLattices;
+    integrator->latticecandidates = lattice_candidates; \
+    integrator->keeplattices = keep_lattices;
 #define SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
         SET_COMMON_QMC_ARGS \
         if (number_of_devices > 0) \
