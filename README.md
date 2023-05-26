@@ -22,7 +22,7 @@ predecessor of pySecDec.
 Installation
 ============
 
-pySecDec should work under Python version 3.6 or newer on the
+pySecDec should work under Python version 3.8 or newer on the
 usual Unix-like systems.
 
 The latest release can be installed from [PyPI] by first
@@ -120,6 +120,14 @@ to the sources; do this by running
     $ make dependencies
     $ make build
     $ export PYTHONPATH=$PWD
+
+Note that `make dependencies` will install the dependency
+libraries using `python3` binary by default. A different Python
+binary can be chosen for this by setting the `PYTHON` argument
+to it, for example:
+
+    $ make dependencies PYTHON=python3.10
+    $ make build PYTHON=python3.10
 
 The ``Makefile`` in the package's root directory also implements
 other common development tasks.  You can list all available
