@@ -4,12 +4,6 @@
 # timeout (in seconds) for all test cases
 TIMEOUT=600
 
-# Auto detect nvcc
-ifeq ($(CXX), nvcc)
-SECDEC_WITH_CUDA = 1
-endif
-
-
 .DEFAULT_GOAL=build
 .PHONY .SILENT : help
 help :
