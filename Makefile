@@ -1,6 +1,9 @@
 # This Makefile implements common tasks needed by developers
 # A list of implemented rules can be obtained by the command "make help"
 
+# Python binary name
+PYTHON?=python3
+
 # timeout (in seconds) for all test cases
 TIMEOUT=600
 
@@ -68,16 +71,16 @@ clean:
 	# remove the SecDecUtil tarball
 	rm -f util/secdecutil-*.tar.gz
 
-	python3 -m SCons -cc
+	$(PYTHON) -m SCons -cc
 
 .PHONY: dependencies
 dependencies:
-	python3 -m pip install --user toml
-	python3 -m pip install --user $$(python3 -c 'import toml; m = toml.load("pyproject.toml"); print(" ".join(m["build-system"]["requires"] + m["project"]["dependencies"] + sum(m["project"]["optional-dependencies"].values(), [])));')
+	$(PYTHON) -m pip install --user toml
+	$(PYTHON) -m pip install --user $$($(PYTHON) -c 'import toml; m = toml.load("pyproject.toml"); print(" ".join(m["build-system"]["requires"] + m["project"]["dependencies"] + sum(m["project"]["optional-dependencies"].values(), [])));')
 
 .PHONY: build
 build:
-	python3 -m SCons build -j2
+	$(PYTHON) -m SCons build -j2
 
 .PHONY : check
 check : check3 doctest util-check
@@ -85,20 +88,20 @@ check : check3 doctest util-check
 .PHONY : check3
 check3 :
 	@ # run tests
-	python3 -m pytest pySecDec --timeout=$(TIMEOUT)
+	$(PYTHON) -m pytest pySecDec --timeout=$(TIMEOUT)
 
 .PHONY : active-check
 active-check :
-	python3 -m pytest pySecDec -m 'active' --timeout=$(TIMEOUT)
+	$(PYTHON) -m pytest pySecDec -m 'active' --timeout=$(TIMEOUT)
 
 .PHONY : fast-check
 fast-check :
-	python3 -m pytest pySecDec -m 'not slow' --timeout=$(TIMEOUT)
+	$(PYTHON) -m pytest pySecDec -m 'not slow' --timeout=$(TIMEOUT)
 
 .PHONY : util-check
 util-check :
 	export SECDEC_WITH_CUDA=$(SECDEC_WITH_CUDA) && \
-	export SECDEC_CONTRIB=$$(python3 -m pySecDecContrib --dirname) && \
+	export SECDEC_CONTRIB=$$($(PYTHON) -m pySecDecContrib --dirname) && \
 	cd pySecDecContrib/util && \
 	if [ -f Makefile ] ; \
 	then \
@@ -129,14 +132,14 @@ high-level :
 	# '$(MAKE) -C high_level_tests summarize' forwards the error if an example fails
 	# 'exit 1' forwards the error out of the shell's for loop
 	export DIRNAME=high_level_tests ; \
-	for PYTHON in python3 ; do \
+	for PYTHON in $(PYTHON) ; do \
 		PYTHON=$$PYTHON $(MAKE) -C $$DIRNAME && $(MAKE) -C $$DIRNAME summarize || exit 1 \
 	; \
 	done
 
 .PHONY : dist
 dist : build
-	python3 -m SCons dist
+	$(PYTHON) -m SCons dist
 
 .SILENT .PHONY : show-todos
 grep_cmd  = grep -riG [^"au""sphinx.ext."]todo --color=auto --exclude=Makefile --exclude-dir=.git --exclude=catch.hpp
@@ -158,5 +161,5 @@ show-todos :
 .PHONY : coverage
 coverage :
 	rm -rf htmlcov
-	python3 -m pytest pySecDec --cov=pySecDec --cov-report=html --cov-branch
+	$(PYTHON) -m pytest pySecDec --cov=pySecDec --cov-report=html --cov-branch
 	xdg-open htmlcov/index.html
