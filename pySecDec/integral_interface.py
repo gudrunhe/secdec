@@ -1491,8 +1491,8 @@ class DistevalLibrary(object):
 
     :param format:
         string;
-        The format of the returned result, ``"sympy"`` or
-        ``"json"``. Default: `"sympy"`.
+        The format of the returned result, ``"sympy"``,
+        ``"mathematica"``, or ``"json"``. Default: ``"sympy"``.
 
     The call operator returns a single string with the resulting
     value as a series in the regulator powers.
