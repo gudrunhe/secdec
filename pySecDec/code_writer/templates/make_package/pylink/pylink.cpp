@@ -369,8 +369,8 @@
     if ( generatingvectors_id == none or not standard_lattices) \
         integrator->generatingvectors = ::integrators::generatingvectors::none(); \
     integrator->logger = std::cerr; \
-    integrator->lattice_candidates = lattice_candidates; \
-    integrator->keeplattices = keeplattices; \
+    integrator->latticecandidates = lattice_candidates; \
+    integrator->keeplattices = keep_lattices;
 #define SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
         SET_COMMON_QMC_ARGS \
         if (number_of_devices > 0) \

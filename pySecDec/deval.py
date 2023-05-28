@@ -508,14 +508,14 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 deformp[idx]),
                 shift_done_cb, (idx, s))
 
-    def shift_done_cb_medianGV(result, exception, w, idx, shift):
+    def shift_done_cb_median_lattice(result, exception, w, idx, shift):
         (re, im), di, dt = result
         if math.isnan(re) or math.isnan(im):
             for s in range(lattice_candidates):
                 par.cancel_cb(shift_tag[idx, s])
             deformp[idx] = tuple(p*0.9 for p in deformp[idx])
             log(f"got NaN from k{idx}; decreasing deformp by 0.9 to {deformp[idx]}")
-            schedule_kernel_medianGV(idx)
+            schedule_kernel_median_lattice(idx)
         else:
             shift_val[idx, shift] = complex(re, im)
             if dt > 2*w.int_overhead:
@@ -523,7 +523,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 kern_di[idx] += di
                 kern_dt[idx] += dt
 
-    def schedule_kernel_medianGV(idx):
+    def schedule_kernel_median_lattice(idx):
         for s in range(lattice_candidates):
             shift = kern_rng[idx].rand(dims[idx])
             shift_rnd[idx, s] = shift
@@ -537,7 +537,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 (idx+1, int(lattices[idx]), 0, int(lattices[idx]), genvec_candidates[(idx,s)],
                 shift.tolist(),
                 deformp[idx]),
-                shift_done_cb_medianGV, (idx, s))
+                shift_done_cb_median_lattice, (idx, s))
 
     perkern_epsrel = 0.2
     perkern_epsabs = 1e-4
@@ -596,7 +596,7 @@ async def doeval(workers, datadir, coeffsdir, intfile, epsabs, epsrel, npresampl
                 if lattice_candidates > 0:
                     for i in mask_todo.nonzero()[0]:
                         if(not standard_lattices or lattices[i] > maxlattices[i]):
-                            schedule_kernel_medianGV(int(i))
+                            schedule_kernel_median_lattice(int(i))
                             await asyncio.sleep(0)
                     if par.queue_size() > 0:
                         log(f"distributing {par.queue_size()} jobs to construct generating vectors")
