@@ -840,13 +840,16 @@ def load_worker_commands(jsonfile, dirname):
 
 def split_integral_into_orders(orders, ampid, kernel2idx, info, br_coef, valmap, sp_regulators, requested_orders):
     br_pref = info["expanded_prefactor_value"]
+    br_pref_coef_leading_orders = np.min([o for o in br_pref.keys()],axis=0) + np.min([o for o in br_coef.keys()],axis=0)
     kern_leading_orders = np.min([o["regulator_powers"] for o in info["orders"]], axis=0)
+    kern_highest_orders = np.max([o["regulator_powers"] for o in info["orders"]], axis=0)
+    max_highest_orders = br_pref_coef_leading_orders + kern_highest_orders
     prefactor = bracket_mul(br_pref, br_coef, -kern_leading_orders + requested_orders)
     for o in info["orders"]:
         powers = np.array(o["regulator_powers"])
         for pow, coef in prefactor.items():
             p = powers + pow
-            if np.all(p <= requested_orders):
+            if np.all(p <= requested_orders) & np.all(p <= max_highest_orders): # truncate expansion at highest known order
                 key = (ampid, tuple(p.tolist()))
                 orders.setdefault(key, np.zeros(len(kernel2idx), dtype=np.complex128))
                 for k in o["kernels"]:
