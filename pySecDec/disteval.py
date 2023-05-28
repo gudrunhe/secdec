@@ -13,10 +13,8 @@ Options:
     --cluster=X             use this cluster.json file
     --coefficients=X        use coefficients from this directory
     --format=X              output the result in this format ("sympy", "mathematica", "json")
-    --lattice-candidates=X  number of generating vector candidates used for median QMC rule (default: 11)
-                            if standard-lattices=True, the median QMC is only used once the standard lattices are exhausted
-                            lattice-candidates=0 disables the use of the median QMC rule.
-    --standard-lattices=X   use pre-computed lattices instead of median QMC (default: True)
+    --lattice-candidates=X  number of median lattice candidates (default: 11)
+    --standard-lattices=X   use pre-computed lattices before the median lattices ("yes" or "no", default: "yes")
     --help                  show this help message
 Arguments:
     <var>=X                 set this integral or coefficient variable to a given value
@@ -945,7 +943,7 @@ def main():
         elif key == "--shifts": nshifts = int(float(value))
         elif key == "--timeout": deadline = time.time() + parse_unit(value, {"s": 1, "m": 60, "h": 60*60, "d": 24*60*60})
         elif key == "--lattice-candidates": lattice_candidates = int(float(value))
-        elif key == "--standard-lattices": standard_lattices = eval(value)
+        elif key == "--standard-lattices": standard_lattices = value.lower() == "yes"
         elif key == "--help":
             print(__doc__.strip())
             exit(0)
