@@ -1,7 +1,7 @@
 /*
  * Qmc Single Header
- * Commit: d3458c006a13936fe5eacbae4f3c214f064ba20d
- * Generated: 14-08-2021 14:21:40
+ * Commit: 75d244310a856252d74999f21d452dcf1362314b
+ * Generated: 26-05-2023 23:25:15
  *
  * ----------------------------------------------------------
  * This file has been merged from multiple headers.
@@ -157,6 +157,29 @@ namespace integrators
 #include <cstddef> // nullptr_t
 #include <stdexcept> // logic_error
 
+#ifndef QMC_HASBATCHING_H
+#define QMC_HASBATCHING_H
+
+#include <utility> // declval
+#include <type_traits> // true_type, false_type
+
+namespace integrators
+{
+    namespace core
+    {
+        template <typename I, typename T, typename D, typename U, typename = void>
+        struct has_batching_impl : std::false_type {};
+        template <typename I, typename T, typename D, typename U>
+        struct has_batching_impl<I,T,D,U,std::void_t<decltype(std::declval<I>().operator()(std::declval<D*>(),std::declval<T*>(),std::declval<U>()))>> : std::true_type {};
+
+        // Helper function for detecting if the user's functor has a operator(D* x, T* r, U batchsize) used for computing batches of points on CPU
+        template <typename I, typename T, typename D, typename U> inline constexpr bool has_batching = has_batching_impl<I,T,D,U>::value;
+
+    };
+};
+
+#endif
+
 namespace integrators
 {
     namespace fitfunctions
@@ -173,7 +196,6 @@ namespace integrators
                 throw std::logic_error("fit_function called");
             }
         };
-
         template<typename I, typename D, U M>
         struct NoneTransform
         {
@@ -188,9 +210,19 @@ namespace integrators
 #ifdef __CUDACC__
             __host__ __device__
 #endif
-            auto operator()(D* x) -> decltype(f(x)) const
+            auto operator()(D* x) -> decltype(f(x))
             {
                 return f(x);
+            }
+            void operator()(D* x, decltype(f(x))* res, U count)
+            {
+                if constexpr (integrators::core::has_batching<I, decltype(f(x)), D, U>) {
+                    f(x, res, count);
+                } else {
+                    for (U i = U(); i != count; ++i) {
+                        res[i] = operator()(x + i * f.number_of_integration_variables);
+                    }
+                }
             }
         };
 
@@ -217,6 +249,8 @@ namespace integrators
 #include <stdexcept> // std::domain_error
 #include <cmath> // abs
 #include <vector>
+
+// (Included Above): #include "../core/has_batching.hpp"
 
 namespace integrators
 {
@@ -304,7 +338,7 @@ namespace integrators
 #ifdef __CUDACC__
             __host__ __device__
 #endif
-            auto operator()(D* x) -> decltype(f(x)) const
+            auto operator()(D* x) -> decltype(f(x)) 
             {
                 using std::abs;
                 D wgt = 1;
@@ -317,6 +351,33 @@ namespace integrators
                     if ( x[d] > D(1) || x[d] < D(0) ) return D(0);
                 }
                 return wgt * f(x);
+            }
+            void operator()(D* x, decltype(f(x))* res, U count)
+            {
+                if constexpr (integrators::core::has_batching<I, decltype(f(x)), D, U>) {
+                    auto xx = x;
+                    D* wgts = new D[count];
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        wgts[i] = 1;
+                        for (U d = 0; d < number_of_integration_variables ; ++d)
+                        {
+                            D p2 = abs(p[d][2]);
+                            D p3 = abs(p[d][3]);
+                            wgts[i] *= p2*p[d][0]*(p[d][0]-D(1))/(p[d][0]-xx[d])/(p[d][0]-xx[d]) + p3*p[d][1]*(p[d][1]-D(1))/(p[d][1]-xx[d])/(p[d][1]-xx[d]) + p[d][4] + xx[d]*(D(2)*p[d][5]+xx[d]*D(3)*(D(1)-p2-p3-p[d][4]-p[d][5]));
+                            xx[d] = p2*(xx[d]*(p[d][0]-D(1)))/(p[d][0]-xx[d]) + p3*(xx[d]*(p[d][1]-D(1)))/(p[d][1]-xx[d])  + xx[d]*(p[d][4]+xx[d]*(p[d][5]+xx[d]*(D(1)-p2-p3-p[d][4]-p[d][5])));
+                            if ( xx[d] > D(1) || xx[d] < D(0) ) wgts[i] = D(0);
+                        }
+                    }    
+                    f(x, res, count);
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        res[i] = wgts[i] * res[i];
+                    }
+                    delete[] wgts;
+                } else {
+                    for (U i = U(); i != count; ++i) {
+                        res[i] = operator()(x + i * f.number_of_integration_variables);
+                    }
+                }
             }
         };
 
@@ -345,6 +406,8 @@ namespace integrators
 
 #include <cstddef> // nullptr_t
 
+// (Included Above): #include "../core/has_batching.hpp"
+
 namespace integrators
 {
     namespace transforms
@@ -364,6 +427,16 @@ namespace integrators
             {
                 return f(x);
             }
+            void operator()(D* x, decltype(f(x))* res, U count)
+            {
+                if constexpr (integrators::core::has_batching<I, decltype(f(x)), D, U>) {
+                    f(x, res, count);
+                } else {
+                    for (U i = U(); i != count; ++i) {
+                        res[i] = operator()(x + i * f.number_of_integration_variables);
+                    }
+                }
+            }
         };
         struct None
         {
@@ -375,6 +448,8 @@ namespace integrators
 #endif
 #ifndef QMC_TRANSFORMS_BAKER_H
 #define QMC_TRANSFORMS_BAKER_H
+
+// (Included Above): #include "../core/has_batching.hpp"
 
 namespace integrators
 {
@@ -402,6 +477,30 @@ namespace integrators
                     if (x[s] < D(0)) x[s] = D(0);
                 }
                 return wgt * f(x);
+            }
+            void operator()(D* x, decltype(f(x))* res, U count)
+            {
+                if constexpr (integrators::core::has_batching<I, decltype(f(x)), D, U>) {
+                    auto xx = x;
+                    D wgt = 1;
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        for(U s = 0; s<number_of_integration_variables; s++)
+                        {
+                            xx[s] = D(1) - fabs(D(2)*xx[s]-D(1)) ;
+                            // loss of precision can cause x < 0 or x > 1 must keep in x \elem [0,1]
+                            if (xx[s] > D(1)) xx[s] = D(1);
+                            if (xx[s] < D(0)) xx[s] = D(0);
+                        }
+                    }
+                    f(x, res, count);
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        res[i] = wgt * res[i];
+                    }
+                } else {
+                    for (U i = U(); i != count; ++i) {
+                        res[i] = operator()(x + i * f.number_of_integration_variables);
+                    }
+                }
             }
         };
         struct Baker
@@ -608,6 +707,7 @@ namespace integrators
 };
 
 #endif
+// (Included Above): #include "../core/has_batching.hpp"
 
 namespace integrators
 {
@@ -641,6 +741,35 @@ namespace integrators
                 }
                 return wgt * f(x);
             }
+            void operator()(D* x, decltype(f(x))* res, U count)
+            {
+                if constexpr (integrators::core::has_batching<I, decltype(f(x)), D, U>) {
+                    auto xx = x;
+                    D* wgts = new D[count];
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        wgts[i] = 1;
+                        const D prefactor = (D(r0)+D(r1)+D(1))*detail::Binomial<r0+r1,r0>::value;
+                        for(U s = 0; s<number_of_integration_variables; s++)
+                        {
+                            wgts[i] *= prefactor*detail::IPow<D,r0>::value(xx[s])*detail::IPow<D,r1>::value(D(1)-xx[s]);
+                            xx[s] = detail::IPow<D,r0+1>::value(xx[s])*detail::KorobovTerm<D,r1,r0,r1>::value(xx[s]);
+                            // loss of precision can cause x < 0 or x > 1 must keep in x \elem [0,1]
+                            if (xx[s] > D(1)) xx[s] = D(1);
+                            if (xx[s] < D(0)) xx[s] = D(0);
+                        }
+                    }
+                    f(x, res, count);
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        res[i] = wgts[i] * res[i];
+                    }
+                    delete[] wgts;
+                } else {
+                    for (U i = U(); i != count; ++i) {
+                        res[i] = operator()(x + i * f.number_of_integration_variables);
+                    }
+                }
+            }
+
         };
         template<U r0, U r1 = r0>
         struct Korobov
@@ -820,6 +949,7 @@ namespace integrators
 };
 
 #endif
+// (Included Above): #include "../core/has_batching.hpp"
 
 namespace integrators
 {
@@ -865,6 +995,38 @@ namespace integrators
                 }
                 return wgt * f(x);
             }
+            void operator()(D* x, decltype(f(x))* res, U count)
+            {
+                if constexpr (integrators::core::has_batching<I, decltype(f(x)), D, U>) {
+                    auto xx = x;
+                    D* wgts = new D[count];
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        wgts[i] = 1;
+                        const D fac1 = detail::Factorial<r>::value;
+                        const D fac2 = detail::Factorial<(r-U(1))/U(2)>::value;
+
+                        const D wgt_prefactor = pi/detail::IPow<D,r>::value(D(2))*fac1/fac2/fac2;
+                        const D transform_prefactor = D(1)/detail::IPow<D,U(2)*r-U(1)>::value(D(2))*fac1/fac2/fac2;
+                        for(U s = 0; s<number_of_integration_variables; s++)
+                        {
+                            wgts[i] *= wgt_prefactor*detail::IPow<D,r>::value(sin(pi*xx[s]));
+                            xx[s] = transform_prefactor*detail::SidiTerm<D,(r-U(1))/U(2),r>::value(xx[s],pi);
+                            // loss of precision can cause xx < 0 or xx > 1 must keep in xx \elem [0,1]
+                            if (xx[s] > D(1)) xx[s] = D(1);
+                            if (xx[s] < D(0)) xx[s] = D(0);
+                        }
+                    }
+                    f(x, res, count);
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        res[i] = wgts[i] * res[i];
+                    }
+                    delete[] wgts;
+                } else {
+                    for (U i = U(); i != count; ++i) {
+                        res[i] = operator()(x + i * f.number_of_integration_variables);
+                    }
+                }
+            }
         };
 
         // Even r
@@ -901,6 +1063,38 @@ namespace integrators
                 }
                 return wgt * f(x);
             }
+            void operator()(D* x, decltype(f(x))* res, U count)
+            {
+                if constexpr (integrators::core::has_batching<I, decltype(f(x)), D, U>) {
+                    auto xx = x;
+                    D* wgts = new D[count];
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        wgts[i] = 1;
+                        const D fac1 = detail::Factorial<r/U(2)-U(1)>::value;
+                        const D fac2 = detail::Factorial<r-U(1)>::value;
+
+                        const D wgt_prefactor = detail::IPow<D,r-U(2)>::value(D(2))*D(r)*fac1*fac1/fac2;
+                        const D transform_prefactor = D(r)/D(2)/pi*fac1*fac1/fac2;
+                        for(U s = 0; s<number_of_integration_variables; s++)
+                        {
+                            wgts *= wgt_prefactor*detail::IPow<D,r>::value(sin(pi*xx[s]));
+                            xx[s] = transform_prefactor*detail::SidiTerm<D,r/U(2)-U(1),r>::value(xx[s],pi);
+                            // loss of precision can cause xx < 0 or xx > 1 must keep in xx \elem [0,1]
+                            if (xx[s] > D(1)) xx[s] = D(1);
+                            if (xx[s] < D(0)) xx[s] = D(0);
+                        }
+                    }
+                    f(x, res, count);
+                    for (U i = 0; i!= count; ++i, xx+=number_of_integration_variables) {
+                        res[i] = wgts[i] * res[i];
+                    }
+                    delete[] wgts;
+                } else {
+                    for (U i = U(); i != count; ++i) {
+                        res[i] = operator()(x + i * f.number_of_integration_variables);
+                    }
+                }
+            }
         };
 
         // r == 0
@@ -918,6 +1112,10 @@ namespace integrators
             auto operator()(D* x) -> decltype(f(x)) const
             {
                 return f(x);
+            }
+            void operator()(D* x, decltype(f(x))* res, U count)
+            {
+                f(x, res, count);
             }
         };
 
@@ -953,7 +1151,7 @@ namespace integrators
 
         template <typename I> void sample_worker(const U thread_id,U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U total_work_packages, const U n, const U m,  I& func, const int device, D& time_in_ns, U& points_computed) const;
         template <typename I> void evaluate_worker(const U thread_id,U& work_queue, std::mutex& work_queue_mutex, const std::vector<U>& z, const std::vector<D>& d, std::vector<T>& r, const U n, I& func, const int device, D& time_in_ns, U& points_computed) const;
-        template <typename I> result<T> sample(I& func, const U n, const U m, std::vector<result<T>> & previous_iterations);
+        template <typename I> result<T> sample(I& func, const U n, const U m, std::vector<result<T>> & previous_iterations, std::vector<U> *generating_vector = nullptr);
         void update(const result<T>& res, U& n, U& m) const;
         template <typename I> result<T> integrate_no_fit_no_transform(I& func);
 
@@ -976,6 +1174,11 @@ namespace integrators
         std::map<U,std::vector<U>> generatingvectors;
         U verbosity;
 
+        bool batching;
+
+        U latticecandidates;
+        bool keeplattices;
+
         U evaluateminn;
 
         size_t fitstepsize;
@@ -985,11 +1188,12 @@ namespace integrators
         double fitftol;
         gsl_multifit_nlinear_parameters fitparametersgsl;
 
-        U get_next_n(U preferred_n) const;
+        U get_next_n(U preferred_n, bool allow_median_lattices = true) const;
 
         template <typename I> result<T> integrate(I& func);
         template <typename I> samples<T,D> evaluate(I& func);
         template <typename I> typename F<I,D,M>::transform_t fit(I& func);
+        template <typename I> std::vector<U> get_median_z(U n, I& func);
         Qmc();
         virtual ~Qmc() {}
     };
@@ -1067,6 +1271,12 @@ namespace integrators
 
             #undef QMC_ABS_CALL
         };
+
+        template <typename T>
+        T compute_signed_max_re_im(const result<T>& res)
+        {
+            return res.integral;
+        };
     };
 };
 
@@ -1137,6 +1347,7 @@ namespace integrators
         template <typename T> std::complex<T> compute_error(const std::complex<T>& svariance) { return compute_error_complex(svariance); };
         template <typename T> std::complex<T> compute_variance_from_error(const std::complex<T>& error) { return compute_variance_from_error_complex(error); };
         template <typename T, typename D> D compute_error_ratio(const result<std::complex<T>>& res, const D& epsrel, const D& epsabs, const ErrorMode errormode) { return compute_error_ratio_complex(res, epsrel, epsabs, errormode); };
+        template <typename T> T compute_signed_max_re_im(const result<std::complex<T>>& res) { return (std::abs(res.integral.real()) > std::abs(res.integral.imag())) ? res.integral.real() : res.integral.imag(); };
 
 #ifdef __CUDACC__
         // Overloads (thrust::complex)
@@ -1144,6 +1355,7 @@ namespace integrators
         template <typename T> thrust::complex<T> compute_error(const thrust::complex<T>& svariance) { return compute_error_complex(svariance); };
         template <typename T> thrust::complex<T> compute_variance_from_error(const thrust::complex<T>& error) { return compute_variance_from_error_complex(error); };
         template <typename T, typename D> D compute_error_ratio(const result<thrust::complex<T>>& res, const D& epsrel, const D& epsabs, const ErrorMode errormode) { return compute_error_ratio_complex(res, epsrel, epsabs, errormode); };
+        template <typename T> T compute_signed_max_re_im(const result<thrust::complex<T>>& res) { return (std::abs(res.integral.real()) > std::abs(res.integral.imag())) ? res.integral.real() : res.integral.imag(); };
 #endif
     };
 };
@@ -1473,9 +1685,29 @@ namespace integrators
             generatingvectors[12148002047]={1,4460034585,4192279828,956270804,4233805881,531494255,4314610224,5815452895,2216195588,991235505};
             generatingvectors[17179869209]={1,6509448386,4956350883,7081563299,3187015543,3057004275,1370423947,2853256536,6529660412,6947593721};
             generatingvectors[24296004011]={1,10063714232,11598913330,2292935963,1047062119,1472104940,758619429,10725375394,1245101568,3691451466};
-
+            generatingvectors[34359738421]={1,13284241015,4747929435,5634134767,6572020438,10731165789,4350433762,14510070047,2620274659,4573585837};
+            generatingvectors[48592008053]={1,18560138411,9547098320,3785452840,12633112625,1079370434,2348350358,8251590624,5328275748,4759811440};
+            generatingvectors[68719476767]={1,26244027730,14007824995,31591716930,26842308147,29732316964,19894805679,17981118397,29347359790,4732146810};
             return generatingvectors;
 
+        }
+    };
+};
+#endif
+#ifndef QMC_GENERATINGVECTORS_NONE
+#define QMC_GENERATINGVECTORS_NONE
+
+#include <vector>
+#include <map>
+
+namespace integrators
+{
+    namespace generatingvectors
+    {
+        inline std::map<U,std::vector<U>> none()
+        {
+            // for the use with the median qmc construction
+            return std::map<U,std::vector<U>>();
         }
     };
 };
@@ -1611,6 +1843,10 @@ namespace integrators
                 public:
                     operator T*() { return memory; }
                     cuda_memory(std::size_t s) { QMC_CORE_CUDA_SAFE_CALL(cudaMalloc(&memory, s*sizeof(T))); };
+                    cuda_memory(int value, std::size_t s) { 
+                        QMC_CORE_CUDA_SAFE_CALL(cudaMalloc(&memory, s*sizeof(T)));
+                        QMC_CORE_CUDA_SAFE_CALL(cudaMemset(memory, value, s*sizeof(T)));
+                    };
                     ~cuda_memory() { QMC_CORE_CUDA_SAFE_CALL(cudaFree(memory)); }
                 };
             };
@@ -1734,7 +1970,7 @@ namespace integrators
                 d_func.reset( new integrators::core::cuda::detail::cuda_memory<I>(1) );
                 d_z.reset( new integrators::core::cuda::detail::cuda_memory<U>(z.size()) );
                 d_d.reset( new integrators::core::cuda::detail::cuda_memory<D>(d.size()) );
-                d_r.reset( new integrators::core::cuda::detail::cuda_memory<T>(d_r_size_over_m*m) );
+                d_r.reset( new integrators::core::cuda::detail::cuda_memory<T>(0,d_r_size_over_m*m) ); // allocate and set to 0
                 if(verbosity > 1) logger << "- (" << device << ") allocated d_func,d_z,d_d,d_r" << std::endl;
 
                 // copy func (initialize on new active device)
@@ -1747,14 +1983,11 @@ namespace integrators
                 if(verbosity > 1) logger << "- (" << device << ") copied d_func to device memory" << std::endl;
 
                 // Copy z,d,r,func to device
-                if(verbosity > 1) logger << "- (" << device << ") copying z,d,r to device memory" << std::endl;
+                if(verbosity > 1) logger << "- (" << device << ") copying z,d to device memory" << std::endl;
                 QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<U*>(*d_z), z.data(), z.size() * sizeof(U), cudaMemcpyHostToDevice));
                 QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(static_cast<D*>(*d_d), d.data(), d.size() * sizeof(D), cudaMemcpyHostToDevice));
-                for (U k = 0; k < m; k++)
-                {
-                    QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(&(static_cast<T*>(*d_r)[k*d_r_size_over_m]), &r_element[k*r_size_over_m], d_r_size_over_m * sizeof(T), cudaMemcpyHostToDevice));
-                }
-                if(verbosity > 1) logger << "- (" << device << ") copied z,d,r to device memory" << std::endl;
+                // d_r not copied (initialised to 0 above)
+                if(verbosity > 1) logger << "- (" << device << ") copied z,d to device memory" << std::endl;
 
                 //        QMC_CORE_CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1)); // TODO (V2) - investigate if this helps
                 //        cudaOccupancyMaxPotentialBlockSize( &minGridSize, &blockSize, MyKernel, 0, 0); // TODO (V2) - investigate if this helps - https://devblogs.nvidia.com/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/
@@ -1813,6 +2046,8 @@ namespace integrators
 #ifdef __CUDACC__
 #include <memory> // unique_ptr
 #include <cuda_runtime_api.h> // cudaMemcpy
+#include <thrust/device_ptr.h> // thrust::device_ptr
+#include <thrust/reduce.h> // thrust::reduce
 
 // (Included Above): #include "detail/cuda_memory.hpp"
 // (Included Above): #include "detail/cuda_safe_call.hpp"
@@ -1828,10 +2063,12 @@ namespace integrators
             template <typename T>
             void teardown_sample(const std::unique_ptr<integrators::core::cuda::detail::cuda_memory<T>>& d_r, const U d_r_size_over_m, T* r_element, const U r_size_over_m, const U m, const int device, const U verbosity, const Logger& logger)
             {
-                // Copy r to host
+                // Wrap raw device pointer into a thrust::device_ptr
+                thrust::device_ptr<T> d_r_ptr(static_cast<T*>(*d_r.get()));
+                // Reduce d_r on device and copy result to host
                 for (U k = 0; k < m; k++)
                 {
-                    QMC_CORE_CUDA_SAFE_CALL(cudaMemcpy(&r_element[k*r_size_over_m], &(static_cast<T*>(*d_r)[k*d_r_size_over_m]), d_r_size_over_m * sizeof(T), cudaMemcpyDeviceToHost));
+                    r_element[k*r_size_over_m] = thrust::reduce(d_r_ptr+k*d_r_size_over_m, d_r_ptr+k*d_r_size_over_m + d_r_size_over_m);
                 }
                 if (verbosity > 1) logger << "- (" << device << ") copied r to host memory" << std::endl;
             };
@@ -1897,33 +2134,56 @@ namespace integrators
         namespace generic
         {
             template <typename T, typename D, typename I>
-            void compute(const U i, const std::vector<U>& z, const std::vector<D>& d, T* r_element, const U r_size_over_m, const U total_work_packages, const U n, const U m, I& func)
+            void compute(const U i, const std::vector<U>& z, const std::vector<D>& d, T* r_element, const U r_size_over_m, const U total_work_packages, const U n, const U m, const bool batching, I& func)
             {
                 using std::modf;
+                
+                U batchsize = 1;
+                T* points = nullptr;
+                if (batching)
+                {
+                    batchsize = (n / total_work_packages) + ((i < (n % total_work_packages)) ? 1 : 0);
+                    points = new T[batchsize];
+                }
+                std::vector<D> x(func.number_of_integration_variables * batchsize, 0);
 
                 for (U k = 0; k < m; k++)
                 {
                     for( U offset = i; offset < n; offset += total_work_packages )
                     {
-                        D wgt = 1.;
                         D mynull = 0;
-                        std::vector<D> x(func.number_of_integration_variables,0);
 
                         for (U sDim = 0; sDim < func.number_of_integration_variables; sDim++)
                         {
                             #define QMC_MODF_CALL modf( integrators::math::mul_mod<D,D>(offset,z.at(sDim),n)/(static_cast<D>(n)) + d.at(k*func.number_of_integration_variables+sDim), &mynull)
 
                             static_assert(std::is_same<decltype(QMC_MODF_CALL),D>::value, "Downcast detected in integrators::core::generic::compute. Please implement \"D modf(D)\".");
-                            x[sDim] = QMC_MODF_CALL;
+                            x[sDim + (batching ? (func.number_of_integration_variables * (offset / total_work_packages)) : 0)] = QMC_MODF_CALL;
 
                             #undef QMC_MODF_CALL
                         }
+                        if (!batching) {
+                            D wgt = 1.;
+                            T point = func(x.data());
+                            r_element[k*r_size_over_m] += wgt*point;
+                        }
+                    }
 
-                        T point = func(x.data());
-
-                        r_element[k*r_size_over_m] += wgt*point;
+                    if constexpr (integrators::core::has_batching<I, T, D, U>) {
+                        if (batching)
+                        {
+                            func(x.data(), points, batchsize);
+                            D wgt = 1.;
+                            for ( U i = 0; i != batchsize; ++i)
+                            {
+                                r_element[k*r_size_over_m] += wgt*points[i];
+                            }
+                        }
                     }
                 }
+                
+                if (batching)
+                    delete[] points;
             }
 
             template <typename T, typename D, typename I>
@@ -1952,6 +2212,7 @@ namespace integrators
 
 #endif
 
+// (Included Above): #include "core/has_batching.hpp"
 #ifndef QMC_LEAST_SQUARES_H
 #define QMC_LEAST_SQUARES_H
 
@@ -2324,13 +2585,14 @@ namespace integrators
                     previous_iterations.pop_back();
                 }
             }
+            U r_size = r.size();
             for(U k = 0; k < m; k++)
             {
                 T sum = {0.};
                 T delta = {0.};
-                for (U i = 0; i<r.size()/m; i++)
+                for (U i = 0; i<r_size/m; i++)
                 {
-                    sum += r.at(k*r.size()/m+i);
+                    sum += r.at(k*r_size/m+i);
                 }
                 if (verbosity > 1) logger << "shift " << k+previous_m << " result: " << sum/static_cast<T>(n) << std::endl;
                 // Compute Variance using online algorithm (Knuth, The Art of Computer Programming)
@@ -2459,7 +2721,7 @@ namespace integrators
             // Do work
             if (device == -1)
             {
-                integrators::core::generic::compute(i, z, d, &r[thread_id], r.size()/m, total_work_packages, n, m, func);
+                integrators::core::generic::compute(i, z, d, &r[thread_id], r.size()/m, total_work_packages, n, m, batching, func);
             }
             else
             {
@@ -2484,9 +2746,10 @@ namespace integrators
 
     };
     
+    // argument generating_vector only used while constructing median qmc rule. 
     template <typename T, typename D, U M, template<typename,typename,U> class P, template<typename,typename,U> class F, typename G, typename H>
     template <typename I>
-    result<T> Qmc<T,D,M,P,F,G,H>::sample(I& func, const U n, const U m, std::vector<result<T>> & previous_iterations)
+    result<T> Qmc<T,D,M,P,F,G,H>::sample(I& func, const U n, const U m, std::vector<result<T>> & previous_iterations, std::vector<U> *generating_vector)
     {
         std::vector<U> z;
         std::vector<D> d;
@@ -2501,7 +2764,7 @@ namespace integrators
         U extra_threads = devices.size() - devices.count(-1);
         
         // Memory required for result vector
-        U r_size_over_m = extra_threads*cudablocks*cudathreadsperblock; // non-cpu workers
+        U r_size_over_m = extra_threads; // non-cpu workers
         if (devices.count(-1) != 0 && cputhreads > 0)
         {
             r_size_over_m += cputhreads; // cpu-workers
@@ -2519,11 +2782,16 @@ namespace integrators
             }
 
             // Generate z, d, r
-            init_z(z, n, func.number_of_integration_variables);
+            if (generating_vector)
+                z = *generating_vector;
+            else if (generatingvectors.find(n) != generatingvectors.end())
+                init_z(z, n, func.number_of_integration_variables);
+            else
+                z = get_median_z(n, func);
             init_d(d, shifts, func.number_of_integration_variables);
             init_r(r, shifts, r_size_over_m);
 
-            if (verbosity > 0)
+            if (verbosity > 0 && !generating_vector) // don't print while generating median qmc lattice
             {
                 logger << "-- qmc::sample called --" << std::endl;
                 logger << "func.number_of_integration_variables " << func.number_of_integration_variables << std::endl;
@@ -2544,6 +2812,9 @@ namespace integrators
                     logger << i << " ";
                 logger << std::endl;
                 logger.display_timing = display_timing;
+                logger << "batching " << batching << std::endl;
+                logger << "keeplattices " << keeplattices << std::endl;
+                logger << "latticecandidates " << latticecandidates << std::endl;
                 logger << "n " << n << std::endl;
                 logger << "m " << m << std::endl;
                 logger << "shifts " << shifts << std::endl;
@@ -2561,7 +2832,7 @@ namespace integrators
                 if (verbosity > 2) logger << "computing serially" << std::endl;
                 for( U i=0; i < total_work_packages; i++)
                 {
-                    integrators::core::generic::compute(i, z, d, &r[0], r.size()/shifts, total_work_packages, n, shifts, func);
+                    integrators::core::generic::compute(i, z, d, &r[0], r.size()/shifts, total_work_packages, n, shifts, batching, func);
                 }
             }
             else
@@ -2593,7 +2864,7 @@ namespace integrators
                     {
 #ifdef __CUDACC__
                         thread_pool.push_back( std::thread( &Qmc<T,D,M,P,F,G,H>::sample_worker<I>, this, thread_id, std::ref(work_queue), std::ref(work_queue_mutex), std::cref(z), std::cref(d), std::ref(r), total_work_packages, n, shifts, std::ref(func), device, std::ref(time_in_ns_per_thread[thread_number]), std::ref(points_computed_per_thread[thread_number])  ) ); // Launch non-cpu workers
-                        thread_id += cudablocks*cudathreadsperblock;
+                        thread_id += 1;
                         thread_number += 1;
 #else
                         throw std::invalid_argument("qmc::sample called with device != -1 (CPU) but CUDA not supported by compiler, device: " + std::to_string(device));
@@ -2640,6 +2911,13 @@ namespace integrators
             {
                 D mfeps = D(1000)*D(n*shifts)/D(std::chrono::duration_cast<std::chrono::nanoseconds>(time_after_compute - time_before_compute).count()); // million function evaluations per second
                 logger << "(Total) Million Function Evaluations/s: " << mfeps << " Mfeps" << std::endl;
+            }
+            if(generating_vector) // don't apply reduce while constructing median qmc rule
+            {
+                res.integral = 0;
+                for (T& x: r) res.integral+=x;
+                res.integral /= static_cast<T>(n);
+                return res;
             }
             res = integrators::core::reduce(r, n, shifts,  previous_iterations, verbosity, logger);
         }
@@ -2748,7 +3026,7 @@ namespace integrators
         // allocate memory
         samples<T,D> res;
         U& n = res.n;
-        n = get_next_n(evaluateminn); // get next available n >= evaluateminn
+        n = get_next_n(evaluateminn, false); // get next available n >= evaluateminn
         std::vector<U>& z = res.z;
         std::vector<D>& d = res.d;
         std::vector<T>& r = res.r;
@@ -2775,6 +3053,7 @@ namespace integrators
                 logger << i << " ";
             logger << std::endl;
             logger.display_timing = display_timing;
+            logger << "batching " << batching << std::endl;
             logger << "n " << n << std::endl;
         }
 
@@ -2999,14 +3278,18 @@ namespace integrators
     };
 
     template <typename T, typename D, U M, template<typename,typename,U> class P, template<typename,typename,U> class F, typename G, typename H>
-    U Qmc<T,D,M,P,F,G,H>::get_next_n(U preferred_n) const
+    U Qmc<T,D,M,P,F,G,H>::get_next_n(U preferred_n, bool allow_median_lattices) const
     {
         U n;
         if ( generatingvectors.lower_bound(preferred_n) == generatingvectors.end() )
         {
-            n = generatingvectors.rbegin()->first;
-            if (verbosity > 0)
-                logger << "Qmc integrator does not have a generating vector with n larger than " << std::to_string(preferred_n) << ", using largest generating vector with size " << std::to_string(n) << "." << std::endl;
+            if (latticecandidates > 0 && allow_median_lattices) {
+                n = preferred_n; // use median qmc rule
+            } else {
+                n = generatingvectors.rbegin()->first;
+                if (verbosity > 0)
+                    logger << "Qmc integrator does not have a generating vector with n larger than " << std::to_string(preferred_n) << ", using largest generating vector with size " << std::to_string(n) << "." << std::endl;
+            }
         } else {
             n = generatingvectors.lower_bound(preferred_n)->first;
         }
@@ -3084,8 +3367,58 @@ namespace integrators
     };
 
     template <typename T, typename D, U M, template<typename,typename,U> class P, template<typename,typename,U> class F, typename G, typename H>
+    template <typename I>
+    std::vector<U> Qmc<T,D,M,P,F,G,H>::get_median_z(U n, I& func)
+    {
+        std::vector<std::vector<U>> genVecs;
+        std::vector<D> results;
+        std::uniform_int_distribution<U> uniformDist(1, n-1);
+        if (verbosity > 0)
+            logger << "constructing lattice of size " << std::to_string(n) << " using median qmc rule " << std::endl;
+
+        if (latticecandidates % 2 == 0) latticecandidates++; 
+
+        std::vector<result<T>> previous_iterations;
+
+        for(U i=0; i < latticecandidates; i++)
+        {
+            genVecs.push_back(std::vector<U>(M));
+            for (U & i :  genVecs.back())
+            {
+                do
+                    i = uniformDist(randomgenerator);
+                while (std::gcd(i, n) != 1);
+            }
+            results.push_back(overloads::compute_signed_max_re_im(sample(func, n, 1, previous_iterations, &genVecs.back())));
+        }
+        std::vector<D> resSort;
+        for( auto r:results)
+            resSort.push_back(r);
+        std::sort(resSort.begin(), resSort.end());
+        T median = resSort[latticecandidates/2];
+        for (U i=0; i<latticecandidates; i++)
+            if (results[i] == median)
+            {
+                if(keeplattices)
+                    generatingvectors[n] = genVecs[i];
+                if (verbosity > 0)
+                {
+                    logger << "New generating vector with n= " << std::to_string(n) << " : ";
+                    bool display_timing = logger.display_timing;
+                    logger.display_timing = false;
+                    for (auto x: genVecs[i]) logger << " " << x;
+                    logger << std::endl;
+                    logger.display_timing = display_timing;
+                }
+
+                return genVecs[i];
+            }
+        throw std::logic_error("unexpected median");
+    }
+
+    template <typename T, typename D, U M, template<typename,typename,U> class P, template<typename,typename,U> class F, typename G, typename H>
     Qmc<T,D,M,P,F,G,H>::Qmc() :
-    logger(std::cout), randomgenerator( G( std::random_device{}() ) ), minn(8191), minm(32), epsrel(0.01), epsabs(1e-7), maxeval(1000000), maxnperpackage(1), maxmperpackage(1024), errormode(integrators::ErrorMode::all), cputhreads(std::thread::hardware_concurrency()), cudablocks(1024), cudathreadsperblock(256), devices({-1}), generatingvectors(integrators::generatingvectors::cbcpt_dn1_100()), verbosity(0), evaluateminn(100000), fitstepsize(10), fitmaxiter(40), fitxtol(3e-3), fitgtol(1e-8), fitftol(1e-8), fitparametersgsl({})
+    logger(std::cout), randomgenerator( G( std::random_device{}() ) ), minn(8191), minm(32), epsrel(0.01), epsabs(1e-7), maxeval(1000000), maxnperpackage(1), maxmperpackage(1024), errormode(integrators::ErrorMode::all), cputhreads(std::thread::hardware_concurrency()), cudablocks(1024), cudathreadsperblock(256), devices({-1}), generatingvectors(integrators::generatingvectors::cbcpt_dn1_100()), verbosity(0), batching(false), evaluateminn(100000), fitstepsize(10), fitmaxiter(40), fitxtol(3e-3), fitgtol(1e-8), fitftol(1e-8), fitparametersgsl({}), latticecandidates(11), keeplattices(false)
     {
         // Check U satisfies requirements of mod_mul implementation
         static_assert( std::numeric_limits<U>::is_modulo, "Qmc integrator constructed with a type U that is not modulo. Please use a different unsigned integer type for U.");

@@ -344,7 +344,8 @@ known_qmc_generatingvectors = dict(
     cbcpt_dn1_100 = 1,
     cbcpt_dn2_6 = 2,
     cbcpt_cfftw1_6 = 3,
-    cbcpt_cfftw2_10 = 4
+    cbcpt_cfftw2_10 = 4,
+    none = 5
 )
 
 class CPPIntegrator(object):
@@ -584,11 +585,31 @@ class Qmc(CPPIntegrator):
         The possible choices correspond to the available generating
         vectors of the underlying Qmc implementation. Possible values
         are ``"default"``, ``"cbcpt_dn1_100"``, ``"cbcpt_dn2_6"``,
-        ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``.
+        ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``, ``"none"``.
 
         The ``"default"`` value will use all available generating
         vectors suitable for the highest dimension integral
         appearing in the library.
+
+    :param lattice_candidates:
+        int;
+        Number of generating vector candidates used for median QMC rule.
+        If standard_lattices=True, the median QMC is only used once the standard lattices are exhausted
+        lattice_candidates=0 disables the use of the median QMC rule.
+        Default: ``"11"``
+
+    :param standard_lattices:
+        bool;
+        Use pre-computed lattices instead of median QMC.
+        Setting this parameter to ``"False"`` is equal to setting ``"generatingvectors=none"``
+        Default: ``"True"``
+
+    :param keep_lattices:
+        bool;
+        Specifies if list of generating vectors generated using
+        median Qmc rule should be kept for other integrals
+        Default: ``"False"``
+
 
     :param cputhreads:
         int;
@@ -615,7 +636,7 @@ class Qmc(CPPIntegrator):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],lattice_candidates=11,standard_lattices=True,keep_lattices=False):
         if cputhreads is None:
             try:
                 cputhreads = len(os.sched_getaffinity(0))
@@ -641,7 +662,10 @@ class Qmc(CPPIntegrator):
                                                             c_longlong, # seed
                                                             c_int, # transform_id
                                                             c_int, # fitfunction_id
-                                                            c_int # generatingvectors_id
+                                                            c_int, # generatingvectors_id
+                                                            c_ulonglong, # lattice_candidates
+                                                            c_bool, # standard_lattices
+                                                            c_bool # keep_lattices
                                                       ]
 
         # assuming:
@@ -664,7 +688,8 @@ class Qmc(CPPIntegrator):
                                                                     cudablocks,cudathreadsperblock,verbosity,
                                                                     seed,known_qmc_transforms[str(transform).lower()],
                                                                     known_qmc_fitfunctions[str(fitfunction).lower()],
-                                                                    known_qmc_generatingvectors[str(generatingvectors).lower()]
+                                                                    known_qmc_generatingvectors[str(generatingvectors).lower()],
+                                                                    lattice_candidates,standard_lattices,keep_lattices
                                                                    )
         self._epsrel=epsrel
         self._epsabs=epsabs
@@ -715,6 +740,25 @@ class CudaQmc(object):
         are ``"default"``, ``"cbcpt_dn1_100"``, ``"cbcpt_dn2_6"``,
         ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``.
 
+    :param lattice_candidates:
+        int;
+        Number of generating vector candidates used for median QMC rule.
+        If standard_lattices=True, the median QMC is only used once the standard lattices are exhausted
+        lattice_candidates=0 disables the use of the median QMC rule.
+        Default: ``"11"``
+
+    :param standard_lattices:
+        bool;
+        Use pre-computed lattices instead of median QMC.
+        Setting this parameter to ``"False"`` is equal to setting ``"generatingvectors=none"``
+        Default: ``"True"``
+
+    :param keep_lattices:
+        bool;
+        Specifies if list of generating vectors generated using
+        median Qmc rule should be kept for other integrals
+        Default: ``"False"``
+
     :param cputhreads:
         int;
         The number of CPU threads that should be used to evaluate
@@ -740,7 +784,7 @@ class CudaQmc(object):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[]):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],lattice_candidates=11,standard_lattices=True,keep_lattices=False):
         devices_t = c_int * len(devices)
         if cputhreads is None:
             try:
@@ -765,6 +809,9 @@ class CudaQmc(object):
                         c_int, # transform_id
                         c_int, # fitfunction_id
                         c_int, # generatingvectors_id
+                        c_ulonglong, # lattice_candidates
+                        c_bool, # standard_lattices
+                        c_bool, # keep_lattices
                         c_ulonglong, # number_of_devices
                         devices_t # devices[]
                    ]
@@ -795,6 +842,7 @@ class CudaQmc(object):
                                                                                                seed,known_qmc_transforms[str(transform).lower()],
                                                                                                known_qmc_fitfunctions[str(fitfunction).lower()],
                                                                                                known_qmc_generatingvectors[str(generatingvectors).lower()],
+                                                                                               lattice_candidates,standard_lattices,keep_lattices,
                                                                                                len(devices),devices_t(*devices)
                                                                                           )
         self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(
@@ -804,6 +852,7 @@ class CudaQmc(object):
                                                                                                seed,known_qmc_transforms[str(transform).lower()],
                                                                                                known_qmc_fitfunctions[str(fitfunction).lower()],
                                                                                                known_qmc_generatingvectors[str(generatingvectors).lower()],
+                                                                                               lattice_candidates,standard_lattices,keep_lattices,
                                                                                                len(devices),devices_t(*devices)
                                                                                           )
         self._epsrel=epsrel
@@ -1038,6 +1087,7 @@ class IntegralLibrary(object):
         the choices ``all``, ``real`` or ``imag`` might prevent the integration
         from stopping since the requested precision epsrel cannot be reached.
         Default: ``abs``.
+
 
     .. seealso::
         A more detailed description of these parameters and
@@ -1477,6 +1527,18 @@ class DistevalLibrary(object):
         The number of shifts of the QMC lattice.
         Default: ``32``.
 
+    :param lattice_candidates:
+        unsigned int, optional;
+        The number of generating vector candidates used for median QMC rule.
+        If standard_lattices=True, the median QMC is only used once the standard lattices are exhausted
+        lattice_candidates=0 disables the use of the median QMC rule.
+        Default: ``11``.
+
+    :param standard_lattices:
+        bool, optional;
+        Use pre-computed lattices instead of median QMC.
+        Default: ``True``.
+
     :param verbose:
         bool, optional;
         Print the integration log.
@@ -1527,6 +1589,7 @@ class DistevalLibrary(object):
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
             number_of_presamples=1e4, shifts=32,
+            lattice_candidates=11, standard_lattices=True, 
             coefficients=None, verbose=None, format="sympy"):
         import asyncio
         import json
@@ -1555,6 +1618,7 @@ class DistevalLibrary(object):
         result = asyncio.run(disteval.do_eval(
             self.prepared, coefficients, epsabs, epsrel,
             int(number_of_presamples), int(points), int(shifts),
+            lattice_candidates, standard_lattices,
             parameters, parameters, deadline))
         if format == "sympy":
             return disteval.result_to_sympy(result)

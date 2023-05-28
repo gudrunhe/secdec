@@ -324,7 +324,10 @@
     long long int seed, \
     int transform_id, \
     int fitfunction_id, \
-    int generatingvectors_id
+    int generatingvectors_id, \
+    unsigned long long int lattice_candidates, \
+    bool standard_lattices, \
+    bool keep_lattices
 #define SET_COMMON_QMC_ARGS \
     /* If an argument is set to 0 then use the default of the Qmc library */ \
     if ( epsrel != 0 ) \
@@ -363,7 +366,11 @@
         integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_cfftw1_6(); \
     if ( generatingvectors_id == cbcpt_cfftw2_10 ) \
         integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_cfftw2_10(); \
-    integrator->logger = std::cerr;
+    if ( generatingvectors_id == none or not standard_lattices) \
+        integrator->generatingvectors = ::integrators::generatingvectors::none(); \
+    integrator->logger = std::cerr; \
+    integrator->latticecandidates = lattice_candidates; \
+    integrator->keeplattices = keep_lattices;
 #define SET_QMC_ARGS_WITH_DEVICES_AND_RETURN \
         SET_COMMON_QMC_ARGS \
         if (number_of_devices > 0) \
@@ -412,7 +419,8 @@ enum qmc_generatingvectors_t : int
     cbcpt_dn1_100 = 1,
     cbcpt_dn2_6 = 2,
     cbcpt_cfftw1_6 = 3,
-    cbcpt_cfftw2_10 = 4
+    cbcpt_cfftw2_10 = 4,
+    none = 5
 };
 
 #define CASE_NONE_QMC() \
