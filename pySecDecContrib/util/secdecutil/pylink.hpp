@@ -173,9 +173,9 @@ extern "C"
     int transform_id, \
     int fitfunction_id, \
     int generatingvectors_id, \
-    bool useMedianQmc, \
-    bool keepMedianGV, \
-    unsigned long long int numMedianLattices
+    unsigned long long int lattice_candidates, \
+    bool standard_lattices, \
+    bool keep_lattices
     #ifdef SECDEC_WITH_CUDA
         secdecutil::Integrator<integrand_return_t,real_t,cuda_together_integrand_t> *
         allocate_cuda_integrators_Qmc_together(

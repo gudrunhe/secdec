@@ -591,23 +591,25 @@ class Qmc(CPPIntegrator):
         vectors suitable for the highest dimension integral
         appearing in the library.
 
-    :param useMedianQmc:
+    :param lattice_candidates:
+        int;
+        Number of generating vector candidates used for median QMC rule.
+        If standard_lattices=True, the median QMC is only used once the standard lattices are exhausted
+        lattice_candidates=0 disables the use of the median QMC rule.
+        Default: ``"11"``
+
+    :param standard_lattices:
         bool;
-        Specifies if list of generating vectors should be extended using
-        Median Qmc rule, if required.
+        Use pre-computed lattices instead of median QMC.
+        Setting this parameter to ``"False"`` is equal to setting ``"generatingvectors=none"``
         Default: ``"True"``
 
-    :param keepMedianGV:
+    :param keep_lattices:
         bool;
         Specifies if list of generating vectors generated using
         median Qmc rule should be kept for other integrals
         Default: ``"False"``
 
-    :param numMedianLattices:
-        int;
-        Number of candidate generating vectors for applying the
-        median Qmc rule.
-        Default: ``"11"``
 
     :param cputhreads:
         int;
@@ -634,7 +636,7 @@ class Qmc(CPPIntegrator):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],useMedianQmc=True,keepMedianGV=False,numMedianLattices=11):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],lattice_candidates=11,standard_lattices=True,keep_lattices=False):
         if cputhreads is None:
             try:
                 cputhreads = len(os.sched_getaffinity(0))
@@ -661,9 +663,9 @@ class Qmc(CPPIntegrator):
                                                             c_int, # transform_id
                                                             c_int, # fitfunction_id
                                                             c_int, # generatingvectors_id
-                                                            c_bool, # useMedianQmc
-                                                            c_bool, # keepMedianGV
-                                                            c_ulonglong # numMedianLattices
+                                                            c_ulonglong, # lattice_candidates
+                                                            c_bool, # standard_lattices
+                                                            c_bool # keep_lattices
                                                       ]
 
         # assuming:
@@ -687,7 +689,7 @@ class Qmc(CPPIntegrator):
                                                                     seed,known_qmc_transforms[str(transform).lower()],
                                                                     known_qmc_fitfunctions[str(fitfunction).lower()],
                                                                     known_qmc_generatingvectors[str(generatingvectors).lower()],
-                                                                    useMedianQmc,keepMedianGV,numMedianLattices
+                                                                    lattice_candidates,standard_lattices,keep_lattices
                                                                    )
         self._epsrel=epsrel
         self._epsabs=epsabs
@@ -738,23 +740,24 @@ class CudaQmc(object):
         are ``"default"``, ``"cbcpt_dn1_100"``, ``"cbcpt_dn2_6"``,
         ``"cbcpt_cfftw1_6"``, and ``"cbcpt_cfftw2_10"``.
 
-    :param useMedianQmc:
+    :param lattice_candidates:
+        int;
+        Number of generating vector candidates used for median QMC rule.
+        If standard_lattices=True, the median QMC is only used once the standard lattices are exhausted
+        lattice_candidates=0 disables the use of the median QMC rule.
+        Default: ``"11"``
+
+    :param standard_lattices:
         bool;
-        Specifies if list of generating vectors should be extended using
-        Median Qmc rule, if required.
+        Use pre-computed lattices instead of median QMC.
+        Setting this parameter to ``"False"`` is equal to setting ``"generatingvectors=none"``
         Default: ``"True"``
 
-    :param keepMedianGV:
+    :param keep_lattices:
         bool;
         Specifies if list of generating vectors generated using
-        Median Qmc rule, should be kept for other integrals
-        Default: ``"True"``
-
-    :param numMedianLattices:
-        int;
-        Number of candidate generating vectors for applying the
-        Median Qmc rule.
-        Default: ``"11"``
+        median Qmc rule should be kept for other integrals
+        Default: ``"False"``
 
     :param cputhreads:
         int;
@@ -781,7 +784,7 @@ class CudaQmc(object):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],useMedianQmc=True,keepMedianGV=True,numMedianLattices=11):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],lattice_candidates=11,standard_lattices=True,keep_lattices=False):
         devices_t = c_int * len(devices)
         if cputhreads is None:
             try:
@@ -806,9 +809,9 @@ class CudaQmc(object):
                         c_int, # transform_id
                         c_int, # fitfunction_id
                         c_int, # generatingvectors_id
-                        c_bool, # useMedianQmc
-                        c_bool, # keepMedianGV
-                        c_ulonglong, # numMedianLattices
+                        c_ulonglong, # lattice_candidates
+                        c_bool, # standard_lattices
+                        c_bool, # keep_lattices
                         c_ulonglong, # number_of_devices
                         devices_t # devices[]
                    ]
@@ -839,7 +842,7 @@ class CudaQmc(object):
                                                                                                seed,known_qmc_transforms[str(transform).lower()],
                                                                                                known_qmc_fitfunctions[str(fitfunction).lower()],
                                                                                                known_qmc_generatingvectors[str(generatingvectors).lower()],
-                                                                                               useMedianQmc,keepMedianGV,numMedianLattices,
+                                                                                               lattice_candidates,standard_lattices,keep_lattices,
                                                                                                len(devices),devices_t(*devices)
                                                                                           )
         self.c_integrator_ptr_separate = self.c_lib.allocate_cuda_integrators_Qmc_separate(
@@ -849,7 +852,7 @@ class CudaQmc(object):
                                                                                                seed,known_qmc_transforms[str(transform).lower()],
                                                                                                known_qmc_fitfunctions[str(fitfunction).lower()],
                                                                                                known_qmc_generatingvectors[str(generatingvectors).lower()],
-                                                                                               useMedianQmc,keepMedianGV,numMedianLattices,
+                                                                                               lattice_candidates,standard_lattices,keep_lattices,
                                                                                                len(devices),devices_t(*devices)
                                                                                           )
         self._epsrel=epsrel
@@ -1507,11 +1510,17 @@ class DistevalLibrary(object):
         The number of shifts of the QMC lattice.
         Default: ``32``.
 
-    :param gvCandidates:
+    :param lattice_candidates:
         unsigned int, optional;
-        The number of generating vectors tested for median QMC rule.
-        If set to 0: use precomputed generating vectors.
-        Default: ``0``.
+        The number of generating vector candidates used for median QMC rule.
+        If standard_lattices=True, the median QMC is only used once the standard lattices are exhausted
+        lattice_candidates=0 disables the use of the median QMC rule.
+        Default: ``11``.
+
+    :param standard_lattices:
+        bool, optional;
+        Use pre-computed lattices instead of median QMC.
+        Default: ``True``.
 
     :param verbose:
         bool, optional;
@@ -1543,7 +1552,7 @@ class DistevalLibrary(object):
     def __call__(self,
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
-            number_of_presamples=1e4, shifts=32, gvCandidates=0, workers=None,
+            number_of_presamples=1e4, shifts=32, lattice_candidates=11, standard_lattices=True, workers=None,
             coefficients=None, verbose=True):
         import json
         import subprocess
@@ -1587,7 +1596,8 @@ class DistevalLibrary(object):
                 "--points", str(points),
                 "--presamples", str(number_of_presamples),
                 "--shifts", str(shifts),
-                "--gvCandidates", str(gvCandidates),
+                "--lattice-candidates", str(lattice_candidates),
+                "--standard-lattices", str(standard_lattices),
                 *clusteropt,
                 *(["--coefficients", coefficients] if coefficients is not None else []),
                 *(f"{k}={v}" for k, v in parameters.items())
