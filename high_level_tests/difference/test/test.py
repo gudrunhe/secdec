@@ -66,7 +66,7 @@ class CheckLib(unittest.TestCase):
 
     def test_Cuhre(self):
         # choose integrator
-        self.lib.use_Cuhre(flags=2, epsrel=self.epsrel) # ``flags=2``: verbose --> see Cuba manual
+        self.lib.use_Cuhre(flags=0, epsrel=self.epsrel) # ``flags=2``: verbose --> see Cuba manual
 
         # integrate
         str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = self.lib()
