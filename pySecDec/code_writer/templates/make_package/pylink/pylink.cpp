@@ -366,7 +366,7 @@
         integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_cfftw1_6(); \
     if ( generatingvectors_id == cbcpt_cfftw2_10 ) \
         integrator->generatingvectors = ::integrators::generatingvectors::cbcpt_cfftw2_10(); \
-    if ( generatingvectors_id == none or not standard_lattices) \
+    if ( generatingvectors_id == none or (lattice_candidates > 0 and not standard_lattices)) \
         integrator->generatingvectors = ::integrators::generatingvectors::none(); \
     integrator->logger = std::cerr; \
     integrator->latticecandidates = lattice_candidates; \

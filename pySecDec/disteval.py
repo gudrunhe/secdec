@@ -13,8 +13,7 @@ Options:
     --cluster=X             use this cluster.json file
     --coefficients=X        use coefficients from this directory
     --format=X              output the result in this format ("sympy", "mathematica", "json")
-    --lattice-candidates=X  number of median lattice candidates (default: 11)
-    --standard-lattices=X   use pre-computed lattices before the median lattices ("yes" or "no", default: "yes")
+    --lattice-candidates=X  number of median lattice candidates, if X>0 (default: 0)
     --help                  show this help message
 Arguments:
     <var>=X                 set this integral or coefficient variable to a given value
@@ -414,6 +413,8 @@ async def prepare_eval(workers, datadir, intfile):
 async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nshifts, lattice_candidates, standard_lattices, valuemap, valuemap_coeff, deadline):
 
     datadir, info, requested_orders, kernel2idx, infos, ampcount, korders, family2idx, par, t_init, t_worker = prepared
+
+    if lattice_candidates == 0: standard_lattices=True
 
     t1 = time.time()
 
@@ -923,8 +924,8 @@ def main():
     nshifts = 32
     clusterfile = None
     coeffsdir = None
-    lattice_candidates = 11
-    standard_lattices = True
+    lattice_candidates = 0
+    standard_lattices = False
     deadline = math.inf
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["cluster=", "coefficients=", "epsabs=", "epsrel=", "format=", "points=", "presamples=", "shifts=", "lattice-candidates=", "standard-lattices=", "timeout=", "help"])
@@ -955,9 +956,7 @@ def main():
     if coeffsdir is None: coeffsdir = os.path.join(dirname, "coefficients")
     clusterfile = os.path.join(dirname, "cluster.json") if clusterfile is None else clusterfile
     assert lattice_candidates >= 0
-    assert lattice_candidates > 0 or standard_lattices
-    assert isinstance(standard_lattices,bool)
-    if lattice_candidates % 2 == 0: lattice_candidates += 1
+    if lattice_candidates > 0 and lattice_candidates % 2 == 0: lattice_candidates += 1
     log("Settings:")
     log(f"- file = {intfile}")
     log(f"- epsabs = {epsabs}")
@@ -966,7 +965,6 @@ def main():
     log(f"- presamples = {npresamples}")
     log(f"- shifts = {nshifts}")
     log(f"- lattice-candidates = {lattice_candidates}")
-    log(f"- standard-lattices = {standard_lattices}")
     for arg in args[1:]:
         if "=" not in arg: raise ValueError(f"Bad argument: {arg}")
         key, value = arg.split("=", 1)

@@ -8,7 +8,7 @@ if __name__ == "__main__":
     elliptic2L = DistevalLibrary('elliptic2L_physical/disteval/elliptic2L_physical.json')
 
     # integrate
-    str_result = elliptic2L(parameters={"s": 90.0, 't': -2.5, 'pp4':1.6, 'msq':1.0}, verbose=True, epsrel = 1e-5, epsabs = 1e-100, lattice_candidates = 11, standard_lattices=False)
+    str_result = elliptic2L(parameters={"s": 90.0, 't': -2.5, 'pp4':1.6, 'msq':1.0}, verbose=True, epsrel = 1e-5, epsabs = 1e-100, lattice_candidates = 11)
 
     # convert result to sympy expressions
     result = sp.sympify(str_result)

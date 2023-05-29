@@ -596,13 +596,13 @@ class Qmc(CPPIntegrator):
         Number of generating vector candidates used for median QMC rule.
         If standard_lattices=True, the median QMC is only used once the standard lattices are exhausted
         lattice_candidates=0 disables the use of the median QMC rule.
-        Default: ``"11"``
+        Default: ``"0"``
 
     :param standard_lattices:
         bool;
         Use pre-computed lattices instead of median QMC.
         Setting this parameter to ``"False"`` is equal to setting ``"generatingvectors=none"``
-        Default: ``"True"``
+        Default: ``"False"``
 
     :param keep_lattices:
         bool;
@@ -636,7 +636,7 @@ class Qmc(CPPIntegrator):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],lattice_candidates=11,standard_lattices=True,keep_lattices=False):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],lattice_candidates=0,standard_lattices=False,keep_lattices=False):
         if cputhreads is None:
             try:
                 cputhreads = len(os.sched_getaffinity(0))
@@ -745,13 +745,13 @@ class CudaQmc(object):
         Number of generating vector candidates used for median QMC rule.
         If standard_lattices=True, the median QMC is only used once the standard lattices are exhausted
         lattice_candidates=0 disables the use of the median QMC rule.
-        Default: ``"11"``
+        Default: ``"0"``
 
     :param standard_lattices:
         bool;
         Use pre-computed lattices instead of median QMC.
         Setting this parameter to ``"False"`` is equal to setting ``"generatingvectors=none"``
-        Default: ``"True"``
+        Default: ``"False"``
 
     :param keep_lattices:
         bool;
@@ -784,7 +784,7 @@ class CudaQmc(object):
 
     '''
     def __init__(self,integral_library,transform='korobov3',fitfunction='default',generatingvectors='default',epsrel=1e-2,epsabs=1e-7,maxeval=4611686018427387903,errormode='default',evaluateminn=0,
-                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],lattice_candidates=11,standard_lattices=True,keep_lattices=False):
+                      minn=10000,minm=0,maxnperpackage=0,maxmperpackage=0,cputhreads=None,cudablocks=0,cudathreadsperblock=0,verbosity=0,seed=0,devices=[],lattice_candidates=0,standard_lattices=False,keep_lattices=False):
         devices_t = c_int * len(devices)
         if cputhreads is None:
             try:
@@ -1530,14 +1530,8 @@ class DistevalLibrary(object):
     :param lattice_candidates:
         unsigned int, optional;
         The number of generating vector candidates used for median QMC rule.
-        If standard_lattices=True, the median QMC is only used once the standard lattices are exhausted
         lattice_candidates=0 disables the use of the median QMC rule.
-        Default: ``11``.
-
-    :param standard_lattices:
-        bool, optional;
-        Use pre-computed lattices instead of median QMC.
-        Default: ``True``.
+        Default: ``0``.
 
     :param verbose:
         bool, optional;
@@ -1589,7 +1583,7 @@ class DistevalLibrary(object):
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
             number_of_presamples=1e4, shifts=32,
-            lattice_candidates=11, standard_lattices=True, 
+            lattice_candidates=0, standard_lattices=False, 
             coefficients=None, verbose=None, format="sympy"):
         import asyncio
         import json
