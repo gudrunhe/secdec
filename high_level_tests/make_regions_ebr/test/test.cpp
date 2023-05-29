@@ -1,5 +1,5 @@
 #include "catch_amalgamated.hpp"
-using Catch::Approx;
+using Catch::Matchers::WithinAbs;
 
 #include <complex> // std::complex
 #include <numeric> // std::accumulate
@@ -88,11 +88,11 @@ TEST_CASE( "check result qmc", "[INTEGRAL_NAME]" ) {
                 REQUIRE(      result_with_prefactor.at(order).uncertainty.imag() <= std::abs(2*epsrel * target_result_with_prefactor.at(order).imag())      );
 
             // check values
-            REQUIRE(  result_with_prefactor.at(order).value.real() == Approx( target_result_with_prefactor.at(order).real() ).epsilon( 10.0*epsrel )  );
+            REQUIRE_THAT(  result_with_prefactor.at(order).value.real(), WithinAbs( target_result_with_prefactor.at(order).real(), 10.0*epsrel )  );
             if (  target_result_with_prefactor.at(order).imag() == 0.0  )
                 REQUIRE(  result_with_prefactor.at(order).value.imag() <= epsabs  );
             else
-                REQUIRE(  result_with_prefactor.at(order).value.imag() == Approx( target_result_with_prefactor.at(order).imag() ).epsilon( 10.0*epsrel )  );
+                REQUIRE_THAT(  result_with_prefactor.at(order).value.imag(), WithinAbs( target_result_with_prefactor.at(order).imag(), 10.0*epsrel )  );
 
             std::cout << "----------------" << std::endl << std::endl;
         }
