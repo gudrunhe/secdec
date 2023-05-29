@@ -30,12 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The default sector decomposition method in `loop_package` changed from `iterative` to `geometric`.
 - Use `form` instead of `tform` and `form_threads=1` by default, parallelisation is provided by the build system instead.
 - Disabled `ContinuationLines` in FORM output.
-- Various scripts `export_sector`, `formwrapper`, `write_contour_deformation`, `write_integrand` moved to `pySecDecContrib`
+- Various scripts `export_sector`, `formwrapper`, `write_contour_deformation`, `write_integrand` moved to `pySecDecContrib`.
 - `git_id` changed to `__commit__` to be more consistent with naming of other metadata (e.g. `__authors__` and `__version__`).
 - Print `test.log` for failed high level tests.
 - Require recent version of `numpy>=1.23`.
-- Require recent version of `sympy>=1.10.1` and `sympy<1.11` (due to a bug in the sympy series expansion)
-- Python binary can be set with `PYTHON` variable
+- Require recent version of `sympy>=1.10.1` and `sympy<1.11` (due to a bug in the sympy series expansion).
+- Python binary can be set with `PYTHON` variable.
+- Replaced python testing framework `nose` with `pytest`.
+- [Catch2](https://github.com/catchorg/Catch2) version 3.3.2 is now included in `high_level_tests` and used as our C++ testing framework.
 - [Normaliz](https://www.normaliz.uni-osnabrueck.de/) version 3.9.2 is now included in `pySecDecContrib`; `normaliz_executable` and `normaliz` arguments to `make_package` and other functions are now optional (and should probably not be used).
 - [GiNaC](https://www.ginac.de/) updated to 1.8.4.
 - [CLN](https://www.ginac.de/CLN/) updated to 1.3.6-b4d44895.
