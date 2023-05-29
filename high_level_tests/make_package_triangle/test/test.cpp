@@ -1,4 +1,6 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
+using Catch::Approx;
+
 #include "triangle.hpp"
 
 #include <complex> // std::complex

@@ -1,4 +1,5 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
+using Catch::Approx;
 
 #include <complex> // std::complex
 #include <numeric> // std::accumulate

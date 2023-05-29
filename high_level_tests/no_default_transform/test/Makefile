@@ -7,7 +7,7 @@ else
 COMPILE = -c
 endif
 
-test.o : test.cpp $(TEST_FRAMEWORK_DIR)/catch.hpp
+test.o : test.cpp $(TEST_FRAMEWORK_DIR)/catch_amalgamated.hpp
 	$(CXX) $(COMPILE) $(CXXFLAGS) -I../$(INTEGRAL_NAME) $< -o $@
 
 test.exe : test.o $(TEST_FRAMEWORK_DIR)/catch.o ../$(INTEGRAL_NAME)/lib$(INTEGRAL_NAME).a
