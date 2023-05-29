@@ -6,14 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- New integrator `Disteval`
+- Integration based on median QMC rule implemented, can be enabled with option `lattice_candidates`
 - Numerator support for expansion by regions.
 - `suggested_extra_regulator_exponent`  function, returns a list of suggested extra regulators sufficient to regularise a loop integral
-- `extra_regulator_constraints` function, returns a list of inequalities which must be obeyed by the extra regulators in order to regularise a loop integral
+- `extra_regulator_constraints` function, returns a dict of inequalities which must be obeyed by the extra regulators in order to regularise a loop integral
 - `form_memory_use` argument for  `loop_regions`, tailors `form.set` to use approximately the requested amount of memory.
 - `form_threads` argument for `loop_regions`, the number of threads TFORM will use.
 - `extra_regulator_name`, `extra_regulator_exponent` for `loop_regions`, the name to be used for the extra regulator required to obtain well defined integrals and a list of exponents of the extra regulator.
 - Documentation for `prefactor` in `IntegralLibrary` output.
 - `ginsh` binary built for GiNaC, now used for coefficient parsing.
+- Example `examples/pentabox_offshell`. A 2-loop penta-box integral.
+- Example `examples/hexatriangle`. A massive 2-loop qq->ttH master integral
+- Example `examples/region_tools`. Demonstrates the standalone usage of suggested_extra_regulator_exponent, extra_regulator_constraints and find_regions
+- Added [jupyter](https://jupyter.org/) examples in `examples/jupyter`
 
 ### Changed
 - Vastly improved computation of the Newton polytopes, speeding up some steps required for expansion by regions and geometric sector decomposition.
@@ -27,8 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Various scripts `export_sector`, `formwrapper`, `write_contour_deformation`, `write_integrand` moved to `pySecDecContrib`
 - `git_id` changed to `__commit__` to be more consistent with naming of other metadata (e.g. `__authors__` and `__version__`).
 - Print `test.log` for failed high level tests.
-- Require recent version of `sympy>=1.10.1`.
 - Require recent version of `numpy>=1.23`.
+- Require recent version of `sympy>=1.10.1` and `sympy<1.11` (due to a bug in the sympy series expansion)
+- Python binary can be set with `PYTHON` variable
 - [Normaliz](https://www.normaliz.uni-osnabrueck.de/) version 3.9.2 is now included in `pySecDecContrib`; `normaliz_executable` and `normaliz` arguments to `make_package` and other functions are now optional (and should probably not be used).
 - [GiNaC](https://www.ginac.de/) updated to 1.8.4.
 - [CLN](https://www.ginac.de/CLN/) updated to 1.3.6-b4d44895.
@@ -38,7 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [GSL](https://www.gnu.org/software/gsl/) updated to 2.7.1.
 
 ### Removed
-- Support for Python version 3.6.
+- Support for Python versions 3.6 and 3.7.
+- A C++17 compliant compiler is now required (previously C++14 was sufficient).
 - `add_monomial_reglator_power` argument for `loop_regions`, replaced by `extra_regulator_name` and `extra_regulator_exponent`.
 
 ### Fixed
@@ -48,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expansion by regions for cases where the resulting expansion is trivial.
 - Provide more useful error messages in `polytope` class, relevant when using expansion by regions or geometric sector decomposition methods.
 - Deprecation warnings emitted by SymPy due to calls of type `sympify(str)`
+- The Cuba examples are not built during installation
 
 ## [1.5.6] - 2022-11-15
 
