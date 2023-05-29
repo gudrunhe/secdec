@@ -87,7 +87,7 @@ contrib += \
         cd pySecDecContrib && \
         tar -xf {nauty}.tar.gz && \
         cd {nauty} && \
-        ./configure --disable-popcnt --disable-clz && \
+        ./configure --enable-generic --disable-popcnt --disable-clz && \
         make dreadnaut && \
         strip dreadnaut && \
         cp -a dreadnaut ../bin/dreadnaut && \
