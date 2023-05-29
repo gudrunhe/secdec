@@ -9,7 +9,7 @@ if __name__ == "__main__":
     elliptic2L_physical = IntegralLibrary('elliptic2L_physical/elliptic2L_physical_pylink.so')
 
     # choose integrator
-    elliptic2L_physical.use_Qmc(transform='korobov1',verbosity=2, standard_lattices=False, lattice_candidates=11, keep_lattices=False)
+    elliptic2L_physical.use_Qmc(transform='korobov1',verbosity=2, lattice_candidates=11)
 
     # integrate non-Euclidean point;
     s, t, pp4, msq = [90.,-2.5,1.6,1.]

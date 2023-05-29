@@ -599,13 +599,13 @@ class Qmc(CPPIntegrator):
         Default: ``"0"``
 
     :param standard_lattices:
-        bool;
+        bool; experimental
         Use pre-computed lattices instead of median QMC.
         Setting this parameter to ``"False"`` is equal to setting ``"generatingvectors=none"``
         Default: ``"False"``
 
     :param keep_lattices:
-        bool;
+        bool; experimental
         Specifies if list of generating vectors generated using
         median Qmc rule should be kept for other integrals
         Default: ``"False"``
