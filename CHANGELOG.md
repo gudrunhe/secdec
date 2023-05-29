@@ -6,11 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- New integrator `Disteval`
-- Integration based on median QMC rule implemented, can be enabled with option `lattice_candidates`
+- New integrator `Disteval`.
+- Integration based on median QMC rule implemented, can be enabled with option `lattice_candidates`.
 - Numerator support for expansion by regions.
-- `suggested_extra_regulator_exponent`  function, returns a list of suggested extra regulators sufficient to regularise a loop integral
-- `extra_regulator_constraints` function, returns a dict of inequalities which must be obeyed by the extra regulators in order to regularise a loop integral
+- `suggested_extra_regulator_exponent`  function, returns a list of suggested extra regulators sufficient to regularise a loop integral.
+- `extra_regulator_constraints` function, returns a dict of inequalities which must be obeyed by the extra regulators in order to regularise a loop integral.
 - `form_memory_use` argument for  `loop_regions`, tailors `form.set` to use approximately the requested amount of memory.
 - `form_threads` argument for `loop_regions`, the number of threads TFORM will use.
 - `extra_regulator_name`, `extra_regulator_exponent` for `loop_regions`, the name to be used for the extra regulator required to obtain well defined integrals and a list of exponents of the extra regulator.
@@ -18,8 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ginsh` binary built for GiNaC, now used for coefficient parsing.
 - Example `examples/pentabox_offshell`. A 2-loop penta-box integral.
 - Example `examples/hexatriangle`. A massive 2-loop qq->ttH master integral
-- Example `examples/region_tools`. Demonstrates the standalone usage of suggested_extra_regulator_exponent, extra_regulator_constraints and find_regions
-- Added [jupyter](https://jupyter.org/) examples in `examples/jupyter`
+- Example `examples/region_tools`. Demonstrates the standalone usage of `suggested_extra_regulator_exponent`, `extra_regulator_constraints` and `find_regions`.
+- Added [jupyter](https://jupyter.org/) examples in `examples/jupyter`.
 
 ### Changed
 - Vastly improved computation of the Newton polytopes, speeding up some steps required for expansion by regions and geometric sector decomposition.
