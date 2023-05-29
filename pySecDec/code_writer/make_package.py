@@ -2143,6 +2143,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
     expanded_prefactor = expand_ginac(prefactor, regulators, required_prefactor_orders)
     print(repr(expanded_prefactor))
 
+    # update `highest_prefactor_pole_orders`, can change as prefactor could be of form `1 + (1/a + 1)*b`, i.e. can get poles in `a` as we expand in `b`
+    highest_prefactor_pole_orders = -np.array([lowest_order(expanded_prefactor, regulator) for regulator in regulators])
+
     # pack the `prefactor` into c++ function that returns a nested `Series`
     # and takes the `real_parameters` and the `complex_parameters`
     prefactor_type = 'secdecutil::Series<' * len(regulators) + 'integrand_return_t' + '>' * len(regulators)
