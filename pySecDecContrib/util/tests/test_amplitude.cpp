@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "../secdecutil/amplitude.hpp"
 
 #include "../secdecutil/integrators/qmc.hpp" // secdecutil::integrators::Qmc
@@ -125,7 +125,7 @@ TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
         const double uncertainty_first_estimate = integral_ptr->get_integral_result().uncertainty;
         REQUIRE(uncertainty_first_estimate < 1e-8);
         REQUIRE(uncertainty_first_estimate > 1e-15);
-        REQUIRE(value_first_estimate == Approx(1./24.).epsilon(3.*uncertainty_first_estimate)); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT(value_first_estimate, Catch::Matchers::WithinAbs(1./24., 3.*uncertainty_first_estimate)); // expect 3 sigma agreeement 99.7% of the time
 
         auto integration_time = integral_ptr->get_integration_time(); // should not throw
         REQUIRE(typeid(integration_time) == typeid(double));
@@ -148,7 +148,7 @@ TEST_CASE( "Integration with QmcIntegral", "[Integral][QmcIntegral]" ) {
         const double value_second_estimate = integral_ptr->get_integral_result().value;
         const double uncertainty_second_estimate = integral_ptr->get_integral_result().uncertainty;
         REQUIRE(uncertainty_second_estimate < 5e-10);
-        REQUIRE(value_second_estimate == Approx(1./24.).epsilon(3.*uncertainty_second_estimate)); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT(value_second_estimate, Catch::Matchers::WithinAbs(1./24., 3.*uncertainty_second_estimate)); // expect 3 sigma agreeement 99.7% of the time
 
         // exceeding largest available QMC lattice // (now just computes the largest lattice)
         //integral_ptr->set_next_number_of_function_evaluations(400000);
@@ -209,7 +209,7 @@ TEST_CASE( "Integration with CubaIntegral", "[Integral][CubaIntegral]" ) {
         const double uncertainty_first_estimate = integral_ptr->get_integral_result().uncertainty;
         REQUIRE(uncertainty_first_estimate < 1e-3);
         REQUIRE(uncertainty_first_estimate > 1e-5);
-        REQUIRE(value_first_estimate == Approx(1./24.).epsilon(3.*uncertainty_first_estimate)); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT(value_first_estimate, Catch::Matchers::WithinAbs(1./24.,3.*uncertainty_first_estimate)); // expect 3 sigma agreeement 99.7% of the time
 
         auto integration_time = integral_ptr->get_integration_time(); // should not throw
         REQUIRE(typeid(integration_time) == typeid(double));
@@ -232,7 +232,7 @@ TEST_CASE( "Integration with CubaIntegral", "[Integral][CubaIntegral]" ) {
         const double value_second_estimate = integral_ptr->get_integral_result().value;
         const double uncertainty_second_estimate = integral_ptr->get_integral_result().uncertainty;
         REQUIRE(uncertainty_second_estimate < 5e-6);
-        REQUIRE(value_second_estimate == Approx(1./24.).epsilon(3.*uncertainty_second_estimate)); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT(value_second_estimate, Catch::Matchers::WithinAbs(1./24.,3.*uncertainty_second_estimate)); // expect 3 sigma agreeement 99.7% of the time
 
     };
 
@@ -461,7 +461,7 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
         for(size_t i = 0; i < sum_handler.expression.size(); ++i)
         {
             std::cout << "sum_results[" << i << "] = " << sum_results.at(i) << std::endl;
-            REQUIRE( sum_results.at(i).value == Approx(integral_sum_solutions.at(i)).epsilon(3.*epsrel) ); // expect 3 sigma agreeement 99.7% of the time
+            REQUIRE_THAT( sum_results.at(i).value, Catch::Matchers::WithinAbs(integral_sum_solutions.at(i), 3.*epsrel) ); // expect 3 sigma agreeement 99.7% of the time
         }
 
     };
@@ -508,10 +508,10 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
 
         REQUIRE( typeid(sum_results) == typeid(std::vector<secdecutil::UncorrelatedDeviation<complex_t>>) );
 
-        REQUIRE( sum_results.at(0).value.real() == Approx(0.25   ).epsilon(3*sum_results.at(0).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
-        REQUIRE( sum_results.at(0).value.imag() == Approx(0.5    ).epsilon(3*sum_results.at(0).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
-        REQUIRE( sum_results.at(1).value.real() == Approx(-5e-4  ).epsilon(3*sum_results.at(1).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
-        REQUIRE( sum_results.at(1).value.imag() == Approx(2.5e-4 ).epsilon(3*sum_results.at(1).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(0).value.real(), Catch::Matchers::WithinAbs(0.25   ,3*sum_results.at(0).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(0).value.imag(), Catch::Matchers::WithinAbs(0.5    ,3*sum_results.at(0).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(1).value.real(), Catch::Matchers::WithinAbs(-5e-4  ,3*sum_results.at(1).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(1).value.imag(), Catch::Matchers::WithinAbs(2.5e-4 ,3*sum_results.at(1).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
 
         REQUIRE( std::abs(sum_results.at(0).uncertainty)/std::abs(sum_results.at(0).value) < epsrel );
         REQUIRE( std::abs(sum_results.at(1).uncertainty)/std::abs(sum_results.at(1).value) < epsrel );
@@ -561,10 +561,10 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
 
         REQUIRE( typeid(sum_results) == typeid(std::vector<secdecutil::UncorrelatedDeviation<complex_t>>) );
 
-        REQUIRE( sum_results.at(0).value.real() == Approx(2.5e-4 ).epsilon(3*sum_results.at(0).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
-        REQUIRE( sum_results.at(0).value.imag() == Approx(5e-4   ).epsilon(3*sum_results.at(0).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
-        REQUIRE( sum_results.at(1).value.real() == Approx(-0.5   ).epsilon(3*sum_results.at(1).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
-        REQUIRE( sum_results.at(1).value.imag() == Approx( 0.25  ).epsilon(3*sum_results.at(1).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(0).value.real(), Catch::Matchers::WithinAbs(2.5e-4 , 3*sum_results.at(0).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(0).value.imag(), Catch::Matchers::WithinAbs(5e-4   , 3*sum_results.at(0).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(1).value.real(), Catch::Matchers::WithinAbs(-0.5   , 3*sum_results.at(1).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(1).value.imag(), Catch::Matchers::WithinAbs( 0.25  , 3*sum_results.at(1).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
 
         REQUIRE( std::abs(sum_results.at(0).uncertainty)/std::abs(sum_results.at(0).value) < epsrel );
         REQUIRE( std::abs(sum_results.at(1).uncertainty)/std::abs(sum_results.at(1).value) < epsrel );
@@ -612,10 +612,10 @@ TEST_CASE( "Optimized integration with WeightedIntegralHandler", "[WeightedInteg
 
         REQUIRE( typeid(sum_results) == typeid(std::vector<secdecutil::UncorrelatedDeviation<complex_t>>) );
 
-        REQUIRE( sum_results.at(0).value.real() == Approx(2.5e-4 ).epsilon(3*sum_results.at(0).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
-        REQUIRE( sum_results.at(0).value.imag() == Approx(5e-4   ).epsilon(3*sum_results.at(0).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
-        REQUIRE( sum_results.at(1).value.real() == Approx(-0.5   ).epsilon(3*sum_results.at(1).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
-        REQUIRE( sum_results.at(1).value.imag() == Approx( 0.25    ).epsilon(3*sum_results.at(1).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(0).value.real(), Catch::Matchers::WithinAbs(2.5e-4 , 3*sum_results.at(0).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(0).value.imag(), Catch::Matchers::WithinAbs(5e-4   , 3*sum_results.at(0).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(1).value.real(), Catch::Matchers::WithinAbs(-0.5   , 3*sum_results.at(1).uncertainty.real()) ); // expect 3 sigma agreeement 99.7% of the time
+        REQUIRE_THAT( sum_results.at(1).value.imag(), Catch::Matchers::WithinAbs( 0.25    , 3*sum_results.at(1).uncertainty.imag()) ); // expect 3 sigma agreeement 99.7% of the time
 
         REQUIRE( std::abs(sum_results.at(0).uncertainty)/std::abs(sum_results.at(0).value) < epsrel );
         REQUIRE( std::abs(sum_results.at(1).uncertainty)/std::abs(sum_results.at(1).value) < epsrel );

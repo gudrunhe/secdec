@@ -1,4 +1,6 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
+using Catch::Approx;
+
 #include "../secdecutil/uncertainties.hpp"
 
 #include <complex>

@@ -1,4 +1,6 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
+using Catch::Approx;
+
 #include "../secdecutil/integrand_container.hpp"
 #include "../secdecutil/integrators/integrator.hpp"
 #include "../secdecutil/integrators/cquad.hpp"
@@ -11,8 +13,6 @@
 #else
     template <typename ...T> using complex_template = std::complex<T...>;
 #endif
-
-using Catch::Matchers::Contains;
 
 TEST_CASE( "Test cquad error message more than 1D", "[Integrator][CQuad]" ) {
     int dimensionality = 4;
@@ -30,12 +30,12 @@ TEST_CASE( "Test cquad gsl error handling", "[Integrator][CQuad]" ) {
     const auto integrand_container = secdecutil::IntegrandContainer<double, double const * const>(dimensionality,integrand);
 
     REQUIRE_THROWS_AS( secdecutil::gsl::CQuad<double>(1e-2,1e-7,1) , secdecutil::gsl::gsl_error);
-    REQUIRE_THROWS_WITH( secdecutil::gsl::CQuad<double>(1e-2,1e-7,1) , Contains("n must be at least 3") );
+    REQUIRE_THROWS_WITH( secdecutil::gsl::CQuad<double>(1e-2,1e-7,1) , Catch::Matchers::ContainsSubstring("n must be at least 3") );
 
     secdecutil::gsl::CQuad<double> integrator{-1.0,1e-7,100};
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::gsl::gsl_error );
-    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Contains( "tolerance" ) && Contains( "invalid" ) );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::ContainsSubstring( "tolerance" ) && Catch::Matchers::ContainsSubstring( "invalid" ) );
 };
 
 TEST_CASE( "Test cquad result_info contour deformation sign check error", "[Integrator][CQuad]" ) {
@@ -47,7 +47,7 @@ TEST_CASE( "Test cquad result_info contour deformation sign check error", "[Inte
     secdecutil::gsl::CQuad<double> integrator;
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
-    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Contains( "contour deformation" ) );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::ContainsSubstring( "contour deformation" ) );
 };
 
 TEST_CASE( "Test cquad result_info positive polynomial sign check error", "[Integrator][CQuad]" ) {
@@ -59,7 +59,7 @@ TEST_CASE( "Test cquad result_info positive polynomial sign check error", "[Inte
     secdecutil::gsl::CQuad<double> integrator;
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
-    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Contains( "positive polynomial" ) );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::ContainsSubstring( "positive polynomial" ) );
 };
 
 TEST_CASE( "Test cquad member access", "[Integrator][CQuad]" ) {

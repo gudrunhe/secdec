@@ -1,4 +1,6 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
+using Catch::Approx;
+
 #include "../secdecutil/integrand_container.hpp"
 #include "../secdecutil/integrators/integrator.hpp"
 #include "../secdecutil/integrators/cuba.hpp"
@@ -197,7 +199,7 @@ TEST_CASE( "Test Cuhre integrator with complex", "[Integrator][Cuba][Cuhre]" ) {
     auto integrator = secdecutil::cuba::Cuhre<cubareal>();
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
-    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::Contains( "contour deformation" ) );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::ContainsSubstring( "contour deformation" ) );
   };
 
   TEST_CASE( "Test Vegas result_info positive polynomial sign check error", "[Integrator][Cuba][Cuhre]" ) {
@@ -209,7 +211,7 @@ TEST_CASE( "Test Cuhre integrator with complex", "[Integrator][Cuba][Cuhre]" ) {
     auto integrator = secdecutil::cuba::Vegas<cubareal>();
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
-    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::Contains( "positive polynomial" ) );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::ContainsSubstring( "positive polynomial" ) );
   };
 
  TEST_CASE( "Test exceptions in complex base class", "[Integrator]" ) {

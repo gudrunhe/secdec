@@ -5,7 +5,9 @@
 #endif
 #include<complex>
 
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
+using Catch::Approx;
+
 #include "../secdecutil/integrand_container.hpp"
 
 TEST_CASE( "Check Access", "[IntegrandContainer]" ) {

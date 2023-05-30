@@ -1,4 +1,4 @@
-AC_INIT([SecDecUtil], [1.4.5])
+AC_INIT([SecDecUtil],[1.4.6])
 AC_CONFIG_SRCDIR([secdecutil/series.hpp])
 AM_INIT_AUTOMAKE
 
@@ -15,7 +15,7 @@ AC_ARG_ENABLE([cuda],
     ]
 )
 
-dnl define AX_CXX_COMPILE_STDCXX_14 macro (sometimes required for mac)
+dnl define AX_CXX_COMPILE_STDCXX_17 macro (sometimes required for mac)
 AC_CONFIG_MACRO_DIR([acinclude.d])
 
 AC_PROG_CXX
@@ -23,4 +23,5 @@ AC_PROG_CXX
 dnl noext: use -std=c++17 rather than -std=gnu++14
 AX_CXX_COMPILE_STDCXX_17([noext])
 
-AC_OUTPUT(Makefile secdecutil/Makefile tests/Makefile)
+AC_CONFIG_FILES([Makefile secdecutil/Makefile tests/Makefile])
+AC_OUTPUT

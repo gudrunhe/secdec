@@ -1,4 +1,6 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
+using Catch::Approx;
+
 #include "../secdecutil/coefficient_parser.hpp" // secdecutil::exparse::read_coefficient
 #include "../secdecutil/series.hpp" // secdecutil::Series
 

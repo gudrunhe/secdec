@@ -4,7 +4,8 @@
 #include "../secdecutil/deep_apply.hpp"
 #include "../secdecutil/series.hpp"
 
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
+using Catch::Approx;
 
 TEST_CASE( "deep_apply std::vector container to different type", "[deep_apply]" ) {
 

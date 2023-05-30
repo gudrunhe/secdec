@@ -1,4 +1,6 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
+using Catch::Approx;
+
 #include "../secdecutil/integrand_container.hpp"
 #include "../secdecutil/integrators/integrator.hpp"
 #include "../secdecutil/integrators/qmc.hpp"
@@ -73,7 +75,7 @@ TEST_CASE( "Test result_info contour deformation sign check error with qmc", "[I
     auto integrator = secdecutil::integrators::Qmc<double,dimensionality,integrators::transforms::Korobov<3>::type, integrand_t>();
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
-    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::Contains( "contour deformation" ) );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::ContainsSubstring( "contour deformation" ) );
 };
 
 TEST_CASE( "Test result_info positive polynomial sign check error with qmc", "[IntegrandContainer]" ) {
@@ -85,6 +87,6 @@ TEST_CASE( "Test result_info positive polynomial sign check error with qmc", "[I
     auto integrator = secdecutil::integrators::Qmc<double,dimensionality,integrators::transforms::Korobov<3>::type, decltype(integrand_container)>();
 
     REQUIRE_THROWS_AS( integrator.integrate(integrand_container) , secdecutil::sign_check_error );
-    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::Contains( "positive polynomial" ) );
+    REQUIRE_THROWS_WITH( integrator.integrate(integrand_container) , Catch::Matchers::ContainsSubstring( "positive polynomial" ) );
 };
 

@@ -9,16 +9,16 @@ endif
 
 SECDEC_CONTRIB = `python3 -m pySecDecContrib --dirname`
 
-test_integrator_SOURCES = main.cpp test_integrator.cpp catch.hpp
-test_cuba_integrators_SOURCES = main.cpp test_cuba_integrators.cpp catch.hpp
-test_cquad_SOURCES = main.cpp test_cquad.cpp catch.hpp
-test_qmc_SOURCES = main.cpp test_qmc.cpp catch.hpp
-test_series_SOURCES = main.cpp test_series.cpp catch.hpp
-test_integrand_container_SOURCES = main.cpp test_integrand_container.cpp catch.hpp
-test_deep_apply_SOURCES = main.cpp test_deep_apply.cpp catch.hpp
-test_uncertainties_SOURCES = main.cpp test_uncertainties.cpp catch.hpp
-test_amplitude_SOURCES = main.cpp test_amplitude.cpp catch.hpp
-test_coefficient_parser_SOURCES = main.cpp test_coefficient_parser.cpp catch.hpp
+test_integrator_SOURCES = catch_amalgamated.cpp test_integrator.cpp catch_amalgamated.hpp
+test_cuba_integrators_SOURCES = catch_amalgamated.cpp test_cuba_integrators.cpp catch_amalgamated.hpp
+test_cquad_SOURCES = catch_amalgamated.cpp test_cquad.cpp catch_amalgamated.hpp
+test_qmc_SOURCES = catch_amalgamated.cpp test_qmc.cpp catch_amalgamated.hpp
+test_series_SOURCES = catch_amalgamated.cpp test_series.cpp catch_amalgamated.hpp
+test_integrand_container_SOURCES = catch_amalgamated.cpp test_integrand_container.cpp catch_amalgamated.hpp
+test_deep_apply_SOURCES = catch_amalgamated.cpp test_deep_apply.cpp catch_amalgamated.hpp
+test_uncertainties_SOURCES = catch_amalgamated.cpp test_uncertainties.cpp catch_amalgamated.hpp
+test_amplitude_SOURCES = catch_amalgamated.cpp test_amplitude.cpp catch_amalgamated.hpp
+test_coefficient_parser_SOURCES = catch_amalgamated.cpp test_coefficient_parser.cpp catch_amalgamated.hpp
 
 test_cuba_integrators_LDADD = -lcuba
 test_cuba_integrators_CXXFLAGS = -I$(SECDEC_CONTRIB)/include

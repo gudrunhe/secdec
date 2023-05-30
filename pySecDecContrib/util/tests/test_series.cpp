@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "../secdecutil/series.hpp"
 
 #include <complex>
