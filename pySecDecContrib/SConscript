@@ -136,9 +136,9 @@ contrib += env.Program("bin/pysecdec_listcuda", [f"disteval/listcuda.cpp"],
     LINKFLAGS="-s")
 File("disteval/minicuda.h")
 
-File("bin/export_sector")
-File("bin/formwrapper")
-File("lib/write_contour_deformation.frm")
-File("lib/write_integrand.frm")
+contrib += [File("bin/export_sector")]
+contrib += [File("bin/formwrapper")]
+contrib += [File("lib/write_contour_deformation.frm")]
+contrib += [File("lib/write_integrand.frm")]
 
 Return("contrib")
