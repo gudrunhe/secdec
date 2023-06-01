@@ -19,7 +19,7 @@ c() {
     fi
 }
 
-python=${PYTHON:python3}
+python=${PYTHON:-python3}
 tmpdir=$(mktemp -d)
 
 echo "### Installing Python dependencies"
