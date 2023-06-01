@@ -97,9 +97,14 @@ References
             | `doi:10.1016/j.cpc.2019.02.015 <http://dx.doi.org/10.1016/j.cpc.2019.02.015>`_,
 	    | `arXiv:1811.11720 <http://arxiv.org/abs/1811.11720>`_
 
-.. [PSD21]  | G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, F. Langer, V Magerya, A Poldaru, J. Schlenk, E. Villa
-              *Expansion by regions with pySecDec*,
-            | (to appear)
+.. [PSD21]  | G. Heinrich, S. Jahn, S. P. Jones, M. Kerner, F. Langer, V Magerya, A Poldaru, J. Schlenk, E. Villa,
+              *Expansion by regions with pySecDec*, Comput.Phys.Commun. 273 (2022),
+            | `doi:10.1016/j.cpc.2021.108267 <https://doi.org/10.1016/j.cpc.2021.108267>`_,
+            | `arXiv:2108.10807 <https://arxiv.org/abs/2108.10807>`_
+
+.. [PSD23]  | G. Heinrich, S. P. Jones, M. Kerner, V. Magerya, A. Olsson, J. Schlenk,
+              *Numerical Scattering Amplitudes with pySecDec*,
+            | `arXiv:2305.19768 <https://arxiv.org/abs/2305.19768>`_
 
 .. [RUV17]  | B. Ruijl, T. Ueda, J. Vermaseren,
               *FORM version 4.2*,

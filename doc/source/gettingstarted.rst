@@ -696,7 +696,7 @@ The generated C++ library can be :ref:`compiled <building_the_cpp_lib>` and call
 List of Examples
 ----------------
 
-Here we list the available examples. For more details regarding each example see [PSD17]_, [PSD18]_ and [PSD21]_.
+Here we list the available examples. For more details regarding each example see [PSD17]_, [PSD18]_, [PSD21]_ and [PSD23]_.
 
 +----------------------------+--------------------------------------------------------------------------------------------------------------------------------+
 | **easy**:                  | a simple parametric integral, described in :numref:`a_simple_example`                                                          |
