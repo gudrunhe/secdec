@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The `json` output format of `Disteval` now includes the values
+  of the integrals in addition to the values of the sums.
+
 ## [1.6] - 2023-05-29
 
 ### Added
