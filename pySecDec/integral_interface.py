@@ -1619,11 +1619,12 @@ class DistevalLibrary(object):
         elif format == "mathematica":
             return disteval.result_to_mathematica(result)
         else:
-            result["sums"] = {
-                sum_name : {
-                    tuple(exp) : (complex(val_re, val_im), complex(err_re, err_im))
-                    for exp, (val_re, val_im), (err_re, err_im) in sum_terms
+            for key in ("sums", "integrals"):
+                result[key] = {
+                    sum_name : {
+                        tuple(exp) : (complex(val_re, val_im), complex(err_re, err_im))
+                        for exp, (val_re, val_im), (err_re, err_im) in sum_terms
+                    }
+                    for sum_name, sum_terms in result[key].items()
                 }
-                for sum_name, sum_terms in result["sums"].items()
-            }
             return result
