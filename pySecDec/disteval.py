@@ -789,6 +789,26 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
         maxlattice = np.max(lattices[mask])
         log(f"- {f}: {di:.4e} evals, {dt:.4e} sec, {np.min(slow):.4g} - {np.max(slow):.4g} bubbles, {minlattice:.4e} - {maxlattice:.4e} pts")
 
+    # Calculate the values of individual integrals
+    intvals = {}
+    for ii in infos.values():
+        br_pref = ii["expanded_prefactor_value"]
+        br_kern_val = {
+            tuple(o["regulator_powers"]) : sum(kern_val[kernel2idx[ii["name"], k]] for k in o["kernels"])
+            for o in ii["orders"]
+        }
+        br_kern_var = {
+            tuple(o["regulator_powers"]) : sum(kern_var[kernel2idx[ii["name"], k]] for k in o["kernels"])
+            for o in ii["orders"]
+        }
+        maxord = np.array(ii["lowest_orders"]) + np.array(ii["prefactor_highest_orders"]) - np.array(ii["prefactor_lowest_orders"])
+        br_val = bracket_mul(br_pref, br_kern_val, maxord)
+        br_var = bracket_mul({k: abs2(v) for k, v in br_pref.items()}, br_kern_var, maxord)
+        intvals[ii["name"]] = [
+            [p, (np.real(val), np.imag(val)), (np.sqrt(np.real(br_var[p])), np.sqrt(np.imag(br_var[p])))]
+            for p, val in br_val.items()
+        ]
+
     return {
         "regulators": info["regulators"],
         "sums": {
@@ -798,7 +818,8 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 if a == ampid
             ]
             for ampid in range(ampcount)
-        }
+        },
+        "integrals": intvals
     }
 
 def default_worker_commands(dirname):
