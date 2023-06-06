@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import numpy as np
 import sympy as sp
 import pySecDec as psd
 from pySecDec.algebra import Polynomial
@@ -19,17 +18,14 @@ if __name__ == "__main__":
         internal_lines = internal_lines,
         external_lines = external_lines,
         replacement_rules = [
-                            ('p1*p1', '0'),
-                            ('p2*p2', '0'),
-                            ('p3*p3', '0'),
-                            ('p4*p4', '0'),
-                            ('p1*p2', 's12/2'),
-                            ('p3*p4', 's12/2'),
-                            ('p1*p3', 's13/2'),
-                            ('p2*p4', 's13/2'),
-                            ('p2*p3', '-s12/2-s13/2'),
-                            ('p1*p4', '-s12/2-s13/2'),
-                            ],
+            ('p4', '-p1-p2-p3'),
+            ('p1*p1', '0'),
+            ('p2*p2', '0'),
+            ('p3*p3', '0'),
+            ('p1*p2', 's12/2'),
+            ('p1*p3', 's13/2'),
+            ('p2*p3', '-s12/2-s13/2'),
+        ],
     )
     # (Optional) Draw diagrams
     #psd.loop_integral.draw.plot_diagram(internal_lines,external_lines,name)
@@ -39,9 +35,8 @@ if __name__ == "__main__":
 
     # pretty print
     print('  regulator_exponents: ', regulator_exponents)
-    print('  I[' + ','.join(['v'+str(i) for i in range(len(regulator_exponents))]) + '] -> ', 
-          'I[' + ','.join(['v'+str(i) if e ==0 else str(sympify_expression('v'+str(i)+'+('+str(e)+'*n1)')) for i,e in enumerate(regulator_exponents)]) + ']'
-         )
+    print('  I[' + ','.join([f'v{i}' for i in range(len(regulator_exponents))]) + '] -> ', 
+          'I[' + ','.join([str(sympify_expression(f'v{i}+({e})*n1')) for i,e in enumerate(regulator_exponents)]) + ']')
     print()
 
     print('-- extra_regulator_constraints --')
@@ -55,8 +50,8 @@ if __name__ == "__main__":
         print('  region: ', region)
         print('    constraints: ', constraints.tolist())
         for constraint in constraints:
-            print('     ', constraint, '=>', 
-                '(' + str(sympify_expression('+'.join([ '(' + str(e) + ')*v'+str(i) for i,e in enumerate(constraint) if e != 0]))) + ') != 0' )
+            expr = '+'.join([ f'({e})*v{i}' for i,e in enumerate(constraint) if e != 0])
+            print(f'     {constraint} => ({sympify_expression(expr)}) != 0')
     print()
 
     print('-- find_regions --')
