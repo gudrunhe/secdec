@@ -1004,7 +1004,17 @@ def main():
 
     # Report the result
     if result_format == "json":
-        json.dump(result, sys.stdout, indent=2)
+        def json2str(obj, indent):
+            if isinstance(obj, dict):
+                return f"{{\n{indent} " + \
+                    f",\n{indent} ".join([f"{json.dumps(k)}:{json2str(v, indent + ' ')}" for k, v in obj.items()]) + \
+                    f"\n{indent}}}"
+            elif isinstance(obj, (list, tuple)):
+                return f"[\n{indent} " + \
+                    f",\n{indent} ".join([json.dumps(i) for i in obj]) + \
+                    f"\n{indent}]"
+            return json.dumps(obj)
+        print(json2str(result, ""))
     elif result_format == "mathematica":
         print(result_to_mathematica(result))
     else:
