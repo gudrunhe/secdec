@@ -13,7 +13,7 @@ runtests : $(ALL_EXAMPLES)
 
 # Running selection
 # ----------------
-SELECTED_TESTS = regulator_in_powerlist bubble1L_dot_rank4 tadpole2L_rank2 userdefined_cpp issue7
+SELECTED_TESTS = regulator_in_powerlist bubble1L_dot_rank4 tadpole2L_rank2 userdefined_cpp issue7 easy_sum
 .PHONY : runselected
 runselected : $(SELECTED_TESTS)
 

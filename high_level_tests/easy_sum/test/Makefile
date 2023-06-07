@@ -16,7 +16,7 @@ test.exe : test.o $(TEST_FRAMEWORK_DIR)/catch.o ../$(INTEGRAL_NAME)/lib$(INTEGRA
 .PHONY : test
 test : test.log
 test.log : test.exe test.py
-	(echo "CXX test:" && ./test.exe -s && echo "PYTHON test:" && $(PYTHON) test.py -v 2>&1) 2>&1 >test.log \
+	(echo "CXX test:" && ./test.exe -s && echo "PYTHON test:" && $(PYTHON) test.py -q) 2>&1 >test.log \
 	&& printf "\n@@@ SUCCESS @@@" >> test.log || printf "\n@@@ FAILURE @@@" >> test.log
 
 .PHONY : clean very-clean

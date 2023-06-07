@@ -13,8 +13,12 @@ static-library : $(INTEGRAL_NAME)
 pylink-library : $(INTEGRAL_NAME) static-library
 	$(MAKE) -C $(INTEGRAL_NAME) pylink
 
+.PHONY: disteval
+disteval: $(INTEGRAL_NAME)
+	$(MAKE) -C $(INTEGRAL_NAME) disteval
+
 .PHONY : test
-test : static-library pylink-library
+test : static-library pylink-library disteval
 	echo $(EXAMPLES_DIR)
 	$(MAKE) -C test INTEGRAL_NAME=$(INTEGRAL_NAME) $@
 
