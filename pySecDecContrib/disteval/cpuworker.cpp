@@ -692,6 +692,8 @@ int main() {
         workt += handle_one_command();
     }
     double t2 = timestamp();
-    fprintf(stderr, "%s] Done in %.3gs: %.3g%% useful time, %.3g%% read time; work ended %.3gs ago\n",
-            workername, lastt-t1, 100*workt/(lastt-t1), 100*readt/(lastt-t1), t2-lastt);
+    if (0) {
+        fprintf(stderr, "%s] Done in %.3gs: %.3g%% useful time, %.3g%% read time; work ended %.3gs ago\n",
+                workername, lastt-t1, 100*workt/(lastt-t1), 100*readt/(lastt-t1), t2-lastt);
+    }
 }

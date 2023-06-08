@@ -918,6 +918,8 @@ main(int argc, char *argv[])
     double t2 = timestamp();
     for (int i = 0; i < NTHREADS; i++)
         G.useful_time += G.threads[i].useful_time;
-    fprintf(stderr, "%s] Done in %.3gs: %.3g%% useful time, %.3g%% read time; work ended %.3gs ago\n",
-            G.workername, lastt-t1, 100*G.useful_time/(lastt-t1), 100*readt/(lastt-t1), t2-lastt);
+    if (0) {
+        fprintf(stderr, "%s] Done in %.3gs: %.3g%% useful time, %.3g%% read time; work ended %.3gs ago\n",
+                G.workername, lastt-t1, 100*G.useful_time/(lastt-t1), 100*readt/(lastt-t1), t2-lastt);
+    }
 }
