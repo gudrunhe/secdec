@@ -727,14 +727,14 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 for ampid in ampids:
                     relerr = []
                     log(f"{sum_names[ampid]!r}=(")
-                    for (a, p), val, var in sorted(zip(ap2coeffs.keys(), amp_val, amp_var)):
+                    for (a, p), val, var, i in sorted(zip(ap2coeffs.keys(), amp_val, amp_var, range(len(ap2coeffs)))):
                         if a != ampid: continue
                         stem = "*".join(f"{r}^{p}" for r, p in zip(sp_regulators, p))
                         err = np.sqrt(np.real(var)) + (1j)*np.sqrt(np.imag(var))
                         log(f"  +{stem}*({val:+.16e})")
                         log(f"  +{stem}*({err:+.16e})*plusminus")
                         abserr = np.abs(err)
-                        relerr.append(abserr / np.abs(val) if abserr > epsabs[ampid] else 0.0)
+                        relerr.append(abserr / np.abs(val) if abserr > epsabs[i] else 0.0)
                     log(")")
                     log(f"{sum_names[ampid]!r} relative errors by order:", ", ".join(f"{e:.2e}" for e in relerr))
                     relerrs.append(np.max(relerr))
@@ -768,7 +768,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
             amp_val, amp_var = await iterate_integration(propose_lattices1)
 
     if not early_exit:
-        log(f"trying to achieve epsrel={epsrel} and epsabs={epsabs} for each amplitude")
+        log(f"trying to achieve epsrel={epsrel} and epsabs={epsabs} for each order of each amplitude")
         amp_val, amp_var = await iterate_integration(propose_lattices2)
 
     # Report the results
