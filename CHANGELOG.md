@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - The `json` output format of `Disteval` now includes the values
   of the integrals in addition to the values of the sums.
+- [zlib](http://zlib.net/) version 1.2.13, needed by FORM.
+
+### Changed
+- FORM is now configured using `--with-zlib`, to avoid [FORM issue 95](https://github.com/vermaseren/form/issues/95).
 
 ## [1.6] - 2023-05-29
 

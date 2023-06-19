@@ -57,6 +57,7 @@ are:
  * CUBA (http://www.feynarts.de/cuba/), used for `Vegas`, `Suave`, `Divonne`, and `Cuhre` integrators.
  * GSL (http://www.gnu.org/software/gsl/), used for the `CQuad` integrator.
  * FORM (http://www.nikhef.nl/~form/), used to optimize the integrands.
+ * zlib (http://zlib.net/), used by FORM.
  * Nauty and Traces (http://pallini.di.uniroma1.it/), used by `pySecDec.make_package` to find symmetries between sectors (if `use_dreadnaut` is set to `True`).
  * Normaliz (https://www.normaliz.uni-osnabrueck.de), used by the geometric decomposition module (`decomposition_method` set to `'geometric'` or `'geometric_ku'`).
  * Catch (https://github.com/philsquared/Catch) used by SedDecUtil (part of pySecDec) for unit testing.

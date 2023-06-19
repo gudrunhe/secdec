@@ -3,6 +3,7 @@ import sys
 Import("env")
 
 cuba = "Cuba-4.2.2"
+zlib = "zlib-1.2.13"
 form = "form-4.3.0"
 gmp = "gmp-6.2.1"
 gsl = "gsl-2.7.1"
@@ -34,7 +35,7 @@ contrib += \
     Install("include/secdecutil", Glob("util/secdecutil/*hpp")) + \
     Install("include/secdecutil/integrators", Glob("util/secdecutil/integrators/*hpp"))
 
-def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", extra_sources=[], pre_commands="", post_commands="", extra_configure_args="", build_target="", install_target="install"):
+def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", extra_sources=[], pre_commands="", post_commands="", extra_configure_args="", build_target="", install_target="install", bindir=True):
     return env.Command(target, [f"{packagename}{extension}"] + extra_sources, f"""
         cd pySecDecContrib && \
         tar -xf {packagename}{extension} && \
@@ -44,7 +45,7 @@ def ConfigureAndInstall(env, target, packagename, extension=".tar.gz", extra_sou
             --prefix="$$PWD/../install" \
             --libdir="$$PWD/../lib" \
             --includedir="$$PWD/../include" \
-            --bindir="$$PWD/../bin" \
+            {'--bindir="$$PWD/../bin"' if bindir else ''} \
             {extra_configure_args} && \
         {post_commands} \
         make {build_target} && \
@@ -65,10 +66,15 @@ contrib += \
         extra_configure_args="CFLAGS='-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'",
         build_target="lib")
 
+zlib_files = ["lib/libz.a", "include/zlib.h", "include/zconf.h"]
+contrib += \
+    ConfigureAndInstall(env, zlib_files, zlib, extension=".tar.xz", extra_configure_args="--static", bindir=False)
+
 form_files = ["bin/form", "bin/tform"]
 contrib += \
     ConfigureAndInstall(env, form_files, form,
-        extra_configure_args="--without-gmp --without-zlib --enable-native=no")
+        extra_sources = zlib_files,
+        extra_configure_args="--without-gmp --with-zlib --enable-native=no")
 
 gmp_files = open(f"{gmp}.list").read().splitlines()
 contrib += \
