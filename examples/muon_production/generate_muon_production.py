@@ -1,7 +1,6 @@
 import pySecDec as psd
 from pySecDec import LoopPackage
 from pySecDec import sum_package
-import numpy as np
 
 if __name__ == "__main__":
     
@@ -100,5 +99,4 @@ if __name__ == "__main__":
             regulators = ['eps'],
             requested_orders = [0],
             real_parameters = ['s', 't', 'u'], #Make sure that the list of real parameters contain every symbolic kinematic invariant defined in 'all_integrals'
-            complex_parameters = [],
-            processes = 30)
+            complex_parameters = [])
