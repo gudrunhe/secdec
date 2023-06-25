@@ -1,0 +1,50 @@
+integralfamilies:
+  - name: F4
+    loop_momenta:
+      - l1
+      - l2
+    propagators:
+      - [l1,0]
+      - [l1+q1,0]
+      - [l1+q1+q2,0]
+      - [l1-l2,mt2]
+      - [l2,mt2]
+      - [l2+q1,mt2]
+      - [l2+q1+q2,mt2]
+  - name: F3
+    loop_momenta:
+      - l1
+      - l2
+    propagators:
+      - [l1-l2,0]
+      - [l1-l2-q1,0]
+      - [l1,mt2]
+      - [l1+q1,mt2]
+      - [l2+q1,mt2]
+      - [l1+q1+q2,mt2]
+      - [l2+q1+q2,mt2]
+  - name: F2
+    loop_momenta:
+      - l1
+      - l2
+    propagators:
+      - [l1-l2,0 ]
+      - [l1-l2-q2,0]
+      - [l1,mt2]
+      - [l1+q2,mt2]
+      - [l2+q2,mt2]
+      - [l1+q1+q2,mt2]
+      - [l2+q1+q2,mt2]
+  - name: F1
+    loop_momenta:
+      - l1
+      - l2
+    propagators:
+      - [l1-l2,0]
+      - [l1,mt2]
+      - [l2,mt2]
+      - [l1+q2,mt2]
+      - [l2+q2,mt2]
+      - [l1+q1+q2,mt2]
+      - [l2+q1+q2,mt2]
+ 

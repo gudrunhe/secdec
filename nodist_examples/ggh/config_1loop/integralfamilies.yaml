@@ -1,0 +1,10 @@
+integralfamilies:
+  - name: F1
+    loop_momenta:
+      - l1
+    propagators:
+      -  [l1, mt2]
+      -  [l1+q1, mt2]
+      -  [l1+q1+q2, mt2]
+
+
