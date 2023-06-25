@@ -709,12 +709,17 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
 
                 latticex = lattices[mask_done]/oldlattices[mask_done]
                 precisionx = np.sqrt((np.real(kern_var[mask_done]) + np.imag(kern_var[mask_done])) / (np.real(new_kern_var) + np.imag(new_kern_var)))
+                ratiox = kern_val[mask_done]/new_kern_val
+                sigmarx = np.abs(np.real(kern_val[mask_done]-new_kern_val))/np.sqrt(np.maximum( np.abs(np.real(kern_var[mask_done])), np.abs(np.real(new_kern_var)) ))
+                sigmaix = np.abs(np.imag(kern_val[mask_done]-new_kern_val))/np.sqrt(np.maximum( np.abs(np.imag(kern_var[mask_done])), np.abs(np.imag(new_kern_var)) ))
                 for i, idx in enumerate(mask_done.nonzero()[0]):
                     idx = int(idx)
                     if precisionx[i] < 1.0:
-                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({1/precisionx[i]:.4g}x worse at {latticex[i]:.1f}x lattice)")
+                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e}, sigma: {sigmarx[i]} {sigmaix[i]} ({1/precisionx[i]:.4g}x worse at {latticex[i]:.1f}x lattice)")
                     else:
-                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
+                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e}, sigma: {sigmarx[i]} {sigmaix[i]} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
+                    if (sigmarx[i] > 10. or sigmaix[i] > 10.) and not math.isnan(latticex[i]):
+                        log(f"WARNING: unlikely that new result is compatible with old, {new_kern_val[i]} ~ {np.sqrt(new_kern_var[i])} vs {kern_val[mask_done][i]} ~ {np.sqrt(kern_var[mask_done][i])}")
                 submask_lucky = new_kern_var <= kern_var[mask_done]
                 kern_val[mask_done] = np.where(submask_lucky, new_kern_val, kern_val[mask_done])
                 kern_var[mask_done] = np.where(submask_lucky, new_kern_var, kern_var[mask_done])
