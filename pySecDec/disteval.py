@@ -415,6 +415,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     datadir, info, requested_orders, kernel2idx, infos, ampcount, korders, family2idx, par, t_init, t_worker = prepared
 
     if lattice_candidates == 0: standard_lattices=True
+    if lattice_candidates > 0 and lattice_candidates % 2 == 0: lattice_candidates += 1
 
     t1 = time.time()
 
@@ -525,9 +526,9 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     lattices = np.zeros(len(kernel2idx), dtype=np.float64)
     for i in range(len(kernel2idx)):
         lattices[i], genvecs[i] = generating_vector(dims[i], npoints0)
-    shift_val = np.full((len(kernel2idx), nshifts), np.nan, dtype=np.complex128)
-    shift_rnd = np.empty((len(kernel2idx), nshifts), dtype=object)
-    shift_tag = np.full((len(kernel2idx), nshifts), None, dtype=object)
+    shift_val = np.full((len(kernel2idx), max(nshifts,lattice_candidates)), np.nan, dtype=np.complex128)
+    shift_rnd = np.empty((len(kernel2idx), max(nshifts,lattice_candidates)), dtype=object)
+    shift_tag = np.full((len(kernel2idx), max(nshifts,lattice_candidates)), None, dtype=object)
     kern_db = np.ones(len(kernel2idx))
     kern_dt = np.ones(len(kernel2idx))
     kern_di = np.ones(len(kernel2idx))
@@ -697,9 +698,9 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                     early_exit = True
 
                 # Not all kernels might be done due to an early exit
-                mask_done = np.logical_and(mask_todo, ~np.any(np.isnan(shift_val), axis=1))
+                mask_done = np.logical_and(mask_todo, ~np.any(np.isnan(shift_val[:,:nshifts]), axis=1))
                 log(f"integration done, updated {np.count_nonzero(mask_done)} kernels")
-                shift_val_done = shift_val[mask_done]
+                shift_val_done = shift_val[mask_done,:nshifts]
                 shift_val[mask_todo] = np.nan
                 new_kern_val = np.mean(shift_val_done, axis=1)
                 new_kern_val /= lattices[mask_done]
