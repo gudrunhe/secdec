@@ -282,7 +282,7 @@ def adjust_1d_n(W2, V, w, a, tau, nmin, nmax, allow_medianQMC):
     assert not np.any(np.isinf(n))
     assert not np.any(np.isnan(n))
     # if not using medianQMC: Enforce nmax, raising the rest
-    if allow_medianQMC: return n
+    if allow_medianQMC: return n.astype(int)
     mask = (n > nmax)
     while True:
         n[mask] = nmax[mask]
