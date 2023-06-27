@@ -283,7 +283,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
             if isinstance(c_i, dict):
                 for genidx in c_i.keys():
                     if not (0 <= genidx < len(package_generators)):
-                        raise ValueError(f"coefficient for generator {genidx} is provided, but there are only {len(pacakge_generators)}")
+                        raise ValueError(f"coefficient for generator {genidx} is provided, but there are only {len(package_generators)}")
             else:
                 if len(c_i) != len(package_generators):
                     raise ValueError(f"`coefficients` must have list of the same length as `package_generators`.")
@@ -304,7 +304,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
             if isinstance(c_i, dict):
                 for genidx in c_i.keys():
                     if not (0 <= genidx < len(package_generators)):
-                        raise ValueError(f"coefficient for generator {genidx} is provided, but there are only {len(pacakge_generators)}")
+                        raise ValueError(f"coefficient for generator {genidx} is provided, but there are only {len(package_generators)}")
             else:
                 if len(c_i) != len(package_generators):
                     raise ValueError(f"`coefficients` must have list of the same length as `package_generators`.")
