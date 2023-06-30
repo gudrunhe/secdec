@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `json` output format of `Disteval` now includes the values
   of the integrals in addition to the values of the sums.
 - [zlib](http://zlib.net/) version 1.2.13, needed by FORM.
+- Example `nodist_examples/ggh`. 1- and 2-loop amplitude for Higgs production in gluon fusion.
+- Example `triangle2L_wu`. An integral that requires the
 
 ### Changed
 - FORM is now configured using `--with-zlib`, to avoid [FORM issue 95](https://github.com/vermaseren/form/issues/95).
+- If lattice_candidates is even and non-zero, use lattice_candidates+1 candidates.
+
+### Fixed
+- Wrong results using disteval with median QMC
 
 ## [1.6] - 2023-05-29
 
