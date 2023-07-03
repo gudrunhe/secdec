@@ -812,7 +812,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
         br_var = bracket_mul({k: abs2(v) for k, v in br_pref.items()}, br_kern_var, maxord)
         intvals[ii["name"]] = [
             [p, (np.real(val), np.imag(val)), (np.sqrt(np.real(br_var[p])), np.sqrt(np.imag(br_var[p])))]
-            for p, val in br_val.items()
+            for p, val in sorted(br_val.items())
         ]
 
     return {
