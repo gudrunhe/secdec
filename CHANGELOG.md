@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [GiNaC](https://www.ginac.de/) updated to 1.8.6+ (commit 4bc2092 as of Jun 21 2023).
 
 ### Fixed
-- Critical bug in `disteval` introduced in 1.6 when using the (default) median QMC lattice rules. Bug led to incorrect results for integrals with a severly underestimated error after recomputing with a larger lattice.
+- Critical bug in `disteval` introduced in 1.6 when using the (default) median QMC lattice rules. Bug led to incorrect results for integrals with a severely underestimated error after recomputing with a larger lattice.
 - Parsing of the coefficient expressions with `ginsh`. Previously, mixing the exponentiation operator `^` and the unary `+` and/or `-` operators would result in `ginsh` misparsing the coefficients.
 
 ## [1.6] - 2023-05-29
