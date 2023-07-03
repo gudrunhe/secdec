@@ -455,7 +455,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     # Load the integral coefficients
     ap2coeffs = {} # (ampid, powerlist) -> coeflist
     if info["type"] == "integral":
-        sum_names = ["sum0"]
+        sum_names = [info["name"]]
         br_coef = {(0,)*len(info["regulators"]): sp.sympify(1)}
         split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, br_coef, valuemap, sp_regulators, requested_orders)
     elif info["type"] == "sum":
