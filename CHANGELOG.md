@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - FORM is now configured using `--with-zlib`, to avoid [FORM issue 95](https://github.com/vermaseren/form/issues/95).
 - If `lattice_candidates` is even and non-zero, use `lattice_candidates+1` candidates.
+- The default `decomposition_method` of `make_package` and `code_writer.make_package` to `geometric_no_primary`.
+- The default `decomposition_method` of `loop_integral.loop_package` to `geometric`.
 - [GiNaC](https://www.ginac.de/) updated to 1.8.6+ (commit 4bc2092 as of Jun 21 2023).
 
 ### Fixed
