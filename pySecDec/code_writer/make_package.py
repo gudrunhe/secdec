@@ -1438,7 +1438,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                  complex_parameters=[], form_optimization_level=2, form_work_space='50M',
                  form_memory_use=None, form_threads=1,
                  form_insertion_depth=5, contour_deformation_polynomial=None, positive_polynomials=[],
-                 decomposition_method='iterative_no_primary', normaliz_executable=None,
+                 decomposition_method='geometric_no_primary', normaliz_executable=None,
                  enforce_complex=False, split=False, ibp_power_goal=-1, use_iterative_sort=True,
                  use_light_Pak=True, use_dreadnaut=False, use_Pak=True, processes=None, pylink_qmc_transforms=['korobov3x3']):
     r'''
@@ -1621,9 +1621,9 @@ def make_package(name, integration_variables, regulators, requested_orders,
         The strategy to decompose the polynomials. The
         following strategies are available:
 
-        * 'iterative_no_primary' (default): integration region
+        * 'iterative_no_primary': integration region
           :math:`[0,1]^N`.
-        * 'geometric_no_primary': integration region :math:`[0,1]^N`.
+        * 'geometric_no_primary'(default): integration region :math:`[0,1]^N`.
         * 'geometric_infinity_no_primary': integration region
           :math:`[0,\infty]^N`.
         * 'iterative': primary decomposition followed by
@@ -2083,7 +2083,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 if var not in integration_variables:
                     this_primary_sector_remainder_expression = this_primary_sector_remainder_expression.replace(i,1,remove=True)
                     break
-
             if use_symmetries and not split:
                 # search for symmetries throughout the secondary decomposition
                 indices = range(len(integration_variables))
