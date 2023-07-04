@@ -644,7 +644,7 @@ output, we can convert these expressions to the slower but more high level `symp
 >>> import sympy as sp
 >>> eps_first = expand_singular(expression, [0,1], [1,1])
 >>> alpha_first = expand_singular(expression, [1,0], [1,1])
->>> sp.sympify(eps_first)
+>>> sp.sympify(str(eps_first))
 1/(2*alpha*eps) - 1/(2*alpha**2) + eps/(2*alpha**3)
->>> sp.sympify(alpha_first)
+>>> sp.sympify(str(alpha_first))
 -alpha/(2*eps**3) + 1/(2*eps**2)
