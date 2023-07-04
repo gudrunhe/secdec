@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2023-07-04
+
 ### Added
 - The `json` output format of `Disteval` now includes the values of the integrals in addition to the values of the sums.
 - [zlib](http://zlib.net/) version 1.2.13, needed by FORM.
@@ -16,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - If `lattice_candidates` is even and non-zero, use `lattice_candidates+1` candidates.
 - The default `decomposition_method` of `make_package` and `code_writer.make_package` to `geometric_no_primary`.
 - The default `decomposition_method` of `loop_integral.loop_package` to `geometric`.
-- [GiNaC](https://www.ginac.de/) updated to 1.8.6+ (commit 4bc2092 as of Jun 21 2023).
+- [GiNaC](https://www.ginac.de/) updated to 1.8.6+ (commit 4bc2092 from Jun 21 2023).
 
 ### Fixed
 - Critical bug in `disteval` introduced in 1.6 when using the median QMC lattice rules. Bug led to incorrect results for integrals with a severely underestimated error after recomputing with a larger lattice.
