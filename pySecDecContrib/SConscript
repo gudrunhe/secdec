@@ -68,7 +68,7 @@ contrib += \
 
 zlib_files = ["lib/libz.a", "include/zlib.h", "include/zconf.h"]
 contrib += \
-    ConfigureAndInstall(env, zlib_files, zlib, extension=".tar.xz", extra_configure_args="--static", bindir=False)
+    ConfigureAndInstall(env, zlib_files, zlib, extra_configure_args="--static", bindir=False)
 
 form_files = ["bin/form", "bin/tform"]
 contrib += \
