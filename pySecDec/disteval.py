@@ -715,9 +715,9 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 for i, idx in enumerate(mask_done.nonzero()[0]):
                     idx = int(idx)
                     if precisionx[i] < 1.0:
-                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e}, sigma: {sigmarx[i]} {sigmaix[i]} ({1/precisionx[i]:.4g}x worse at {latticex[i]:.1f}x lattice)")
+                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({1/precisionx[i]:.4g}x worse at {latticex[i]:.1f}x lattice; {sigmarx[i]:.3g}+{sigmaix[i]:.3g}j sigma)")
                     else:
-                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e}, sigma: {sigmarx[i]} {sigmaix[i]} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice)")
+                        log(f"k{idx} @ {lattices[idx]:.3e} = {new_kern_val[i]:.16e} ~ {new_kern_var[i]:.3e} ({precisionx[i]:.4g}x better at {latticex[i]:.1f}x lattice; {sigmarx[i]:.3g}+{sigmaix[i]:.3g}j sigma)")
                     if (sigmarx[i] > 10. or sigmaix[i] > 10.) and not math.isnan(latticex[i]):
                         log(f"WARNING: unlikely that new result is compatible with old, {new_kern_val[i]} ~ {np.sqrt(new_kern_var[i])} vs {kern_val[mask_done][i]} ~ {np.sqrt(kern_var[mask_done][i])}")
                 submask_lucky = new_kern_var <= kern_var[mask_done]
