@@ -926,7 +926,7 @@ class TestNumerator(unittest.TestCase):
         )
         self.assertRaisesRegex(
             AssertionError,
-            str(li.numerator_input.args[0]).replace('(',r'\(').replace(')','\)').replace('*',r'\*') + \
+            str(li.numerator_input.args[0]).replace('(',r'\(').replace(')',r'\)').replace('*',r'\*') + \
                 '.*Lorentz_indices.*1.*more than.*(twice|two times)',
             lambda: li.numerator
         )
@@ -942,7 +942,7 @@ class TestNumerator(unittest.TestCase):
         )
         self.assertRaisesRegex(
             AssertionError,
-            str(li.numerator_input.args[0]).replace('(',r'\(').replace(')','\)').replace('*',r'\*') + \
+            str(li.numerator_input.args[0]).replace('(',r'\(').replace(')',r'\)').replace('*',r'\*') + \
                 '.*Lorentz_indices.*1.*more than.*(twice|two times)',
             lambda: li.numerator
         )
@@ -958,7 +958,7 @@ class TestNumerator(unittest.TestCase):
         )
         self.assertRaisesRegex(
             AssertionError,
-            str(li.numerator_input).replace('(',r'\(').replace(')','\)').replace('*',r'\*') + \
+            str(li.numerator_input).replace('(',r'\(').replace(')',r'\)').replace('*',r'\*') + \
                 '.*Lorentz_indices.*mu.*more than.*(twice|two times)',
             lambda: li.numerator
         )

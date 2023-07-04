@@ -86,7 +86,7 @@ class TestMidLevel(TestMakePackage):
                         polynomials_to_decompose = ['(x+y)^(-2+eps)']
                     )
 
-        self.assertEqual(template_replacements['pole_structures_initializer'], '{{-1,0}}')
+        self.assertEqual(template_replacements['pole_structures_initializer'], '{{0,-1}}')
 
     #@pytest.mark.active
     def test_pole_structures_serial(self):
@@ -103,7 +103,7 @@ class TestMidLevel(TestMakePackage):
                         polynomials_to_decompose = ['(x+y)^(-2+eps)']
                     )
 
-        self.assertEqual(template_replacements['pole_structures_initializer'], '{{-1,0}}')
+        self.assertEqual(template_replacements['pole_structures_initializer'], '{{0,-1}}')
 
 # ----------------------------------- parse input -----------------------------------
 class TestConvertInput(TestMakePackage):
