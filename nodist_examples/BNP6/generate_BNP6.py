@@ -26,7 +26,7 @@ if __name__ == "__main__":
     )
 
 
-    Mandelstam_symbols = ['s','t','u']
+    Mandelstam_symbols = ['s','t']
     #mass_symbols = ['m1sq','m2sq']
 
 
