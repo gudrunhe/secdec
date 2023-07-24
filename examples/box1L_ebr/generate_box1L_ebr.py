@@ -18,16 +18,13 @@ if __name__ == "__main__":
     replacement_rules = [
                             # note that in those relations all momenta are incoming
                             # general relations:
+                            ('p4', '-p1-p2-p3'),
                             ('p1*p1', 'm1sq'),
                             ('p2*p2', 'm2sq'),
                             ('p3*p3', 'm3sq'),
-                            ('p4*p4', 'm4sq'),
                             ('p1*p2', 's/2-(m1sq+m2sq)/2'),
                             ('p1*p3', 't/2-(m1sq+m3sq)/2'),
-                            ('p1*p4', 'u/2-(m1sq+m4sq)/2'),
                             ('p2*p3', 'u/2-(m2sq+m3sq)/2'),
-                            ('p2*p4', 't/2-(m2sq+m4sq)/2'),
-                            ('p3*p4', 's/2-(m3sq+m4sq)/2'),
                             ('u', '(m1sq+m2sq+m3sq+m4sq)-s-t'),
                             # relations for our specific case:
                             ('mt**2', 'mtsq'),

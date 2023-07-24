@@ -116,15 +116,12 @@ The following part contains the definition of the loop integral ``li``:
         # Define the kinematics and the names of the kinematic
         # invariants.
         replacement_rules = [
+            ('p4', '-p1-p2-p3'),
             ('p1*p1', 's1'),
             ('p2*p2', '0'),
             ('p3*p3', '0'),
-            ('p4*p4', '0'),
             ('p3*p2', 't/2'),
             ('p1*p2', 's/2-s1/2'),
-            ('p1*p4', 't/2-s1/2'),
-            ('p2*p4', 's1/2-t/2-s/2'),
-            ('p3*p4', 's/2'),
             ('m**2', 'msq')
         ]
     )
@@ -643,16 +640,13 @@ Poles in the extra regulator ``n1`` may appear in individual regions but are exp
         replacement_rules = [
             # note that in those relations all momenta are incoming
             # general relations:
+            ('p4', '-p1-p2-p3'),
             ('p1*p1', 'm1sq'),
             ('p2*p2', 'm2sq'),
             ('p3*p3', 'm3sq'),
-            ('p4*p4', 'm4sq'),
             ('p1*p2', 's/2-(m1sq+m2sq)/2'),
             ('p1*p3', 't/2-(m1sq+m3sq)/2'),
-            ('p1*p4', 'u/2-(m1sq+m4sq)/2'),
             ('p2*p3', 'u/2-(m2sq+m3sq)/2'),
-            ('p2*p4', 't/2-(m2sq+m4sq)/2'),
-            ('p3*p4', 's/2-(m3sq+m4sq)/2'),
             ('u', '(m1sq+m2sq+m3sq+m4sq)-s-t'),
             # relations for our specific case:
             ('mt**2', 'mtsq'),
