@@ -255,7 +255,7 @@ async def benchmark_worker(w):
             break
     w.speed = dn/(dt - dt0)
 
-def bracket_mul(br1, br2, maxorders):
+def bracket_mul(br1, br2, maxorders, mul=lambda a, b: a*b):
     """
     Multiply two multivariate polynomials represented in the form
     of {exponent: coefficient} dictionaries; skip any terms with
@@ -266,8 +266,15 @@ def bracket_mul(br1, br2, maxorders):
         for k2, v2 in br2.items():
             key = tuple(x + y for x, y in zip(k1, k2))
             if all(x <= y for x, y in zip(key, maxorders)):
-                br[key] = br.get(key, 0) + v1*v2
+                br[key] = br.get(key, 0) + mul(v1, v2)
     return br
+
+def mul_variance(coef, var):
+    cr2 = np.real(coef)**2
+    ci2 = np.imag(coef)**2
+    vr = np.real(var)
+    vi = np.imag(var)
+    return complex(cr2*vr + ci2*vi, ci2*vr + cr2*vi)
 
 def adjust_1d_n(W2, V, w, a, tau, nmin, nmax, allow_medianQMC):
     assert np.all(W2 > 0)
@@ -490,7 +497,12 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
         await done_evalf
 
     W = np.stack([w for w in ap2coeffs.values()])
-    W2 = abs2(W)
+    Wre2 = np.real(W)**2
+    Wim2 = np.imag(W)**2
+    W2 = Wre2 + Wim2
+    W_re_var_coef = Wre2 + 1j*Wim2
+    W_im_var_coef = Wim2 + 1j*Wre2
+    del Wre2, Wim2
     log(f"will consider {len(ap2coeffs)} sums:")
     for a, p in sorted(ap2coeffs.keys()):
         log(f"- {sum_names[a]!r},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
@@ -725,7 +737,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 kern_var[mask_done] = np.where(submask_lucky, new_kern_var, kern_var[mask_done])
                 log(f"unlucky results: {np.count_nonzero(~submask_lucky)} out of {np.count_nonzero(mask_done)}")
             amp_val = W @ kern_val
-            amp_var = W2 @ kern_var
+            amp_var = W_re_var_coef @ np.real(kern_var) + W_im_var_coef @ np.imag(kern_var)
             # Report results
             if np.any(mask_todo):
                 ampids = sorted(set(a for a, p in ap2coeffs.keys()))
@@ -809,7 +821,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
         }
         maxord = np.array(ii["lowest_orders"]) + np.array(ii["prefactor_highest_orders"]) - np.array(ii["prefactor_lowest_orders"])
         br_val = bracket_mul(br_pref, br_kern_val, maxord)
-        br_var = bracket_mul({k: abs2(v) for k, v in br_pref.items()}, br_kern_var, maxord)
+        br_var = bracket_mul(br_pref, br_kern_var, maxord, mul=mul_variance)
         intvals[ii["name"]] = [
             [p, (np.real(val), np.imag(val)), (np.sqrt(np.real(br_var[p])), np.sqrt(np.imag(br_var[p])))]
             for p, val in sorted(br_val.items())
