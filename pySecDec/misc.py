@@ -424,10 +424,11 @@ def sympify_expression(a):
     to a sympy expression
 
     :param a:
-    The object to be converted to a sympy expression.
+        The object to be converted to a sympy expression.
 
     :return:
-    A sympy expression representing the object.
+        A sympy expression representing the object.
+
     '''
     if getattr(a, "_pysecdec_sympy_", None) is not None:
         return a._pysecdec_sympy_()

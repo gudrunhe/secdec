@@ -157,8 +157,7 @@ def triangulate(cone, normaliz=None, workdir='normaliz_tmp', keep_workdir=False,
 
     .. note::
         This function calls the command line executable of
-        `normaliz` [BIR]_. See :ref:`installation_normaliz`
-        for installation and a list of tested versions.
+        `normaliz` [BIR]_.
 
 
     :param cone:

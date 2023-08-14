@@ -769,7 +769,7 @@ class Polynomial(_Expression):
     def denest(self):
         """
         Returns a flattened version of a nested :class:`.Polynomial`
-        of :class:`.Polynomial`s.
+        of :class:`.Polynomial`\s.
         """
         expolist = []
         coeffs = []

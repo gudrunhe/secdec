@@ -663,13 +663,13 @@ class Qmc(CPPIntegrator):
         the integrand function.
 
         The default is the number of logical CPUs allocated to the
-        current process (that is, ``len(os.sched_getaffinity(0))``)
+        current process (that is, ``len(os.sched_getaffinity(0))`` )
         on platforms that expose this information (i.e. Linux+glibc),
         or ``os.cpu_count()``.
 
         If GPUs are used, one additional CPU thread per device
         will be launched for communicating with the device. One
-        can set ``cputhreads'' to zero to disable CPU evaluation
+        can set ``cputhreads`` to zero to disable CPU evaluation
         in this case.
 
     .. seealso::
@@ -813,11 +813,11 @@ class CudaQmc(object):
         The default is the number of logical CPUs allocated to the
         current process (that is, ``len(os.sched_getaffinity(0))``)
         on platforms that expose this information (i.e. Linux+glibc),
-        or ``os.cpu_count()``.
+        or ``os.cpu_count()`` .
 
         If GPUs are used, one additional CPU thread per device
         will be launched for communicating with the device. One
-        can set ``cputhreads'' to zero to disable CPU evaluation
+        can set ``cputhreads`` to zero to disable CPU evaluation
         in this case.
 
     .. seealso::
@@ -920,7 +920,7 @@ class CudaQmc(object):
 class IntegralLibrary(object):
     r'''
     Interface to a c++ library produced by
-    :func:`.make_package` or :func:`.loop_package`.
+    :func:`.code_writer.make_package` or :func:`.loop_package`.
 
     :param shared_object_path:
         str;
@@ -1143,7 +1143,7 @@ class IntegralLibrary(object):
     .. seealso::
         A more detailed description of these parameters and
         how they affect timing/precision is given in
-        :numref:`chapter_cpp_amplitude`.
+        :numref:`chapter_secdecutil_amplitude`.
 
     The call operator returns three strings:
     * The integral without its prefactor
@@ -1509,7 +1509,7 @@ class DevNullWriter:
 class DistevalLibrary(object):
     r'''
     Interface to the integration library produced by
-    :func:`.make_package` or :func:`.loop_package` and built by
+    :func:`.code_writer.make_package` or :func:`.loop_package` and built by
     ``make disteval``.
 
     :param specification_path:
@@ -1547,14 +1547,14 @@ class DistevalLibrary(object):
         iterable of float, optional;
         The values of the real parameters of the library in
         the same order as the real_parameters argument of
-        :func:`.make_package`. (Not needed if parameters are
+        :func:`.code_writer.make_package`. (Not needed if parameters are
         given).
 
     :param complex_parameters:
         iterable of complex, optional;
         The values of the complex parameters of the library in
         the same order as the complex_parameters argument of
-        :func:`.make_package`. (Not needed if parameters are
+        :func:`.code_writer.make_package`. (Not needed if parameters are
         given).
 
     :param number_of_presamples:
