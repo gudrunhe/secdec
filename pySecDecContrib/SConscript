@@ -10,7 +10,7 @@ gsl = "gsl-2.7.1"
 nauty = "nauty2_8_6"
 normaliz = "normaliz-3.9.2"
 cln = "cln-1.3.6"
-ginac = "ginac-1.8.6"
+ginac = "ginac-1.8.7"
 
 contrib_extra_source = File(Split(f"""
     SConscript
