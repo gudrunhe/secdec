@@ -23,7 +23,7 @@ To run the example change to the `easy` directory and run the commands::
     $ make -C easy
     $ python3 integrate_easy.py
 
-Additional build options are discussed in the :ref:`next section <building_the_cpp_lib>`. This will evaluate and print the result of the integral::
+Additional build options are discussed in the :ref:`next section <building_the_integration_lib>`. This will evaluate and print the result of the integral::
 
     Numerical Result: + ((1.00000000000000022e+00,0.00000000000000000e+00) +/- (5.65352153979095401e-17,0.00000000000000000e+00))*eps^-1 + ((3.06852819440053548e-01,0.00000000000000000e+00) +/- (1.18502493127591741e-15,0.00000000000000000e+00)) + O(eps)
     Analytic Result: + (1.000000)*eps^-1 + (0.306853) + O(eps)
@@ -303,6 +303,8 @@ In the ``integrate_box1L.py`` an example is shown how to parse the expression wi
 
 An example of how to loop over several kinematic points is shown in the example `integrate_box1L_multiple_points.py`.
 
+..  _disteval_cli:
+
 Command-line interface with *disteval*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -546,7 +548,7 @@ Finally, the list of integrals and coefficients are passed to :func:`sum_package
         psd.sum_package('easy_sum', integrals,
             coefficients = coefficients, **common_args)
 
-The generated C++ library can be :ref:`compiled <building_the_cpp_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
+The generated C++ library can be :ref:`compiled <building_the_integration_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
 
 .. _using_expansion_by_regions_generic_integral:
 
@@ -597,7 +599,7 @@ The output of :func:`make_regions <pySecDec.make_regions.make_regions>` can be p
             real_parameters = ['t']
         )
 
-The generated C++ library can be :ref:`compiled <building_the_cpp_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
+The generated C++ library can be :ref:`compiled <building_the_integration_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
 
 .. _using_expansion_by_regions_loop_integral:
 
@@ -683,7 +685,7 @@ The output of :func:`loop_regions <pySecDec.loop_integral.loop_regions>` can be 
             complex_parameters = [])
 
 
-The generated C++ library can be :ref:`compiled <building_the_cpp_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
+The generated C++ library can be :ref:`compiled <building_the_integration_lib>` and called via the :ref:`python <python_interface>` and/or :ref:`C++ <cpp_interface>` interface as described above.
 
 .. _list_of_examples:
 

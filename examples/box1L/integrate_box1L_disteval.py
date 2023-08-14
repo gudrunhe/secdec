@@ -5,10 +5,11 @@ import sympy as sp
 if __name__ == "__main__":
 
     # load the library
-    box1L = DistevalLibrary('box1L/disteval/box1L.json')
+    box1L = DistevalLibrary('box1L/disteval/box1L.json', verbose=False)
 
     # integrate
-    result = box1L(parameters={"s": 4.0, "t": -0.75, "s1": 1.25, "msq": 1.0}, verbose=False, format="json")
+    result = box1L(parameters={"s": 4.0, "t": -0.75, "s1": 1.25, "msq": 1.0},
+                   epsrel=1e-3, epsabs=1e-10, format="json")
     values = result["sums"]["box1L"]
 
     # examples how to access individual orders

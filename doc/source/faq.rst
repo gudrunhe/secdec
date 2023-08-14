@@ -4,19 +4,24 @@ Frequently Asked Questions
 How can I adjust the integrator parameters?
 -------------------------------------------
 
-If the python interface is used for the numerical integration, i.e. a python script like ``examples/integrate_box1L.py``, the integration parameters can be specified in the argument list of the integrator call.
-For example, using Vegas as integrator::
+When using the python interface to integration libraries based on *disteval*, the integrator parameters can be specified directly in the integrator call.
+Please see the documentation of :class:`DistevalLibrary<pySecDec.integral_interface.DistevalLibrary>` for the list of available parameters.
+For example, from ``examples/box1L/integrate_box1L_disteval.py``::
 
-    box1L.use_Vegas(flags=2, epsrel=1e-3, epsabs=1e-12, nstart=5000, nincrease=10000, maxeval=10000000, real_complex_together=True)
+    result = box1L(parameters={"s": 4.0, "t": -0.75, "s1": 1.25, "msq": 1.0},
+                   epsrel=1e-3, epsabs=1e-10, format="json")
 
-Or, using Divonne as integrator::
+When using the *disteval* command-line interface, the same parameters can be adjusted via command-line options, as described in :ref:`disteval_cli`.
 
-    box1L.use_Divonne(flags=2, epsrel=1e-3, epsabs=1e-12, maxeval=10000000, border=1e-8, real complex together=True)
+If the python interface to :class:`IntegralLibrary<pySecDec.integral_interface.IntegralLibrary>` is used for the numerical integration, i.e. a python script like ``examples/box1L/integrate_box1L.py``, the integrator parameters can be specified in the argument list of the integrator call.
+For example, using Qmc as integrator::
 
-The parameter real complex together tells the integrator to integrate real and imaginary parts simultaneously. A complete list of possible options for the integrators can be found in :mod:`integral_interface <pySecDec.integral_interface>`.
+    box1L.use_Qmc(flags=2, epsrel=1e-3, epsabs=1e-12, nstart=5000, nincrease=10000, maxeval=10000000, real_complex_together=True)
+
+The complete list of possible options for the integrators can be found in :mod:`integral_interface <pySecDec.integral_interface>`.
 
 If the C++ interface is used, the options can be specified as fields of the integrator.
-For example, after running ``examples/generate_box1L.py``, in the file ``examples/box1L/integrate_box1L.cpp``, you can modify the corresponding block to e.g.::
+For example, after running ``examples/box1L/generate_box1L.py``, in the file ``examples/box1L/integrate_box1L.cpp``, you can modify the corresponding block to e.g.::
 
     // Integrate
     secdecutil::cuba::Vegas<box1L::integrand_return_t> integrator;
@@ -44,7 +49,7 @@ More information about the C++ integrator class can be found in :numref:`chapter
 How can I request a higher numerical accuracy?
 ----------------------------------------------
 
-The integrator stops if any of the following conditions is fulfilled: (1) ``epsrel`` is reached, (2) ``epsabs`` is reached, (3) ``maxeval`` is reached.
+The integrator stops if any of the following conditions is fulfilled: (1) ``epsrel`` is reached, (2) ``epsabs`` is reached, (4) timeout is reached (see the ``timeout`` argument in :class:`DistevalLibrary<pySecDec.integral_interface.DistevalLibrary>` and the ``wall_clock_limit`` argument in :class:`IntegralLibrary<pySecDec.integral_interface.IntegralLibrary>`), (4) ``maxeval`` is reached (for :class:`Vegas<pySecDec.integral_interface.Vegas>`, :class:`Suave<pySecDec.integral_interface.Suave>`, :class:`Divonne<pySecDec.integral_interface.Divonne>`, :class:`Cuhre<pySecDec.integral_interface.Cuhre>`, and :class:`Qmc<pySecDec.integral_interface.Qmc>`/:class:`CudaQmc<pySecDec.integral_interface.CudaQmc>`).
 Therefore, setting these parameters accordingly will cause the integrator to make more iterations and reach a more accurate result.
 
 What can I do if the integration takes very long?
@@ -57,19 +62,17 @@ In particular for integrals with spurious poles, the parameter ``epsabs`` should
 How can I tune the contour deformation parameters?
 --------------------------------------------------
 
-You can specify the parameters in the argument of the integral call in the python script for the integration, see e.g. line 12 of ``examples/integrate box1L.py``::
+Since version 1.5 `pySecDec` automates the selection of contour deformation parameters, and manual tuning is not required in the majority of cases.
 
-    str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor=box1L(real_parameters=[4.,-0.75,1.25,1.],number_of_presamples=10**6,deformation_parameters_maximum=0.5)
-
-This sets the number of presampling points to ``10**6`` (default: ``10**5``) and the maximum value for the contour deformation parameter ``deformation_parameters_maximum`` to ``0.5`` (default: ``1``). The user should make sure that deformation parameters maximum is always larger than deformation_parameters_minimum (default: ``1e-5``). These parameters are described in :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
+Users that wish to experiment can use ``deformation_parameters_maximum``, ``deformation_parameters_minimum``, and ``number_of_presamples`` parameters of :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>` manually.
 
 What can I do if the program stops with an error message containing `sign_check_error`?
 ---------------------------------------------------------------------------------------
 
 This error occurs if the contour deformation leads to a wrong sign of the Feynman :math:`i\delta` prescription, usually due to the fact that the deformation parameter :math:`\lambda` is too large.
-If this error is encountered the program will automatically reduce :math:`\lambda` and re-attempt integration. If the code continues after the error and eventually returns a result then it successfully adjusted the contour and the error can be ignored. To avoid this error in the first place choose a larger value for ``number_of_presamples`` and a smaller value (e.g. ``0.5``) for ``deformation_parameters_maximum`` (see item above). If that does not help, you can try ``0.1`` instead of ``0.5`` for ``deformation_parameters_maximum``. The relevant parameters are described in :class:`IntegralLibrary <pySecDec.integral_interface.IntegralLibrary>`.
+Since version 1.5 `pySecDec` automates the selection of the :math:`\lambda` parameters, and will automatically adjust the integration contour and retry in cases when `sign_check_error` is detected, so no user intervention is normally required.
 
-If the code fails to find a contour it may display the error message ``All deformation parameters at minimum already, integral still fails`` and stop. In this case try reducing ``deformation_parameters_maximum`` (default: ``1e-5``) to a smaller number. If the code still fails to find a valid contour it may be that your integral has an unavoidable end-point singularity or other numerical problems. Often this error is encountered when the ``real_parameters`` and/or ``complex_parameters`` are very large/small or if some of the parameters differ from each other by orders of magnitude. If all of the ``real_parameters`` or ``complex_parameters`` are of a similar size (but not :math:`\mathcal{O}(1)`) then dividing each parameter by e.g. the largest parameter (such that all parameters are :math:`\mathcal{O}(1)`) can help to avoid a situation where extremely small deformation parameters are required to obtain a valid contour. It may then be possible to restore the desired result using dimensional analysis (i.e. multiplying the result by some power of the largest parameter).
+If the code still fails to find a valid contour it may display the error message ``All deformation parameters at minimum already, integral still fails`` and stop. In this case try reducing ``deformation_parameters_maximum`` (default: ``1e-5``) to a smaller number. If the code still fails to find a valid contour it may be that your integral has an unavoidable end-point singularity or other numerical problems. Often this error is encountered when the ``real_parameters`` and/or ``complex_parameters`` are very large/small or if some of the parameters differ from each other by orders of magnitude. If all of the ``real_parameters`` or ``complex_parameters`` are of a similar size (but not :math:`\mathcal{O}(1)`) then dividing each parameter by e.g. the largest parameter (such that all parameters are :math:`\mathcal{O}(1)`) can help to avoid a situation where extremely small deformation parameters are required to obtain a valid contour. It may then be possible to restore the desired result using dimensional analysis (i.e. multiplying the result by some power of the largest parameter).
 
 If you still encounter an error after following these suggestions, please open an issue.
 
@@ -179,8 +182,8 @@ In the python script generating the expressions for the integral, define mass sy
 
 Then, in :mod:`loop_package <pySecDec.loop_integral.loop_package>` define::
 
-    real parameters = Mandelstam_symbols,
-    complex parameters = mass_symbols,
+    real_parameters = Mandelstam_symbols,
+    complex_parameters = mass_symbols,
 
 In the integration script (using the python interface), the numerical values for the complex parameters are given after the ones for the real parameters::
 
@@ -194,7 +197,7 @@ In the C++ interface, you can set (for the example `triangle2L`)::
     const std::vector<triangle2L::complex_t> complex_parameters = { {1.,0.0038} };
 
 
-When should I use the “split” option?
+When should I use the "split" option?
 -------------------------------------
 
 The modules :func:`loop_package <pySecDec.loop_integral.loop_package>` and :func:`make_package <pySecDec.code_writer.make_package>` have the option to split the integration domain (``split=True``). This option can be useful for integrals which do not have a Euclidean region. If certain kinematic conditions are fulfilled, for example if the integral contains massive on-shell lines, it can happen that singularities at :math:`x_i = 1` remain in the :math:`\mathcal{F}` polynomial after the decomposition. The split option remaps these singularities to the origin of parameter space. If your integral is of this type, and with the standard approach the numerical integration does not seem to converge, try the ``split`` option. It produces a lot more sectors, so it should not be used without need. We also would like to mention that very often a change of basis to increase the (negative) power of the :math:`\mathcal{F}` polynomial can be beneficial if integrals of this type occur in the calculation.
@@ -202,7 +205,9 @@ The modules :func:`loop_package <pySecDec.loop_integral.loop_package>` and :func
 How can I obtain results from pySecDec in a format convenient for GiNaC/ Sympy/ Mathematica/ Maple?
 ---------------------------------------------------------------------------------------------------
 
-If you are using the python interface, you can use the functions :func:`series_to_ginac <pySecDec.integral_interface.series_to_ginac>`, :func:`series_to_sympy <pySecDec.integral_interface.series_to_sympy>`, :func:`series_to_mathematica <pySecDec.integral_interface.series_to_mathematica>`, :func:`series_to_maple <pySecDec.integral_interface.series_to_maple>` to convert the output of the integral library.
+When using the python interface to *disteval* libraries (i.e. :class:`DistevalLibrary<pySecDec.integral_interface.DistevalLibrary>`), use the ``format`` argument to change the output format. Similar format selection is avaialbe in the *disteval* command-line interface, as described in :ref:`disteval_cli`.
+
+When using :class:`IntegralLibrary<pySecDec.integral_interface.IntegralLibrary>`), you can use the functions :func:`series_to_ginac <pySecDec.integral_interface.series_to_ginac>`, :func:`series_to_sympy <pySecDec.integral_interface.series_to_sympy>`, :func:`series_to_mathematica <pySecDec.integral_interface.series_to_mathematica>`, :func:`series_to_maple <pySecDec.integral_interface.series_to_maple>` to convert the output as needed.
 
 Example::
 

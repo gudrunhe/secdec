@@ -8,7 +8,7 @@ if __name__ == "__main__":
     box1L = IntegralLibrary('box1L/box1L_pylink.so')
 
     # choose integrator
-    box1L.use_Vegas()
+    box1L.use_Qmc(epsrel=1e-3, epsabs=1e-10)
 
     # integrate
     str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = box1L(real_parameters=[4.0, -0.75, 1.25, 1.0], verbose=True)
