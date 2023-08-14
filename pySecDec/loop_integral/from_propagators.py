@@ -78,14 +78,16 @@ class LoopIntegralFromPropagators(LoopIntegral):
         Scalar products must be passed in index notation e.g.
         ``k1(mu)*k2(mu)``. The numerator must be a sum of products
         of exclusively:
-            * numbers
-            * scalar products (e.g. ``p1(mu)*k1(mu)*p1(nu)*k2(nu)``)
-            * symbols (e.g. ``s``, ``eps``)
+
+        * numbers
+        * scalar products (e.g. ``p1(mu)*k1(mu)*p1(nu)*k2(nu)``)
+        * symbols (e.g. ``s``, ``eps``)
 
         Examples:
-            * ``p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)``
-            * ``p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)``
-            * ``p1(mu)*k1(mu)``
+
+        * ``p1(mu)*k1(mu)*p1(nu)*k2(nu) + 4*s*eps*k1(mu)*k1(mu)``
+        * ``p1(mu)*(k1(mu) + k2(mu))*p1(nu)*k2(nu)``
+        * ``p1(mu)*k1(mu)``
 
         .. note::
             In order to use the resulting `LoopIntegral` as an argument
