@@ -270,6 +270,52 @@ def series_to_maple(series):
     """
     return _convert_series(series, "^", "O")
 
+def series_to_json(series, name="sum"):
+    """
+    Convert a textual representation of a series into json format.
+
+    :param series:
+        str;
+        Any of the series obtained by calling an :class:`.IntegralLibrary` object.
+    :param name:
+        str;
+        The name of the series.
+        Default: ``"sum"``.
+    :returns:
+        A dictionary containing the ``'regulators'`` and the value of the series
+        stored as (exponent, value) key-value pairs.
+    """
+    def parse_terms(t, bottom_is_tuple, var=[], order=[], all_terms={'regulators':[]}):
+        def is_bottom(t):
+            return (not isinstance(t,tuple) and not isinstance(t,list))
+        if is_bottom(t[0] if bottom_is_tuple else t):
+            all_terms[tuple(order)] = t if bottom_is_tuple else (t,0.)
+            all_terms['regulators'] = var.copy()
+        elif isinstance(t,tuple):
+            if len(t) == 3:
+                var.append(t[1])
+                parse_terms(t[0], bottom_is_tuple, var, order, all_terms)
+                var.pop()
+            elif len(t) == 2:
+                order.append(t[1])
+                parse_terms(t[0], bottom_is_tuple, var, order, all_terms)
+                order.pop()
+            else:
+                raise RuntimeError(f'Unexpected tuple in series: {t}')
+        elif isinstance(t,list):
+            for e in t:
+                parse_terms(e, bottom_is_tuple, var, order, all_terms)
+        else:
+            raise RuntimeError(f'Unexpected term in series: {t}')
+        return all_terms
+    terms = parse_terms(_parse_series(series), True if "+/-" in series else False)
+    regulators = terms['regulators']
+    del terms['regulators']
+    result = {}
+    result['regulators'] = regulators
+    result['sums'] = {name: terms}
+    return result
+
 # assuming
 # enum qmc_transform_t : int
 # {
@@ -1088,6 +1134,11 @@ class IntegralLibrary(object):
         from stopping since the requested precision epsrel cannot be reached.
         Default: ``abs``.
 
+    :param format:
+        string;
+        The format of the returned result, ``"series"``,
+        ``"ginac"``, ``"sympy"``, ``"mathematica"``,
+        ``"maple"``, or ``"json"``. Default: ``"series"``.
 
     .. seealso::
         A more detailed description of these parameters and
@@ -1239,7 +1290,7 @@ class IntegralLibrary(object):
                      mineval=None, maxincreasefac=20., min_epsrel=0.2, min_epsabs=1.e-4,
                      max_epsrel=1.e-14, max_epsabs=1.e-20, min_decrease_factor=0.9,
                      decrease_to_percentage=0.7, wall_clock_limit=1.7976931348623158e+308, # 1.7976931348623158e+308 max double
-                     number_of_threads=0, reset_cuda_after=0, verbose=False, errormode='abs'
+                     number_of_threads=0, reset_cuda_after=0, verbose=False, errormode='abs', format="series"
                 ):
         # Set the default integrator
         if getattr(self, "integrator", None) is None:
@@ -1294,7 +1345,23 @@ class IntegralLibrary(object):
         if return_value != 0:
             raise RuntimeError("Integration failed, see error message above.")
         else:
-            return queue.get()
+            str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor = queue.get()
+            if format == "ginac":
+                str_integral_without_prefactor = series_to_ginac(str_integral_without_prefactor)
+                str_integral_with_prefactor = series_to_ginac(str_integral_with_prefactor)
+            elif format == "sympy":
+                str_integral_without_prefactor = series_to_sympy(str_integral_without_prefactor)
+                str_integral_with_prefactor = series_to_sympy(str_integral_with_prefactor)
+            elif format == "mathematica":
+                str_integral_without_prefactor = series_to_mathematica(str_integral_without_prefactor)
+                str_integral_with_prefactor = series_to_mathematica(str_integral_with_prefactor)
+            elif format == "maple":
+                str_integral_without_prefactor = series_to_maple(str_integral_without_prefactor)
+                str_integral_with_prefactor = series_to_maple(str_integral_with_prefactor)
+            elif format == "json":
+                str_integral_without_prefactor = series_to_json(str_integral_without_prefactor, self.info['name'])
+                str_integral_with_prefactor = series_to_json(str_integral_with_prefactor, self.info['name'])
+            return (str_integral_without_prefactor, str_prefactor, str_integral_with_prefactor)
 
     def _call_implementation(
                                 self, queue, return_value_queue, real_parameters, complex_parameters, together,

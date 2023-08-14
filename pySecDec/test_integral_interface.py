@@ -80,6 +80,16 @@ class TestParsing(unittest.TestCase):
                 "(2/eps + 8 + O(eps))/alpha + (1/eps^2 + 9 + O(eps)) + O(alpha)"
             )
 
+    def test_series_to_json(self):
+        assert ii.series_to_json(" + ((5e-01,10e-01) +/- (20e-01,3e-00))*ep^-1 + ((4,5) +/- (6,7))*ep + O(ep^2)") == \
+            { 'regulators': ['ep'], 'sums': { 'sum': { (-1,): (0.5+1j,2+3j), (1,): (4+5j,6+7j)} }}
+        assert ii.series_to_json(" + (1)*ep^-1 + (2)") == \
+            { 'regulators': ['ep'], 'sums': { 'sum': { (-1,): (1,0), (0,): (2,0)} }}
+        assert ii.series_to_json(" + (8)") == \
+            { 'regulators': [None], 'sums': { 'sum': { (0,): (8,0)} }}
+        assert ii.series_to_json(" + ( + (-1 +/- 2)*eps^-1 + (-10 +/- 8) + O(eps))*alpha^-1 + ( + (5 +/- 1)*eps^-2 + (-19 +/- 9) + O(eps)) + O(alpha)") == \
+            { 'regulators': ['alpha','eps'], 'sums': { 'sum': { (-1,-1): (-1,2), (-1,0): (-10,8), (0,-2): (5,1), (0,0): (-19,9)} }}
+
     def test_multi_series_to_sympy(self):
         assert ii.series_to_sympy(" + (1)*ep^-1 + (2)\n + (1)*ep^-2 + (2)*ep^-1") == \
             [('1/ep + 2', '0/ep + 0'), ('1/ep**2 + 2/ep', '0/ep**2 + 0/ep')]
