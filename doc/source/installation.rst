@@ -50,14 +50,12 @@ from source like this:
 Drawing Feynman Diagrams with `neato`
 -------------------------------------
 
-In order to use :func:`~pySecDec.loop_integral.draw.plot_diagram`, the command line tool
-`neato` must be available. The function :func:`~pySecDec.loop_integral.loop_package` tries
-to call :func:`~pySecDec.loop_integral.draw.plot_diagram` if given a
-:class:`~pySecDec.loop_integral.LoopIntegralFromGraph` and issues a warning on failure. That
-warning can be safely ignored if you are not interested in the drawing.
+The :func:`~pySecDec.loop_integral.draw.plot_diagram` function draws a Feynman diagram using the command line tool `neato`. 
+It is automatically called when generating an integral library using the :func:`~pySecDec.loop_integral.loop_package` function with an integral of type  :class:`~pySecDec.loop_integral.LoopIntegralFromGraph` and will issue a warning if `neato` is not available. 
 
-`neato` is part of the `graphviz` package. It is available in many package repositories and at
-http://www.graphviz.org.
+The warning can be safely ignored if you are not interested in the drawing.
+Alternatively, you must manually install `neato` which is part of the `graphviz` package.
+It is available in many package repositories and at http://www.graphviz.org.
 
 .. _additional_cpp_dependencies:
 
