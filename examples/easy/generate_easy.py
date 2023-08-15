@@ -8,7 +8,6 @@ if __name__ == "__main__":
         name = 'easy',
         integration_variables = ['x','y'],
         regulators = ['eps'],
-
         requested_orders = [0],
         polynomials_to_decompose = ['(x+y)^(-2+eps)']
     )
