@@ -214,9 +214,11 @@ def make_package(name, integration_variables, regulators, requested_orders,
           integration over :math:`[0,1]^{N-1}`.
 
         'iterative', 'geometric', and 'geometric_ku' are only
-        valid for loop integrals. An end user should use
+        valid for loop integrals. The functions 
         'iterative_no_primary', 'geometric_no_primary', or
-        'geometric_infinity_no_primary' here.
+        'geometric_infinity_no_primary' should be used when
+        decomposing a function with no overall Dirac delta
+        function.
         In order to compute loop integrals, please use the
         function :func:`pySecDec.loop_integral.loop_package`.
 
