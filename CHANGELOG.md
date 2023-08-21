@@ -5,8 +5,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `format` option for `IntegralLibrary`, allows the integral result to be output in `ginac`, `sympy`, `mathematica`, `maple` and `json` compatible formats.
+- Example `nodist_examples/BNP6_wu`. A 2-loop 4-point non-planar integral that requires a rescaling of the Feynman parameters.
+
 ### Changed
 - [GiNaC](https://www.ginac.de/) updated to 1.8.7.
+- Updated "Installation", "Getting Started" and "FAQ" documentation to reflect current usage guidelines.
 
 ### Fixed
 - The final integration error reported by `disteval` in cases when either the sum coefficients, or the integral prefactors have non-zero imaginary parts. In such cases the total requested error bound would be satisfied correctly, but the reporting of it would be incorrect.
