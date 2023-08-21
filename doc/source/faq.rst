@@ -14,7 +14,7 @@ For example, from ``examples/box1L/integrate_box1L_disteval.py``::
 When using the *disteval* command-line interface, the same parameters can be adjusted via command-line options, as described in :ref:`disteval_cli`.
 
 If the python interface to :class:`IntegralLibrary<pySecDec.integral_interface.IntegralLibrary>` is used for the numerical integration, i.e. a python script like ``examples/box1L/integrate_box1L.py``, the integrator parameters can be specified in the argument list of the integrator call.
-For example, using Qmc as integrator::
+For example, using :class:`Qmc<pySecDec.integral_interface.Qmc>` as integrator::
 
     box1L.use_Qmc(flags=2, epsrel=1e-3, epsabs=1e-12, nstart=5000, nincrease=10000, maxeval=10000000, real_complex_together=True)
 
@@ -55,9 +55,9 @@ Therefore, setting these parameters accordingly will cause the integrator to mak
 What can I do if the integration takes very long?
 -------------------------------------------------
 
-For most integrals, the best performance will be achieved using the QMC integrator and we recommend switching to it, if not already used.
+For most integrals, the best performance will be achieved using the Quasi-Monte-Carlo integrator from the :ref:`disteval interface<disteval_build>` and we recommend switching to it, if not already used.
 If changing the integrator doesn't improve the runtime, it is possible that the integrator parameters should be adjusted, as described in the previous sections.
-In particular for integrals with spurious poles, the parameter ``epsabs`` should be increased, since it is the only relevant stopping criterion in this case, besides ``maxeval``.
+In particular for integrals with spurious poles, the parameter ``epsabs`` should be increased, since it is the only relevant stopping criterion in this case.
 
 How can I tune the contour deformation parameters?
 --------------------------------------------------

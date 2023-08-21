@@ -220,7 +220,7 @@ The ``SECDEC_WITH_CUDA_FLAGS`` variable, which enables GPU code compilation, con
 Multiple GPU architectures may be specified as described in the `NVCC manual <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_, for example ``SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_XX,code=sm_XX -gencode arch=compute_YY,code=sm_YY"`` where ``XX`` and ``YY`` are the target GPU architectures. 
 The script ``examples/easy/print-cuda-arch.sh`` can be used to obtain the compute architecture of your current machine.  
 
-After building, the integral can be evaluated numerically using the :ref:`disteval cli <disteval_cli>` or :ref:`disteval python interface <disteval_python>`.
+After building, the integral can be evaluated numerically using the :ref:`disteval command-line interface <disteval_cli>` or :ref:`disteval python interface <disteval_python>`.
 Alternatively, a C++ library can be produced by :ref:`building intlib <intlib_build>` and used via the :ref:`C++ Interface <intlib_cpp>`.
 
 ..  _disteval_cli:
@@ -264,6 +264,7 @@ The evaluation can be controlled via the provided command-line options:
 * ``--points=<number>``: use this initial Quasi-Monte-Carlo lattice size (default: ``1e4``);
 * ``--presamples=<number>``: use this many points for presampling (default: ``1e4``);
 * ``--shifts=<number>``: use this many lattice shifts per integral (default: ``32``);
+* ``--lattice-candidates=<number>``: use the *median QMC rules* construction with this many lattice candidates (default: ``0``);
 * ``--coefficients=<path>``: use coefficients from this directory;
 * ``--format=<path>``: output the result in this format (``sympy``, ``mathematica``, or ``json``; default: ``sympy``).
 
@@ -289,16 +290,14 @@ The example starts by importing the necessary packages and loading the library:
     from pySecDec.integral_interface import DistevalLibrary
     import sympy as sp
 
-    if __name__ == "__main__":
-
-        box1L = DistevalLibrary('box1L/disteval/box1L.json', verbose=False)
+    box1L = DistevalLibrary('box1L/disteval/box1L.json', verbose=False)
 
 Then, calling the ``box1L`` library to perform the evaluation at the given parameter values:
 
 .. code::
 
-        result = box1L(parameters={"s": 4.0, "t": -0.75, "s1": 1.25, "msq": 1.0},
-                    epsrel=1e-3, epsabs=1e-10, format="json")
+    result = box1L(parameters={"s": 4.0, "t": -0.75, "s1": 1.25, "msq": 1.0},
+                epsrel=1e-3, epsabs=1e-10, format="json")
 
 The values of the invariants `s`, `t`, `s1` and `msq` are passed in the dictionary `parameters`, these values can be changed to evaluate different kinematic points.
 The parameters `epsrel` and `epsabs` set the requested relative and absolute precision, respectively.
@@ -309,12 +308,12 @@ And finally, the result is parsed and pretty printed:
 
 .. code::
 
-        values = result["sums"]["box1L"]
+    values = result["sums"]["box1L"]
 
-        print('Numerical Result')
-        print('eps^-2:', values[(-2,)][0], '+/- (', values[(-2,)][1], ')')
-        print('eps^-1:', values[(-1,)][0], '+/- (', values[(-1,)][1], ')')
-        print('eps^0 :', values[( 0,)][0], '+/- (', values[( 0,)][1], ')')
+    print('Numerical Result')
+    print('eps^-2:', values[(-2,)][0], '+/- (', values[(-2,)][1], ')')
+    print('eps^-1:', values[(-1,)][0], '+/- (', values[(-1,)][1], ')')
+    print('eps^0 :', values[( 0,)][0], '+/- (', values[( 0,)][1], ')')
 
 .. note::
 
@@ -370,15 +369,13 @@ First it imports the necessary python packages and loads the C++ library.
     from pySecDec.integral_interface import IntegralLibrary
     import sympy as sp
 
-    if __name__ == "__main__":
-
-        box1L = IntegralLibrary('box1L/box1L_pylink.so')
+    box1L = IntegralLibrary('box1L/box1L_pylink.so')
 
 Next, an integrator is configured for the numerical integration. The full list of available integrators and their options is given in :mod:`integral_interface <pySecDec.integral_interface>`.
 
 .. code::
 
-        box1L.use_Qmc()
+    box1L.use_Qmc()
 
 If the library has been compilted for GPUs (i.e. using `nvcc` and `SECDEC_WITH_CUDA_FLAGS`), as described above, the code will run on available GPUs and CPU cores.
 
@@ -388,8 +385,9 @@ A list of possible settings for the library, in particular details of how to set
 
 .. code::
 
-        result_without_prefactor, result_prefactor, result_with_prefactor = box1L(real_parameters=[4.0, -0.75, 1.25, 1.0],
-                                                                                epsrel=1e-3, epsabs=1e-10, format="json")
+    result_without_prefactor, result_prefactor, result_with_prefactor = \
+        box1L(real_parameters=[4.0, -0.75, 1.25, 1.0],
+              epsrel=1e-3, epsabs=1e-10, format="json")
 
 The values of the invariants `s`, `t`, `s1` and `msq` are passed (in the correct order) in the list `real_parameters`, these values can be changed to evaluate different kinematic points.
 The parameters `epsrel` and `epsabs` set the requested relative and absolute precision, respectively.
@@ -403,12 +401,12 @@ In the ``integrate_box1L.py`` an example is shown how to parse the expression wi
 
 .. code::
 
-        values = result_with_prefactor["sums"]["box1L"]
+    values = result_with_prefactor["sums"]["box1L"]
 
-        print('Numerical Result')
-        print('eps^-2:', values[(-2,)][0], '+/- (', values[(-2,)][1], ')')
-        print('eps^-1:', values[(-1,)][0], '+/- (', values[(-1,)][1], ')')
-        print('eps^0 :', values[( 0,)][0], '+/- (', values[( 0,)][1], ')')
+    print('Numerical Result')
+    print('eps^-2:', values[(-2,)][0], '+/- (', values[(-2,)][1], ')')
+    print('eps^-1:', values[(-1,)][0], '+/- (', values[(-1,)][1], ')')
+    print('eps^0 :', values[( 0,)][0], '+/- (', values[( 0,)][1], ')')
 
 .. note::
 
@@ -422,7 +420,7 @@ An example of how to loop over several kinematic points is shown in the example 
 C++ Interface (*intlib*)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Usually it is easier to obtain a numerical result using the :ref:`disteval cli <disteval_cli>`, :ref:`disteval python interface <disteval_python>` or :ref:`intlib python interface <intlib_python>`.
+Usually it is easier to obtain a numerical result using the :ref:`disteval CLI <disteval_cli>`, :ref:`disteval python interface <disteval_python>` or :ref:`intlib python interface <intlib_python>`.
 However, the library can also be used directly from C++.
 Inside the generated `box1L` folder the file ``integrate_box1L.cpp`` demonstrates this.
 
@@ -566,7 +564,7 @@ Finally, the list of integrals and coefficients are passed to :func:`sum_package
             coefficients = coefficients, real_parameters=['s'],
             regulators=['eps'], requested_orders=[0])
 
-The generated C/C++ code can be :ref:`compiled <disteval_build>` and then called via the :ref:`disteval cli <disteval_cli>` or :ref:`disteval python interface <disteval_python>`.
+The generated C/C++ code can be :ref:`compiled <disteval_build>` and then called via the :ref:`disteval CLI <disteval_cli>` or :ref:`disteval python interface <disteval_python>`.
 Alternatively, a library can be :ref:`generated <intlib_build>` and called via the :ref:`python <intlib_python>` or :ref:`C++ <intlib_cpp>` interface.
 
 .. _using_expansion_by_regions_generic_integral:
@@ -618,7 +616,7 @@ The output of :func:`make_regions <pySecDec.make_regions.make_regions>` can be p
             real_parameters = ['t']
         )
 
-The generated C++ code can be :ref:`compiled <disteval_build>` and then called via the :ref:`disteval cli <disteval_cli>` or :ref:`disteval python interface <disteval_python>`.
+The generated C++ code can be :ref:`compiled <disteval_build>` and then called via the :ref:`disteval CLI <disteval_cli>` or :ref:`disteval python interface <disteval_python>`.
 Alternatively, a library can be :ref:`generated <intlib_build>` and called via the :ref:`python <intlib_python>` or :ref:`C++ <intlib_cpp>` interface.
 
 .. _using_expansion_by_regions_loop_integral:
@@ -698,7 +696,7 @@ The output of :func:`loop_regions <pySecDec.loop_integral.loop_regions>` can be 
                     complex_parameters = [])
 
 
-The generated C++ code can be :ref:`compiled <disteval_build>` and then called via the :ref:`disteval cli <disteval_cli>` or :ref:`disteval python interface <disteval_python>`.
+The generated C++ code can be :ref:`compiled <disteval_build>` and then called via the :ref:`disteval CLI <disteval_cli>` or :ref:`disteval python interface <disteval_python>`.
 Alternatively, a library can be :ref:`generated <intlib_build>` and called via the :ref:`python <intlib_python>` or :ref:`C++ <intlib_cpp>` interface.
 
 .. _list_of_examples:
