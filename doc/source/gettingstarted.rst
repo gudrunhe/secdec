@@ -166,7 +166,7 @@ The ordering is important when using the *intlib* interface as the values assign
 Next, the function :func:`loop_package <pySecDec.loop_integral.loop_package>` is called. It will create a folder called `box1L`.
 It performs the algebraic sector decomposition steps and writes a package containing the C++ code for the numerical evaluation.
 The argument `requested_orders` specifies the order in the regulator to which the integral should be expanded.
-For a complete list of possible options see  :func:`loop_package <pySecDec.loop_integral.loop_package>`.
+For a complete list of possible options see :func:`loop_package <pySecDec.loop_integral.loop_package>`.
 
 .. code::
 
@@ -175,7 +175,11 @@ For a complete list of possible options see  :func:`loop_package <pySecDec.loop_
             loop_integral = li,
             real_parameters = Mandelstam_symbols + mass_symbols,
             requested_orders = [0],
+            sector_decomposition = "geometric"
         )
+
+Here we have specified the ``sector_decomposition`` parameter; it selects one of the sector decomposition algoirhtms available in *pySecDec*: use ``"geometric"`` for the geometric decomposition method described in [BHJ+15]_ (this is the default since version 1.6) , ``"geometric_ku"`` for the method of [KU10]_, and ``"iterative"`` for the method of [Hei08]_.
+See :ref:`sector_decomposition` for more details.
 
 .. _disteval_build:
 
