@@ -16,6 +16,10 @@ import sympy as sp
 import sys
 import tempfile
 
+ginsh_constant_names = {
+    "Pi", "Euler", "Catalan", "FAIL", "I", "Digits"
+}
+
 class Coefficient(object):
     r'''
     Store a coefficient expressed as a product of terms
@@ -120,7 +124,7 @@ class Coefficient(object):
     @staticmethod
     def from_string(expression, exclude_parameters=()):
         expression = expression.replace("**", "^")
-        parameters = sorted(list(set(re.findall("[a-zA-Z_][a-zA-Z_0-9]*", expression)) - set(exclude_parameters)))
+        parameters = sorted(list(set(re.findall("[a-zA-Z_][a-zA-Z_0-9]*", expression)) - set(exclude_parameters) - ginsh_constant_names))
         return Coefficient(expression, parameters=parameters)
 
 def _generate_one_term(gen_index, sums, complex_parameters, name, package_generator, pylink_qmc_transforms, real_parameters, regulators, replacements_in_files, requested_orders, template_sources):
