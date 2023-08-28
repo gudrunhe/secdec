@@ -4,3 +4,4 @@ from .loop_integral import loop_package, LoopPackage, loop_regions, LoopIntegral
 from .code_writer import sum_package, MakePackage, Coefficient
 from .make_regions import make_regions
 from .metadata import __authors__, __version__, __commit__
+from .misc import version

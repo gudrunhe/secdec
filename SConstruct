@@ -75,7 +75,7 @@ if os.path.exists(".git"):
     git_id = subprocess.check_output(["git", "rev-parse", "HEAD"], encoding="utf8").strip()
     source = File(subprocess.check_output(["git", "ls-files", "pySecDec"], encoding="utf8").splitlines())
     generated_source = env.Textfile(target="pySecDec/metadata.py", source=[
-        f'__version__ = version = "{pyproject["project"]["version"]}"',
+        f'__version__ = "{pyproject["project"]["version"]}"',
         f'__authors__ = authors = "{pyproject["project"]["author"]}"',
         f'__commit__ = git_id = "{git_id}"'
     ])

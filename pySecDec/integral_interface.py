@@ -16,6 +16,7 @@ except ImportError:
     from queue import Queue
 import os
 import os.path
+from .misc import version
 
 def _parse_series_coefficient(text):
     """
@@ -1314,6 +1315,9 @@ class IntegralLibrary(object):
             errormode_enum = 4
         else:
             raise ValueError('Unknown `errormode` "' + str(errormode) + '"')
+
+        if verbose:
+            print(version)
 
 
         # Initialize and launch the underlying c routines in a subprocess

@@ -10,6 +10,10 @@ from itertools import chain, combinations, product
 import sympy as sp
 import numpy as np
 import warnings
+import sys
+from .metadata import __authors__, __version__, __commit__
+
+version = f'pySecDec {__version__} ({__commit__[:8]}) [Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}, NumPy {np.__version__}, SymPy {sp.__version__}]'
 
 def make_cpp_list(python_list):
     '''

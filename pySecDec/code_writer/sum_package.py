@@ -1,6 +1,6 @@
-from ..metadata import version, git_id
+from ..metadata import git_id
 from .template_parser import validate_pylink_qmc_transforms, generate_pylink_qmc_macro_dict, parse_template_file, parse_template_tree
-from ..misc import sympify_symbols, make_cpp_list, chunks
+from ..misc import sympify_symbols, make_cpp_list, chunks, version
 from .make_package import make_package
 import pySecDecContrib
 

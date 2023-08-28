@@ -4,8 +4,8 @@ This module implements the main program - the function
 
 """
 
-from ..metadata import version, git_id
-from ..misc import sympify_symbols, rangecomb, make_cpp_list, chunks
+from ..metadata import git_id
+from ..misc import sympify_symbols, rangecomb, make_cpp_list, chunks, version
 from ..algebra import _Expression, Expression, Polynomial, \
                       ExponentiatedPolynomial, Pow, Product, \
                       ProductRule, Function, Sum, sympify_expression
