@@ -175,10 +175,10 @@ For a complete list of possible options see :func:`loop_package <pySecDec.loop_i
             loop_integral = li,
             real_parameters = Mandelstam_symbols + mass_symbols,
             requested_orders = [0],
-            sector_decomposition = "geometric"
+            decomposition_method = "geometric"
         )
 
-Here we have specified the ``sector_decomposition`` parameter; it selects one of the sector decomposition algoirhtms available in *pySecDec*: use ``"geometric"`` for the geometric decomposition method described in [BHJ+15]_ (this is the default since version 1.6) , ``"geometric_ku"`` for the method of [KU10]_, and ``"iterative"`` for the method of [Hei08]_.
+Here we have specified the ``decomposition_method`` parameter; it selects one of the sector decomposition algoirhtms available in *pySecDec*: use ``"geometric"`` for the geometric decomposition method described in [BHJ+15]_ (this is the default since version 1.6) , ``"geometric_ku"`` for the method of [KU10]_, and ``"iterative"`` for the method of [Hei08]_.
 See :ref:`sector_decomposition` for more details.
 
 .. _disteval_build:
