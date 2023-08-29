@@ -2249,7 +2249,8 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     "kernels": [f"sector_{s}_order_{o}" for s, o in order_names]
                 }
                 for powers, order_names in sector_orders.items()
-            ]
+            ],
+            "generated_by": version
     }
     with open(os.path.join(name, "disteval", name + ".json"), "w") as f:
         json.dump(descr, f, indent=2)

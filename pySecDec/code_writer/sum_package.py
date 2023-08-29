@@ -523,7 +523,8 @@ def sum_package(name, package_generators, regulators, requested_orders,
                     if sumidx in coeffs_lo
                 ]
                 for sumidx, sum_name in enumerate(sums.keys())
-            }
+            },
+            "generated_by": version
         }, f, indent=2)
     # Return template replacements of last integral processed (for 1 integral case this emulates what code_writer.make_package does)
     return template_replacements[-1][2]
