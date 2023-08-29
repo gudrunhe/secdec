@@ -35,6 +35,7 @@ import sys
 import time
 
 from .generating_vectors import generating_vector, max_lattice_size
+from .misc import version
 
 from pySecDecContrib import dirname as contrib_dirname
 
@@ -998,6 +999,7 @@ def main():
     clusterfile = os.path.join(dirname, "cluster.json") if clusterfile is None else clusterfile
     assert lattice_candidates >= 0
     if lattice_candidates > 0 and lattice_candidates % 2 == 0: lattice_candidates += 1
+    log(version)
     log("Settings:")
     log(f"- file = {intfile}")
     log(f"- epsabs = {epsabs}")

@@ -1642,6 +1642,7 @@ class DistevalLibrary(object):
         # [3] https://github.com/python/cpython/issues/66435
         import nest_asyncio; nest_asyncio.apply()
         disteval.log_file = sys.stderr if verbose else DevNullWriter()
+        disteval.log(version)
         dirname = os.path.dirname(specification_path)
         if workers is None:
             workers = disteval.default_worker_commands(dirname)
