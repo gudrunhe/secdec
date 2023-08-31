@@ -290,26 +290,27 @@ def adjust_1d_n(W2, V, w, a, tau, nmin, nmax, allow_medianQMC):
     assert not np.any(np.isinf(n))
     assert not np.any(np.isnan(n))
     # if not using medianQMC: Enforce nmax, raising the rest
-    if allow_medianQMC: return n.astype(int)
-    mask = (n > nmax)
-    while True:
-        n[mask] = nmax[mask]
-        maskc = np.count_nonzero(mask)
-        if maskc == 0: break
-        if maskc == len(n): return n
-        VV = V - (W2[mask] @ (w[mask]/n[mask]**a))
-        if VV < 0:
-            log(f"Probably can't reach the target error now that {np.count_nonzero(mask)} integrals are capped at maximum lattice size")
-            log(f"... will still try though")
-            return n
-        assert np.all(VV > 0)
-        mask2 = (~mask)
-        n[mask2] *= (1/VV * (W2[mask2] @ (w[mask2]/n[mask2]**a)))**(1/a)
-        assert not np.any(np.isinf(n))
-        assert not np.any(np.isnan(n))
-        add = (n > nmax)
-        if not np.any(add): break
-        mask |= add
+    if not allow_medianQMC:
+        mask = (n > nmax)
+        while True:
+            n[mask] = nmax[mask]
+            maskc = np.count_nonzero(mask)
+            if maskc == 0: break
+            if maskc == len(n): return n
+            VV = V - (W2[mask] @ (w[mask]/n[mask]**a))
+            if VV < 0:
+                log(f"Probably can't reach the target error now that {np.count_nonzero(mask)} integrals are capped at maximum lattice size")
+                log(f"... will still try though")
+                return n
+            assert np.all(VV > 0)
+            mask2 = (~mask)
+            n[mask2] *= (1/VV * (W2[mask2] @ (w[mask2]/n[mask2]**a)))**(1/a)
+            assert not np.any(np.isinf(n))
+            assert not np.any(np.isnan(n))
+            add = (n > nmax)
+            if not np.any(add): break
+            mask |= add
+    # Enforce nmin, lowering the rest where possible
     mask = (n < nmin)
     while True:
         n[mask] = nmin[mask]
@@ -322,7 +323,9 @@ def adjust_1d_n(W2, V, w, a, tau, nmin, nmax, allow_medianQMC):
         add = (n < nmin)
         if not np.any(add): break
         mask |= add
-    return n
+    assert not np.any(np.isnan(n))
+    assert np.all(n >= nmin)
+    return n.astype(int)
 
 def adjust_n(W2, V, w, a, tau, nmin, nmax, allow_medianQMC, names=[]):
     assert np.all(V>0)
@@ -330,8 +333,8 @@ def adjust_n(W2, V, w, a, tau, nmin, nmax, allow_medianQMC, names=[]):
     n = nmin.copy()
     for i in range(len(W2)-1, -1, -1):
         mask = (w != 0) & (W2[i,:] != 0)
-        n[mask] = adjust_1d_n(W2[i,mask], V[i], w[mask], a, tau[mask], n[mask], nmax[mask], allow_medianQMC)
-        assert not np.any(np.isnan(n))
+        if np.count_nonzero(mask) > 0:
+            n[mask] = adjust_1d_n(W2[i,mask], V[i], w[mask], a, tau[mask], n[mask], nmax[mask], allow_medianQMC)
     return n
 
 async def prepare_eval(workers, datadir, intfile):
