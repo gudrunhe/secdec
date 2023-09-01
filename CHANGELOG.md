@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - The final integration error reported by `disteval` in cases when either the sum coefficients, or the integral prefactors have non-zero imaginary parts. In such cases the total requested error bound would be satisfied correctly, but the reporting of it would be incorrect.
+- Crash when using median QMC rules with `disteval` with the assertion error `assert np.all(nmin > 0)`.
 
 ## [1.6.1] - 2023-07-04
 
