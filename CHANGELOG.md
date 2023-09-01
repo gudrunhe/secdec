@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.2] - 2023-09-01
+
 ### Added
 - `format` option for `IntegralLibrary`, allows the integral result to be output in `ginac`, `sympy`, `mathematica`, `maple` and `json` compatible formats.
 - Example `nodist_examples/BNP6_wu`. A 2-loop 4-point non-planar integral that requires a rescaling of the Feynman parameters.
