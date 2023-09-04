@@ -5,6 +5,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [FORM](https://github.com/vermaseren/form) updated to 4.3.1.
+
 ## [1.6.2] - 2023-09-01
 
 ### Added
