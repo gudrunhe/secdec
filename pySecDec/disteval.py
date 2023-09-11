@@ -823,7 +823,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
             tuple(o["regulator_powers"]) : sum(kern_var[kernel2idx[ii["name"], k]] for k in o["kernels"])
             for o in ii["orders"]
         }
-        maxord = np.array(ii["lowest_orders"]) + np.array(ii["prefactor_highest_orders"]) - np.array(ii["prefactor_lowest_orders"])
+        maxord = np.array(ii["lowest_orders"]) + np.array(ii["prefactor_highest_orders"])
         br_val = bracket_mul(br_pref, br_kern_val, maxord)
         br_var = bracket_mul(br_pref, br_kern_var, maxord, mul=mul_variance)
         intvals[ii["name"]] = [

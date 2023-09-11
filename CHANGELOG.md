@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - [FORM](https://github.com/vermaseren/form) updated to 4.3.1.
 
+### Fixed
+- The expansion order of the `integrals` key of the `json` format from *disteval*, in cases when the leading order of the prefactor is not zero.
+
 ## [1.6.2] - 2023-09-01
 
 ### Added
