@@ -19,7 +19,8 @@ command = sys.argv[1:]
 
 bstdout = sys.stdout if sys.version_info.major == 2 else sys.stdout.buffer
 
-rx = re.compile(b"Workspace overflow. ([0-9]*) ")
+rx_overflow = re.compile(b"Workspace overflow. ([0-9]+) ")
+rx_workspace = re.compile("WorkSpace ([0-9]+)\n?", re.IGNORECASE | re.MULTILINE)
 
 try:
     while True:
@@ -27,32 +28,44 @@ try:
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         for line in proc.stdout:
             bstdout.write(line)
-            m = rx.search(line)
+            m = rx_overflow.search(line)
             if m is not None:
                 workspace = int(m.group(1))
         proc.wait()
         if workspace is None:
             exit(proc.returncode)
         else:
+            curws = workspace
             newws = max(workspace*3, 10*1000*1000)
-            bstdout.write(b"=== Will increase WorkSpace in form.set to %d, and rerun FORM.\n" % (newws,))
             try:
-                with open("form.set", "r") as f:
-                    lines = [line for line in f if "workspace" not in line.lower()]
-            except (OSError, IOError) as e:
-                bstdout.write(b"=== Error reading form.set: %s\n" % (str(e).encode("utf8"),))
                 lines = []
-            lines.append("WorkSpace %d\n" % newws)
-            # Try to write form.set atomically, just in case.
-            fd, tmpname = tempfile.mkstemp(prefix="form.set.", dir=".")
-            try:
-                os.fchmod(fd, 0o644)
-                os.close(fd)
-                with open(tmpname, "w") as f:
-                    f.write("".join(lines))
-                os.rename(tmpname, "form.set")
-            except:
-                os.unlink(tmpname)
-                raise
+                with open("form.set", "r") as f:
+                    for line in f:
+                        m = rx_workspace.match(line)
+                        if m is None:
+                            lines.append(line)
+                        else:
+                            curws = int(m.group(1))
+            except (OSError, IOError) as e:
+                bstdout.write(b"===>> Error reading form.set: %s\n" % (str(e).encode("utf8"),))
+                lines = []
+            if curws >= newws:
+                bstdout.write(b"===>> Must increase WorkSpace in form.set to %d, but it is already %d.\n" % (newws, curws))
+            else:
+                bstdout.write(b"===>> Will increase WorkSpace in form.set from %d to %d.\n" % (curws, newws))
+                lines.append("WorkSpace %d\n" % newws)
+                # Try to write form.set atomically, just in case.
+                fd, tmpname = tempfile.mkstemp(prefix="form.set.", dir=".")
+                try:
+                    os.fchmod(fd, 0o644)
+                    os.close(fd)
+                    with open(tmpname, "w") as f:
+                        f.write("".join(lines))
+                    os.rename(tmpname, "form.set")
+                except:
+                    os.unlink(tmpname)
+                    raise
+            bstdout.write(b"===>> Will now rerun: %s\n" % (" ".join(command).encode("utf8"),))
+            bstdout.flush()
 except KeyboardInterrupt:
     pass
