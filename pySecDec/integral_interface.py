@@ -1663,6 +1663,7 @@ class DistevalLibrary(object):
         import sys
         import time
         from . import disteval
+
         if real_parameters or complex_parameters:
             with open(self.filename) as f:
                 spec = json.load(f)
@@ -1686,17 +1687,13 @@ class DistevalLibrary(object):
             int(number_of_presamples), int(points), int(shifts),
             lattice_candidates, standard_lattices,
             parameters, parameters, deadline))
-        if format == "sympy":
+        
+        if format == "raw":
+            return result
+        elif format == "sympy":
             return disteval.result_to_sympy(result)
         elif format == "mathematica":
             return disteval.result_to_mathematica(result)
         else:
-            for key in ("sums", "integrals"):
-                result[key] = {
-                    sum_name : {
-                        tuple(exp) : (complex(val_re, val_im), complex(err_re, err_im))
-                        for exp, (val_re, val_im), (err_re, err_im) in sum_terms
-                    }
-                    for sum_name, sum_terms in result[key].items()
-                }
-            return result
+            return disteval.result_to_json(result)
+            

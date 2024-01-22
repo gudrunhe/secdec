@@ -956,6 +956,17 @@ def result_to_mathematica(result):
     text.append("}")
     return "".join(text)
 
+def result_to_json(result):
+    for key in ("sums", "integrals"):
+        result[key] = {
+            sum_name : {
+                tuple(exp) : (complex(val_re, val_im), complex(err_re, err_im))
+                for exp, (val_re, val_im), (err_re, err_im) in sum_terms
+            }
+            for sum_name, sum_terms in result[key].items()
+        }
+    return result
+
 def main():
 
     valuemap = {}
