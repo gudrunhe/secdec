@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - The expansion order of the `integrals` key of the `json` format from *disteval*, in cases when the leading order of the prefactor is not zero.
+- GPU results being slightly off in very rare cases with *disteval*.
 
 ## [1.6.2] - 2023-09-01
 

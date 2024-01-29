@@ -41,6 +41,9 @@ typedef struct { real_t re, im; } complex_t;
 #define NTHREADS 1
 #define MAXQUEUE 16
 
+#define CUDA_BUFFER_SIZE (32*1024*1024)
+#define CUDA_SUM_BUFFER_SIZE (CUDA_BUFFER_SIZE/1024)
+
 typedef int (*IntegrateF)(
     void * presult,
     const uint64_t lattice,
@@ -148,7 +151,7 @@ struct PerThreadState {
     pthread_t thread;
     CUstream stream;
     CUdeviceptr buffer_d;
-    size_t buffer_size;
+    CUdeviceptr sum_buffer_d;
     CUdeviceptr params_d;
     CudaParameterData *params;
     complex_t *result;
@@ -393,7 +396,7 @@ worker_thread(void *ps)
         }
         if (1) { // CUDA path
             uint64_t threads = 128, pt_per_thread = 8;
-            uint64_t blocksperbatch = fam.complex_result ? s.buffer_size/sizeof(complex_t) : s.buffer_size/sizeof(real_t);
+            uint64_t blocksperbatch = fam.complex_result ? CUDA_BUFFER_SIZE/sizeof(complex_t) : CUDA_BUFFER_SIZE/sizeof(real_t);
             uint64_t ptperbatch = blocksperbatch * (threads*pt_per_thread);
             complex_t result = {0, 0};
             memcpy(s.params->genvec, c.genvec, sizeof(c.genvec));
@@ -402,6 +405,8 @@ worker_thread(void *ps)
             memcpy(s.params->complexp, fam.complexp, sizeof(fam.complexp));
             memcpy(s.params->deformp, c.deformp, sizeof(c.deformp));
             double t1 = timestamp();
+            CU(cuMemsetD8Async, s.buffer_d, 0, CUDA_BUFFER_SIZE, s.stream);
+            CU(cuMemsetD8Async, s.sum_buffer_d, 0, CUDA_SUM_BUFFER_SIZE, s.stream);
             CU(cuMemcpyHtoDAsync, s.params_d, s.params, sizeof(CudaParameterData), s.stream);
             CUdeviceptr genvec_d = s.params_d + offsetof(CudaParameterData, genvec);
             CUdeviceptr shift_d = s.params_d + offsetof(CudaParameterData, shift);
@@ -413,16 +418,19 @@ worker_thread(void *ps)
                 uint64_t blocks = (i2 - i1 + threads*pt_per_thread - 1)/(threads*pt_per_thread);
                 void *args[] = {&s.buffer_d, &c.lattice, &i1, &i2, &genvec_d, &shift_d, &realp_d, &complexp_d, &deformp_d, NULL };
                 CU(cuLaunchKernel, ker.cuda_fn_integrate, blocks, 1, 1, threads, 1, 1, 0, s.stream, args, NULL);
-                void *sum_args[] = {&s.buffer_d, &s.buffer_d, &blocks, NULL};
+                void *sum_args[] = {&s.sum_buffer_d, &s.buffer_d, &blocks, NULL};
                 CUfunction fn_sum = fam.complex_result ? G.cuda.fn_sum_c_b128_x1024 : G.cuda.fn_sum_d_b128_x1024;
+                bool swapped = false;
                 while (blocks > 1) {
                     uint64_t reduced = (blocks + 1024-1)/1024;
                     CU(cuLaunchKernel, fn_sum, reduced, 1, 1, 128, 1, 1, 0, s.stream, sum_args, NULL);
                     blocks = reduced;
+                    swapped = !swapped;
+                    std::swap(sum_args[0], sum_args[1]);
                 }
                 s.result->re = 0;
                 s.result->im = 0;
-                CU(cuMemcpyDtoHAsync, s.result, s.buffer_d, fam.complex_result ? sizeof(complex_t) : sizeof(real_t), s.stream);
+                CU(cuMemcpyDtoHAsync, s.result, swapped ? s.sum_buffer_d : s.buffer_d, fam.complex_result ? sizeof(complex_t) : sizeof(real_t), s.stream);
                 // Without this CU_CTX_SCHED_BLOCKING_SYNC doesn't work,
                 // and cuStreamSynchronize spins with 100% CPU usage.
                 // With this, both CU_CTX_SCHED_BLOCKING_SYNC and
@@ -482,10 +490,11 @@ init(int devindex)
         CU(cuMemAlloc, &ts.params_d, sizeof(CudaParameterData));
         CU(cuMemAllocHost, (void**)&ts.params, sizeof(*ts.params));
         CU(cuMemAllocHost, (void**)&ts.result, sizeof(*ts.result));
-        ts.buffer_size = 128*1024*1024;
-        CU(cuMemAlloc, &ts.buffer_d, ts.buffer_size);
+        CU(cuMemAlloc, &ts.buffer_d, CUDA_BUFFER_SIZE);
+        CU(cuMemAlloc, &ts.sum_buffer_d, CUDA_SUM_BUFFER_SIZE);
         CU(cuMemsetD8Async, ts.params_d, 0, sizeof(CudaParameterData), ts.stream);
-        CU(cuMemsetD8Async, ts.buffer_d, 0, ts.buffer_size, ts.stream);
+        CU(cuMemsetD8Async, ts.buffer_d, 0, CUDA_BUFFER_SIZE, ts.stream);
+        CU(cuMemsetD8Async, ts.sum_buffer_d, 0, CUDA_SUM_BUFFER_SIZE, ts.stream);
         pthread_create(&ts.thread, NULL, &worker_thread, (void*)&G.threads[thr]);
     }
 }
