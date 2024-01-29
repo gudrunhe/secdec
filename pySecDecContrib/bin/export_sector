@@ -614,7 +614,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ pass
         real_t w = ${"*".join("w_" + v for v in intvars) if intvars else "1"};
 @@ for j, v in enumerate(intvars):
-        ${v} = clamp01(${i.qmcTransform}_f(${v}));
+        ${v} = ${i.qmcTransform}_f(${v});
 @@ for line in cleanup_code(i.order_integrandBody).splitlines():
         ${line.replace("return(", "val += w*(")}
 @@ pass
