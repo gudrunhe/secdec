@@ -726,8 +726,9 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 latticex = lattices[mask_done]/oldlattices[mask_done]
                 precisionx = np.sqrt((np.real(kern_var[mask_done]) + np.imag(kern_var[mask_done])) / (np.real(new_kern_var) + np.imag(new_kern_var)))
                 ratiox = kern_val[mask_done]/new_kern_val
-                sigmarx = np.abs(np.real(kern_val[mask_done]-new_kern_val))/np.sqrt(np.maximum( np.abs(np.real(kern_var[mask_done])), np.abs(np.real(new_kern_var)) ))
-                sigmaix = np.abs(np.imag(kern_val[mask_done]-new_kern_val))/np.sqrt(np.maximum( np.abs(np.imag(kern_var[mask_done])), np.abs(np.imag(new_kern_var)) ))
+                with np.errstate(all='ignore'):
+                    sigmarx = np.abs(np.real(kern_val[mask_done]-new_kern_val))/np.sqrt(np.maximum( np.abs(np.real(kern_var[mask_done])), np.abs(np.real(new_kern_var)) ))
+                    sigmaix = np.abs(np.imag(kern_val[mask_done]-new_kern_val))/np.sqrt(np.maximum( np.abs(np.imag(kern_var[mask_done])), np.abs(np.imag(new_kern_var)) ))
                 for i, idx in enumerate(mask_done.nonzero()[0]):
                     idx = int(idx)
                     if precisionx[i] < 1.0:
