@@ -1709,6 +1709,70 @@ class Log(_Expression):
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         return Log( expression.arg.replace(index,value,remove) , copy=False )
+    
+class Exp(_Expression):
+    r'''
+    The real valued exponential function.
+    Store the expressions ``exp(arg)``.
+
+    :param arg:
+        :class:`._Expression`;
+        The argument of the exponential function.
+
+    :param copy:
+        bool;
+        Whether or not to copy the `arg`.
+
+    '''
+    def __init__(self, arg, copy=True):
+        self.number_of_variables = arg.number_of_variables
+        self.arg = arg.copy() if copy else arg
+
+    @cached_property
+    def str(self):
+        return 'exp(' + str(self.arg) + ')'
+
+    def __repr__(self):
+        return self.str
+
+    __str__ = __repr__
+
+    def copy(self):
+        "Return a copy of a :class:`.Exp`."
+        return Exp(self.arg.copy(), copy=False)
+
+    def simplify(self):
+        'Apply ``exp(0) = 1``.'
+        if self.simplified:
+            return self
+
+        self.clear_cache()
+
+        self.arg = self.arg.simplify()
+        if type(self.arg) is Polynomial and len(self.arg.coeffs) == 1 and self.arg.coeffs[0] == 0 and (self.arg.expolist == 0).all():
+            return Polynomial(np.zeros([1,len(self.arg.polysymbols)], dtype=int), np.array([1]), self.arg.polysymbols, copy=False)
+        else:
+            self.simplified = True
+            return self
+
+    @property
+    def symbols(self):
+        return self.arg.symbols
+
+    def derive(self, index):
+        '''
+        Generate the derivative by the parameter indexed `index`.
+
+        :param index:
+            integer;
+            The index of the paramater to derive by.
+
+        '''
+        return Product(self, self.arg.derive(index), copy=False)
+
+    @doc(_Expression.docstring_of_replace)
+    def replace(expression, index, value, remove=False):
+        return Exp( expression.arg.replace(index,value,remove) , copy=False )
 
 def Expression(expression, polysymbols, follow_functions=False):
     '''
@@ -1769,6 +1833,10 @@ def Expression(expression, polysymbols, follow_functions=False):
                     return LogOfPolynomial.from_expression(expression.args[0], polysymbols)
                 except:
                     return Log(recursive_call(expression.args[0]))
+
+            if isinstance(expression, sp.exp):
+                assert len(expression.args) == 1
+                return Exp(recursive_call(expression.args[0]))
 
             if expression.is_Function:
                 func = Function(expression.__class__.__name__, *(recursive_call(e) for e in expression.args))

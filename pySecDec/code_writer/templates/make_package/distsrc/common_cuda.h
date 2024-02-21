@@ -23,6 +23,8 @@ typedef thrust::complex<real_t> complex_t;
     typedef real_t result_t;
     mathfn real_t SecDecInternalLog(real_t x)
     { return log(x); };
+    mathfn real_t SecDecInternalExp(real_t x)
+    { return exp(x); };
     mathfn real_t SecDecInternalPow(real_t x, real_t n)
     { return pow(x, n); }
 #endif

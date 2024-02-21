@@ -283,6 +283,7 @@ namespace %(name)s
 
 #define SecDecInternalDenominator(x) 1.0/(x)
 #define SecDecInternalLog(x) log(x)
+#define SecDecInternalExp(x) exp(x)
 #define SecDecInternalPow(x, n) pow(x, n)
 
 #ifdef SECDEC_WITH_CUDA

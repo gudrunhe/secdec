@@ -771,7 +771,7 @@ Format 255;
 * Replace all function calls by symbols for simultaneous optimization.
 * {
 
-  #redefine functionsToReplace "`functions',log,SecDecInternalPow,SecDecInternalDenominator"
+  #redefine functionsToReplace "`functions',log,exp,SecDecInternalPow,SecDecInternalDenominator"
   #If `contourDeformation'
     #redefine functionsToReplace "SecDecInternalRealPart,`functionsToReplace'"
   #EndIf
@@ -920,7 +920,7 @@ Format 255;
 * Keep track of function calls that are not written to
 * the c++ file yet.
 
-  #redefine functionsToReplace "`functions',`decomposedPolynomialDerivatives',log,SecDecInternalPow,SecDecInternalDenominator"
+  #redefine functionsToReplace "`functions',`decomposedPolynomialDerivatives',log,exp,SecDecInternalPow,SecDecInternalDenominator"
   #If `contourDeformation'
     #redefine functionsToReplace "SecDecInternalRealPart,`contourdefJacobianFunctions',`deformedIntegrationVariableDerivativeFunctions',`functionsToReplace'"
   #EndIf

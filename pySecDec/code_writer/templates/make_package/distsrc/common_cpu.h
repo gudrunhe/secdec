@@ -415,6 +415,11 @@ DEF_CC_FUNCTION(exp, exp)
 
     DEF_RR_FUNCTION(SecDecInternalLog, SecDecInternalLog)
 
+    static inline real_t SecDecInternalExp(real_t x)
+    { return std::exp(x); };
+
+    DEF_RR_FUNCTION(SecDecInternalExp, SecDecInternalExp)
+
     static inline real_t SecDecInternalPow(const real_t x, const real_t n)
     { return std::pow(x, n); }
 
