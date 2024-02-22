@@ -295,3 +295,11 @@ Note that any internally generated prefactors, for example from Feynman parametr
     
     * ``make_package(prefactor='x', ...)`` : ``x`` is not included in ``str_integral_without_prefactor`` and ``str_prefactor = x``, ``str_integral_with_prefactor = x * str_integral_without_prefactor``.
 
+What should I do if I get ``OSError: [Errno 24] Too many open files``?
+---------------------------------------------------------
+
+This happens if the number of running subprocesses exceeds the open file limit of the OS.
+Due to the massive parallelization during integration, this can happen if the default limit is set too low.
+How to raise the open file limit depends on the OS. On Mac OSX (El Capitan), where this is known to be a problem, 
+the command #ulimit -Sn 10000 sets the limit to 10000.
+
