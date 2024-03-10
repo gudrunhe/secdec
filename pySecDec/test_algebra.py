@@ -1056,6 +1056,75 @@ class TestLog(unittest.TestCase):
         assert str(ln) == string_ln
         assert repr(ln) == string_ln
 
+#@pytest.mark.active
+class TestExp(unittest.TestCase):
+    def test_init(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+
+        # Proper instantiation
+        exp = Exp(p0)
+
+        # made a copy?
+        assert exp.arg.expolist[0,0] == 0
+        assert p0.expolist[0,0] == 0
+        exp.arg.expolist[0,0] = 5
+        assert exp.arg.expolist[0,0] == 5
+        assert p0.expolist[0,0] == 0
+
+    def test_copy(self):
+        p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
+
+        orig = Exp(p0)
+        copy = orig.copy()
+
+        assert orig.arg.expolist[0,0] == 0
+        assert copy.arg.expolist[0,0] == 0
+        orig.arg.expolist[0,0] = 5
+        assert orig.arg.expolist[0,0] == 5
+        assert copy.arg.expolist[0,0] == 0
+
+    #@pytest.mark.active
+    def test_simplify(self):
+        zero = Polynomial.from_expression(0, ['x0','x1','x2'])
+
+        one = Exp(zero).simplify()
+
+        assert type(one) is Polynomial
+        assert sympify_expression(one) == 1
+        np.testing.assert_array_equal(one.coeffs, [1])
+        np.testing.assert_array_equal(one.expolist, [[0,0,0]])
+
+    #@pytest.mark.active
+    def test_simplify_exp_of_polynomial_zero(self):
+        zero = Polynomial([[4,1,5],[0,0,0]], [0,Polynomial.from_expression(0, ['x','y','z'])], ['x','y','z'])
+
+        one = Exp(zero).simplify()
+
+        assert type(one) is Polynomial
+        assert sympify_expression(one) == 1
+        np.testing.assert_array_equal(one.coeffs, [1])
+        np.testing.assert_array_equal(one.expolist, [[0,0,0]])
+
+    def test_derive(self):
+        polynomial = Polynomial.from_expression('A*x0 + B*x1', ['x0','x1'])
+        exp = Exp(polynomial)
+
+        derivative_0 = exp.derive(0).simplify()
+        target_derivative_0 = sympify_expression('A*exp(A*x0 + B*x1)')
+        assert (sympify_expression(derivative_0) - target_derivative_0).simplify() == 0
+
+        derivative_0_1 = sympify_expression(derivative_0.derive(1))
+        target_derivative_0_1 = sympify_expression('B*A*exp(A*x0 + B*x1)')
+        assert (derivative_0_1 - target_derivative_0_1).simplify() == 0
+
+    def test_string_form(self):
+        p1 = Polynomial([(8,1),(1,5),(2,1)],['B','C','D'])
+        exp = Exp(p1)
+        string_exp = 'exp( + (B)*x0**8*x1 + (C)*x0*x1**5 + (D)*x0**2*x1)'
+
+        assert str(exp) == string_exp
+        assert repr(exp) == string_exp
+
 class TestSum(unittest.TestCase):
     def test_init(self):
         p0 = Polynomial([(0,1),(1,0),(2,1)],['A','B','C'])
