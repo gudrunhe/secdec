@@ -421,7 +421,7 @@ async def prepare_eval(workers, datadir, intfile):
         t1 - t0,
         t2 - t1)
 
-async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nshifts, lattice_candidates, standard_lattices, valuemap, valuemap_coeff, deadline):
+async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nshifts, lattice_candidates, standard_lattices, valuemap_int, valuemap_coeff, deadline):
 
     datadir, info, requested_orders, kernel2idx, infos, ampcount, korders, family2idx, par, t_init, t_worker = prepared
 
@@ -431,28 +431,25 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     t1 = time.time()
 
     for p in info["realp"] + info["complexp"]:
-        if p not in valuemap:
+        if p not in valuemap_int:
             raise ValueError(f"missing integral parameter: {p}")
 
     sp_regulators = sp.var(info["regulators"])
 
-    valuemap_rat = {
-        k:sp.nsimplify(v, rational=True, tolerance=np.abs(v)*1e-13)
-        for k, v in valuemap_coeff.items()
-    }
     realp = {
-        i : [valuemap[p] for p in info["realp"]]
-        for i, info in infos.items()
+        fam : [valuemap_int[p] for p in info["realp"]]
+        for fam, info in infos.items()
     }
     complexp = {
-        i : [(np.real(valuemap[p]), np.imag(valuemap[p])) for p in info["complexp"]]
-        for i, info in infos.items()
+        fam : [(np.real(valuemap_int[p]), np.imag(valuemap_int[p])) for p in info["complexp"]]
+        for fam, info in infos.items()
     }
+    valuemap_coeff = {k : str(v) for k, v in valuemap_coeff.items()}
 
     log(f"parsing {len(infos)} integral prefactors")
     for ii in infos.values():
         ii["expanded_prefactor_value"] = {
-            tuple(t["regulator_powers"]) : complex(sp.sympify(t["coefficient"]).subs(valuemap))
+            tuple(t["regulator_powers"]) : complex(sp.sympify(t["coefficient"]).subs(valuemap_int))
             for t in ii["expanded_prefactor"]
         }
 
@@ -468,7 +465,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     if info["type"] == "integral":
         sum_names = [info["name"]]
         br_coef = {(0,)*len(info["regulators"]): sp.sympify(1)}
-        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, br_coef, valuemap, sp_regulators, requested_orders)
+        split_integral_into_orders(ap2coeffs, 0, kernel2idx, info, br_coef, valuemap_int, sp_regulators, requested_orders)
     elif info["type"] == "sum":
         log("loading amplitude coefficients")
         sum_names = list(info["sums"].keys())
@@ -480,7 +477,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 return
             log("-", t["coefficient"])
             br_coef = {tuple(k):complex(re, im) for k, (re, im) in br_coef}
-            split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], br_coef, valuemap, sp_regulators, requested_orders)
+            split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], br_coef, valuemap_int, sp_regulators, requested_orders)
             done_evalf.todo -= 1
             if done_evalf.todo == 0:
                 done_evalf.set_result(None)
@@ -492,7 +489,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 coef_ord = - kern_lord - pref_lord + requested_orders
                 par.call_cb("evalf", (
                         os.path.relpath(os.path.join(coeffsdir, t["coefficient"]), datadir),
-                        {k:str(v) for k,v in valuemap_rat.items()},
+                        {k:str(v) for k,v in valuemap_coeff.items()},
                         [[str(var), int(order)] for var, order in zip(sp_regulators, coef_ord)]
                     ),
                     evalf_cb,
@@ -970,7 +967,6 @@ def result_to_json(result):
 
 def main():
 
-    valuemap = {}
     valuemap_coeff = {}
     valuemap_int = {}
     npoints = 10**4
@@ -1025,27 +1021,22 @@ def main():
     log(f"- lattice-candidates = {lattice_candidates}")
     for arg in args[1:]:
         if "=" not in arg: raise ValueError(f"Bad argument: {arg}")
-        key, value = arg.split("=", 1)
-        value = complex(value)
-        value = value.real if value.imag == 0 else value
+        key, svalue = arg.split("=", 1)
+        fvalue = complex(sp.sympify(svalue))
+        fvalue = fvalue.real if fvalue.imag == 0 else fvalue
         if key.startswith("coeff-"):
-            valuemap_coeff[key[6:]] = value
+            valuemap_coeff[key[6:]] = svalue
         elif key.startswith("int-"):
-            valuemap_int[key[4:]] = value
+            valuemap_int[key[4:]] = fvalue
         else:
-            valuemap[key] = value
-    valuemap_int = {**valuemap, **valuemap_int}
-    valuemap_coeff = {**valuemap, **valuemap_coeff}
-    log("Invariants:")
+            valuemap_coeff[key] = svalue
+            valuemap_int[key] = fvalue
+    log("Integral variables:")
     for key, value in valuemap_int.items():
-        if valuemap_coeff.get(key, None) == value:
-            log(f"- {key} = {value}")
-    for key, value in valuemap_int.items():
-        if valuemap_coeff.get(key, None) != value:
-            log(f"- integral {key} = {value}")
+        log(f"- {key} = {value!s}")
+    log("Coefficient variables:")
     for key, value in valuemap_coeff.items():
-        if valuemap_int.get(key, None) != value:
-            log(f"- coefficient {key} = {value}")
+        log(f"- {key} = {value}")
 
     # Load worker list
     workers = load_worker_commands(clusterfile, dirname)

@@ -1544,22 +1544,28 @@ class DistevalLibrary(object):
     following arguments:
 
     :param parameters:
-        dict of float, optional;
+        dict of str to object, optional;
         A map from parameter names to their values.
+        A value can be any object that can be converted to
+        complex() and to str(). To make sure floating point
+        imprecision does not spoil the results, it is best to
+        pass the values of the parameters as integers, strings,
+        sympy expressions, or fractions.Fraction() objects.
+        Floating point numbers are supported, but not encouraged.
 
     :param real_parameters:
         iterable of float, optional;
         The values of the real parameters of the library in
         the same order as the real_parameters argument of
-        :func:`.code_writer.make_package`. (Not needed if parameters are
-        given).
+        :func:`.code_writer.make_package`.
+        (Not needed if ``parameters`` are provided).
 
     :param complex_parameters:
         iterable of complex, optional;
         The values of the complex parameters of the library in
         the same order as the complex_parameters argument of
-        :func:`.code_writer.make_package`. (Not needed if parameters are
-        given).
+        :func:`.code_writer.make_package`.
+        (Not needed if ``parameters`` are provided).
 
     :param number_of_presamples:
         unsigned int, optional;
@@ -1669,10 +1675,16 @@ class DistevalLibrary(object):
                 spec = json.load(f)
             realp = spec["realp"]
             for i, val in enumerate(real_parameters):
-                parameters[realp[i]] = float(val)
+                parameters[realp[i]] = val
             complexp = spec["complexp"]
             for i, val in enumerate(complex_parameters):
-                parameters[complexp[i]] = complex(val)
+                parameters[complexp[i]] = val
+        valuemap_int = {}
+        valuemap_coeff = {}
+        for key, value in parameters.items():
+            fvalue = complex(value)
+            valuemap_int[key] = fvalue.real if fvalue.imag == 0 else fvalue
+            valuemap_coeff[key] = str(value)
         if not isinstance(epsabs, list) and not isinstance(epsabs, tuple):
             epsabs = [epsabs]
         if not isinstance(epsrel, list) and not isinstance(epsrel, tuple):
@@ -1686,7 +1698,7 @@ class DistevalLibrary(object):
             self.prepared, coefficients, epsabs, epsrel,
             int(number_of_presamples), int(points), int(shifts),
             lattice_candidates, standard_lattices,
-            parameters, parameters, deadline))
+            valuemap_int, valuemap_coeff, deadline))
         
         if format == "raw":
             return result
