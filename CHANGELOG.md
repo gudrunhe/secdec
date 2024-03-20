@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The command line integration interface of *disteval* now supports variable values specified as rational numbers (e.g. `1/3` instead of `0.3333`).
+- `DistevalLibrary` now supports variable values specified as strings (e.g. `"0.3333"`), and as sympy numeric objects (e.g. `sympy.sympify("1/3")`).
+
 ### Changed
 - [FORM](https://github.com/vermaseren/form) updated to 4.3.1.
 
@@ -23,13 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated "Installation", "Getting Started" and "FAQ" documentation to reflect current usage guidelines.
 
 ### Fixed
-- The final integration error reported by `disteval` in cases when either the sum coefficients, or the integral prefactors have non-zero imaginary parts. In such cases the total requested error bound would be satisfied correctly, but the reporting of it would be incorrect.
-- Crash when using median QMC rules with `disteval` with the assertion error `assert np.all(nmin > 0)`.
+- The final integration error reported by *disteval* in cases when either the sum coefficients, or the integral prefactors have non-zero imaginary parts. In such cases the total requested error bound would be satisfied correctly, but the reporting of it would be incorrect.
+- Crash when using median QMC rules with *disteval* with the assertion error `assert np.all(nmin > 0)`.
 
 ## [1.6.1] - 2023-07-04
 
 ### Added
-- The `json` output format of `Disteval` now includes the values of the integrals in addition to the values of the sums.
+- The `json` output format of *disteval* now includes the values of the integrals in addition to the values of the sums.
 - [zlib](http://zlib.net/) version 1.2.13, needed by FORM.
 - Example `nodist_examples/ggh`. Demonstrates the computation of the 1- and 2-loop amplitudes for Higgs production in gluon fusion.
 - Example `nodist_examples/triangle2L_wu`. Integral that requires a rescaling of the Feynman parameters.
@@ -42,13 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [GiNaC](https://www.ginac.de/) updated to 1.8.6+ (commit 4bc2092 from Jun 21 2023).
 
 ### Fixed
-- Critical bug in `disteval` introduced in 1.6 when using the median QMC lattice rules. Bug led to incorrect results for integrals with a severely underestimated error after recomputing with a larger lattice.
+- Critical bug in *disteval* introduced in 1.6 when using the median QMC lattice rules. Bug led to incorrect results for integrals with a severely underestimated error after recomputing with a larger lattice.
 - Parsing of the coefficient expressions with `ginsh`. Previously, mixing the exponentiation operator `^` and the unary `+` and/or `-` operators would result in `ginsh` misparsing the coefficients.
 
 ## [1.6] - 2023-05-29
 
 ### Added
-- New integrator `Disteval`.
+- New integrator "Disteval".
 - Integration based on median QMC rule implemented, can be enabled with option `lattice_candidates`.
 - Numerator support for expansion by regions.
 - `suggested_extra_regulator_exponent`  function, returns a list of suggested extra regulators sufficient to regularise a loop integral.
