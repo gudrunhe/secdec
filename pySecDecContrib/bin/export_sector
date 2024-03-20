@@ -259,13 +259,13 @@ integrand_return_t ${sorder}_integrand
 )
 {
 @@ for j, v in enumerate(getlist(i.order_integrationVariables)):
-    auto ${v} = integration_variables[${j}];
+    const auto ${v} = integration_variables[${j}]; (void)${v};
 @@ for j, v in enumerate(getlist(i.realParameters)):
-    auto ${v} = real_parameters[${j}]; (void)${v};
+    const auto ${v} = real_parameters[${j}]; (void)${v};
 @@ for j, v in enumerate(getlist(i.complexParameters)):
-    auto ${v} = complex_parameters[${j}]; (void)${v};
+    const auto ${v} = complex_parameters[${j}]; (void)${v};
 @@ for j, v in enumerate(getlist(i.order_deformationParameters)):
-    auto ${v} = deformation_parameters[${j}];
+    const auto ${v} = deformation_parameters[${j}]; (void)${v};
 @@ code = cleanup_code(i.order_integrandBody)
 @@ for line in code.splitlines():
     ${line}
@@ -343,13 +343,13 @@ integrand_return_t ${sorder}_contour_deformation_polynomial
 )
 {
 @@ for j, v in enumerate(getlist(i.order_integrationVariables)):
-    auto ${v} = integration_variables[${j}];
+    const auto ${v} = integration_variables[${j}]; (void)${v};
 @@ for j, v in enumerate(getlist(i.realParameters)):
-    auto ${v} = real_parameters[${j}]; (void)${v};
+    const auto ${v} = real_parameters[${j}]; (void)${v};
 @@ for j, v in enumerate(getlist(i.complexParameters)):
-    auto ${v} = complex_parameters[${j}]; (void)${v};
+    const auto ${v} = complex_parameters[${j}]; (void)${v};
 @@ for j, v in enumerate(getlist(i.order_deformationParameters)):
-    auto ${v} = deformation_parameters[${j}];
+    const auto ${v} = deformation_parameters[${j}]; (void)${v};
 @@ code = cleanup_code(i.order_contourDeformationPolynomialBody)
 @@ for line in code.splitlines():
     ${line}
@@ -387,11 +387,11 @@ void ${sorder}_maximal_allowed_deformation_parameters
 )
 {
 @@ for j, v in enumerate(getlist(i.order_integrationVariables)):
-    auto ${v} = integration_variables[${j}];
+    const auto ${v} = integration_variables[${j}]; (void)${v};
 @@ for j, v in enumerate(getlist(i.realParameters)):
-    auto ${v} = real_parameters[${j}]; (void)${v};
+    const auto ${v} = real_parameters[${j}]; (void)${v};
 @@ for j, v in enumerate(getlist(i.complexParameters)):
-    auto ${v} = complex_parameters[${j}]; (void)${v};
+    const auto ${v} = complex_parameters[${j}]; (void)${v};
 @@ code = cleanup_code(i.order_optimizeDeformationParametersBody)
 @@ for line in code.splitlines():
     ${line}
