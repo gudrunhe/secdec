@@ -10,19 +10,19 @@
 
 #define sum_kernel(name, value_t) \
     extern "C" __global__ void \
-    name(value_t *dst, value_t *src, uint64_t n) \
+    name(value_t * __restrict__ dst, value_t * __restrict__ src, uint64_t n) \
     { \
         uint64_t bid = blockIdx.x; \
         uint64_t tid = threadIdx.x; \
         uint64_t idx = (bid*128 + tid)*8; \
-        value_t val1 = (idx+0 < n) ? src[idx+0] : value_t(0); \
-        value_t val2 = (idx+1 < n) ? src[idx+1] : value_t(0); \
-        value_t val3 = (idx+2 < n) ? src[idx+2] : value_t(0); \
-        value_t val4 = (idx+3 < n) ? src[idx+3] : value_t(0); \
-        value_t val5 = (idx+4 < n) ? src[idx+4] : value_t(0); \
-        value_t val6 = (idx+5 < n) ? src[idx+5] : value_t(0); \
-        value_t val7 = (idx+6 < n) ? src[idx+6] : value_t(0); \
-        value_t val8 = (idx+7 < n) ? src[idx+7] : value_t(0); \
+        value_t val1 = (idx+0 < n) ? src[idx+0] : value_t{}; \
+        value_t val2 = (idx+1 < n) ? src[idx+1] : value_t{}; \
+        value_t val3 = (idx+2 < n) ? src[idx+2] : value_t{}; \
+        value_t val4 = (idx+3 < n) ? src[idx+3] : value_t{}; \
+        value_t val5 = (idx+4 < n) ? src[idx+4] : value_t{}; \
+        value_t val6 = (idx+5 < n) ? src[idx+5] : value_t{}; \
+        value_t val7 = (idx+6 < n) ? src[idx+6] : value_t{}; \
+        value_t val8 = (idx+7 < n) ? src[idx+7] : value_t{}; \
         value_t val = ((val1 + val2) + (val3 + val4)) + ((val5 + val6) + (val7 + val8)); \
         typedef cub::BlockReduce<value_t, 128, cub::BLOCK_REDUCE_RAKING_COMMUTATIVE_ONLY> Reduce; \
         __shared__ typename Reduce::TempStorage shared; \
@@ -33,8 +33,8 @@
 sum_kernel(sum_d_b128_x1024, real_t)
 sum_kernel(sum_c_b128_x1024, complex_t)
 
-#define SecDecInternalSignCheckErrorPositivePolynomial(id) {val = nan("U"); break;}
-#define SecDecInternalSignCheckErrorContourDeformation(id) {val = nan("F"); break;}
+#define SecDecInternalSignCheckPositivePolynomial(cond, id) if (unlikely(cond)) { val = REAL_NAN; break; }
+#define SecDecInternalSignCheckContourDeformation(cond, id) if (unlikely(cond)) { val = REAL_NAN; break; }
 
 extern "C" __global__ void
 builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, order=0
@@ -58,15 +58,15 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
     const real_t m3sq = realp[3];
     const real_t SecDecInternalLambda0 = deformp[0];
     const real_t SecDecInternalLambda1 = deformp[1];
-    const real_t invlattice = 1.0/lattice;
-    result_t val = 0.0;
+    const real_t invlattice = SecDecInternalDenominator((real_t)(double)lattice);
+    result_t val = {};
     uint64_t index = index1 + (bid*128 + tid)*8;
     uint64_t li_x0 = mulmod(index, genvec[0], lattice);
     uint64_t li_x1 = mulmod(index, genvec[1], lattice);
     for (uint64_t i = 0; (i < 8) && (index < index2); i++, index++) {
-        real_t x0 = warponce(li_x0*invlattice + shift[0], 1.0);
+        real_t x0 = warponce(invlattice*(double)li_x0 + shift[0], 1.0);
         li_x0 = warponce_i(li_x0 + genvec[0], lattice);
-        real_t x1 = warponce(li_x1*invlattice + shift[1], 1.0);
+        real_t x1 = warponce(invlattice*(double)li_x1 + shift[1], 1.0);
         li_x1 = warponce_i(li_x1 + genvec[1], lattice);
         real_t w_x0 = korobov3x3_w(x0);
         real_t w_x1 = korobov3x3_w(x1);
@@ -197,10 +197,10 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
         auto tmp3_76 = tmp3_75 + tmp3_74 + tmp3_72;
         auto tmp3_77 = __DenominatorCall1*tmp3_76*tmp3_60*tmp3_36*__PowCall1*__PowCall2;
         auto _SignCheckExpression = SecDecInternalImagPart(tmp3_70);
-        if (unlikely(_SignCheckExpression>0)) SecDecInternalSignCheckErrorContourDeformation(1);
+        SecDecInternalSignCheckContourDeformation(!(_SignCheckExpression<=0), 1);
         auto tmp3_78 = SecDecInternalRealPart(tmp3_57);
-        if (unlikely(tmp3_78<0)) SecDecInternalSignCheckErrorPositivePolynomial(1);
-        val += w*(tmp3_77);
+        SecDecInternalSignCheckPositivePolynomial(!(tmp3_78>=0), 1);
+        val = val + w*(tmp3_77);
     }
     // Sum up 128*8=1024 values across 4 warps.
     typedef cub::BlockReduce<result_t, 128, cub::BLOCK_REDUCE_RAKING_COMMUTATIVE_ONLY> Reduce;

@@ -15,6 +15,7 @@
 
 import collections
 import contextlib
+import getopt
 import glob
 import os
 import os.path
@@ -56,6 +57,9 @@ def getintlist(text, separator=","):
 def sed(text, rx, template):
     return re.sub(rx, template, text, flags=re.M)
 
+def grep(text, rx):
+    return re.findall(rx, text, flags=re.M)
+
 def cleanup_code(text):
     """
     Take a code dump from FORM, reformat it into C++, rename
@@ -66,20 +70,30 @@ def cleanup_code(text):
     code = sed(code, r"SecDecInternalAbbreviation\[([0-9]+)\]", r"tmp1_\1")
     code = sed(code, r"SecDecInternalAbbreviations[0-9]+\(([0-9]+)\)", r"tmp1_\1")
     code = sed(code, r"SecDecInternalSecondAbbreviation\[([0-9]+)\]", r"tmp2_\1")
+    code = sed(code, r"SecDecInternalSecondAbbreviation\(([0-9]+)\)", r"tmp2_\1")
     term = "[+-]?[a-zA-Z0-9_*]+"
-    code = sed(code, fr"pow\(({term}),2\)", r"\1*\1")
-    code = sed(code, fr"pow\(({term}),3\)", r"\1*\1*\1")
-    code = sed(code, fr"pow\(({term}),4\)", r"(\1*\1)*(\1*\1)")
-    code = sed(code, r"pow\(", r"SecDecInternalPow(")
-    code = sed(code, r"log\(", r"SecDecInternalLog(")
+    code = sed(code, fr"\bpow\(({term}),2\)", r"SecDecInternalSqr(\1)")
+    code = sed(code, fr"\bpow\(({term}),3\)", r"SecDecInternalSqr(\1)*\1")
+    code = sed(code, fr"\bpow\(({term}),4\)", r"SecDecInternalSqr(SecDecInternalSqr(\1))")
+    code = sed(code, fr"\bpow\(({term}),([0-9]+)\)", r"SecDecInternalNPow(\1,\2)")
+    code = sed(code, r"\bpow\(", r"SecDecInternalPow(")
+    code = sed(code, r"\blog\(", r"SecDecInternalLog(")
+    code = sed(code, r"if *\((.*)\) *SecDecInternalSignCheckError(.*)\(", r"SecDecInternalSignCheck\2(\1,")
+    # Convert i_*expr into SecDecInternalI(expr)
     code = sed(code, fr"= *({term})\*i_\*({term});", r"= SecDecInternalI(\1*\2);")
     code = sed(code, fr"= *({term})\*i_;", r"= SecDecInternalI(\1);")
     code = sed(code, fr"= *([+-]?)i_\*({term});", r"= SecDecInternalI(\1\2);")
     code = sed(code, fr"= *([+-]?)i_;", r"= SecDecInternalI(\g<1>1);")
-    code = sed(code, r"if *\((.*)\) *SecDecInternalSignCheck", r"if (unlikely(\1)) SecDecInternalSignCheck")
+    # Make numbers either integrers or rationals (via SecDecInternalQuo)
     code = sed(code, r"[.]E[+]0([^0-9])", r"\1")
-    code = sed(code, r" *= *", " = ")
-    code = sed(code, r" *[+] *([^0-9])", r" + \1")
+    code = sed(code, r"[.]([^0-9])", r"\1")
+    assert "." not in code
+    assert re.search(r"\b[0-9]*[eE][0-9+-]", code) is None
+    code = sed(code, r"([0-9]+)/([0-9]+)", r"SecDecInternalQuo(\1,\2)")
+    assert "/" not in code
+    # Put some cosmetic spaces back in for prettier formatting
+    code = sed(code, fr"\b *= *\b", r" = ")
+    code = sed(code, r"\b *[+] *\b", r" + ")
     code = sed(code, r" *, *", ", ")
     code = sed(code, r"  *", r" ")
     # Switch to static single assignment form, for variable type
@@ -109,6 +123,23 @@ def cleanup_code(text):
         lines.append(line)
     code = "\n".join(lines)
     code = sed(code, r"^result_t (.*SecDecInternal.*Part.*)$", r"real_t \1")
+    return code
+
+assert cleanup_code("x=1*2./3.E+0*4.E+0;") == "auto x = 1*SecDecInternalQuo(2, 3)*4;"
+assert cleanup_code("x=1/2*2/3;") == "auto x = SecDecInternalQuo(1, 2)*SecDecInternalQuo(2, 3);"
+assert cleanup_code("x1e2=x+y;x<=1;y+=z;") == "auto x1e2 = x + y;\nx<=1;\ny+=z;"
+
+def code_variables(code):
+    return list(set(grep(code, "^auto ([^ ]+) ")))
+
+def code_to_mma(code):
+    code = sed(code, r"^auto ", "")
+    code = sed(code, r"^return\(", "Return(")
+    code = sed(code, r"\(", "[")
+    code = sed(code, r"\)", "]")
+    code = sed(code, r"_", "$")
+    code = sed(code, r"\bi\b", "I")
+    #code = sed(code, r"([^a-zA-Z0-9_$])\[([^\]]*)\]", r"\1(\2)")
     return code
 
 def template_writer(template_source, *argnames):
@@ -422,8 +453,8 @@ DIST_SECTOR_ORDER_CPP = template_writer("""\
 #define SECDEC_RESULT_IS_COMPLEX ${1 if complex else 0}
 #include "common_cpu.h"
 
-#define SecDecInternalSignCheckErrorPositivePolynomial(id) {*presult = nan("U"); return 1; }
-#define SecDecInternalSignCheckErrorContourDeformation(id) {*presult = nan("F"); return 2; }
+#define SecDecInternalSignCheckPositivePolynomial(cond, id) if (unlikely(cond)) {*presult = REAL_NAN; return 1; }
+#define SecDecInternalSignCheckContourDeformation(cond, id) if (unlikely(cond)) {*presult = REAL_NAN; return 2; }
 
 extern "C" int
 ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
@@ -445,7 +476,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ for j, v in enumerate(getlist(i.order_deformationParameters)):
     const real_t ${v} = deformp[${j}];
 @@ pass
-    const real_t invlattice = 1.0/lattice;
+    const real_t invlattice = SecDecInternalDenominator((real_t)(double)lattice);
     resultvec_t acc = RESULTVEC_ZERO;
     uint64_t index = index1;
 @@ intvars = getlist(i.order_integrationVariables)
@@ -467,7 +498,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ for k in range(1, VECSIZE):
         if (unlikely(index + ${k} >= index2)) w.x[${k}] = 0;
 @@ for j, v in enumerate(intvars):
-        ${v} = clamp01(${i.qmcTransform}_f(${v}));
+        ${v} = ${i.qmcTransform}_f(${v});
 @@ for line in cleanup_code(i.order_integrandBody).splitlines():
         ${line.replace("return(", "acc = acc + w*(")}
 @@ pass
@@ -497,7 +528,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__maxdeformp(
     const complex_t ${v} = complexp[${j}]; (void)${v};
 @@     ndeformp = len(getlist(i.order_deformationParameters))
 @@     deformp_init = ', '.join(['REALVEC_CONST(10.0)']*ndeformp)
-    const real_t invlattice = 1.0/lattice;
+    const real_t invlattice = SecDecInternalDenominator((real_t)(double)lattice);
     realvec_t deformp[${ndeformp}] = { ${deformp_init} };
     uint64_t index = index1;
 @@     intvars = getlist(i.order_integrationVariables)
@@ -512,7 +543,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__maxdeformp(
         realvec_t ${v} = {{ ${li_list} }};
         ${v} = warponce(${v} + shift[${j}], 1);
 @@     for j, v in enumerate(intvars):
-        ${v} = clamp01(${i.qmcTransform}_f(${v}));
+        ${v} = ${i.qmcTransform}_f(${v});
 @@     code = cleanup_code(i.order_optimizeDeformationParametersBody)
 @@     for line in code.splitlines():
         ${line}
@@ -540,9 +571,9 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__fpolycheck(
 @@     for j, v in enumerate(getlist(i.complexParameters)):
     const complex_t ${v} = complexp[${j}]; (void)${v};
 @@     for j, v in enumerate(getlist(i.order_deformationParameters)):
-    const real_t ${v} = deformp[${j}];
+    const real_t ${v} = deformp[${j}]; (void)${v};
 @@     pass
-    const real_t invlattice = 1.0/lattice;
+    const real_t invlattice = SecDecInternalDenominator((real_t)(double)lattice);
     uint64_t index = index1;
 @@     intvars = getlist(i.order_integrationVariables)
 @@     for j, v in enumerate(intvars):
@@ -556,12 +587,12 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}__fpolycheck(
         realvec_t ${v} = {{ ${li_list} }};
         ${v} = warponce(${v} + shift[${j}], 1);
 @@     for j, v in enumerate(intvars):
-        ${v} = clamp01(${i.qmcTransform}_f(${v}));
+        ${v} = ${i.qmcTransform}_f(${v});
 @@     code = cleanup_code(i.order_contourDeformationPolynomialBody)
 @@     for line in code.splitlines():
         ${line.replace("return(", "auto fpoly_im = SecDecInternalImagPart(")}
 @@     pass
-        if (unlikely(fpoly_im > 0)) return 1;
+        if (unlikely(!(fpoly_im <= 0))) return 1;
     }
     return 0;
 }
@@ -572,8 +603,8 @@ DIST_SECTOR_ORDER_CU = template_writer("""\
 #define SECDEC_RESULT_IS_COMPLEX ${1 if complex else 0}
 #include "common_cuda.h"
 
-#define SecDecInternalSignCheckErrorPositivePolynomial(id) {val = nan("U"); break;}
-#define SecDecInternalSignCheckErrorContourDeformation(id) {val = nan("F"); break;}
+#define SecDecInternalSignCheckPositivePolynomial(cond, id) if (unlikely(cond)) {val = REAL_NAN; break;}
+#define SecDecInternalSignCheckContourDeformation(cond, id) if (unlikely(cond)) {val = REAL_NAN; break;}
 
 extern "C" __global__ void
 ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
@@ -596,10 +627,10 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ for j, v in enumerate(getlist(i.complexParameters)):
     const complex_t ${v} = complexp[${j}]; (void)${v};
 @@ for j, v in enumerate(getlist(i.order_deformationParameters)):
-    const real_t ${v} = deformp[${j}];
+    const real_t ${v} = deformp[${j}]; (void)${v};
 @@ pass
-    const real_t invlattice = 1.0/lattice;
-    result_t val = 0.0;
+    const real_t invlattice = SecDecInternalDenominator((real_t)(double)lattice);
+    result_t val = (result_t)0;
     uint64_t index = index1 + (bid*128 + tid)*8;
 @@ intvars = getlist(i.order_integrationVariables)
 @@ for j, v in enumerate(intvars):
@@ -607,7 +638,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ pass
     for (uint64_t i = 0; (i < 8) && (index < index2); i++, index++) {
 @@ for j, v in enumerate(intvars):
-        real_t ${v} = warponce(li_${v}*invlattice + shift[${j}], 1.0);
+        real_t ${v} = warponce(invlattice*(double)li_${v} + shift[${j}], 1.0);
         li_${v} = warponce_i(li_${v} + genvec[${j}], lattice);
 @@ for j, v in enumerate(intvars):
         real_t w_${v} = ${i.qmcTransform}_w(${v});
@@ -616,7 +647,7 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 @@ for j, v in enumerate(intvars):
         ${v} = ${i.qmcTransform}_f(${v});
 @@ for line in cleanup_code(i.order_integrandBody).splitlines():
-        ${line.replace("return(", "val += w*(")}
+        ${line.replace("return(", "val = val + w*(")}
 @@ pass
     }
     // Sum up 128*8=1024 values across 4 warps.
@@ -627,36 +658,127 @@ ${i.namespace}__sector_${i.sector}_order_${i.order_name}(
 }
 """, "i")
 
+SECTOR_ORDER_MMA = template_writer("""\
+SecDecInternalQuo[n_,d_] := n/d;
+SecDecInternalI[ex_] := I * ex;
+SecDecInternalRealPart[ex_] := Re[ex];
+SecDecInternalImagPart[ex_] := Im[ex];
+SecDecInternalAbs[ex_] := Abs[ex];
+SecDecInternalDenominator[ex_] := 1/ex;
+SecDecInternalNPow[ex_, n_] := ex^n;
+SecDecInternalLog[ex_] := Conjugate[Log[Conjugate[ex]]];
+SecDecInternalPow[ex_, n_] := Conjugate[Power[Conjugate[ex],n]];
+SecDecInternalSignCheckPositivePolynomial[cond_, id_] If[cond, Throw[$PositivePolynomial[id]]];
+SecDecInternalSignCheckContourDeformation[cond_, id_] If[cond, Throw[$ContourDeformation[id]]];
+SecDecInternalSqr[ex_] := ex*ex;
+
+${i.namespace.replace("_", "$")}$sector$${i.sector}$order$${i.order_name}Integrand[
+    {${", ".join([x + "_" for x in getlist(i.order_integrationVariables)])}, ___},
+    {${", ".join([x + "_" for x in getlist(i.realParameters) + getlist(i.complexParameters)])}},
+    {${", ".join([x + "_" for x in getlist(i.order_deformationParameters)])}}
+] :=
+@@ code = cleanup_code(i.order_integrandBody).replace("_", "$")
+@@ varnames = code_variables(code)
+Module[{${", ".join(varnames)}},
+@@ for line in code_to_mma(code).splitlines():
+    ${line}
+@@ pass
+];
+
+${i.namespace.replace("_", "$")}$sector$${i.sector}$order$${i.order_name}MaxDeformP[
+    {${", ".join([x + "_" for x in getlist(i.order_integrationVariables)])}, ___},
+    {${", ".join([x + "_" for x in getlist(i.realParameters) + getlist(i.complexParameters)])}}
+@@ if int(i.contourDeformation):
+] :=
+@@     code = cleanup_code(i.order_optimizeDeformationParametersBody).replace("_", "$")
+@@     varnames = code_variables(code)
+Module[{${", ".join(varnames)}, SecDecInternalOutputDeformationParameters, deformp},
+    deformp = Table[0, ${len(getlist(i.order_deformationParameters))}];
+    SecDecInternalOutputDeformationParameters[i_, v_] := (deformp[[i+1]] = v);
+@@     for line in code_to_mma(code).splitlines():
+    ${line}
+@@     pass
+    deformp
+];
+@@ else:
+] := {}
+@@ pass
+
+${i.namespace.replace("_", "$")}$sector$${i.sector}$order$${i.order_name}F[
+    {${", ".join([x + "_" for x in getlist(i.order_integrationVariables)])}, ___},
+    {${", ".join([x + "_" for x in getlist(i.realParameters) + getlist(i.complexParameters)])}},
+    {${", ".join([x + "_" for x in getlist(i.order_deformationParameters)])}}
+@@ if int(i.contourDeformation):
+] :=
+@@     code = cleanup_code(i.order_contourDeformationPolynomialBody).replace("_", "$")
+@@     varnames = code_variables(code)
+Module[{${", ".join(varnames)}},
+@@     for line in code_to_mma(code).splitlines():
+    ${line}
+@@     pass
+];
+@@ else:
+] := None
+@@ pass
+
+${i.namespace.replace("_", "$")}$sector$${i.sector}$order$${i.order_name}DeformOK[
+    integrationVariables_List,
+    parameters_List,
+    deformationParameters_List
+@@ if int(i.contourDeformation):
+] :=
+  SecDecInternalImagPart[
+    ${i.namespace.replace("_", "$")}$sector$${i.sector}$order$${i.order_name}F[
+      integrationVariables, parameters, deformationParameters]] <= 0
+@@ else:
+] := True
+@@ pass
+""", "i")
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        print("usage: ${sys.argv[0]} sector.info destination-dir")
+    subset = ["cpp", "disteval"]
+    optlist, arglist = getopt.gnu_getopt(sys.argv[1:], "", ["subset="])
+    for opt, val in optlist:
+        if opt == "--subset": subset = val.split(",")
+    if len(arglist) != 2:
+        print("usage: ${sys.argv[0]} [--subset=cpp,disteval,mma] sector.info destination-dir")
         exit(1)
-
-    sectorfile = sys.argv[1]
-    dstdir = sys.argv[2]
+    sectorfile = arglist[0]
+    dstdir = arglist[1]
 
     info = load_info(sectorfile)
 
-    fname = os.path.join(dstdir, "src/sector_" + info["sector"] + ".cpp")
-    with open(fname, "w") as f:
-        SECTOR_CPP(f, DictionaryWrapper(info))
+    if "cpp" in subset:
+        fname = os.path.join(dstdir, "src/sector_" + info["sector"] + ".cpp")
+        with open(fname, "w") as f:
+            SECTOR_CPP(f, DictionaryWrapper(info))
+    if "mma" in subset:
+        os.makedirs("mma", exist_ok=True)
 
     for oidx in range(1, int(info["numOrders"]) + 1):
         so = "sector_" + info["sector"] + "_" + info[f"order{oidx}_name"]
-        files = {
-            f"distsrc/{so}.cpp": DIST_SECTOR_ORDER_CPP,
-            f"distsrc/{so}.cu": DIST_SECTOR_ORDER_CU,
-            f"src/{so}.cpp": SECTOR_ORDER_CPP,
-            f"src/{so}.hpp": SECTOR_ORDER_HPP,
-        }
-        if int(info["contourDeformation"]):
+        files = {}
+        if "cpp" in subset:
             files.update({
-                f"src/contour_deformation_{so}.cpp": CONTOUR_DEFORMATION_SECTOR_ORDER_CPP,
-                f"src/contour_deformation_{so}.hpp": CONTOUR_DEFORMATION_SECTOR_ORDER_HPP,
-                f"src/optimize_deformation_parameters_{so}.cpp": OPTIMIZE_DEFORMATION_PARAMETERS_SECTOR_ORDER_CPP,
-                f"src/optimize_deformation_parameters_{so}.hpp": OPTIMIZE_DEFORMATION_PARAMETERS_SECTOR_ORDER_HPP,
+                f"src/{so}.cpp": SECTOR_ORDER_CPP,
+                f"src/{so}.hpp": SECTOR_ORDER_HPP,
+            })
+            if int(info["contourDeformation"]):
+                files.update({
+                    f"src/contour_deformation_{so}.cpp": CONTOUR_DEFORMATION_SECTOR_ORDER_CPP,
+                    f"src/contour_deformation_{so}.hpp": CONTOUR_DEFORMATION_SECTOR_ORDER_HPP,
+                    f"src/optimize_deformation_parameters_{so}.cpp": OPTIMIZE_DEFORMATION_PARAMETERS_SECTOR_ORDER_CPP,
+                    f"src/optimize_deformation_parameters_{so}.hpp": OPTIMIZE_DEFORMATION_PARAMETERS_SECTOR_ORDER_HPP,
+                })
+        if "disteval" in subset:
+            files.update({
+                f"distsrc/{so}.cpp": DIST_SECTOR_ORDER_CPP,
+                f"distsrc/{so}.cu": DIST_SECTOR_ORDER_CU,
+            })
+        if "mma" in subset:
+            files.update({
+                f"mma/{so}.m": SECTOR_ORDER_MMA,
             })
         # Mungle the key names so that templates could access
         # the current order keys as `order_xxx`, instead of

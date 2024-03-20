@@ -605,6 +605,16 @@ def _make_sector_distsrc_files(sector_order_names):
             [f"distsrc/sector_{s}_{o}.cu" for s, o in orders]
     return " \\\n\t".join(files)
 
+def _make_sector_mma_files(sector_order_names):
+    """
+    Produce a Makefile-formatted list of source files that
+    export_sector will produce for a given sector for the
+    Mathematica output.
+    """
+    orders = sector_order_names.values()
+    files = [f"mma/sector_{s}_{o}.m" for s, o in orders]
+    return " \\\n\t".join(files)
+
 def _derivative_muliindex_to_name(basename, multiindex):
     '''
     Convert a derivative multiindex as returned by
@@ -1356,6 +1366,7 @@ def _process_secondary_sector(environment):
     sector_order_names = _make_sector_order_names(sector_index, regulator_powers, highest_poles_current_sector)
     sector_cpp_files = _make_sector_cpp_files(sector_index, sector_order_names, contour_deformation_polynomial is not None)
     sector_distsrc_files = _make_sector_distsrc_files(sector_order_names)
+    sector_mma_files = _make_sector_mma_files(sector_order_names)
     regulator_powers = _make_FORM_shifted_orders(regulator_powers)
 
     # parse template file "sector.h"
@@ -1374,6 +1385,7 @@ def _process_secondary_sector(environment):
     template_replacements['sector_cpp_files'] = sector_cpp_files
     template_replacements['sector_hpp_files'] = sector_cpp_files.replace(".cpp", ".hpp")
     template_replacements['sector_distsrc_files'] = sector_distsrc_files
+    template_replacements['sector_mma_files'] = sector_mma_files
     template_replacements['sector_codegen_sources'] = \
             "codegen/sector%i.h" % sector_index if contour_deformation_polynomial is None else \
             "codegen/sector%i.h codegen/contour_deformation_sector%i.h" % (sector_index, sector_index)
@@ -1386,7 +1398,7 @@ def _process_secondary_sector(environment):
                         template_replacements)
     for key in 'functions', 'cal_I_derivatives', 'decomposed_polynomial_derivatives','insert_cal_I_procedure','insert_other_procedure','insert_decomposed_procedure', \
             'integrand_definition_procedure','highest_regulator_poles','required_orders','regulator_powers','number_of_orders', \
-            'sector_index', 'sector_cpp_files', 'sector_hpp_files', 'sector_distsrc_files', 'sector_codegen_sources':
+            'sector_index', 'sector_cpp_files', 'sector_hpp_files', 'sector_distsrc_files', 'sector_mma_files', 'sector_codegen_sources':
         del template_replacements[key]
 
     if contour_deformation_polynomial is not None:

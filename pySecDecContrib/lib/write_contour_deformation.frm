@@ -156,7 +156,7 @@
 
   #optimize expressionF
 
-  Format float 20;
+  Format rational;
   Format C;
   Format 255;
 
@@ -264,7 +264,7 @@
   .sort
 
 * write the optimization symbols
-  Format float 20;
+  Format rational;
   Format C;
   Format 255;
   #write <sector`sectorID'.info> "%O"
@@ -280,10 +280,10 @@
       Format C;
       Format 255;
       #write <sector`sectorID'.info> "SecDecInternalOutputDeformationParameters(`$cppidx',"
-      Format float 20;
+      Format rational;
       Format C;
       Format 255;
-      #write <sector`sectorID'.info> "1.0/SecDecInternalAbs(SecDecInternalRealPart(%E)));" expr(#@FAIL@#)
+      #write <sector`sectorID'.info> "SecDecInternalDenominator(SecDecInternalAbs(SecDecInternalRealPart(%E))));" expr(#@FAIL@#)
     #EndIf
   #EndDo
 

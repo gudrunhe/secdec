@@ -83,7 +83,11 @@ endif
 
 # Source generation without compilation
 
+source: $(foreach I,$(INTEGRALS),$I/source)
+source-mma: $(foreach I,$(INTEGRALS),$I/source-mma)
+
 $(foreach I,$(INTEGRALS),$I/source)::
 	$(MAKE) -C $(dir $@) source
 
-source: $(foreach I,$(INTEGRALS),$I/source)
+$(foreach I,$(INTEGRALS),$I/source-mma)::
+	$(MAKE) -C $(dir $@) source-mma

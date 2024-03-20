@@ -269,6 +269,8 @@ namespace %(name)s
     SecDecFn real_t SecDecInternalImagPart(const complex_t x) { return x.imag(); }
     SecDecFn complex_t SecDecInternalI(const real_t x) { return complex_t{0, x}; }
     SecDecFn complex_t SecDecInternalI(const complex_t x) { return complex_t{-x.imag(), x.real()}; }
+    SecDecFn real_t SecDecInternalSqr(const real_t x) { return x*x; }
+    SecDecFn complex_t SecDecInternalSqr(const complex_t x) { return x*x; }
 
     #undef %(name)s_contour_deformation
     #undef %(name)s_has_complex_parameters
@@ -285,6 +287,8 @@ namespace %(name)s
 #define SecDecInternalLog(x) log(x)
 #define SecDecInternalExp(x) exp(x)
 #define SecDecInternalPow(x, n) pow(x, n)
+#define SecDecInternalNPow(x, n) pow(x, n)
+#define SecDecInternalQuo(n, d) ((real_t)(n)/(d))
 
 #ifdef SECDEC_WITH_CUDA
 #define SecDecInternalAbs(x) thrust::abs(complex_t{x})
@@ -296,15 +300,15 @@ namespace %(name)s
 #define unlikely(x) (x)
 
 #define SecDecInternalOutputDeformationParameters(i, v) output_deformation_parameters[i] = (v);
-#define SecDecInternalSignCheckErrorPositivePolynomial(id) \
-    { \
+#define SecDecInternalSignCheckPositivePolynomial(cond, id) \
+    if (unlikely(cond)) { \
       secdecutil::ResultInfo current_result; \
       current_result.return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_positive_polynomial; \
       current_result.signCheckId = (id); \
       result_info->fill_if_empty_threadsafe(current_result); \
     };
-#define SecDecInternalSignCheckErrorContourDeformation(id) \
-    { \
+#define SecDecInternalSignCheckContourDeformation(cond, id) \
+    if (unlikely(cond)) { \
       secdecutil::ResultInfo current_result; \
       current_result.return_value = secdecutil::ResultInfo::ReturnValue::sign_check_error_contour_deformation; \
       current_result.signCheckId = (id); \

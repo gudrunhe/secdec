@@ -2,6 +2,7 @@ include Makefile.conf
 include $(wildcard codegen/sector*.d)
 
 source : $(SECTOR_CPP)
+source-mma : $(SECTOR_MMA)
 
 lib$(NAME).a : $(patsubst %%.cpp,%%.o,$(SECTOR_CPP)) src/integrands.o src/pole_structures.o src/prefactor.o
 	@rm -f $@
@@ -46,6 +47,10 @@ codegen/sector%%.done: codegen/sector%%.h
 	@# generate c++ code
 	cd codegen && $(PYTHON) '$(SECDEC_CONTRIB)/bin/formwrapper' $(FORMCALL) -D sectorID=$(patsubst codegen/sector%%.h,%%,$<) '$(SECDEC_CONTRIB)/lib/write_integrand.frm'
 	$(PYTHON) '$(SECDEC_CONTRIB)/bin/export_sector' $(patsubst %%.h,%%.info,$<) ./
+	touch $@
+
+codegen/sector%%.mma.done: codegen/sector%%.done
+	$(PYTHON) '$(SECDEC_CONTRIB)/bin/export_sector' --subset=mma $(patsubst %%.done,%%.info,$<) ./
 	touch $@
 
 # The following is for the distributed evaluation.

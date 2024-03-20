@@ -1,8 +1,8 @@
 #define SECDEC_RESULT_IS_COMPLEX 1
 #include "common_cpu.h"
 
-#define SecDecInternalSignCheckErrorPositivePolynomial(id) {*presult = nan("U"); return 1; }
-#define SecDecInternalSignCheckErrorContourDeformation(id) {*presult = nan("F"); return 2; }
+#define SecDecInternalSignCheckPositivePolynomial(cond, id) if (unlikely(cond)) {*presult = NAN; return 1; }
+#define SecDecInternalSignCheckContourDeformation(cond, id) if (unlikely(cond)) {*presult = NAN; return 2; }
 
 extern "C" int
 builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, order=0
@@ -23,7 +23,7 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
     const real_t m3sq = realp[3];
     const real_t SecDecInternalLambda0 = deformp[0];
     const real_t SecDecInternalLambda1 = deformp[1];
-    const real_t invlattice = 1.0/lattice;
+    const real_t invlattice = SecDecInternalDenominator((real_t)(double)lattice);
     resultvec_t acc = RESULTVEC_ZERO;
     uint64_t index = index1;
     int_t li_x0 = mulmod(genvec[0], index, lattice);
@@ -150,9 +150,9 @@ builtin__gauge( // sunset, nu=(1,2,3), realp=(q2, m1sq, m2sq, m3sq), sector=1, o
         auto tmp3_64 = -tmp3_16 + tmp3_63;
         auto tmp3_65 = x1*tmp3_54*tmp3_34*__PowCall1*__PowCall2*__DenominatorCall1;
         auto _SignCheckExpression = SecDecInternalImagPart(tmp3_64);
-        if (unlikely(_SignCheckExpression>0)) SecDecInternalSignCheckErrorContourDeformation(1);
+        SecDecInternalSignCheckContourDeformation(!(_SignCheckExpression<=0), 1);
         auto tmp3_66 = SecDecInternalRealPart(tmp3_51);
-        if (unlikely(tmp3_66<0)) SecDecInternalSignCheckErrorPositivePolynomial(1);
+        SecDecInternalSignCheckPositivePolynomial(!(tmp3_66>=0), 1);
         acc = acc + w*(tmp3_65);
     }
     *presult = componentsum(acc);

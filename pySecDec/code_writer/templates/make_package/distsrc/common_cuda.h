@@ -2,12 +2,16 @@
 
 #include <cinttypes>
 #include <cub/block/block_reduce.cuh>
+#include <math_constants.h>
 #include <thrust/complex.h>
 
+#define likely(x) __builtin_expect((x), 1)
+#define unlikely(x) __builtin_expect((x), 0)
 #define mathfn __device__ static inline
 
 typedef double real_t;
 typedef thrust::complex<real_t> complex_t;
+#define REAL_NAN CUDART_NAN
 
 #if SECDEC_RESULT_IS_COMPLEX 
     typedef complex_t result_t;
@@ -29,8 +33,8 @@ typedef thrust::complex<real_t> complex_t;
     { return pow(x, n); }
 #endif
 
-mathfn double sqr(const double x) { return x*x; }
-mathfn complex_t sqr(const complex_t x) { return x*x; }
+mathfn double SecDecInternalSqr(const double x) { return x*x; }
+mathfn complex_t SecDecInternalSqr(const complex_t x) { return x*x; }
 mathfn real_t SecDecInternalRealPart(const real_t x) { return x; }
 mathfn real_t SecDecInternalRealPart(const complex_t x) { return x.real(); }
 mathfn real_t SecDecInternalImagPart(const real_t x) { return 0; }
@@ -40,11 +44,24 @@ mathfn complex_t SecDecInternalI(const complex_t x) { return complex_t{-x.imag()
 
 mathfn real_t exp(int n) { return exp(real_t(n)); }
 
-#define SecDecInternalDenominator(x) (1.0/(x))
-#define i_ (complex_t{0,1})
+template<typename T> mathfn T
+SecDecInternalNPow(const T &a, unsigned n) {
+    T s = T(1.0);
+    T r = a;
+    if (likely(n > 0)) {
+        for (;;) {
+            if (n %% 2) { s = s*r; }
+            n /= 2;
+            if (n == 0) break;
+            r = SecDecInternalSqr(r);
+        }
+    }
+    return s;
+}
 
-#define likely(x) __builtin_expect((x), 1)
-#define unlikely(x) __builtin_expect((x), 0)
+#define SecDecInternalQuo(n, d) (((real_t)(n))/(d))
+#define SecDecInternalDenominator(x) ((real_t)1/(x))
+#define i_ (complex_t{0,1})
 
 mathfn real_t none_f(real_t x) { return x; }
 mathfn real_t none_w(real_t x) { return 1; }
@@ -53,42 +70,42 @@ mathfn real_t baker_w(real_t x) { return 1; }
 mathfn real_t korobov1x1_w(const real_t x) { auto u = (1-x)*x; return 6*u; }
 mathfn real_t korobov1x1_f(const real_t x) {
     auto y = (x <= 0.5) ? x : 1-x;
-    auto y2 = sqr(y);
+    auto y2 = SecDecInternalSqr(y);
     auto h = y2*(3 - 2*y);
     return (x <= 0.5) ? h : 1-h;
 }
-mathfn real_t korobov2x2_w(const real_t x) { auto u = (1-x)*x; return 30*sqr(u); }
+mathfn real_t korobov2x2_w(const real_t x) { auto u = (1-x)*x; return 30*SecDecInternalSqr(u); }
 mathfn real_t korobov2x2_f(const real_t x) {
     auto y = (x <= 0.5) ? x : 1-x;
-    auto y3 = y*sqr(y);
+    auto y3 = y*SecDecInternalSqr(y);
     auto h = y3*(10 + y*(-15 + 6*y));
     return (x <= 0.5) ? h : 1-h;
 }
-mathfn real_t korobov3x3_w(const real_t x) { auto u = (1-x)*x; return 140*u*sqr(u); }
+mathfn real_t korobov3x3_w(const real_t x) { auto u = (1-x)*x; return 140*u*SecDecInternalSqr(u); }
 mathfn real_t korobov3x3_f(const real_t x) {
     auto y = (x <= 0.5) ? x : 1-x;
-    auto y4 = sqr(sqr(y));
+    auto y4 = SecDecInternalSqr(SecDecInternalSqr(y));
     auto h = y4*(35 + y*(-84 + (70 - 20*y)*y));
     return (x <= 0.5) ? h : 1-h;
 }
-mathfn real_t korobov4x4_w(const real_t x) { auto u = (1-x)*x; return 630*sqr(sqr(u)); }
+mathfn real_t korobov4x4_w(const real_t x) { auto u = (1-x)*x; return 630*SecDecInternalSqr(SecDecInternalSqr(u)); }
 mathfn real_t korobov4x4_f(const real_t x) {
     auto y = (x <= 0.5) ? x : 1-x;
-    auto y5 = y*sqr(sqr(y));
+    auto y5 = y*SecDecInternalSqr(SecDecInternalSqr(y));
     auto h = y5*(126 + y*(-420 + y*(540 + y*(-315 + 70*y))));
     return (x <= 0.5) ? h : 1-h;
 }
-mathfn real_t korobov5x5_w(const real_t x) { auto u = (1-x)*x; return 2772*u*sqr(sqr(u)); }
+mathfn real_t korobov5x5_w(const real_t x) { auto u = (1-x)*x; return 2772*u*SecDecInternalSqr(SecDecInternalSqr(u)); }
 mathfn real_t korobov5x5_f(const real_t x) {
     auto y = (x <= 0.5) ? x : 1-x;
-    auto y6 = sqr(y*sqr(y));
+    auto y6 = SecDecInternalSqr(y*SecDecInternalSqr(y));
     auto h = y6*(462 + y*(-1980 + y*(3465 + y*(-3080 + (1386 - 252*y)*y))));
     return (x <= 0.5) ? h : 1-h;
 }
-mathfn real_t korobov6x6_w(const real_t x) { auto u = (1-x)*x; return 12012*sqr(u*sqr(u)); }
+mathfn real_t korobov6x6_w(const real_t x) { auto u = (1-x)*x; return 12012*SecDecInternalSqr(u*SecDecInternalSqr(u)); }
 mathfn real_t korobov6x6_f(const real_t x) {
     auto y = (x <= 0.5) ? x : 1-x;
-    auto y7 = y*sqr(y*sqr(y));
+    auto y7 = y*SecDecInternalSqr(y*SecDecInternalSqr(y));
     auto h = y7*(1716 + y*(-9009 + y*(20020 + y*(-24024 + y*(16380 + y*(-6006 + 924*y))))));
     return (x <= 0.5) ? h : 1-h;
 }
