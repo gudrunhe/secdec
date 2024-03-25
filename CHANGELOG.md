@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - The command line integration interface of *disteval* now supports variable values specified as rational numbers (e.g. `1/3` instead of `0.3333`).
 - `DistevalLibrary` now supports variable values specified as strings (e.g. `"0.3333"`), and as sympy numeric objects (e.g. `sympy.sympify("1/3")`).
+- `pySecDec.algebra` now defines the exponential function in the class `Exp`, which enables `remainder_expression` in `MakePackage` to include
+  `exp()` factors and use their derivatives to define subtraction terms.
+- High level test `massive_ft_integral`. Evaluates a massive flow-time integral which requires the newly added `Exp` class.
+- Unit tests in `test_algebra` for the newly added `Exp` class.
 
 ### Changed
 - [FORM](https://github.com/vermaseren/form) updated to 4.3.1.
