@@ -31,6 +31,7 @@ if __name__ == "__main__":
     # the order here matches the order of ``regulators``
     requested_orders = [0],
 
+    decomposition_method='iterative_no_primary'
     )
 
     # check the generated "functions.hpp"
