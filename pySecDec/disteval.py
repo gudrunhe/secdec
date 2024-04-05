@@ -494,13 +494,23 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                     ),
                     evalf_cb,
                     (a, t)
-                )
+                    )
         await done_evalf
 
     # Sort in the (ampid, orderid) order to make the reporting
     # stable. The code below should however work no matter the
     # order here.
     ap2coeffs = dict(sorted(ap2coeffs.items()))
+
+    await par.drain()
+    gpuworkers = []
+    for wi,w in enumerate(par.workers):
+        if 'cuda' in w.name: gpuworkers.append(wi)
+    if len(gpuworkers)>0:
+        oldpar = par
+        par = RandomScheduler()
+        par.workers = [oldpar.workers[wi] for wi in gpuworkers]
+        par.wspeed = [oldpar.wspeed[wi] for wi in gpuworkers]
 
     W = np.stack([w for w in ap2coeffs.values()])
     Wre2 = np.real(W)**2
@@ -892,7 +902,7 @@ def default_worker_commands(dirname):
             log(f"Can't determine GPU count: {e}")
     else:
         log(f"CUDA worker data was not built, skipping")
-    if ncuda > 0: ncpu = 0
+    #if ncuda > 0: ncpu = 0
     log(f"local CPU worker count: {ncpu}, GPU worker count: {ncuda}")
     return [["nice", sys.executable, "-m", "pySecDecContrib", "pysecdec_cpuworker"]] * ncpu + \
         [["nice", sys.executable, "-m", "pySecDecContrib", "pysecdec_cudaworker", "-d", str(i)] for i in range(ncuda)]
