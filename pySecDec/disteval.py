@@ -508,8 +508,18 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     for a, p in sorted(ap2coeffs.keys()):
         log(f"- {sum_names[a]!r},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
 
-    epsrel = [epsrel[a] if a < len(epsrel) else epsrel[-1] for a, p in ap2coeffs.keys()]
-    epsabs = [epsabs[a] if a < len(epsabs) else epsabs[-1] for a, p in ap2coeffs.keys()]
+    # extend epsrel and epsabs to match len(ap2coeffs)
+    if len(epsrel) <= len(sum_names):
+        # assume only one epsrel specified, or one for each amplitude
+        epsrel = [epsrel[a] if a < len(epsrel) else epsrel[-1] for a, p in sorted(ap2coeffs.keys())]
+    else:
+        # assume one epsrel for each amplitude and order in epsilon
+        epsrel = epsrel + [epsrel[-1]]*(len(ap2coeffs)-len(epsrel))
+
+    if len(epsabs) <= len(sum_names):
+        epsabs = [epsabs[a] if a < len(epsabs) else epsabs[-1] for a, p in sorted(ap2coeffs.keys())]
+    else:
+        epsabs = epsabs + [epsabs[-1]]*(len(ap2coeffs)-len(epsabs))
 
     # Presample all kernels
     kern_rng = [np.random.RandomState(0) for fam, ker in kernel2idx.keys()]
