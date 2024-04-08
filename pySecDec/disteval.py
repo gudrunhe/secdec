@@ -497,6 +497,11 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 )
         await done_evalf
 
+    # Sort in the (ampid, orderid) order to make the reporting
+    # stable. The code below should however work no matter the
+    # order here.
+    ap2coeffs = dict(sorted(ap2coeffs.items()))
+
     W = np.stack([w for w in ap2coeffs.values()])
     Wre2 = np.real(W)**2
     Wim2 = np.imag(W)**2
@@ -508,18 +513,29 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     for a, p in sorted(ap2coeffs.keys()):
         log(f"- {sum_names[a]!r},", " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, p)))
 
-    # extend epsrel and epsabs to match len(ap2coeffs)
     if len(epsrel) <= len(sum_names):
-        # assume only one epsrel specified, or one for each amplitude
-        epsrel = [epsrel[a] if a < len(epsrel) else epsrel[-1] for a, p in sorted(ap2coeffs.keys())]
+        # Assume one epsrel per amplitude is specified, in the
+        # order of the amplitudes. If fewer are given, use the
+        # last entry as the default.
+        epsrel = [epsrel[a] if a < len(epsrel) else epsrel[-1] for a, p in ap2coeffs.keys()]
+    elif len(epsrel) == len(ap2coeffs):
+        # Assume one epsrel per amplitude*order is specified, in the
+        # order of the amplitudes. For advanced use only.
+        pass
     else:
-        # assume one epsrel for each amplitude and order in epsilon
-        epsrel = epsrel + [epsrel[-1]]*(len(ap2coeffs)-len(epsrel))
+        raise ValueError(f"Incorrect size of the epsrel array given")
 
     if len(epsabs) <= len(sum_names):
-        epsabs = [epsabs[a] if a < len(epsabs) else epsabs[-1] for a, p in sorted(ap2coeffs.keys())]
+        # Assume one epsabs per amplitude is specified, in the
+        # order of the amplitudes. If fewer are given, use the
+        # last entry as the default.
+        epsabs = [epsabs[a] if a < len(epsabs) else epsabs[-1] for a, p in ap2coeffs.keys()]
+    elif len(epsabs) == len(ap2coeffs):
+        # Assume one epsabs per amplitude*order is specified, in the
+        # order of the amplitudes. For advanced use only.
+        pass
     else:
-        epsabs = epsabs + [epsabs[-1]]*(len(ap2coeffs)-len(epsabs))
+        raise ValueError(f"Incorrect size of the epsabs array given")
 
     # Presample all kernels
     kern_rng = [np.random.RandomState(0) for fam, ker in kernel2idx.keys()]
