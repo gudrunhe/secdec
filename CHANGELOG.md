@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.3] - 2024-04-10
+
 ### Added
 - The command line integration interface of *disteval* now supports variable values specified as rational numbers (e.g. `1/3` instead of `0.3333`).
 - `DistevalLibrary` now supports variable values specified as strings (e.g. `"0.3333"`), and as sympy numeric objects (e.g. `sympy.sympify("1/3")`).
@@ -15,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - [FORM](https://github.com/vermaseren/form) updated to 4.3.1.
+- Require recent version of `numpy>=1.23`.
 
 ### Fixed
 - The expansion order of the `integrals` key of the `json` format from *disteval*, in cases when the leading order of the prefactor is not zero.
