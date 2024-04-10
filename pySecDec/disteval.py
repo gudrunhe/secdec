@@ -198,6 +198,12 @@ class RandomScheduler:
         self.npending += 1
         return (w, w.call_cb(method, args, self._cb, (callback, callback_args)))
 
+    def call_cb_unweighted(self, method, args, callback, callback_args):
+        w = min(random.choices(self.workers, k=3),
+                key=lambda w: w.queue_size())#/w.speed)
+        self.npending += 1
+        return (w, w.call_cb(method, args, self._cb, (callback, callback_args)))
+
     def _cb(self, result, exception, worker, callback, callback_args):
         self.npending -= 1
         if self.npending == 0:
@@ -475,7 +481,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
             if exception is not None:
                 done_evalf.set_exception(WorkerException(exception))
                 return
-            log("-", t["coefficient"])
+            log(f"- {t['coefficient']} ({w.name})")
             br_coef = {tuple(k):complex(re, im) for k, (re, im) in br_coef}
             split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], br_coef, valuemap_int, sp_regulators, requested_orders)
             done_evalf.todo -= 1
@@ -487,14 +493,14 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 pref_lord = np.min([o["regulator_powers"] for o in intinfo["expanded_prefactor"]], axis=0)
                 kern_lord = np.min([o["regulator_powers"] for o in intinfo["orders"]], axis=0)
                 coef_ord = - kern_lord - pref_lord + requested_orders
-                par.call_cb("evalf", (
+                par.call_cb_unweighted("evalf", (
                         os.path.relpath(os.path.join(coeffsdir, t["coefficient"]), datadir),
                         {k:str(v) for k,v in valuemap_coeff.items()},
                         [[str(var), int(order)] for var, order in zip(sp_regulators, coef_ord)]
                     ),
                     evalf_cb,
                     (a, t)
-                    )
+                )
         await done_evalf
 
     # Sort in the (ampid, orderid) order to make the reporting
@@ -502,15 +508,14 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     # order here.
     ap2coeffs = dict(sorted(ap2coeffs.items()))
 
+    # Drop all CPU workers if GPUs are used
     await par.drain()
-    gpuworkers = []
-    for wi,w in enumerate(par.workers):
-        if 'cuda' in w.name: gpuworkers.append(wi)
-    if len(gpuworkers)>0:
+    gpu_wi = [wi for wi, w in enumerate(par.workers) if "cuda" in w.name]
+    if len(gpu_wi) > 0:
         oldpar = par
         par = RandomScheduler()
-        par.workers = [oldpar.workers[wi] for wi in gpuworkers]
-        par.wspeed = [oldpar.wspeed[wi] for wi in gpuworkers]
+        for wi in gpu_wi:
+            par.add_worker(oldpar.workers[wi])
 
     W = np.stack([w for w in ap2coeffs.values()])
     Wre2 = np.real(W)**2
