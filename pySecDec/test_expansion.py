@@ -18,7 +18,7 @@ class TestSingularExpansion(unittest.TestCase):
         self.p6_1 = Polynomial([(0,),(1,),(2,)], coeffs=['3/16','3/16','-9/16'], polysymbols=['eps'])
         self.p6_2 = ExponentiatedPolynomial([(2,),(3,),(4,)], coeffs=['9/16','-9/8','9/16'], polysymbols=['eps'], exponent=-1)
         self.p6 = Product(self.p6_1,self.p6_2)
-        self.p7 = ExponentiatedPolynomial([(1,1),(1,2),(2,0),(2,1),(2,2),(3,0),(3,1),(4,0)],  
+        self.p7 = ExponentiatedPolynomial([(1,1),(1,2),(2,0),(2,1),(2,2),(3,0),(3,1),(4,0)],
             coeffs=['3/4','-3/4','-3/16','-3/16','9/16','3/32','-9/32','9/256'],
             polysymbols=['n1','eps'], exponent=-1)
 

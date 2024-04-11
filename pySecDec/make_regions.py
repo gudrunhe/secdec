@@ -533,7 +533,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
             tindependent = np.all([not np.any(poly.expolist[:,smallness_parameter_index]) for poly in polynomials_refactorized + [numerator_refactorized] ])
             if tindependent and expand_region_expansion_order >= 0:
                 expand_region_expansion_order = 0
-                
+
             series = expand_region(polynomials_refactorized, numerator_refactorized, smallness_parameter_index, expand_region_expansion_order, polynomial_name_indices)
 
             for i,term in enumerate(series):

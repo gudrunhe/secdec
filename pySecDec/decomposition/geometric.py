@@ -40,7 +40,7 @@ def Cheng_Wu(sector, index=-1):
 
 # ********************** geometric decomposition **********************
 def generate_fan(*polynomials):
-    '''
+    r'''
     Calculate the fan of the polynomials in the input. The rays of a
     cone are given by the exponent vectors after factoring out a monomial
     together with the standard basis vectors. Each choice of factored out

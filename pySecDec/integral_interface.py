@@ -1661,7 +1661,7 @@ class DistevalLibrary(object):
             parameters={}, real_parameters=[], complex_parameters=[],
             epsabs=1e-10, epsrel=1e-4, timeout=None, points=1e4,
             number_of_presamples=1e4, shifts=32,
-            lattice_candidates=0, standard_lattices=False, 
+            lattice_candidates=0, standard_lattices=False,
             coefficients=None, verbose=None, format="sympy"):
         import asyncio
         import json
@@ -1699,7 +1699,7 @@ class DistevalLibrary(object):
             int(number_of_presamples), int(points), int(shifts),
             lattice_candidates, standard_lattices,
             valuemap_int, valuemap_coeff, deadline))
-        
+
         if format == "raw":
             return result
         elif format == "sympy":
@@ -1708,4 +1708,4 @@ class DistevalLibrary(object):
             return disteval.result_to_mathematica(result)
         else:
             return disteval.result_to_json(result)
-            
+

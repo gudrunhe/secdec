@@ -24,7 +24,7 @@ def validate_pylink_qmc_transforms(pylink_qmc_transforms):
         List of pylink_qmc_transforms
     '''
     pylink_qmc_transforms_available_options = set(
-        ['none'] + 
+        ['none'] +
         ['baker'] +
         ['korobov'+str(i)+'x'+str(j) for i in range(1,7) for j in range(1,7)] +
         ['sidi'+str(i) for i in range(1,7)]
@@ -131,7 +131,7 @@ def parse_template_file(src, dest, replacements={}):
                 file.flush()
                 unflushedlen[0] = 0
 
-        dest_file_parts = re.split("%\(([^)]*)\)s",string)
+        dest_file_parts = re.split(r"%\(([^)]*)\)s",string)
         dest_file.write(dest_file_parts[0] % replacements)
         for n in range(1,len(dest_file_parts),2):
             bigtext = replacements[dest_file_parts[n]]

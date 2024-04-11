@@ -73,7 +73,7 @@ class Worker:
         message = encode_message((token, method, args))
         self.process.stdin.write(message)
         return token
-    
+
     def cancel_cb(self, token):
         if token in self.callbacks:
             self.callbacks[token] = (lambda a,b,c:None, ())
@@ -85,7 +85,7 @@ class Worker:
             else: fut.set_exception(WorkerException(error))
         self.call_cb(method, args, call_return)
         return fut
-    
+
     def multicall(self, calls):
         fut = asyncio.futures.Future()
         results = [None]*len(calls)
@@ -191,7 +191,7 @@ async def dobenchmark(workercmd, datadir, intfile, valuemap, npoints, nreps):
             info["sums"] = {f"sum{sumidx}" : sum for sumidx, sum in enumerate(info["sums"])}
     else:
         raise ValueError(f"unknown type: {info['type']}")
-    
+
     realp = {
         i : [valuemap[p] for p in info["realp"]]
         for i, info in infos.items()
