@@ -418,7 +418,7 @@ class TestMakeFORMFunctionDefinition(unittest.TestCase):
         target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part2(x?,y?,z?) =  + (3)*a*b*c^3;\n"
         target_FORM_code += "  Id SecDecInternalfDUMMYSecDecInternalfDUMMYmyNamePart0Part3(x?,y?,z?) =  + (4)*a*b*c^4;\n"
 
-        self.assertEqual(FORM_code, target_FORM_code)    
+        self.assertEqual(FORM_code, target_FORM_code)
 
 class TestMiscellaneous(unittest.TestCase):
     #@pytest.mark.active

@@ -199,7 +199,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
         `pySecDec.loop_integral.LoopPackage` `namedtuples`;
         The generator functions for the integrals
         :math:`\int f_i`
-        
+
         .. note::
             The `pySecDec.code_writer.MakePackage` and
             `pySecDec.loop_integral.LoopPackage` objects
@@ -246,7 +246,7 @@ def sum_package(name, package_generators, regulators, requested_orders,
         * ``sidi<i>`` for 1 <= i <= 6
 
         Default: ``['korobov3x3']``
-    
+
     :param processes:
         integer or None, optional;
         Parallelize the generation of terms in a sum using this

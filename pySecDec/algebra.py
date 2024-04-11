@@ -767,7 +767,7 @@ class Polynomial(_Expression):
         return prod
 
     def denest(self):
-        """
+        r"""
         Returns a flattened version of a nested :class:`.Polynomial`
         of :class:`.Polynomial`\s.
         """
@@ -1709,7 +1709,7 @@ class Log(_Expression):
     @doc(_Expression.docstring_of_replace)
     def replace(expression, index, value, remove=False):
         return Log( expression.arg.replace(index,value,remove) , copy=False )
-    
+
 class Exp(_Expression):
     r'''
     The real valued exponential function.

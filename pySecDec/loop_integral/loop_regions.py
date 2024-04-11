@@ -215,7 +215,7 @@ def loop_regions(name, loop_integral, smallness_parameter,
     polynomials_to_decompose = \
             [loop_integral.exponentiated_U, loop_integral.exponentiated_F] + \
             loop_integral.measure.factors
-    
+
     # add regulators of the form x_i**(n*e_i), where n is the extra regulator
     if extra_regulator_name is not None:
         extra_regulator = sympify_expression(extra_regulator_name)
@@ -352,14 +352,14 @@ def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expan
 
 def extra_regulator_constraints(exp_param_index, polynomial, exp_order, regulators, powerlist, dimension, indices=None, normaliz=None):
     '''
-    Returns a dictionary of vectors :\mathbf{n}_i: that give constraints
-    of the form :math:`\langle\mathbf{n_i},\bf{\nu}_{\delta}\rangle \neq 0`
-    on the coefficient of a regulator :math:`\delta` introduced by
-    multiplying the integrand with a monomial 
-    :math:`\mathbf{x}^{\delta\bf{\nu}_{\delta}}`, where :math:`\mathbf{x}`
-    are the variables of the input polynomial. The dictionary contains 
-    entries for each region individually and a list of all constraints 
-    (entry `all`). Only exponents corresponding to integration variables 
+    Returns a dictionary of vectors :\\mathbf{n}_i: that give constraints
+    of the form :math:`\\langle\\mathbf{n_i},\bf{\nu}_{\\delta}\rangle \neq 0`
+    on the coefficient of a regulator :math:`\\delta` introduced by
+    multiplying the integrand with a monomial
+    :math:`\\mathbf{x}^{\\delta\bf{\nu}_{\\delta}}`, where :math:`\\mathbf{x}`
+    are the variables of the input polynomial. The dictionary contains
+    entries for each region individually and a list of all constraints
+    (entry `all`). Only exponents corresponding to integration variables
     can be non-zero.
 
     :param exp_param_index:
@@ -421,7 +421,7 @@ def extra_regulator_constraints(exp_param_index, polynomial, exp_order, regulato
     facets = polytope.facets
 
     regions = facets[ facets[:,exp_param_index] > 0 ]
-    regions = regions[ np.dot(regions,powerlist)<= exp_order ] 
+    regions = regions[ np.dot(regions,powerlist)<= exp_order ]
 
     region_facets_sd_0 = {}
     all_facets_sd_0 = []
@@ -439,7 +439,7 @@ def extra_regulator_constraints(exp_param_index, polynomial, exp_order, regulato
         region_facets_sd_0[tuple(region[:-1])] = facets
         all_facets_sd_0 = all_facets_sd_0 + [facets]
     all_facets_sd_0 = np.concatenate(all_facets_sd_0)
-    
+
     # internal facets
     facets_sd_int_0 = [facet for facet in all_facets_sd_0  if any([np.array_equal(facet, -fac) for fac in all_facets_sd_0])]
     # store only internal facets for each region

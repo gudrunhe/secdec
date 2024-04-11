@@ -214,7 +214,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
           integration over :math:`[0,1]^{N-1}`.
 
         'iterative', 'geometric', and 'geometric_ku' are only
-        valid for loop integrals. The functions 
+        valid for loop integrals. The functions
         'iterative_no_primary', 'geometric_no_primary', or
         'geometric_infinity_no_primary' should be used when
         decomposing a function with no overall Dirac delta

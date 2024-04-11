@@ -796,7 +796,7 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
             if standard_lattices:
                 for i in range(len(kernel2idx)):
                     try: n[i], newgenvecs[i] = generating_vector(dims[i], n[i])
-                    except ValueError: 
+                    except ValueError:
                         if lattice_candidates > 0: pass
             if not np.any(n != lattices):
                 log("can't increase the lattice sizes any more; giving up")
