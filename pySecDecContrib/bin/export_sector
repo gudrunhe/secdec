@@ -163,7 +163,7 @@ def make_list(python_list):
 
 def make_CXX_Series_initialization(regulator_names, min_orders, max_orders, sector_ID, contour_deformation, numIV):
     '''
-    Return the c++ code that initilizes the container class
+    Return the c++ code that initializes the container class
     (``Series<Series<...<Series<IntegrandContainer>>...>``).
     '''
     assert len(min_orders) == len(max_orders)

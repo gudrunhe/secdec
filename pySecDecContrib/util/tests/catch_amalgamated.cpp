@@ -596,7 +596,7 @@ namespace Catch {
             elem = trim(elem);
         }
 
-        // Insert the default reporter if user hasn't asked for a specfic one
+        // Insert the default reporter if user hasn't asked for a specific one
         if ( m_data.reporterSpecifications.empty() ) {
             m_data.reporterSpecifications.push_back( {
 #if defined( CATCH_CONFIG_DEFAULT_REPORTER )
@@ -5296,7 +5296,7 @@ namespace Catch {
         auto& currentTracker = m_trackerContext.currentTracker();
         assert(
             currentTracker.nameAndLocation() != nameAndLoc &&
-            "Trying to create tracker for a genreator that already has one" );
+            "Trying to create tracker for a generator that already has one" );
 
         auto newTracker = Catch::Detail::make_unique<Generators::GeneratorTracker>(
             CATCH_MOVE(nameAndLoc), m_trackerContext, &currentTracker );

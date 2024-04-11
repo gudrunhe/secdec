@@ -154,7 +154,7 @@ namespace secdecutil
 
 
         /*
-         * complex specilizations
+         * complex specializations
          */
 
         #define COMPLEX_QMC_BODY(complex_template) \
