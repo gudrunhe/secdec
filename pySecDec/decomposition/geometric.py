@@ -49,7 +49,7 @@ def generate_fan(*polynomials):
     considered.
 
     :param polynomials:
-        abritrarily many instances of :class:`.Polynomial` where
+        arbitrarily many instances of :class:`.Polynomial` where
         all of these have an equal number of variables;
         The polynomials to calculate the fan for.
     '''
@@ -230,7 +230,7 @@ def geometric_decomposition(sector, indices=None, normaliz=None, workdir='normal
     for cone_indices in incidence_lists.values():
         cone = transformation[:,cone_indices].T
 
-        # triangluate where neccessary
+        # triangulate where necessary
         if len(cone_indices) != dim:
             # assert len(cone) > dim # --> this check is done by `triangulate`
             triangular_cones = triangulate(cone, normaliz, workdir)

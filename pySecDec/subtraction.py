@@ -169,7 +169,7 @@ def integrate_pole_part(polyprod, *indices):
         :class:`.algebra.Product` of the
         form ``<product of <monomial>**(a_j + ...)> *
         <regulator poles of cal_I> * <cal_I>``;
-        The input product as decribed above.
+        The input product as described above.
         The <product of <monomial>**(a_j + ...)> should be
         a :class:`pySecDec.algebra.Product` of
         <monomial>**(a_j + ...).
@@ -311,7 +311,7 @@ def integrate_by_parts(polyprod, power_goals, indices):
         :class:`.algebra.Product` of the
         form ``<product of <monomial>**(a_j + ...)> *
         <regulator poles of cal_I> * <cal_I>``;
-        The input product as decribed above.
+        The input product as described above.
         The <product of <monomial>**(a_j + ...)> should be
         a :class:`pySecDec.algebra.Product` of
         <monomial>**(a_j + ...).

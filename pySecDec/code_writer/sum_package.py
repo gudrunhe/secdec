@@ -184,14 +184,14 @@ def sum_package(name, package_generators, regulators, requested_orders,
     .. math::
         \sum_j c_{ij} \ \int f_j
 
-    Generate a c++ package with an optmized algorithm to
+    Generate a c++ package with an optimized algorithm to
     evaluate the integrals numerically. It writes the names
     of the integrals in the file `"integral_names.txt"`.
     For the format of the file see :class:`~pySecDec.amplitude_interface.Parser`.
 
     :param name:
         string;
-        The name of the c++ namepace and the output
+        The name of the c++ namespace and the output
         directory.
 
     :param package_generators:

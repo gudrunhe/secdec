@@ -373,7 +373,7 @@ def make_regions(name, integration_variables, regulators, requested_orders, smal
 
     :param name:
         string;
-        The name of the c++ namepace and the output
+        The name of the c++ namespace and the output
         directory.
 
     :param integration_variables:

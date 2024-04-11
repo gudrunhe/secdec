@@ -20,7 +20,7 @@
 #include <secdecutil/pylink.hpp> // The python-C binding is general and therefore contained in the util
 #include <secdecutil/pylink_integral.hpp>
 
-// delegate some template instatiations to separate translation units
+// delegate some template instantiations to separate translation units
 #ifdef SECDEC_WITH_CUDA
     #define EXTERN_NONE_QMC_SEPARATE() \
         extern template class secdecutil::integrators::Qmc< \

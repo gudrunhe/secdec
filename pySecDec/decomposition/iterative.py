@@ -148,7 +148,7 @@ def remap_parameters(singular_parameters, Jacobian, *polynomials):
         The Jacobian determinant is multiplied to this polynomial.
 
     :param polynomials:
-        abritrarily many instances of :class:`.algebra.Polynomial`
+        arbitrarily many instances of :class:`.algebra.Polynomial`
         where all of these have an equal number of variables;
         The polynomials of Feynman parameters to be remapped. These
         are typically :math:`F` and :math:`U`.

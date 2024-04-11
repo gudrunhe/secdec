@@ -144,7 +144,7 @@ def split(sector, seed, *indices):
             yield sector.copy()
             return
 
-        # We call this function recusively and pop the first index/splitting_value in each iteration
+        # We call this function recursively and pop the first index/splitting_value in each iteration
         index = indices[0]
         remaining_indices = indices[1:]
         splitting_value = splitting_point[0]

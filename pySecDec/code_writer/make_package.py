@@ -727,7 +727,7 @@ class MaxDegreeFunction(Function):
 
             :param index:
                 integer;
-                The index of the paramater to derive by.
+                The index of the parameter to derive by.
 
             '''
             derivative = self.derivatives[index]
@@ -1135,7 +1135,7 @@ def _process_secondary_sector(environment):
     for item in after_ibp:
         subtracted.extend(  integrate_pole_part(item, *integration_variable_indices)  )
 
-    # intialize expansion
+    # initialize expansion
     pole_parts = [s.factors[1].simplify() for s in subtracted]
     regular_parts = [Product( *([s.factors[0]] + s.factors[2:]), copy=False ) for s in subtracted]
 
@@ -1348,7 +1348,7 @@ def _process_secondary_sector(environment):
         for name in ordered_decomposed_derivative_names
     )
 
-    # generate list over all occuring orders in the regulators
+    # generate list over all occurring orders in the regulators
     regulator_powers = list( rangecomb(np.zeros_like(required_orders), required_orders + highest_poles_current_sector) )
     number_of_orders = len(regulator_powers)
 
@@ -1456,13 +1456,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     :param name:
         string;
-        The name of the c++ namepace and the output
+        The name of the c++ namespace and the output
         directory.
 
     :param integration_variables:
         iterable of strings or sympy symbols;
         The variables that are to be integrated. The
-        intgration region depends on the chosen
+        integration region depends on the chosen
         `decomposition_method`.
 
     :param regulators:
@@ -1534,7 +1534,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     :param functions:
         iterable of strings or sympy symbols, optional;
-        Function symbols occuring in `remainder_expression`,
+        Function symbols occurring in `remainder_expression`,
         e.g.``['f']``.
 
         .. note::
@@ -1818,7 +1818,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
     # make a copy of the `integration_variables` for later reference
     all_integration_variables = list(integration_variables)
 
-    # intialize the c++ declarations of the `functions`
+    # initialize the c++ declarations of the `functions`
     function_declarations = set()
 
     have_dummy_functions = True if functions else False
