@@ -364,7 +364,7 @@ namespace secdecutil {
     #ifdef SECDEC_WITH_CUDA
 
         /*
-         * Integrand containter that is usable on a CUDA device.
+         * Integrand container that is usable on a CUDA device.
          */
 
         template<typename real_t, typename complex_t, typename integrand_return_t, unsigned long long maximal_number_of_functions, size_t number_of_real_parameters, size_t number_of_complex_parameters, char... name>

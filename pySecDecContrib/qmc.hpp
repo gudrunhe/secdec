@@ -3327,7 +3327,7 @@ namespace integrators
         if (verbosity > 2)
             logger << "-- qmc::integrate called --" << std::endl;
 
-        std::vector<result<T>> previous_iterations; // keep track of the different interations
+        std::vector<result<T>> previous_iterations; // keep track of the different iterations
         U n = get_next_n(minn); // get next available n >= minn
         U m = minm;
         result<T> res;

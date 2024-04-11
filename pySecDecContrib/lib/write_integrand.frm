@@ -209,7 +209,7 @@ Format 255;
   Local expression = expansion[$currentOrder];
 
 * Find the calls to the contour deformation polynomials that need a sign check.
-* The calls differ only in which Feynman paramters are set to zero or one. We
+* The calls differ only in which Feynman parameters are set to zero or one. We
 * investigate that by looking at the calls to "SecDecInternalCalI" (and its derivatives).
 * {
   #If `contourDeformation'

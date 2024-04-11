@@ -71,7 +71,7 @@ namespace secdecutil
           auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) );
 
           /* "integration_variables" is an array of "cubareal", but the integrand expects type T
-           * --> copy them into a vector of type T using the iterator contructor.
+           * --> copy them into a vector of type T using the iterator constructor.
            * During the copy operation the type is converted implicitly.
            * Implement "zero_border".
            */
@@ -179,7 +179,7 @@ namespace secdecutil
           auto& typed_userdata = *( reinterpret_cast<const userdata_t *>(userdata) ); \
  \
           /* "integration_variables" is an array of "cubareal", but the integrand expects type T \
-           * --> copy them into a vector of type T using the iterator contructor. \
+           * --> copy them into a vector of type T using the iterator constructor. \
            * During the copy operation the type is converted implicitly. \
            * Implement "zero_border". \
            */ \

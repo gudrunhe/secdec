@@ -241,7 +241,7 @@ namespace secdecutil {
                   integrator->epsabs = 0.;
                 }
                 this->integral_result = integrator->integrate(this->integrand); // run the numerical integration
-                this->set_next_number_of_function_evaluations( *integrator->neval, true ); // set number of function evluations to the next larger lattice
+                this->set_next_number_of_function_evaluations( *integrator->neval, true ); // set number of function evaluations to the next larger lattice
             }
 
             ~CubaIntegral()
