@@ -31,7 +31,7 @@ def iterative_sort(matrix):
     # keep sorting the 2D matrix (in place) along both dimensions
     # until it no longer changes
 
-    # initilize sort keys such that we enter the while loop at least once
+    # initialize sort keys such that we enter the while loop at least once
     sort_key_axis_0 = None
     sort_key_axis_1 = None
 

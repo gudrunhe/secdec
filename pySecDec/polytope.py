@@ -23,7 +23,7 @@ def convex_hull(*polynomials):
     of the product of all input polynomials.
 
     :param polynomials:
-        abritrarily many instances of :class:`.Polynomial` where
+        arbitrarily many instances of :class:`.Polynomial` where
         all of these have an equal number of variables;
         The polynomials to calculate the convex hull for.
 
@@ -346,8 +346,8 @@ class Polytope(object):
     def vertex_incidence_lists(self):
         '''
         Return for each vertex the list of facets it
-        lies in (as dictonary). The keys of the output
-        dictonary are the vertices while the values
+        lies in (as dictionary). The keys of the output
+        dictionary are the vertices while the values
         are the indices of the facets in ``self.facets``.
 
         '''

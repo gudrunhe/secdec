@@ -21,7 +21,7 @@ from .misc import version
 def _parse_series_coefficient(text):
     """
     Parse a textual representation of a single coefficient
-    in a series. Retrun a float, a complex number, a tuple
+    in a series. Return a float, a complex number, a tuple
     consisting of the mean and the standard deviation if it
     is given, or a tuple of three elements (via _parse_series)
     if the coefficient is a nested series.
@@ -450,7 +450,7 @@ class MultiIntegrator(CPPIntegrator):
     .. warning::
         The `integral_library` passed to the integrators must be the
         same for all of them. Furthermore, an integrator can only be
-        used to integrate the `integral_library` it has beeen
+        used to integrate the `integral_library` it has been
         constructed with.
 
     .. warning::
@@ -1344,7 +1344,7 @@ class IntegralLibrary(object):
         integration_thread.daemon = True # daemonize worker to have it killed when the main thread is killed
         integration_thread.start()
         while integration_thread.is_alive(): # keep joining worker until it is finished
-            integration_thread.join(5) # call `join` with `timeout` to keep the main thread interruptable
+            integration_thread.join(5) # call `join` with `timeout` to keep the main thread interruptible
         return_value = return_value_queue.get()
         if return_value != 0:
             raise RuntimeError("Integration failed, see error message above.")
@@ -1438,7 +1438,7 @@ class IntegralLibrary(object):
         if compute_integral_return_value != 0:
             return
 
-        # convert c++ stings to python strings or bytes (depending on whether we use python2 or python3)
+        # convert c++ strings to python strings or bytes (depending on whether we use python2 or python3)
         str_integral_without_prefactor = self.c_lib.string2charptr(cpp_str_integral_without_prefactor)
         str_prefactor = self.c_lib.string2charptr(cpp_str_prefactor)
         str_integral_with_prefactor = self.c_lib.string2charptr(cpp_str_integral_with_prefactor)

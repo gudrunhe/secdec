@@ -364,7 +364,7 @@ class TestPrefactorExpansion(unittest.TestCase):
                             / pi / 2 * (-1) * eps * 2**(-4*eps) * 4**(1+eps) * 64
                      '''
         expression_lowest_eps_order = lowest_order(expression, 'eps')
-        assert expression_lowest_eps_order == 0 # no pole, expasion starts at constant order
+        assert expression_lowest_eps_order == 0 # no pole, expansion starts at constant order
 
     #@pytest.mark.active
     def test_lowest_order_one_variable_simple_pole(self):

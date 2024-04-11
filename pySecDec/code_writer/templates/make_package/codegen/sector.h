@@ -51,7 +51,7 @@ CFunctions log, exp, SecDecInternalPow, SecDecInternalDenominator;
 AutoDeclare Symbols SecDecInternalLabel;
 
 * The integrand may be longer than FORM can read in one go.
-* We use python to split the the expression if neccessary.
+* We use python to split the the expression if necessary.
 * Define a procedure that defines the "integrand" expression
 #procedure defineExpansion
   Global expansion = SecDecInternalsDUMMYIntegrand;

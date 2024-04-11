@@ -36,13 +36,13 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     :param name:
         string;
-        The name of the c++ namepace and the output
+        The name of the c++ namespace and the output
         directory.
 
     :param integration_variables:
         iterable of strings or sympy symbols;
         The variables that are to be integrated. The
-        intgration region depends on the chosen
+        integration region depends on the chosen
         `decomposition_method`.
 
     :param regulators:
@@ -114,7 +114,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     :param functions:
         iterable of strings or sympy symbols, optional;
-        Function symbols occuring in `remainder_expression`,
+        Function symbols occurring in `remainder_expression`,
         e.g.``['f']``.
 
         .. note::
@@ -318,7 +318,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     :param form_executable:
         string or None, optional;
-        The path to the form exectuable. The argument is passed
+        The path to the form executable. The argument is passed
         to :meth:`.Coefficient.process`. If ``None``, then either
         ``$FORM``, ``$SECDEC_CONTRIB/bin/form``, or just ``form``
         is used, depending on which environment variable is set.

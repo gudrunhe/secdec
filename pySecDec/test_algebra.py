@@ -470,7 +470,7 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         assert polynomial.expolist.shape == (5,2)
 
     def test_mul(self):
-        with pytest.raises(AssertionError, match=r'Number of varibales must be equal for both factors in *'):
+        with pytest.raises(AssertionError, match=r'Number of variables must be equal for both factors in *'):
             self.p0 * Polynomial([(0,0,3)],[4])
 
         poly = Polynomial([(0,2),(1,0)],[1,'C'])
@@ -509,7 +509,7 @@ class TestFormerSNCPolynomial(unittest.TestCase):
         np.testing.assert_array_equal(sorted_prod_coeffs, sorted_target_prod_coeffs)
 
     def test_add(self):
-        with pytest.raises(AssertionError, match=r'Number of varibales must be equal for both polynomials in +'):
+        with pytest.raises(AssertionError, match=r'Number of variables must be equal for both polynomials in +'):
             self.p0 + Polynomial([(0,0,3)],[4])
 
         assert str(10 + Polynomial([(1,0)],[1])) == ' + (10) + (1)*x0'

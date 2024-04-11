@@ -271,7 +271,7 @@ class Function(_Expression):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         derivative = self.derivatives[index]
@@ -513,7 +513,7 @@ class Polynomial(_Expression):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         # derivative by ``x`` --> have ``x`` coded in ``expolist`` and can have ``x`` in coeffs
@@ -581,7 +581,7 @@ class Polynomial(_Expression):
 
         '''
         if  type(other) is Polynomial:
-            assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both polynomials in +'
+            assert self.number_of_variables == other.number_of_variables, 'Number of variables must be equal for both polynomials in +'
 
             sum_expolist = np.vstack([self.expolist, other.expolist])
             sum_coeffs = np.hstack([self.coeffs, -other.coeffs if sub else other.coeffs])
@@ -599,7 +599,7 @@ class Polynomial(_Expression):
     def __mul__(self, other):
         'multiplication operator'
         if  type(other) is Polynomial:
-            assert self.number_of_variables == other.number_of_variables, 'Number of varibales must be equal for both factors in *'
+            assert self.number_of_variables == other.number_of_variables, 'Number of variables must be equal for both factors in *'
 
             product_expolist = np.vstack([other.expolist + term for term in self.expolist])
             product_coeffs = np.hstack([other.coeffs * term for term in self.coeffs])
@@ -858,7 +858,7 @@ class ExponentiatedPolynomial(Polynomial):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         # derive an expression of the form "poly**exponent"
@@ -1025,7 +1025,7 @@ class LogOfPolynomial(Polynomial):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         # derive an expression of the form "log(poly)"
@@ -1161,7 +1161,7 @@ class Sum(_Expression):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         # derivative(p1 + p2 + ...) = derivative(p1) + derivative(p2) + ...
@@ -1283,7 +1283,7 @@ class Product(_Expression):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         return ProductRule(*self.factors, copy=False).derive(index)
@@ -1362,7 +1362,7 @@ class ProductRule(_Expression):
             # The `factorlist` is a 3 dimensional array. Its first
             # index denotes the terms of the sum :math:`i`. The
             # second index denotes the factor :math:`j`. The last
-            # index denotes the varible to take the derivative with
+            # index denotes the variable to take the derivative with
             # respect to. The value of ``factorlist[i,j,k]`` denotes
             # how many derivatives :math:`n_{ijk}` are to be taken.
             # If not given, a product of the `expressions` without
@@ -1403,7 +1403,7 @@ class ProductRule(_Expression):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         # product rule: derivative(<coeff> * x**k) = <coeff> * k * x**(k-1) + derivative(<coeff>) * x**k
@@ -1431,7 +1431,7 @@ class ProductRule(_Expression):
                     lower_derivative_multiindex = tuple(lower_derivative_multiindex)
                     lower_derivative = expression[lower_derivative_multiindex]
                     expression[derivative_multiindex] = lower_derivative.derive(index).simplify() # automatically simplify cache
-                # set the coefficent to zero if the derivative is zero, so that it doesn't get outputted in str()
+                # set the coefficient to zero if the derivative is zero, so that it doesn't get outputted in str()
                 if new_coeffs[n] != 0 and isinstance(expression[derivative_multiindex], Polynomial) and not np.any(expression[derivative_multiindex].expolist):
                     if sympify_expression(expression[derivative_multiindex]).simplify() == 0:
                         new_coeffs[n] = 0
@@ -1606,7 +1606,7 @@ class Pow(_Expression):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         # derive an expression of the form "base**exponent"
@@ -1697,7 +1697,7 @@ class Log(_Expression):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         # derivative(log(arg)) = 1/arg * derivative(arg) = arg**-1 * derivative(arg)
@@ -1765,7 +1765,7 @@ class Exp(_Expression):
 
         :param index:
             integer;
-            The index of the paramater to derive by.
+            The index of the parameter to derive by.
 
         '''
         return Product(self, self.arg.derive(index), copy=False)

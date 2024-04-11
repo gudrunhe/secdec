@@ -581,7 +581,7 @@ def squash_symmetry_redundant_sectors_sort(sectors, sort_function, indices=None)
 
     If two sectors only differ by a permutation of the
     polysymbols (to be interpreted as integration
-    variables over some inteval), then the two sectors
+    variables over some interval), then the two sectors
     integrate to the same value. Thus we can drop one
     of them and count the other twice. The multiple
     counting of a sector is accounted for by increasing

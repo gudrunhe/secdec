@@ -6,7 +6,7 @@ Usage:
 Options:
     --epsabs=X              stop if this absolute precision is reached (default: 1e-10)
     --epsrel=X              stop if this relative precision is reached (default: 1e-4)
-    --timeout=X             stop after at most this many seconds (defaul: inf)
+    --timeout=X             stop after at most this many seconds (default: inf)
     --points=X              begin integration with this lattice size (default: 1e4)
     --presamples=X          use this many points for presampling (default: 1e4)
     --shifts=X              use this many lattice shifts per integral (default: 32)

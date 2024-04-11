@@ -59,7 +59,7 @@ def powerset(iterable, min_length=0, stride=1):
 
 def rangecomb(low, high):
     '''
-    Return an iterator over the occuring orders in a
+    Return an iterator over the occurring orders in a
     multivariate series expansion between `low` and
     `high`.
 
@@ -181,7 +181,7 @@ def parallel_det(M, pool):
         sub_indices.remove(i)
         return sub_indices
 
-    # resolve the first row of the matix
+    # resolve the first row of the matrix
     sub_Ms = (M[[[k] for k in range(1,D)],sub_indices(i)] for i in range(D))
     sub_dets = pool.imap(det, sub_Ms)
     result = 0
@@ -219,7 +219,7 @@ def det(M):
         sub_indices.remove(i)
         return sub_indices
 
-    # resolve the first row of the matix
+    # resolve the first row of the matrix
     for i in range(D):
         sub_M = M[[[k] for k in range(1,D)],sub_indices(i)]
         term = M[0,i] * det(sub_M) # recursion
@@ -271,7 +271,7 @@ def argsort_2D_array(array):
     The idea is to bring identical rows together.
 
     .. seealso::
-        If your array is not two dimesional
+        If your array is not two dimensional
         use :func:`.argsort_ND_array`.
 
     Example:
@@ -492,7 +492,7 @@ def lowest_order(expression, variable):
         The variable in which to expand.
 
     '''
-    # convert to sympy if neccessary
+    # convert to sympy if necessary
     variable = sympify_symbols([variable], '`variable` must be a symbol')[0]
     if not isinstance(expression, sp.Expr):
         expression = sympify_expression(expression)
