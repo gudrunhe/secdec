@@ -228,7 +228,8 @@ commands:
 >>> one_loop_bubble.F
  + (-p**2)*x0*x1
 
-The example above among other useful features is also stated in the full documenation of
+The example above among other useful features is also stated in the full
+documentation of
 :class:`LoopIntegralFromPropagators() <pySecDec.loop_integral.LoopIntegralFromPropagators>`
 in the reference guide.
 
@@ -410,7 +411,7 @@ This declaration is necessary if we want to simultaneously decompose ``p1`` and 
 
 
 We just fully decomposed ``p1`` and ``p2``. In some cases, one may want to bring
-one polynomial, say ``p1``, into standard form, but not neccessarily the other.
+one polynomial, say ``p1``, into standard form, but not necessarily the other.
 For that purpose, the :class:`Sector <pySecDec.decomposition.Sector>` can take
 a second argument. In the following code example, we bring ``p1`` into standard
 form, apply all transformations to ``p2`` as well, but stop before ``p2`` is fully

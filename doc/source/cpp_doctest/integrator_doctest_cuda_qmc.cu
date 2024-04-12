@@ -41,7 +41,7 @@ int main()
         maxdim, // the highest dimension this integrator will be used for
         ::integrators::transforms::Sidi<3>::type, // the integral transform
         cuda_integrand_t, // the functor type to be passed to this integrator
-        ::integrators::fitfunctions::PolySingular::type // the fit funtion (optional)
+        ::integrators::fitfunctions::PolySingular::type // the fit function (optional)
     > integrator_sidi3_adaptive_gpu;
     integrator_sidi3_adaptive_gpu.randomgenerator.seed(seed);
 
