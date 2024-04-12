@@ -158,7 +158,7 @@ the command
 
     $ make doc
 
-generates the documentaion in `html` and in `pdf` format. Developers
+generates the documentation in `html` and in `pdf` format. Developers
 should inline-document python functions and also keep the C++
 part up to date. To generate HTML and PDF separately, use
 
@@ -170,7 +170,7 @@ and
 
 [sphinx]: http://www.sphinx-doc.org
 
-Building the documentaion in pdf format requires an up-to-date
+Building the documentation in pdf format requires an up-to-date
 installation of a latex implementation. If you get an error about
 missing `.sty` file, do the following:
 
@@ -197,7 +197,7 @@ make sure you have a recent [Singularity] installed, and run
 
     ./build-release.sh
 
-This will create a source distribuion file (`dist/*.tar.gz`)
+This will create a source distribution file (`dist/*.tar.gz`)
 and several prebuild distribution files (`dist/*.whl`); it will
 also print the instructions on how to double-check the files
 with [auditwheel] and upload them to PyPI using [Twine].
@@ -209,7 +209,7 @@ The reason for using Singularity here is because prebuilt
 distributions must be built inside one of the [manylinux] Docker
 images: this guarantees that the prebuilt libraries and programs
 will work on a wide range of Linux systems. If it wasn't for
-this requirement, then making a distibution would be as simple
+this requirement, then making a distribution would be as simple
 as running
 
     $ make dist
