@@ -9,7 +9,7 @@ SecDecUtil
 `SecDecUtil` is a standalone autotools-c++ package, that collects common helper classes and
 functions needed by the c++ code generated using :func:`loop_package <pySecDec.loop_integral.loop_package>`
 or :func:`make_package <pySecDec.code_writer.make_package>`. Everything defined by the `SecDecUtil`
-is put into the c++ namepace `secdecutil`.
+is put into the c++ namespace `secdecutil`.
 
 .. _chapter_secdecutil_amplitude:
 
@@ -344,7 +344,7 @@ An integrator that chooses another integrator based on the dimension of the inte
 CQuad
 ~~~~~
 
-For one dimensional integrals, we wrap the cquad integrator form the GNU scientifc library (gsl).
+For one dimensional integrals, we wrap the cquad integrator form the GNU scientific library (gsl).
 
 CQuad takes the following options:
  * ``epsrel`` -  The desired relative accuracy for the numerical evaluation. Default: ``0.01``.
@@ -367,7 +367,7 @@ The quasi-monte carlo integrator as described in [PSD18]_. Using a quasi-monte i
     Derived from :cpp:class:`secdecutil::Integrator` and :cpp:class:`::integrators::Qmc` - the
     underlying standalone implementation of the Qmc.
 
-The most important fields and template argments of :cpp:class:`Qmc` are:
+The most important fields and template arguments of :cpp:class:`Qmc` are:
  * ``minn`` - The minimal number of points in the Qmc lattice. Will be augmented to the next larger available ``n``.
  * ``minm`` - The minimal number of random shifts.
  * ``maxeval`` - The maximal number of integrand evaluations.

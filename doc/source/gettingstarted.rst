@@ -11,7 +11,7 @@ The standard `pySecDec` procedure for computing an integral or amplitude consist
 Currently, `pySecDec` offers two different integration interfaces:
 
 #. `disteval`: a distributed evaluation interface which provides access to the fastest integrator,
-#. `intlib`: the legacy integration interface, which is more flexible and is maintained for backward compatability.
+#. `intlib`: the legacy integration interface, which is more flexible and is maintained for backward compatibility.
 
 We recommend the use of the `disteval` interface, which we describe below.
 
@@ -109,7 +109,7 @@ This will print the result of the integral evaluated with Mandelstam invariants 
 The file ``generate_box1L.py`` defines the loop integral and calls `pySecDec` to perform the sector decomposition. 
 When run it produces the directory `box1L` which contains the code required to numerically evaluate the integral. 
 The make command builds this code. 
-The file ``integrate_box1L_disteval.py`` loads and evalutes the integral for a specified numerical point.
+The file ``integrate_box1L_disteval.py`` loads and evaluates the integral for a specified numerical point.
 
 The content of the python files is described in detail in the following sections. The user is encouraged to copy and adapt these files to evaluate their own loop integrals.
 
@@ -219,7 +219,7 @@ To build the libraries with NVidia C Compiler (NVCC) for GPU support, type
 
     $ make disteval SECDEC_WITH_CUDA_FLAGS="-arch=sm_XX"
 
-where ``sm_XX`` must be replaced by the target NVidia GPU architechtures; see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
+where ``sm_XX`` must be replaced by the target NVidia GPU architectures; see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
 The ``SECDEC_WITH_CUDA_FLAGS`` variable, which enables GPU code compilation, contains flags which are passed to NVCC during code compilation and linking.
 Multiple GPU architectures may be specified as described in the `NVCC manual <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_, for example ``SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_XX,code=sm_XX -gencode arch=compute_YY,code=sm_YY"`` where ``XX`` and ``YY`` are the target GPU architectures. 
 The script ``examples/easy/print-cuda-arch.sh`` can be used to obtain the compute architecture of your current machine.  
@@ -264,7 +264,7 @@ The evaluation can be controlled via the provided command-line options:
 
 * ``--epsabs=<number>``: stop if this absolute precision is reached (default: ``1e-10``);
 * ``--epsrel=<number>``: stop if this relative precision is reached (default: ``1e-4``);
-* ``--timeout=<number>``: stop after at most this many seconds (defaul: ``inf``);
+* ``--timeout=<number>``: stop after at most this many seconds (default: ``inf``);
 * ``--points=<number>``: use this initial Quasi-Monte-Carlo lattice size (default: ``1e4``);
 * ``--presamples=<number>``: use this many points for presampling (default: ``1e4``);
 * ``--shifts=<number>``: use this many lattice shifts per integral (default: ``32``);
@@ -351,7 +351,7 @@ To build the libraries with NVidia C Compiler (NVCC) for GPU support, type
 
     $ make SECDEC_WITH_CUDA_FLAGS="-arch=sm_XX" CXX="nvcc"
 
-where ``sm_XX`` must be replaced by the target NVidia GPU architechtures; see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
+where ``sm_XX`` must be replaced by the target NVidia GPU architectures; see the `arch option of NVCC <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_.
 The ``SECDEC_WITH_CUDA_FLAGS`` variable, which enables GPU code compilation, contains flags which are passed to NVCC during code compilation and linking.
 Multiple GPU architectures may be specified as described in the `NVCC manual <http://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/#options-for-steering-gpu-code-generation>`_, for example ``SECDEC_WITH_CUDA_FLAGS="-gencode arch=compute_XX,code=sm_XX -gencode arch=compute_YY,code=sm_YY"`` where ``XX`` and ``YY`` are the target GPU architectures. 
 The script ``examples/easy/print-cuda-arch.sh`` can be used to obtain the compute architecture of your current machine.  

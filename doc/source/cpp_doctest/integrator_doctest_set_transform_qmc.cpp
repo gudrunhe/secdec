@@ -33,7 +33,7 @@ int main()
         maxdim, // the highest dimension this integrator will be used for
         ::integrators::transforms::Korobov<4,1>::type, // the integral transform
         container_t, // the functor type to be passed to this integrator
-        ::integrators::fitfunctions::None::type // the fit funtion
+        ::integrators::fitfunctions::None::type // the fit function
     > integrator_korobov4x1;
     integrator_korobov4x1.randomgenerator.seed(seed);
 
@@ -46,7 +46,7 @@ int main()
         maxdim, // the highest dimension this integrator will be used for
         ::integrators::transforms::Sidi<3>::type, // the integral transform
         container_t, // the functor type to be passed to this integrator
-        ::integrators::fitfunctions::PolySingular::type // the fit funtion
+        ::integrators::fitfunctions::PolySingular::type // the fit function
     > integrator_sidi3_adaptive;
     integrator_sidi3_adaptive.randomgenerator.seed(seed);
 

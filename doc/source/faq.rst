@@ -205,7 +205,7 @@ The modules :func:`loop_package <pySecDec.loop_integral.loop_package>` and :func
 How can I obtain results from pySecDec in a format convenient for GiNaC/ Sympy/ Mathematica/ Maple?
 ---------------------------------------------------------------------------------------------------
 
-When using the python interface to *disteval* libraries (i.e. :class:`DistevalLibrary<pySecDec.integral_interface.DistevalLibrary>`), use the ``format`` argument to change the output format. Similar format selection is avaialbe in the *disteval* command-line interface, as described in :ref:`disteval_cli`.
+When using the python interface to *disteval* libraries (i.e. :class:`DistevalLibrary<pySecDec.integral_interface.DistevalLibrary>`), use the ``format`` argument to change the output format. Similar format selection is available in the *disteval* command-line interface, as described in :ref:`disteval_cli`.
 
 When using :class:`IntegralLibrary<pySecDec.integral_interface.IntegralLibrary>`), you can use the functions :func:`series_to_ginac <pySecDec.integral_interface.series_to_ginac>`, :func:`series_to_sympy <pySecDec.integral_interface.series_to_sympy>`, :func:`series_to_mathematica <pySecDec.integral_interface.series_to_mathematica>`, :func:`series_to_maple <pySecDec.integral_interface.series_to_maple>` to convert the output as needed.
 
