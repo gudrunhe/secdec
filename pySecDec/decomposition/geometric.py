@@ -189,7 +189,7 @@ def geometric_decomposition(sector, indices=None, normaliz=None, workdir='normal
     polytope.complete_representation(normaliz, workdir)
 
     if len(polytope.equations) > 0:
-        NotImplementedError("Polytope is not full dimensional in geometric_decomposition. Input integral is scaleless.")
+        raise NotImplementedError("Polytope is not full dimensional in geometric_decomposition. Input integral is scaleless.")
 
     transformation = polytope.facets.T[:-1] # do not need offset term "a_F"
     incidence_lists = polytope.vertex_incidence_lists()
