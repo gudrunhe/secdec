@@ -325,7 +325,8 @@ def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expan
         constr = extra_regulator_constraints(idx, poly, expansion_by_regions_order,
                 loop_integral.regulators, loop_integral.powerlist, loop_integral.dimensionality,
                 indices=None, normaliz=normaliz)['all']
-        if len(constr) == 0: return None
+        if len(constr) == 0:
+            return None
     except ValueError as e:
         if "need at least one array to concatenate" in str(e):
             return None
@@ -351,12 +352,12 @@ def suggested_extra_regulator_exponent(loop_integral, smallness_parameter, expan
         nzero -= 1
 
 def extra_regulator_constraints(exp_param_index, polynomial, exp_order, regulators, powerlist, dimension, indices=None, normaliz=None):
-    '''
-    Returns a dictionary of vectors :\\mathbf{n}_i: that give constraints
-    of the form :math:`\\langle\\mathbf{n_i},\bf{\nu}_{\\delta}\rangle \neq 0`
-    on the coefficient of a regulator :math:`\\delta` introduced by
+    r'''
+    Returns a dictionary of vectors :math:`\mathbf{n}_i` that give constraints
+    of the form :math:`\langle\mathbf{n_i},\bf{\nu}_{\delta}\rangle \neq 0`
+    on the coefficient of a regulator :math:`\delta` introduced by
     multiplying the integrand with a monomial
-    :math:`\\mathbf{x}^{\\delta\bf{\nu}_{\\delta}}`, where :math:`\\mathbf{x}`
+    :math:`\mathbf{x}^{\delta\bf{\nu}_{\delta}}`, where :math:`\mathbf{x}`
     are the variables of the input polynomial. The dictionary contains
     entries for each region individually and a list of all constraints
     (entry `all`). Only exponents corresponding to integration variables
@@ -397,7 +398,6 @@ def extra_regulator_constraints(exp_param_index, polynomial, exp_order, regulato
         The shell command to run `normaliz`.
         Default: use `normaliz` from pySecDecContrib
     '''
-
     powerlist = np.array(powerlist)
     powerlist = powerlist[ powerlist > 0 ]
     powerlist = np.insert(powerlist,exp_param_index,0)

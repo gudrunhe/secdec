@@ -337,7 +337,6 @@ def make_package(name, integration_variables, regulators, requested_orders,
         `New in version 1.5`.
         Default: ``['korobov3x3']``
     '''
-
     # Build generators_args
     generators_args = \
     {

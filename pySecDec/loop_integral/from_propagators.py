@@ -200,7 +200,7 @@ class LoopIntegralFromPropagators(LoopIntegral):
                 try:
                     tmp.coeffs = tmp.coeffs.astype(int)
                 # ignore if not all coefficients can be converted to `int` --> keep the sympy expressions
-                except:
+                except (TypeError, ValueError):
                     pass
                 # M is symmetric
                 M[j,i] = M[i,j] = tmp
@@ -266,9 +266,9 @@ class LoopIntegralFromPropagators(LoopIntegral):
                 numerator_loop_tensors = [[(0,mu),(1,mu)],[(1,1),(1,2)]]
                 numerator_external_tensors = [[],[(0,1),(1,2)]]
                 numerator_symbols = [1, A]
-                _numerator_tensors = (numerator_loop_tensors,
-                                      numerator_external_tensors,
-                                      numerator_symbols)
+                _numerator_tensors =
+                (numerator_loop_tensors, numerator_external_tensors,
+                numerator_symbols)
 
         '''
         numerator_loop_tensors = []
@@ -359,9 +359,9 @@ class LoopIntegralFromPropagators(LoopIntegral):
             # gamma_factor = 'Gamma(N_nu - D*L/2 - r/2)'
             def reduce_gamma(r_over_two):
                 '''
-                   Transform Gamma(N_nu - D*L/2 - r_over_two) -->
-                   (N_nu - D*L/2 - (r_over_two+1))*(N_nu - D*L/2 - (r_over_two+2))*...*Gamma(N_nu - D*L/2 - highest_rank//2)'
-                   and divide by Gamma(N_nu - D*L/2 - highest_rank//2).
+                Transform Gamma(N_nu - D*L/2 - r_over_two) -->
+                (N_nu - D*L/2 - (r_over_two+1))*(N_nu - D*L/2 - (r_over_two+2))*...*Gamma(N_nu - D*L/2 - highest_rank//2)'
+                and divide by Gamma(N_nu - D*L/2 - highest_rank//2).
                 '''
                 if r_over_two == highest_rank//2:
                     return 1

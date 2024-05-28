@@ -6,6 +6,7 @@ Functions to generate c++ sources from template files.
 import os
 import re
 
+
 def validate_pylink_qmc_transforms(pylink_qmc_transforms):
     '''
     Check if `pylink_qmc_transforms` are valid options and remove duplicates
@@ -118,11 +119,11 @@ def parse_template_file(src, dest, replacements={}):
                 dest_file.flush()
 
         def recursive_write(file, text, unflushedlen = [0]):
-            if type(text) == list:
+            if isinstance(text, list):
                 for part in text:
                     recursive_write(file,part,unflushedlen)
                 return
-            if type(text) is not str:
+            if not isinstance(text, str):
                 text = str(text)
             # file.write(text)
             write_large(file,text)

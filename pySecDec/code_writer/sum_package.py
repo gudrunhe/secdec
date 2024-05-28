@@ -38,7 +38,7 @@ class Coefficient(object):
         iterable of strings or sympy symbols;
         The symbols other parameters.
 
-        '''
+    '''
     def __init__(self, numerators, denominators=(), parameters=()):
         if not np.iterable(parameters):
             raise ValueError("parameters must be iterable")
@@ -81,11 +81,11 @@ class Coefficient(object):
                 f.write(self.expression)
                 f.write("):\n")
                 # Is the whole expression zero?
-                f.write("is(subs(__EXPR,{");
+                f.write("is(subs(__EXPR,{")
                 f.write(",".join(f"{reg}=={rand}" for reg, rand in zip(regulators, rregs)))
                 f.write("})==0);\n")
                 for i, reg in enumerate(regulators):
-                    f.write("__EXPRi=subs(__EXPR,{");
+                    f.write("__EXPRi=subs(__EXPR,{")
                     f.write(",".join(
                             f"{reg}=={rregs[j]}"
                             for j, reg in enumerate(regulators)

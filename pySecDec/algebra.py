@@ -561,16 +561,16 @@ class Polynomial(_Expression):
         return self.polysymbols
 
     def __add__(self, other):
-        'addition operator'
+        'Addition operator'
         return self._sub_or_add(other, False)
     __radd__ = __add__
 
     def __sub__(self, other):
-        'subtraction operator'
+        'Subtraction operator'
         return self._sub_or_add(other, True)
 
-    def __rsub__(self,other):
-        'other - self'
+    def __rsub__(self, other):
+        'Return other - self'
         return (-self) + other
 
     def _sub_or_add(self, other, sub):
@@ -597,7 +597,7 @@ class Polynomial(_Expression):
             return NotImplemented
 
     def __mul__(self, other):
-        'multiplication operator'
+        'Multiplication operator'
         if  type(other) is Polynomial:
             assert self.number_of_variables == other.number_of_variables, 'Number of variables must be equal for both factors in *'
 
@@ -620,7 +620,7 @@ class Polynomial(_Expression):
     __rmul__ = __mul__
 
     def __neg__(self):
-        'arithmetic negation "-self"'
+        'Arithmetic negation "-self"'
         return Polynomial(self.expolist.copy(), -self.coeffs, self.polysymbols, copy=False)
 
     def __pow__(self, exponent):
@@ -1472,7 +1472,8 @@ class ProductRule(_Expression):
                 self.coeffs[0] = 0
 
         for i in range(1,len(self.coeffs)):
-            if self.coeffs[i] == 0: continue
+            if self.coeffs[i] == 0:
+                continue
             previous_term = self.factorlist[i-1]
             # search `self.factorlist` for the same term
             # since `self.factorlist` is sorted, must only compare with the previous term

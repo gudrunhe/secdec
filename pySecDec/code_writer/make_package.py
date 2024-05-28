@@ -110,17 +110,18 @@ def _parse_expressions(expressions, polysymbols, target_type, name_of_make_argum
 
 def _validate(name, allow_underscore=False):
     '''
-    Check validity of `name` for usage in FORM,
-    c++, and the file system. If `allow_underscore`
-    is True the underscores are allowed.
+    Check validity of ``name`` for usage in FORM,
+    c++, and the file system. If ``allow_underscore``
+    is ``True`` the underscores are allowed.
+
     Restrictions are as follows:
-     o FORM: no underscores
-     o FORM, c++: the first character must be
-       in [A-Z, a-z]; i.e. no leading numbers
-     o all: no special characters; i.e. only
-       characters from the set [A-Z, a-z, 0-9]
-     o `name` must not begin with the internal
-       prefix
+
+    - FORM: no underscores
+    - FORM, c++: the first character must be
+      in [A-Z, a-z]; i.e. no leading numbers
+    - all: no special characters; i.e. only
+      characters from the set [A-Z, a-z, 0-9]
+    - ``name`` must not begin with the internal prefix
 
     '''
     if match(r'^[A-Z,a-z,_]+[A-Z,a-z,0-9,_]*$', name) is None:
@@ -175,7 +176,6 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
                    form_work_space, form_memory_use, form_threads, form_insertion_depth,
                    contour_deformation_polynomial, positive_polynomials, decomposition_method, pylink_qmc_transforms):
     'Get the data types right.'
-
     # parse symbols
     integration_variables = sympify_symbols(list(integration_variables), 'All `integration_variables` must be symbols.')
     regulators = sympify_symbols(list(regulators), 'All `regulators` must be symbols.')
@@ -183,7 +183,9 @@ def _convert_input(name, integration_variables, ibp_power_goal, regulators,
     positive_polynomials = sympify_symbols(list(positive_polynomials), 'All `positive_polynomials` must be symbols.')
     real_parameters= sympify_symbols(list(real_parameters), 'All `real_parameters` must be symbols.')
     complex_parameters = sympify_symbols(list(complex_parameters), 'All `complex_parameters` must be symbols.')
-    functions = list(functions); sympify_symbols(functions, 'All `functions` must be symbols.'); functions = set(str(f) for f in functions)
+    functions = list(functions)
+    sympify_symbols(functions, 'All `functions` must be symbols.')
+    functions = set(str(f) for f in functions)
     if contour_deformation_polynomial is not None:
         contour_deformation_polynomial = sympify_symbols([contour_deformation_polynomial], '`contour_deformation_polynomial` must be a symbol.')[0]
 
@@ -559,7 +561,7 @@ def _make_FORM_shifted_orders(positive_powers):
     r'''
     Write FORM code that defines the preprocessor
     variables
-    `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''.
+    ``shiftedRegulator-regulatorIndex-PowerOrder-shiftedOrderIndex``.
 
     '''
     codelines = []
@@ -795,7 +797,6 @@ class MaxDegreeFunction(Function):
 
 def _make_environment(original_environment):
     'Prepare the environment for :func:`._process_secondary_sector`.'
-
     original_environment = original_environment.copy()
     sector_index = original_environment.pop('sector_index')
     secondary_sectors = original_environment.pop('secondary_sectors')
@@ -818,7 +819,6 @@ def _make_environment(original_environment):
 
 def _process_secondary_sector(environment):
     'Function to process the `secondary_sectors` in parallel.'
-
     # read environment
     sector_index = environment['sector_index']
     sector = environment['sector']
