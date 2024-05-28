@@ -57,7 +57,7 @@ def plot_diagram(internal_lines, external_lines, filename, powerlist=None, neato
 
     '''
     # pinch internal lines
-    if powerlist != None:
+    if powerlist is not None:
         internal_lines = [ [mass,[vertex1,vertex2]] for mass,(vertex1,vertex2) in internal_lines ] # deep copy
         external_lines = [ [momentum,vertex] for momentum,vertex in external_lines ] # deep copy
         _pinch(internal_lines, external_lines, powerlist) # modify `internal_lines` and `external_lines` in place
@@ -71,7 +71,7 @@ def plot_diagram(internal_lines, external_lines, filename, powerlist=None, neato
     dummy = 0
     extra_edges_dummy = [100]
     for edge in internal_lines:
-        if powerlist == None:
+        if powerlist is None:
             power = 1
         else:
             power = powerlist[dummy]

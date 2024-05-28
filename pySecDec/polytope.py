@@ -6,11 +6,14 @@ The polytope class as required by :mod:`pySecDec.make_regions`
 and :mod:`pySecDec.decomposition.geometric`.
 
 """
-
 from .algebra import Polynomial
-import os, shutil, subprocess, re, numpy as np
+import os
+import shutil
+import subprocess
+import numpy as np
 
 import pySecDecContrib
+
 
 def convex_hull(*polynomials):
     '''
@@ -201,7 +204,7 @@ def triangulate(cone, normaliz=None, workdir='normaliz_tmp', keep_workdir=False,
 
     os.mkdir(workdir)
     try:
-        if switch_representation == False:
+        if not switch_representation:
             run_card_as_str = normaliz_runcard(cone, 'cone', cone.shape[1])
         else:
             run_card_as_str = normaliz_runcard(cone, 'inequalities', cone.shape[1])

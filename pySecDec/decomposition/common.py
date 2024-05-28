@@ -8,7 +8,10 @@ from ..algebra import Polynomial, ExponentiatedPolynomial
 from ..misc import argsort_ND_array, sympify_expression
 import numpy as np
 import sympy as sp
-import subprocess, shutil, os
+import subprocess
+import shutil
+import os
+
 
 class Sector(object):
     '''
@@ -122,15 +125,15 @@ def refactorize(polyprod, parameter=None):
 
 def _sector2array(sector):
     '''
-    Combine the `expolist`s and the `coeff`s
-    of all :class:`.Polynomial`s in a
+    Combine the ``expolist``s and the ``coeff``s
+    of all :class:`.Polynomial` s in a
     :class:`.Sector` to two large arrays.
-    Return the combined expolists and the
-    combined coeffs.
+    Return the combined ``expolists`` and the
+    combined ``coeffs``.
 
     :param sector:
-        :class:`.Sector`; The container of the
-        :class:`.Polynomial`s to be combined.
+        :class:`.Sector`;
+        The container of the :class:`.Polynomial` s to be combined.
 
     '''
     # process `Jacobian`
@@ -260,7 +263,7 @@ def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
     '''
     assert len(expolist.shape) == 2, "_array_to_dreadnaut passed invalid expolist (not 2 x 2)"
     assert expolist.shape[0] > 0, "_array_to_dreadnaut passed invalid expolist (no terms)"
-    assert expolist.shape[1] > 0,  "_array_to_dreadnaut passed invalid expolist (no variables)"
+    assert expolist.shape[1] > 0, "_array_to_dreadnaut passed invalid expolist (no variables)"
     assert len(unique_exponents) > 0, "_array_to_dreadnaut passed no unique exponents"
     assert len(unique_coeffs) > 0, "_array_to_dreadnaut passed no unique coefficients"
 
@@ -353,10 +356,10 @@ def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
         f.write("->" + "\n") # set output standard out
         f.write("q" + "\n")  # q = quit dreadnaut
 
+
 def squash_symmetry_redundant_sectors_dreadnaut(sectors, indices=None, dreadnaut='dreadnaut', workdir='dreadnaut_tmp', keep_workdir=False):
     '''
-    Reduce a list of sectors by squashing duplicates
-    with equal integral.
+    Reduce a list of sectors by squashing duplicates with equal integral.
 
     Each :class:`.Sector` is converted to a :class:`.Polynomial`
     which is represented as a graph following
@@ -384,8 +387,7 @@ def squash_symmetry_redundant_sectors_dreadnaut(sectors, indices=None, dreadnaut
         `dreadnaut` [MP+14]_.
         It has been tested with `dreadnaut` version nauty26r7.
 
-    See also:
-    :func:`squash_symmetry_redundant_sectors_sort`
+    .. seealso:: :func:`squash_symmetry_redundant_sectors_sort`
 
     :param sectors:
         iterable of :class:`.Sector`; the sectors to be
@@ -602,8 +604,7 @@ def squash_symmetry_redundant_sectors_sort(sectors, sort_function, indices=None)
     :func:`pySecDec.matrix_sort.light_Pak_sort` are
     faster but do not identify all symmetries.
 
-    See also:
-    :func:`squash_symmetry_redundant_sectors_dreadnaut`
+    .. seealso:: :func:`squash_symmetry_redundant_sectors_dreadnaut`
 
     Example:
 
