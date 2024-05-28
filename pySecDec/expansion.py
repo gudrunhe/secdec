@@ -458,7 +458,7 @@ def expand_ginac(expression, variables, orders):
         f.write("):\n")
         for var, order in zip(variables, orders):
             f.write(f"__EXPR = series_to_poly(series(__EXPR, {var}, {order+1})):\n")
-        f.write("__START;\n__EXPR;\nquit:\n");
+        f.write("__START;\n__EXPR;\nquit:\n")
         f.flush()
         result = subprocess.check_output([ginsh, f.name], encoding="utf8")
     result = re.sub(r".*__START\n", "", result, flags=re.DOTALL)

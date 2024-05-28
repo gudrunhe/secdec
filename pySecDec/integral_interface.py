@@ -1646,7 +1646,8 @@ class DistevalLibrary(object):
         # [1] https://github.com/jupyter/notebook/issues/3397
         # [2] https://github.com/ipython/ipykernel/issues/548
         # [3] https://github.com/python/cpython/issues/66435
-        import nest_asyncio; nest_asyncio.apply()
+        import nest_asyncio
+        nest_asyncio.apply()
         disteval.log_file = sys.stderr if verbose else DevNullWriter()
         disteval.log(version)
         dirname = os.path.dirname(specification_path)

@@ -814,7 +814,7 @@ class TestProductRule(unittest.TestCase):
 
         for expr0, expr1 in zip(p0.expressions, p1.expressions):
             for key in list(expr0.keys()) + list(expr1.keys()):
-                assert not (expr0[key] is expr1[key])
+                assert expr0[key] is not expr1[key]
 
     #@pytest.mark.active
     def test_derive(self):
@@ -844,7 +844,7 @@ class TestProductRule(unittest.TestCase):
         prod_rule = ProductRule(p0,p1).derive(-1)
         prod_rule_simplify_returned = prod_rule.simplify()
 
-        assert not (prod_rule is prod_rule_simplify_returned)
+        assert prod_rule is not prod_rule_simplify_returned
         assert type(prod_rule) is ProductRule
         assert type(prod_rule_simplify_returned) is Polynomial
         assert sympify_expression(prod_rule).simplify() == 0

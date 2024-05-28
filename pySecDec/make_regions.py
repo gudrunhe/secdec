@@ -139,9 +139,7 @@ def find_regions(exp_param_index , polynomial, indices = None, normaliz=None, wo
             files.
 
     '''
-
     polytope_vertices = polynomial.expolist
-
 
     if indices is not None:
         dim = len(polytope_vertices[0])
@@ -293,6 +291,7 @@ def derive_prod(poly_list,numerator,index,polynomial_name_indices):
 
     return new_poly_list,numerator_new
 
+
 def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
     r"""
     Expands the product of the polynomials in `poly_list` and the numerator with respect
@@ -323,45 +322,43 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
         Indices of polynomials in the symbols of the input polynomials.
 
     """
-
     if order < 0:
         return
 
-    else:
-        i = 1
-        # 0th order term
-        term = Product(*poly_list)
-        term.factors.append(numerator)
+    i = 1
+    # 0th order term
+    term = Product(*poly_list)
+    term.factors.append(numerator)
+    term = term.replace(index, 0, remove=True)
+    for factor in term.factors:
+        factor.simplify()
+    yield term
+
+    # calculate higher order terms
+    derivative = derive_prod(poly_list,numerator,index,polynomial_name_indices)
+
+    inverse_i_factorial = sympify_expression(1)
+    while i <= order:
+
+        inverse_i_factorial /= i
+        term = Product(*derivative[0])
+        term.factors.append((derivative[1] * inverse_i_factorial))
         term = term.replace(index, 0, remove=True)
         for factor in term.factors:
-            factor.simplify()
+            if type(factor) is ExponentiatedPolynomial:
+                # make sure we don't simplify poly**0 to 1
+                if hasattr(factor.exponent, "simplify"):
+                    factor.exponent = factor.exponent.simplify()
+                if type(factor.exponent) is not Polynomial and sympify_expression(factor.exponent).simplify() or \
+                    type(factor.exponent) is Polynomial and (factor.exponent.expolist != 0).any():
+                    factor.simplify()
+            else:
+                factor.simplify()
         yield term
 
-        # calculate higher order terms
-        derivative = derive_prod(poly_list,numerator,index,polynomial_name_indices)
+        derivative = derive_prod(derivative[0],derivative[1],index, polynomial_name_indices)
 
-        inverse_i_factorial = sympify_expression(1)
-        while i <= order:
-
-            inverse_i_factorial /= i
-            term = Product(*derivative[0])
-            term.factors.append((derivative[1] * inverse_i_factorial))
-            term = term.replace(index, 0, remove=True)
-            for factor in term.factors:
-                if type(factor) is ExponentiatedPolynomial:
-                    # make sure we don't simplify poly**0 to 1
-                    if hasattr(factor.exponent, "simplify"):
-                        factor.exponent = factor.exponent.simplify()
-                    if type(factor.exponent) is not Polynomial and sympify_expression(factor.exponent).simplify() or \
-                        type(factor.exponent) is Polynomial and (factor.exponent.expolist != 0).any():
-                        factor.simplify()
-                else:
-                    factor.simplify()
-            yield term
-
-            derivative = derive_prod(derivative[0],derivative[1],index, polynomial_name_indices)
-
-            i+=1
+        i+=1
 
 
 def make_regions(name, integration_variables, regulators, requested_orders, smallness_parameter,
