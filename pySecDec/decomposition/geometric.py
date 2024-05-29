@@ -35,8 +35,11 @@ def Cheng_Wu(sector, index=-1):
 
     Jacobian = sector.Jacobian.replace(index, 1, remove)
     other = [poly.replace(index, 1, remove) for poly in sector.other]
-    cast = [Product( *(product.factors[i].replace(index, 1, remove) for i in (0,1)) ) for product in sector.cast]
+    cast = [Product( *(product.factors[i].replace(index, 1, remove)
+                       for i in (0, 1)) )
+            for product in sector.cast]
     return Sector(cast, other, Jacobian)
+
 
 # ********************** geometric decomposition **********************
 def generate_fan(*polynomials):
@@ -82,6 +85,7 @@ def generate_fan(*polynomials):
                 fan.append(cone)
     return fan
 
+
 def transform_variables(polynomial, transformation, polysymbols='y'):
     r'''
     Transform the parameters :math:`x_i` of a
@@ -121,6 +125,7 @@ def transform_variables(polynomial, transformation, polysymbols='y'):
     outpoly.polysymbols = polysymbols
     outpoly.number_of_variables = number_of_new_variables
     return outpoly
+
 
 def geometric_decomposition(sector, indices=None, normaliz=None, workdir='normaliz_tmp'):
     '''
@@ -226,7 +231,6 @@ def geometric_decomposition(sector, indices=None, normaliz=None, workdir='normal
 
         return subsector
 
-
     for cone_indices in incidence_lists.values():
         cone = transformation[:,cone_indices].T
 
@@ -237,14 +241,14 @@ def geometric_decomposition(sector, indices=None, normaliz=None, workdir='normal
 
             assert len(triangular_cones.shape) == 3
             for i, triangular_cone in enumerate(triangular_cones):
-                triangular_cone_indices = []
-                for vector in triangular_cone:
-                    # find the indices of the vectors defining the triangular cone
-                    triangular_cone_indices.append(int(  np.where( (vector == transformation.T).all(axis=1) )[0]  ))
+                # find the indices of the vectors defining the triangular cone
+                triangular_cone_indices = [int( np.where( (vector == transformation.T).all(axis=1) )[0] )
+                                           for vector in triangular_cone]
                 yield make_sector(triangular_cone_indices, triangular_cone)
 
         else:
             yield make_sector(cone_indices, cone)
+
 
 def geometric_decomposition_ku(sector, indices=None, normaliz=None, workdir='normaliz_tmp'):
     '''

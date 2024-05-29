@@ -88,19 +88,19 @@ class TestFindSingularSetsAtOne(unittest.TestCase):
     #@pytest.mark.active
     def test_find_singular_sets_at_one_empty(self):
         poly = Polynomial.from_expression('x0 - x1', ['x0','x1'])
-        singular_set = find_singular_sets_at_one(poly)
+        singular_set = list(find_singular_sets_at_one(poly))
         self.assertEqual(singular_set, [tuple(),(0,1)])
 
     #@pytest.mark.active
     def test_find_singular_sets_at_one_simple(self):
         poly = Polynomial.from_expression('1 - x0 + x1', ['x0','x1'])
-        singular_set = find_singular_sets_at_one(poly)
+        singular_set = list(find_singular_sets_at_one(poly))
         self.assertEqual(singular_set, [(0,)])
 
     #@pytest.mark.active
     def test_find_singular_sets_at_one_medium(self):
         poly = Polynomial.from_expression('2 - x0 + a*x1**2*x5**4 - x3*x0**8', ['x0','x1','x2','x3','x4','x5'])
-        singular_set = find_singular_sets_at_one(poly)
+        singular_set = list(find_singular_sets_at_one(poly))
         self.assertEqual(singular_set, [(0,3),(0,1,3),(0,3,5)])
 
     #@pytest.mark.active
@@ -111,13 +111,13 @@ class TestFindSingularSetsAtOne(unittest.TestCase):
                + (s)*x0*x1**2*x3**2 + (s)*x1*x3*x4 + (s)*x1*x3 + (s)*x2*x3*x4 \
                + (s)*x2*x3 + (s)*x1*x3**2*x4 + (s)*x1*x3**2
         poly = Polynomial.from_expression(poly, ['x0','x1','x2','x3','x4','x5'])
-        singular_set = find_singular_sets_at_one(poly)
+        singular_set = list(find_singular_sets_at_one(poly))
         self.assertEqual(singular_set, [(2,3),(0,2,3),(2,3,4),(0,2,3,4)])
 
     #@pytest.mark.active
     def test_find_singular_sets_only_at_one(self):
         poly = Polynomial.from_expression('2 - x0 - x2*x0**8', ['x0','x1','x2'])
-        singular_set = find_singular_sets_at_one(poly)
+        singular_set = list(find_singular_sets_at_one(poly))
         self.assertEqual(singular_set, [(0,2)])
 
 #@pytest.mark.active
