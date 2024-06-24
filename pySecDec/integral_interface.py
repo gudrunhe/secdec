@@ -1709,3 +1709,6 @@ class DistevalLibrary(object):
         else:
             return disteval.result_to_json(result)
 
+    def close(self):
+        """Shutdown the workers and release all resources."""
+        asyncio.run(disteval.clear_eval(self.prepared))

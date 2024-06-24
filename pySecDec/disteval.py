@@ -868,6 +868,15 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
         "integrals": intvals
     }
 
+async def clear_eval(prepared):
+    datadir, info, requested_orders, kernel2idx, infos, ampcount, korders, family2idx, par, t_init, t_worker = prepared
+    await par.drain()
+    for worker in par.workers:
+        worker.process.stdin.close()
+        worker.process.kill()
+    for worker in par.workers:
+        await worker.process.wait()
+
 def default_worker_commands(dirname):
     ncpu = 0
     try:
@@ -1093,6 +1102,8 @@ def main():
     else:
         print(result_to_sympy(result))
     sys.stdout.flush()
+
+    loop.run_until_complete(clear_eval(prepared))
 
 if __name__ == "__main__":
     main()
