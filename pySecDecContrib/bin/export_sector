@@ -139,8 +139,10 @@ def code_to_mma(code):
     code = sed(code, r"\)", "]")
     code = sed(code, r"_", "$")
     code = sed(code, r"\bi\b", "I")
-    #code = sed(code, r"([^a-zA-Z0-9_$])\[([^\]]*)\]", r"\1(\2)")
+    code = sed(code, r"\[\!\[", "[Not[")
     return code
+
+assert code_to_mma("SignCheckCD(!(Val<=0),1)") == "SignCheckCD[Not[Val<=0],1]"
 
 def template_writer(template_source, *argnames):
     """
