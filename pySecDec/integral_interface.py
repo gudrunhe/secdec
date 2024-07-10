@@ -1712,4 +1712,5 @@ class DistevalLibrary(object):
     def close(self):
         """Shutdown the workers and release all resources."""
         import asyncio
+        from . import disteval
         asyncio.run(disteval.clear_eval(self.prepared))
