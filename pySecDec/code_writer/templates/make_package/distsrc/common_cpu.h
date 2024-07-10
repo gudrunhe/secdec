@@ -66,11 +66,15 @@ mathfn real_t SecDecInternalAbs(const complex_t &a) { return std::abs(a); }
 mathfn complex_t SecDecInternalI(const real_t &a) { return complex_t{0, a}; }
 mathfn complex_t SecDecInternalI(const complex_t &a) { return complex_t{-a.imag(), a.real()}; }
 
+template<typename T> inline T SecDecInternalOne();
+template<> inline real_t SecDecInternalOne<real_t>() { return 1; }
+template<> inline complex_t SecDecInternalOne<complex_t>() { return complex_t{1, 0}; }
+
 template<typename T> mathfn T
 SecDecInternalNPow(const T &a, unsigned n) {
-    T s = T(1.0);
-    T r = a;
+    T s = SecDecInternalOne<T>();
     if (likely(n > 0)) {
+        T r = a;
         for (;;) {
             if (n %% 2) { s = s*r; }
             n /= 2;
@@ -226,6 +230,7 @@ DEF_FUNCTION(realvec_t, SecDecInternalAbs, realvec_t, std::abs)
 mathfn realvec_t SecDecInternalRealPart(const realvec_t &a) { return a; }
 mathfn realvec_t SecDecInternalImagPart(const realvec_t &a) { return REALVEC_ZERO; }
 mathfn realvec_t SecDecInternalSqr(const realvec_t &a) { return a*a; }
+template<> inline realvec_t SecDecInternalOne<realvec_t>() { return REALVEC_CONST(1); }
 
 mathfn real_t componentsum(const realvec_t &a)
 { return a.x[0] + a.x[1] + a.x[2] + a.x[3]; }
@@ -441,6 +446,7 @@ mathfn realvec_t SecDecInternalImagPart(const complexvec_t &a) { return a.im; }
 mathfn realvec_t SecDecInternalDenominator(const realvec_t &x) { return REALVEC_CONST(1)/x; }
 mathfn complexvec_t SecDecInternalDenominator(const complexvec_t &x) { return REALVEC_CONST(1)/x; }
 mathfn complexvec_t SecDecInternalSqr(const complexvec_t &a) { return a*a; }
+template<> inline complexvec_t SecDecInternalOne<complexvec_t>() { return (complexvec_t{REALVEC_CONST(1), REALVEC_CONST(0)}); }
 
 #define DEF_CC_FUNCTION(fname, fn) \
     static inline complexvec_t fname(const complexvec_t &a) { \

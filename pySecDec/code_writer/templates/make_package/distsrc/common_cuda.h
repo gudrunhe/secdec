@@ -47,8 +47,8 @@ mathfn real_t exp(int n) { return exp(real_t(n)); }
 template<typename T> mathfn T
 SecDecInternalNPow(const T &a, unsigned n) {
     T s = T(1.0);
-    T r = a;
     if (likely(n > 0)) {
+        T r = a;
         for (;;) {
             if (n %% 2) { s = s*r; }
             n /= 2;
