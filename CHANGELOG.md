@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.4] - 2024-07-16
+
 ### Added
 - `disteval.clear_eval()` and `integral_interface.DistevalLibrary.close()` to clean up *disteval* resources.
 - `make source-mma` to output integrals in Mathematica-compatible format (*experimental*).
