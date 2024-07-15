@@ -561,7 +561,7 @@ def _make_FORM_shifted_orders(positive_powers):
     r'''
     Write FORM code that defines the preprocessor
     variables
-    ``shiftedRegulator-regulatorIndex-PowerOrder-shiftedOrderIndex``.
+    `shiftedRegulator`regulatorIndex'PowerOrder`shiftedOrderIndex''.
 
     '''
     codelines = []
