@@ -5,6 +5,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `disteval.clear_eval()` and `integral_interface.DistevalLibrary.close()` to clean up *disteval* resources.
+- `make source-mma` to output integrals in Mathematica-compatible format (*experimental*).
+
+### Changed
+- Minor code style chages.
+
+### Fixed
+- `SecDecInternalNPow()` would previously not compile on the CPU.
+- Typos and spelling.
+
 ## [1.6.3] - 2024-04-10
 
 ### Added
