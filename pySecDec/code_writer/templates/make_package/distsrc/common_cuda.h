@@ -44,20 +44,18 @@ mathfn complex_t SecDecInternalI(const complex_t x) { return complex_t{-x.imag()
 
 mathfn real_t exp(int n) { return exp(real_t(n)); }
 
-template<typename T> mathfn T
-SecDecInternalNPow(const T &a, unsigned n) {
-    T s = T(1.0);
-    if (likely(n > 0)) {
-        T r = a;
-        for (;;) {
-            if (n %% 2) { s = s*r; }
-            n /= 2;
-            if (n == 0) break;
-            r = SecDecInternalSqr(r);
-        }
+#define SecDecInternalNPow(x, n) SecDecInternalNPowTemplate<n>(x)
+template<unsigned n, typename T> inline T
+SecDecInternalNPowTemplate(const T &x)
+{
+    if constexpr ((n%%2) == 0) {
+        return SecDecInternalSqr(SecDecInternalNPowTemplate<n/2,T>(x));
+    } else {
+        return SecDecInternalSqr(SecDecInternalNPowTemplate<n/2,T>(x))*x;
     }
-    return s;
 }
+template<> inline real_t SecDecInternalNPowTemplate<1,real_t>(const real_t &x) { return x; };
+template<> inline complex_t SecDecInternalNPowTemplate<1,complex_t>(const complex_t &x) { return x; };
 
 #define SecDecInternalQuo(n, d) (((real_t)(n))/(d))
 #define SecDecInternalDenominator(x) ((real_t)1/(x))

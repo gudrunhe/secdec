@@ -69,7 +69,7 @@ endif
 
 # CPU files (.so)
 
-XCXXFLAGS=-std=c++14 -O3 -funsafe-math-optimizations $(CXXFLAGS)
+XCXXFLAGS=-std=c++17 -O3 -funsafe-math-optimizations $(CXXFLAGS)
 
 DIST_SO_OBJECTS = $(patsubst %%,distsrc/sector_%%.o,$(SECTOR_ORDERS))
 
@@ -86,7 +86,7 @@ disteval/builtin.so: distsrc/builtin.o
 
 # CUDA files (.fatbin)
 
-XNVCCFLAGS=-std=c++14 $(SECDEC_WITH_CUDA_FLAGS) $(NVCCFLAGS)
+XNVCCFLAGS=-std=c++17 $(SECDEC_WITH_CUDA_FLAGS) $(NVCCFLAGS)
 
 DIST_FATBIN_OBJECTS = $(patsubst %%,distsrc/sector_%%.fatbin,$(SECTOR_ORDERS))
 
