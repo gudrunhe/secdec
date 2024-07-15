@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `SecDecInternalNPow()` would previously not compile on the CPU.
+- Premature end of *disteval* integration in rare cases with few integrals.
 - Typos and spelling.
 
 ## [1.6.3] - 2024-04-10

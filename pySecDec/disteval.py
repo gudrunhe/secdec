@@ -216,7 +216,7 @@ class RandomScheduler:
 
     async def drain(self):
         assert self.npending <= sum(len(w.callbacks) for w in self.workers)
-        if self.npending > 0:
+        while self.npending > 0:
             self.drained.clear()
             await self.drained.wait()
 
