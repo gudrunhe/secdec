@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `make source-mma` to output integrals in Mathematica-compatible format (*experimental*).
 
 ### Changed
-- Minor code style chages.
+- Minor code style changes.
 
 ### Fixed
 - `SecDecInternalNPow()` would previously not compile on the CPU.
