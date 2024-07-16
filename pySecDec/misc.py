@@ -73,8 +73,8 @@ def rangecomb(low, high):
 
     >>> from pySecDec.misc import rangecomb
     >>> all_orders = rangecomb([-1,-2], [0,0])
-    >>> list(all_orders)
-    [(-1, -2), (-1, -1), (-1, 0), (0, -2), (0, -1), (0, 0)]
+    >>> list(all_orders) == [(-1, -2), (-1, -1), (-1, 0), (0, -2), (0, -1), (0, 0)]
+    True
 
     '''
     low = np.asarray(low)
