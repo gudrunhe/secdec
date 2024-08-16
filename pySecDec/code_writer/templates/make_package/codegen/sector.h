@@ -40,10 +40,10 @@ AutoDeclare Symbols SecDecInternalsDUMMY;
 
 * We generated logs in the subtraction and pack denominators
 * and powers into a functions.
-CFunctions log, exp, SecDecInternalPow, SecDecInternalDenominator;
+CFunctions log, exp, SecDecInternalPow, SecDecInternalDenominator, sqrt;
 
 * We rewrite function calls as symbols
-#Do function = {`functions',`decomposedPolynomialDerivatives',log,exp,SecDecInternalPow,SecDecInternalDenominator}
+#Do function = {`functions',`decomposedPolynomialDerivatives',log,exp,SecDecInternalPow,SecDecInternalDenominator,sqrt}
   AutoDeclare Symbols SecDecInternal`function'Call;
 #EndDo
 
