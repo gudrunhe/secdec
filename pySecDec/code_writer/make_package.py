@@ -1847,12 +1847,14 @@ def make_package(name, integration_variables, regulators, requested_orders,
         # cannot split when using the geometric decomposition method because the integration interval is [0,inf] after the primary decomposition
         if decomposition_method == 'geometric':
             raise ValueError('Cannot have ``split=True`` and ``decomposition_method="geometric"``. You probably want to try ``split=True`` and ``decomposition_method="geometric_ku"``')
+        if decomposition_method == 'geometric_infinity_no_primary':
+            raise ValueError('Cannot have ``split=True`` and ``decomposition_method="geometric_infinity_no_primary"``. You probably want to try ``split=True`` and ``decomposition_method="geometric_no_primary" (Note: the "geometric_infinity_no_primary" strategy has an integration region of [0,inf]^N, while the "geometric_no_primary" strategy has an integration region of [0,1]^N)``')
 
         original_decomposition_strategies = strategy
 
         def primary_decomposition_with_splitting(sector, indices):
             # investigate symmetries before the split
-            if use_symmetries:
+            if use_symmetries and (decomposition_method != 'geometric_no_primary' and decomposition_method != 'iterative_no_primary'):
                 primary_sectors = _reduce_sectors_by_symmetries\
                 (
                     list(  original_decomposition_strategies['primary'](sector, indices)  ),
