@@ -39,6 +39,14 @@ jobs:
         python3 -m pip install --upgrade pip
         make dependencies
 
+    - name: Verify Python Installation 1
+      run: |
+        which python3.8
+        echo $PATH
+        which sphinx-build
+        sphinx-build --version
+        python3.8 --version
+
     - name: Build
       run: |
         make build
@@ -50,6 +58,8 @@ jobs:
     - name: Verify Python Installation
       run: |
         which python3.8
+        echo $PATH
+        which sphinx-build
         python3.8 --version
         ls -l /runner/_work/_tool/Python/3.8.18/x64/lib/
 
