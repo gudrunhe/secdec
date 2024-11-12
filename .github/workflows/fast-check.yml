@@ -2,6 +2,7 @@ name: Fast Check
 on:
   push:
   workflow_dispatch:
+
 jobs:
   check:
     name: Make Check
@@ -10,39 +11,60 @@ jobs:
       matrix:
         python-version: [3.8]
         os: [self-hosted]
+
     steps:
     - name: Install dependencies
       run: |
         if ! dpkg -s graphviz normaliz nauty libgsl-dev; then
-          sudo apt-get install graphviz normaliz nauty libgsl-dev
+          sudo apt-get update
+          sudo apt-get install -y graphviz normaliz nauty libgsl-dev python3.8-dev libpython3.8 libpython3.8-dev
         fi
+
+    - uses: actions/checkout@v3
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - uses: actions/checkout@v2
+        architecture: 'x64'
+
+    - name: Debug Python Environment
+      run: |
+        which python3
+        python3 --version
+        echo "PYTHONPATH=$PYTHONPATH"
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+        ldd $(which python3) || true
+        ls -l /usr/lib/libpython3* || true
+
     - name: Install Python dependencies
       run: |
         python3 -m pip install --upgrade pip
         make dependencies
+
     - name: Build
       run: |
         make build
+
     - name: pytest Check
       run: |
         python3 -m pytest --timeout=600 pySecDec
+
     - name: Doc Test
       run: |
         export PYTHONPATH=$PWD
         make doctest
+
     - name: Util Check
       run: |
         export PYTHONPATH=$PWD
         make util-check -j2
+
     - name: High-level Tests
       run: |
         export PYTHONPATH=$PWD
         make -C high_level_tests runselected -j2
+
     - name: High-level Test Summary
       run: |
         export PYTHONPATH=$PWD
