@@ -47,9 +47,16 @@ jobs:
       run: |
         python3 -m pytest --timeout=600 pySecDec
 
+    - name: Verify Python Installation
+      run: |
+        which python3.8
+        python3.8 --version
+        ls -l /runner/_work/_tool/Python/3.8.18/x64/lib/
+
     - name: Doc Test
       run: |
-        PYTHON=$(which python3.8) make doctest
+        export LD_LIBRARY_PATH=/runner/_work/_tool/Python/3.8.18/x64/lib:$LD_LIBRARY_PATH
+        PYTHON=/runner/_work/_tool/Python/3.8.18/x64/bin/python3.8 make doctest
 
     - name: Util Check
       run: |
