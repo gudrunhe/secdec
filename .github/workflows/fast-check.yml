@@ -17,7 +17,7 @@ jobs:
       run: |
         if ! dpkg -s graphviz normaliz nauty libgsl-dev; then
           sudo apt-get update
-          sudo apt-get install -y graphviz normaliz nauty libgsl-dev python3.8-dev libpython3.8 libpython3.8-dev
+          sudo apt-get install -y graphviz normaliz nauty libgsl-dev
         fi
 
     - uses: actions/checkout@v3
@@ -28,14 +28,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: 'x64'
 
-    - name: Debug Python Environment
+    - name: Setup environment variables
       run: |
-        which python3
-        python3 --version
-        echo "PYTHONPATH=$PYTHONPATH"
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-        ldd $(which python3) || true
-        ls -l /usr/lib/libpython3* || true
+        echo "LD_LIBRARY_PATH=/runner/_work/_tool/Python/3.8.18/x64/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+        echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
 
     - name: Install Python dependencies
       run: |
@@ -52,20 +48,16 @@ jobs:
 
     - name: Doc Test
       run: |
-        export PYTHONPATH=$PWD
         make doctest
 
     - name: Util Check
       run: |
-        export PYTHONPATH=$PWD
         make util-check -j2
 
     - name: High-level Tests
       run: |
-        export PYTHONPATH=$PWD
         make -C high_level_tests runselected -j2
 
     - name: High-level Test Summary
       run: |
-        export PYTHONPATH=$PWD
         make -C high_level_tests summarize-selected
