@@ -30,6 +30,7 @@ jobs:
 
     - name: Setup environment variables
       run: |
+        echo "PYTHON=/runner/_work/_tool/Python/3.8.18/x64/bin/python3.8" >> $GITHUB_ENV
         echo "LD_LIBRARY_PATH=/runner/_work/_tool/Python/3.8.18/x64/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
         echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
 
@@ -48,7 +49,7 @@ jobs:
 
     - name: Doc Test
       run: |
-        make doctest
+        PYTHON=$(which python3.8) make doctest
 
     - name: Util Check
       run: |
