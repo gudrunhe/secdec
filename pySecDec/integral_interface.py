@@ -1684,8 +1684,12 @@ class DistevalLibrary(object):
         valuemap_coeff = {}
         for key, value in parameters.items():
             fvalue = complex(value)
-            valuemap_int[key] = fvalue.real if fvalue.imag == 0 else fvalue
-            valuemap_coeff[key] = str(value)
+            if fvalue.imag == 0:
+                valuemap_int[key] = fvalue.real
+                valuemap_coeff[key] = str(value.real) if isinstance(value, complex) else str(value)
+            else:
+                valuemap_int[key] = fvalue
+                valuemap_coeff[key] = f"{str(value.real)} + ({str(value.imag)})*I" if isinstance(value, complex) else str(value)
         if not isinstance(epsabs, list) and not isinstance(epsabs, tuple):
             epsabs = [epsabs]
         if not isinstance(epsrel, list) and not isinstance(epsrel, tuple):
