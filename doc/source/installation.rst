@@ -45,8 +45,6 @@ from source like this:
 .. _PyPI: https://pypi.org/project/pySecDec/
 .. _pip: https://pypi.org/project/pip/
 
-.. _installation_neato:
-
 
 Running the Program
 -------------------
@@ -55,6 +53,8 @@ You can find a large number of examples in the `pySecDec git repository <https:/
 
 For more information and to learn how to use `pySecDec` for your own problems, follow the :ref:`getting_started` section.
 
+
+.. _installation_neato:
 
 Drawing Feynman Diagrams with `neato`
 -------------------------------------
