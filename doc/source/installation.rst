@@ -47,6 +47,15 @@ from source like this:
 
 .. _installation_neato:
 
+
+Running the Program
+-------------------
+
+You can find a large number of examples in the `pySecDec git repository <https://github.com/gudrunhe/secdec/tree/master/examples>`_, we suggest that you start with the `easy <https://github.com/gudrunhe/secdec/tree/master/examples/easy>`_ example (for general integrals) and the `box1L <https://github.com/gudrunhe/secdec/tree/master/examples/box1L>`_ example (for loop integrals).
+
+For more information and to learn how to use `pySecDec` for your own problems, follow the :ref:`getting_started` section.
+
+
 Drawing Feynman Diagrams with `neato`
 -------------------------------------
 
