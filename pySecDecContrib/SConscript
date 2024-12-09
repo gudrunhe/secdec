@@ -5,7 +5,7 @@ Import("env")
 cuba = "Cuba-4.2.2"
 zlib = "zlib-1.2.13"
 form = "form-4.3.1"
-gmp = "gmp-6.2.1"
+gmp = "gmp-6.3.0"
 gsl = "gsl-2.7.1"
 nauty = "nauty2_8_6"
 normaliz = "normaliz-3.9.2"
