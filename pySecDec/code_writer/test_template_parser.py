@@ -1,5 +1,7 @@
 from .template_parser import *
-import sys, os, shutil
+import sys
+import os
+import shutil
 import unittest
 import pytest
 

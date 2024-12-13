@@ -7,7 +7,8 @@ import unittest
 import sympy as sp
 import numpy as np
 from itertools import permutations
-import sys, os
+import sys
+import os
 import shutil
 import pytest
 

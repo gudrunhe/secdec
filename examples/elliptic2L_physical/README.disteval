@@ -17,7 +17,7 @@ and finally integrate (locally):
         --epsrel=3e-5
 
 The option `--epsrel=3e-5` will make the evaluator integrate in
-the adaptive mode untill this precision is reached.
+the adaptive mode until this precision is reached.
 
 Use the option `--points=1e6` to specify the initial lattice size
 on which all integrals will be evaluated in the first iteration.

@@ -3,7 +3,9 @@
 from pySecDec.loop_integral import LoopIntegralFromPropagators, LoopPackage
 from pySecDec.code_writer.sum_package import sum_package, Coefficient
 from itertools import repeat
-import re, sympy as sp, numpy as np
+import re
+import sympy as sp
+import numpy as np
 
 # arXiv:1809.06240
 

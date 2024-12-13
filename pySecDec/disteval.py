@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """
 Distributed and/or local evaluator for pySecDec integrals.
-Usage:
+
+Usage::
+
     python3 -m pySecDec.disteval integrand.json [options] <var>=value ...
-Options:
+
+Options::
+
     --epsabs=X              stop if this absolute precision is reached (default: 1e-10)
     --epsrel=X              stop if this relative precision is reached (default: 1e-4)
     --timeout=X             stop after at most this many seconds (default: inf)
@@ -15,7 +19,9 @@ Options:
     --format=X              output the result in this format ("sympy", "mathematica", "json")
     --lattice-candidates=X  number of median lattice candidates, if X>0 (default: 0)
     --help                  show this help message
-Arguments:
+
+Arguments::
+
     <var>=X                 set this integral or coefficient variable to a given value
     int-<var>=X             set this integral variable to a given value
     coeff-<var>=X           set this coefficient variable to a given value

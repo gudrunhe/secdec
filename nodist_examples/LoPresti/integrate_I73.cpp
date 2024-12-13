@@ -40,7 +40,7 @@ int main()
     // Note: The integrals themselves may also be computed in parallel irresprective of this option.
     amplitude.number_of_threads = 16;
 
-    // The cuda driver does not automatically remove unneccessary functions from the device memory
+    // The cuda driver does not automatically remove unnecessary functions from the device memory
     // such that the device may run out of memry after some time. This option controls how many
     // after how many integrals "cudaDeviceReset()" is called to clear the memory. With the default
     // "0", "cudaDeviceReset()" is never called. This option is ignored if compiled without cuda.

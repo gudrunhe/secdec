@@ -3,13 +3,19 @@
 Benchmark the evaluation rate (i.e. evaluations per second) of
 disteval kernels in a given integral sum. Print the resulting
 evaluation rates in a comma-separated value (CSV) format.
-Usage:
+
+Usage::
+
     python3 -m pySecDec.disteval_benchmark integrand.json [options] <var>=value ...
-Options:
+
+Options::
+
     --points=X          evaluate using this many points per batch (default: 1e5)
     --repetitions=X     repeat the measurement this many times (default: 10)
     --help              show this help message
-Arguments:
+
+Arguments::
+
     <var>=X             set this integral or coefficient variable to a given value
 """
 

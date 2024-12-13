@@ -6,7 +6,8 @@ from .make_package import _convert_input, _make_FORM_definition, \
                           _make_CXX_function_declaration
 from ..algebra import Function, Polynomial, Product, ProductRule, Sum
 from ..misc import sympify_expression
-import sys, shutil
+import sys
+import shutil
 import unittest
 import pytest
 

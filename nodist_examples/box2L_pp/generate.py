@@ -59,7 +59,7 @@ def parse_integral(line, families, args):
     return package_args
 
 def parse_coefficient(line, dimension_symbol, args):
-    '''Decomposes the coefficent into numerator and denominator and \
+    '''Decomposes the coefficient into numerator and denominator and \
     calculates the order of epsilon of the coefficient.'''
     d = sp.symbols(dimension_symbol)
     eps = sp.symbols("eps")

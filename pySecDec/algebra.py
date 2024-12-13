@@ -11,6 +11,7 @@ from .misc import argsort_2D_array, argsort_ND_array, doc, \
 import numpy as np
 import sympy as sp
 
+
 class _Expression(object):
     '''
     Abstract base class for all expressions in this
@@ -211,11 +212,11 @@ class Function(_Expression):
             ``dfd<index>``.
 
         '''
-        def update(repository, multiindex, recipies, expression):
+        def update(repository, multiindex, recipes, expression):
             '''
             Recursively compute all intermediate derivatives
             of `expression` indicated by `multiindex` using
-            `recipies` and add them to the `repository`.
+            `recipes` and add them to the `repository`.
             Return the derivative indicated by `multiindex`.
 
             '''
@@ -228,8 +229,8 @@ class Function(_Expression):
                     return expression
                 else:
                     # must compute the derivative from a lower derivative
-                    index, lower_multiindex = recipies[multiindex]
-                    required_derivative = update(repository, lower_multiindex, recipies, expression).derive(index).simplify()
+                    index, lower_multiindex = recipes[multiindex]
+                    required_derivative = update(repository, lower_multiindex, recipes, expression).derive(index).simplify()
                     repository[multiindex] = required_derivative
                     return required_derivative
 
