@@ -45,7 +45,7 @@ from source like this:
 [pypi]: https://pypi.org/project/pySecDec/
 [pip]: https://pypi.org/project/pip/
 
-## Additional dependencies
+## Included dependencies
 
 `pySecDec` and the integration libraries it produces depend
 on multiple third-party non-Python packages, all of which are
