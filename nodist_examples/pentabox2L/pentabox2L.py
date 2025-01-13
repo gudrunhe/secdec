@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pySecDec.loop_integral import loop_package
-import pySecDec as psd, sympy as sp
+import pySecDec as psd
+import sympy as sp
 
 if __name__ == "__main__":
 

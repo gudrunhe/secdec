@@ -22,12 +22,12 @@ make <dirname>:
    Run 'make test' in the directory <dirname>.
 
 
-FUTHER OPTIONS
-==============
+FURTHER OPTIONS
+===============
 
-You can set the environemnt variable CUBACORES to the number of cores to be
+You can set the environment variable CUBACORES to the number of cores to be
 used for the numerical integrations. Make's "-j<jmake>" option controls how
-many recipies make executes in parallel. To run up to four instances of make
+many recipes make executes in parallel. To run up to four instances of make
 and use two cores for each numerical integration run 'CUBACORES=4 make -j2'.
 Note that make may start up to <jmake> integrations in parallel such that
 you will have up to "<jmake> * CUBACORES" threads running in parallel.
@@ -45,4 +45,4 @@ Some tests can run the numerical integration on GPUs using CUDA.
 In order to enable CUDA, set the environment variables 'CXX=nvcc'
 and 'SECDEC_WITH_CUDA_FLAGS=-arch=<target CUDA arch>' (try e.g.
 sm_52 if you are not sure), see the "Building the C++ Library" in
-the "Getting Started" section of the documentaion for details.
+the "Getting Started" section of the documentation for details.

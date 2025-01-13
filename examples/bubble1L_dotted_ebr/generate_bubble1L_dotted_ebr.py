@@ -18,7 +18,7 @@ if __name__ == "__main__":
         replacement_rules = [('p*p', 'psq'), ('msq_', 'msq')]
     )
 
-    # define the loop integeral for the case where we expand in z
+    # define the loop integral for the case where we expand in z
     li_z = LoopIntegralFromPropagators(
         propagators=li_m.propagators,
         loop_momenta=li_m.loop_momenta,

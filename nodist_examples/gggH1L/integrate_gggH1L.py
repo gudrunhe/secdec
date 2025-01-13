@@ -25,7 +25,7 @@ if __name__ == "__main__":
     amp2 = IntegralLibrary('F312/F312_pylink.so')
 
     # choose Qmc integrator
-    # amp.use_Qmc()  # Qmc doesnt work as of now for new version, try Vegas  # amp.use_Vegas()
+    # amp.use_Qmc()  # Qmc doesn't work as of now for new version, try Vegas  # amp.use_Vegas()
     amp1.use_Qmc()
     amp2.use_Qmc()
 
@@ -197,7 +197,7 @@ if __name__ == "__main__":
 
     # Use the form factor values to calculate the Mod Squared Amplitude
 
-    # Set the dimesnions as 4 because Form Factors dont have divergent terms of epsilon -> we can safely substitute eps = 0 now
+    # Set the dimensions as 4 because Form Factors dont have divergent terms of epsilon -> we can safely substitute eps = 0 now
     #dim = 4
     
     # Because we are dealing with normalised form factors, conjugate dont have effect
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     #print('---------------------------------------------------------------')
     #print('Multiply Above Number with ( ( Nc*(Nc^2 -1) )*(topmass^4)*(alpha_S^3) / pi*(v^2) )  To Get The Final Ampltiude Squared, which can then be averaged over colors and gluon polraisations ')
     #print('---------------------------------------------------------------')
-    #print('Both Numerical and Analytic Amplitudes have been eveluated at these conditions :  [ s12, s13, s23, topmass^2, hmass^2 ]  = [ ',s1,', ',s2,', ',s3,', ',(topmass*topmass),', ',(hmass*hmass),' ]')
+    #print('Both Numerical and Analytic Amplitudes have been evaluated at these conditions :  [ s12, s13, s23, topmass^2, hmass^2 ]  = [ ',s1,', ',s2,', ',s3,', ',(topmass*topmass),', ',(hmass*hmass),' ]')
     #print('---------------------------------------------------------------')
 
 

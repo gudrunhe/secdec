@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # contour deformation is not required because there are no external legs
     contour_deformation = False,
 
-    # make sure the retun type is double
+    # make sure the return type is double
     enforce_complex = True,
 
     package_generator=psd.code_writer.make_package

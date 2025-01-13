@@ -1,6 +1,7 @@
 'Routines to draw Feynman diagrams'
 
-import subprocess, os
+import subprocess
+import os
 
 def plot_diagram(internal_lines, external_lines, filename, powerlist=None, neato='neato', extension='pdf', Gstart=0):
     '''
