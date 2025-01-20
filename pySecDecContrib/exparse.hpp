@@ -33,7 +33,7 @@ struct mpqc_class
         mpq_init(neg_im);
         mpq_neg(neg_re,this->re);
         mpq_neg(neg_im,this->im);
-        mpqc_class neg_this(mpq_get_str(NULL,10,neg_re),mpq_get_str(NULL,10,neg_im));
+        mpqc_class neg_this(neg_re,neg_im);
         mpq_clear(neg_re);
         mpq_clear(neg_im);
         return neg_this;
@@ -168,14 +168,22 @@ struct mpqc_class
     
     friend std::ostream& operator<<(std::ostream& os, const mpqc_class& num)
     {
-        os << "(" << mpq_get_str(NULL,10,num.re) << "," << mpq_get_str(NULL,10,num.im) << ")"; // std::complex<> style output
+        char * re_cstr = new char [mpz_sizeinbase(mpq_numref(num.re),10)+mpz_sizeinbase(mpq_denref(num.re),10)+3];
+        char * im_cstr = new char [mpz_sizeinbase(mpq_numref(num.im),10)+mpz_sizeinbase(mpq_denref(num.im),10)+3];
+        mpq_get_str(re_cstr,10,num.re);
+        mpq_get_str(im_cstr,10,num.im);
+        std::string re_str(re_cstr);
+        std::string im_str(im_cstr);
+        os << "(" << re_str << "," << im_str << ")"; // std::complex<> style output
+        delete[] re_cstr;
+        delete[] im_cstr;
         return os;
     }
     
     mpqc_class& operator= (const mpqc_class& rhs)
     {
-        mpq_init(this->re);
-        mpq_init(this->im);
+        //mpq_init(this->re);
+        //mpq_init(this->im);
         mpq_set(this->re,rhs.re);
         mpq_set(this->im,rhs.im);
         return *this;
@@ -183,8 +191,8 @@ struct mpqc_class
     
     mpqc_class& operator=(mpqc_class&& rhs)
     {
-        mpq_init(this->re);
-        mpq_init(this->im);
+        //mpq_init(this->re);
+        //mpq_init(this->im);
         mpq_set(this->re,rhs.re);
         mpq_set(this->im,rhs.im);
         return *this;
@@ -223,6 +231,17 @@ struct mpqc_class
         mpq_set_d(this->im,im);
         mpq_canonicalize(this->re);
         mpq_canonicalize(this->im);
+    };
+    mpqc_class(mpq_t& re) {
+        mpq_init(this->re);
+        mpq_init(this->im);
+        mpq_set(this->re,re);
+    };
+    mpqc_class(mpq_t& re, mpq_t& im){
+        mpq_init(this->re);
+        mpq_init(this->im);
+        mpq_set(this->re,re);
+        mpq_set(this->im,im);
     };
     // Copy Constructor
     mpqc_class(const mpqc_class& other)
