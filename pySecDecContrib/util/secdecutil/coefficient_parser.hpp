@@ -148,9 +148,29 @@ namespace secdecutil
                 ginsh_ss << "real_symbols('" << regulator_name << "'):\n";
             }
             for(int i = 0; i < names_of_real_parameters.size(); i++)
-                ginsh_ss << names_of_real_parameters.at(i) << "=" << mpq_get_str(NULL,10,rational_t(real_parameters.at(i)).re) << ":\n";
+            {
+                rational_t real_param_rational_t = real_parameters.at(i);
+                char * real_param_rational_cstr = new char [mpz_sizeinbase(mpq_numref(real_param_rational_t.re),10)+mpz_sizeinbase(mpq_denref(real_param_rational_t.re),10)+3];
+                std::string real_param_rational_str(mpq_get_str(real_param_rational_cstr,10,real_param_rational_t.re));
+                delete[] real_param_rational_cstr;
+                
+                ginsh_ss << names_of_real_parameters.at(i) << "=" << real_param_rational_str << ":\n";
+            }
+
             for(int i = 0; i < names_of_complex_parameters.size(); i++)
-                ginsh_ss << names_of_complex_parameters.at(i) << "=" << mpq_get_str(NULL,10,rational_t(complex_parameters.at(i).real(),0).re) << "+I*(" <<  mpq_get_str(NULL,10,rational_t(0,complex_parameters.at(i).imag()).im) << "):\n";
+            {
+                rational_t complex_param_rational_t = rational_t(complex_parameters.at(i).real(),complex_parameters.at(i).imag());
+                char * complex_param_re_rational_cstr = new char [mpz_sizeinbase(mpq_numref(complex_param_rational_t.re),10)+mpz_sizeinbase(mpq_denref(complex_param_rational_t.re),10)+3];
+                char * complex_param_im_rational_cstr = new char [mpz_sizeinbase(mpq_numref(complex_param_rational_t.im),10)+mpz_sizeinbase(mpq_denref(complex_param_rational_t.im),10)+3];
+                std::string complex_param_re_rational_str(mpq_get_str(complex_param_re_rational_cstr,10,complex_param_rational_t.re));
+                std::string complex_param_im_rational_str(mpq_get_str(complex_param_im_rational_cstr,10,complex_param_rational_t.im));
+                delete[] complex_param_re_rational_cstr;
+                delete[] complex_param_im_rational_cstr;
+                
+                ginsh_ss << names_of_complex_parameters.at(i) << "=" << complex_param_re_rational_str << "+I*(" << complex_param_im_rational_str << "):\n";
+                
+            }
+
             std::ifstream coefficient_file(filename);
             if (coefficient_file.is_open())
             {
