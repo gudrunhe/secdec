@@ -69,11 +69,14 @@ endif
 
 # CPU files (.so)
 
-XCXXFLAGS=-std=c++17 -O3 -funsafe-math-optimizations $(CXXFLAGS)
+XCXXFLAGS=-std=c++17 -O3 -funsafe-math-optimizations -I'$(SECDEC_CONTRIB)/disteval' $(CXXFLAGS)
 
 DIST_SO_OBJECTS = $(patsubst %%,distsrc/sector_%%.o,$(SECTOR_ORDERS))
 
 distsrc/%%.o: distsrc/%%.cpp
+	$(CXX) -c -o $@ -fPIC $(XCXXFLAGS) $^
+
+distsrc/builtin.o: $(SECDEC_CONTRIB)/disteval/builtin.cpp
 	$(CXX) -c -o $@ -fPIC $(XCXXFLAGS) $^
 
 disteval/$(NAME).so: $(DIST_SO_OBJECTS)
@@ -92,6 +95,9 @@ DIST_FATBIN_OBJECTS = $(patsubst %%,distsrc/sector_%%.fatbin,$(SECTOR_ORDERS))
 
 distsrc/%%.fatbin: distsrc/%%.cu
 	$(NVCC) $(XNVCCFLAGS) -dc -fatbin -o $@ $^
+
+distsrc/builtin.fatbin: $(SECDEC_CONTRIB)/disteval/builtin.cu
+	$(NVCC) $(XNVCCFLAGS) -dc -fatbin -o $@ -x cu $^
 
 disteval/$(NAME).fatbin: $(DIST_FATBIN_OBJECTS)
 	@echo distsrc/sector_*.fatbin >$@.sourcelist

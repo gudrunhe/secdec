@@ -70,7 +70,7 @@ mathfn complex_t SecDecInternalI(const complex_t &a) { return complex_t{-a.imag(
 template<unsigned n, typename T> inline T
 SecDecInternalNPowTemplate(const T &x)
 {
-    if constexpr ((n%%2) == 0) {
+    if constexpr ((n%2) == 0) {
         return SecDecInternalSqr(SecDecInternalNPowTemplate<n/2,T>(x));
     } else {
         return SecDecInternalSqr(SecDecInternalNPowTemplate<n/2,T>(x))*x;
@@ -82,11 +82,11 @@ template<> inline complex_t SecDecInternalNPowTemplate<1,complex_t>(const comple
 static uint64_t mulmod(uint64_t a, uint64_t b, uint64_t k) {
     // assume 0 <= a,b <= k < 2^53
     if (k <= 3037000499) { // floor(Int, sqrt(2^63-1))
-        return (a*b) %% k;
+        return (a*b) % k;
     } else {
         auto x = static_cast<double>(a);
         auto c = static_cast<uint64_t>( (x*b) / k );
-        auto r = static_cast<int64_t>( (a*b) - (c*k) ) %% static_cast<int64_t>(k);
+        auto r = static_cast<int64_t>( (a*b) - (c*k) ) % static_cast<int64_t>(k);
         return r < 0 ? static_cast<uint64_t>(r+k) : static_cast<uint64_t>(r);
     }
 }
