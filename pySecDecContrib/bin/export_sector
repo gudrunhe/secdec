@@ -755,6 +755,8 @@ if __name__ == "__main__":
         fname = os.path.join(dstdir, "src/sector_" + info["sector"] + ".cpp")
         with open(fname, "w") as f:
             SECTOR_CPP(f, DictionaryWrapper(info))
+    if "disteval" in subset:
+        os.makedirs("distsrc", exist_ok=True)
     if "mma" in subset:
         os.makedirs("mma", exist_ok=True)
 
