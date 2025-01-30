@@ -89,7 +89,7 @@ disteval/builtin.so: distsrc/builtin.o
 
 # CUDA files (.fatbin)
 
-XNVCCFLAGS=-std=c++17 $(SECDEC_WITH_CUDA_FLAGS) $(NVCCFLAGS)
+XNVCCFLAGS=-std=c++17 -I'$(SECDEC_CONTRIB)/disteval' $(SECDEC_WITH_CUDA_FLAGS) $(NVCCFLAGS)
 
 DIST_FATBIN_OBJECTS = $(patsubst %%,distsrc/sector_%%.fatbin,$(SECTOR_ORDERS))
 
