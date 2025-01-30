@@ -2231,6 +2231,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
 
     expanded_prefactor = expanded_prefactor.denest()
     os.mkdir(os.path.join(name, "disteval"))
+    os.mkdir(os.path.join(name, "distsrc"))
     descr = {
             "name": name,
             "type": "integral",
