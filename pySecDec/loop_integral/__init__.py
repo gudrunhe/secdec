@@ -14,6 +14,7 @@ Routines to Feynman parametrize a loop integral.
 .. autoclass:: pySecDec.loop_integral.LoopIntegral
 .. autoclass:: pySecDec.loop_integral.LoopIntegralFromGraph
 .. autoclass:: pySecDec.loop_integral.LoopIntegralFromPropagators
+.. autofunction:: pySecDec.loop_integral.leading_order
 
 Loop Package
 ~~~~~~~~~~~~
@@ -44,3 +45,4 @@ from .from_propagators import LoopIntegralFromPropagators
 from .loop_package import loop_package, LoopPackage
 from .draw import plot_diagram
 from .loop_regions import loop_regions
+from .leading_order import leading_order
