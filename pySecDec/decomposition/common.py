@@ -287,7 +287,7 @@ def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
     offset = 0
 
     with open(os.path.join(workdir,dreadnaut_file), 'w') as f:
-
+        f.write("As\n") # Use sparse Nauty
         f.write("n=" + str(n) + "\n")
         f.write("g" + "\n")  # g = begin entering graph
 
@@ -324,12 +324,14 @@ def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
             offset += 1
 
         f.write("! coeffs\n")
+        coeff2rows = {}
+        for row, term_coeff in enumerate(coeffs):
+            coeff = str(term_coeff)
+            coeff2rows.setdefault(coeff, [])
+            coeff2rows[coeff].append(row)
         for coeff in unique_coeffs:
             f.write(str(offset) + ": ")
-            terms = []
-            for row, term_coeff in enumerate(coeffs):
-                if str(term_coeff) == coeff:
-                    terms.append(cols + row)
+            terms = [cols + row for row in coeff2rows[coeff]]
             f.write(",".join(map(str, terms)))
             f.write(";" + "\n")
             offset += 1
