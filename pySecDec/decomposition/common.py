@@ -331,7 +331,7 @@ def _array_to_dreadnaut(expolist, coeffs, unique_exponents, unique_coeffs,
             coeff2rows[coeff].append(row)
         for coeff in unique_coeffs:
             f.write(str(offset) + ": ")
-            terms = [cols + row for row in coeff2rows[coeff]]
+            terms = [cols + row for row in coeff2rows.get(coeff, ())]
             f.write(",".join(map(str, terms)))
             f.write(";" + "\n")
             offset += 1

@@ -547,7 +547,8 @@ class TestOther(unittest.TestCase):
             shutil.rmtree(workdir)
 
         target_ingraph = \
-        '''n=5
+        '''As
+        n=5
         g
         ! columns
         0: 2;
