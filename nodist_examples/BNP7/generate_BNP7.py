@@ -12,25 +12,25 @@ if __name__ == "__main__":
             ('p1*p1', 0),
             ('p2*p2', 0),
             ('p3*p3', 0),
-            ('p4*p4', 'm2'),
+            ('p4*p4', 0),
             ('p1*p2', 's/2'),
             ('p2*p3', 't/2'),
-            ('p1*p3', '(-s-t+m2)/2'),
-            ('p3*p4', 's/2-m2/2'),
-            ('p1*p4', 't/2-m2/2'),
+            ('p1*p3', '(-s-t)/2'),
+            ('p3*p4', 's/2'),
+            ('p1*p4', 't/2'),
             ('p2*p4', '(-s-t)/2')]
             )
 
-    print(li.F)
-    print(li.U)
+    # print(li.F)
+    # print(li.U)
     
-    psd.loop_integral.draw.plot_diagram(
-        internal_lines = [[0,[3,4]],[0,[4,5]],[0,[3,6]],[0,[1,5]],[0,[1,6]],[0,[2,5]],[0,[2,6]]],
-        external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
-        filename='BNP7_diagram')
+    # psd.loop_integral.draw.plot_diagram(
+    #     internal_lines = [[0,[3,4]],[0,[4,5]],[0,[3,6]],[0,[1,5]],[0,[1,6]],[0,[2,5]],[0,[2,6]]],
+    #     external_lines = [['p1',1],['p2',2],['p3',3],['p4',4]],
+    #     filename='BNP7_diagram')
 
     Mandelstam_symbols = ['s','t']
-    mass_symbols = ['m2']
+    mass_symbols = []
 
     rescaled_U = sp.sympify(str(li.U))
     rescaled_F = sp.sympify(str(li.F))
