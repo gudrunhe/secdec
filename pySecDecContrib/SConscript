@@ -63,7 +63,7 @@ contrib += \
                 -e 's/puts(s)/fputs(s,stderr); putc(10,stderr)/' \
                 -e 's/stdout/stderr/g' src/common/stddecl.h && \
         """,
-        extra_configure_args="CFLAGS='-O3 -fomit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'",
+        extra_configure_args="CFLAGS='-O3 -fno-omit-frame-pointer -ffast-math -fno-finite-math-only -fexceptions -fcommon -fPIC'",
         build_target="lib")
 
 zlib_files = ["lib/libz.a", "include/zlib.h", "include/zconf.h"]
