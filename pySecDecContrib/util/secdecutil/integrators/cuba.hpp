@@ -51,6 +51,11 @@ namespace secdecutil
         { \
               std::cerr << "integrating with zero_border = " << zero_border << std::endl; \
         } \
+	/* do not remove statefile on success (will be reused if integration iterates) */ \
+	if (!(flags & 16) ) \
+	{ \
+	      flags += 16; \
+	} \
         call_cuba(); \
         if (flags & 3) \
         { \
