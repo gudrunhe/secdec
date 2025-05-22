@@ -143,7 +143,7 @@ namespace secdecutil {
             /*
              * constructor
              */
-            QmcIntegral(const std::shared_ptr<integrator_t>& qmc, const integrand_t& integrand) :
+            QmcIntegral(const std::shared_ptr<integrator_t> qmc, const integrand_t& integrand) :
                 Integral<integrand_return_t,real_t>(qmc->minn), qmc(qmc), integrand(integrand), scaleexpo(1.0) {};
 
             void compute_impl(const bool verbose) override
@@ -198,14 +198,14 @@ namespace secdecutil {
             /*
              * constructor
              */
-            CubaIntegral(const std::shared_ptr<integrator_t>& integrator, const integrand_t& integrand) :
+            CubaIntegral(const std::shared_ptr<integrator_t> integrator, const integrand_t& integrand) :
                 Integral<integrand_return_t,real_t>(integrator->mineval > 1 ? integrator->mineval : 1000),
                 integrator(integrator),
                 integrand(integrand),
                 scaleexpo(0.5),
                 tmpdir("")
                 {
-                  // set statefile path`
+                  // set statefile path
                   std::string path;
                   if(const char* env_p = std::getenv("SECDEC_TMPDIR"))
                       path+= env_p;
@@ -268,7 +268,7 @@ namespace secdecutil {
             /*
              * constructor
              */
-            CQuadIntegral(const std::shared_ptr<integrator_t>& integrator, const integrand_t& integrand) :
+            CQuadIntegral(const std::shared_ptr<integrator_t> integrator, const integrand_t& integrand) :
                 Integral<integrand_return_t,real_t>(),
                 integrator(integrator),
                 integrand(integrand),
@@ -301,7 +301,7 @@ namespace secdecutil {
             /*
              * constructor
              */
-            MultiIntegratorIntegral(const std::shared_ptr<integrator_t>& integrator, const integrand_t& integrand) :
+            MultiIntegratorIntegral(const std::shared_ptr<integrator_t> integrator, const integrand_t& integrand) :
                 Integral<integrand_return_t,real_t>(),
                 integrator(integrator),
                 integrand(integrand),
@@ -329,7 +329,7 @@ namespace secdecutil {
              * constructor
              */
             WeightedIntegral(
-                                const std::shared_ptr<integral_t>& integral,
+                                const std::shared_ptr<integral_t> integral,
                                 const coefficient_t& coefficient = coefficient_t(1)
                             ) :
             integral(integral), coefficient(coefficient) {};
@@ -513,13 +513,13 @@ namespace secdecutil {
          * evaluate a vector of integrals
          */
         template<typename integrand_return_t, typename integral_t>
-        void evaluate_integrals(std::vector<integral_t*>& integrals, const bool& verbose, size_t number_of_threads, size_t reset_cuda_after,
+        void evaluate_integrals(std::vector<std::shared_ptr<integral_t>>& integrals, const bool& verbose, size_t number_of_threads, size_t reset_cuda_after,
                     std::map<std::string, std::vector<std::vector<double>>> changed_deformation_parameters_map)
         {
             if(number_of_threads == 0)
                 ++number_of_threads;
 
-            std::function<void(integral_t*)> compute_integral = [ &verbose, &integrals, &changed_deformation_parameters_map ] (integral_t* integral)
+            std::function<void(std::shared_ptr<integral_t>)> compute_integral = [ &verbose, &integrals, &changed_deformation_parameters_map ] (std::shared_ptr<integral_t> integral)
                 {
                     const unsigned long long int curr_n = integral->get_number_of_function_evaluations();
                     const unsigned long long int next_n = integral->get_next_number_of_function_evaluations();
@@ -540,8 +540,8 @@ namespace secdecutil {
                             integral->clear_errors();
 
                             std::cerr << "Integral " << integral->display_name << " failed, reducing deformation parameters." << std::endl;
-                            std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type*>> pars = integral->get_parameters();
-                            std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type>> extra_pars = integral->get_extra_parameters();
+                            std::vector<std::vector<typename integral_t::real_t_type*>> pars = integral->get_parameters();
+                            std::vector<std::vector<typename integral_t::real_t_type>> extra_pars = integral->get_extra_parameters();
                             failed_atleast_once = true;
                             bool changed_deformation_parameters = false;
                             for(int k = 0; k < pars.size(); k++){
@@ -567,8 +567,8 @@ namespace secdecutil {
                         }
                         if(not failed){
                             if(failed_atleast_once){
-                                std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type*>> pars = integral->get_parameters();
-                                std::vector<std::vector<typename std::remove_pointer<decltype(integral)>::type::real_t_type>> pars_data(pars.size());
+                                std::vector<std::vector<typename integral_t::real_t_type*>> pars = integral->get_parameters();
+                                std::vector<std::vector<typename integral_t::real_t_type>> pars_data(pars.size());
                                 for(int i = 0; i < pars.size(); i++){
                                     for(auto par:pars[i]){
                                         pars_data[i].push_back(*par);
@@ -600,7 +600,7 @@ namespace secdecutil {
                 size_t job_counter = 0;
                 int number_of_cuda_devices; cuda_safe_call( cudaGetDeviceCount(&number_of_cuda_devices) );
             #endif
-            for (integral_t* integral : integrals)
+            for (std::shared_ptr<integral_t>& integral : integrals)
             {
                 if(thread_pool.at(idx).joinable())
                     thread_pool.at(idx).join();
@@ -807,7 +807,7 @@ namespace secdecutil {
                 /*
                  * estimate total time and try to get below wall_clock_limit
                  */
-                void ensure_wall_clock_limit(bool& repeat, std::vector<integral_t*>& integrals, double decrease_to_percentage=1.0)
+                void ensure_wall_clock_limit(bool& repeat, std::vector<std::shared_ptr<integral_t>>& integrals, double decrease_to_percentage=1.0)
                 {
                     real_t elapsed_time = std::chrono::duration<real_t>(std::chrono::steady_clock::now() - start_time).count();
                     real_t remaining_time = wall_clock_limit - elapsed_time;
@@ -822,7 +822,7 @@ namespace secdecutil {
                             std::cerr << "remaining time: " << remaining_time << " s = " << remaining_time/60 << " min = " << remaining_time/60/60 << " hr" << std::endl;
                             std::cerr << "stopping due to time constraint" << std::endl;
                         }
-                        for (integral_t* integral : integrals)
+                        for (std::shared_ptr<integral_t>& integral : integrals)
                         {
                             integral->set_next_number_of_function_evaluations(  integral->get_number_of_function_evaluations(), true );
                         }
@@ -833,7 +833,7 @@ namespace secdecutil {
                     real_t decrease_factor;
                     bool can_improve_in_time = true;
 
-                    for (integral_t* integral : integrals)
+                    for (std::shared_ptr<integral_t>& integral : integrals)
                     {
                         const unsigned long long int& curr_n = integral->get_number_of_function_evaluations();
                         const unsigned long long int& next_n = integral->get_next_number_of_function_evaluations();
@@ -866,7 +866,7 @@ namespace secdecutil {
                         // reduce runtime by updating with fewer samples
                         time_for_next_iteration = 0.;
                         can_improve_in_time = false;
-                        for (integral_t* integral : integrals)
+                        for (std::shared_ptr<integral_t>& integral : integrals)
                         {
                             const unsigned long long int& curr_n = integral->get_number_of_function_evaluations();
                             const unsigned long long int& next_n = integral->get_next_number_of_function_evaluations();
@@ -1188,12 +1188,12 @@ namespace secdecutil {
                     ++number_of_threads;
 
                 // make a unique vector of the appearing integrals
-                std::vector<integral_t*> integrals;
+                std::vector<std::shared_ptr<integral_t>> integrals;
                 std::function<void(sum_t&)> populate_integrals =
                     [ &integrals ] (sum_t& sum)
                     {
                         for (term_t& term : sum.summands)
-                            integrals.push_back(term.integral.get());
+                            integrals.push_back(term.integral);
                     };
                 secdecutil::deep_apply(expression, populate_integrals);
                 std::sort(integrals.begin(), integrals.end());
