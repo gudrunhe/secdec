@@ -342,7 +342,7 @@ def expand_region(poly_list,numerator,index,order,polynomial_name_indices):
 
         inverse_i_factorial /= i
         term = Product(*derivative[0])
-        term.factors.append((derivative[1] * inverse_i_factorial))
+        term.factors.append(derivative[1] * inverse_i_factorial)
         term = term.replace(index, 0, remove=True)
         for factor in term.factors:
             if type(factor) is ExponentiatedPolynomial:

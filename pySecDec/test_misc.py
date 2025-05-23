@@ -18,7 +18,7 @@ class TestMakeCPPList(unittest.TestCase):
     def test_make_cpp_list_empty(self):
         python_list = []
         cpp_list = make_cpp_list(python_list)
-        target_cpp_list = str() # empty string
+        target_cpp_list = ""  # empty string
         assert cpp_list == target_cpp_list
 
 
