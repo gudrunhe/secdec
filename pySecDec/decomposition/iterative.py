@@ -327,9 +327,8 @@ def iterative_decomposition(sector, indices=None):
         indices = list(indices)
 
     try:
-        subsectors = iteration_step(sector, indices) # only this line can raise `EndOfDecomposition`
+        subsectors = iteration_step(sector, indices)  # only this line can raise `EndOfDecomposition`
         for subsector in subsectors:
-            for deeper_subsector in iterative_decomposition(subsector, indices):
-                yield deeper_subsector
+            yield from iterative_decomposition(subsector, indices)
     except EndOfDecomposition:
         yield sector

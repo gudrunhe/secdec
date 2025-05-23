@@ -1866,8 +1866,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                 )
             else:
                 primary_sectors = original_decomposition_strategies['primary'](sector, indices)
-            for output_sector in primary_sectors:
-                yield output_sector
+            yield from primary_sectors
 
         def secondary_decomposition_with_splitting(sector, indices, split_sectors=None):
             if split_sectors is None:
@@ -1880,8 +1879,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                     if len(split_decomposed_sector) == 1:
                         yield decomposed_sector
                     else:
-                        for deeper_sector in secondary_decomposition_with_splitting(decomposed_sector, indices, split_decomposed_sector):
-                            yield deeper_sector
+                        yield from secondary_decomposition_with_splitting(decomposed_sector, indices, split_decomposed_sector)
 
         # apply modifications to the decomposition strategy
         strategy = dict(primary=primary_decomposition_with_splitting, secondary=secondary_decomposition_with_splitting)
@@ -2066,7 +2064,7 @@ def make_package(name, integration_variables, regulators, requested_orders,
                                                                       maxdegrees=maxdegrees_contour_deformation_polynomial)
                                                     for deformed_name in symbolic_deformed_variable_names
                                               ]
-                symbolic_deformed_variables.extend( (regulator for regulator in elementary_monomials[len(integration_variables):]) )
+                symbolic_deformed_variables.extend(regulator for regulator in elementary_monomials[len(integration_variables):])
                 symbolic_deformation_factors = [
                                                     MaxDegreeFunction(deformed_name,
                                                                       *elementary_monomials[:len(integration_variables)],

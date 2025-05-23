@@ -190,10 +190,10 @@ def split(sector, seed, *indices):
 
         # recursively call `split` with the `remaining_indices`
         for sector in (subsector0, subsector1):
-            for subsubsector in split_recursively(sector, remaining_indices, splitting_point):
-                yield subsubsector
+            yield from split_recursively(sector, remaining_indices, splitting_point)
 
     return split_recursively(sector, indices, splitting_point)
+
 
 def split_singular(sector, seed, indices=[]):
     '''
