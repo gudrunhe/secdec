@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated exparse to 0.1.1, Nauty to 2.8.9, normaliz to 3.10.4, CLN to 1.3.7, zlib to 1.3.1, GSL to 2.8, and GMP to 6.3.0.
+- Updated exparse to 0.1.1, Nauty to 2.8.9, normaliz to 3.10.4, GiNaC to 1.8.9, CLN to 1.3.7, zlib to 1.3.1, GSL to 2.8, and GMP to 6.3.0.
 
 ## [1.6.4] - 2024-07-16
 
