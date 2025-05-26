@@ -970,13 +970,13 @@ class TestPow(unittest.TestCase):
 
         derivative_0_1 = sympify_expression(derivative_0.derive(1))
         target_derivative_0_1 = sympify_expression('A*x1 *( (A*x0 + B*x1) ** (x1 - 1) * (log(A*x0 + B*x1) + (x1 - 1)*B/(A*x0 + B*x1)) ) + (A*x0 + B*x1) ** (x1 - 1) * A')
-        assert (derivative_0_1 - target_derivative_0_1).simplify() == 0
+        assert (derivative_0_1 - target_derivative_0_1).expand().simplify() == 0
 
         # `_Expression` in exponent
         exp = Pow(polynomial1, Sum(polynomial1, polynomial2))
         derivative_0 = exp.derive(0)
         target_derivative_0 = sympify_expression('(A*x0 + B*x1)**(A*x0 + B*x1 + x1) * ( A*log(A*x0 + B*x1) + (A*x0 + B*x1 + x1)/(A*x0 + B*x1)*A )')
-        assert (sympify_expression(derivative_0) - target_derivative_0).simplify() == 0
+        assert (sympify_expression(derivative_0) - target_derivative_0).expand().simplify() == 0
 
     def test_string_form(self):
         p0 = ExponentiatedPolynomial([(0,1)],['A'],exponent='exponent')
