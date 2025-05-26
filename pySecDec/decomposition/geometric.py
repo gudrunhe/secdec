@@ -242,7 +242,7 @@ def geometric_decomposition(sector, indices=None, normaliz=None, workdir='normal
             assert len(triangular_cones.shape) == 3
             for i, triangular_cone in enumerate(triangular_cones):
                 # find the indices of the vectors defining the triangular cone
-                triangular_cone_indices = [int( np.where( (vector == transformation.T).all(axis=1) )[0] )
+                triangular_cone_indices = [int( np.where( (vector == transformation.T).all(axis=1) )[0][0] )
                                            for vector in triangular_cone]
                 yield make_sector(triangular_cone_indices, triangular_cone)
 
