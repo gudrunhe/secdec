@@ -159,7 +159,7 @@ class LoopIntegralFromGraph(LoopIntegral):
             uncut = missing(range(self.P),cut)
 
             # Define transition matrix for cut graph by removing cut propagators
-            newmatrix = np.matrix(self.vertmatrix) # copies data by default
+            newmatrix = np.array(self.vertmatrix) # copies data by default
             for i in cut:
                 start = self.intverts[self.internal_lines[i][1][0]]
                 end = self.intverts[self.internal_lines[i][1][1]]
@@ -168,7 +168,7 @@ class LoopIntegralFromGraph(LoopIntegral):
 
             # Check if cut graph is connected
             numvert = self.V + len(self.external_lines)
-            if(0 in newmatrix**numvert):
+            if(0 in np.linalg.matrix_power(newmatrix,numvert)):
                 # not connected if exponentiated matrix has a zero
                 continue
 
@@ -193,7 +193,7 @@ class LoopIntegralFromGraph(LoopIntegral):
             uncut = missing(range(self.P),cut)
 
             # Define transition matrix for cut graph by removing cut propagators
-            newmatrix = np.matrix(self.vertmatrix) # copies data by default
+            newmatrix = np.array(self.vertmatrix) # copies data by default
             for i in cut:
                 start = self.intverts[self.internal_lines[i][1][0]]
                 end = self.intverts[self.internal_lines[i][1][1]]
@@ -201,7 +201,7 @@ class LoopIntegralFromGraph(LoopIntegral):
                 newmatrix[end,start] -= 1
 
             numvert = self.V + len(self.external_lines)
-            newmatrix = newmatrix**numvert
+            newmatrix = np.linalg.matrix_power(newmatrix,numvert)
 
             # find all internal vertices *not* connected to vertex 0 (arbitrary choice)
             intnotconnectedto0 = []
