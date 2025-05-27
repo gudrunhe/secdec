@@ -14,7 +14,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Physics"
 ]
-dependencies = ["numpy>=1.23", "sympy>=1.10.1,<1.11.0", "nest-asyncio"]
+dependencies = ["numpy>=1.23,<3", "sympy>=1.10.1,!=1.11.*,!=1.12.*,<2", "nest-asyncio~=1.5"]
 requires-python = ">=3.8"
 description = 'Numerical evaluator of integrals implementing the "Sector Decomposition" method (arXiv:2305.19768, arXiv:2108.10807, arXiv:1703.09692, arXiv:hep-ph/0004013, arXiv:0803.4177).'
 license = "GPLv3"
@@ -26,7 +26,7 @@ testing = ["pytest", "pytest-timeout", "pytest-cov"]
 documentation = ["sphinx>=1.6.3"]
 
 [build-system]
-requires = ["enscons>=0.26", "toml>=0.10", "packaging>=20.5"]
+requires = ["enscons~=0.26", "toml~=0.10", "packaging>=20.5"]
 build-backend = "enscons.api"
 
 [tool.pytest.ini_options]
