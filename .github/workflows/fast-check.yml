@@ -1,8 +1,3 @@
-name: Nuke ~/.local to avoid old installed tools from other workflows
-run: |
-  echo "Removing ~/.local to avoid leftover binaries from older workflows..."
-  rm -rf ~/.local
-
 name: Fast Check
 on:
   push:
@@ -18,6 +13,11 @@ jobs:
         os: [self-hosted]
 
     steps:
+	- name: Nuke ~/.local to avoid old user-installed tools
+	  run: |
+		echo "Removing ~/.local to avoid leftover binaries from older workflows..."
+		rm -rf ~/.local
+
     - name: Install dependencies
       run: |
         if ! dpkg -s graphviz normaliz nauty libgsl-dev; then
