@@ -50,8 +50,8 @@ jobs:
       # ✅ Install system-level dependencies (if not already installed)
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y graphviz normaliz nauty libgsl-dev
+          apt-get update
+          apt-get install -y graphviz normaliz nauty libgsl-dev
 
       # ✅ Install Python dependencies
       - name: Install Python dependencies
