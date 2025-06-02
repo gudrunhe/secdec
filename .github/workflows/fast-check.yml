@@ -10,7 +10,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
         os: [self-hosted]
 
     steps:
@@ -19,8 +19,6 @@ jobs:
         run: |
           echo "Removing ~/.local to avoid leftover binaries from older workflows..."
           rm -rf ~/.local
-          echo "Nuking pip cache..."
-          rm -rf ~/.cache/pip
 
       # ✅ Checkout Repo
       - uses: actions/checkout@v3
