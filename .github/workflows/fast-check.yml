@@ -14,12 +14,6 @@ jobs:
         os: [self-hosted]
 
     steps:
-      # 🔥 Clean Previous Workspace (optional but good practice)
-      - name: Clean runner workspace
-        run: |
-          echo "Cleaning runner workspace..."
-          sudo rm -rf ${{ github.workspace }}/*
-
       # 🔥 Nuke ~/.local to avoid ghost binaries and old pip installs
       - name: Nuke ~/.local
         run: |
