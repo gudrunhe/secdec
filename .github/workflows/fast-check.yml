@@ -1,4 +1,5 @@
 name: Fast Check
+
 on:
   push:
   workflow_dispatch:
@@ -13,74 +14,100 @@ jobs:
         os: [self-hosted]
 
     steps:
-    - name: Nuke ~/.local to avoid old user-installed tools
-      run: |
-        echo "Removing ~/.local to avoid leftover binaries from older workflows..."
-        rm -rf ~/.local
+      # 🔥 Clean Previous Workspace (optional but good practice)
+      - name: Clean runner workspace
+        run: |
+          echo "Cleaning runner workspace..."
+          sudo rm -rf ${{ github.workspace }}/*
 
-    - name: Install dependencies
-      run: |
-        if ! dpkg -s graphviz normaliz nauty libgsl-dev; then
+      # 🔥 Nuke ~/.local to avoid ghost binaries and old pip installs
+      - name: Nuke ~/.local
+        run: |
+          echo "Removing ~/.local to avoid leftover binaries from older workflows..."
+          rm -rf ~/.local
+
+      # ✅ Checkout Repo
+      - uses: actions/checkout@v3
+
+      # ✅ Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+
+      # ✅ Confirm Python version and path
+      - name: Verify Python setup
+        run: |
+          which python3
+          python3 --version
+          which pip
+          pip --version
+
+      # ✅ Set Environment Variables
+      - name: Setup environment variables
+        run: |
+          PY_DIR=$(dirname $(dirname $(which python3)))
+          echo "PYTHON=$PY_DIR/bin/python3" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$PY_DIR/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # ✅ Install system-level dependencies (if not already installed)
+      - name: Install system dependencies
+        run: |
           sudo apt-get update
           sudo apt-get install -y graphviz normaliz nauty libgsl-dev
-        fi
 
-    - uses: actions/checkout@v3
+      # ✅ Install Python dependencies
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install sphinx
+          make dependencies
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-        architecture: 'x64'
+      # ✅ Confirm sphinx-build is using correct Python
+      - name: Debug sphinx-build
+        run: |
+          which sphinx-build
+          head -n 1 $(which sphinx-build)
+          sphinx-build --version
 
-    - name: Setup environment variables
-      run: |
-        echo "PYTHON=/runner/_work/_tool/Python/3.8.18/x64/bin/python3.8" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=/runner/_work/_tool/Python/3.8.18/x64/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-        echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+      # ✅ Build
+      - name: Build
+        run: |
+          make build
 
-    - name: Install Python dependencies
-      run: |
-        python3 -m pip install --upgrade pip
-        make dependencies
+      # ✅ Run Unit Tests
+      - name: Run pytest
+        run: |
+          python3 -m pytest --timeout=600 pySecDec
 
-    - name: Verify Python Installation 1
-      run: |
-        which python3.8
-        echo $PATH
-        which sphinx-build
-        sphinx-build --version
-        python3.8 --version
+      # ✅ Verify Python Installation and Library Paths
+      - name: Verify Python Libs
+        run: |
+          python3 --version
+          echo $LD_LIBRARY_PATH
+          ls -l $(dirname $(dirname $(which python3)))/lib/
 
-    - name: Build
-      run: |
-        make build
+      # ✅ Run Doc Tests
+      - name: Doc Test
+        run: |
+          PYTHON=$(which python3)
+          export LD_LIBRARY_PATH=$(dirname $(dirname $PYTHON))/lib:$LD_LIBRARY_PATH
+          PYTHON=$PYTHON make doctest
 
-    - name: pytest Check
-      run: |
-        python3 -m pytest --timeout=600 pySecDec
+      # ✅ Utility Check
+      - name: Util Check
+        run: |
+          make util-check -j2
 
-    - name: Verify Python Installation
-      run: |
-        which python3.8
-        echo $PATH
-        which sphinx-build
-        python3.8 --version
-        ls -l /runner/_work/_tool/Python/3.8.18/x64/lib/
+      # ✅ High-Level Tests
+      - name: High-level Tests
+        run: |
+          make -C high_level_tests runselected -j2
 
-    - name: Doc Test
-      run: |
-        export LD_LIBRARY_PATH=/runner/_work/_tool/Python/3.8.18/x64/lib:$LD_LIBRARY_PATH
-        PYTHON=/runner/_work/_tool/Python/3.8.18/x64/bin/python3.8 make doctest
-
-    - name: Util Check
-      run: |
-        make util-check -j2
-
-    - name: High-level Tests
-      run: |
-        make -C high_level_tests runselected -j2
-
-    - name: High-level Test Summary
-      run: |
-        make -C high_level_tests summarize-selected
+      # ✅ High-Level Test Summary
+      - name: High-level Test Summary
+        run: |
+          make -C high_level_tests summarize-selected
