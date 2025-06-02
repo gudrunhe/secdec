@@ -47,12 +47,6 @@ jobs:
           echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      # ✅ Install system-level dependencies (if not already installed)
-      - name: Install system dependencies
-        run: |
-          apt-get update
-          apt-get install -y graphviz normaliz nauty libgsl-dev
-
       # ✅ Install Python dependencies
       - name: Install Python dependencies
         run: |
