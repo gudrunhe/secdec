@@ -13,10 +13,10 @@ jobs:
         os: [self-hosted]
 
     steps:
-	- name: Nuke ~/.local to avoid old user-installed tools
-	  run: |
-		echo "Removing ~/.local to avoid leftover binaries from older workflows..."
-		rm -rf ~/.local
+    - name: Nuke ~/.local to avoid old user-installed tools
+      run: |
+        echo "Removing ~/.local to avoid leftover binaries from older workflows..."
+        rm -rf ~/.local
 
     - name: Install dependencies
       run: |
