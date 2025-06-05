@@ -1,50 +1,96 @@
 name: Full Check
+
 on:
   workflow_dispatch:
+
 jobs:
   check:
     name: Make Check
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.8", "3.10"]
+        python-version: ["3.9", "3.12"]
         os: [ubuntu-latest]
+
     steps:
-    - name: Install dependencies
-      run: |
-        if ! dpkg -s graphviz normaliz nauty libgsl-dev; then
-          sudo apt-get install graphviz normaliz nauty libgsl-dev
-        fi
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - uses: actions/checkout@v2
-    - name: Install Python dependencies
-      run: |
-        make dependencies
-    - name: Build
-      run: |
-        make build
-    - name: pytest Check
-      run: |
-        python3 -m pytest --timeout=600 pySecDec
-    - name: Build HTML documentation
-      run: |
-        make doc-html
-    - name: Doc Test
-      run: |
-        export PYTHONPATH=$PWD
-        make doctest
-    - name: Util Check
-      run: |
-        export PYTHONPATH=$PWD
-        make util-check -j2
-    - name: High-level Tests
-      run: |
-        export PYTHONPATH=$PWD
-        make -C high_level_tests runtests -j2
-    - name: High-level Test Summary
-      run: |
-        export PYTHONPATH=$PWD
-        make -C high_level_tests summarize
+      # ✅ Nuke ~/.local to avoid ghost binaries and old pip installs
+      - name: Nuke ~/.local
+        run: |
+          echo "Removing ~/.local to avoid leftover binaries from older workflows..."
+          rm -rf ~/.local
+
+      # ✅ Install system dependencies
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz normaliz nauty libgsl-dev
+
+      # ✅ Checkout Repo
+      - uses: actions/checkout@v3
+
+      # ✅ Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+
+      # ✅ Confirm Python version and path
+      - name: Verify Python setup
+        run: |
+          which python3
+          python3 --version
+          which pip
+          pip --version
+
+      # ✅ Set Environment Variables
+      - name: Setup environment variables
+        run: |
+          PY_DIR=$(dirname $(dirname $(which python3)))
+          echo "PYTHON=$PY_DIR/bin/python3" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=$PY_DIR/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # ✅ Install Python dependencies
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          make dependencies
+
+      # ✅ Build
+      - name: Build
+        run: |
+          make build
+
+      # ✅ Run Unit Tests
+      - name: Run pytest
+        run: |
+          python3 -m pytest --timeout=600 pySecDec
+
+      # ✅ Build HTML documentation
+      - name: Build HTML documentation
+        run: |
+          make doc-html
+
+      # ✅ Run Doc Tests
+      - name: Doc Test
+        run: |
+          PYTHON=$(which python3)
+          export LD_LIBRARY_PATH=$(dirname $(dirname $PYTHON))/lib:$LD_LIBRARY_PATH
+          PYTHON=$PYTHON make doctest
+
+      # ✅ Utility Check
+      - name: Util Check
+        run: |
+          make util-check -j2
+
+      # ✅ High-Level Tests
+      - name: High-level Tests
+        run: |
+          make -C high_level_tests runtests -j2
+
+      # ✅ High-Level Test Summary
+      - name: High-level Test Summary
+        run: |
+          make -C high_level_tests summarize
