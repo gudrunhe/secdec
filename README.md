@@ -148,6 +148,10 @@ in the source repository to run all tests. Developers should write test cases fo
 ALL functions they implement and make sure that ALL tests pass before uploading a
 commit.
 
+⚠️ **Note**: Building `pySecDec` requires **GNU Make** (version 4.0 or newer).
+On some systems (e.g. macOS or BSD), the default `make` may be incompatible.
+In such cases, install GNU Make separately and use it instead of the default `make`.
+
 [pytest]: https://docs.pytest.org/
 
 ## Building the Documentation

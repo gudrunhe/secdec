@@ -6,6 +6,11 @@ Obtain a Compiler
 
 `pySecDec` works on Unix-like systems, specifically Linux and macOS. It requires a working c++ compiler and a Python 3 (>=3.8) installation.
 
+⚠️ **Note**: Building `pySecDec` requires **GNU Make** (version 4.0 or newer).
+On some systems (e.g. macOS or BSD), the default `make` may be incompatible. In
+such cases, install GNU Make separately and use it instead of the default
+`make`.
+
 On Linux systems, users can install compilers (we recommend the latest GCC or Clang compiler) and Python 3 using the package manager provided with their Linux distribution (usually one of : `apk`, `apt-get`, `apt`, `yum`).
 
 On macOS systems, users can install a compiler via the App Store:
@@ -59,8 +64,8 @@ For more information and to learn how to use `pySecDec` for your own problems, f
 Drawing Feynman Diagrams with `neato`
 -------------------------------------
 
-The :func:`~pySecDec.loop_integral.draw.plot_diagram` function draws a Feynman diagram using the command line tool `neato`. 
-It is automatically called when generating an integral library using the :func:`~pySecDec.loop_integral.loop_package` function with an integral of type  :class:`~pySecDec.loop_integral.LoopIntegralFromGraph` and will issue a warning if `neato` is not available. 
+The :func:`~pySecDec.loop_integral.draw.plot_diagram` function draws a Feynman diagram using the command line tool `neato`.
+It is automatically called when generating an integral library using the :func:`~pySecDec.loop_integral.loop_package` function with an integral of type  :class:`~pySecDec.loop_integral.LoopIntegralFromGraph` and will issue a warning if `neato` is not available.
 
 The warning can be safely ignored if you are not interested in the drawing.
 Alternatively, you must manually install `neato` which is part of the `graphviz` package.
