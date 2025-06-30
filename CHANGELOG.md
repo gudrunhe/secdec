@@ -6,12 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-
-- `loop_integral.leading_order()`
+- `loop_integral.leading_order()` which returns the leading degree of divergence of a loop integral.
+- Non-trivial `remainder_expression` support when choosing the decomposition method `geometric_infinity_no_primary`.
+- *disteval* supports complex parameters passed with native python syntax.
+- *disteval* parses coefficient files with all available cpu cores even when gpu workers are used for integration.
 
 ### Changed
-
+- Speedup `squash_symmetry_redundant_sectors_dreadnaut` (e.g. `box_2L_numerator` 22s -> 3.7s)
 - Updated exparse to 0.1.1, Nauty to 2.8.9, normaliz to 3.10.4, GiNaC to 1.8.9, CLN to 1.3.7, zlib to 1.3.1, GSL to 2.8, and GMP to 6.3.0.
+- Updated Cuba to 4.2.2p1 (4.2.2 with a custom patch to fix a segfault in cuhre)
+
+### Fixed
+- Internal power functions are now available on GPU.
+- The `sqrt` function output by `sympy` is now correctly handled in FORM scripts.
+- `split=True` now functions correctly when choosing decomposition method `geometric_infinity_no_primary`.
+- Memory leaks in `coefficient_parser`.
+- `numpy` deprecations.
 
 ## [1.6.4] - 2024-07-16
 
