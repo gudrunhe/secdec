@@ -5,6 +5,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.5] - 2025-07-08
+
 ### Added
 - `loop_integral.leading_order()` which returns the leading degree of divergence of a loop integral.
 - Non-trivial `remainder_expression` support when choosing the decomposition method `geometric_infinity_no_primary`.
