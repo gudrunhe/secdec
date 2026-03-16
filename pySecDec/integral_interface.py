@@ -1680,6 +1680,9 @@ class DistevalLibrary(object):
         import math
         import sys
         import time
+        import sympy as sp
+        from fractions import Fraction
+        from decimal import Decimal
         from . import disteval
 
         if real_parameters or complex_parameters:
@@ -1697,10 +1700,19 @@ class DistevalLibrary(object):
             fvalue = complex(value)
             if fvalue.imag == 0:
                 valuemap_int[key] = fvalue.real
-                valuemap_coeff[key] = str(value.real) if isinstance(value, complex) else str(value)
+                valuemap_coeff[key] = (
+                    Fraction(value.real) if isinstance(value, complex) else
+                    Fraction(value) if isinstance(value, (float, Decimal)) else
+                    sp.sympify(value, rational=True) if isinstance(value, str) else
+                    str(value)
+                )
             else:
                 valuemap_int[key] = fvalue
-                valuemap_coeff[key] = f"{str(value.real)} + ({str(value.imag)})*I" if isinstance(value, complex) else str(value)
+                valuemap_coeff[key] = (
+                    f"{Fraction(value.real)} + ({Fraction(value.imag)})*I" if isinstance(value, complex) else
+                    sp.sympify(value, rational=True) if isinstance(value, str) else
+                    str(value)
+                )
         if not isinstance(epsabs, list) and not isinstance(epsabs, tuple):
             epsabs = [epsabs]
         if not isinstance(epsrel, list) and not isinstance(epsrel, tuple):

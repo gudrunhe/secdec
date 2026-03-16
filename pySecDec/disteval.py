@@ -443,14 +443,17 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
     sp_regulators = sp.var(info["regulators"])
 
     realp = {
-        fam : [valuemap_int[p] for p in info["realp"]]
+        fam : [float(valuemap_int[p]) for p in info["realp"]]
         for fam, info in infos.items()
     }
     complexp = {
-        fam : [(np.real(valuemap_int[p]), np.imag(valuemap_int[p])) for p in info["complexp"]]
+        fam : [(complex(p).real, complex(p).imag) for p in info["complexp"]]
         for fam, info in infos.items()
     }
-    valuemap_coeff = {k : str(v) for k, v in valuemap_coeff.items()}
+    valuemap_coeff = {
+        k : str(v)
+        for k, v in valuemap_coeff.items()
+    }
 
     log(f"parsing {len(infos)} integral prefactors")
     for ii in infos.values():
@@ -1083,7 +1086,8 @@ def main():
     for arg in args[1:]:
         if "=" not in arg: raise ValueError(f"Bad argument: {arg}")
         key, svalue = arg.split("=", 1)
-        fvalue = complex(sp.sympify(svalue))
+        svalue = sp.sympify(svalue, rational=True)
+        fvalue = complex(svalue)
         fvalue = fvalue.real if fvalue.imag == 0 else fvalue
         if key.startswith("coeff-"):
             valuemap_coeff[key[6:]] = svalue
