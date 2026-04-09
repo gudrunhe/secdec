@@ -486,11 +486,16 @@ async def do_eval(prepared, coeffsdir, epsabs, epsrel, npresample, npoints0, nsh
                 return
             log(f"- {t['coefficient']} ({w.name})")
             br_coef = {tuple(k):complex(re, im) for k, (re, im) in br_coef}
+            br_coef = {k: v for k, v in br_coef.items() if v != 0}
             if any(i1 < i2 for k in br_coef.keys() for i1, i2 in zip(k, t["coefficient_lowest_orders"])):
+                for k, v in br_coef.items():
+                    k = " ".join(f"{r}^{e}" for r, e in zip(sp_regulators, k))
+                    log(f"  - {k} * ({v})")
                 log(f"  -> leading order is lower than {t['coefficient_lowest_orders']}")
                 done_evalf.set_exception(ValueError(f"Leading order of {t['coefficient']!r} is lower than {t['coefficient_lowest_orders']}"))
                 return
-            split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], br_coef, valuemap_int, sp_regulators, requested_orders)
+            if len(br_coef) > 0:
+                split_integral_into_orders(ap2coeffs, a, kernel2idx, infos[t["integral"]], br_coef, valuemap_int, sp_regulators, requested_orders)
             done_evalf.todo -= 1
             if done_evalf.todo == 0:
                 done_evalf.set_result(None)
