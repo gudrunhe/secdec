@@ -675,7 +675,11 @@ SecDecInternalSignCheckContourDeformation[cond_, id_] If[cond, Throw[$ContourDef
 SecDecInternalSqr[ex_] := ex*ex;
 
 ${i.namespace.replace("_", "$")}$sector$${i.sector}$order$${i.order_name}Integrand[
+@@ if len(getlist(i.order_integrationVariables)) != 0:
     {${", ".join([x + "_" for x in getlist(i.order_integrationVariables)])}, ___},
+@@ else:
+    {___},
+@@ pass
     {${", ".join([x + "_" for x in getlist(i.realParameters) + getlist(i.complexParameters)])}},
     {${", ".join([x + "_" for x in getlist(i.order_deformationParameters)])}}
 ] :=
@@ -688,7 +692,11 @@ Module[{${", ".join(varnames)}},
 ];
 
 ${i.namespace.replace("_", "$")}$sector$${i.sector}$order$${i.order_name}MaxDeformP[
+@@ if len(getlist(i.order_integrationVariables)) != 0:
     {${", ".join([x + "_" for x in getlist(i.order_integrationVariables)])}, ___},
+@@ else:
+    {___},
+@@ pass
     {${", ".join([x + "_" for x in getlist(i.realParameters) + getlist(i.complexParameters)])}}
 @@ if int(i.contourDeformation):
 ] :=
@@ -707,7 +715,11 @@ Module[{${", ".join(varnames)}, SecDecInternalOutputDeformationParameters, defor
 @@ pass
 
 ${i.namespace.replace("_", "$")}$sector$${i.sector}$order$${i.order_name}F[
+@@ if len(getlist(i.order_integrationVariables)) != 0:
     {${", ".join([x + "_" for x in getlist(i.order_integrationVariables)])}, ___},
+@@ else:
+    {___},
+@@ pass
     {${", ".join([x + "_" for x in getlist(i.realParameters) + getlist(i.complexParameters)])}},
     {${", ".join([x + "_" for x in getlist(i.order_deformationParameters)])}}
 @@ if int(i.contourDeformation):
