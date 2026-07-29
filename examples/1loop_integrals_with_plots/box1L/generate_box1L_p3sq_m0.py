@@ -5,8 +5,8 @@ if __name__ == "__main__":
 
     li = psd.LoopIntegralFromGraph(
         internal_lines = [
-            ['m1',[1,2]], 
-            ['m2',[2,3]], 
+            [0, [1,2]], 
+            [0, [2,3]], 
             [0, [3,4]], 
             [0, [4,1]]
         ],
@@ -23,18 +23,16 @@ if __name__ == "__main__":
             ('p3*p3', 'p3sq'),
             ('p1*p2', 's/2'),
             ('p2*p3', 't/2-p3sq/2'),
-            ('p1*p3', 'u/2-p3sq/2'),
-            ('m1**2', 'm1sq'),
-            ('m2**2', 'm2sq')
+            ('p1*p3', '(-s-t)/2'),
         ]
     )
 
     psd.loop_package(
-        name = 'box1L_m2',
+        name = 'box1L_m0',
 
         loop_integral = li,
 
-        real_parameters = ['s','t','u','m1sq','m2sq','p3sq'],
+        real_parameters = ['s','t','p3sq'],
 
         # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
         requested_orders = [0],

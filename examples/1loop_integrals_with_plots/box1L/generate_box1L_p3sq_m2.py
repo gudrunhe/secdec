@@ -7,8 +7,8 @@ if __name__ == "__main__":
         internal_lines = [
             ['m1',[1,2]], 
             ['m2',[2,3]], 
-            ['m3',[3,4]], 
-            ['m4',[4,1]]
+            [0, [3,4]], 
+            [0, [4,1]]
         ],
         external_lines = [
             ['p1',1], 
@@ -23,20 +23,18 @@ if __name__ == "__main__":
             ('p3*p3', 'p3sq'),
             ('p1*p2', 's/2'),
             ('p2*p3', 't/2-p3sq/2'),
-            ('p1*p3', 'u/2-p3sq/2'),
+            ('p1*p3', '(-s-t)/2'),
             ('m1**2', 'm1sq'),
-            ('m2**2', 'm2sq'),
-            ('m3**2', 'm3sq'),
-            ('m4**2', 'm4sq'),
+            ('m2**2', 'm2sq')
         ]
     )
 
     psd.loop_package(
-        name = 'box1L_m4',
+        name = 'box1L_m2',
 
         loop_integral = li,
 
-        real_parameters = ['s','u','t','m1sq', 'm2sq', 'm3sq', 'm4sq', 'p3sq'],
+        real_parameters = ['s','t','m1sq','m2sq','p3sq'],
 
         # the highest order of the final epsilon expansion --> change this value to whatever you think is appropriate
         requested_orders = [0],
