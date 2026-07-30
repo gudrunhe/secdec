@@ -1,11 +1,11 @@
 from pySecDec.integral_interface import DistevalLibrary
 
 # load the libraries
-box1L_m4 = DistevalLibrary("box1L_m4/disteval/box1L_m4.json", verbose=False)
-box1L_m3 = DistevalLibrary("box1L_m3/disteval/box1L_m3.json", verbose=False)
-box1L_m2 = DistevalLibrary("box1L_m2/disteval/box1L_m2.json", verbose=False)
-box1L_m1 = DistevalLibrary("box1L_m1/disteval/box1L_m1.json", verbose=False)
-box1L_m0 = DistevalLibrary("box1L_m0/disteval/box1L_m0.json", verbose=False)
+box1L_p3sq_m4 = DistevalLibrary("box1L_p3sq_m4/disteval/box1L_p3sq_m4.json", verbose=False)
+box1L_p3sq_m3 = DistevalLibrary("box1L_p3sq_m3/disteval/box1L_p3sq_m3.json", verbose=False)
+box1L_p3sq_m2 = DistevalLibrary("box1L_p3sq_m2/disteval/box1L_p3sq_m2.json", verbose=False)
+box1L_p3sq_m1 = DistevalLibrary("box1L_p3sq_m1/disteval/box1L_p3sq_m1.json", verbose=False)
+box1L_p3sq_m0 = DistevalLibrary("box1L_p3sq_m0/disteval/box1L_p3sq_m0.json", verbose=False)
 
 s=5
 t = -s/2
@@ -13,25 +13,25 @@ p3sq = 12/23
 m1sq = m2sq = m3sq = m4sq = 1.0
 
 # integrate all configurations and store the results
-result = box1L_m4(parameters={"s": s, 't':t,"m1sq": m1sq, "m2sq": m2sq, "m3sq":m3sq, "m4sq":m4sq,  "p3sq": p3sq},
+result = box1L_p3sq_m4(parameters={"s": s, 't':t,"m1sq": m1sq, "m2sq": m2sq, "m3sq":m3sq, "m4sq":m4sq,  "p3sq": p3sq},
                epsrel=1e-4, epsabs=1e-10, format="json", verbose=True)
-values_m4 = result["sums"]["box1L_m4"]
+values_m4 = result["sums"]["box1L_p3sq_m4"]
 
-result = box1L_m3(parameters={"s": s, 't':t, "m1sq" : m1sq, "m2sq" : m2sq, "m3sq" : m3sq, "p3sq": p3sq},
+result = box1L_p3sq_m3(parameters={"s": s, 't':t, "m1sq" : m1sq, "m2sq" : m2sq, "m3sq" : m3sq, "p3sq": p3sq},
                epsrel=1e-4, epsabs=1e-10, format="json", verbose=True)
-values_m3 = result["sums"]["box1L_m3"]
+values_m3 = result["sums"]["box1L_p3sq_m3"]
 
-result = box1L_m2(parameters={"s": s, 't':t,"m1sq": m1sq, "m2sq": m2sq, "p3sq": p3sq},
+result = box1L_p3sq_m2(parameters={"s": s, 't':t,"m1sq": m1sq, "m2sq": m2sq, "p3sq": p3sq},
                epsrel=1e-4, epsabs=1e-10, format="json", verbose=True)
-values_m2 = result["sums"]["box1L_m2"]
+values_m2 = result["sums"]["box1L_p3sq_m2"]
 
-result = box1L_m1(parameters={"s": s, 't':t,"m1sq": m1sq, "p3sq": p3sq},
+result = box1L_p3sq_m1(parameters={"s": s, 't':t,"m1sq": m1sq, "p3sq": p3sq},
                epsrel=1e-4, epsabs=1e-10, format="json", verbose=True)
-values_m1 = result["sums"]["box1L_m1"]
+values_m1 = result["sums"]["box1L_p3sq_m1"]
 
-result = box1L_m0(parameters={"s" : s, 't' : t, "p3sq" : p3sq},
+result = box1L_p3sq_m0(parameters={"s" : s, 't' : t, "p3sq" : p3sq},
                epsrel=1e-4, epsabs=1e-10, format="json", verbose=True)
-values_m0 = result["sums"]["box1L_m0"]
+values_m0 = result["sums"]["box1L_p3sq_m0"]
 
 
 # Print and comapare to analytic results

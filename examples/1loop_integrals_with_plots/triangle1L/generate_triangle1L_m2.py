@@ -21,8 +21,7 @@ if __name__ == "__main__":
         ('p2*p2', 0),
         ('p1*p2', 's/2'),
         ('m1**2', 'm1sq'),
-        ('m2**2', 'm2sq'),
-        ('m3**2', 'm3sq'),
+        ('m2**2', 'm2sq')
         ],
     )
 
@@ -30,7 +29,7 @@ if __name__ == "__main__":
         
         name = 'triangle1L_m2',
         loop_integral= li,
-        real_parameters= ('s', 'm1sq', 'm2sq', 'm3sq'),
+        real_parameters= ('s', 'm1sq', 'm2sq'),
         requested_orders=[0],
 
         )

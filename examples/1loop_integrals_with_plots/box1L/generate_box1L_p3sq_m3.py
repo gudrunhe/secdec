@@ -31,7 +31,7 @@ if __name__ == "__main__":
     )
 
     psd.loop_package(
-        name = 'box1L_m3',
+        name = 'box1L_p3sq_m3',
 
         loop_integral = li,
 
