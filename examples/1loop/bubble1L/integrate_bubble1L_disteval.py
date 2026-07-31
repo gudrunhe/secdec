@@ -6,13 +6,13 @@ bubble1L_m1 = DistevalLibrary('bubble1L_m1/disteval/bubble1L_m1.json', verbose=F
 bubble1L_m2 = DistevalLibrary('bubble1L_m2/disteval/bubble1L_m2.json', verbose=False)
 
 #integrate each configuration
-result = bubble1L_m0(parameters={"s": 5.0, "m1sq": 1.0, "m2sq": 1.0, "m3sq": 1.0},
+result = bubble1L_m0(parameters={"s": 5.0},
                epsrel=1e-6, epsabs=1e-12, format="json", verbose=True)
 values_m0 = result["sums"]["bubble1L_m0"]
-result = bubble1L_m1(parameters={"s": 5.0, "m1sq": 1.0, "m2sq": 1.0, "m3sq": 1.0},
+result = bubble1L_m1(parameters={"s": 5.0, "m1sq": 1.0},
                epsrel=1e-6, epsabs=1e-12, format="json", verbose=True)
 values_m1 = result["sums"]["bubble1L_m1"]
-result = bubble1L_m2(parameters={"s": 5.0, "m1sq": 1.0, "m2sq": 1.0, "m3sq": 1.0},
+result = bubble1L_m2(parameters={"s": 5.0, "m1sq": 1.0, "m2sq": 1.0},
                epsrel=1e-6, epsabs=1e-12, format="json", verbose=True)
 values_m2 = result["sums"]["bubble1L_m2"]
 

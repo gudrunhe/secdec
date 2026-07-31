@@ -7,13 +7,13 @@ triangle1L_m2 = DistevalLibrary('triangle1L_m2/disteval/triangle1L_m2.json', ver
 triangle1L_m3 = DistevalLibrary('triangle1L_m3/disteval/triangle1L_m3.json', verbose=False)
 
 #integrate each configuration
-result = triangle1L_m0(parameters={"s": 5.0, "m1sq": 1.0, "m2sq": 1.0, "m3sq": 1.0},
+result = triangle1L_m0(parameters={"s": 5.0},
                epsrel=1e-6, epsabs=1e-12, format="json", verbose=True)
 values_m0 = result["sums"]["triangle1L_m0"]
-result = triangle1L_m1(parameters={"s": 5.0, "m1sq": 1.0, "m2sq": 1.0, "m3sq": 1.0},
+result = triangle1L_m1(parameters={"s": 5.0, "m1sq": 1.0},
                epsrel=1e-6, epsabs=1e-12, format="json", verbose=True)
 values_m1 = result["sums"]["triangle1L_m1"]
-result = triangle1L_m2(parameters={"s": 5.0, "m1sq": 1.0, "m2sq": 1.0, "m3sq": 1.0},
+result = triangle1L_m2(parameters={"s": 5.0, "m1sq": 1.0, "m2sq": 1.0},
                epsrel=1e-6, epsabs=1e-12, format="json", verbose=True)
 values_m2 = result["sums"]["triangle1L_m2"]
 result = triangle1L_m3(parameters={"s": 5.0, "m1sq": 1.0, "m2sq": 1.0, "m3sq": 1.0},
