@@ -4,11 +4,15 @@ github test runner.
 
 To use these scripts:
 
-1. Run ./build.sh to build baseimage.sif.
+1. You will require subuid and subgid enabled
+   (/etc/subuid and /etc/subgid - USERNAME:ID:COUNT e.g. myuser:10000:5000)
+   for root-less build.
+
+2. Run ./build.sh to build baseimage.sif. or sudo ./build.sh if you dont have sub*ids
 
    Note that sudo is used here, but nowhere else.
 
-2. Run ./config.sh to create $TMP/pysecdec-github-runner directory
+3. Run ./config.sh to create $TMP/pysecdec-github-runner directory
    with all the needed files set up, and register the runner on
    Github. Note that you'll need to go to Settings->Actions->Self-hosted
    runners->Add runner to get the registration token. Only Github project
@@ -17,13 +21,13 @@ To use these scripts:
    Note that ./config.sh can be re-run multiple times, and it will
    recreate and re-register everything anew.
 
-3. You can run ./clear.sh to remove $TMP/pysecdec-github-runner.
+4. You can run ./clear.sh to remove $TMP/pysecdec-github-runner.
 
-4. You can run ./run.sh to run Github Runner in the foreground.
+5. You can run ./run.sh to run Github Runner in the foreground.
 
-5. You can run ./shell.sh to log into the container (using Bash).
+6. You can run ./shell.sh to log into the container (using Bash).
 
-6. You can run ./daemon-start.sh to start ./run.sh in the background
+7. You can run ./daemon-start.sh to start ./run.sh in the background
    (as a daemon).
 
    If you did, then ./daemon-status.sh will print the status of this
